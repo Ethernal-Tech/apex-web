@@ -32,3 +32,24 @@ export class CreateTransactionDto {
 	@ApiProperty({ enum: ChainEnum })
 	destinationChain: ChainEnum;
 }
+
+export class SignTransactionDto {
+	@IsNotEmpty()
+	@ApiProperty()
+	privateKey: string;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	transaction: string;
+}
+
+export class SubmitTransactionDto {
+	@IsNotEmpty()
+	@IsEnum(ChainEnum)
+	@ApiProperty({ enum: ChainEnum })
+	chain: ChainEnum;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	transaction: string;
+}

@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateTransactionDto } from './transaction.dto';
 import {
 	Address,
 	AuxiliaryData,
@@ -9,6 +8,7 @@ import {
 	Int,
 	MetadataList,
 	MetadataMap,
+	PrivateKey,
 	Transaction,
 	TransactionHash,
 	TransactionInput,
@@ -16,25 +16,33 @@ import {
 	TransactionOutput,
 	TransactionWitnessSet,
 	Value,
+	Vkeywitnesses,
+	hash_transaction,
+	make_vkey_witness,
 } from '@emurgo/cardano-serialization-lib-nodejs';
 import {
+	createContext,
 	getMultisigAddress,
 	getSlot,
 	getTransactionBuilder,
 	getUtxos,
-} from 'src/utils/transactionHelper';
+} from 'src/transaction/transaction.helper';
+import { createTransactionSubmissionClient } from '@cardano-ogmios/client';
+import {
+	CreateTransactionDto,
+	SignTransactionDto,
+	SubmitTransactionDto,
+} from './transaction.dto';
 
 @Injectable()
 export class TransactionService {
-	async createTransaction(model: CreateTransactionDto) {
-		const {
-			senderAddress,
-			receiverAddress,
-			destinationChain,
-			originChain,
-			amount,
-		} = model;
-
+	async createTransaction({
+		senderAddress,
+		receiverAddress,
+		destinationChain,
+		originChain,
+		amount,
+	}: CreateTransactionDto): Promise<Transaction> {
 		const txBuilder = await getTransactionBuilder(originChain);
 
 		const fromBech32SenderAddress = Address.from_bech32(senderAddress);
@@ -122,5 +130,37 @@ export class TransactionService {
 			TransactionWitnessSet.new(),
 			auxiliaryData,
 		);
+	}
+
+	async signTransaction({
+		transaction,
+		privateKey,
+	}: SignTransactionDto): Promise<Transaction> {
+		const unsignedTx = Transaction.from_json(transaction);
+		const privKey = PrivateKey.from_bech32(privateKey);
+		const txBody = unsignedTx.body();
+		const txBodyHash = hash_transaction(txBody);
+
+		const vkey_witnesses = Vkeywitnesses.new();
+		const vkey_witness = make_vkey_witness(txBodyHash, privKey);
+		vkey_witnesses.add(vkey_witness);
+
+		const witness = TransactionWitnessSet.new();
+		witness.set_vkeys(vkey_witnesses);
+
+		return Transaction.new(txBody, witness, unsignedTx.auxiliary_data());
+	}
+
+	async submitTransaction({
+		transaction,
+		chain,
+	}: SubmitTransactionDto): Promise<string> {
+		const tx = Transaction.from_json(transaction);
+		const context = await createContext(chain);
+		const client = await createTransactionSubmissionClient(context);
+
+		const res = await client.submitTransaction(tx.to_hex());
+		client.shutdown();
+		return res;
 	}
 }
