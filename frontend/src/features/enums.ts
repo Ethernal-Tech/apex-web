@@ -9,3 +9,8 @@ export enum BridgingRequestState {
     Finished = 3,
     Error = 4,
 } 
+
+export enum WalletErrors {
+    NoWalletsAvailable = 1,
+    WalletNotEnabled = 2,
+}
