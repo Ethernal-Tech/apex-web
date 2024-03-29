@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import FieldBase from "../components/Form/FieldBase";
-import { requestBridgingAction } from "../actions/bridging";
+import FieldBase from "../../components/Form/FieldBase";
+import { requestBridgingAction } from "../../actions/bridging";
 import { Box, Button, Card, CardContent, CardHeader, CircularProgress, Container, MenuItem, Select, Typography } from "@mui/material";
-import TextFormField from "../components/Form/TextFormField";
-import InfoFormField from "../components/Form/InfoFormField";
-import { requestAddressBalanceAction, requestBridgeBalanceAction } from "../actions/balance";
-import { BridgingRequestState, Chain } from "../features/enums";
-import BridgingRequestHandler, { BridgingHandlerNotification } from "../features/BridgingRequestHandler";
+import TextFormField from "../../components/Form/TextFormField";
+import InfoFormField from "../../components/Form/InfoFormField";
+import { requestAddressBalanceAction, requestBridgeBalanceAction } from "../../actions/balance";
+import { BridgingRequestState, Chain } from "../../features/enums";
+import BridgingRequestHandler, { BridgingHandlerNotification } from "../../features/BridgingRequestHandler";
 
 const FIELDS = {
     PRIVATE_KEY: 'privateKey',

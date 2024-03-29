@@ -1,0 +1,20 @@
+[
+    {
+        "href": "https://eternl.io/app/mainnet/welcome",
+        "imageUrl": "https://eternl.io/favicon.ico",
+        "alt": "Eternl logo",
+        "text": "Eternl"
+    },
+    {
+        "href": "https://www.namiwallet.io/",
+        "imageUrl": "https://lh3.googleusercontent.com/xpxFzm6RFpD4fIUFumHeuXE_sl17mTVACXCxT24NeXsum5KnLHZB0i8Am6Hn8BR8kzU7t9gC3VGjDjYagPJEwMNXwA=s60",
+        "alt": "Nami logo",
+        "text": "Nami"
+    },
+    {
+        "href": "https://yoroi-wallet.com/",
+        "imageUrl": "https://lh3.googleusercontent.com/cQm0YJB92K3uxkyCOvJG0f77acDi-oqozvZkfpx7W9dS-CEV29RR-AQnno_OhXPO_gIstr8HCFawNqXhV4rt1Alm=s60",
+        "alt": "Yoroi logo",
+        "text": "Yoroi"
+    }
+]
