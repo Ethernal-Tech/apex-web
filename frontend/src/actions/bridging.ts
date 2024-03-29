@@ -1,4 +1,4 @@
-import appSettings from "../appSettings";
+import appSettings from '../settings/appSettings';
 
 export type StartTxRequestModel = {
     priv_key: string,

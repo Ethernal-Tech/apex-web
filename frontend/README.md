@@ -6,7 +6,7 @@ Run `npm install` once, to fetch node_modules
 
 ## Configuration
 
-`./frontend/src/appSettings.json` contains `apiUrl` field which should be set to the relayer location 
+`./frontend/src/settings/appSettings_[environment].json` contains `apiUrl` field which should be set to the relayer location 
 
 ## Running
 

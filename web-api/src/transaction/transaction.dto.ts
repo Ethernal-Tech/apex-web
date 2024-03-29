@@ -23,13 +23,13 @@ export class CreateTransactionDto {
 
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
-	@ApiProperty({ enum: ChainEnum })
+	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
 	originChain: ChainEnum;
 
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
 	@NotSame('originChain')
-	@ApiProperty({ enum: ChainEnum })
+	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
 	destinationChain: ChainEnum;
 }
 
@@ -46,7 +46,7 @@ export class SignTransactionDto {
 export class SubmitTransactionDto {
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
-	@ApiProperty({ enum: ChainEnum })
+	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
 	chain: ChainEnum;
 
 	@IsNotEmpty()
