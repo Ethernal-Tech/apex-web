@@ -1,6 +1,6 @@
 import { Box, Typography, Button } from "@mui/material";
-import data from "../features/walletButtonsData.json";
-import { WalletErrors } from "../features/enums";
+import data from "../../features/walletButtonsData.json";
+import { WalletErrors } from "../../features/enums";
 
 type NoWalletMessageType = {
     type: WalletErrors | undefined;
