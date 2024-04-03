@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsDate, IsNotEmpty, IsString } from 'class-validator';
 
 export class GenerateLoginCodeDto {
 	@IsNotEmpty()
@@ -23,4 +23,33 @@ export class LoginCodeDto {
 	@IsString()
 	@ApiProperty()
 	code: string;
+}
+
+export class LoginDto {
+	@IsNotEmpty()
+	@IsString()
+	@ApiProperty()
+	address: string;
+
+	@IsNotEmpty()
+	@IsString()
+	@ApiProperty()
+	signedLoginCode: string;
+}
+
+export class TokenDto {
+	@IsNotEmpty()
+	@IsString()
+	@ApiProperty()
+	address: string;
+
+	@IsNotEmpty()
+	@IsString()
+	@ApiProperty()
+	token: string;
+
+	@IsNotEmpty()
+	@IsDate()
+	@ApiProperty()
+	expiresAt: Date;
 }

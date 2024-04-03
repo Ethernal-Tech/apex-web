@@ -1,5 +1,10 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { GenerateLoginCodeDto, LoginCodeDto } from './auth.dto';
+import {
+	GenerateLoginCodeDto,
+	LoginCodeDto,
+	LoginDto,
+	TokenDto,
+} from './auth.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 
@@ -23,6 +28,22 @@ export class AuthController {
 		@Body() model: GenerateLoginCodeDto,
 	): Promise<LoginCodeDto> {
 		const result = await this.authService.generateLoginCode(model);
+		return result;
+	}
+
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: TokenDto,
+		description: 'Success',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('login')
+	async login(@Body() model: LoginDto): Promise<TokenDto> {
+		const result = await this.authService.login(model);
 		return result;
 	}
 }

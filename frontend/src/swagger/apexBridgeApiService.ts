@@ -219,6 +219,53 @@ export class AuthControllerClient extends BaseClient {
         }
         return Promise.resolve<LoginCodeDto>(<any>null);
     }
+
+    /**
+     * @return Success
+     */
+    login(body: LoginDto): Promise<TokenDto> {
+        let url_ = this.baseUrl + "/auth/login";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ = <RequestInit>{
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processLogin(_response);
+        });
+    }
+
+    protected processLogin(response: Response): Promise<TokenDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = TokenDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<TokenDto>(<any>null);
+    }
 }
 
 export enum ChainEnum {
@@ -432,6 +479,90 @@ export class LoginCodeDto implements ILoginCodeDto {
 export interface ILoginCodeDto {
     address: string;
     code: string;
+}
+
+export class LoginDto implements ILoginDto {
+    address!: string;
+    signedLoginCode!: string;
+
+    constructor(data?: ILoginDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.address = _data["address"];
+            this.signedLoginCode = _data["signedLoginCode"];
+        }
+    }
+
+    static fromJS(data: any): LoginDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new LoginDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["address"] = this.address;
+        data["signedLoginCode"] = this.signedLoginCode;
+        return data; 
+    }
+}
+
+export interface ILoginDto {
+    address: string;
+    signedLoginCode: string;
+}
+
+export class TokenDto implements ITokenDto {
+    address!: string;
+    token!: string;
+    expiresAt!: Date;
+
+    constructor(data?: ITokenDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.address = _data["address"];
+            this.token = _data["token"];
+            this.expiresAt = _data["expiresAt"] ? new Date(_data["expiresAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): TokenDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TokenDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["address"] = this.address;
+        data["token"] = this.token;
+        data["expiresAt"] = this.expiresAt ? this.expiresAt.toISOString() : <any>undefined;
+        return data; 
+    }
+}
+
+export interface ITokenDto {
+    address: string;
+    token: string;
+    expiresAt: Date;
 }
 
 export class ApiException extends Error {
