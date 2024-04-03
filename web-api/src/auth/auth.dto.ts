@@ -25,6 +25,18 @@ export class LoginCodeDto {
 	code: string;
 }
 
+export class DataSignatureDto {
+	@IsNotEmpty()
+	@IsString()
+	@ApiProperty()
+	signature: string;
+
+	@IsNotEmpty()
+	@IsString()
+	@ApiProperty()
+	key: string;
+}
+
 export class LoginDto {
 	@IsNotEmpty()
 	@IsString()
@@ -32,9 +44,8 @@ export class LoginDto {
 	address: string;
 
 	@IsNotEmpty()
-	@IsString()
-	@ApiProperty()
-	signedLoginCode: string;
+	@ApiProperty({ type: () => DataSignatureDto })
+	signedLoginCode: DataSignatureDto;
 }
 
 export class TokenDto {

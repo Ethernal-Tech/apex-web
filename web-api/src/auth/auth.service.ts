@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+	DataSignatureDto,
 	GenerateLoginCodeDto,
 	LoginCodeDto,
 	LoginDto,
@@ -48,16 +49,15 @@ export class AuthService {
 			throw new BadRequestException();
 		}
 
-		// TODO: verify signed code
-		// if (
-		// 	!verifySignedCode(
-		// 		loginCode.address,
-		// 		loginCode.code,
-		// 		model.signedLoginCode,
-		// 	)
-		// ) {
-		// 	throw new BadRequestException();
-		// }
+		if (
+			!this.verifySignedCode(
+				loginCode.address,
+				loginCode.code,
+				model.signedLoginCode,
+			)
+		) {
+			throw new BadRequestException();
+		}
 
 		let user = await this.userRepository.findOneBy({
 			address: loginCode.address.toLowerCase(),
@@ -86,5 +86,14 @@ export class AuthService {
 		response.expiresAt = new Date(expiresIn);
 
 		return response;
+	}
+
+	private verifySignedCode(
+		address: string,
+		code: string,
+		signedCode: DataSignatureDto,
+	) {
+		// TODO: implement verify
+		return address && code && signedCode;
 	}
 }

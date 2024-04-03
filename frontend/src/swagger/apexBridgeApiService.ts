@@ -481,11 +481,11 @@ export interface ILoginCodeDto {
     code: string;
 }
 
-export class LoginDto implements ILoginDto {
-    address!: string;
-    signedLoginCode!: string;
+export class DataSignatureDto implements IDataSignatureDto {
+    signature!: string;
+    key!: string;
 
-    constructor(data?: ILoginDto) {
+    constructor(data?: IDataSignatureDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -496,8 +496,51 @@ export class LoginDto implements ILoginDto {
 
     init(_data?: any) {
         if (_data) {
+            this.signature = _data["signature"];
+            this.key = _data["key"];
+        }
+    }
+
+    static fromJS(data: any): DataSignatureDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new DataSignatureDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["signature"] = this.signature;
+        data["key"] = this.key;
+        return data; 
+    }
+}
+
+export interface IDataSignatureDto {
+    signature: string;
+    key: string;
+}
+
+export class LoginDto implements ILoginDto {
+    address!: string;
+    signedLoginCode!: DataSignatureDto;
+
+    constructor(data?: ILoginDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+        if (!data) {
+            this.signedLoginCode = new DataSignatureDto();
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
             this.address = _data["address"];
-            this.signedLoginCode = _data["signedLoginCode"];
+            this.signedLoginCode = _data["signedLoginCode"] ? DataSignatureDto.fromJS(_data["signedLoginCode"]) : new DataSignatureDto();
         }
     }
 
@@ -511,14 +554,14 @@ export class LoginDto implements ILoginDto {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["address"] = this.address;
-        data["signedLoginCode"] = this.signedLoginCode;
+        data["signedLoginCode"] = this.signedLoginCode ? this.signedLoginCode.toJSON() : <any>undefined;
         return data; 
     }
 }
 
 export interface ILoginDto {
     address: string;
-    signedLoginCode: string;
+    signedLoginCode: DataSignatureDto;
 }
 
 export class TokenDto implements ITokenDto {
