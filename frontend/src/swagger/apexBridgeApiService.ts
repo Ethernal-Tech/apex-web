@@ -57,7 +57,7 @@ export class TransactionControllerClient extends BaseClient {
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
-            return throwException("Not Found", status, _responseText, _headers);
+            return throwException("Bad Request", status, _responseText, _headers);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -159,6 +159,65 @@ export class TransactionControllerClient extends BaseClient {
             });
         }
         return Promise.resolve<string>(<any>null);
+    }
+}
+
+export class AuthControllerClient extends BaseClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        super();
+        this.http = http ? http : <any>window;
+        this.baseUrl = this.getBaseUrl("", baseUrl);
+    }
+
+    /**
+     * @return Success
+     */
+    generateLoginCode(body: GenerateLoginCodeDto): Promise<LoginCodeDto> {
+        let url_ = this.baseUrl + "/auth/generateLoginCode";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ = <RequestInit>{
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGenerateLoginCode(_response);
+        });
+    }
+
+    protected processGenerateLoginCode(response: Response): Promise<LoginCodeDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = LoginCodeDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<LoginCodeDto>(<any>null);
     }
 }
 
@@ -297,6 +356,82 @@ export class SubmitTransactionDto implements ISubmitTransactionDto {
 export interface ISubmitTransactionDto {
     chain: ChainEnum;
     transaction: string;
+}
+
+export class GenerateLoginCodeDto implements IGenerateLoginCodeDto {
+    address!: string;
+
+    constructor(data?: IGenerateLoginCodeDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.address = _data["address"];
+        }
+    }
+
+    static fromJS(data: any): GenerateLoginCodeDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new GenerateLoginCodeDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["address"] = this.address;
+        return data; 
+    }
+}
+
+export interface IGenerateLoginCodeDto {
+    address: string;
+}
+
+export class LoginCodeDto implements ILoginCodeDto {
+    address!: string;
+    code!: string;
+
+    constructor(data?: ILoginCodeDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.address = _data["address"];
+            this.code = _data["code"];
+        }
+    }
+
+    static fromJS(data: any): LoginCodeDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new LoginCodeDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["address"] = this.address;
+        data["code"] = this.code;
+        return data; 
+    }
+}
+
+export interface ILoginCodeDto {
+    address: string;
+    code: string;
 }
 
 export class ApiException extends Error {
