@@ -6,7 +6,7 @@ import WalletErrorMessage from './WalletErrorMessage';
 import { WalletErrors } from '../../features/enums';
 import { HOME_ROUTE } from '../PageRouter';
 import { useDispatch } from 'react-redux';
-import { setisLoggedInSliceAction } from '../../redux/slices/isLoggedInSlice';
+import { setTokenAction } from '../../redux/slices/tokenSlice';
 import { getStakeAddress } from '../../utils/userWalletUtil';
 import { generateLoginCodeAction, loginAction } from './action';
 import { DataSignatureDto, GenerateLoginCodeDto, LoginDto } from '../../swagger/apexBridgeApiService';
@@ -45,8 +45,7 @@ function LoginPage() {
 					signedLoginCode: new DataSignatureDto(signedData)
 				});
 				const token = await loginAction(loginModel);
-				console.log(token);
-				dispatch(setisLoggedInSliceAction(true));
+				dispatch(setTokenAction(token));
 				return navigate(HOME_ROUTE);
 			}
 		} catch (error) {

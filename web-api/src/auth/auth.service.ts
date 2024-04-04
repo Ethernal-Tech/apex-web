@@ -12,6 +12,19 @@ import { Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import {
+	COSEKey,
+	COSESign1,
+	Label,
+	Int,
+	BigNum,
+} from '@emurgo/cardano-message-signing-nodejs';
+import {
+	Address,
+	Ed25519Signature,
+	PublicKey,
+	RewardAddress,
+} from '@emurgo/cardano-serialization-lib-nodejs';
 
 @Injectable()
 export class AuthService {
@@ -68,6 +81,7 @@ export class AuthService {
 				address: loginCode.address.toLowerCase(),
 				createdAt: new Date(),
 			});
+			await this.userRepository.save(user);
 		}
 
 		await this.loginCodeRepository.remove(loginCode);
@@ -89,11 +103,39 @@ export class AuthService {
 	}
 
 	private verifySignedCode(
-		address: string,
+		bech32Address: string,
 		code: string,
 		signedCode: DataSignatureDto,
 	) {
-		// TODO: implement verify
-		return address && code && signedCode;
+		const decoded = COSESign1.from_bytes(
+			Buffer.from(signedCode.signature, 'hex'),
+		);
+		const headermap = decoded.headers().protected().deserialized_headers();
+		const addressHex = Buffer.from(
+			headermap.header(Label.new_text('address'))!.to_bytes(),
+		)
+			.toString('hex')
+			.substring(4);
+		const address = Address.from_bytes(Buffer.from(addressHex, 'hex'));
+		const key = COSEKey.from_bytes(Buffer.from(signedCode.key, 'hex'));
+		const pubKeyBytes = key
+			.header(Label.new_int(Int.new_negative(BigNum.from_str('2'))))!
+			.as_bytes();
+		const publicKey = PublicKey.from_bytes(pubKeyBytes!);
+
+		const payload = decoded.payload();
+		const signature = Ed25519Signature.from_bytes(decoded.signature());
+		const receivedData = decoded.signed_data().to_bytes();
+
+		const signerStakeAddrBech32 = RewardAddress.from_address(address)!
+			.to_address()!
+			.to_bech32();
+		const utf8Payload = Buffer.from(payload!).toString('utf8');
+
+		const isVerified = publicKey.verify(receivedData, signature);
+		const payloadAsExpected = utf8Payload == code;
+		const isAddressEqual = signerStakeAddrBech32 === bech32Address;
+
+		return isVerified && payloadAsExpected && isAddressEqual;
 	}
 }

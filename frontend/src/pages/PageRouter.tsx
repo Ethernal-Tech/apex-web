@@ -10,14 +10,13 @@ export const LOGIN_ROUTE = '/login'
 
 
 function PageRouter() {
-	const isLoggedIn = useSelector((state: RootState) => state.isLoggedIn.isLoggedIn);
+	const tokenState = useSelector((state: RootState) => state.token);
 	
 	const isLoggedInMemo = useMemo(
 		() => {
-			// TODO: handle isLoggedIn correctly, and remove this redux state
-			return isLoggedIn;
+			return tokenState.token;
 		},
-		[isLoggedIn]
+		[tokenState]
 	)
 
 	const renderHomePage = useMemo(
