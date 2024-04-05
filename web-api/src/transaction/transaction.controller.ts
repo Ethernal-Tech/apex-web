@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	HttpCode,
+	HttpStatus,
+	Post,
+	UseGuards,
+} from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import {
 	CreateTransactionDto,
@@ -6,9 +13,11 @@ import {
 	SubmitTransactionDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from 'src/guards/auth.guard';
 
 @ApiTags('Transaction')
 @Controller('transaction')
+@UseGuards(AuthGuard)
 export class TransactionController {
 	constructor(private readonly transactionService: TransactionService) {}
 

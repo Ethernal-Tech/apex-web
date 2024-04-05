@@ -1,88 +1,95 @@
-import { Box, CssBaseline, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { Avatar, Dialog, DialogContent, DialogContentText, DialogTitle, LinearProgress, List, ListItem, ListItemAvatar, ListItemButton, ListItemText } from '@mui/material';
 import { BrowserWallet, Wallet } from '@meshsdk/core';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import WalletErrorMessage from './WalletErrorMessage';
-import { WalletErrors } from '../../features/enums';
 import { HOME_ROUTE } from '../PageRouter';
 import { useDispatch } from 'react-redux';
 import { setTokenAction } from '../../redux/slices/tokenSlice';
 import { getStakeAddress } from '../../utils/userWalletUtil';
 import { generateLoginCodeAction, loginAction } from './action';
 import { DataSignatureDto, GenerateLoginCodeDto, LoginDto } from '../../swagger/apexBridgeApiService';
+import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 
 function LoginPage() {
-	const [installedWallets, setInstalledWallets] = useState<Wallet[] | undefined>();
-	const [showNoWalletMessage, setShowNoWalletMessage] = useState<WalletErrors | undefined>();
-
+	const [connecting, setConnecting] = useState(false);
 	const dispatch = useDispatch();
+	const fetchFunction = useTryCatchJsonByAction();
 	
 	const navigate = useNavigate();
 
-	useEffect(() => {
-		async function getInstalledWallets() {
-			const installedWallets = BrowserWallet.getInstalledWallets();
-			if (!installedWallets.length) { return setShowNoWalletMessage(WalletErrors.NoWalletsAvailable); }
-			setInstalledWallets(installedWallets);
+	const installedWallets = useMemo(
+		() => BrowserWallet.getInstalledWallets(),
+		[]
+	)
+
+	async function handleWalletClick(selectedWallet: Wallet) {
+		if (!selectedWallet) {
+			return;
 		}
-		getInstalledWallets();
-	}, [])
 
-	async function handleWalletClick(event: any) {
-		const { id: walletName } = event.target;
-		if (!walletName) return;
+		setConnecting(true);
 
-		try {
-			const wallet = await BrowserWallet.enable(walletName);
-			if (wallet instanceof BrowserWallet)  {
-				const stakeAddress = await getStakeAddress(wallet);
-				const address = stakeAddress.to_bech32();
-				const loginCode = await generateLoginCodeAction(new GenerateLoginCodeDto({ address }));
-				const messageHex = Buffer.from(loginCode.code).toString("hex");    
+		const wallet = await BrowserWallet.enable(selectedWallet.name);
+		if (wallet instanceof BrowserWallet)  {
+			const stakeAddress = await getStakeAddress(wallet);
+			const address = stakeAddress.to_bech32();
+			const bindedGenerateLoginCodeAction = generateLoginCodeAction.bind(null, new GenerateLoginCodeDto({ address }));
+			const loginCode = await fetchFunction(bindedGenerateLoginCodeAction);
+			if (!loginCode) {
+				setConnecting(false);
+				return;
+			}
+			const messageHex = Buffer.from(loginCode.code).toString("hex");
+			try {
 				const signedData = await wallet.signData(stakeAddress.to_bech32(), messageHex);
 				const loginModel = new LoginDto({
 					address,
 					signedLoginCode: new DataSignatureDto(signedData)
 				});
-				const token = await loginAction(loginModel);
+				
+				const bindedLoginAction = loginAction.bind(null, loginModel);
+				const token = await fetchFunction(bindedLoginAction);
+				setConnecting(false);
+
+				if (!token) {
+					return;
+				}
+
 				dispatch(setTokenAction(token));
 				return navigate(HOME_ROUTE);
 			}
-		} catch (error) {
-			setShowNoWalletMessage(WalletErrors.WalletNotEnabled);
+			catch (err) {
+				setConnecting(false);
+			}
 		}
 
 	}
 	return (
-		<>
-		<CssBaseline />
-		<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-			{showNoWalletMessage ?
-				<WalletErrorMessage type={showNoWalletMessage} onClose={() => setShowNoWalletMessage(undefined)} /> :
-				<Box sx={{ mt: 2 }}>
-					<FormControl fullWidth>
-						<InputLabel id="wallet-select-label">Select wallet</InputLabel>
-						<Select
-							sx={{ width: '300px' }}
-							labelId="wallet-select-label"
-							id="wallet-select"
-							value=""
-							onClick={(e) => handleWalletClick(e)}
-						>
-							{installedWallets?.map(wallet => (
-								<MenuItem key={wallet.name} value={wallet.name} id={wallet.name}>
-									<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-										<img src={wallet.icon} alt={wallet.name} height={20} width={20} />
-										{wallet.name}
-									</Box>
-								</MenuItem>
-							))}
-						</Select>
-					</FormControl>
-				</Box>
-			}
-		</Box>
-		</>
+		<Dialog open>
+			<DialogTitle>Please select a wallet to connect</DialogTitle>
+			<List sx={{ pt: 0 }}>
+				{installedWallets.map(wallet => (
+					<ListItem disableGutters key={wallet.name}>
+						<ListItemButton disabled={connecting} onClick={() => handleWalletClick(wallet)}>
+							<ListItemAvatar>
+								<Avatar>
+									<img src={wallet.icon} alt={wallet.name} height={20} width={20} />
+								</Avatar>
+							</ListItemAvatar>
+							<ListItemText primary={wallet.name} />
+						</ListItemButton>
+					</ListItem>
+				))}
+			</List>
+			{installedWallets.length === 0 && (
+				<DialogContent>
+					<DialogContentText>
+						You don't have any installed wallets.
+					</DialogContentText>
+				</DialogContent>
+			)}
+			{connecting && <LinearProgress />}
+		</Dialog>
 	);
 }
 
