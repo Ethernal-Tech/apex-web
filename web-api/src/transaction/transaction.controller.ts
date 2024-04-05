@@ -1,13 +1,23 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	HttpCode,
+	HttpStatus,
+	Post,
+	UseGuards,
+} from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import {
 	CreateTransactionDto,
 	SignTransactionDto,
 	SubmitTransactionDto,
 } from './transaction.dto';
-import { ApiResponse } from '@nestjs/swagger';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from 'src/guards/auth.guard';
 
+@ApiTags('Transaction')
 @Controller('transaction')
+@UseGuards(AuthGuard)
 export class TransactionController {
 	constructor(private readonly transactionService: TransactionService) {}
 
@@ -18,7 +28,7 @@ export class TransactionController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Not Found',
+		description: 'Bad Request',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post('createBridgingTransaction')

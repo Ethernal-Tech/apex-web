@@ -1,9 +1,9 @@
 import appSettings from '../settings/appSettings';
+import { getToken } from '../utils/storageUtils';
 
 export abstract class BaseClient {
     protected async transformOptions(originalOptions: RequestInit): Promise<RequestInit> {
-		// TODO: add accessToken
-		const accessToken = ''
+		const accessToken = getToken()?.token;
 
         return Promise.resolve({
 			...originalOptions,
