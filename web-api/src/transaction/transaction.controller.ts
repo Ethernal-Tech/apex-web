@@ -5,8 +5,9 @@ import {
 	SignTransactionDto,
 	SubmitTransactionDto,
 } from './transaction.dto';
-import { ApiResponse } from '@nestjs/swagger';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Transaction')
 @Controller('transaction')
 export class TransactionController {
 	constructor(private readonly transactionService: TransactionService) {}
@@ -18,7 +19,7 @@ export class TransactionController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Not Found',
+		description: 'Bad Request',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post('createBridgingTransaction')

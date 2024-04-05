@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit'
-import isLoggedInSlice from './slices/isLoggedInSlice'
+import tokenSlice from './slices/tokenSlice'
 
 export const store = configureStore({
 	reducer: {
-		isLoggedIn: isLoggedInSlice,
+		token: tokenSlice,
 	},
 	middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
 })

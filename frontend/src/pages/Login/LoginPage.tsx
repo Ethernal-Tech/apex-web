@@ -6,7 +6,10 @@ import WalletErrorMessage from './WalletErrorMessage';
 import { WalletErrors } from '../../features/enums';
 import { HOME_ROUTE } from '../PageRouter';
 import { useDispatch } from 'react-redux';
-import { setisLoggedInSliceAction } from '../../redux/slices/isLoggedInSlice';
+import { setTokenAction } from '../../redux/slices/tokenSlice';
+import { getStakeAddress } from '../../utils/userWalletUtil';
+import { generateLoginCodeAction, loginAction } from './action';
+import { DataSignatureDto, GenerateLoginCodeDto, LoginDto } from '../../swagger/apexBridgeApiService';
 
 function LoginPage() {
 	const [installedWallets, setInstalledWallets] = useState<Wallet[] | undefined>();
@@ -32,8 +35,17 @@ function LoginPage() {
 		try {
 			const wallet = await BrowserWallet.enable(walletName);
 			if (wallet instanceof BrowserWallet)  {
-				// TODO: login to web api, and handle login correctly
-				dispatch(setisLoggedInSliceAction(true));
+				const stakeAddress = await getStakeAddress(wallet);
+				const address = stakeAddress.to_bech32();
+				const loginCode = await generateLoginCodeAction(new GenerateLoginCodeDto({ address }));
+				const messageHex = Buffer.from(loginCode.code).toString("hex");    
+				const signedData = await wallet.signData(stakeAddress.to_bech32(), messageHex);
+				const loginModel = new LoginDto({
+					address,
+					signedLoginCode: new DataSignatureDto(signedData)
+				});
+				const token = await loginAction(loginModel);
+				dispatch(setTokenAction(token));
 				return navigate(HOME_ROUTE);
 			}
 		} catch (error) {
@@ -73,6 +85,5 @@ function LoginPage() {
 		</>
 	);
 }
-
 
 export default LoginPage;

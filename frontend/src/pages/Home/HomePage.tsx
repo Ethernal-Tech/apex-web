@@ -2,14 +2,14 @@ import { AppBar, Button, Toolbar, Typography } from '@mui/material';
 import PrivateKeyForm from '../../containers/deprecated/PrivateKeyForm';
 import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
-import { setisLoggedInSliceAction } from '../../redux/slices/isLoggedInSlice';
+import { removeTokenAction } from '../../redux/slices/tokenSlice';
 
 function HomePage() {
 	const dispatch = useDispatch();
 
 	const logoutCallback = useCallback(
 		() => {
-			dispatch(setisLoggedInSliceAction(false));
+			dispatch(removeTokenAction());
 		},
 		[dispatch]
 	)
