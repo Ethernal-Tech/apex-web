@@ -25,7 +25,7 @@ const TransactionDetailPage = () => {
         console.error(error);
       }
     })();
-  }, []);
+  }, [id]);
 
   return (
     <BasePage>

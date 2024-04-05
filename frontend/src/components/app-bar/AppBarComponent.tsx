@@ -1,13 +1,13 @@
-import { AppBar, Box, Button, Divider, ListItemIcon, ListItemText, Menu, MenuItem, Toolbar, Typography } from "@mui/material"
-import { useCallback, useRef, useState } from "react";
+import { AppBar, Button, Divider, ListItemIcon, ListItemText, Menu, MenuItem, Toolbar, Typography } from "@mui/material"
+import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { setIsLoggedInSliceAction } from "../../redux/slices/isLoggedInSlice";
 import { TABLE_ROUTE, BRIDGE_ROUTE } from "../../pages/PageRouter";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { removeTokenAction } from "../../redux/slices/tokenSlice";
 
 const AppBarComponent = () => {
     const navigate = useNavigate();
@@ -20,12 +20,13 @@ const AppBarComponent = () => {
     const handleClose = () => {
         setAnchorEl(null);
     };
+
     const logoutCallback = useCallback(
-        () => {
-            dispatch(setIsLoggedInSliceAction(false));
-        },
-        [dispatch]
-    )
+		() => {
+			dispatch(removeTokenAction());
+		},
+		[dispatch]
+	)
     function handleOptionClick(to: string) {
         handleClose();
         navigate(to, { replace: true });
