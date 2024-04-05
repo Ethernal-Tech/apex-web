@@ -14,3 +14,9 @@ export enum WalletErrors {
     NoWalletsAvailable = 1,
     WalletNotEnabled = 2,
 }
+
+export enum TransactionStatus {
+    Success = 'success',
+    Pending = 'pending',
+    Rejected = 'rejected',
+}

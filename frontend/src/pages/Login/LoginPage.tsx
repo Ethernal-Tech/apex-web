@@ -1,12 +1,12 @@
-import { Box, CssBaseline, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { BrowserWallet, Wallet } from '@meshsdk/core';
 import { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import WalletErrorMessage from './WalletErrorMessage';
 import { WalletErrors } from '../../features/enums';
-import { HOME_ROUTE } from '../PageRouter';
+import { TABLE_ROUTE } from '../PageRouter';
 import { useDispatch } from 'react-redux';
-import { setisLoggedInSliceAction } from '../../redux/slices/isLoggedInSlice';
+import { setIsLoggedInSliceAction } from '../../redux/slices/isLoggedInSlice';
 
 function LoginPage() {
 	const [installedWallets, setInstalledWallets] = useState<Wallet[] | undefined>();
@@ -33,8 +33,8 @@ function LoginPage() {
 			const wallet = await BrowserWallet.enable(walletName);
 			if (wallet instanceof BrowserWallet)  {
 				// TODO: login to web api, and handle login correctly
-				dispatch(setisLoggedInSliceAction(true));
-				return navigate(HOME_ROUTE);
+				dispatch(setIsLoggedInSliceAction(true));
+				return navigate(TABLE_ROUTE);
 			}
 		} catch (error) {
 			setShowNoWalletMessage(WalletErrors.WalletNotEnabled);
@@ -43,13 +43,12 @@ function LoginPage() {
 	}
 	return (
 		<>
-		<CssBaseline />
 		<Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
 			{showNoWalletMessage ?
 				<WalletErrorMessage type={showNoWalletMessage} onClose={() => setShowNoWalletMessage(undefined)} /> :
 				<Box sx={{ mt: 2 }}>
 					<FormControl fullWidth>
-						<InputLabel id="wallet-select-label">Select wallet</InputLabel>
+						<InputLabel id="wallet-select-label" sx={{backgroundColor: 'white'}}>Select wallet</InputLabel>
 						<Select
 							sx={{ width: '300px' }}
 							labelId="wallet-select-label"

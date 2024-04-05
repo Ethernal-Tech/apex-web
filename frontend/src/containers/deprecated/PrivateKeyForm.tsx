@@ -35,7 +35,7 @@ function PrivateKeyForm() {
     const [amount, setAmount] = useState('');
     const [sourceChain, setSourceChain] = useState<Chain>(initialSourceChain);
     const [destinationAddress, setDestinationAddress] = useState('');
-    const [errors, setErrors] = useState<{[key: string]: string}>({});
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [requestStatus, setRequestStatus] = useState<BridgingRequestState | undefined>();
 
     const [sourceAddressBalance, setSourceAddressBalance] = useState<number | undefined>();
@@ -54,7 +54,7 @@ function PrivateKeyForm() {
             destinationBridgeBalance,
             status,
         } = notificationObj;
-        
+
         setSourceAddressBalance(sourceAddrBalance);
         setSourceBridgeBalance(sourceBridgeBalance);
         setDestinationAddressBalance(destinationAddrBalance);
@@ -122,7 +122,7 @@ function PrivateKeyForm() {
 
     const clearFieldError = useCallback((field: string) => {
         setErrors(prev => {
-            let newErrors = {...prev};
+            let newErrors = { ...prev };
             delete newErrors[field];
             return newErrors;
         });
@@ -162,7 +162,7 @@ function PrivateKeyForm() {
     }, [resetBridgingRequest]);
 
     const validateInputs = useCallback(() => {
-        let errors: {[key: string]: string} = {};
+        let errors: { [key: string]: string } = {};
         if (!privateKey) {
             errors[FIELDS.PRIVATE_KEY] = CAN_NOT_BE_EMPTY_ERROR;
         }
@@ -235,19 +235,19 @@ function PrivateKeyForm() {
     const inputsDisabled = useMemo(() => requestStatus !== undefined && requestStatus !== BridgingRequestState.Finished && requestStatus !== BridgingRequestState.Error, [requestStatus])
 
     return (
-        <Box sx={{ margin: '20px', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center' }}>
+        <>
             <Card variant="outlined" sx={{ width: '1200px', maxWidth: '75%' }}>
-                <CardHeader title="Source" sx={{ padding: '16px 16px 0px 16px' }}/>
+                <CardHeader title="Source" sx={{ padding: '16px 16px 0px 16px' }} />
                 <CardContent sx={{ padding: '0px 16px 16px 16px' }}>
-                    <TextFormField label={'Private key'} error={errors[FIELDS.PRIVATE_KEY]} value={privateKey} onValueChange={onPrivateKeyChanged} disabled={inputsDisabled}/>
-                    <TextFormField label={'Address'} error={errors[FIELDS.SOURCE_ADDR]} value={sourceAddress} onValueChange={onSourceAddressChanged} disabled={inputsDisabled}/>
+                    <TextFormField label={'Private key'} error={errors[FIELDS.PRIVATE_KEY]} value={privateKey} onValueChange={onPrivateKeyChanged} disabled={inputsDisabled} />
+                    <TextFormField label={'Address'} error={errors[FIELDS.SOURCE_ADDR]} value={sourceAddress} onValueChange={onSourceAddressChanged} disabled={inputsDisabled} />
                     {
                         sourceAddressBalance !== undefined &&
                         <Container sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '5px' }}>
                             <Typography>Balance: {sourceAddressBalance}</Typography>
                         </Container>
                     }
-                    <TextFormField label={'Amount'} error={errors[FIELDS.AMOUNT]} value={amount} onValueChange={onAmountChanged} disabled={inputsDisabled}/>
+                    <TextFormField label={'Amount'} error={errors[FIELDS.AMOUNT]} value={amount} onValueChange={onAmountChanged} disabled={inputsDisabled} />
                     <InfoFormField label={'Asset'} value={'APX'} />
                     <FieldBase label={'Source chain'}>
                         <Select
@@ -265,10 +265,10 @@ function PrivateKeyForm() {
             </Card>
 
             <Card variant="outlined" sx={{ width: '1200px', maxWidth: '75%', marginTop: '20px' }}>
-                <CardHeader title="Destination" sx={{ padding: '16px 16px 0px 16px' }}/>
+                <CardHeader title="Destination" sx={{ padding: '16px 16px 0px 16px' }} />
                 <CardContent sx={{ padding: '0px 16px 16px 16px' }}>
                     <InfoFormField label={''} value={destinationChain} />
-                    <TextFormField label={'Address'} error={errors[FIELDS.DESTINATION_ADDR]} value={destinationAddress} onValueChange={onDestinationAddressChanged} disabled={inputsDisabled}/>
+                    <TextFormField label={'Address'} error={errors[FIELDS.DESTINATION_ADDR]} value={destinationAddress} onValueChange={onDestinationAddressChanged} disabled={inputsDisabled} />
                     {
                         destinationAddressBalance !== undefined &&
                         <Container sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '5px' }}>
@@ -292,7 +292,7 @@ function PrivateKeyForm() {
                     </Box>
                 }
             </Box>
-        </Box>
+        </>
     );
 }
 

@@ -13,13 +13,15 @@ const isLoggedInSlice = createSlice({
 	name: 'isLoggedIn',
 	initialState,
 	reducers: {
-		setisLoggedInSliceAction: (state, action: PayloadAction<boolean>) => {
+		setIsLoggedInSliceAction: (state, action: PayloadAction<boolean>) => {
+			console.log(`setIsLoggedInSliceAction: ${action.payload}`);
+			
 			state.isLoggedIn = action.payload
 		},
 	},
 })
 
 // Action creators are generated for each case reducer function
-export const { setisLoggedInSliceAction } = isLoggedInSlice.actions
+export const { setIsLoggedInSliceAction } = isLoggedInSlice.actions
 
 export default isLoggedInSlice.reducer
