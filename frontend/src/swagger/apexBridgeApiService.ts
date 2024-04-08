@@ -151,7 +151,7 @@ export class TransactionControllerClient extends BaseClient {
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
-            return throwException("Not Found", status, _responseText, _headers);
+            return throwException("Bad Request", status, _responseText, _headers);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -265,6 +265,205 @@ export class AuthControllerClient extends BaseClient {
             });
         }
         return Promise.resolve<TokenDto>(<any>null);
+    }
+}
+
+export class BridgeTransactionControllerClient extends BaseClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        super();
+        this.http = http ? http : <any>window;
+        this.baseUrl = this.getBaseUrl("", baseUrl);
+    }
+
+    /**
+     * @return Success
+     */
+    get(id: number): Promise<BridgeTransactionDto> {
+        let url_ = this.baseUrl + "/bridgeTransaction/{id}";
+        if (id === undefined || id === null)
+            throw new Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGet(_response);
+        });
+    }
+
+    protected processGet(response: Response): Promise<BridgeTransactionDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BridgeTransactionDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("Not Found", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BridgeTransactionDto>(<any>null);
+    }
+
+    /**
+     * @return Success
+     */
+    getAll(): Promise<BridgeTransactionDto[]> {
+        let url_ = this.baseUrl + "/bridgeTransaction";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGetAll(_response);
+        });
+    }
+
+    protected processGetAll(response: Response): Promise<BridgeTransactionDto[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(BridgeTransactionDto.fromJS(item));
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BridgeTransactionDto[]>(<any>null);
+    }
+
+    /**
+     * @return Success
+     */
+    create(body: CreateBridgeTransactionDto): Promise<BridgeTransactionDto> {
+        let url_ = this.baseUrl + "/bridgeTransaction";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ = <RequestInit>{
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processCreate(_response);
+        });
+    }
+
+    protected processCreate(response: Response): Promise<BridgeTransactionDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BridgeTransactionDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BridgeTransactionDto>(<any>null);
+    }
+
+    /**
+     * @return Success
+     */
+    update(body: UpdateBridgeTransactionDto): Promise<BridgeTransactionDto> {
+        let url_ = this.baseUrl + "/bridgeTransaction";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ = <RequestInit>{
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processUpdate(_response);
+        });
+    }
+
+    protected processUpdate(response: Response): Promise<BridgeTransactionDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BridgeTransactionDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request", status, _responseText, _headers);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("Not Found", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BridgeTransactionDto>(<any>null);
     }
 }
 
@@ -606,6 +805,172 @@ export interface ITokenDto {
     address: string;
     token: string;
     expiresAt: Date;
+}
+
+export enum TransactionStatusEnum {
+    Pending = "Pending",
+    Success = "Success",
+    Failed = "Failed",
+}
+
+export class BridgeTransactionDto implements IBridgeTransactionDto {
+    id!: number;
+    senderAddress!: string;
+    receiverAddress!: string;
+    amount!: number;
+    originChain!: ChainEnum;
+    destinationChain!: ChainEnum;
+    status!: TransactionStatusEnum;
+    createdAt!: Date;
+    finishedAt!: Date | undefined;
+
+    constructor(data?: IBridgeTransactionDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.senderAddress = _data["senderAddress"];
+            this.receiverAddress = _data["receiverAddress"];
+            this.amount = _data["amount"];
+            this.originChain = _data["originChain"];
+            this.destinationChain = _data["destinationChain"];
+            this.status = _data["status"];
+            this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : <any>undefined;
+            this.finishedAt = _data["finishedAt"] ? new Date(_data["finishedAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): BridgeTransactionDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new BridgeTransactionDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["senderAddress"] = this.senderAddress;
+        data["receiverAddress"] = this.receiverAddress;
+        data["amount"] = this.amount;
+        data["originChain"] = this.originChain;
+        data["destinationChain"] = this.destinationChain;
+        data["status"] = this.status;
+        data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : <any>undefined;
+        data["finishedAt"] = this.finishedAt ? this.finishedAt.toISOString() : <any>undefined;
+        return data; 
+    }
+}
+
+export interface IBridgeTransactionDto {
+    id: number;
+    senderAddress: string;
+    receiverAddress: string;
+    amount: number;
+    originChain: ChainEnum;
+    destinationChain: ChainEnum;
+    status: TransactionStatusEnum;
+    createdAt: Date;
+    finishedAt: Date | undefined;
+}
+
+export class CreateBridgeTransactionDto implements ICreateBridgeTransactionDto {
+    senderAddress!: string;
+    receiverAddress!: string;
+    amount!: number;
+    originChain!: ChainEnum;
+    destinationChain!: ChainEnum;
+
+    constructor(data?: ICreateBridgeTransactionDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.senderAddress = _data["senderAddress"];
+            this.receiverAddress = _data["receiverAddress"];
+            this.amount = _data["amount"];
+            this.originChain = _data["originChain"];
+            this.destinationChain = _data["destinationChain"];
+        }
+    }
+
+    static fromJS(data: any): CreateBridgeTransactionDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateBridgeTransactionDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["senderAddress"] = this.senderAddress;
+        data["receiverAddress"] = this.receiverAddress;
+        data["amount"] = this.amount;
+        data["originChain"] = this.originChain;
+        data["destinationChain"] = this.destinationChain;
+        return data; 
+    }
+}
+
+export interface ICreateBridgeTransactionDto {
+    senderAddress: string;
+    receiverAddress: string;
+    amount: number;
+    originChain: ChainEnum;
+    destinationChain: ChainEnum;
+}
+
+export class UpdateBridgeTransactionDto implements IUpdateBridgeTransactionDto {
+    id!: number;
+    status!: TransactionStatusEnum;
+
+    constructor(data?: IUpdateBridgeTransactionDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): UpdateBridgeTransactionDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateBridgeTransactionDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["status"] = this.status;
+        return data; 
+    }
+}
+
+export interface IUpdateBridgeTransactionDto {
+    id: number;
+    status: TransactionStatusEnum;
 }
 
 export class ApiException extends Error {
