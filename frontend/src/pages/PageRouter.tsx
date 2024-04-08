@@ -1,12 +1,16 @@
 import { useMemo } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import HomePage from './Home/HomePage';
+import NewTransactionPage from './Transactions/NewTransactionPage';
 import LoginPage from './Login/LoginPage';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
+import TransactionsTablePage from './Transactions/TransactionsTablePage';
+import TransactionDetailPage from './Transactions/TransactionDetailPage';
 
+export const LOGIN_ROUTE = '/login';
 export const HOME_ROUTE = '/';
-export const LOGIN_ROUTE = '/login'
+export const NEW_TRANSACTION_ROUTE = '/new-transaction';
+export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
 
 
 function PageRouter() {
@@ -19,13 +23,23 @@ function PageRouter() {
 		[tokenState]
 	)
 
-	const renderHomePage = useMemo(
-		() => isLoggedInMemo ? <HomePage /> : <Navigate to={LOGIN_ROUTE} />,
+	const renderLoginPage = useMemo(
+		() => !isLoggedInMemo ? <LoginPage /> : <Navigate to={HOME_ROUTE} />,
 		[isLoggedInMemo]
 	)
 
-	const renderLoginPage = useMemo(
-		() => !isLoggedInMemo ? <LoginPage /> : <Navigate to={HOME_ROUTE} />,
+	const renderHomePage = useMemo(
+		() => isLoggedInMemo ? <TransactionsTablePage /> : <Navigate to={LOGIN_ROUTE} />,
+		[isLoggedInMemo]
+	)
+
+	const renderNewTransactionPage = useMemo(
+		() => isLoggedInMemo ? <NewTransactionPage /> : <Navigate to={LOGIN_ROUTE} />,
+		[isLoggedInMemo]
+	)
+
+	const renderTransactionDetailsPage = useMemo(
+		() => isLoggedInMemo ? <TransactionDetailPage /> : <Navigate to={LOGIN_ROUTE} />,
 		[isLoggedInMemo]
 	)
 
@@ -33,6 +47,8 @@ function PageRouter() {
 		<Routes >
 			<Route path={LOGIN_ROUTE} element={renderLoginPage} />
 			<Route path={HOME_ROUTE} element={renderHomePage} />
+			<Route path={NEW_TRANSACTION_ROUTE} element={renderNewTransactionPage} />
+			<Route path={TRANSACTION_DETAILS_ROUTE} element={renderTransactionDetailsPage} />
 		</Routes>
 	);
 };
