@@ -2,7 +2,7 @@ import { Avatar, Dialog, DialogContent, DialogContentText, DialogTitle, LinearPr
 import { BrowserWallet, Wallet } from '@meshsdk/core';
 import { useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { TABLE_ROUTE }  from '../PageRouter';
+import { HOME_ROUTE }  from '../PageRouter';
 import { useDispatch } from 'react-redux';
 import { setTokenAction } from '../../redux/slices/tokenSlice';
 import { getStakeAddress } from '../../utils/userWalletUtil';
@@ -56,7 +56,7 @@ function LoginPage() {
 				}
 
 				dispatch(setTokenAction(token));
-				return navigate(TABLE_ROUTE);
+				return navigate(HOME_ROUTE);
 			}
 			catch (err) {
 				setConnecting(false);

@@ -7,7 +7,7 @@ import { BridgeTransactionType } from '../../features/types';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { TransactionStatus } from '../../features/enums';
 
-const CryptoBridgeTransactionsTable = () => {
+const TransactionsTablePage = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [visibleTransactions, setVisibleTransactions] = useState<BridgeTransactionType[] | undefined>();
@@ -100,4 +100,4 @@ const CryptoBridgeTransactionsTable = () => {
   );
 };
 
-export default CryptoBridgeTransactionsTable;
+export default TransactionsTablePage;

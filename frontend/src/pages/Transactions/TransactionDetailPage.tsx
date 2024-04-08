@@ -7,7 +7,7 @@ import { BridgeTransactionType } from '../../features/types';
 import VerticalStepper from '../../components/stepper/VerticalStepper';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FullPageSpinner from '../../components/spinner/Spinner';
-import { TABLE_ROUTE } from '../PageRouter';
+import { HOME_ROUTE } from '../PageRouter';
 import { TransactionStatus } from '../../features/enums';
 
 const TransactionDetailPage = () => {
@@ -32,7 +32,7 @@ const TransactionDetailPage = () => {
       {!!!transaction && <FullPageSpinner />}
       <Box sx={{ mb: 2, display: 'flex', alignSelf: 'start' }}>
         <Box>
-          <Link component={RouterLink} to={TABLE_ROUTE} sx={{ mr: 1, color: 'inherit', textDecoration: 'none', display: 'flex', justifyContent: 'center', gap: 2 }}>
+          <Link component={RouterLink} to={HOME_ROUTE} sx={{ mr: 1, color: 'inherit', textDecoration: 'none', display: 'flex', justifyContent: 'center', gap: 2 }}>
             <Typography variant="body1">
               <ArrowBackIcon />
             </Typography>

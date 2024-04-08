@@ -1,7 +1,7 @@
 import PrivateKeyForm from '../../containers/deprecated/PrivateKeyForm';
 import BasePage from '../base/BasePage';
 
-function HomePage() {
+function NewTransactionPage() {
 	
 	return (
 		<BasePage>
@@ -10,4 +10,4 @@ function HomePage() {
 	)
 }
 
-export default HomePage;
+export default NewTransactionPage;

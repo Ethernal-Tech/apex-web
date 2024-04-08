@@ -2,7 +2,7 @@ import { AppBar, Button, Divider, ListItemIcon, ListItemText, Menu, MenuItem, To
 import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { TABLE_ROUTE, BRIDGE_ROUTE } from "../../pages/PageRouter";
+import { HOME_ROUTE, NEW_TRANSACTION_ROUTE } from "../../pages/PageRouter";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
 import TableChartIcon from '@mui/icons-material/TableChart';
@@ -58,17 +58,17 @@ const AppBarComponent = () => {
                             'aria-labelledby': 'basic-button',
                         }}
                     >
-                        <MenuItem onClick={() => handleOptionClick(BRIDGE_ROUTE)}>
+                        <MenuItem onClick={() => handleOptionClick(NEW_TRANSACTION_ROUTE)}>
                             <ListItemIcon>
                                 <FiberNewIcon fontSize="small" />
                             </ListItemIcon>
                             <ListItemText>New Transaction</ListItemText>
                         </MenuItem>
-                        <MenuItem onClick={() => handleOptionClick(TABLE_ROUTE)}>
+                        <MenuItem onClick={() => handleOptionClick(HOME_ROUTE)}>
                             <ListItemIcon>
                                 <TableChartIcon fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Transactions Table</ListItemText>
+                            <ListItemText>Transactions</ListItemText>
                         </MenuItem>
                         <Divider />
                         <MenuItem onClick={logoutCallback}>
