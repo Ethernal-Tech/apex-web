@@ -64,7 +64,7 @@ export class TransactionController {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Not Found',
+		description: 'Bad Request',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post('submitBridgingTransaction')

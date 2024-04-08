@@ -13,7 +13,7 @@ import {
 import { createInteractionContext } from '@cardano-ogmios/client';
 import { UtxoByAddresses } from '@cardano-ogmios/schema/dist';
 import { Transaction } from '@emurgo/cardano-serialization-lib-nodejs';
-import { ChainEnum } from 'src/transaction/transaction.dto';
+import { ChainEnum } from 'src/common/enum';
 
 export async function getTransactionBuilder(chain: ChainEnum) {
 	const protocolParams = await getProtocolParameters(chain);

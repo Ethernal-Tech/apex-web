@@ -1,11 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
+import { ChainEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
-
-export enum ChainEnum {
-	Prime = 'Prime',
-	Vector = 'Vector',
-}
 
 export class CreateTransactionDto {
 	@IsNotEmpty()
