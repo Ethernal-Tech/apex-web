@@ -63,8 +63,20 @@ const TransactionDetailPage = () => {
               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.amount}</Typography>
             </Box>
             <Box sx={{ mb: 1 }}>
-              <Typography variant="subtitle2">Date:</Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.date}</Typography>
+              <Typography variant="subtitle2">Sender address:</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.senderAddress}</Typography>
+            </Box>
+            <Box sx={{ mb: 1 }}>
+              <Typography variant="subtitle2">Receiver address:</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.receiverAddress}</Typography>
+            </Box>
+            <Box sx={{ mb: 1 }}>
+              <Typography variant="subtitle2">Date created:</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.createdAt}</Typography>
+            </Box>
+            <Box sx={{ mb: 1 }}>
+              <Typography variant="subtitle2">Date finished:</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.finishedAt || "/"}</Typography>
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="subtitle2">Status:</Typography>

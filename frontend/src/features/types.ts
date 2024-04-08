@@ -9,7 +9,10 @@ export type BridgeTransactionType = {
     originChain: string,
     destinationChain: string,
     amount: string,
-    date: string,
     status: string,
+    senderAddress: string;
+    receiverAddress: string;
+    createdAt: string;
+    finishedAt: string | null;
     steps: StepType[]
 }

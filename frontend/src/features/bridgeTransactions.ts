@@ -6,7 +6,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Ethereum",
       destinationChain: "Binance Smart Chain",
       amount: "10.123456",
-      date: "2024-04-01",
+      createdAt: "2024-04-01",
+      finishedAt: "2024-04-02",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "success",
       steps: [
         {
@@ -31,7 +34,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Bitcoin",
       destinationChain: "Ethereum",
       amount: "5.678901",
-      date: "2024-04-02",
+      createdAt: "2024-04-02",
+      finishedAt: null,
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "pending",
       steps: [
         {
@@ -56,7 +62,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Ethereum",
       destinationChain: "Polygon",
       amount: "8.901234",
-      date: "2024-04-03",
+      createdAt: "2024-04-03",
+      finishedAt: "2024-04-04",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "rejected",
       steps: [
         {
@@ -81,7 +90,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Binance Smart Chain",
       destinationChain: "Ethereum",
       amount: "15.432109",
-      date: "2024-04-04",
+      createdAt: "2024-04-04",
+      finishedAt: "2024-04-05",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "success",
       steps: [
         {
@@ -106,7 +118,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Ethereum",
       destinationChain: "Solana",
       amount: "12.789012",
-      date: "2024-04-05",
+      createdAt: "2024-04-05",
+      finishedAt: null,
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "pending",
       steps: [
         {
@@ -131,7 +146,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Solana",
       destinationChain: "Ethereum",
       amount: "20.004567",
-      date: "2024-04-06",
+      createdAt: "2024-04-06",
+      finishedAt: "2024-04-07",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "success",
       steps: [
         {
@@ -156,7 +174,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Ethereum",
       destinationChain: "Binance Smart Chain",
       amount: "10.123456",
-      date: "2024-04-01",
+      createdAt: "2024-04-01",
+      finishedAt: "2024-04-02",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "success",
       steps: [
         {
@@ -181,7 +202,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Bitcoin",
       destinationChain: "Ethereum",
       amount: "5.678901",
-      date: "2024-04-02",
+      createdAt: "2024-04-02",
+      finishedAt: null,
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "pending",
       steps: [
         {
@@ -206,7 +230,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Ethereum",
       destinationChain: "Polygon",
       amount: "8.901234",
-      date: "2024-04-03",
+      createdAt: "2024-04-03",
+      finishedAt: "2024-04-04",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "rejected",
       steps: [
         {
@@ -231,7 +258,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Binance Smart Chain",
       destinationChain: "Ethereum",
       amount: "15.432109",
-      date: "2024-04-04",
+      createdAt: "2024-04-04",
+      finishedAt: "2024-04-05",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "success",
       steps: [
         {
@@ -256,7 +286,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Ethereum",
       destinationChain: "Solana",
       amount: "12.789012",
-      date: "2024-04-05",
+      createdAt: "2024-04-05",
+      finishedAt: null,
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "pending",
       steps: [
         {
@@ -281,7 +314,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Solana",
       destinationChain: "Ethereum",
       amount: "20.004567",
-      date: "2024-04-06",
+      createdAt: "2024-04-06",
+      finishedAt: "2024-04-07",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "success",
       steps: [
         {
@@ -306,7 +342,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Ethereum",
       destinationChain: "Binance Smart Chain",
       amount: "10.123456",
-      date: "2024-04-01",
+      createdAt: "2024-04-01",
+      finishedAt: "2024-04-02",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "success",
       steps: [
         {
@@ -331,7 +370,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Bitcoin",
       destinationChain: "Ethereum",
       amount: "5.678901",
-      date: "2024-04-02",
+      createdAt: "2024-04-02",
+      finishedAt: null,
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "pending",
       steps: [
         {
@@ -356,7 +398,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Ethereum",
       destinationChain: "Polygon",
       amount: "8.901234",
-      date: "2024-04-03",
+      createdAt: "2024-04-03",
+      finishedAt: "2024-04-04",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "rejected",
       steps: [
         {
@@ -381,7 +426,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Binance Smart Chain",
       destinationChain: "Ethereum",
       amount: "15.432109",
-      date: "2024-04-04",
+      createdAt: "2024-04-04",
+      finishedAt: "2024-04-05",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "success",
       steps: [
         {
@@ -406,7 +454,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Ethereum",
       destinationChain: "Solana",
       amount: "12.789012",
-      date: "2024-04-05",
+      createdAt: "2024-04-05",
+      finishedAt: null,
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "pending",
       steps: [
         {
@@ -431,7 +482,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Solana",
       destinationChain: "Ethereum",
       amount: "20.004567",
-      date: "2024-04-06",
+      createdAt: "2024-04-06",
+      finishedAt: "2024-04-07",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "success",
       steps: [
         {
@@ -456,7 +510,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Ethereum",
       destinationChain: "Binance Smart Chain",
       amount: "10.123456",
-      date: "2024-04-01",
+      createdAt: "2024-04-01",
+      finishedAt: "2024-04-02",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "success",
       steps: [
         {
@@ -481,7 +538,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Bitcoin",
       destinationChain: "Ethereum",
       amount: "5.678901",
-      date: "2024-04-02",
+      createdAt: "2024-04-02",
+      finishedAt: null,
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "pending",
       steps: [
         {
@@ -506,7 +566,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Ethereum",
       destinationChain: "Polygon",
       amount: "8.901234",
-      date: "2024-04-03",
+      createdAt: "2024-04-03",
+      finishedAt: "2024-04-04",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "rejected",
       steps: [
         {
@@ -531,7 +594,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Binance Smart Chain",
       destinationChain: "Ethereum",
       amount: "15.432109",
-      date: "2024-04-04",
+      createdAt: "2024-04-04",
+      finishedAt: "2024-04-05",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "success",
       steps: [
         {
@@ -556,7 +622,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Ethereum",
       destinationChain: "Solana",
       amount: "12.789012",
-      date: "2024-04-05",
+      createdAt: "2024-04-05",
+      finishedAt: null,
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "pending",
       steps: [
         {
@@ -581,7 +650,10 @@ export const bridgeTransactions: BridgeTransactionType[] = [
       originChain: "Solana",
       destinationChain: "Ethereum",
       amount: "20.004567",
-      date: "2024-04-06",
+      createdAt: "2024-04-06",
+      finishedAt: "2024-04-07",
+      senderAddress: "0x1234567890123456789012345678901234567890",
+      receiverAddress: "0x1234567890123456789012345678901234567890",
       status: "success",
       steps: [
         {

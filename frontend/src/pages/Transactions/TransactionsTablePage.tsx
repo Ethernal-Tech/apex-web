@@ -12,6 +12,8 @@ const TransactionsTablePage = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [visibleTransactions, setVisibleTransactions] = useState<BridgeTransactionType[] | undefined>();
     const [isLoading, setIsLoading] = useState(false);
+    const tableRef = useRef(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         (async () => {
@@ -43,9 +45,6 @@ const TransactionsTablePage = () => {
         setPage(0);
       };
 
-  const tableRef = useRef(null);
-  const navigate = useNavigate();
-
   return (
     <BasePage>
     {isLoading && <FullPageSpinner />}
@@ -56,7 +55,9 @@ const TransactionsTablePage = () => {
             <TableCell>Origin Chain</TableCell>
             <TableCell>Destination Chain</TableCell>
             <TableCell>Amount</TableCell>
-            <TableCell>Date</TableCell>
+            <TableCell>Receiver Address</TableCell>
+            <TableCell>Created At</TableCell>
+            <TableCell>Finished At</TableCell>
             <TableCell>Status</TableCell>
             <TableCell>Actions</TableCell>
           </TableRow>
@@ -67,7 +68,9 @@ const TransactionsTablePage = () => {
               <TableCell>{transaction.originChain}</TableCell>
               <TableCell>{transaction.destinationChain}</TableCell>
               <TableCell>{transaction.amount}</TableCell>
-              <TableCell>{transaction.date}</TableCell>
+              <TableCell>{transaction.receiverAddress}</TableCell>
+              <TableCell>{transaction.createdAt}</TableCell>
+              <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center'}}>{transaction.finishedAt || "/"}</TableCell>
               <TableCell>
                 <Chip 
                   label={transaction.status}
