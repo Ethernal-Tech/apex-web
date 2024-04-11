@@ -87,3 +87,45 @@ export class BridgeTransactionDto {
 	@ApiProperty({ nullable: true })
 	finishedAt?: Date;
 }
+
+export class BridgeTransactionPaginationDto {
+	@ApiProperty({ nullable: true })
+	page: number;
+
+	@ApiProperty({ nullable: true })
+	perPage: number;
+}
+
+export class BridgeTransactionFilterDto extends BridgeTransactionPaginationDto {
+	@ApiProperty({ nullable: true })
+	destinationChain: ChainEnum;
+
+	@ApiProperty({ nullable: true })
+	receiverAddress: string;
+
+	@ApiProperty({ nullable: true })
+	amountFrom: number;
+
+	@ApiProperty({ nullable: true })
+	amountTo: number;
+
+	@ApiProperty({ nullable: true })
+	orderBy: string;
+
+	@ApiProperty({ nullable: true })
+	order: string;
+}
+
+export class BridgeTransactionResponseDto {
+	@ApiProperty({ type: BridgeTransactionDto, isArray: true })
+	entities: BridgeTransactionDto[]
+
+	@ApiProperty()
+	page: number
+
+	@ApiProperty()
+	perPage: number
+
+	@ApiProperty()
+	total: number
+}

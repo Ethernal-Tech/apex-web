@@ -1,24 +1,24 @@
 import { Link as RouterLink,useParams } from 'react-router-dom';
-import { getTransactionById } from '../../features/bridgeTransactions';
 import { Box, Link, Typography } from '@mui/material';
 import BasePage from '../base/BasePage';
 import { useEffect, useState } from 'react';
-import { BridgeTransactionType } from '../../features/types';
 import VerticalStepper from '../../components/stepper/VerticalStepper';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { HOME_ROUTE } from '../PageRouter';
-import { TransactionStatus } from '../../features/enums';
+import { BridgeTransactionControllerClient, BridgeTransactionDto, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
 
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const [transaction, setTransaction] = useState<BridgeTransactionType | undefined>(undefined);
+  const [transaction, setTransaction] = useState<BridgeTransactionDto | undefined>(undefined);
 
   useEffect(() => {
     (async () => {
       try {
         if (id) {
-          const transactionDetails = await getTransactionById(id);
+          const bridgeClient = new BridgeTransactionControllerClient();
+          const transactionDetails = await bridgeClient.get(Number(id));
+          // const transactionDetails = await getTransactionById(id);
           transactionDetails && setTransaction(transactionDetails);
         }
       } catch (error) {
@@ -72,23 +72,23 @@ const TransactionDetailPage = () => {
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="subtitle2">Date created:</Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.createdAt}</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.createdAt.toLocaleDateString()}</Typography>
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="subtitle2">Date finished:</Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.finishedAt || "/"}</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.finishedAt?.toLocaleDateString() || "/"}</Typography>
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="subtitle2">Status:</Typography>
               <Typography variant="body1" sx={{
                 fontWeight: 'bold',
-                color: (transaction?.status === TransactionStatus.Success ? 'green' : (transaction?.status === TransactionStatus.Rejected ? 'red' : 'gray')),
+                color: (transaction?.status === TransactionStatusEnum.Success ? 'green' : (transaction?.status === TransactionStatusEnum.Failed ? 'red' : 'gray')),
                 textTransform: 'uppercase'
               }}>{transaction?.status}</Typography>
             </Box>
           </Box>
           <Box sx={{ flex: '1 1 50%', display: 'flex', justifyContent: 'center' }}>
-            {transaction && <VerticalStepper steps={transaction?.steps}/>}
+            {/* {transaction && <VerticalStepper steps={transaction?.steps}/>} */}
           </Box>
         </Box>
       </Box>

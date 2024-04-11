@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TransactionStatusEnum } from 'src/common/enum';
-import { Repository } from 'typeorm';
+import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import {
 	CreateBridgeTransactionDto,
 	BridgeTransactionDto,
 	UpdateBridgeTransactionDto,
+	BridgeTransactionFilterDto,
+	BridgeTransactionResponseDto,
 } from './bridgeTransaction.dto';
 
 @Injectable()
@@ -31,6 +33,44 @@ export class BridgeTransactionService {
 		const entities = await this.bridgeTransactionRepository.find();
 
 		return entities.map((entity) => this.mapToReponse(entity));
+	}
+
+	async getAllFiltered(body: BridgeTransactionFilterDto): Promise<BridgeTransactionResponseDto> {
+		const where: {[key: string]: any} = {};
+
+		if (body.destinationChain) {
+			where['destinationChain'] = body.destinationChain;
+		}
+		if (body.receiverAddress) {
+			where['receiverAddress'] = body.receiverAddress;
+		}
+		if (body.amountFrom && body.amountTo) {
+			where['amount'] = Between(body.amountFrom, body.amountTo);
+		} else if (body.amountFrom) {
+			where['amount'] = MoreThanOrEqual(body.amountFrom);
+		} else if (body.amountTo) {
+			where['amount'] = LessThanOrEqual(body.amountTo);
+		}
+
+		const page = body.page ? body.page : 1;
+		const perPage = body.perPage ? body.perPage : 10;
+		const skip = (page-1) * perPage;
+		
+		const [entities, total] = await this.bridgeTransactionRepository.findAndCount(
+			{
+				where: where,
+				take: perPage,
+				skip: skip,
+			}
+		);
+		
+		
+		return {
+			entities: entities.map((entity) => this.mapToReponse(entity)),
+			page: page,
+			perPage: perPage,
+			total: total,
+		};
 	}
 
 	async create({
