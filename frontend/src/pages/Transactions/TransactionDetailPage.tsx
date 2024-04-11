@@ -18,7 +18,6 @@ const TransactionDetailPage = () => {
         if (id) {
           const bridgeClient = new BridgeTransactionControllerClient();
           const transactionDetails = await bridgeClient.get(Number(id));
-          // const transactionDetails = await getTransactionById(id);
           transactionDetails && setTransaction(transactionDetails);
         }
       } catch (error) {
