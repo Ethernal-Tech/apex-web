@@ -61,6 +61,9 @@ export class BridgeTransactionService {
 				where: where,
 				take: perPage,
 				skip: skip,
+				order: {
+					[body.orderBy]: body.order,
+				  },
 			}
 		);
 		

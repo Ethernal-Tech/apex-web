@@ -1,20 +1,25 @@
 import { useState, useRef, MouseEvent, ChangeEvent, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Chip, TablePagination, Box, SelectChangeEvent } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Chip, TablePagination, Box, SelectChangeEvent, TableSortLabel } from '@mui/material';
 import BasePage from '../base/BasePage';
 import { useNavigate } from 'react-router-dom';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { BridgeTransactionControllerClient, BridgeTransactionDto, BridgeTransactionFilterDto, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
 import Filters from '../../components/filters/Filters';
 import { transformFilters } from '../../utils/typeUtils';
+import { visuallyHidden } from '@mui/utils';
+import { headCells } from './tableConfig';
 
 const TransactionsTablePage = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [order] = useState<'asc' | 'desc' | undefined>('desc');
+  const [orderBy] = useState('createdAt');
   const [visibleTransactions, setVisibleTransactions] = useState<BridgeTransactionDto[] | undefined>();
   const [numberOfTransactions, setNumberOfTransactions] = useState<number | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const tableRef = useRef(null);
   const navigate = useNavigate();
+
   const initialFilters = {
     receiverAddress: '',
     destinationChain: '',
@@ -22,9 +27,10 @@ const TransactionsTablePage = () => {
     amountTo: '',
     page: page,
     perPage: rowsPerPage,
-    orderBy: '',
-    order: '',
+    order: order,
+    orderBy: orderBy,
   }; 
+  
   const [filters, setFilters] = useState(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState(initialFilters);
 
@@ -90,7 +96,7 @@ const TransactionsTablePage = () => {
         setPage(newPage);
         setFilters({
           ...filters,
-          page: newPage+1
+          page: newPage + 1
         });
         
       };
@@ -101,10 +107,23 @@ const TransactionsTablePage = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setFilters({
       ...filters,
+      page: 1,
       perPage: parseInt(event.target.value)
     });
     setPage(0);
   };
+
+  const createSortHandler =
+    (property: string) => (event: React.MouseEvent<unknown>) => {
+      const isAsc = filters.orderBy === property && filters.order === 'asc';
+      setFilters({
+        ...filters,
+        page: 1,
+        order: isAsc ? 'desc' : 'asc',
+        orderBy: property
+      });
+      setPage(0);
+    };
 
   return (
     <BasePage>
@@ -124,14 +143,31 @@ const TransactionsTablePage = () => {
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Origin Chain</TableCell>
-            <TableCell>Destination Chain</TableCell>
-            <TableCell>Amount</TableCell>
-            <TableCell>Receiver Address</TableCell>
-            <TableCell>Created At</TableCell>
-            <TableCell>Finished At</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Actions</TableCell>
+          {headCells.map((headCell) => (
+          <TableCell
+            key={headCell.id}
+            padding='normal'
+            sortDirection={filters.orderBy === headCell.id ? filters.order : false}
+            sx={{ cursor: 'default' }}
+          >
+              {
+                headCell.id === 'actions' ?
+                  headCell.label :
+                  <TableSortLabel
+                    active={filters.orderBy === headCell.id}
+                    direction={filters.orderBy === headCell.id ? filters.order : 'asc'}
+                    onClick={createSortHandler(headCell.id)}
+                  >
+                    {headCell.label}
+                    {filters.orderBy === headCell.id ? (
+                      <Box component="span" sx={visuallyHidden}>
+                        {filters.order === 'desc' ? 'sorted descending' : 'sorted ascending'}
+                      </Box>
+                    ) : null}
+                  </TableSortLabel>
+              }
+          </TableCell>
+        ))}
           </TableRow>
         </TableHead>
         <TableBody>
