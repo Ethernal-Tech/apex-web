@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
+import { PaginatedDto } from 'src/common/dto';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
@@ -84,48 +85,48 @@ export class BridgeTransactionDto {
 	createdAt: Date;
 
 	@IsDate()
-	@ApiProperty({ nullable: true })
+	@ApiProperty({ nullable: true, required: false })
 	finishedAt?: Date;
 }
 
-export class BridgeTransactionPaginationDto {
-	@ApiProperty({ nullable: true })
-	page: number;
+export class BridgeTransactionFilterDto extends PaginatedDto {
+	// obratinet from jwt token
+	senderAddress: string;
 
-	@ApiProperty({ nullable: true })
-	perPage: number;
-}
+	@ApiProperty({
+		nullable: true,
+		required: false,
+		enum: TransactionStatusEnum,
+		enumName: 'TransactionStatusEnum',
+	})
+	destinationChain?: ChainEnum;
 
-export class BridgeTransactionFilterDto extends BridgeTransactionPaginationDto {
-	@ApiProperty({ nullable: true })
-	destinationChain: ChainEnum;
+	@ApiProperty({ nullable: true, required: false })
+	receiverAddress?: string;
 
-	@ApiProperty({ nullable: true })
-	receiverAddress: string;
+	@ApiProperty({ nullable: true, required: false })
+	amountFrom?: number;
 
-	@ApiProperty({ nullable: true })
-	amountFrom: number;
+	@ApiProperty({ nullable: true, required: false })
+	amountTo?: number;
 
-	@ApiProperty({ nullable: true })
-	amountTo: number;
+	@ApiProperty({ nullable: true, required: false })
+	orderBy?: string;
 
-	@ApiProperty({ nullable: true })
-	orderBy: string;
-
-	@ApiProperty({ nullable: true })
-	order: string;
+	@ApiProperty({ nullable: true, required: false })
+	order?: string;
 }
 
 export class BridgeTransactionResponseDto {
 	@ApiProperty({ type: BridgeTransactionDto, isArray: true })
-	entities: BridgeTransactionDto[]
+	items: BridgeTransactionDto[];
 
 	@ApiProperty()
-	page: number
+	page: number;
 
 	@ApiProperty()
-	perPage: number
+	perPage: number;
 
 	@ApiProperty()
-	total: number
+	total: number;
 }

@@ -5,8 +5,9 @@ import { Box, Button, Card, CardContent, CardHeader, CircularProgress, Container
 import TextFormField from "../../components/Form/TextFormField";
 import InfoFormField from "../../components/Form/InfoFormField";
 import { requestAddressBalanceAction, requestBridgeBalanceAction } from "../../actions/balance";
-import { BridgingRequestState, Chain } from "../../features/enums";
+import { BridgingRequestState } from "../../features/enums";
 import BridgingRequestHandler, { BridgingHandlerNotification } from "../../features/BridgingRequestHandler";
+import { ChainEnum } from '../../swagger/apexBridgeApiService';
 
 const FIELDS = {
     PRIVATE_KEY: 'privateKey',
@@ -20,7 +21,7 @@ const CAN_NOT_BE_EMPTY_ERROR = 'Can not be empty'
 const CAN_NOT_BE_ZERO_OR_NEGATIVE_ERROR = 'Can not be zero or negative'
 const LESS_THAN_MINIMUM_AMOUNT = `Must be greater or equal to the minimum amount to send: ${MINIMUM_AMOUNT_TO_SEND}`
 
-const initialSourceChain = Chain.PRIME
+const initialSourceChain = ChainEnum.Prime
 
 const BridgingRequestStatusMessage = {
     [BridgingRequestState.RequestedOnSource]: '33% Bridging requested on source',
@@ -33,7 +34,7 @@ function PrivateKeyForm() {
     const [privateKey, setPrivateKey] = useState('');
     const [sourceAddress, setSourceAddress] = useState('');
     const [amount, setAmount] = useState('');
-    const [sourceChain, setSourceChain] = useState<Chain>(initialSourceChain);
+    const [sourceChain, setSourceChain] = useState<ChainEnum>(initialSourceChain);
     const [destinationAddress, setDestinationAddress] = useState('');
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [requestStatus, setRequestStatus] = useState<BridgingRequestState | undefined>();
@@ -44,7 +45,7 @@ function PrivateKeyForm() {
     const [destinationBridgeBalance, setDestinationBridgeBalance] = useState<number | undefined>();
     const bridgingRequest = useRef<BridgingRequestHandler | undefined>();
 
-    const destinationChain = useMemo(() => sourceChain === Chain.PRIME ? Chain.VECTOR : Chain.PRIME, [sourceChain]);
+    const destinationChain = useMemo(() => sourceChain === ChainEnum.Prime ? ChainEnum.Vector : ChainEnum.Prime, [sourceChain]);
 
     const onBridgingRequestHandlerNotification = useCallback((notificationObj: BridgingHandlerNotification) => {
         const {
@@ -68,7 +69,7 @@ function PrivateKeyForm() {
         });
 
         const destinationBridgeBalance = await requestBridgeBalanceAction({
-            chainId: sourceChain === Chain.PRIME ? Chain.VECTOR : Chain.PRIME,
+            chainId: sourceChain === ChainEnum.Prime ? ChainEnum.Vector : ChainEnum.Prime,
         });
 
         setSourceBridgeBalance(sourceBridgeBalance);
@@ -154,7 +155,7 @@ function PrivateKeyForm() {
     }, [clearFieldError, resetBridgingRequest]);
 
     const onSourceChainChanged = useCallback((e: any) => {
-        setSourceChain(e.target.value as Chain);
+        setSourceChain(e.target.value as ChainEnum);
 
         setSourceBridgeBalance(undefined);
         setDestinationBridgeBalance(undefined);
@@ -257,8 +258,8 @@ function PrivateKeyForm() {
                                 style: { padding: '12px 14px' }
                             }}
                         >
-                            <MenuItem value={Chain.PRIME}>{Chain.PRIME}</MenuItem>
-                            <MenuItem value={Chain.VECTOR}>{Chain.VECTOR}</MenuItem>
+                            <MenuItem value={ChainEnum.Prime}>{ChainEnum.Prime}</MenuItem>
+                            <MenuItem value={ChainEnum.Vector}>{ChainEnum.Vector}</MenuItem>
                         </Select>
                     </FieldBase>
                 </CardContent>

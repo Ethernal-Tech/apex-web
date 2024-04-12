@@ -19,6 +19,8 @@ import {
 	CreateBridgeTransactionDto,
 	UpdateBridgeTransactionDto,
 } from './bridgeTransaction.dto';
+import { AuthUser } from 'src/decorators/authUser.decorator';
+import { User } from 'src/auth/auth.entity';
 
 @ApiTags('BridgeTransaction')
 @Controller('bridgeTransaction')
@@ -63,7 +65,11 @@ export class BridgeTransactionController {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post('filter')
-	async getAllFiltered(@Body() filter: BridgeTransactionFilterDto): Promise<BridgeTransactionResponseDto> {
+	async getAllFiltered(
+		@Body() filter: BridgeTransactionFilterDto,
+		@AuthUser() user: User,
+	): Promise<BridgeTransactionResponseDto> {
+		filter.senderAddress = user.address;
 		return this.bridgeTransactionService.getAllFiltered(filter);
 	}
 

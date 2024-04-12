@@ -1,142 +1,84 @@
-import { useState, useRef, MouseEvent, ChangeEvent, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Chip, TablePagination, Box, SelectChangeEvent, TableSortLabel } from '@mui/material';
+import { useState, useRef, MouseEvent, ChangeEvent, useEffect, useCallback } from 'react';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Chip, TablePagination, Box, TableSortLabel, SortDirection } from '@mui/material';
 import BasePage from '../base/BasePage';
 import { useNavigate } from 'react-router-dom';
 import FullPageSpinner from '../../components/spinner/Spinner';
-import { BridgeTransactionControllerClient, BridgeTransactionDto, BridgeTransactionFilterDto, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionFilterDto, BridgeTransactionResponseDto, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
 import Filters from '../../components/filters/Filters';
-import { transformFilters } from '../../utils/typeUtils';
 import { visuallyHidden } from '@mui/utils';
 import { headCells } from './tableConfig';
+import { getAllFilteredAction } from './action';
+import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 
 const TransactionsTablePage = () => {
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [order] = useState<'asc' | 'desc' | undefined>('desc');
-  const [orderBy] = useState('createdAt');
-  const [visibleTransactions, setVisibleTransactions] = useState<BridgeTransactionDto[] | undefined>();
-  const [numberOfTransactions, setNumberOfTransactions] = useState<number | undefined>();
-  const [isLoading, setIsLoading] = useState(false);
-  const tableRef = useRef(null);
-  const navigate = useNavigate();
+	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
+	const [isLoading, setIsLoading] = useState(false);
+	const tableRef = useRef(null);
+	const navigate = useNavigate();
+	const fetchFunction = useTryCatchJsonByAction();
+	
+	const [filters, setFilters] = useState(new BridgeTransactionFilterDto());
 
-  const initialFilters = {
-    receiverAddress: '',
-    destinationChain: '',
-    amountFrom: '',
-    amountTo: '',
-    page: page,
-    perPage: rowsPerPage,
-    order: order,
-    orderBy: orderBy,
-  }; 
-  
-  const [filters, setFilters] = useState(initialFilters);
-  const [appliedFilters, setAppliedFilters] = useState(initialFilters);
+    const fetchDataCallback = useCallback(
+		async () => {
+			setIsLoading(true);
+			const bindedAction = getAllFilteredAction.bind(null, filters);
+			const response = await fetchFunction(bindedAction);
+			setTransactions(response);
+			setIsLoading(false);
+		},
+		[filters, fetchFunction]
+	)
 
-    function resetFilters() {
-      setAppliedFilters(initialFilters);
-      setFilters(initialFilters);
-    }
+	useEffect(
+		() => {
+			fetchDataCallback();
+		},
+		[fetchDataCallback]
+	)
 
-    const handleFilterChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>) => {
-        setFilters({
-            ...filters,
-            [event.target.name]: event.target.value
-        });
-    }
+	const handleChangePage = (
+		event: MouseEvent<HTMLButtonElement> | null,
+		page: number,
+	) => {
+		setFilters(state => new BridgeTransactionFilterDto({
+			...state,
+			page
+		}));
+			
+	};
+		
+	const handleChangeRowsPerPage = (
+		event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+	) => {
+		setFilters(state => new BridgeTransactionFilterDto({
+			...state,
+			page: 0,
+			perPage: parseInt(event.target.value)
+		}));
+	};
 
-    function applySelectedFilters() {
-      setAppliedFilters({...filters});
-    }
+	const createSortHandler =
+		(property: string) => (event: React.MouseEvent<unknown>) => {
+			const isAsc = filters.orderBy === property && filters.order === 'asc';
+			setFilters(new BridgeTransactionFilterDto({
+				...filters,
+				page: 0,
+				order: isAsc ? 'desc' : 'asc',
+				orderBy: property
+			})
+		);
+	};
 
-    const handleAppliedFilterChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>) => {
-      setAppliedFilters({
-        ...appliedFilters,
-        [event.target.name]: event.target.value
-    });
-  }
-
-    const getBridgeTransactions = async () => {
-      try {
-        setIsLoading(true);
-        const bridgeClient = new BridgeTransactionControllerClient();
-        const transformedFilters = transformFilters(filters);
-
-        const response = await bridgeClient.getAllFiltered(new BridgeTransactionFilterDto(transformedFilters));
-        if (response.entities) {
-            setVisibleTransactions(response.entities);
-            setNumberOfTransactions(response.total);
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    
-    useEffect(() => {
-      getBridgeTransactions();
-      }, [
-        filters.page,
-        filters.perPage,
-        filters.order,
-        filters.orderBy,
-        appliedFilters.receiverAddress,
-        appliedFilters.destinationChain,
-        appliedFilters.amountFrom,
-        appliedFilters.amountTo
-      ]
-    );
-
-    const handleChangePage = (
-        event: MouseEvent<HTMLButtonElement> | null,
-        newPage: number,
-      ) => {
-        setPage(newPage);
-        setFilters({
-          ...filters,
-          page: newPage + 1
-        });
-        
-      };
-      
-  const handleChangeRowsPerPage = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setFilters({
-      ...filters,
-      page: 1,
-      perPage: parseInt(event.target.value)
-    });
-    setPage(0);
-  };
-
-  const createSortHandler =
-    (property: string) => (event: React.MouseEvent<unknown>) => {
-      const isAsc = filters.orderBy === property && filters.order === 'asc';
-      setFilters({
-        ...filters,
-        page: 1,
-        order: isAsc ? 'desc' : 'asc',
-        orderBy: property
-      });
-      setPage(0);
-    };
+	
 
   return (
     <BasePage>
     {isLoading && <FullPageSpinner />}
       <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
         <Filters
-          filters={transformFilters(filters)}
-          appliedFilters={transformFilters(appliedFilters)}
-          handleAppliedFilterChange={handleAppliedFilterChange}
-          handleFilterChange={handleFilterChange}
-          applySelectedFilters={applySelectedFilters}
-          getFilteredBridgeTransactions={getBridgeTransactions}
-          resetFilters={resetFilters}
+          filters={filters}
+          onFilterChange={setFilters}
         />
       </Box>
     <TableContainer component={Paper}  ref={tableRef}>
@@ -147,7 +89,7 @@ const TransactionsTablePage = () => {
           <TableCell
             key={headCell.id}
             padding='normal'
-            sortDirection={filters.orderBy === headCell.id ? filters.order : false}
+            sortDirection={filters.orderBy === headCell.id ? filters.order as SortDirection : false}
             sx={{ cursor: 'default' }}
           >
               {
@@ -155,7 +97,7 @@ const TransactionsTablePage = () => {
                   headCell.label :
                   <TableSortLabel
                     active={filters.orderBy === headCell.id}
-                    direction={filters.orderBy === headCell.id ? filters.order : 'asc'}
+                    direction={filters.orderBy === headCell.id ? filters.order as "desc" | "asc" : 'asc'}
                     onClick={createSortHandler(headCell.id)}
                   >
                     {headCell.label}
@@ -171,7 +113,7 @@ const TransactionsTablePage = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {visibleTransactions?.map((transaction, index) => (
+          {transactions?.items.map((transaction, index) => (
             <TableRow key={`tx-${index}`}>
               <TableCell>{transaction.originChain}</TableCell>
               <TableCell>{transaction.destinationChain}</TableCell>
@@ -199,12 +141,12 @@ const TransactionsTablePage = () => {
         </TableBody>
       </Table>
     </TableContainer>
-    {!!numberOfTransactions &&<TablePagination
+    {!!transactions?.total &&<TablePagination
           component="div"
-          count={numberOfTransactions}
-          page={page}
+          count={transactions.total}
+          page={transactions.page}
+          rowsPerPage={transactions.perPage}
           onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
           onRowsPerPageChange={handleChangeRowsPerPage}
     />}
     </BasePage>

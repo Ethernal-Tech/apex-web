@@ -1,7 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TransactionStatusEnum } from 'src/common/enum';
-import { Between, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import {
+	Between,
+	FindOptionsOrder,
+	FindOptionsWhere,
+	LessThanOrEqual,
+	MoreThanOrEqual,
+	Repository,
+} from 'typeorm';
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import {
 	CreateBridgeTransactionDto,
@@ -35,43 +42,46 @@ export class BridgeTransactionService {
 		return entities.map((entity) => this.mapToReponse(entity));
 	}
 
-	async getAllFiltered(body: BridgeTransactionFilterDto): Promise<BridgeTransactionResponseDto> {
-		const where: {[key: string]: any} = {};
+	async getAllFiltered(
+		model: BridgeTransactionFilterDto,
+	): Promise<BridgeTransactionResponseDto> {
+		const where: FindOptionsWhere<BridgeTransaction> = {
+			destinationChain: model.destinationChain,
+			receiverAddress: model.receiverAddress,
+			senderAddress: model.senderAddress,
+		};
 
-		if (body.destinationChain) {
-			where['destinationChain'] = body.destinationChain;
-		}
-		if (body.receiverAddress) {
-			where['receiverAddress'] = body.receiverAddress;
-		}
-		if (body.amountFrom && body.amountTo) {
-			where['amount'] = Between(body.amountFrom, body.amountTo);
-		} else if (body.amountFrom) {
-			where['amount'] = MoreThanOrEqual(body.amountFrom);
-		} else if (body.amountTo) {
-			where['amount'] = LessThanOrEqual(body.amountTo);
+		if (model.amountFrom && model.amountTo) {
+			where.amount = Between(model.amountFrom, model.amountTo);
+		} else if (model.amountFrom) {
+			where.amount = MoreThanOrEqual(model.amountFrom);
+		} else if (model.amountTo) {
+			where.amount = LessThanOrEqual(model.amountTo);
 		}
 
-		const page = body.page ? body.page : 1;
-		const perPage = body.perPage ? body.perPage : 10;
-		const skip = (page-1) * perPage;
-		
-		const [entities, total] = await this.bridgeTransactionRepository.findAndCount(
-			{
-				where: where,
-				take: perPage,
-				skip: skip,
-				order: {
-					[body.orderBy]: body.order,
-				  },
-			}
-		);
-		
-		
+		const page = model.page || 0;
+		const take = model.perPage || 10;
+		const skip = page * take;
+
+		let order: FindOptionsOrder<BridgeTransaction> | undefined = {
+			createdAt: 'desc',
+		};
+		if (model.orderBy && model.order) {
+			order = { [model.orderBy]: model.order };
+		}
+
+		const [entities, total] =
+			await this.bridgeTransactionRepository.findAndCount({
+				where,
+				take,
+				skip,
+				order,
+			});
+
 		return {
-			entities: entities.map((entity) => this.mapToReponse(entity)),
+			items: entities.map((entity) => this.mapToReponse(entity)),
 			page: page,
-			perPage: perPage,
+			perPage: take,
 			total: total,
 		};
 	}

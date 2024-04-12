@@ -2,29 +2,28 @@ import { Link as RouterLink,useParams } from 'react-router-dom';
 import { Box, Link, Typography } from '@mui/material';
 import BasePage from '../base/BasePage';
 import { useEffect, useState } from 'react';
-import VerticalStepper from '../../components/stepper/VerticalStepper';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { HOME_ROUTE } from '../PageRouter';
-import { BridgeTransactionControllerClient, BridgeTransactionDto, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionDto, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
+import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
+import { getAction } from './action';
 
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [transaction, setTransaction] = useState<BridgeTransactionDto | undefined>(undefined);
+	const fetchFunction = useTryCatchJsonByAction();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        if (id) {
-          const bridgeClient = new BridgeTransactionControllerClient();
-          const transactionDetails = await bridgeClient.get(Number(id));
-          transactionDetails && setTransaction(transactionDetails);
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    })();
-  }, [id]);
+
+	useEffect(() => {
+		(async () => {
+			if (id) {
+				const bindedAction = getAction.bind(null, parseInt(id));
+				const response = await fetchFunction(bindedAction);
+				setTransaction(response);
+			}
+		})();
+	}, [id, fetchFunction]);
 
   return (
     <BasePage>

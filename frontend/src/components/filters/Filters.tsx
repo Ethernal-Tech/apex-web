@@ -1,12 +1,12 @@
-import { ChangeEvent, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Modal from '@mui/material/Modal';
 import FilterList from '@mui/icons-material/FilterList';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
-import { Chain } from '../../features/enums';
 import AppliedFiltersChips from './AppliedFiltersChips';
-import { BridgeTransactionFilterDto } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionFilterDto, ChainEnum, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
+import { propertyOf } from '../../utils/propertyOf';
 
 const style = {
     position: 'absolute' as 'absolute',
@@ -19,46 +19,79 @@ const style = {
     p: 4,
 };
 
-type FiltersProps = {
-    filters: Partial<BridgeTransactionFilterDto>
-    appliedFilters: Partial<BridgeTransactionFilterDto>
-    handleAppliedFilterChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>) => void
-    handleFilterChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>) => void
-    applySelectedFilters: () => void
-    getFilteredBridgeTransactions: () => void
-    resetFilters: () => void
+type Props = {
+    filters: BridgeTransactionFilterDto
+    onFilterChange: (newFilters: BridgeTransactionFilterDto) => void
 }
 
-export default function Filters({ filters, handleFilterChange, appliedFilters, handleAppliedFilterChange, applySelectedFilters, getFilteredBridgeTransactions, resetFilters }: FiltersProps) {
+export default function Filters({ filters, onFilterChange }: Props) {
+	const [values, setValues] = useState(new BridgeTransactionFilterDto(filters));
     const [open, setOpen] = useState(false);
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
-    
-    function removeFilter(e: any) {
-        handleFilterChange(e);
-        handleAppliedFilterChange(e);
-    }
 
-    function handleApplyFilters() {
-        applySelectedFilters();
-        getFilteredBridgeTransactions();
-        handleClose();
-    }
+	const removeFilterCallback = useCallback(
+		(propName: string) => {
+			if (filters.hasOwnProperty(propName)) {
+				onFilterChange(new BridgeTransactionFilterDto({
+					...filters,
+					[propName]: undefined
+				}))
+			}
+		},
+		[filters, onFilterChange]
+	)
+
+	useEffect(
+		() => {
+			setValues(new BridgeTransactionFilterDto(filters))
+		},
+		[filters]
+	)
+
+    const applyFiltersCallback = useCallback(
+		() => {
+			onFilterChange(new BridgeTransactionFilterDto(values))
+			setOpen(false);
+		},
+		[onFilterChange, values]
+	)
+
+	const resetFiltersCallback = useCallback(
+		() => {
+			// keep sort
+			onFilterChange(new BridgeTransactionFilterDto({
+				order: filters.order,
+				orderBy: filters.orderBy,
+			}))
+		},
+		[onFilterChange, filters.order, filters.orderBy]
+	)
+
+	const changeCallback = useCallback(
+		(e:  React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<TransactionStatusEnum>) => {
+			setValues((state) => new BridgeTransactionFilterDto({
+				...state,
+				page: 0,
+				 [e.target.name]: e.target.value
+			}))
+		},
+		[]
+	)
+
     return (
         <div>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <AppliedFiltersChips appliedFilters={appliedFilters} removeFilter={removeFilter} resetFilters={resetFilters}/>
+                <AppliedFiltersChips filters={filters} removeFilter={removeFilterCallback} resetFilters={resetFiltersCallback}/>
                 <Button
                     variant="outlined"
                     startIcon={<FilterList />}
-                    onClick={handleOpen}
+                    onClick={() => setOpen(true)}
                 >
                     Filters
                 </Button>
             </Box>
             <Modal
                 open={open}
-                onClose={handleClose}
+                onClose={() => setOpen(false)}
                 aria-labelledby="modal-modal-title"
                 aria-describedby="modal-modal-description"
             >
@@ -81,50 +114,51 @@ export default function Filters({ filters, handleFilterChange, appliedFilters, h
                                 name='destinationChain'
                                 label="Destination Chain"
                                 variant="outlined"
-                                value={filters.destinationChain}
-                                onChange={(e)=>handleFilterChange(e)}
+                                value={values.destinationChain}
+                                onChange={changeCallback}
                             >
-                                <MenuItem value={Chain.PRIME}>Prime</MenuItem>
-                                <MenuItem value={Chain.VECTOR}>Vector</MenuItem>
+								{Object.values(ChainEnum).map(chain => (
+									<MenuItem value={chain}>{chain}</MenuItem>
+								))}
                             </Select>
                         </FormControl>
                         <TextField
                             id="receiver-address"
-                            name="receiverAddress"
+                            name={propertyOf<BridgeTransactionFilterDto>('receiverAddress')}
                             label="Receiver Address"
                             variant="outlined"
                             size="small"
-                            value={filters.receiverAddress}
-                            onChange={(e)=>handleFilterChange(e)}
+                            value={values.receiverAddress}
+                            onChange={changeCallback}
                         />
                         <Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <TextField
                                     id="amount-from"
-                                    name="amountFrom"
+                                    name={propertyOf<BridgeTransactionFilterDto>('amountFrom')}
                                     label="Amount From"
                                     type="number"
                                     variant="outlined"
                                     size="small"
-                                    value={filters.amountFrom === 0 ? '' : filters.amountFrom}
-                                    onChange={(e)=>handleFilterChange(e)}
+                                    value={values.amountFrom}
+                                    onChange={changeCallback}
                                 />
                                 <TextField
                                     id="amount-to"
-                                    name="amountTo"
+                                    name={propertyOf<BridgeTransactionFilterDto>('amountTo')}
                                     label="Amount To"
                                     type="number"
                                     variant="outlined"
                                     size="small"
-                                    value={filters.amountTo === 0 ? '' : filters.amountTo}
-                                    onChange={(e)=>handleFilterChange(e)}
+                                    value={values.amountTo}
+                                    onChange={changeCallback}
                                 />
                             </Box>
                         </Box>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                        <Button onClick={handleClose}>Cancel</Button>
-                        <Button variant="contained" color="primary" onClick={handleApplyFilters}>
+                        <Button onClick={() => setOpen(false)}>Cancel</Button>
+                        <Button variant="contained" color="primary" onClick={applyFiltersCallback}>
                             Apply
                         </Button>
                     </Box>
