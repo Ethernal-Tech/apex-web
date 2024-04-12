@@ -1,78 +1,131 @@
-import { useState, useRef, MouseEvent, ChangeEvent, useEffect } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Chip, TablePagination } from '@mui/material';
-import {bridgeTransactions, getBridgeTransactions} from '../../features/bridgeTransactions';
+import { useState, useRef, MouseEvent, ChangeEvent, useEffect, useCallback } from 'react';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Chip, TablePagination, Box, TableSortLabel, SortDirection } from '@mui/material';
 import BasePage from '../base/BasePage';
 import { useNavigate } from 'react-router-dom';
-import { BridgeTransactionType } from '../../features/types';
 import FullPageSpinner from '../../components/spinner/Spinner';
-import { TransactionStatus } from '../../features/enums';
+import { BridgeTransactionFilterDto, BridgeTransactionResponseDto, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
+import Filters from '../../components/filters/Filters';
+import { visuallyHidden } from '@mui/utils';
+import { headCells } from './tableConfig';
+import { getAllFilteredAction } from './action';
+import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 
 const TransactionsTablePage = () => {
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [visibleTransactions, setVisibleTransactions] = useState<BridgeTransactionType[] | undefined>();
-    const [isLoading, setIsLoading] = useState(false);
+	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
+	const [isLoading, setIsLoading] = useState(false);
+	const tableRef = useRef(null);
+	const navigate = useNavigate();
+	const fetchFunction = useTryCatchJsonByAction();
+	
+	const [filters, setFilters] = useState(new BridgeTransactionFilterDto());
 
-    useEffect(() => {
-        (async () => {
-          try {
-            setIsLoading(true);
-            const transactions = await getBridgeTransactions(page, rowsPerPage);
-            if (transactions) {
-                setVisibleTransactions(transactions);
-            }
-          } catch (error) {
-            console.error(error);
-          } finally {
-            setIsLoading(false);
-          }
-        })();
-      }, [page, rowsPerPage]);
+    const fetchDataCallback = useCallback(
+		async () => {
+			setIsLoading(true);
+			const bindedAction = getAllFilteredAction.bind(null, filters);
+			const response = await fetchFunction(bindedAction);
+			setTransactions(response);
+			setIsLoading(false);
+		},
+		[filters, fetchFunction]
+	)
 
-    const handleChangePage = (
-        event: MouseEvent<HTMLButtonElement> | null,
-        newPage: number,
-      ) => {
-        setPage(newPage);
-      };
+	useEffect(
+		() => {
+			fetchDataCallback();
+		},
+		[fetchDataCallback]
+	)
 
-      const handleChangeRowsPerPage = (
-        event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-      ) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-      };
+	const handleChangePage = (
+		event: MouseEvent<HTMLButtonElement> | null,
+		page: number,
+	) => {
+		setFilters(state => new BridgeTransactionFilterDto({
+			...state,
+			page
+		}));
+			
+	};
+		
+	const handleChangeRowsPerPage = (
+		event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+	) => {
+		setFilters(state => new BridgeTransactionFilterDto({
+			...state,
+			page: 0,
+			perPage: parseInt(event.target.value)
+		}));
+	};
 
-  const tableRef = useRef(null);
-  const navigate = useNavigate();
+	const createSortHandler =
+		(property: string) => (event: React.MouseEvent<unknown>) => {
+			const isAsc = filters.orderBy === property && filters.order === 'asc';
+			setFilters(new BridgeTransactionFilterDto({
+				...filters,
+				page: 0,
+				order: isAsc ? 'desc' : 'asc',
+				orderBy: property
+			})
+		);
+	};
+
+	
 
   return (
     <BasePage>
     {isLoading && <FullPageSpinner />}
+      <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Filters
+          filters={filters}
+          onFilterChange={setFilters}
+        />
+      </Box>
     <TableContainer component={Paper}  ref={tableRef}>
       <Table>
         <TableHead>
           <TableRow>
-            <TableCell>Origin Chain</TableCell>
-            <TableCell>Destination Chain</TableCell>
-            <TableCell>Amount</TableCell>
-            <TableCell>Date</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Actions</TableCell>
+          {headCells.map((headCell) => (
+          <TableCell
+            key={headCell.id}
+            padding='normal'
+            sortDirection={filters.orderBy === headCell.id ? filters.order as SortDirection : false}
+            sx={{ cursor: 'default' }}
+          >
+              {
+                headCell.id === 'actions' ?
+                  headCell.label :
+                  <TableSortLabel
+                    active={filters.orderBy === headCell.id}
+                    direction={filters.orderBy === headCell.id ? filters.order as "desc" | "asc" : 'asc'}
+                    onClick={createSortHandler(headCell.id)}
+                  >
+                    {headCell.label}
+                    {filters.orderBy === headCell.id ? (
+                      <Box component="span" sx={visuallyHidden}>
+                        {filters.order === 'desc' ? 'sorted descending' : 'sorted ascending'}
+                      </Box>
+                    ) : null}
+                  </TableSortLabel>
+              }
+          </TableCell>
+        ))}
           </TableRow>
         </TableHead>
         <TableBody>
-          {visibleTransactions?.map((transaction, index) => (
+          {transactions?.items.map((transaction, index) => (
             <TableRow key={`tx-${index}`}>
               <TableCell>{transaction.originChain}</TableCell>
               <TableCell>{transaction.destinationChain}</TableCell>
               <TableCell>{transaction.amount}</TableCell>
-              <TableCell>{transaction.date}</TableCell>
+              <TableCell>{transaction.receiverAddress}</TableCell>
+              <TableCell>{transaction.createdAt.toLocaleString()}</TableCell>
+              <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
               <TableCell>
                 <Chip 
                   label={transaction.status}
                   sx={{
-                    bgcolor: transaction.status === TransactionStatus.Success ? 'green' : (transaction?.status === TransactionStatus.Rejected ? 'red' : 'gray'),
+                    bgcolor: transaction.status === TransactionStatusEnum.Success ? 'green' : (transaction?.status === TransactionStatusEnum.Failed ? 'red' : 'gray'),
                     color: 'white',
                     textTransform: 'uppercase'
                   }}
@@ -88,14 +141,14 @@ const TransactionsTablePage = () => {
         </TableBody>
       </Table>
     </TableContainer>
-    <TablePagination
+    {!!transactions?.total &&<TablePagination
           component="div"
-          count={bridgeTransactions.length}
-          page={page}
+          count={transactions.total}
+          page={transactions.page}
+          rowsPerPage={transactions.perPage}
           onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-    />
+    />}
     </BasePage>
   );
 };

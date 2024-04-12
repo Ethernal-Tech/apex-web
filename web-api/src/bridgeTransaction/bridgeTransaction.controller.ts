@@ -14,9 +14,13 @@ import { BridgeTransactionService } from './bridgeTransaction.service';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	BridgeTransactionDto,
+	BridgeTransactionFilterDto,
+	BridgeTransactionResponseDto,
 	CreateBridgeTransactionDto,
 	UpdateBridgeTransactionDto,
 } from './bridgeTransaction.dto';
+import { AuthUser } from 'src/decorators/authUser.decorator';
+import { User } from 'src/auth/auth.entity';
 
 @ApiTags('BridgeTransaction')
 @Controller('bridgeTransaction')
@@ -51,6 +55,22 @@ export class BridgeTransactionController {
 	@Get()
 	async getAll(): Promise<BridgeTransactionDto[]> {
 		return this.bridgeTransactionService.getAll();
+	}
+
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: BridgeTransactionResponseDto,
+		isArray: false,
+		description: 'Success',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('filter')
+	async getAllFiltered(
+		@Body() filter: BridgeTransactionFilterDto,
+		@AuthUser() user: User,
+	): Promise<BridgeTransactionResponseDto> {
+		filter.senderAddress = user.address;
+		return this.bridgeTransactionService.getAllFiltered(filter);
 	}
 
 	@ApiResponse({

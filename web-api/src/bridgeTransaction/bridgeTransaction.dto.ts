@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
+import { PaginatedDto } from 'src/common/dto';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
@@ -84,6 +85,48 @@ export class BridgeTransactionDto {
 	createdAt: Date;
 
 	@IsDate()
-	@ApiProperty({ nullable: true })
+	@ApiProperty({ nullable: true, required: false })
 	finishedAt?: Date;
+}
+
+export class BridgeTransactionFilterDto extends PaginatedDto {
+	// obratinet from jwt token
+	senderAddress: string;
+
+	@ApiProperty({
+		nullable: true,
+		required: false,
+		enum: TransactionStatusEnum,
+		enumName: 'TransactionStatusEnum',
+	})
+	destinationChain?: ChainEnum;
+
+	@ApiProperty({ nullable: true, required: false })
+	receiverAddress?: string;
+
+	@ApiProperty({ nullable: true, required: false })
+	amountFrom?: number;
+
+	@ApiProperty({ nullable: true, required: false })
+	amountTo?: number;
+
+	@ApiProperty({ nullable: true, required: false })
+	orderBy?: string;
+
+	@ApiProperty({ nullable: true, required: false })
+	order?: string;
+}
+
+export class BridgeTransactionResponseDto {
+	@ApiProperty({ type: BridgeTransactionDto, isArray: true })
+	items: BridgeTransactionDto[];
+
+	@ApiProperty()
+	page: number;
+
+	@ApiProperty()
+	perPage: number;
+
+	@ApiProperty()
+	total: number;
 }

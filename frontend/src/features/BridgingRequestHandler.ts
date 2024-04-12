@@ -1,5 +1,6 @@
 import { requestAddressBalanceAction, requestBridgeBalanceAction } from "../actions/balance"
-import { BridgingRequestState, Chain } from "./enums"
+import { ChainEnum } from '../swagger/apexBridgeApiService'
+import { BridgingRequestState } from "./enums"
 
 const POOL_BALANCES_INTERVAL_MS = 1000
 
@@ -12,7 +13,7 @@ export type BridgingHandlerNotification = {
 }
 
 class BridgingRequestHandler {
-    sourceChain: Chain
+    sourceChain: ChainEnum
 
     sourceAddr: string
     sourceAddrBalance: number | undefined
@@ -29,7 +30,7 @@ class BridgingRequestHandler {
     notifyCallback: (notificationObj: BridgingHandlerNotification) => void
 
     constructor(
-        sourceChain: Chain,
+        sourceChain: ChainEnum,
         sourceAddr: string,
         sourceAddrBalance: number | undefined,
         sourceBridgeBalance: number | undefined,
@@ -107,13 +108,13 @@ class BridgingRequestHandler {
         let destinationAddrBalance;
         if (this.destinationAddr) {
             destinationAddrBalance = await requestAddressBalanceAction({
-                chainId: this.sourceChain === Chain.PRIME ? Chain.VECTOR : Chain.PRIME,
+                chainId: this.sourceChain === ChainEnum.Prime ? ChainEnum.Vector : ChainEnum.Prime,
                 address: this.destinationAddr,
             });
         }
 
         const destinationBridgeBalance = await requestBridgeBalanceAction({
-            chainId: this.sourceChain === Chain.PRIME ? Chain.VECTOR : Chain.PRIME,
+            chainId: this.sourceChain === ChainEnum.Prime ? ChainEnum.Vector : ChainEnum.Prime,
         });
 
         this._setBalances(sourceAddrBalance, sourceBridgeBalance, destinationAddrBalance, destinationBridgeBalance);

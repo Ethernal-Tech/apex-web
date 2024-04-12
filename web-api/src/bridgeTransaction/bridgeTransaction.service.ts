@@ -1,12 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TransactionStatusEnum } from 'src/common/enum';
-import { Repository } from 'typeorm';
+import {
+	Between,
+	FindOptionsOrder,
+	FindOptionsWhere,
+	LessThanOrEqual,
+	MoreThanOrEqual,
+	Repository,
+} from 'typeorm';
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import {
 	CreateBridgeTransactionDto,
 	BridgeTransactionDto,
 	UpdateBridgeTransactionDto,
+	BridgeTransactionFilterDto,
+	BridgeTransactionResponseDto,
 } from './bridgeTransaction.dto';
 
 @Injectable()
@@ -31,6 +40,50 @@ export class BridgeTransactionService {
 		const entities = await this.bridgeTransactionRepository.find();
 
 		return entities.map((entity) => this.mapToReponse(entity));
+	}
+
+	async getAllFiltered(
+		model: BridgeTransactionFilterDto,
+	): Promise<BridgeTransactionResponseDto> {
+		const where: FindOptionsWhere<BridgeTransaction> = {
+			destinationChain: model.destinationChain,
+			receiverAddress: model.receiverAddress,
+			senderAddress: model.senderAddress,
+		};
+
+		if (model.amountFrom && model.amountTo) {
+			where.amount = Between(model.amountFrom, model.amountTo);
+		} else if (model.amountFrom) {
+			where.amount = MoreThanOrEqual(model.amountFrom);
+		} else if (model.amountTo) {
+			where.amount = LessThanOrEqual(model.amountTo);
+		}
+
+		const page = model.page || 0;
+		const take = model.perPage || 10;
+		const skip = page * take;
+
+		let order: FindOptionsOrder<BridgeTransaction> | undefined = {
+			createdAt: 'desc',
+		};
+		if (model.orderBy && model.order) {
+			order = { [model.orderBy]: model.order };
+		}
+
+		const [entities, total] =
+			await this.bridgeTransactionRepository.findAndCount({
+				where,
+				take,
+				skip,
+				order,
+			});
+
+		return {
+			items: entities.map((entity) => this.mapToReponse(entity)),
+			page: page,
+			perPage: take,
+			total: total,
+		};
 	}
 
 	async create({
