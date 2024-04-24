@@ -5,9 +5,10 @@ import { useEffect, useState } from 'react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { HOME_ROUTE } from '../PageRouter';
-import { BridgeTransactionDto, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionDto } from '../../swagger/apexBridgeApiService';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getAction } from './action';
+import { getStatusColor } from '../../utils/statusUtils';
 
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -80,7 +81,7 @@ const TransactionDetailPage = () => {
               <Typography variant="subtitle2">Status:</Typography>
               <Typography variant="body1" sx={{
                 fontWeight: 'bold',
-                color: (transaction?.status === TransactionStatusEnum.Success ? 'green' : (transaction?.status === TransactionStatusEnum.Failed ? 'red' : 'gray')),
+                color: transaction && getStatusColor(transaction.status),
                 textTransform: 'uppercase'
               }}>{transaction?.status}</Typography>
             </Box>

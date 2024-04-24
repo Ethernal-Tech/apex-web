@@ -29,19 +29,21 @@ function LoginPage() {
 
 		setConnecting(true);
 
-		const wallet = await BrowserWallet.enable(selectedWallet.name);
-		if (wallet instanceof BrowserWallet)  {
-			const stakeAddress = await getStakeAddress(wallet);
-			const address = stakeAddress.to_bech32();
-			const bindedGenerateLoginCodeAction = generateLoginCodeAction.bind(null, new GenerateLoginCodeDto({ address }));
-			const loginCode = await fetchFunction(bindedGenerateLoginCodeAction);
-			if (!loginCode) {
-				setConnecting(false);
-				return;
-			}
-			const messageHex = Buffer.from(loginCode.code).toString("hex");
-			try {
+		try {
+			const wallet = await BrowserWallet.enable(selectedWallet.name);
+			if (wallet && wallet instanceof BrowserWallet)  {
+				const stakeAddress = await getStakeAddress(wallet);
+				const address = stakeAddress.to_bech32();
+				const bindedGenerateLoginCodeAction = generateLoginCodeAction.bind(null, new GenerateLoginCodeDto({ address }));
+				const loginCode = await fetchFunction(bindedGenerateLoginCodeAction);
+				if (!loginCode) {
+					setConnecting(false);
+					return;
+				}
+				const messageHex = Buffer.from(loginCode.code).toString("hex");
+
 				const signedData = await wallet.signData(stakeAddress.to_bech32(), messageHex);
+				// TODO: add chain enum to login
 				const loginModel = new LoginDto({
 					address,
 					signedLoginCode: new DataSignatureDto(signedData)
@@ -58,9 +60,13 @@ function LoginPage() {
 				dispatch(setTokenAction(token));
 				return navigate(HOME_ROUTE);
 			}
-			catch (err) {
-				setConnecting(false);
+
+		}
+		catch (err: any) {
+			if (err instanceof Error) {
+				console.log(err.stack)
 			}
+			setConnecting(false);
 		}
 
 	}

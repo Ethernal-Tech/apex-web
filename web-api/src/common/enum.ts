@@ -1,7 +1,12 @@
 export enum TransactionStatusEnum {
 	Pending = 'Pending',
-	Success = 'Success',
-	Failed = 'Failed',
+	DiscoveredOnSource = 'DiscoveredOnSource',
+	InvalidRequest = 'InvalidRequest',
+	SubmittedToBridge = 'SubmittedToBridge',
+	IncludedInBatch = 'IncludedInBatch',
+	SubmittedToDestination = 'SubmittedToDestination',
+	FailedToExecuteOnDestination = 'FailedToExecuteOnDestination',
+	ExecutedOnDestination = 'ExecutedOnDestination',
 }
 
 export enum ChainEnum {

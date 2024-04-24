@@ -118,7 +118,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                 onChange={changeCallback}
                             >
 								{Object.values(ChainEnum).map(chain => (
-									<MenuItem value={chain}>{chain}</MenuItem>
+									<MenuItem key={chain} value={chain}>{chain}</MenuItem>
 								))}
                             </Select>
                         </FormControl>

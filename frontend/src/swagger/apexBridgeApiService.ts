@@ -852,8 +852,13 @@ export interface ITokenDto {
 
 export enum TransactionStatusEnum {
     Pending = "Pending",
-    Success = "Success",
-    Failed = "Failed",
+    DiscoveredOnSource = "DiscoveredOnSource",
+    InvalidRequest = "InvalidRequest",
+    SubmittedToBridge = "SubmittedToBridge",
+    IncludedInBatch = "IncludedInBatch",
+    SubmittedToDestination = "SubmittedToDestination",
+    FailedToExecuteOnDestination = "FailedToExecuteOnDestination",
+    ExecutedOnDestination = "ExecutedOnDestination",
 }
 
 export class BridgeTransactionDto implements IBridgeTransactionDto {

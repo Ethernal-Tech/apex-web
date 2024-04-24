@@ -121,8 +121,9 @@ export class BridgeTransactionService {
 
 		entity.status = status;
 		if (
-			entity.status === TransactionStatusEnum.Success ||
-			entity.status === TransactionStatusEnum.Failed
+			entity.status === TransactionStatusEnum.InvalidRequest ||
+			entity.status === TransactionStatusEnum.FailedToExecuteOnDestination ||
+			entity.status === TransactionStatusEnum.ExecutedOnDestination
 		) {
 			entity.finishedAt = new Date();
 		}

@@ -5,7 +5,7 @@ type Props = {
     label: string
     error?: string
     value: string | number
-    onValueChange: any
+    onValueChange?: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> | undefined
     multiline?: boolean
     disabled?: boolean
 }

@@ -3,12 +3,13 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper
 import BasePage from '../base/BasePage';
 import { useNavigate } from 'react-router-dom';
 import FullPageSpinner from '../../components/spinner/Spinner';
-import { BridgeTransactionFilterDto, BridgeTransactionResponseDto, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionFilterDto, BridgeTransactionResponseDto } from '../../swagger/apexBridgeApiService';
 import Filters from '../../components/filters/Filters';
 import { visuallyHidden } from '@mui/utils';
 import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
+import { getStatusColor } from '../../utils/statusUtils';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
@@ -125,7 +126,7 @@ const TransactionsTablePage = () => {
                 <Chip 
                   label={transaction.status}
                   sx={{
-                    bgcolor: transaction.status === TransactionStatusEnum.Success ? 'green' : (transaction?.status === TransactionStatusEnum.Failed ? 'red' : 'gray'),
+                    bgcolor: getStatusColor(transaction.status),
                     color: 'white',
                     textTransform: 'uppercase'
                   }}
