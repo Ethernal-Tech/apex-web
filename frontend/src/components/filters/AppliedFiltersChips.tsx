@@ -17,10 +17,10 @@ const mapKeyToWord: { [key: string]: string } = {
 }
 
 const filterProps: string[] = [
-	propertyOf<BridgeTransactionFilterDto>('amountTo'),
-	propertyOf<BridgeTransactionFilterDto>('amountFrom'),
-	propertyOf<BridgeTransactionFilterDto>('destinationChain'),
-	propertyOf<BridgeTransactionFilterDto>('receiverAddress'),
+	'amountTo',
+	'amountFrom',
+	'destinationChain',
+	'receiverAddress'
 ]
 
 function AppliedFiltersChips({ filters, removeFilter, resetFilters }: Props) {
