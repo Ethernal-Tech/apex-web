@@ -6,7 +6,6 @@ import FilterList from '@mui/icons-material/FilterList';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
 import AppliedFiltersChips from './AppliedFiltersChips';
 import { BridgeTransactionFilterDto, ChainEnum, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
-import { propertyOf } from '../../utils/propertyOf';
 
 const style = {
     position: 'absolute' as 'absolute',

@@ -50,6 +50,7 @@ export class AuthService {
 		const code = this.loginCodeRepository.create({
 			address: address.toLowerCase(),
 			code: randomUUID(),
+			chainID: chainID
 		});
 
 		await this.loginCodeRepository.save(code);

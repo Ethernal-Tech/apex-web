@@ -1,7 +1,6 @@
 import { Box, Button, Chip } from "@mui/material";
 import { useMemo } from "react";
 import { BridgeTransactionFilterDto } from "../../swagger/apexBridgeApiService";
-import { propertyOf } from '../../utils/propertyOf';
 
 type Props = {
     filters: BridgeTransactionFilterDto;

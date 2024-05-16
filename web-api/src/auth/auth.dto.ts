@@ -18,6 +18,7 @@ export class LoginCodeDto {
 	constructor(loginCode: LoginCodeDto) {
 		this.address = loginCode.address;
 		this.code = loginCode.code;
+		this.chainID = loginCode.chainID;
 	}
 
 	@IsNotEmpty()
