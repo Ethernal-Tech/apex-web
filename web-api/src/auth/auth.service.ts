@@ -38,9 +38,11 @@ export class AuthService {
 	) {}
 	async generateLoginCode({
 		address,
+		chainID
 	}: GenerateLoginCodeDto): Promise<LoginCodeDto> {
 		const oldCode = await this.loginCodeRepository.findOneBy({
 			address: address.toLowerCase(),
+			chainID: chainID
 		});
 		if (oldCode !== null) {
 			await this.loginCodeRepository.delete(oldCode);
@@ -57,6 +59,7 @@ export class AuthService {
 	async login(model: LoginDto): Promise<TokenDto> {
 		const loginCode = await this.loginCodeRepository.findOneBy({
 			address: model.address.toLowerCase(),
+			chainID: model.chainID
 		});
 		if (!loginCode) {
 			throw new BadRequestException();
@@ -74,12 +77,14 @@ export class AuthService {
 
 		let user = await this.userRepository.findOneBy({
 			address: loginCode.address.toLowerCase(),
+			chainID: model.chainID
 		});
 
 		if (!user) {
 			user = this.userRepository.create({
 				address: loginCode.address.toLowerCase(),
 				createdAt: new Date(),
+				chainID: loginCode.chainID
 			});
 			await this.userRepository.save(user);
 		}

@@ -1,3 +1,4 @@
+import { ChainEnum } from 'src/common/enum';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('loginCodes')
@@ -10,6 +11,9 @@ export class LoginCode {
 
 	@Column()
 	code: string;
+
+	@Column({ type: 'enum', enum: ChainEnum, default: ChainEnum.Prime })
+	chainID: ChainEnum;
 }
 
 @Entity('users')
@@ -22,4 +26,7 @@ export class User {
 
 	@Column()
 	createdAt: Date;
+
+	@Column({ type: 'enum', enum: ChainEnum, default: ChainEnum.Prime })
+	chainID: ChainEnum;
 }
