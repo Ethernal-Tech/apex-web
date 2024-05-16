@@ -1,7 +1,6 @@
 import { Box, Button, Chip } from "@mui/material";
 import { useMemo } from "react";
 import { BridgeTransactionFilterDto } from "../../swagger/apexBridgeApiService";
-import { propertyOf } from '../../utils/propertyOf';
 
 type Props = {
     filters: BridgeTransactionFilterDto;
@@ -17,10 +16,10 @@ const mapKeyToWord: { [key: string]: string } = {
 }
 
 const filterProps: string[] = [
-	propertyOf<BridgeTransactionFilterDto>('amountTo'),
-	propertyOf<BridgeTransactionFilterDto>('amountFrom'),
-	propertyOf<BridgeTransactionFilterDto>('destinationChain'),
-	propertyOf<BridgeTransactionFilterDto>('receiverAddress'),
+	'amountTo',
+	'amountFrom',
+	'destinationChain',
+	'receiverAddress'
 ]
 
 function AppliedFiltersChips({ filters, removeFilter, resetFilters }: Props) {

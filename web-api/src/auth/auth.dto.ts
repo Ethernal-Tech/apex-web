@@ -1,17 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsNotEmpty, IsString } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { ChainEnum } from 'src/common/enum';
 
 export class GenerateLoginCodeDto {
 	@IsNotEmpty()
 	@IsString()
 	@ApiProperty()
 	address: string;
+
+	@IsNotEmpty()
+	@IsEnum(ChainEnum)
+	@ApiProperty()
+	chainID: ChainEnum;
 }
 
 export class LoginCodeDto {
 	constructor(loginCode: LoginCodeDto) {
 		this.address = loginCode.address;
 		this.code = loginCode.code;
+		this.chainID = loginCode.chainID;
 	}
 
 	@IsNotEmpty()
@@ -23,6 +30,11 @@ export class LoginCodeDto {
 	@IsString()
 	@ApiProperty()
 	code: string;
+
+	@IsNotEmpty()
+	@IsEnum(ChainEnum)
+	@ApiProperty()
+	chainID: ChainEnum;
 }
 
 export class DataSignatureDto {
@@ -46,6 +58,11 @@ export class LoginDto {
 	@IsNotEmpty()
 	@ApiProperty({ type: () => DataSignatureDto })
 	signedLoginCode: DataSignatureDto;
+
+	@IsNotEmpty()
+	@IsEnum(ChainEnum)
+	@ApiProperty()
+	chainID: ChainEnum;
 }
 
 export class TokenDto {
@@ -63,4 +80,9 @@ export class TokenDto {
 	@IsDate()
 	@ApiProperty()
 	expiresAt: Date;
+
+	@IsNotEmpty()
+	@IsEnum(ChainEnum)
+	@ApiProperty()
+	chainID: ChainEnum;
 }

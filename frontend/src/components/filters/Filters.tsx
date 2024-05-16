@@ -6,7 +6,6 @@ import FilterList from '@mui/icons-material/FilterList';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
 import AppliedFiltersChips from './AppliedFiltersChips';
 import { BridgeTransactionFilterDto, ChainEnum, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
-import { propertyOf } from '../../utils/propertyOf';
 
 const style = {
     position: 'absolute' as 'absolute',
@@ -124,7 +123,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                         </FormControl>
                         <TextField
                             id="receiver-address"
-                            name={propertyOf<BridgeTransactionFilterDto>('receiverAddress')}
+                            name={'receiverAddress'}
                             label="Receiver Address"
                             variant="outlined"
                             size="small"
@@ -135,7 +134,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <TextField
                                     id="amount-from"
-                                    name={propertyOf<BridgeTransactionFilterDto>('amountFrom')}
+                                    name={'amountFrom'}
                                     label="Amount From"
                                     type="number"
                                     variant="outlined"
@@ -145,7 +144,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                 />
                                 <TextField
                                     id="amount-to"
-                                    name={propertyOf<BridgeTransactionFilterDto>('amountTo')}
+                                    name={'amountTo'}
                                     label="Amount To"
                                     type="number"
                                     variant="outlined"

@@ -7,7 +7,7 @@ import { useDispatch } from 'react-redux';
 import { setTokenAction } from '../../redux/slices/tokenSlice';
 import { getStakeAddress } from '../../utils/userWalletUtil';
 import { generateLoginCodeAction, loginAction } from './action';
-import { DataSignatureDto, GenerateLoginCodeDto, LoginDto } from '../../swagger/apexBridgeApiService';
+import { ChainEnum, DataSignatureDto, GenerateLoginCodeDto, LoginDto } from '../../swagger/apexBridgeApiService';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 
 function LoginPage() {
@@ -22,6 +22,8 @@ function LoginPage() {
 		[]
 	)
 
+	const chainID = ChainEnum.Prime; // hardcoded value for now
+
 	async function handleWalletClick(selectedWallet: Wallet) {
 		if (!selectedWallet) {
 			return;
@@ -34,7 +36,7 @@ function LoginPage() {
 			if (wallet && wallet instanceof BrowserWallet)  {
 				const stakeAddress = await getStakeAddress(wallet);
 				const address = stakeAddress.to_bech32();
-				const bindedGenerateLoginCodeAction = generateLoginCodeAction.bind(null, new GenerateLoginCodeDto({ address }));
+				const bindedGenerateLoginCodeAction = generateLoginCodeAction.bind(null, new GenerateLoginCodeDto({ address, chainID }));
 				const loginCode = await fetchFunction(bindedGenerateLoginCodeAction);
 				if (!loginCode) {
 					setConnecting(false);
@@ -42,11 +44,11 @@ function LoginPage() {
 				}
 				const messageHex = Buffer.from(loginCode.code).toString("hex");
 
-				const signedData = await wallet.signData(stakeAddress.to_bech32(), messageHex);
-				// TODO: add chain enum to login
+				const signedData = await wallet.signData(address, messageHex);
 				const loginModel = new LoginDto({
 					address,
-					signedLoginCode: new DataSignatureDto(signedData)
+					signedLoginCode: new DataSignatureDto(signedData),
+					chainID
 				});
 				
 				const bindedLoginAction = loginAction.bind(null, loginModel);
