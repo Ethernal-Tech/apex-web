@@ -6,7 +6,6 @@ import {
 	HttpStatus,
 	Param,
 	Post,
-	Put,
 	UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from 'src/guards/auth.guard';
@@ -16,8 +15,6 @@ import {
 	BridgeTransactionDto,
 	BridgeTransactionFilterDto,
 	BridgeTransactionResponseDto,
-	CreateBridgeTransactionDto,
-	UpdateBridgeTransactionDto,
 } from './bridgeTransaction.dto';
 import { AuthUser } from 'src/decorators/authUser.decorator';
 import { User } from 'src/auth/auth.entity';
@@ -41,20 +38,11 @@ export class BridgeTransactionController {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get(':id')
-	async get(@Param('id') id: number): Promise<BridgeTransactionDto> {
-		return this.bridgeTransactionService.get(id);
-	}
-
-	@ApiResponse({
-		status: HttpStatus.OK,
-		type: BridgeTransactionDto,
-		isArray: true,
-		description: 'Success',
-	})
-	@HttpCode(HttpStatus.OK)
-	@Get()
-	async getAll(): Promise<BridgeTransactionDto[]> {
-		return this.bridgeTransactionService.getAll();
+	async get(
+		@Param('id') id: number,
+		@AuthUser() user: User,
+	): Promise<BridgeTransactionDto> {
+		return this.bridgeTransactionService.get(id, user.chainID);
 	}
 
 	@ApiResponse({
@@ -70,44 +58,7 @@ export class BridgeTransactionController {
 		@AuthUser() user: User,
 	): Promise<BridgeTransactionResponseDto> {
 		filter.senderAddress = user.address;
+		filter.originChain = user.chainID;
 		return this.bridgeTransactionService.getAllFiltered(filter);
-	}
-
-	@ApiResponse({
-		status: HttpStatus.OK,
-		type: BridgeTransactionDto,
-		description: 'Success',
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Bad Request',
-	})
-	@HttpCode(HttpStatus.OK)
-	@Post()
-	async create(
-		@Body() model: CreateBridgeTransactionDto,
-	): Promise<BridgeTransactionDto> {
-		return this.bridgeTransactionService.create(model);
-	}
-
-	@ApiResponse({
-		status: HttpStatus.OK,
-		type: BridgeTransactionDto,
-		description: 'Success',
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Bad Request',
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Not Found',
-	})
-	@HttpCode(HttpStatus.OK)
-	@Put()
-	async update(
-		@Body() model: UpdateBridgeTransactionDto,
-	): Promise<BridgeTransactionDto> {
-		return this.bridgeTransactionService.update(model);
 	}
 }
