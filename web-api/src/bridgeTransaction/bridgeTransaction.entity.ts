@@ -25,6 +25,9 @@ export class BridgeTransaction {
 	status: TransactionStatusEnum;
 
 	@Column()
+	sourceTxHash: string;
+
+	@Column()
 	createdAt: Date;
 
 	@Column({ nullable: true })
