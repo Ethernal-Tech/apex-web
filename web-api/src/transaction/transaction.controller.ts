@@ -14,6 +14,8 @@ import {
 } from './transaction.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { User } from 'src/auth/auth.entity';
+import { AuthUser } from 'src/decorators/authUser.decorator';
 
 @ApiTags('Transaction')
 @Controller('transaction')
@@ -33,8 +35,11 @@ export class TransactionController {
 	@HttpCode(HttpStatus.OK)
 	@Post('createBridgingTransaction')
 	async createBridgingTransaction(
+		@AuthUser() user: User,
 		@Body() model: CreateTransactionDto,
 	): Promise<string> {
+		model.senderAddress = user.address;
+		model.originChain = user.chainID;
 		const transaction = await this.transactionService.createTransaction(model);
 		return transaction.to_json();
 	}
@@ -69,8 +74,10 @@ export class TransactionController {
 	@HttpCode(HttpStatus.OK)
 	@Post('submitBridgingTransaction')
 	async submitBridgingTransaction(
+		@AuthUser() user: User,
 		@Body() model: SubmitTransactionDto,
 	): Promise<string> {
+		model.chain = user.chainID;
 		return this.transactionService.submitTransaction(model);
 	}
 }

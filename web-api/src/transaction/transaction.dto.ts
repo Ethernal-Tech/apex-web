@@ -1,11 +1,10 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
 import { ChainEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
 export class CreateTransactionDto {
-	@IsNotEmpty()
-	@ApiProperty()
+	@ApiHideProperty()
 	senderAddress: string;
 
 	@IsNotEmpty()
@@ -17,9 +16,7 @@ export class CreateTransactionDto {
 	@ApiProperty()
 	amount: number;
 
-	@IsNotEmpty()
-	@IsEnum(ChainEnum)
-	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
+	@ApiHideProperty()
 	originChain: ChainEnum;
 
 	@IsNotEmpty()
@@ -40,9 +37,7 @@ export class SignTransactionDto {
 }
 
 export class SubmitTransactionDto {
-	@IsNotEmpty()
-	@IsEnum(ChainEnum)
-	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
+	@ApiHideProperty()
 	chain: ChainEnum;
 
 	@IsNotEmpty()
