@@ -33,6 +33,7 @@ import {
 	SignTransactionDto,
 	SubmitTransactionDto,
 } from './transaction.dto';
+import { splitStringIntoChunks } from 'src/utils/stringUtils';
 
 @Injectable()
 export class TransactionService {
@@ -86,23 +87,41 @@ export class TransactionService {
 
 		const gtm = GeneralTransactionMetadata.new();
 		const map = MetadataMap.new();
-		map.insert_str('chainId', TransactionMetadatum.new_text(destinationChain));
 
 		const map_t1 = MetadataMap.new();
-		map_t1.insert_str(
-			'address',
-			TransactionMetadatum.new_text(receiverAddress),
+		const receiverAddressList = MetadataList.new();
+		const chunkedReceiverAddresses = splitStringIntoChunks(receiverAddress);
+		chunkedReceiverAddresses.forEach((chunk) => {
+			receiverAddressList.add(TransactionMetadatum.new_text(chunk));
+		});
+		map_t1.insert(
+			TransactionMetadatum.new_text('a'),
+			TransactionMetadatum.new_list(receiverAddressList),
 		);
 		map_t1.insert_str(
-			'amount',
+			'm',
 			TransactionMetadatum.new_int(Int.from_str(amount.toString())),
+		);
+
+		map.insert_str('t', TransactionMetadatum.new_text('bridge'));
+		map.insert_str('d', TransactionMetadatum.new_text(destinationChain));
+
+		const senderAddressList = MetadataList.new();
+		const chunkedSenderAddresses = splitStringIntoChunks(senderAddress);
+		chunkedSenderAddresses.forEach((chunk) => {
+			senderAddressList.add(TransactionMetadatum.new_text(chunk));
+		});
+
+		map.insert(
+			TransactionMetadatum.new_text('s'),
+			TransactionMetadatum.new_list(senderAddressList),
 		);
 
 		const list = MetadataList.new();
 		list.add(TransactionMetadatum.new_map(map_t1));
 
 		map.insert(
-			TransactionMetadatum.new_text('transactions'),
+			TransactionMetadatum.new_text('tx'),
 			TransactionMetadatum.new_list(list),
 		);
 
