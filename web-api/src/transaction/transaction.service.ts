@@ -33,10 +33,18 @@ import {
 	SignTransactionDto,
 	SubmitTransactionDto,
 } from './transaction.dto';
+import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
+import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { splitStringIntoChunks } from 'src/utils/stringUtils';
 
 @Injectable()
 export class TransactionService {
+	constructor(
+		@InjectRepository(BridgeTransaction)
+		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
+	) {}
 	async createTransaction({
 		senderAddress,
 		receiverAddress,
@@ -177,6 +185,44 @@ export class TransactionService {
 		const tx = Transaction.from_json(transaction);
 		const context = await createContext(chain);
 		const client = await createTransactionSubmissionClient(context);
+
+		const txJs = tx.auxiliary_data()?.metadata();
+		const metadata = txJs?.get(BigNum.one());
+		const map = metadata?.as_map();
+		const senderAddressArr = map
+			?.get(TransactionMetadatum.new_text('s'))
+			.as_list();
+		const senderAddress = Array(senderAddressArr).join('');
+
+		const destinationChain = map
+			?.get(TransactionMetadatum.new_text('d'))
+			.as_text();
+
+		const transactionsMap = map
+			?.get(TransactionMetadatum.new_text('tx'))
+			.as_list();
+		const metadataTx = transactionsMap?.get(0).as_map();
+
+		const addressArr = metadataTx?.get_str('a').as_list();
+		const address = Array(addressArr).join('');
+
+		const amount = metadataTx?.get_str('m').as_text();
+
+		const entity = new BridgeTransaction();
+
+		entity.senderAddress = senderAddress ?? entity.senderAddress;
+		entity.receiverAddress = address ?? entity.receiverAddress;
+		entity.destinationChain =
+			(destinationChain as ChainEnum) ?? entity.destinationChain;
+		entity.amount = amount ? Number(Int.from_str(amount)) : entity.amount;
+
+		entity.originChain = chain;
+		entity.createdAt = new Date();
+		entity.status = TransactionStatusEnum.Pending;
+
+		const newBridgeTransaction =
+			this.bridgeTransactionRepository.create(entity);
+		await this.bridgeTransactionRepository.save(newBridgeTransaction);
 
 		const res = await client.submitTransaction(tx.to_hex());
 		client.shutdown();
