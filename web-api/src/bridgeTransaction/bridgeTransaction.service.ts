@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { TransactionStatusEnum } from 'src/common/enum';
 import {
 	Between,
 	FindOptionsOrder,
@@ -11,12 +10,17 @@ import {
 } from 'typeorm';
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import {
-	CreateBridgeTransactionDto,
 	BridgeTransactionDto,
-	UpdateBridgeTransactionDto,
 	BridgeTransactionFilterDto,
 	BridgeTransactionResponseDto,
 } from './bridgeTransaction.dto';
+import {
+	getBridgingRequestStates,
+	getNotFinalStateBridgeTransactions,
+	isBridgeTransactionStateFinal,
+	updateBridgeTransactionStates,
+} from './bridgeTransaction.helper';
+import { ChainEnum } from 'src/common/enum';
 
 @Injectable()
 export class BridgeTransactionService {
@@ -25,7 +29,7 @@ export class BridgeTransactionService {
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 	) {}
 
-	async get(id: number): Promise<BridgeTransactionDto> {
+	async get(id: number, chain: ChainEnum): Promise<BridgeTransactionDto> {
 		const entity = await this.bridgeTransactionRepository.findOne({
 			where: { id },
 		});
@@ -33,13 +37,24 @@ export class BridgeTransactionService {
 			throw new NotFoundException();
 		}
 
+		// update status
+		if (!isBridgeTransactionStateFinal(entity)) {
+			const bridgingRequestStates = await getBridgingRequestStates(chain, [
+				entity.sourceTxHash,
+			]);
+			const bridgingRequestState = bridgingRequestStates.find(
+				(state) => state.sourceTxHash === entity.sourceTxHash,
+			);
+			if (
+				bridgingRequestState &&
+				bridgingRequestState.status !== entity.status
+			) {
+				entity.status = bridgingRequestStates[0].status;
+				await this.bridgeTransactionRepository.save(entity);
+			}
+		}
+
 		return this.mapToReponse(entity);
-	}
-
-	async getAll(): Promise<BridgeTransactionDto[]> {
-		const entities = await this.bridgeTransactionRepository.find();
-
-		return entities.map((entity) => this.mapToReponse(entity));
 	}
 
 	async getAllFiltered(
@@ -49,6 +64,7 @@ export class BridgeTransactionService {
 			destinationChain: model.destinationChain,
 			receiverAddress: model.receiverAddress,
 			senderAddress: model.senderAddress,
+			originChain: model.originChain,
 		};
 
 		if (model.amountFrom && model.amountTo) {
@@ -78,58 +94,30 @@ export class BridgeTransactionService {
 				order,
 			});
 
+		// update statuses
+		const notFinalStateEntities = getNotFinalStateBridgeTransactions(entities);
+		const notFinalStateTxHashes = notFinalStateEntities.map(
+			(entity) => entity.sourceTxHash,
+		);
+
+		const bridgingRequestStates = await getBridgingRequestStates(
+			model.originChain,
+			notFinalStateTxHashes,
+		);
+
+		const updatedBridgeTransactions = updateBridgeTransactionStates(
+			notFinalStateEntities,
+			bridgingRequestStates,
+		);
+
+		await this.bridgeTransactionRepository.save(updatedBridgeTransactions);
+
 		return {
 			items: entities.map((entity) => this.mapToReponse(entity)),
 			page: page,
 			perPage: take,
 			total: total,
 		};
-	}
-
-	async create({
-		senderAddress,
-		receiverAddress,
-		destinationChain,
-		originChain,
-		amount,
-	}: CreateBridgeTransactionDto): Promise<BridgeTransactionDto> {
-		let entity = new BridgeTransaction();
-		entity.senderAddress = senderAddress;
-		entity.receiverAddress = receiverAddress;
-		entity.destinationChain = destinationChain;
-		entity.originChain = originChain;
-		entity.amount = amount;
-		entity.createdAt = new Date();
-		entity.status = TransactionStatusEnum.Pending;
-
-		entity = await this.bridgeTransactionRepository.create(entity);
-		entity = await this.bridgeTransactionRepository.save(entity);
-
-		return this.mapToReponse(entity);
-	}
-
-	async update({
-		id,
-		status,
-	}: UpdateBridgeTransactionDto): Promise<BridgeTransactionDto> {
-		let entity = await this.bridgeTransactionRepository.findOne({
-			where: { id },
-		});
-		if (!entity) {
-			throw new NotFoundException();
-		}
-
-		entity.status = status;
-		if (
-			entity.status === TransactionStatusEnum.InvalidRequest ||
-			entity.status === TransactionStatusEnum.FailedToExecuteOnDestination ||
-			entity.status === TransactionStatusEnum.ExecutedOnDestination
-		) {
-			entity.finishedAt = new Date();
-		}
-		entity = await this.bridgeTransactionRepository.save(entity);
-
-		return this.mapToReponse(entity);
 	}
 
 	private mapToReponse(entity: BridgeTransaction): BridgeTransactionDto {

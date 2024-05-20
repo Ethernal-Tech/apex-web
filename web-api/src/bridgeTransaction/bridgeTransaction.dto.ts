@@ -1,46 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
 import { PaginatedDto } from 'src/common/dto';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
-
-export class CreateBridgeTransactionDto {
-	@IsNotEmpty()
-	@ApiProperty()
-	senderAddress: string;
-
-	@IsNotEmpty()
-	@ApiProperty()
-	receiverAddress: string;
-
-	@IsNotEmpty()
-	@IsPositive()
-	@ApiProperty()
-	amount: number;
-
-	@IsNotEmpty()
-	@IsEnum(ChainEnum)
-	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
-	originChain: ChainEnum;
-
-	@IsNotEmpty()
-	@IsEnum(ChainEnum)
-	@NotSame('originChain')
-	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
-	destinationChain: ChainEnum;
-}
-
-export class UpdateBridgeTransactionDto {
-	@IsNotEmpty()
-	@ApiProperty()
-	id: number;
-
-	@ApiProperty({
-		enum: TransactionStatusEnum,
-		enumName: 'TransactionStatusEnum',
-	})
-	status: TransactionStatusEnum;
-}
 
 export class BridgeTransactionDto {
 	@IsNotEmpty()
@@ -90,14 +52,17 @@ export class BridgeTransactionDto {
 }
 
 export class BridgeTransactionFilterDto extends PaginatedDto {
-	// obratinet from jwt token
+	@ApiHideProperty()
 	senderAddress: string;
+
+	@ApiHideProperty()
+	originChain: ChainEnum;
 
 	@ApiProperty({
 		nullable: true,
 		required: false,
-		enum: TransactionStatusEnum,
-		enumName: 'TransactionStatusEnum',
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
 	})
 	destinationChain?: ChainEnum;
 
