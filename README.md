@@ -35,8 +35,11 @@ Save
 ### Step 3
 
 From pgAdmin4 open context menu for local server (Local from Step 2), and select Create -> Login/Group Role...
+
 General - Name: apexuser (.env file)
+
 Definition - Password: qwerty12AB (.env file)
+
 Privileges - Check all
 
 Save
@@ -44,7 +47,9 @@ Save
 ### Step 4
 
 From pgAdmin4 open context menu for local server (Local from Step 2), and select Create -> Database...
+
 General - Database: apex (.env file)
+
 Owner - apexuser
 
 Save
