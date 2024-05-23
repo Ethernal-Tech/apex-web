@@ -34,6 +34,7 @@ function LoginPage() {
 		try {
 			const wallet = await BrowserWallet.enable(selectedWallet.name);
 			if (wallet && wallet instanceof BrowserWallet)  {
+				// TODO: this probably should not be stake address
 				const stakeAddress = await getStakeAddress(wallet);
 				const address = stakeAddress.to_bech32();
 				const bindedGenerateLoginCodeAction = generateLoginCodeAction.bind(null, new GenerateLoginCodeDto({ address, chainID }));

@@ -1,6 +1,7 @@
 import { BridgingRequestStateDto } from 'src/blockchain/dto';
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import { TransactionStatusEnum } from 'src/common/enum';
+import axios from 'axios';
 
 export const getBridgingRequestStates = async (
 	chainId: string,
@@ -15,15 +16,13 @@ export const getBridgingRequestStates = async (
 		apiUrl += `&txHash=${txHash}`;
 	}
 
-	const response = await fetch(apiUrl, {
+	const response = await axios.get(apiUrl, {
 		headers: {
 			'X-API-KEY': oracleApiKey,
 		},
 	});
 
-	const jsonResponse = await response.json();
-
-	return jsonResponse as BridgingRequestStateDto[];
+	return response.data as BridgingRequestStateDto[];
 };
 
 export const isBridgeTransactionStateFinal = (entity: BridgeTransaction) => {
