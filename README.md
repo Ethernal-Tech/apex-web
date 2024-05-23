@@ -16,10 +16,10 @@ If you already have PostgreSQL installed and have set up the password for the 'p
 Open a terminal and switch to the postgres system user. Once you are the postgres user, access the PostgreSQL command line interface. Reset the password for the postgres user. Replace "postgres" with your desired password.
 
 ```bash
-sudo -i -u postgres
-psql
-ALTER USER postgres PASSWORD 'postgres';
-\q
+$ sudo -i -u postgres
+$ psql
+$ ALTER USER postgres PASSWORD 'postgres';
+$ \q
 ```
 
 ### Step 2
