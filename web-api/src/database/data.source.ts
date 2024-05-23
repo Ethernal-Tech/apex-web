@@ -11,7 +11,7 @@ export const dbdatasource: DataSourceOptions = {
 	username: process.env.DB_USERNAME,
 	password: process.env.DB_PASSWORD,
 	database: process.env.DB_NAME,
-	// TODO: set synchronize to false and uncomment code below
+	// TODO: for production set synchronize to false and uncomment code below, and generate migrations
 	synchronize: true,
 	entities: ['dist/**/*.entity.js'],
 	// ssl: process.env.DB_SSL === 'true',

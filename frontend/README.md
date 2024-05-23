@@ -20,3 +20,8 @@ Run `npm run build` to build the app
 
 - User addresses and private keys can be found after running `./scripts/reset_all.sh`, or in `./relayer/.env`
 - Minimum amount to send is `849070`
+
+## Generating Swagger client file
+
+- Must have .net 6.0 sdk installed
+- `npx nswag run ./frontend/src/swagger/apexBridgeService.nswag`

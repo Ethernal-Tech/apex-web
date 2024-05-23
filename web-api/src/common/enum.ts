@@ -10,6 +10,6 @@ export enum TransactionStatusEnum {
 }
 
 export enum ChainEnum {
-	Prime = 'Prime',
-	Vector = 'Vector',
+	Prime = 'prime',
+	Vector = 'vector',
 }

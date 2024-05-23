@@ -1,7 +1,16 @@
 import { BridgingRequestStateDto } from 'src/blockchain/dto';
 import { BridgeTransaction } from './bridgeTransaction.entity';
-import { TransactionStatusEnum } from 'src/common/enum';
 import axios from 'axios';
+import { TransactionStatusEnum } from 'src/common/enum';
+
+export const BridgingRequestNotFinalStates = [
+	TransactionStatusEnum.Pending,
+	TransactionStatusEnum.DiscoveredOnSource,
+	TransactionStatusEnum.SubmittedToBridge,
+	TransactionStatusEnum.IncludedInBatch,
+	TransactionStatusEnum.SubmittedToDestination,
+	TransactionStatusEnum.FailedToExecuteOnDestination,
+];
 
 export const getBridgingRequestStates = async (
 	chainId: string,
@@ -22,37 +31,39 @@ export const getBridgingRequestStates = async (
 		},
 	});
 
-	return response.data as BridgingRequestStateDto[];
-};
-
-export const isBridgeTransactionStateFinal = (entity: BridgeTransaction) => {
-	const status = entity.status;
-	return (
-		status === TransactionStatusEnum.InvalidRequest ||
-		status === TransactionStatusEnum.ExecutedOnDestination
-	);
-};
-
-export const getNotFinalStateBridgeTransactions = (
-	entities: BridgeTransaction[],
-) => {
-	return entities.filter((entity) => !isBridgeTransactionStateFinal(entity));
+	return response.data as { [key: string]: BridgingRequestStateDto };
 };
 
 export const updateBridgeTransactionStates = (
 	entities: BridgeTransaction[],
-	newBridgingRequestStates: BridgingRequestStateDto[],
+	newBridgingRequestStates: { [key: string]: BridgingRequestStateDto },
 ) => {
 	const statusUpdatedBridgeTransactions: BridgeTransaction[] = [];
 
-	for (const bridgeRequestState of newBridgingRequestStates) {
-		const currentEntity = entities.find(
-			(entity) => entity.sourceTxHash === bridgeRequestState.sourceTxHash,
+	const notFinalStates: { [key: string]: boolean } =
+		BridgingRequestNotFinalStates.reduce(
+			(acc: { [key: string]: boolean }, cv: TransactionStatusEnum) => ({
+				...acc,
+				[cv]: true,
+			}),
+			{},
 		);
-		if (currentEntity && currentEntity.status !== bridgeRequestState.status) {
-			currentEntity.status = bridgeRequestState.status;
-			statusUpdatedBridgeTransactions.push(currentEntity);
+
+	for (const entity of entities) {
+		const state = newBridgingRequestStates[entity.sourceTxHash];
+		if (!state) {
+			continue;
+		}
+
+		if (entity.status !== state.status) {
+			entity.status = state.status;
+			if (!notFinalStates[entity.status]) {
+				entity.finishedAt = new Date();
+			}
+
+			statusUpdatedBridgeTransactions.push(entity);
 		}
 	}
+
 	return statusUpdatedBridgeTransactions;
 };

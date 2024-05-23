@@ -22,7 +22,7 @@ function LoginPage() {
 		[]
 	)
 
-	const chainID = ChainEnum.Prime; // hardcoded value for now
+	const chainId = ChainEnum.Prime; // hardcoded value for now
 
 	async function handleWalletClick(selectedWallet: Wallet) {
 		if (!selectedWallet) {
@@ -37,7 +37,9 @@ function LoginPage() {
 				// TODO: this probably should not be stake address
 				const stakeAddress = await getStakeAddress(wallet);
 				const address = stakeAddress.to_bech32();
-				const bindedGenerateLoginCodeAction = generateLoginCodeAction.bind(null, new GenerateLoginCodeDto({ address, chainID }));
+				const bindedGenerateLoginCodeAction = generateLoginCodeAction.bind(null, new GenerateLoginCodeDto({
+					address, chainId,
+				}));
 				const loginCode = await fetchFunction(bindedGenerateLoginCodeAction);
 				if (!loginCode) {
 					setConnecting(false);
@@ -49,7 +51,7 @@ function LoginPage() {
 				const loginModel = new LoginDto({
 					address,
 					signedLoginCode: new DataSignatureDto(signedData),
-					chainID
+					chainId,
 				});
 				
 				const bindedLoginAction = loginAction.bind(null, loginModel);

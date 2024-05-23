@@ -1,9 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Cron, SchedulerRegistry } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
 	Between,
 	FindOptionsOrder,
 	FindOptionsWhere,
+	In,
 	LessThanOrEqual,
 	MoreThanOrEqual,
 	Repository,
@@ -15,9 +17,8 @@ import {
 	BridgeTransactionResponseDto,
 } from './bridgeTransaction.dto';
 import {
+	BridgingRequestNotFinalStates,
 	getBridgingRequestStates,
-	getNotFinalStateBridgeTransactions,
-	isBridgeTransactionStateFinal,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
 import { ChainEnum } from 'src/common/enum';
@@ -27,31 +28,15 @@ export class BridgeTransactionService {
 	constructor(
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
+		private readonly schedulerRegistry: SchedulerRegistry,
 	) {}
 
-	async get(id: number, chain: ChainEnum): Promise<BridgeTransactionDto> {
+	async get(id: number): Promise<BridgeTransactionDto> {
 		const entity = await this.bridgeTransactionRepository.findOne({
 			where: { id },
 		});
 		if (!entity) {
 			throw new NotFoundException();
-		}
-
-		// update status
-		if (!isBridgeTransactionStateFinal(entity)) {
-			const bridgingRequestStates = await getBridgingRequestStates(chain, [
-				entity.sourceTxHash,
-			]);
-			const bridgingRequestState = bridgingRequestStates.find(
-				(state) => state.sourceTxHash === entity.sourceTxHash,
-			);
-			if (
-				bridgingRequestState &&
-				bridgingRequestState.status !== entity.status
-			) {
-				entity.status = bridgingRequestStates[0].status;
-				await this.bridgeTransactionRepository.save(entity);
-			}
 		}
 
 		return this.mapToReponse(entity);
@@ -62,7 +47,6 @@ export class BridgeTransactionService {
 	): Promise<BridgeTransactionResponseDto> {
 		const where: FindOptionsWhere<BridgeTransaction> = {
 			destinationChain: model.destinationChain,
-			receiverAddress: model.receiverAddress,
 			senderAddress: model.senderAddress,
 			originChain: model.originChain,
 		};
@@ -94,24 +78,6 @@ export class BridgeTransactionService {
 				order,
 			});
 
-		// update statuses
-		const notFinalStateEntities = getNotFinalStateBridgeTransactions(entities);
-		const notFinalStateTxHashes = notFinalStateEntities.map(
-			(entity) => entity.sourceTxHash,
-		);
-
-		const bridgingRequestStates = await getBridgingRequestStates(
-			model.originChain,
-			notFinalStateTxHashes,
-		);
-
-		const updatedBridgeTransactions = updateBridgeTransactionStates(
-			notFinalStateEntities,
-			bridgingRequestStates,
-		);
-
-		await this.bridgeTransactionRepository.save(updatedBridgeTransactions);
-
 		return {
 			items: entities.map((entity) => this.mapToReponse(entity)),
 			page: page,
@@ -120,11 +86,49 @@ export class BridgeTransactionService {
 		};
 	}
 
+	// every 10 seconds
+	@Cron('*/10 * * * * *', { name: 'updateStatusesJob' })
+	async updateStatuses(): Promise<void> {
+		const job = this.schedulerRegistry.getCronJob('updateStatusesJob');
+		job.stop();
+		try {
+			const chains = [ChainEnum.Prime, ChainEnum.Vector];
+			for (const chain of chains) {
+				const entities = await this.bridgeTransactionRepository.find({
+					where: {
+						status: In(BridgingRequestNotFinalStates),
+					},
+				});
+				if (entities.length > 0) {
+					const notFinalStateTxHashes = entities.map(
+						(entity) => entity.sourceTxHash,
+					);
+
+					const bridgingRequestStates = await getBridgingRequestStates(
+						chain,
+						notFinalStateTxHashes,
+					);
+
+					const updatedBridgeTransactions = updateBridgeTransactionStates(
+						entities,
+						bridgingRequestStates,
+					);
+					await this.bridgeTransactionRepository.save(
+						updatedBridgeTransactions,
+					);
+				}
+			}
+		} finally {
+			job.start();
+			console.log('Job updateStatusesJob executed');
+		}
+	}
+
 	private mapToReponse(entity: BridgeTransaction): BridgeTransactionDto {
 		const response = new BridgeTransactionDto();
 		response.id = entity.id;
 		response.senderAddress = entity.senderAddress;
-		response.receiverAddress = entity.receiverAddress;
+		response.receiverAddresses = entity.receiverAddresses;
 		response.destinationChain = entity.destinationChain;
 		response.originChain = entity.originChain;
 		response.amount = entity.amount;

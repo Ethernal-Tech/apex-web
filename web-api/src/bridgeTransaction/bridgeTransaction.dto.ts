@@ -15,7 +15,7 @@ export class BridgeTransactionDto {
 
 	@IsNotEmpty()
 	@ApiProperty()
-	receiverAddress: string;
+	receiverAddresses: string;
 
 	@IsNotEmpty()
 	@IsPositive()
@@ -65,9 +65,6 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 		enumName: 'ChainEnum',
 	})
 	destinationChain?: ChainEnum;
-
-	@ApiProperty({ nullable: true, required: false })
-	receiverAddress?: string;
 
 	@ApiProperty({ nullable: true, required: false })
 	amountFrom?: number;

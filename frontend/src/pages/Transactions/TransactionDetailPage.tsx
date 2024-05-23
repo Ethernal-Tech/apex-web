@@ -1,30 +1,46 @@
 import { Link as RouterLink,useParams } from 'react-router-dom';
 import { Box, Link, Typography } from '@mui/material';
 import BasePage from '../base/BasePage';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { HOME_ROUTE } from '../PageRouter';
 import { BridgeTransactionDto } from '../../swagger/apexBridgeApiService';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getAction } from './action';
-import { getStatusColor } from '../../utils/statusUtils';
+import { getStatusColor, getStatusText, isStatusFinal } from '../../utils/statusUtils';
+import { capitalizeWord } from '../../utils/generalUtils';
 
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [transaction, setTransaction] = useState<BridgeTransactionDto | undefined>(undefined);
 	const fetchFunction = useTryCatchJsonByAction();
 
+  const fetchTx = useCallback(async () => {
+    if (id) {
+      const bindedAction = getAction.bind(null, parseInt(id));
+      const response = await fetchFunction(bindedAction);
+      setTransaction(response);
+
+      return response;
+    }
+  }, [fetchFunction, id])
 
 	useEffect(() => {
-		(async () => {
-			if (id) {
-				const bindedAction = getAction.bind(null, parseInt(id));
-				const response = await fetchFunction(bindedAction);
-				setTransaction(response);
-			}
-		})();
-	}, [id, fetchFunction]);
+		fetchTx()
+
+    const handle = setInterval(async () => {
+      const tx = await fetchTx();
+      if (tx && isStatusFinal(tx.status)) {
+        clearInterval(handle);
+      }
+    }, 5000);
+
+    return () => {
+      clearInterval(handle);
+    }
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
   return (
     <BasePage>
@@ -49,13 +65,13 @@ const TransactionDetailPage = () => {
               <Typography variant="subtitle2">
                 Origin Chain:
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.originChain}</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{capitalizeWord(transaction?.originChain || '')}</Typography>
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="subtitle2">
                 Destination Chain:
               </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.destinationChain}</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{capitalizeWord(transaction?.destinationChain || '')}</Typography>
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="subtitle2">Amount:</Typography>
@@ -66,16 +82,16 @@ const TransactionDetailPage = () => {
               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.senderAddress}</Typography>
             </Box>
             <Box sx={{ mb: 1 }}>
-              <Typography variant="subtitle2">Receiver address:</Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.receiverAddress}</Typography>
+              <Typography variant="subtitle2">Receiver addresses:</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.receiverAddresses}</Typography>
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="subtitle2">Date created:</Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.createdAt.toLocaleDateString()}</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.createdAt.toLocaleString()}</Typography>
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="subtitle2">Date finished:</Typography>
-              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.finishedAt?.toLocaleDateString() || "/"}</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{transaction?.finishedAt?.toLocaleString() || "/"}</Typography>
             </Box>
             <Box sx={{ mb: 1 }}>
               <Typography variant="subtitle2">Status:</Typography>
@@ -83,7 +99,7 @@ const TransactionDetailPage = () => {
                 fontWeight: 'bold',
                 color: transaction && getStatusColor(transaction.status),
                 textTransform: 'uppercase'
-              }}>{transaction?.status}</Typography>
+              }}>{getStatusText(transaction?.status || '')}</Typography>
             </Box>
           </Box>
           <Box sx={{ flex: '1 1 50%', display: 'flex', justifyContent: 'center' }}>

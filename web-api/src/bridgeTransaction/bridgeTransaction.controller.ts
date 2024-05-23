@@ -38,11 +38,8 @@ export class BridgeTransactionController {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get(':id')
-	async get(
-		@Param('id') id: number,
-		@AuthUser() user: User,
-	): Promise<BridgeTransactionDto> {
-		return this.bridgeTransactionService.get(id, user.chainID);
+	async get(@Param('id') id: number): Promise<BridgeTransactionDto> {
+		return this.bridgeTransactionService.get(id);
 	}
 
 	@ApiResponse({
@@ -58,7 +55,7 @@ export class BridgeTransactionController {
 		@AuthUser() user: User,
 	): Promise<BridgeTransactionResponseDto> {
 		filter.senderAddress = user.address;
-		filter.originChain = user.chainID;
+		filter.originChain = user.chainId;
 		return this.bridgeTransactionService.getAllFiltered(filter);
 	}
 }

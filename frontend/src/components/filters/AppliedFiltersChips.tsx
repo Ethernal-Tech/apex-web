@@ -12,14 +12,12 @@ const mapKeyToWord: { [key: string]: string } = {
 	amountFrom: 'From',
 	amountTo: 'To',
 	destinationChain: 'Destination chain',
-	receiverAddress: 'Receiver address'
 }
 
 const filterProps: string[] = [
 	'amountTo',
 	'amountFrom',
 	'destinationChain',
-	'receiverAddress'
 ]
 
 function AppliedFiltersChips({ filters, removeFilter, resetFilters }: Props) {

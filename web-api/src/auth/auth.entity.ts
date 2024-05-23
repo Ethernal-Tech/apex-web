@@ -13,7 +13,7 @@ export class LoginCode {
 	code: string;
 
 	@Column({ type: 'enum', enum: ChainEnum, default: ChainEnum.Prime })
-	chainID: ChainEnum;
+	chainId: ChainEnum;
 }
 
 @Entity('users')
@@ -28,5 +28,5 @@ export class User {
 	createdAt: Date;
 
 	@Column({ type: 'enum', enum: ChainEnum, default: ChainEnum.Prime })
-	chainID: ChainEnum;
+	chainId: ChainEnum;
 }

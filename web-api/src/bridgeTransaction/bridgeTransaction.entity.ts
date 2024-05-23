@@ -10,7 +10,7 @@ export class BridgeTransaction {
 	senderAddress: string;
 
 	@Column()
-	receiverAddress: string;
+	receiverAddresses: string;
 
 	@Column()
 	amount: number;

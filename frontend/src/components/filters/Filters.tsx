@@ -6,6 +6,7 @@ import FilterList from '@mui/icons-material/FilterList';
 import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
 import AppliedFiltersChips from './AppliedFiltersChips';
 import { BridgeTransactionFilterDto, ChainEnum, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
+import { capitalizeWord } from '../../utils/generalUtils';
 
 const style = {
     position: 'absolute' as 'absolute',
@@ -66,7 +67,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
 	)
 
 	const changeCallback = useCallback(
-		(e:  React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<TransactionStatusEnum>) => {
+		(e:  React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<TransactionStatusEnum> | SelectChangeEvent<ChainEnum>) => {
 			setValues((state) => new BridgeTransactionFilterDto({
 				...state,
 				page: 0,
@@ -117,19 +118,10 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                 onChange={changeCallback}
                             >
 								{Object.values(ChainEnum).map(chain => (
-									<MenuItem key={chain} value={chain}>{chain}</MenuItem>
+									<MenuItem key={chain} value={chain}>{capitalizeWord(chain)}</MenuItem>
 								))}
                             </Select>
                         </FormControl>
-                        <TextField
-                            id="receiver-address"
-                            name={'receiverAddress'}
-                            label="Receiver Address"
-                            variant="outlined"
-                            size="small"
-                            value={values.receiverAddress}
-                            onChange={changeCallback}
-                        />
                         <Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <TextField

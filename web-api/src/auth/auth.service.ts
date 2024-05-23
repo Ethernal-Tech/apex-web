@@ -38,11 +38,11 @@ export class AuthService {
 	) {}
 	async generateLoginCode({
 		address,
-		chainID
+		chainId,
 	}: GenerateLoginCodeDto): Promise<LoginCodeDto> {
 		const oldCode = await this.loginCodeRepository.findOneBy({
 			address: address.toLowerCase(),
-			chainID: chainID
+			chainId: chainId,
 		});
 		if (oldCode !== null) {
 			await this.loginCodeRepository.delete(oldCode);
@@ -50,7 +50,7 @@ export class AuthService {
 		const code = this.loginCodeRepository.create({
 			address: address.toLowerCase(),
 			code: randomUUID(),
-			chainID: chainID
+			chainId: chainId,
 		});
 
 		await this.loginCodeRepository.save(code);
@@ -60,13 +60,15 @@ export class AuthService {
 	async login(model: LoginDto): Promise<TokenDto> {
 		const loginCode = await this.loginCodeRepository.findOneBy({
 			address: model.address.toLowerCase(),
-			chainID: model.chainID
+			chainId: model.chainId,
 		});
 		if (!loginCode) {
 			throw new BadRequestException();
 		}
+		console.log('use pk: ' + process.env.USE_PRIVATE_KEY);
 
 		if (
+			process.env.USE_PRIVATE_KEY != 'true' &&
 			!this.verifySignedCode(
 				loginCode.address,
 				loginCode.code,
@@ -78,14 +80,14 @@ export class AuthService {
 
 		let user = await this.userRepository.findOneBy({
 			address: loginCode.address.toLowerCase(),
-			chainID: model.chainID
+			chainId: model.chainId,
 		});
 
 		if (!user) {
 			user = this.userRepository.create({
 				address: loginCode.address.toLowerCase(),
 				createdAt: new Date(),
-				chainID: loginCode.chainID
+				chainId: loginCode.chainId,
 			});
 			await this.userRepository.save(user);
 		}
@@ -94,6 +96,7 @@ export class AuthService {
 
 		const response = new TokenDto();
 		response.address = user.address;
+		response.chainId = user.chainId;
 		const tokenValidHours = +this.configService.get<number>(
 			'APP_ACCESS_TOKEN_VALIDITY_HOURS',
 		)!;

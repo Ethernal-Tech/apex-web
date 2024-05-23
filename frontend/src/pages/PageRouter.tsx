@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import NewTransactionPage from './Transactions/NewTransactionPage';
+import PKLoginPage from './Login/PKLoginPage';
 import LoginPage from './Login/LoginPage';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import TransactionsTablePage from './Transactions/TransactionsTablePage';
 import TransactionDetailPage from './Transactions/TransactionDetailPage';
+import appSettings from '../settings/appSettings';
 
 export const LOGIN_ROUTE = '/login';
 export const HOME_ROUTE = '/';
@@ -24,7 +26,9 @@ function PageRouter() {
 	)
 
 	const renderLoginPage = useMemo(
-		() => !isLoggedInMemo ? <LoginPage /> : <Navigate to={HOME_ROUTE} />,
+		() => !isLoggedInMemo
+			? (appSettings.usePrivateKey ? <PKLoginPage /> : <LoginPage />)
+			: <Navigate to={HOME_ROUTE} />,
 		[isLoggedInMemo]
 	)
 

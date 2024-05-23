@@ -17,8 +17,8 @@ export const headCells: readonly HeadCell[] = [
         label: 'Amount',
     },
     {
-        id: 'receiverAddress',
-        label: 'Receiver Address',
+        id: 'receiverAddresses',
+        label: 'Receiver Addresses',
     },
     {
         id: 'createdAt',

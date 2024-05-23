@@ -9,7 +9,7 @@ import { visuallyHidden } from '@mui/utils';
 import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
-import { getStatusColor } from '../../utils/statusUtils';
+import { getStatusColor, getStatusText, isStatusFinal } from '../../utils/statusUtils';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
@@ -21,12 +21,14 @@ const TransactionsTablePage = () => {
 	const [filters, setFilters] = useState(new BridgeTransactionFilterDto());
 
     const fetchDataCallback = useCallback(
-		async () => {
-			setIsLoading(true);
+		async (hideLoading: boolean = false) => {
+			!hideLoading && setIsLoading(true);
 			const bindedAction = getAllFilteredAction.bind(null, filters);
 			const response = await fetchFunction(bindedAction);
 			setTransactions(response);
-			setIsLoading(false);
+			!hideLoading && setIsLoading(false);
+
+      return response
 		},
 		[filters, fetchFunction]
 	)
@@ -37,6 +39,23 @@ const TransactionsTablePage = () => {
 		},
 		[fetchDataCallback]
 	)
+
+  useEffect(
+    () => {
+      const handle = setInterval(async () => {
+        const resp = await fetchDataCallback(true);
+        if (resp.items.every(x => isStatusFinal(x.status))) {
+          clearInterval(handle);
+        }
+      }, 5000);
+
+      return () => {
+        clearInterval(handle);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  )
 
 	const handleChangePage = (
 		event: MouseEvent<HTMLButtonElement> | null,
@@ -114,17 +133,17 @@ const TransactionsTablePage = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {transactions?.items.map((transaction, index) => (
-            <TableRow key={`tx-${index}`}>
+          {transactions?.items.map((transaction) => (
+            <TableRow key={`tx-${transaction.id}`}>
               <TableCell>{transaction.originChain}</TableCell>
               <TableCell>{transaction.destinationChain}</TableCell>
               <TableCell>{transaction.amount}</TableCell>
-              <TableCell>{transaction.receiverAddress}</TableCell>
+              <TableCell>{transaction.receiverAddresses}</TableCell>
               <TableCell>{transaction.createdAt.toLocaleString()}</TableCell>
               <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
               <TableCell>
                 <Chip 
-                  label={transaction.status}
+                  label={getStatusText(transaction.status)}
                   sx={{
                     bgcolor: getStatusColor(transaction.status),
                     color: 'white',

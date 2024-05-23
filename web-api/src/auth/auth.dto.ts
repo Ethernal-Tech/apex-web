@@ -10,15 +10,15 @@ export class GenerateLoginCodeDto {
 
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
-	@ApiProperty()
-	chainID: ChainEnum;
+	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
+	chainId: ChainEnum;
 }
 
 export class LoginCodeDto {
 	constructor(loginCode: LoginCodeDto) {
 		this.address = loginCode.address;
 		this.code = loginCode.code;
-		this.chainID = loginCode.chainID;
+		this.chainId = loginCode.chainId;
 	}
 
 	@IsNotEmpty()
@@ -33,8 +33,8 @@ export class LoginCodeDto {
 
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
-	@ApiProperty()
-	chainID: ChainEnum;
+	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
+	chainId: ChainEnum;
 }
 
 export class DataSignatureDto {
@@ -61,8 +61,8 @@ export class LoginDto {
 
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
-	@ApiProperty()
-	chainID: ChainEnum;
+	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
+	chainId: ChainEnum;
 }
 
 export class TokenDto {
@@ -83,6 +83,6 @@ export class TokenDto {
 
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
-	@ApiProperty()
-	chainID: ChainEnum;
+	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
+	chainId: ChainEnum;
 }

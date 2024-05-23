@@ -9,8 +9,11 @@ import {
 import { TransactionService } from './transaction.service';
 import {
 	CreateTransactionDto,
+	CreateTransactionResponseDto,
 	SignTransactionDto,
 	SubmitTransactionDto,
+	SubmitTransactionResponseDto,
+	TransactionResponseDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from 'src/guards/auth.guard';
@@ -25,7 +28,7 @@ export class TransactionController {
 
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: String,
+		type: CreateTransactionResponseDto,
 		description: 'Success',
 	})
 	@ApiResponse({
@@ -37,16 +40,15 @@ export class TransactionController {
 	async createBridgingTransaction(
 		@AuthUser() user: User,
 		@Body() model: CreateTransactionDto,
-	): Promise<string> {
+	): Promise<CreateTransactionResponseDto> {
 		model.senderAddress = user.address;
-		model.originChain = user.chainID;
-		const transaction = await this.transactionService.createTransaction(model);
-		return transaction.to_json();
+		model.originChain = user.chainId;
+		return await this.transactionService.createTransaction(model);
 	}
 
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: String,
+		type: TransactionResponseDto,
 		description: 'Success',
 	})
 	@ApiResponse({
@@ -57,14 +59,13 @@ export class TransactionController {
 	@Post('signBridgingTransaction')
 	async signBridgingTransaction(
 		@Body() model: SignTransactionDto,
-	): Promise<string> {
-		const transaction = await this.transactionService.signTransaction(model);
-		return transaction.to_json();
+	): Promise<TransactionResponseDto> {
+		return await this.transactionService.signTransaction(model);
 	}
 
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: String,
+		type: SubmitTransactionResponseDto,
 		description: 'Success',
 	})
 	@ApiResponse({
@@ -76,8 +77,9 @@ export class TransactionController {
 	async submitBridgingTransaction(
 		@AuthUser() user: User,
 		@Body() model: SubmitTransactionDto,
-	): Promise<string> {
-		model.chain = user.chainID;
+	): Promise<SubmitTransactionResponseDto> {
+		model.senderAddress = user.address;
+		model.originChain = user.chainId;
 		return this.transactionService.submitTransaction(model);
 	}
 }
