@@ -10,6 +10,7 @@ import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusColor, getStatusText, isStatusFinal } from '../../utils/statusUtils';
+import { capitalizeWord } from '../../utils/generalUtils';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
@@ -135,8 +136,8 @@ const TransactionsTablePage = () => {
         <TableBody>
           {transactions?.items.map((transaction) => (
             <TableRow key={`tx-${transaction.id}`}>
-              <TableCell>{transaction.originChain}</TableCell>
-              <TableCell>{transaction.destinationChain}</TableCell>
+              <TableCell>{capitalizeWord(transaction.originChain)}</TableCell>
+              <TableCell>{capitalizeWord(transaction.destinationChain)}</TableCell>
               <TableCell>{transaction.amount}</TableCell>
               <TableCell>{transaction.receiverAddresses}</TableCell>
               <TableCell>{transaction.createdAt.toLocaleString()}</TableCell>
