@@ -52,7 +52,7 @@ export class SignTransactionDto {
 	txHash: string;
 }
 
-export class SubmitTransactionDto {
+export class TransactionSubmittedDto {
 	@ApiHideProperty()
 	originChain: ChainEnum;
 
@@ -64,10 +64,6 @@ export class SubmitTransactionDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	originTxHash: string;
-
-	@IsNotEmpty()
-	@ApiProperty()
-	signedTxRaw: string;
 
 	@ApiHideProperty()
 	senderAddress: string;
@@ -81,6 +77,12 @@ export class SubmitTransactionDto {
 	@IsPositive()
 	@ApiProperty()
 	amount: number;
+}
+
+export class SubmitTransactionDto extends TransactionSubmittedDto {
+	@IsNotEmpty()
+	@ApiProperty()
+	signedTxRaw: string;
 }
 
 export class SubmitTransactionResponseDto {

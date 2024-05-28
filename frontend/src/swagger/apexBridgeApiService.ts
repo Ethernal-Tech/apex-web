@@ -161,6 +161,49 @@ export class TransactionControllerClient extends BaseClient {
         }
         return Promise.resolve<SubmitTransactionResponseDto>(null as any);
     }
+
+    /**
+     * @return Success
+     */
+    bridgingTransactionSubmitted(body: TransactionSubmittedDto): Promise<void> {
+        let url_ = this.baseUrl + "/transaction/bridgingTransactionSubmitted";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processBridgingTransactionSubmitted(_response);
+        });
+    }
+
+    protected processBridgingTransactionSubmitted(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
 }
 
 export class AuthControllerClient extends BaseClient {
@@ -661,9 +704,9 @@ export interface ITransactionResponseDto {
 export class SubmitTransactionDto implements ISubmitTransactionDto {
     destinationChain!: ChainEnum;
     originTxHash!: string;
-    signedTxRaw!: string;
     receiverAddrs!: string[];
     amount!: number;
+    signedTxRaw!: string;
 
     [key: string]: any;
 
@@ -687,13 +730,13 @@ export class SubmitTransactionDto implements ISubmitTransactionDto {
             }
             this.destinationChain = _data["destinationChain"];
             this.originTxHash = _data["originTxHash"];
-            this.signedTxRaw = _data["signedTxRaw"];
             if (Array.isArray(_data["receiverAddrs"])) {
                 this.receiverAddrs = [] as any;
                 for (let item of _data["receiverAddrs"])
                     this.receiverAddrs!.push(item);
             }
             this.amount = _data["amount"];
+            this.signedTxRaw = _data["signedTxRaw"];
         }
     }
 
@@ -712,13 +755,13 @@ export class SubmitTransactionDto implements ISubmitTransactionDto {
         }
         data["destinationChain"] = this.destinationChain;
         data["originTxHash"] = this.originTxHash;
-        data["signedTxRaw"] = this.signedTxRaw;
         if (Array.isArray(this.receiverAddrs)) {
             data["receiverAddrs"] = [];
             for (let item of this.receiverAddrs)
                 data["receiverAddrs"].push(item);
         }
         data["amount"] = this.amount;
+        data["signedTxRaw"] = this.signedTxRaw;
         return data;
     }
 }
@@ -726,9 +769,9 @@ export class SubmitTransactionDto implements ISubmitTransactionDto {
 export interface ISubmitTransactionDto {
     destinationChain: ChainEnum;
     originTxHash: string;
-    signedTxRaw: string;
     receiverAddrs: string[];
     amount: number;
+    signedTxRaw: string;
 
     [key: string]: any;
 }
@@ -777,6 +820,77 @@ export class SubmitTransactionResponseDto implements ISubmitTransactionResponseD
 
 export interface ISubmitTransactionResponseDto {
     txId: string;
+
+    [key: string]: any;
+}
+
+export class TransactionSubmittedDto implements ITransactionSubmittedDto {
+    destinationChain!: ChainEnum;
+    originTxHash!: string;
+    receiverAddrs!: string[];
+    amount!: number;
+
+    [key: string]: any;
+
+    constructor(data?: ITransactionSubmittedDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+        if (!data) {
+            this.receiverAddrs = [];
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.destinationChain = _data["destinationChain"];
+            this.originTxHash = _data["originTxHash"];
+            if (Array.isArray(_data["receiverAddrs"])) {
+                this.receiverAddrs = [] as any;
+                for (let item of _data["receiverAddrs"])
+                    this.receiverAddrs!.push(item);
+            }
+            this.amount = _data["amount"];
+        }
+    }
+
+    static fromJS(data: any): TransactionSubmittedDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TransactionSubmittedDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["destinationChain"] = this.destinationChain;
+        data["originTxHash"] = this.originTxHash;
+        if (Array.isArray(this.receiverAddrs)) {
+            data["receiverAddrs"] = [];
+            for (let item of this.receiverAddrs)
+                data["receiverAddrs"].push(item);
+        }
+        data["amount"] = this.amount;
+        return data;
+    }
+}
+
+export interface ITransactionSubmittedDto {
+    destinationChain: ChainEnum;
+    originTxHash: string;
+    receiverAddrs: string[];
+    amount: number;
 
     [key: string]: any;
 }

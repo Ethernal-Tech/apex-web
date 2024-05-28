@@ -12,6 +12,7 @@ import {
 	SubmitTransactionDto,
 	SubmitTransactionResponseDto,
 	TransactionResponseDto,
+	TransactionSubmittedDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
@@ -71,15 +72,14 @@ export class TransactionService {
 		return tx;
 	}
 
-	async submitTransaction({
+	async transactionSubmitted({
 		originChain,
 		destinationChain,
 		originTxHash,
-		signedTxRaw,
 		senderAddress,
 		receiverAddrs,
 		amount,
-	}: SubmitTransactionDto): Promise<SubmitTransactionResponseDto> {
+	}: TransactionSubmittedDto): Promise<void> {
 		const entity = new BridgeTransaction();
 
 		const receiverAddresses = receiverAddrs.join(', ');
@@ -95,12 +95,16 @@ export class TransactionService {
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;
 
-		const txId = await submitTransaction(originChain, signedTxRaw);
-
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
 		await this.bridgeTransactionRepository.save(newBridgeTransaction);
+	}
 
+	async submitTransaction(
+		dto: SubmitTransactionDto,
+	): Promise<SubmitTransactionResponseDto> {
+		const txId = await submitTransaction(dto.originChain, dto.signedTxRaw);
+		await this.transactionSubmitted(dto);
 		return { txId };
 	}
 }

@@ -14,6 +14,7 @@ import {
 	SubmitTransactionDto,
 	SubmitTransactionResponseDto,
 	TransactionResponseDto,
+	TransactionSubmittedDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthGuard } from 'src/guards/auth.guard';
@@ -81,5 +82,24 @@ export class TransactionController {
 		model.senderAddress = user.address;
 		model.originChain = user.chainId;
 		return this.transactionService.submitTransaction(model);
+	}
+
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Success',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('bridgingTransactionSubmitted')
+	async bridgingTransactionSubmitted(
+		@AuthUser() user: User,
+		@Body() model: TransactionSubmittedDto,
+	): Promise<void> {
+		model.senderAddress = user.address;
+		model.originChain = user.chainId;
+		return this.transactionService.transactionSubmitted(model);
 	}
 }
