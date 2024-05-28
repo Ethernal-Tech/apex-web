@@ -65,7 +65,6 @@ export class AuthService {
 		if (!loginCode) {
 			throw new BadRequestException();
 		}
-		console.log('use pk: ' + process.env.USE_PRIVATE_KEY);
 
 		if (
 			process.env.USE_PRIVATE_KEY != 'true' &&
