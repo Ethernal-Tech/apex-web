@@ -1,14 +1,13 @@
 import { Avatar, Dialog, DialogContent, DialogContentText, DialogTitle, LinearProgress, List, ListItem, ListItemAvatar, ListItemButton, ListItemText } from '@mui/material';
-import { BrowserWallet, Wallet } from '@meshsdk/core';
 import { useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { HOME_ROUTE }  from '../PageRouter';
 import { useDispatch } from 'react-redux';
 import { setTokenAction } from '../../redux/slices/tokenSlice';
-import { getStakeAddress } from '../../utils/userWalletUtil';
 import { generateLoginCodeAction, loginAction } from './action';
 import { ChainEnum, DataSignatureDto, GenerateLoginCodeDto, LoginDto } from '../../swagger/apexBridgeApiService';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
+import WalletHandler, { Wallet } from '../../features/WalletHandler';
 
 function LoginPage() {
 	const [connecting, setConnecting] = useState(false);
@@ -18,7 +17,7 @@ function LoginPage() {
 	const navigate = useNavigate();
 
 	const installedWallets = useMemo(
-		() => BrowserWallet.getInstalledWallets(),
+		() => WalletHandler.getInstalledWallets(),
 		[]
 	)
 
@@ -32,10 +31,10 @@ function LoginPage() {
 		setConnecting(true);
 
 		try {
-			const wallet = await BrowserWallet.enable(selectedWallet.name);
-			if (wallet && wallet instanceof BrowserWallet)  {
+			const wallet = await WalletHandler.enable(selectedWallet.name);
+			if (WalletHandler.checkWallet(wallet))  {
 				// TODO: this probably should not be stake address
-				const stakeAddress = await getStakeAddress(wallet);
+				const stakeAddress = await WalletHandler.getStakeAddress(wallet);
 				const address = stakeAddress.to_bech32();
 				const bindedGenerateLoginCodeAction = generateLoginCodeAction.bind(null, new GenerateLoginCodeDto({
 					address, chainId,

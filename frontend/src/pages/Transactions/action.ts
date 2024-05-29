@@ -1,4 +1,4 @@
-import { BridgeTransactionControllerClient, BridgeTransactionFilterDto, CreateTransactionDto, SignTransactionDto, SubmitTransactionDto, TransactionControllerClient } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionControllerClient, BridgeTransactionFilterDto, CreateTransactionDto, SignTransactionDto, SubmitTransactionDto, TransactionControllerClient, TransactionSubmittedDto } from '../../swagger/apexBridgeApiService';
 
 export const getAction = (id:number) => {
 	const client = new BridgeTransactionControllerClient();
@@ -23,4 +23,9 @@ export const signTransactionAction = (model: SignTransactionDto) => {
 export const submitTransactionAction = (model: SubmitTransactionDto) => {
 	const client = new TransactionControllerClient();
 	return client.submitBridgingTransaction(model);
+}
+
+export const bridgingTransactionSubmittedAction = (model: TransactionSubmittedDto) => {
+	const client = new TransactionControllerClient();
+	return client.bridgingTransactionSubmitted(model);
 }

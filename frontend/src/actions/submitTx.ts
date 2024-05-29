@@ -1,10 +1,10 @@
-import { toast } from "react-toastify";
-import { signTransactionAction, submitTransactionAction } from "../pages/Transactions/action";
+import { bridgingTransactionSubmittedAction, signTransactionAction, submitTransactionAction } from "../pages/Transactions/action";
 import appSettings from "../settings/appSettings";
-import { CreateTransactionDto, CreateTransactionResponseDto, SignTransactionDto, SubmitTransactionDto } from "../swagger/apexBridgeApiService";
+import { CreateTransactionDto, CreateTransactionResponseDto, SignTransactionDto, SubmitTransactionDto, TransactionSubmittedDto } from "../swagger/apexBridgeApiService";
 import { tryCatchJsonByAction } from "../utils/fetchUtils";
 import { Dispatch, UnknownAction } from 'redux';
 import { store } from "../redux/store";
+import WalletHandler from "../features/WalletHandler";
 
 export const signAndSubmitTx = async (
     values: CreateTransactionDto,
@@ -21,8 +21,22 @@ const signAndSubmitTxUsingWallet = async (
     createResponse: CreateTransactionResponseDto,
     dispatch: Dispatch<UnknownAction>,
 ) => {
-    toast.error("sign and submit using wallet not implemented")
-    throw new Error("sign and submit using wallet not implemented");
+    // TODO: actually implement this, once everything is ready
+    const wallet = WalletHandler.getEnabledWallet();
+    const signedTxRaw = await wallet.signTx(createResponse.txRaw);
+    await wallet.submitTx(signedTxRaw);
+
+    const amount = createResponse.bridgingFee
+        + values.receivers.map(x => x.amount).reduce((acc, cv) => acc + cv, 0);
+
+    const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
+        destinationChain: values.destinationChain,
+        receiverAddrs: values.receivers.map(x => x.address),
+        amount,
+        originTxHash: createResponse.txHash,
+    }));
+
+    await tryCatchJsonByAction(bindedSubmittedAction, dispatch);
 }
 
 const signAndSubmitTxUsingPrivateKey = async (
@@ -50,10 +64,5 @@ const signAndSubmitTxUsingPrivateKey = async (
         signedTxRaw: signResponse.txRaw,
     }));
 
-    const submitResponse = await tryCatchJsonByAction(bindedSubmitAction, dispatch);
-
-    return {
-        signResponse,
-        submitResponse,
-    };
+    await tryCatchJsonByAction(bindedSubmitAction, dispatch);
 }
