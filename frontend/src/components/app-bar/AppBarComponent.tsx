@@ -8,6 +8,7 @@ import FiberNewIcon from '@mui/icons-material/FiberNew';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { removeTokenAction } from "../../redux/slices/tokenSlice";
+import { removePKLoginAction } from "../../redux/slices/pkLoginSlice";
 
 const AppBarComponent = () => {
     const navigate = useNavigate();
@@ -23,6 +24,7 @@ const AppBarComponent = () => {
 
     const logoutCallback = useCallback(
 		() => {
+            dispatch(removePKLoginAction());
 			dispatch(removeTokenAction());
 		},
 		[dispatch]

@@ -1,23 +1,22 @@
 import { toast } from "react-toastify";
 import { signTransactionAction, submitTransactionAction } from "../pages/Transactions/action";
 import appSettings from "../settings/appSettings";
-import { ChainEnum, CreateTransactionDto, CreateTransactionResponseDto, SignTransactionDto, SubmitTransactionDto } from "../swagger/apexBridgeApiService";
+import { CreateTransactionDto, CreateTransactionResponseDto, SignTransactionDto, SubmitTransactionDto } from "../swagger/apexBridgeApiService";
 import { tryCatchJsonByAction } from "../utils/fetchUtils";
 import { Dispatch, UnknownAction } from 'redux';
+import { store } from "../redux/store";
 
 export const signAndSubmitTx = async (
-    chainId: ChainEnum | undefined,
     values: CreateTransactionDto,
     createResponse: CreateTransactionResponseDto,
     dispatch: Dispatch<UnknownAction>,
 ) => {
     const signAndSubmitFunc = appSettings.usePrivateKey
         ? signAndSubmitTxUsingPrivateKey : signAndSubmitTxUsingWallet;
-    return await signAndSubmitFunc(chainId, values, createResponse, dispatch);
+    return await signAndSubmitFunc(values, createResponse, dispatch);
 }
 
 const signAndSubmitTxUsingWallet = async (
-    chainId: ChainEnum | undefined,
     values: CreateTransactionDto,
     createResponse: CreateTransactionResponseDto,
     dispatch: Dispatch<UnknownAction>,
@@ -27,13 +26,11 @@ const signAndSubmitTxUsingWallet = async (
 }
 
 const signAndSubmitTxUsingPrivateKey = async (
-    chainId: ChainEnum | undefined,
     values: CreateTransactionDto,
     createResponse: CreateTransactionResponseDto,
     dispatch: Dispatch<UnknownAction>,
 ) => {
-    const privateKey = chainId === ChainEnum.Prime
-		?  appSettings.primePrivateKey : appSettings.vectorPrivateKey;
+    const privateKey = store.getState().pkLogin.pkLogin!.privateKey
 
     const bindedSignAction = signTransactionAction.bind(null, new SignTransactionDto({
         signingKeyHex: privateKey,

@@ -7,10 +7,11 @@ import { setTokenAction } from '../../redux/slices/tokenSlice';
 import { generateLoginCodeAction, loginAction } from './action';
 import { ChainEnum, DataSignatureDto, GenerateLoginCodeDto, LoginDto } from '../../swagger/apexBridgeApiService';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
-import appSettings from '../../settings/appSettings';
+import { PKLoginDto } from '../../utils/storageUtils';
 import TextFormField from '../../components/Form/TextFormField';
 import FieldBase from '../../components/Form/FieldBase';
 import { capitalizeWord } from '../../utils/generalUtils';
+import { setPKLoginAction } from '../../redux/slices/pkLoginSlice';
 
 // TODO: add input validations
 function PKLoginPage() {
@@ -20,10 +21,13 @@ function PKLoginPage() {
 
 	const [values, setValues] = useState(new GenerateLoginCodeDto({
 		chainId: ChainEnum.Prime,
-		address: appSettings.primeAddress,
+		address: '',
 	}));
-	
-	const privateKey = values.chainId === ChainEnum.Prime ? appSettings.primePrivateKey : appSettings.vectorPrivateKey;
+
+	const [pkLoginValues, setPKLoginValues] = useState<PKLoginDto>({
+		address:  '',
+		privateKey: '',
+	});
 	
 	const navigate = useNavigate();
 
@@ -39,7 +43,7 @@ function PKLoginPage() {
 			}
 
 			// TODO: sign data with private key?
-			const messageHex = Buffer.from(loginCode.code).toString("hex");
+			// const messageHex = Buffer.from(loginCode.code).toString("hex");
 
 			const signedData = {key: '', signature: ''}
 			const loginModel = new LoginDto({
@@ -55,6 +59,7 @@ function PKLoginPage() {
 				return;
 			}
 
+			dispatch(setPKLoginAction(pkLoginValues));
 			dispatch(setTokenAction(token));
 			return navigate(HOME_ROUTE);
 
@@ -75,11 +80,15 @@ function PKLoginPage() {
 					<Select
 						value={values.chainId}
 						onChange={(event) => {
-								setValues((state) => new GenerateLoginCodeDto({
+							setValues((state) => new GenerateLoginCodeDto({
 								...state,
 								chainId: event.target.value as ChainEnum,
-								address: event.target.value as ChainEnum === ChainEnum.Prime
-									? appSettings.primeAddress : appSettings.vectorAddress
+								address: '',
+							}))
+							setPKLoginValues((state) => ({
+								...state,
+								address: '',
+								privateKey: '',
 							}))
 						}}
 						>
@@ -90,14 +99,32 @@ function PKLoginPage() {
 				<TextFormField
 					label='Address'
 					value={values.address}
-					disabled
+					onValueChange={(event) => {
+						setValues((state) => new GenerateLoginCodeDto({
+							...state,
+							address: event.target.value
+						}))
+						setPKLoginValues((state) => ({
+							...state,
+							address: event.target.value
+						}))
+					}}
 				/>	
 				<TextFormField
 					label='Private key'
-					value={privateKey}
-					disabled
+					value={pkLoginValues.privateKey}
+					onValueChange={(event) => {
+						setPKLoginValues((state) => ({
+							...state,
+							privateKey: event.target.value
+						}))
+					}}
 				/>
-				<Button style={{margin: '10px'}} onClick={handleLogin} disabled={connecting}>
+				<Button
+					style={{margin: '10px'}}
+					onClick={handleLogin}
+					disabled={connecting || !pkLoginValues.address || !pkLoginValues.privateKey}
+				>
 					Login
 				</Button>
 			</FormControl>

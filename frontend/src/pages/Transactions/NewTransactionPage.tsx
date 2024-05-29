@@ -49,7 +49,6 @@ function NewTransactionPage() {
 				const createResponse = await fetchFunction(bindedCreateAction);
 
 				await signAndSubmitTx(
-					tokenState.token?.chainId,
 					values,
 					createResponse,
 					dispatch,
@@ -62,7 +61,7 @@ function NewTransactionPage() {
 				setLoading(false);
 			}
 		},
-		[tokenState.token?.chainId, dispatch, navigate, fetchFunction, values]
+		[dispatch, navigate, fetchFunction, values]
 	)
 
 	const receiver = values.receivers && values.receivers.length > 0 ? values.receivers[0] : undefined

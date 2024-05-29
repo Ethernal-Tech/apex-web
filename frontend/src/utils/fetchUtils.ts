@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { Dispatch, UnknownAction } from 'redux';
 import { removeTokenAction } from '../redux/slices/tokenSlice';
+import { removePKLoginAction } from '../redux/slices/pkLoginSlice';
 
 export const catchError = (error: any, dispatch: Dispatch<UnknownAction>) => {
 	// server error
@@ -29,6 +30,7 @@ export const catchError = (error: any, dispatch: Dispatch<UnknownAction>) => {
 
 	// unauthorized error
 	if (error.status === 401) {
+		dispatch(removePKLoginAction());
 		dispatch(removeTokenAction());
 		toast.error('You are unauthorized for this action. Please login to application and try this action again. If problem remains, please contact system administrator.');
 		return null
