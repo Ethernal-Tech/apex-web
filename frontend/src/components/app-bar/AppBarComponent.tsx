@@ -35,6 +35,7 @@ const AppBarComponent = () => {
     }
     return (
         <>
+            {/* todo af - update to not use hex value for bgColor */}
             <AppBar position='fixed' sx={{ zIndex: 20 }}>
                 <Toolbar sx={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginLeft: '10px' }}>
                     <Typography fontSize={'large'} fontWeight={'bold'}>
@@ -46,10 +47,11 @@ const AppBarComponent = () => {
                         aria-haspopup="true"
                         aria-expanded={open ? 'true' : undefined}
                         onClick={handleClick}
-                        sx={{ color: 'white' }}
+                        // TODO af - change the border color to not use hex value. Also update this on a theme level
+                        sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px' }}
                         endIcon={<ExpandMoreIcon />}
                     >
-                        Menu
+                        addr_test1...lt9cc
                     </Button>
                     <Menu
                         id="basic-menu"
@@ -74,10 +76,10 @@ const AppBarComponent = () => {
                         </MenuItem>
                         <Divider />
                         <MenuItem onClick={logoutCallback}>
-                        <ListItemIcon>
+                            <ListItemIcon>
                                 <LogoutIcon fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Logout</ListItemText>
+                            <ListItemText>Disconnect Wallet</ListItemText>
                         </MenuItem>
                     </Menu>
                 </Toolbar>
