@@ -1,5 +1,10 @@
+import { hexToRgb } from '@mui/material/styles';
 import { createTheme } from "@mui/material";
-import { menuDark, white, menuOverlay } from "./AppContainer";
+
+// defined colors used in theme
+const menuDark = '#051D26';;
+const white = "#ffffff";
+const menuOverlay = `rgba(${hexToRgb(menuDark)},0.6)`;
 
 export const theme = createTheme({
 	components: {
@@ -45,24 +50,25 @@ export const theme = createTheme({
 						borderRadius: '8px', // Round the corners of ul
 					},
 					'& li': {
-						'&:hover': {
-							backgroundColor: menuDark,
-						},
-					},
-					icon: {
+						backgroundColor: menuDark,
 						color: white,
+						'& svg':{
+							color:white
+						},
+						'&:hover': {
+							backgroundColor: white,
+							color: menuDark,
+							'& svg':{
+								color:menuDark
+							}
+						},
 					},
 				},
 			}
 		},
-		MuiListItemIcon: {
-			styleOverrides: {
-				root: {
-					color: white
-				}
-			}
-		},
-		MuiSelect: {
+
+		// todo af - check this again
+		/* MuiSelect: {
 			styleOverrides: {
 				root: {
 					color: white,
@@ -72,6 +78,24 @@ export const theme = createTheme({
 					color: white,
 				}
 			}
+		}, */
+		
+		// todo af - check this again
+		/* MuiInputBase: {
+			styleOverrides: {
+				root: {
+					color: white,
+					backgroundColor: menuDark,
+				},
+			}
 		},
+		MuiInputLabel:{
+			styleOverrides: {
+				root: {
+					color: white,
+					backgroundColor: menuDark,
+				},
+			}
+		} */
 	},
 });
