@@ -2,9 +2,9 @@ import { hexToRgb } from '@mui/material/styles';
 import { createTheme } from "@mui/material";
 
 // defined colors used in theme
-const menuDark = '#051D26';;
-const white = "#ffffff";
-const menuOverlay = `rgba(${hexToRgb(menuDark)},0.6)`;
+export const menuDark = '#051D26';;
+export const white = "#ffffff";
+export const menuOverlay = `rgba(${hexToRgb(menuDark)},0.6)`;
 
 export const theme = createTheme({
 	components: {

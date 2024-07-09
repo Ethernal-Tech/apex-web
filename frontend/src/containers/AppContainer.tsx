@@ -4,7 +4,8 @@ import PageRouter from '../pages/PageRouter';
 import { store } from '../redux/store';
 import { CssBaseline } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
-import { theme } from './theme';
+import { menuDark, white, theme } from './theme';
+import { GlobalStyles } from '@mui/system';
 
 
 const AppContainer = () => {
@@ -12,6 +13,11 @@ const AppContainer = () => {
 		<Provider store={store}>
 			<ThemeProvider theme={theme}>
 				<CssBaseline />
+				<GlobalStyles
+					styles={{
+						body: { backgroundColor: menuDark, color:white },
+					}}
+				/>
 				<BrowserRouter>
 					<PageRouter />
 				</BrowserRouter>
