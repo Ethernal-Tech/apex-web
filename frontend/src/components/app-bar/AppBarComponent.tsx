@@ -2,7 +2,7 @@ import { AppBar, Button, Divider, ListItemIcon, ListItemText, Menu, MenuItem, To
 import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { HOME_ROUTE, NEW_TRANSACTION_ROUTE } from "../../pages/PageRouter";
+import { TRANSACTIONS_ROUTE, NEW_TRANSACTION_ROUTE, HOME_ROUTE } from "../../pages/PageRouter";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
 import TableChartIcon from '@mui/icons-material/TableChart';
@@ -55,7 +55,7 @@ const AppBarComponent = () => {
                                 Transfer
                         </Button>
                         <Button
-                            onClick={() => handleOptionClick(HOME_ROUTE)}
+                            onClick={() => handleOptionClick(TRANSACTIONS_ROUTE)}
                             // TODO af - change the border color to not use hex value. Also update this on a theme level
                             sx={{ px: '24px', py: '10px', borderRadius:'8px' }}>
                                 Bridging History
@@ -81,19 +81,6 @@ const AppBarComponent = () => {
                             'aria-labelledby': 'basic-button',
                         }}
                     >
-                        <MenuItem onClick={() => handleOptionClick(NEW_TRANSACTION_ROUTE)}>
-                            <ListItemIcon>
-                                <FiberNewIcon fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText>New Transaction</ListItemText>
-                        </MenuItem>
-                        <MenuItem onClick={() => handleOptionClick(HOME_ROUTE)}>
-                            <ListItemIcon>
-                                <TableChartIcon fontSize="small" />
-                            </ListItemIcon>
-                            <ListItemText>Transactions</ListItemText>
-                        </MenuItem>
-                        <Divider />
                         <MenuItem onClick={logoutCallback}>
                             <ListItemIcon>
                                 <LogoutIcon fontSize="small" />

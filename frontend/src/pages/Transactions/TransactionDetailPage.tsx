@@ -4,7 +4,7 @@ import BasePage from '../base/BasePage';
 import { useCallback, useEffect, useState } from 'react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FullPageSpinner from '../../components/spinner/Spinner';
-import { HOME_ROUTE } from '../PageRouter';
+import { TRANSACTIONS_ROUTE } from '../PageRouter';
 import { BridgeTransactionDto } from '../../swagger/apexBridgeApiService';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getAction } from './action';
@@ -47,7 +47,7 @@ const TransactionDetailPage = () => {
       {!!!transaction && <FullPageSpinner />}
       <Box sx={{ mb: 2, display: 'flex', alignSelf: 'start' }}>
         <Box>
-          <Link component={RouterLink} to={HOME_ROUTE} sx={{ mr: 1, color: 'inherit', textDecoration: 'none', display: 'flex', justifyContent: 'center', gap: 2 }}>
+          <Link component={RouterLink} to={TRANSACTIONS_ROUTE} sx={{ mr: 1, color: 'inherit', textDecoration: 'none', display: 'flex', justifyContent: 'center', gap: 2 }}>
             <Typography variant="body1">
               <ArrowBackIcon />
             </Typography>

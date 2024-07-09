@@ -11,7 +11,7 @@ import FieldBase from '../../components/Form/FieldBase';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import appSettings from '../../settings/appSettings';
 import { capitalizeWord } from '../../utils/generalUtils';
-import { HOME_ROUTE } from '../PageRouter';
+import { TRANSACTIONS_ROUTE } from '../PageRouter';
 import { signAndSubmitTx } from '../../actions/submitTx';
 
 const chainOptions = [
@@ -54,7 +54,7 @@ function NewTransactionPage() {
 					dispatch,
 				);
 
-				navigate(HOME_ROUTE, { replace: true });
+				navigate(TRANSACTIONS_ROUTE, { replace: true });
 			}catch(err) {
 				console.log(err);
 			} finally {

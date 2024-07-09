@@ -1,7 +1,7 @@
 import { Button, Dialog, DialogTitle, FormControl, LinearProgress, MenuItem, Select } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { HOME_ROUTE }  from '../PageRouter';
+import { TRANSACTIONS_ROUTE }  from '../PageRouter';
 import { useDispatch } from 'react-redux';
 import { setTokenAction } from '../../redux/slices/tokenSlice';
 import { generateLoginCodeAction, loginAction } from './action';
@@ -61,7 +61,7 @@ function PKLoginPage() {
 
 			dispatch(setPKLoginAction(pkLoginValues));
 			dispatch(setTokenAction(token));
-			return navigate(HOME_ROUTE);
+			return navigate(TRANSACTIONS_ROUTE);
 
 		}
 		catch (err: any) {
