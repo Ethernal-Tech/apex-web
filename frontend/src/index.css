@@ -7,11 +7,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
   /* TODO AF - potentially make this only visible on the home page, but check. Also make sure radial-gradient is okay. */
   background: 
-    radial-gradient(50% 50% at 50% 50%, rgba(5, 29, 38, .15) 0%, #051D26 100%),
+    radial-gradient(50% 50% at 50% 50%, rgba(5, 29, 38, 0.00) 0%, #051D26 100%),
     url("./assets/planet-background.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
+  min-height: 100vh;
 }
 
 code {
