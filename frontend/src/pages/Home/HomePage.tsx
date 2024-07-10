@@ -7,8 +7,9 @@ import { ReactComponent as NexusIcon } from '../../assets/chain-icons/nexus.svg'
 import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
 import BasePage from '../base/BasePage';
 import BridgeGraph from "../../assets/Bridge-Graph.svg";
+import { menuDark, white } from "../../containers/theme";
 
-const TransactionsTablePage: React.FC = () => {
+const HomePage: React.FC = () => {
   const [source, setSource] = useState('prime');
   const [destination, setDestination] = useState('vector');
 
@@ -49,7 +50,7 @@ const TransactionsTablePage: React.FC = () => {
             sx={{ minWidth: 200 }} // Setting minWidth via sx prop
           />
         </Box>
-        <Button onClick={switchValues} sx={{ mt: '20px', mx:'28px', boxShadow: 'none' }}>
+        <Button onClick={switchValues} sx={{ mt: '20px', mx:'28px', boxShadow: 'none', background:'none' }}>
           <SwitcherIcon />
         </Button>
         <Box>
@@ -64,8 +65,13 @@ const TransactionsTablePage: React.FC = () => {
           />
         </Box>
       </Box>
+
+      {/* TODO AF - hide button when user is logged in, or show a bridge button, or hide (depends on product) */}
+      <Button sx={{backgroundColor:white, color: menuDark}}>
+        Connect Wallet
+      </Button>
     </BasePage>
   );
 };
 
-export default TransactionsTablePage;
+export default HomePage;
