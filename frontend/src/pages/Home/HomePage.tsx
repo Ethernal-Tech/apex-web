@@ -34,6 +34,7 @@ const TransactionsTablePage: React.FC = () => {
       <Typography variant="h1" sx={{ color: '#F25041', lineHeight: '128px', fontSize: '64px' }} fontFamily={'Major Mono Display, sans-serif'}>
         Apex bridge
       </Typography>
+
       <img src={BridgeGraph} alt="apex bridge graph" />
 
       <Box display="flex" alignItems="center" justifyContent="space-between" p={4}>
@@ -48,7 +49,7 @@ const TransactionsTablePage: React.FC = () => {
             sx={{ minWidth: 200 }} // Setting minWidth via sx prop
           />
         </Box>
-        <Button onClick={switchValues} sx={{ mt: '20px', boxShadow: 'none' }}>
+        <Button onClick={switchValues} sx={{ mt: '20px', mx:'28px', boxShadow: 'none' }}>
           <SwitcherIcon />
         </Button>
         <Box>
