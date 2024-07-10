@@ -1,3 +1,7 @@
+import SuccessIcon from '../assets/bridge-status-icons/success.svg';
+import FailedIcon from '../assets/bridge-status-icons/failed.svg';
+import PendingIcon from '../assets/bridge-status-icons/pending.svg';
+
 import { TransactionStatusEnum } from '../swagger/apexBridgeApiService';
 
 const STATUS_TEXT: { [key: string]: string } = {
@@ -31,6 +35,25 @@ export function getStatusColor(status: TransactionStatusEnum) {
 			return 'none';
 	}
 }
+
+// todo af notes - will show "success", "pending", or "failed". returns src for image to be used, as well as the message to show
+export const getStatusIconAndLabel = (status: TransactionStatusEnum) => {
+	switch (status) {
+	  case TransactionStatusEnum.ExecutedOnDestination:
+		return { icon: SuccessIcon, label: 'success' };
+	  case TransactionStatusEnum.FailedToExecuteOnDestination:
+	  case TransactionStatusEnum.InvalidRequest:
+		return { icon: FailedIcon, label: 'failed' };
+	  case TransactionStatusEnum.Pending:
+	  case TransactionStatusEnum.DiscoveredOnSource:
+	  case TransactionStatusEnum.SubmittedToBridge:
+	  case TransactionStatusEnum.IncludedInBatch:
+	  case TransactionStatusEnum.SubmittedToDestination:
+		return { icon: PendingIcon, label: 'pending'};
+	  default:
+		return { icon: null, label: status };
+	}
+  };
 
 export function getStatusText(status: TransactionStatusEnum | string) {
 	return STATUS_TEXT[status] || status

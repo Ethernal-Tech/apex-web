@@ -1,5 +1,5 @@
 import { useState, useRef, MouseEvent, ChangeEvent, useEffect, useCallback } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Chip, TablePagination, Box, TableSortLabel, SortDirection } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, Chip, TablePagination, Box, TableSortLabel, SortDirection, Typography } from '@mui/material';
 import BasePage from '../base/BasePage';
 import { useNavigate } from 'react-router-dom';
 import FullPageSpinner from '../../components/spinner/Spinner';
@@ -9,7 +9,7 @@ import { visuallyHidden } from '@mui/utils';
 import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
-import { getStatusColor, getStatusText, isStatusFinal } from '../../utils/statusUtils';
+import { getStatusColor, getStatusIconAndLabel, getStatusText, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord, dfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
 
 const TransactionsTablePage = () => {
@@ -172,15 +172,11 @@ const TransactionsTablePage = () => {
               <TableCell>{formatAddress(transaction.receiverAddresses)}</TableCell>
               <TableCell>{transaction.createdAt.toLocaleString()}</TableCell>
               <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
-              <TableCell>
-                <Chip 
-                  label={getStatusText(transaction.status)}
-                  sx={{
-                    bgcolor: getStatusColor(transaction.status),
-                    color: 'white',
-                    textTransform: 'uppercase'
-                  }}
-                />
+              <TableCell sx={{display:'flex'}}>
+                <Box sx={{marginRight:1}} component='img' src={getStatusIconAndLabel(transaction.status).icon || ''} alt=''/>
+                <Typography sx={{textTransform:'capitalize', display:'inline-block'}}>
+                  {getStatusIconAndLabel(transaction.status).label}
+                </Typography>
               </TableCell>
               <TableCell>
                 <Button variant="text" sx={{color:'red', background:'none'}} onClick={() => navigate(`/transaction/${transaction.id}`)}>
