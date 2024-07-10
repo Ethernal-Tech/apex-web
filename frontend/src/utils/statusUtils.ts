@@ -28,7 +28,7 @@ export function getStatusColor(status: TransactionStatusEnum) {
 		case TransactionStatusEnum.ExecutedOnDestination:
 			return 'green';
 		default:
-			return 'black';
+			return 'none';
 	}
 }
 

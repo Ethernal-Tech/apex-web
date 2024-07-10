@@ -19,11 +19,9 @@ interface CustomSelectProps {
 const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, onChange, options, sx }) => {
   return (
     <FormControl variant="outlined" fullWidth sx={sx}>
-      <InputLabel>{label}</InputLabel>
       <Select
         value={value}
         onChange={onChange}
-        label={label}
         renderValue={(selected) => (
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <ListItemIcon style={{ minWidth: 0, marginRight: 8 }}>

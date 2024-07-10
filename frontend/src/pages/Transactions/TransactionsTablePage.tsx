@@ -10,7 +10,7 @@ import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusColor, getStatusText, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord } from '../../utils/generalUtils';
+import { capitalizeWord, dfmToApex, formatAddress } from '../../utils/generalUtils';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
@@ -138,8 +138,8 @@ const TransactionsTablePage = () => {
             <TableRow key={`tx-${transaction.id}`}>
               <TableCell>{capitalizeWord(transaction.originChain)}</TableCell>
               <TableCell>{capitalizeWord(transaction.destinationChain)}</TableCell>
-              <TableCell>{transaction.amount}</TableCell>
-              <TableCell>{transaction.receiverAddresses}</TableCell>
+              <TableCell>{dfmToApex(transaction.amount)} APEX</TableCell>
+              <TableCell>{formatAddress(transaction.receiverAddresses)}</TableCell>
               <TableCell>{transaction.createdAt.toLocaleString()}</TableCell>
               <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
               <TableCell>
@@ -153,8 +153,8 @@ const TransactionsTablePage = () => {
                 />
               </TableCell>
               <TableCell>
-                <Button variant="contained" color="primary" onClick={() => navigate(`/transaction/${transaction.id}`)}>
-                  View
+                <Button variant="text" sx={{color:'red', background:'none'}} onClick={() => navigate(`/transaction/${transaction.id}`)}>
+                  View Details
                 </Button>
               </TableCell>
             </TableRow>

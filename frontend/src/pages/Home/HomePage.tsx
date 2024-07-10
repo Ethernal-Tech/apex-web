@@ -40,34 +40,36 @@ const HomePage: React.FC = () => {
 
       <Box display="flex" alignItems="center" justifyContent="space-between" p={4}>
         <Box>
-          <Box mb={1} fontWeight="bold">SOURCE</Box>
+          <Typography mb={1} sx={{color: white}} fontWeight="bold">SOURCE</Typography>
           <CustomSelect
             label="Source"
             icon={getIconComponent(source)}
             value={source}
             onChange={(e) => setSource(e.target.value)}
             options={options}
-            sx={{ minWidth: 200 }} // Setting minWidth via sx prop
+            sx={{ minWidth: 200, background: white, color: menuDark }} // Setting minWidth via sx prop
           />
         </Box>
         <Button onClick={switchValues} sx={{ mt: '20px', mx:'28px', boxShadow: 'none', background:'none' }}>
           <SwitcherIcon />
         </Button>
         <Box>
-          <Box mb={1} fontWeight="bold">DESTINATION</Box>
+          <Typography mb={1} sx={{color: white}} fontWeight="bold">DESTINATION</Typography>
           <CustomSelect
             label="Destination"
             icon={getIconComponent(destination)}
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
             options={options}
-            sx={{ minWidth: 200 }} // Setting minWidth via sx prop
+            sx={{ minWidth: 200, background: white, color: menuDark }} // Setting minWidth via sx prop
           />
         </Box>
       </Box>
 
       {/* TODO AF - hide button when user is logged in, or show a bridge button, or hide (depends on product) */}
-      <Button sx={{backgroundColor:white, color: menuDark}}>
+      <Button 
+        sx={{backgroundColor:white, color: menuDark}}
+        >
         Connect Wallet
       </Button>
     </BasePage>

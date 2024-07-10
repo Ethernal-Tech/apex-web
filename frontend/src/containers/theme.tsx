@@ -6,7 +6,8 @@ export const menuDark = '#051D26';;
 export const white = "#ffffff";
 export const menuOverlay = `rgba(${hexToRgb(menuDark)},0.6)`;
 
-export const theme = createTheme({
+// TODO AF- NOT USED FOR NOW
+export const theme2 = createTheme({
 	components: {
 		// MuiButton
 		MuiButton: {
@@ -99,3 +100,6 @@ export const theme = createTheme({
 		} */
 	},
 });
+
+
+export const theme = createTheme({})

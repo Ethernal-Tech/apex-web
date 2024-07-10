@@ -10,6 +10,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { removeTokenAction } from "../../redux/slices/tokenSlice";
 import { removePKLoginAction } from "../../redux/slices/pkLoginSlice";
 import ApexFusionLogo from "../../assets/apex-fusion-logo.svg";
+import { menuDark, white } from "../../containers/theme";
 
 const AppBarComponent = () => {
     const navigate = useNavigate();
@@ -37,7 +38,7 @@ const AppBarComponent = () => {
     return (
         <>
             {/* todo af - update to not use hex value for bgColor */}
-            <AppBar position='fixed' sx={{ zIndex: 20, boxShadow:'none' }}>
+            <AppBar position='fixed' sx={{ zIndex: 20, boxShadow:'none', background: menuDark }}>
                 <Toolbar sx={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginLeft: '10px' }}>
                     <Button
                         onClick={() => handleOptionClick(HOME_ROUTE)}
@@ -50,13 +51,13 @@ const AppBarComponent = () => {
                         <Button
                             onClick={() => handleOptionClick(NEW_TRANSACTION_ROUTE)}
                             // TODO af - change the border color to not use hex value. Also update this on a theme level
-                            sx={{ px: '24px', py: '10px', borderRadius:'8px' }}>
+                            sx={{ px: '24px', py: '10px', borderRadius:'8px', color: white }}>
                                 Transfer
                         </Button>
                         <Button
                             onClick={() => handleOptionClick(TRANSACTIONS_ROUTE)}
                             // TODO af - change the border color to not use hex value. Also update this on a theme level
-                            sx={{ px: '24px', py: '10px', borderRadius:'8px' }}>
+                            sx={{ px: '24px', py: '10px', borderRadius:'8px', color: white }}>
                                 Bridging History
                         </Button>
                         
@@ -67,8 +68,9 @@ const AppBarComponent = () => {
                             aria-haspopup="true"
                             aria-expanded={open ? 'true' : undefined}
                             onClick={handleClick}
+                            
                             // TODO af - change the border color to not use hex value. Also update this on a theme level
-                            sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px' }}
+                            sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px', color: white}}
                             endIcon={<ExpandMoreIcon />}>
                                 addr_test1...lt9cc
                         </Button>
@@ -76,7 +78,7 @@ const AppBarComponent = () => {
                         {/* TODO af - display button when user is NOT logged in, otherwise display button above */}
                         {/* <Button
                             onClick={() => handleOptionClick(LOGIN_ROUTE)}
-                            sx={{ border: '1px solid', borderColor:'#F25041', px: '24px', py: '10px', borderRadius:'8px' }}>
+                            sx={{ border: '1px solid', borderColor:'#F25041', px: '24px', py: '10px', borderRadius:'8px', color: white }}>
                                 Connect Wallet
                         </Button> */}
                     </div>

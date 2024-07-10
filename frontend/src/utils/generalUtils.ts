@@ -5,3 +5,24 @@ export const capitalizeWord = (word: string): string => {
 
     return `${word[0].toUpperCase()}${word.substring(1)}`
 }
+
+export const formatAddress = (address:string):string => {
+    // Check if the address length is appropriate for formatting
+    if (address.length <= 20) {
+      return address; // No need to format if the address is too short
+    }
+  
+    const firstPart = address.substring(0, 12); // Get the first 8 characters
+    const lastPart = address.substring(address.length - 5); // Get the last 4 characters
+  
+    return `${firstPart}...${lastPart}`; // Combine them with ellipsis
+  }
+
+  export const dfmToApex = (lovelace:number):string =>{
+    // Divide the lovelace amount by 1,000,000 to get the ADA amount
+    const ada = lovelace / 1000000;
+  
+    // Convert the ADA amount to a string with appropriate formatting
+    // Here we use toFixed to ensure two decimal places, adjust if needed
+    return ada.toFixed(6); // Adjust decimal places as required
+  }

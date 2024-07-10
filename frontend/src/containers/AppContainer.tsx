@@ -15,7 +15,7 @@ const AppContainer = () => {
 				<CssBaseline />
 				<GlobalStyles
 					styles={{
-						body: { backgroundColor: menuDark, color:white },
+						// body: { color:white },
 					}}
 				/>
 				<BrowserRouter>
