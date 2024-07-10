@@ -6,6 +6,19 @@ export const capitalizeWord = (word: string): string => {
     return `${word[0].toUpperCase()}${word.substring(1)}`
 }
 
+export const getChainLabelAndColor = (chain: string):{letter:string, color: string} => {
+  switch (chain.toLowerCase()) {
+    case 'prime':
+      return { letter: 'P', color: '#077368' };
+    case 'nexus':
+      return { letter: 'N', color: '#F27B50' };
+    case 'vector':
+      return { letter: 'V', color: '#F25041' };
+    default:
+      return { letter: '', color: 'transparent' };
+  }
+};
+
 export const formatAddress = (address:string):string => {
     // Check if the address length is appropriate for formatting
     if (address.length <= 20) {

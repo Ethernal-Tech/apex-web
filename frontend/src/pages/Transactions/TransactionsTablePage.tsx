@@ -10,7 +10,7 @@ import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusColor, getStatusText, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, dfmToApex, formatAddress } from '../../utils/generalUtils';
+import { capitalizeWord, dfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
@@ -136,8 +136,38 @@ const TransactionsTablePage = () => {
         <TableBody>
           {transactions?.items.map((transaction) => (
             <TableRow key={`tx-${transaction.id}`}>
-              <TableCell>{capitalizeWord(transaction.originChain)}</TableCell>
-              <TableCell>{capitalizeWord(transaction.destinationChain)}</TableCell>
+              <TableCell>
+                <Box component="span" sx={{
+                  display: 'inline-block',
+                  color: 'white',
+                  bgcolor: getChainLabelAndColor(transaction.originChain).color,
+                  borderRadius: '50%',
+                  width: 24,
+                  height: 24,
+                  textAlign: 'center',
+                  lineHeight: '24px',
+                  marginRight: 1,
+                }}>
+                  {getChainLabelAndColor(transaction.originChain).letter}
+                </Box>
+                {capitalizeWord(transaction.originChain)}
+              </TableCell>
+              <TableCell>
+                <Box component="span" sx={{
+                  display: 'inline-block',
+                  color: 'white',
+                  bgcolor: getChainLabelAndColor(transaction.destinationChain).color,
+                  borderRadius: '50%',
+                  width: 24,
+                  height: 24,
+                  textAlign: 'center',
+                  lineHeight: '24px',
+                  marginRight: 1,
+                }}>
+                  {getChainLabelAndColor(transaction.destinationChain).letter}
+                </Box>
+                {capitalizeWord(transaction.destinationChain)}
+              </TableCell>
               <TableCell>{dfmToApex(transaction.amount)} APEX</TableCell>
               <TableCell>{formatAddress(transaction.receiverAddresses)}</TableCell>
               <TableCell>{transaction.createdAt.toLocaleString()}</TableCell>
