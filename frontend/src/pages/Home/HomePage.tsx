@@ -45,9 +45,10 @@ const TransactionsTablePage: React.FC = () => {
             value={source}
             onChange={(e) => setSource(e.target.value)}
             options={options}
+            sx={{ minWidth: 200 }} // Setting minWidth via sx prop
           />
         </Box>
-        <Button onClick={switchValues} sx={{mt:'20px', boxShadow:'none'}}>
+        <Button onClick={switchValues} sx={{ mt: '20px', boxShadow: 'none' }}>
           <SwitcherIcon />
         </Button>
         <Box>
@@ -58,6 +59,7 @@ const TransactionsTablePage: React.FC = () => {
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
             options={options}
+            sx={{ minWidth: 200 }} // Setting minWidth via sx prop
           />
         </Box>
       </Box>

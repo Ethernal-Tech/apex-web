@@ -1,6 +1,5 @@
 import React from 'react';
-import { Select, MenuItem, ListItemIcon, ListItemText, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
-// import { SvgIconComponent } from '@mui/icons-material';
+import { Select, MenuItem, ListItemIcon, ListItemText, FormControl, InputLabel, SelectChangeEvent, SxProps, Theme } from '@mui/material';
 
 interface Option {
   value: string;
@@ -14,11 +13,12 @@ interface CustomSelectProps {
   value: string;
   onChange: (event: SelectChangeEvent<string>) => void;
   options: Option[];
+  sx?: SxProps<Theme>;
 }
 
-const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, onChange, options }) => {
+const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, onChange, options, sx }) => {
   return (
-    <FormControl variant="outlined" fullWidth>
+    <FormControl variant="outlined" fullWidth sx={sx}>
       <InputLabel>{label}</InputLabel>
       <Select
         value={value}
