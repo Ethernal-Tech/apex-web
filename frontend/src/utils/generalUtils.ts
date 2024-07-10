@@ -19,7 +19,10 @@ export const getChainLabelAndColor = (chain: string):{letter:string, color: stri
   }
 };
 
-export const formatAddress = (address:string):string => {
+export const formatAddress = (address:string|undefined):string => {
+    // if address is undefined, return empty string
+    if(!address) return '';
+  
     // Check if the address length is appropriate for formatting
     if (address.length <= 20) {
       return address; // No need to format if the address is too short
@@ -31,9 +34,9 @@ export const formatAddress = (address:string):string => {
     return `${firstPart}...${lastPart}`; // Combine them with ellipsis
   }
 
-  export const dfmToApex = (lovelace:number):string =>{
-    // Divide the lovelace amount by 1,000,000 to get the ADA amount
-    const ada = lovelace / 1000000;
+  export const dfmToApex = (dfm:number):string =>{
+    // Divide the dfm amount by 1,000,000 to get the ADA amount
+    const ada = dfm / 1000000;
   
     // Convert the ADA amount to a string with appropriate formatting
     // Here we use toFixed to ensure two decimal places, adjust if needed
