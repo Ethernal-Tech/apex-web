@@ -8,7 +8,7 @@ import { TRANSACTIONS_ROUTE } from '../PageRouter';
 import { BridgeTransactionDto } from '../../swagger/apexBridgeApiService';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getAction } from './action';
-import { getStatusColor, getStatusIconAndLabel, getStatusText, isStatusFinal } from '../../utils/statusUtils';
+import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord, dfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
 import { menuDark } from '../../containers/theme';
 
@@ -129,7 +129,7 @@ const TransactionDetailPage = () => {
             <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Status:</Typography>
               <Box sx={{display:'flex'}}>
-                <Box sx={{marginRight:1}} component='img' src={transaction && getStatusIconAndLabel(transaction.status).icon || ''} alt=''/>
+                <Box sx={{marginRight:1}} component='img' src={(transaction && getStatusIconAndLabel(transaction.status).icon) || ''} alt=''/>
                 <Typography sx={{textTransform:'capitalize', display:'inline-block'}}>
                   {transaction && getStatusIconAndLabel(transaction.status).label}
                 </Typography>
