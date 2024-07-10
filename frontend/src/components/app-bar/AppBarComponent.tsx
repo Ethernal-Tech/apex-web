@@ -76,11 +76,11 @@ const AppBarComponent = () => {
                         </Button>
                         
                         {/* TODO af - display button when user is NOT logged in, otherwise display button above */}
-                        {/* <Button
+                        <Button
                             onClick={() => handleOptionClick(LOGIN_ROUTE)}
                             sx={{ border: '1px solid', borderColor:'#F25041', px: '24px', py: '10px', borderRadius:'8px', color: white }}>
                                 Connect Wallet
-                        </Button> */}
+                        </Button>
                     </div>
                     <Menu
                         id="basic-menu"
