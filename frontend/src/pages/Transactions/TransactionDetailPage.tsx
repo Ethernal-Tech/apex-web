@@ -45,7 +45,7 @@ const TransactionDetailPage = () => {
   return (
     <BasePage>
       {!!!transaction && <FullPageSpinner />}
-      <Box sx={{ mb: 2, display: 'flex', alignSelf: 'start' }}>
+      <Box sx={{ mb: 2, display: 'flex', alignSelf: 'start', color:'white' }}>
         <Box>
           <Link component={RouterLink} to={TRANSACTIONS_ROUTE} sx={{ mr: 1, color: 'inherit', textDecoration: 'none', display: 'flex', justifyContent: 'center', gap: 2 }}>
             <Typography variant="body1">
@@ -57,13 +57,13 @@ const TransactionDetailPage = () => {
           </Link>
         </Box>
       </Box>
-      <Box sx={{ my: 2 }}>
+      <Box sx={{ my: 2,color:'white'}}>
         <Typography variant="h2">Transaction Details</Typography>
         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 20, mt: 5 }}>
           <Box sx={{ flex: '1 1 50%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ mb: 1 }}>
               <Typography variant="subtitle2">
-                Origin Chain:
+                Source Chain:
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 'bold' }}>{capitalizeWord(transaction?.originChain || '')}</Typography>
             </Box>

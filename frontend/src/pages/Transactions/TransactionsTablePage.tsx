@@ -172,11 +172,13 @@ const TransactionsTablePage = () => {
               <TableCell>{formatAddress(transaction.receiverAddresses)}</TableCell>
               <TableCell>{transaction.createdAt.toLocaleString()}</TableCell>
               <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
-              <TableCell sx={{display:'flex'}}>
-                <Box sx={{marginRight:1}} component='img' src={getStatusIconAndLabel(transaction.status).icon || ''} alt=''/>
-                <Typography sx={{textTransform:'capitalize', display:'inline-block'}}>
-                  {getStatusIconAndLabel(transaction.status).label}
-                </Typography>
+              <TableCell>
+                <Box sx={{display:'flex'}}>
+                  <Box sx={{marginRight:1}} component='img' src={getStatusIconAndLabel(transaction.status).icon || ''} alt=''/>
+                  <Typography sx={{textTransform:'capitalize', display:'inline-block'}}>
+                    {getStatusIconAndLabel(transaction.status).label}
+                  </Typography>
+                </Box>
               </TableCell>
               <TableCell>
                 <Button variant="text" sx={{color:'red', background:'none'}} onClick={() => navigate(`/transaction/${transaction.id}`)}>
