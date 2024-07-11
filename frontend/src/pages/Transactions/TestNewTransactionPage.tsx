@@ -13,7 +13,7 @@ import appSettings from '../../settings/appSettings';
 import { capitalizeWord } from '../../utils/generalUtils';
 import { TRANSACTIONS_ROUTE } from '../PageRouter';
 import { signAndSubmitTx } from '../../actions/submitTx';
-import TotalBalance from './components/TotalBalance';
+import AddressBalance from './components/AddressBalance';
 
 const chainOptions = [
 	ChainEnum.Prime,
@@ -69,7 +69,7 @@ function NewTransactionPage() {
 	
 	return (
 		<BasePage>
-			<TotalBalance/>
+			<AddressBalance/>
 		</BasePage>
 	)
 }
