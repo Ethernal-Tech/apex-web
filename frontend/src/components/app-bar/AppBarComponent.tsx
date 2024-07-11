@@ -51,13 +51,13 @@ const AppBarComponent = () => {
                         <Button
                             onClick={() => handleOptionClick(NEW_TRANSACTION_ROUTE)}
                             // TODO af - change the border color to not use hex value. Also update this on a theme level
-                            sx={{ px: '24px', py: '10px', borderRadius:'8px', color: white }}>
+                            sx={{ px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'capitalize' }}>
                                 Transfer
                         </Button>
                         <Button
                             onClick={() => handleOptionClick(TRANSACTIONS_ROUTE)}
                             // TODO af - change the border color to not use hex value. Also update this on a theme level
-                            sx={{ px: '24px', py: '10px', borderRadius:'8px', color: white }}>
+                            sx={{ px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'capitalize' }}>
                                 Bridging History
                         </Button>
                         
@@ -70,7 +70,7 @@ const AppBarComponent = () => {
                             onClick={handleClick}
                             
                             // TODO af - change the border color to not use hex value. Also update this on a theme level
-                            sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px', color: white}}
+                            sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'lowercase'}}
                             endIcon={<ExpandMoreIcon />}>
                                 addr_test1...lt9cc
                         </Button>
@@ -78,7 +78,7 @@ const AppBarComponent = () => {
                         {/* TODO af - display button when user is NOT logged in, otherwise display button above */}
                         <Button
                             onClick={() => handleOptionClick(LOGIN_ROUTE)}
-                            sx={{ border: '1px solid', borderColor:'#F25041', px: '24px', py: '10px', borderRadius:'8px', color: white }}>
+                            sx={{ border: '1px solid', borderColor:'#F25041', px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'capitalize' }}>
                                 Connect Wallet
                         </Button>
                     </div>
