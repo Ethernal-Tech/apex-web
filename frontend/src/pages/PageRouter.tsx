@@ -9,6 +9,7 @@ import { RootState } from '../redux/store';
 import TransactionsTablePage from './Transactions/TransactionsTablePage';
 import TransactionDetailPage from './Transactions/TransactionDetailPage';
 import appSettings from '../settings/appSettings';
+import TestNewTransactionPage from './Transactions/TestNewTransactionPage';
 
 export const LOGIN_ROUTE = '/login';
 export const HOME_ROUTE = '/';
@@ -59,6 +60,10 @@ function PageRouter() {
 			<Route path={TRANSACTIONS_ROUTE} element={renderTransactionsPage} />
 			<Route path={NEW_TRANSACTION_ROUTE} element={renderNewTransactionPage} />
 			<Route path={TRANSACTION_DETAILS_ROUTE} element={renderTransactionDetailsPage} />
+			
+			{/* todo af - remote this later, just for testing purposes */}
+			<Route path={"/test-new-transaction"} element={<TestNewTransactionPage/>} />
+			
 		</Routes>
 	);
 };
