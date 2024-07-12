@@ -1,4 +1,4 @@
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import BasePage from "../base/BasePage";
 import AddressBalance from "./components/AddressBalance";
 import TotalBalance from "./components/TotalBalance";

@@ -8,6 +8,7 @@ import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
 import BasePage from '../base/BasePage';
 import BridgeGraph from "../../assets/Bridge-Graph.svg";
 import { menuDark, white } from "../../containers/theme";
+import ButtonCustom from "../../components/Buttons/ButtonCustom";
 
 const HomePage: React.FC = () => {
   const [source, setSource] = useState('prime');
@@ -66,12 +67,19 @@ const HomePage: React.FC = () => {
         </Box>
       </Box>
 
-      {/* TODO AF - hide button when user is logged in, or show a bridge button, or hide (depends on product) */}
-      <Button 
-        sx={{backgroundColor:white, color: menuDark}}
-        >
+      {/* TODO AF 
+        - conditional displaf of btn based on log in status.
+        - make button functional (connect to vector networ, or prime network 
+            depending on selected bridge path (not possible to do 2 at once))
+      */}
+      <ButtonCustom 
+        variant="white"
+        sx={{
+          textTransform:'uppercase'
+        }}
+      >
         Connect Wallet
-      </Button>
+      </ButtonCustom>
     </BasePage>
   );
 };
