@@ -48,7 +48,7 @@ const HomePage: React.FC = () => {
             value={source}
             onChange={(e) => setSource(e.target.value)}
             options={options}
-            sx={{ minWidth: 200, background: white, color: menuDark }} // Setting minWidth via sx prop
+            // sx={{ minWidth: 200}} // Setting minWidth via sx prop
           />
         </Box>
         <Button onClick={switchValues} sx={{ mt: '20px', mx:'28px', boxShadow: 'none', background:'none' }}>
@@ -62,7 +62,7 @@ const HomePage: React.FC = () => {
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
             options={options}
-            sx={{ minWidth: 200, background: white, color: menuDark }} // Setting minWidth via sx prop
+            // sx={{ minWidth: 200}} // Setting minWidth via sx prop
           />
         </Box>
       </Box>
