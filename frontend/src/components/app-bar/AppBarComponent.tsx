@@ -11,6 +11,7 @@ import { removeTokenAction } from "../../redux/slices/tokenSlice";
 import { removePKLoginAction } from "../../redux/slices/pkLoginSlice";
 import ApexFusionLogo from "../../assets/apex-fusion-logo.svg";
 import { menuDark, white } from "../../containers/theme";
+import ButtonCustom from "../Buttons/ButtonCustom";
 
 const AppBarComponent = () => {
     const navigate = useNavigate();
@@ -76,19 +77,23 @@ const AppBarComponent = () => {
                         </Button>
                         
                         {/* TODO af - display button when user is NOT logged in, otherwise display button above */}
-                        <Button
-                            onClick={() => handleOptionClick(LOGIN_ROUTE)}
+                        {/* <Button
+                            
                             sx={{ 
                                 border: '1px solid', 
                                 borderColor:'#F25041', 
                                 px: '24px', 
-                                py: '10px', 
                                 borderRadius:'8px', 
                                 color: white, 
                                 textTransform:'capitalize' 
-                            }}>
-                                Connect Wallet
-                        </Button>
+                                }}>
+                                </Button> */}
+                        <ButtonCustom 
+                            variant="redNavigation"
+                            onClick={() => handleOptionClick(LOGIN_ROUTE)}
+                        >
+                            Connect Wallet
+                        </ButtonCustom>
                     </div>
                     <Menu
                         id="basic-menu"

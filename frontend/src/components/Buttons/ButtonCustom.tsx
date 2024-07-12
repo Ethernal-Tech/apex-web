@@ -5,7 +5,7 @@ interface ButtonCustomProps {
     onClick?: () => void;
     sx?: object;
     children?: React.ReactNode;  // Add children prop
-    variant?:'red'|'white'
+    variant?:'red'|'redNavigation'|'white'|'whiteNavigation'
   }
 
   const variantStyles  ={
@@ -14,39 +14,63 @@ interface ButtonCustomProps {
           borderColor: '#F25041',
           color: 'white',
           backgroundColor: 'transparent',
+          padding: '14px 24px',
           '&:hover':{
               boxShadow: 'none',
               backgroundColor:'transparent'
           }
+      },
+      redNavigation:{
+          border: '1px solid',
+          borderColor: '#F25041',
+          color: 'white',
+          backgroundColor: 'transparent',
+          padding: '10px 24px',
+          '&:hover':{
+              boxShadow: 'none',
+              backgroundColor:'transparent'
+          },
+          py:'10px'
       },
       white: {
           border: '1px solid',
           borderColor: 'white',
           color: 'black',
           backgroundColor: 'white',
+          padding: '14px 24px',
           '&:hover':{
               boxShadow: 'none',
               backgroundColor:'white'
           }
-      }
+      },
+      whiteNavigation:{
+        border: '1px solid',
+        borderColor: 'white',
+        color: 'black',
+        backgroundColor: 'white',
+        padding: '10px 24px',
+        '&:hover':{
+            boxShadow: 'none',
+            backgroundColor:'white'
+        },
+        py:'10px'
+    },
   }
 
 const ButtonCustom: React.FC<ButtonCustomProps> = ({ onClick, sx, children, variant = 'white' }) => {
     const CustomButton = styled(Button)({
-        ...variantStyles[variant],
+        // adding chosen variant
         boxShadow: 'none',
         borderRadius: '8px',
         textTransform: 'uppercase',
         fontWeight:600,
-        // adding chosen variant
-        padding: '14px 24px',
+        ...variantStyles[variant],
     });
     
   return (
     <CustomButton
       onClick={onClick}
       sx={{
-
         ...sx,
       }}
     >
