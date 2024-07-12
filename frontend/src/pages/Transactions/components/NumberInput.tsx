@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, styled, SxProps, Theme } from '@mui/material';
+import { TextField, Button, Box, styled, SxProps, Theme, Typography } from '@mui/material';
 // import './CustomStyles.css'; // Import the CSS file
 
 const totalBalance = 5000.000456;  // Define the total balance variable
+const apexPriceInDollars = 0.4 // 1 apex is 0.4$ in this case
 
 const CustomTextField = styled(TextField)({
   '& .MuiOutlinedInput-root': {
@@ -19,13 +20,14 @@ const CustomTextField = styled(TextField)({
     // borderRadius: '8px',
     border: 'none',
     color: 'white',
-    padding: '0 8px',
+    padding: '0 8px 0 0',
     width: '100%',
     caretColor: '#FF5E5E',
   },
   input: {
     fontSize: '1.5rem',
     color: 'white',
+    paddingLeft:0,
     caretColor: '#FF5E5E',
     '&::placeholder': {
       color: '#a3a3a3',
@@ -85,22 +87,27 @@ const PasteTextInput: React.FC<PasteTextInputProps> = ({ sx }) => {
   };
 
   return (
-    <Box display="flex" alignItems="center" width="100%" position="relative" sx={sx}>
-      <CustomTextField
-        type="number"  // Set the input type to number
-        variant="outlined"
-        fullWidth
-        placeholder="0.000000"  // Custom placeholder
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onPaste={handlePaste}
-      />
-      {!text && (
-        <CustomButton variant="contained" onClick={handleMaxClick}>
-          MAX
-        </CustomButton>
-      )}
+    <Box>
+        <Box display="flex" alignItems="center" width="100%" position="relative" sx={sx}>
+            <CustomTextField
+                type="number"  // Set the input type to number
+                variant="outlined"
+                fullWidth
+                placeholder="0.000000"  // Custom placeholder
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
+            />
+            {!text && (
+                <CustomButton variant="contained" onClick={handleMaxClick}>
+                MAX
+                </CustomButton>
+            )}
+        </Box>
+        <Typography sx={{color: '#A1B3A0'}}>&#36;
+            {(+text * apexPriceInDollars).toFixed(2)}
+        </Typography>
     </Box>
   );
 };
