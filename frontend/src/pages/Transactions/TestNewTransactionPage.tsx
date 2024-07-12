@@ -1,10 +1,11 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import BasePage from "../base/BasePage";
 import AddressBalance from "./components/AddressBalance";
 import TotalBalance from "./components/TotalBalance";
 import PasteTextInput from "./components/PasteTextInput";
 import NumberInput from "./components/NumberInput";
 import FeeInformation from "./components/FeeInformation";
+import ButtonCustom from "../../components/Buttons/ButtonCustom";
 
 // TODO: add input validations
 function NewTransactionPage() {
@@ -65,6 +66,22 @@ function NewTransactionPage() {
 							padding:2
 
 						}}/>
+						
+						<ButtonCustom 
+							variant="red"						
+							sx={{
+								gridColumn:'span 1'
+							}}>
+                            Discard
+                        </ButtonCustom>
+						
+						<ButtonCustom 
+							variant="white"						
+							sx={{
+								gridColumn:'span 1'
+							}}>
+							Move funds
+                        </ButtonCustom>
 					</Box>
 				</Box>
 			</Box>

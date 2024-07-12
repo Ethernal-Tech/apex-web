@@ -78,7 +78,15 @@ const AppBarComponent = () => {
                         {/* TODO af - display button when user is NOT logged in, otherwise display button above */}
                         <Button
                             onClick={() => handleOptionClick(LOGIN_ROUTE)}
-                            sx={{ border: '1px solid', borderColor:'#F25041', px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'capitalize' }}>
+                            sx={{ 
+                                border: '1px solid', 
+                                borderColor:'#F25041', 
+                                px: '24px', 
+                                py: '10px', 
+                                borderRadius:'8px', 
+                                color: white, 
+                                textTransform:'capitalize' 
+                            }}>
                                 Connect Wallet
                         </Button>
                     </div>
