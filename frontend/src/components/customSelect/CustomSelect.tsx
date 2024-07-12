@@ -19,8 +19,8 @@ interface CustomSelectProps {
   sx?: SxProps<Theme>;
 }
 
-const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, onChange, options, sx }) => {
-  const StyledFormControl = styled(FormControl)(({ sx }) => ({
+const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, onChange, options }) => {
+  const StyledFormControl = styled(FormControl)(({ theme }) => ({
     borderRadius: '4px',
     border: '1px solid',
     color: 'white',
@@ -42,8 +42,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
     },
     '& .MuiSvgIcon-root': {
       color: 'white',
-    },
-    ...sx
+    }
   }));
 
   const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
@@ -61,10 +60,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
   }));
 
   return (
-    <StyledFormControl
-      fullWidth
-      sx={{...sx}}
-    >
+    <StyledFormControl>
       <Select
         value={value}
         onChange={onChange}
