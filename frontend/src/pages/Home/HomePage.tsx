@@ -7,7 +7,7 @@ import { ReactComponent as NexusIcon } from '../../assets/chain-icons/nexus.svg'
 import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
 import BasePage from '../base/BasePage';
 import BridgeGraph from "../../assets/Bridge-Graph.svg";
-import { menuDark, white } from "../../containers/theme";
+import { white } from "../../containers/theme";
 import ButtonCustom from "../../components/Buttons/ButtonCustom";
 
 const HomePage: React.FC = () => {
@@ -48,7 +48,7 @@ const HomePage: React.FC = () => {
             value={source}
             onChange={(e) => setSource(e.target.value)}
             options={options}
-            // sx={{ minWidth: 200}} // Setting minWidth via sx prop
+            sx={{ width: '240px'}} // Setting minWidth via sx prop
           />
         </Box>
         <Button onClick={switchValues} sx={{ mt: '20px', mx:'28px', boxShadow: 'none', background:'none' }}>
@@ -62,7 +62,7 @@ const HomePage: React.FC = () => {
             value={destination}
             onChange={(e) => setDestination(e.target.value)}
             options={options}
-            // sx={{ minWidth: 200}} // Setting minWidth via sx prop
+            sx={{ width: '240px'}} // Setting minWidth via sx prop
           />
         </Box>
       </Box>

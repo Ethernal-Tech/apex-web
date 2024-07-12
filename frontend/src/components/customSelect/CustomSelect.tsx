@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select, MenuItem, ListItemIcon, ListItemText, FormControl, SelectChangeEvent, SxProps, Theme, Box } from '@mui/material';
+import { Select, MenuItem, ListItemIcon, ListItemText, FormControl, SelectChangeEvent, SxProps, Theme, Box, lighten } from '@mui/material';
 import { styled } from '@mui/system';
 import { menuDark } from '../../containers/theme';
 
@@ -19,41 +19,51 @@ interface CustomSelectProps {
   sx?: SxProps<Theme>;
 }
 
-
 const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, onChange, options, sx }) => {
-  const StyledFormControl = styled(FormControl)(({ theme }) => ({
+  const StyledFormControl = styled(FormControl)(({ sx }) => ({
     borderRadius: '4px',
     border: '1px solid',
-    borderColor: options.find(option => option.value === value)?.borderColor,
     color: 'white',
+    borderColor: options.find(option => option.value === value)?.borderColor,
     '& .MuiOutlinedInput-root': {
-      // color: 'white',
       backgroundColor: 'transparent',
       '& fieldset': {
-        borderColor: 'currentColor',
+        borderColor: 'none',
       },
       '&:hover fieldset': {
-        borderColor: 'currentColor',
+        borderColor: 'none',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: 'none',
+      },
+      '&.Mui-focused': {
+        outline: 'none',
       },
     },
     '& .MuiSvgIcon-root': {
       color: 'white',
     },
+    ...sx
   }));
-  
+
   const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
-    backgroundColor: 'black', // TODO AF - FIX THIS
+    backgroundColor: menuDark,
     color: 'white',
+    '&.Mui-selected': {
+      backgroundColor: menuDark,
+      '&:hover':{
+        backgroundColor: lighten(menuDark,0.1),
+      }
+    },
     '&:hover': {
-      backgroundColor: options.find(option => option.value === value)?.borderColor,
+      backgroundColor: lighten(menuDark,0.1),
     },
   }));
 
-
   return (
     <StyledFormControl
-      variant="outlined"
       fullWidth
+      sx={{...sx}}
     >
       <Select
         value={value}
@@ -69,16 +79,21 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
         MenuProps={{
           PaperProps: {
             sx: {
-              backgroundColor: 'transparent',
+              backgroundColor: menuDark,
               color: 'white',
             }
           }
+        }}
+        sx={{
+          backgroundColor: options.find(option => option.value === value)?.borderColor, // Full color for selected
+          color: 'white',
         }}
       >
         {options.map((option) => (
           <StyledMenuItem
             key={option.value}
             value={option.value}
+            selected={option.value === value}
           >
             <ListItemIcon style={{ minWidth: 0, marginRight: 8, color: 'white' }}>
               <option.icon />
