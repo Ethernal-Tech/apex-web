@@ -15,9 +15,9 @@ const HomePage: React.FC = () => {
   const [destination, setDestination] = useState('vector');
 
   const options = [
-    { value: 'prime', label: 'Prime', icon: PrimeIcon },
-    { value: 'vector', label: 'Vector', icon: VectorIcon },
-    { value: 'nexus', label: 'Nexus', icon: NexusIcon },
+    { value: 'prime', label: 'Prime', icon: PrimeIcon, borderColor:'#077368' },
+    { value: 'vector', label: 'Vector', icon: VectorIcon, borderColor:'#F25041' },
+    { value: 'nexus', label: 'Nexus', icon: NexusIcon, borderColor: '#F27B50'},
   ];
 
   const switchValues = () => {
