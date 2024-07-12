@@ -87,8 +87,8 @@ const PasteTextInput: React.FC<PasteTextInputProps> = ({ sx }) => {
   };
 
   return (
-    <Box>
-        <Box display="flex" alignItems="center" width="100%" position="relative" sx={sx}>
+    <Box sx={sx}>
+        <Box display="flex" alignItems="center" width="100%" position="relative">
             <CustomTextField
                 type="number"  // Set the input type to number
                 variant="outlined"
