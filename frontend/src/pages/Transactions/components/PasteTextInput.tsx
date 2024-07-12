@@ -18,9 +18,11 @@ const CustomTextField = styled(TextField)({
     color: 'white',
     padding: '0 8px',
     width: '100%',
+    caretColor:'#FF5E5E'
   },
   input: {
     color: 'white',
+    caretColor:'#FF5E5E'
   },
 });
 
@@ -65,9 +67,11 @@ const PasteTextInput:React.FC<PasteTextInputProps> = ({sx}) => {
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
-      <CustomButton variant="contained" onClick={handlePasteClick}>
-        PASTE
-      </CustomButton>
+      {!text && (
+        <CustomButton variant="contained" onClick={handlePasteClick}>
+          PASTE
+        </CustomButton>
+      )}
     </Box>
   );
 };
