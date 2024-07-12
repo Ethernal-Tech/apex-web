@@ -1,11 +1,9 @@
-import { AppBar, Button, Divider, ListItemIcon, ListItemText, Menu, MenuItem, Toolbar, Typography } from "@mui/material"
+import { AppBar, Button, ListItemIcon, ListItemText, Menu, MenuItem, Toolbar } from "@mui/material"
 import { useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { TRANSACTIONS_ROUTE, NEW_TRANSACTION_ROUTE, HOME_ROUTE, LOGIN_ROUTE } from "../../pages/PageRouter";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import FiberNewIcon from '@mui/icons-material/FiberNew';
-import TableChartIcon from '@mui/icons-material/TableChart';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { removeTokenAction } from "../../redux/slices/tokenSlice";
 import { removePKLoginAction } from "../../redux/slices/pkLoginSlice";
@@ -49,18 +47,18 @@ const AppBarComponent = () => {
                     </Button>
 
                     <div>
-                        <Button
+                        <ButtonCustom 
+                            variant="navigation"
                             onClick={() => handleOptionClick(NEW_TRANSACTION_ROUTE)}
-                            // TODO af - change the border color to not use hex value. Also update this on a theme level
-                            sx={{ px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'capitalize' }}>
-                                Transfer
-                        </Button>
-                        <Button
+                        >
+                           Transfer
+                        </ButtonCustom>
+                        <ButtonCustom
+                            variant="navigation"
                             onClick={() => handleOptionClick(TRANSACTIONS_ROUTE)}
-                            // TODO af - change the border color to not use hex value. Also update this on a theme level
-                            sx={{ px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'capitalize' }}>
-                                Bridging History
-                        </Button>
+                        >
+                            Bridging History
+                        </ButtonCustom>
                         
                         {/* TODO af - display button when user is logged in, otherwise display btn underneath */}
                         <Button

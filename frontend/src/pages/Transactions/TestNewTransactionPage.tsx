@@ -70,12 +70,19 @@ function NewTransactionPage() {
 						<ButtonCustom 
 							variant="red"						
 							sx={{
-								gridColumn:'span 1'
+								gridColumn:'span 1',
+								textTransform:'uppercase'
 							}}>
                             Discard
                         </ButtonCustom>
 						
-						<ButtonCustom variant="white">
+						<ButtonCustom 
+							variant="white"
+							sx={{
+								gridColumn:'span 1',
+								textTransform:'uppercase'
+							}}
+						>
 							Move funds
                         </ButtonCustom>
 					</Box>
