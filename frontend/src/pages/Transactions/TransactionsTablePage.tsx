@@ -102,7 +102,11 @@ const TransactionsTablePage = () => {
           onFilterChange={setFilters}
         />
       </Box>
-    <TableContainer component={Paper}  ref={tableRef}>
+    <TableContainer component={Paper}  ref={tableRef} sx={{
+      background: 'linear-gradient(180deg, #052531 0%, rgba(5, 37, 49, 0.1) 100%)',
+      border: '1px solid',
+      borderImageSource: 'linear-gradient(180deg, #435F69 0%, rgba(67, 95, 105, 0) 100%)',
+      }}>
       <Table>
         <TableHead>
           <TableRow>
@@ -111,7 +115,7 @@ const TransactionsTablePage = () => {
             key={headCell.id}
             padding='normal'
             sortDirection={filters.orderBy === headCell.id ? filters.order as SortDirection : false}
-            sx={{ cursor: 'default' }}
+            sx={{ cursor: 'default',color:'white' }}
           >
               {
                 headCell.id === 'actions' ?
@@ -136,7 +140,7 @@ const TransactionsTablePage = () => {
         <TableBody>
           {transactions?.items.map((transaction) => (
             <TableRow key={`tx-${transaction.id}`}>
-              <TableCell>
+              <TableCell sx={{color:'white'}}>
                 <Box component="span" sx={{
                   display: 'inline-block',
                   color: 'white',
@@ -152,7 +156,7 @@ const TransactionsTablePage = () => {
                 </Box>
                 {capitalizeWord(transaction.originChain)}
               </TableCell>
-              <TableCell>
+              <TableCell sx={{color:'white'}}>
                 <Box component="span" sx={{
                   display: 'inline-block',
                   color: 'white',
@@ -168,11 +172,11 @@ const TransactionsTablePage = () => {
                 </Box>
                 {capitalizeWord(transaction.destinationChain)}
               </TableCell>
-              <TableCell>{dfmToApex(transaction.amount)} APEX</TableCell>
-              <TableCell>{formatAddress(transaction.receiverAddresses)}</TableCell>
-              <TableCell>{transaction.createdAt.toLocaleString()}</TableCell>
-              <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
-              <TableCell>
+              <TableCell sx={{color:'white'}}>{dfmToApex(transaction.amount)} APEX</TableCell>
+              <TableCell sx={{color:'white'}}>{formatAddress(transaction.receiverAddresses)}</TableCell>
+              <TableCell sx={{color:'white'}}>{transaction.createdAt.toLocaleString()}</TableCell>
+              <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center', color:'white'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
+              <TableCell sx={{color:'white'}}>
                 <Box sx={{display:'flex'}}>
                   <Box sx={{marginRight:1}} component='img' src={getStatusIconAndLabel(transaction.status).icon || ''} alt=''/>
                   <Typography sx={{textTransform:'capitalize', display:'inline-block'}}>
