@@ -42,7 +42,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
     },
     '& .MuiSvgIcon-root': {
       color: 'white',
-    }
+    },
+    width:'260px' // TODO AF - see if this can be passed in from parent prop, might be more managable
   }));
 
   const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
