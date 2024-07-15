@@ -1,6 +1,7 @@
 import { Box } from "@mui/material";
 
 import AppBarComponent from "../../components/app-bar/AppBarComponent";
+import FooterBar from "../../components/footerbar/FooterBar";
 
 const BasePage = ({ children }: any) => {
 
@@ -10,6 +11,7 @@ const BasePage = ({ children }: any) => {
             <Box sx={{ margin: '20px', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center' }}>
                 {children}
             </Box>
+            <FooterBar/>
         </div>
     )
 }
