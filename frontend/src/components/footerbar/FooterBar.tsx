@@ -1,4 +1,7 @@
-import { Box } from "@mui/material"
+import { Box, Button } from "@mui/material"
+import {ReactComponent as ApexIcon} from "../../assets/external-links/Apex.svg";
+import {ReactComponent as LinkedinIcon} from "../../assets/external-links/LN.svg";
+import {ReactComponent as XIcon} from "../../assets/external-links/X.svg";
 
 const containerStyles = {
   width:'100%',
@@ -32,8 +35,21 @@ const FooterBar = () => {
         &copy;2024, Apex Fusion, All Rights Reserved
       </Box>
 
-      <Box sx={childStyles}>
-        socials
+      <Box sx={{
+        ...childStyles,
+        display:'flex',
+        justifyContent:'center',
+        alignItems:'center',
+      }}>
+        <Button component='a' href="https://apexfusion.org/">
+          <ApexIcon/>
+        </Button>
+        <Button component='a' href="https://www.linkedin.com/company/apexfusioncore">
+          <LinkedinIcon/>
+        </Button>
+        <Button component='a' href="https://x.com/apexfusion">
+          <XIcon/>
+        </Button>
       </Box>
       
       <Box sx={childStyles}>
