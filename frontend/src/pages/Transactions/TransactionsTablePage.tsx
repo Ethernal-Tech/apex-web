@@ -124,10 +124,28 @@ const TransactionsTablePage = () => {
                     active={filters.orderBy === headCell.id}
                     direction={filters.orderBy === headCell.id ? filters.order as "desc" | "asc" : 'asc'}
                     onClick={createSortHandler(headCell.id)}
+                    sx={{
+                      '&:hover':{
+                        color:'#a6a6a6',
+                        '& .MuiSvgIcon-root':{
+                          color:'#a6a6a6'
+                        }
+                      },
+                      '&.Mui-active':{
+                        color:'#a6a6a6',
+                        '& .MuiSvgIcon-root':{
+                          color:'#a6a6a6'
+                        }
+                      }
+                    }}
                   >
                     {headCell.label}
                     {filters.orderBy === headCell.id ? (
-                      <Box component="span" sx={visuallyHidden}>
+                      <Box 
+                        component="span" 
+                        sx={{
+                          ...visuallyHidden,
+                          }}>
                         {filters.order === 'desc' ? 'sorted descending' : 'sorted ascending'}
                       </Box>
                     ) : null}
