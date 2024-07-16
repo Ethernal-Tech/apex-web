@@ -35,6 +35,16 @@ function AppliedFiltersChips({ filters, removeFilter, resetFilters }: Props) {
 				onDelete={() => removeFilter(key)}
 				variant="outlined"
 				size="small"
+				sx={{
+					color:'white',
+					'& .MuiChip-deleteIcon':{
+						color:'white',
+						'&:hover':{
+							color:'#a6a6a6'
+						}
+					}
+				}}
+
 			/>
 		)),
 		[appliedFilters, removeFilter]
@@ -46,7 +56,7 @@ function AppliedFiltersChips({ filters, removeFilter, resetFilters }: Props) {
             {chips.length > 0 && (
 				<>
 					{chips}
-					<Button variant="text" sx={{ textTransform: 'none' }} onClick={resetFilters}>Clear all</Button>
+					<Button variant="text" sx={{ textTransform: 'none', color:'white' }} onClick={resetFilters}>Clear all</Button>
 				</>
 			)}
         </Box>

@@ -83,10 +83,20 @@ export default function Filters({ filters, onFilterChange }: Props) {
                 <AppliedFiltersChips filters={filters} removeFilter={removeFilterCallback} resetFilters={resetFiltersCallback}/>
                 <Button
                     variant="outlined"
-                    startIcon={<FilterList />}
                     onClick={() => setOpen(true)}
+                    sx={{
+                        color:'white',
+                        borderColor:'white',
+                        minWidth:'unset',
+                        padding:'5px',
+                        borderRadius:'100px',
+                        '&:hover':{
+                            borderColor:'#a6a6a6',
+                            color:'#a6a6a6'
+                        },
+                    }}
                 >
-                    Filters
+                    <FilterList />
                 </Button>
             </Box>
             <Modal
