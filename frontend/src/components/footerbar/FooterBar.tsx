@@ -32,7 +32,7 @@ const FooterBar = () => {
   return (
     <Box sx={containerStyles}>
       <Box sx={childStyles}>
-        &copy;2024, Apex Fusion, All Rights Reserved
+        &copy;{new Date().getFullYear()}, Apex Fusion, All Rights Reserved
       </Box>
 
       <Box sx={{
@@ -41,13 +41,13 @@ const FooterBar = () => {
         justifyContent:'center',
         alignItems:'center',
       }}>
-        <Button component='a' href="https://apexfusion.org/">
+        <Button component='a' href="https://apexfusion.org/" target="_blank">
           <ApexIcon/>
         </Button>
-        <Button component='a' href="https://www.linkedin.com/company/apexfusioncore">
+        <Button component='a' href="https://www.linkedin.com/company/apexfusioncore" target="_blank">
           <LinkedinIcon/>
         </Button>
-        <Button component='a' href="https://x.com/apexfusion">
+        <Button component='a' href="https://x.com/apexfusion" target="_blank">
           <XIcon/>
         </Button>
       </Box>

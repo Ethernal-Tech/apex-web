@@ -104,8 +104,8 @@ const TransactionsTablePage = () => {
       </Box>
     <TableContainer component={Paper}  ref={tableRef} sx={{
       background: 'linear-gradient(180deg, #052531 0%, rgba(5, 37, 49, 0.1) 100%)',
-      border: '1px solid',
-      borderImageSource: 'linear-gradient(180deg, #435F69 0%, rgba(67, 95, 105, 0) 100%)',
+      border: '1px solid #435F69',
+      borderRadius:'4px'
       }}>
       <Table>
         <TableHead>
@@ -115,7 +115,7 @@ const TransactionsTablePage = () => {
             key={headCell.id}
             padding='normal'
             sortDirection={filters.orderBy === headCell.id ? filters.order as SortDirection : false}
-            sx={{ cursor: 'default',color:'white' }}
+            sx={{ cursor: 'default',color:'white', borderBottom:'1px solid #435F694D' }}
           >
               {
                 headCell.id === 'actions' ?
@@ -158,7 +158,7 @@ const TransactionsTablePage = () => {
         <TableBody>
           {transactions?.items.map((transaction) => (
             <TableRow key={`tx-${transaction.id}`}>
-              <TableCell sx={{color:'white'}}>
+              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
                 <Box component="span" sx={{
                   display: 'inline-block',
                   color: 'white',
@@ -174,7 +174,7 @@ const TransactionsTablePage = () => {
                 </Box>
                 {capitalizeWord(transaction.originChain)}
               </TableCell>
-              <TableCell sx={{color:'white'}}>
+              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
                 <Box component="span" sx={{
                   display: 'inline-block',
                   color: 'white',
@@ -190,11 +190,11 @@ const TransactionsTablePage = () => {
                 </Box>
                 {capitalizeWord(transaction.destinationChain)}
               </TableCell>
-              <TableCell sx={{color:'white'}}>{dfmToApex(transaction.amount)} APEX</TableCell>
-              <TableCell sx={{color:'white'}}>{formatAddress(transaction.receiverAddresses)}</TableCell>
-              <TableCell sx={{color:'white'}}>{transaction.createdAt.toLocaleString()}</TableCell>
-              <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center', color:'white'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
-              <TableCell sx={{color:'white'}}>
+              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{dfmToApex(transaction.amount)} APEX</TableCell>
+              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{formatAddress(transaction.receiverAddresses)}</TableCell>
+              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{transaction.createdAt.toLocaleString()}</TableCell>
+              <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center', color:'white', borderBottom:'1px solid #435F694D'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
+              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
                 <Box sx={{display:'flex'}}>
                   <Box sx={{marginRight:1}} component='img' src={getStatusIconAndLabel(transaction.status).icon || ''} alt=''/>
                   <Typography sx={{textTransform:'capitalize', display:'inline-block'}}>
@@ -202,7 +202,7 @@ const TransactionsTablePage = () => {
                   </Typography>
                 </Box>
               </TableCell>
-              <TableCell>
+              <TableCell sx={{ borderBottom:'1px solid #435F694D'}}>
                 <Button variant="text" sx={{color:'red', background:'none'}} onClick={() => navigate(`/transaction/${transaction.id}`)}>
                   View Details
                 </Button>
@@ -219,6 +219,21 @@ const TransactionsTablePage = () => {
           rowsPerPage={transactions.perPage}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
+          sx={{
+            color:'white',
+            '& .MuiSelect-icon':{
+              color:'white',
+              '&.Mui-disabled':{
+                color:'#435F694D'
+              }
+            },
+            '& .MuiTablePagination-actions .MuiButtonBase-root ':{
+              color:'white',
+              '&.Mui-disabled':{
+                color:'#435F694D'
+              }
+            }
+          }}
     />}
     </BasePage>
   );
