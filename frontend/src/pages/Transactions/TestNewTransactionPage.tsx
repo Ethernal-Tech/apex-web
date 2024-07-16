@@ -105,9 +105,11 @@ function NewTransactionPage() {
 					}}>
 						<Typography sx={{color:'white',mt:4, mb:2, textAlign:'center'}}>Transfer in progress</Typography>
 
-						<TransferProgress/>
+						<Box sx={{mt:4}}>
+							<TransferProgress/>
+						</Box>
 
-						<Box sx={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'20px'}}>
+						<Box sx={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'20px',mt:4}}>
 							<ButtonCustom 
 								variant="red"						
 								sx={{
