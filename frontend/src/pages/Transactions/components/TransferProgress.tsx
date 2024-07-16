@@ -2,7 +2,7 @@ import { Box, Typography } from "@mui/material"
 import {ReactComponent as Done1icon} from "../../../assets/bridge-status-icons/step-done1.svg"
 import {ReactComponent as Done2icon} from "../../../assets/bridge-status-icons/step-done2.svg"
 import {ReactComponent as Done3icon} from "../../../assets/bridge-status-icons/step-done3.svg"
-import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
+// import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
 
 const STATUS = {
     WAITING:'WAITING',
@@ -113,7 +113,7 @@ const TransferProgress = () => {
         justifyContent:"space-evenly",
         gap:'40px'
     }}>
-        {steps.map(step=> <TransferStep step={step}/>)}
+        {steps.map(step=> <TransferStep key={step.number} step={step}/>)}
     </Box>
   )
 }
