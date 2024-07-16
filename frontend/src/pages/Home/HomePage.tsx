@@ -13,12 +13,39 @@ import ButtonCustom from "../../components/Buttons/ButtonCustom";
 const HomePage: React.FC = () => {
   const [source, setSource] = useState('prime');
   const [destination, setDestination] = useState('vector');
-
   const options = [
-    { value: 'prime', label: 'Prime', icon: PrimeIcon, borderColor:'#077368' },
-    { value: 'vector', label: 'Vector', icon: VectorIcon, borderColor:'#F25041' },
-    { value: 'nexus', label: 'Nexus', icon: NexusIcon, borderColor: '#F27B50'},
+    { 
+      value: 'prime',
+      label: 'Prime',
+      icon: PrimeIcon,
+      borderColor:'#077368' 
+    },
+    { 
+      value: 'vector', 
+      label: 'Vector', 
+      icon: VectorIcon,
+      borderColor:'#F25041'
+    },
+    { 
+      value: 'nexus',
+      label: 'Nexus',
+      icon: NexusIcon,
+      borderColor: '#F27B50'
+    }
   ];
+
+
+  // if new source is the same as destination, switch the chains
+  const updateSource = (value:string)=>{
+    if(value === destination) return switchValues()
+      setSource(value)
+  }
+  
+  // if new destination is the same as source, switch the chains
+  const updateDestination = (value:string)=>{
+    if(value === source) return switchValues()
+    setDestination(value)
+  }
 
   const switchValues = () => {
     const temp = source;
@@ -46,7 +73,7 @@ const HomePage: React.FC = () => {
             label="Source"
             icon={getIconComponent(source)}
             value={source}
-            onChange={(e) => setSource(e.target.value)}
+            onChange={(e) => updateSource(e.target.value)}
             options={options}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
           />
@@ -60,7 +87,7 @@ const HomePage: React.FC = () => {
             label="Destination"
             icon={getIconComponent(destination)}
             value={destination}
-            onChange={(e) => setDestination(e.target.value)}
+            onChange={(e) => updateDestination(e.target.value)}
             options={options}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
           />

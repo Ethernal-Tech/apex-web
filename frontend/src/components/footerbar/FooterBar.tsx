@@ -20,10 +20,10 @@ const containerStyles = {
 const childStyles = {
   width:'calc(100%/3)',
   alignSelf:'center',
-  '&:nth-child(2)':{
+  '&:nth-of-type(2)':{
     textAlign:'center',
   },
-  '&:nth-child(3)':{
+  '&:nth-of-type(3)':{
     textAlign:'right'
   }
 }
