@@ -1,5 +1,5 @@
 import { Link as RouterLink,useParams } from 'react-router-dom';
-import { Box, Button, Link, Typography } from '@mui/material';
+import { Box, Link, Typography } from '@mui/material';
 import BasePage from '../base/BasePage';
 import { useCallback, useEffect, useState } from 'react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -11,6 +11,7 @@ import { getAction } from './action';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord, dfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
 import { menuDark } from '../../containers/theme';
+import Button from "../../components/Buttons/ButtonCustom";
 
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -141,7 +142,7 @@ const TransactionDetailPage = () => {
           </Box>
           <Box sx={{display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap:'10px' }}>
             {/* {transaction && <VerticalStepper steps={transaction?.steps}/>} */}
-            <Button>Close</Button>
+            <Button variant="red">Close</Button>
 
             {/* TODO af - link to the transaction on the explorer */}
             <Button>View Explorer</Button>
