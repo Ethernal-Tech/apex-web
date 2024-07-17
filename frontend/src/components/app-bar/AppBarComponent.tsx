@@ -36,7 +36,6 @@ const AppBarComponent = () => {
     }
     return (
         <>
-            {/* todo af - update to not use hex value for bgColor */}
             <AppBar position='fixed' sx={{ zIndex: 20, boxShadow:'none', background: menuDark }}>
                 <Toolbar sx={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginLeft: '10px' }}>
                     <Button
@@ -67,8 +66,6 @@ const AppBarComponent = () => {
                             aria-haspopup="true"
                             aria-expanded={open ? 'true' : undefined}
                             onClick={handleClick}
-                            
-                            // TODO af - change the border color to not use hex value. Also update this on a theme level
                             sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'lowercase'}}
                             endIcon={<ExpandMoreIcon />}>
                                 addr_test1...lt9cc

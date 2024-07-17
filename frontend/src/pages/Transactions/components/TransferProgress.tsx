@@ -118,7 +118,6 @@ const TransferProgress = () => {
             justifyContent:"space-evenly",
             gap:'40px'
         }}>
-            {/* TODO AF - put the entire right side in its own component. organize this better */}
             {steps.map(step=> <TransferStep key={step.number} step={step}/>)}
         </Box>
 

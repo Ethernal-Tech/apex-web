@@ -67,37 +67,6 @@ export const theme2 = createTheme({
 				},
 			}
 		},
-
-		// todo af - check this again
-		/* MuiSelect: {
-			styleOverrides: {
-				root: {
-					color: white,
-					backgroundColor: menuDark,
-				},
-				icon: {
-					color: white,
-				}
-			}
-		}, */
-		
-		// todo af - check this again
-		/* MuiInputBase: {
-			styleOverrides: {
-				root: {
-					color: white,
-					backgroundColor: menuDark,
-				},
-			}
-		},
-		MuiInputLabel:{
-			styleOverrides: {
-				root: {
-					color: white,
-					backgroundColor: menuDark,
-				},
-			}
-		} */
 	},
 });
 

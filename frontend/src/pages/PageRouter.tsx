@@ -35,7 +35,6 @@ function PageRouter() {
 		[isLoggedInMemo]
 	)
 
-	// TODO af - implement this to use the home page. Also the nav should be sorted out to support this
 	const renderHomePage = <HomePage />;
 
 	const renderTransactionsPage = useMemo(

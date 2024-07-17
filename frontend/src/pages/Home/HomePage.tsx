@@ -95,7 +95,7 @@ const HomePage: React.FC = () => {
       </Box>
 
       {/* TODO AF 
-        - conditional displaf of btn based on log in status.
+        - conditional display of btn based on log in status.
         - make button functional (connect to vector networ, or prime network 
             depending on selected bridge path (not possible to do 2 at once))
       */}
