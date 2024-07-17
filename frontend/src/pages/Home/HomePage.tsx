@@ -3,7 +3,7 @@ import { Typography, Box, Button } from '@mui/material';
 import CustomSelect from '../../components/customSelect/CustomSelect';
 import { ReactComponent as PrimeIcon } from '../../assets/chain-icons/prime.svg';
 import { ReactComponent as VectorIcon } from '../../assets/chain-icons/vector.svg';
-import { ReactComponent as NexusIcon } from '../../assets/chain-icons/nexus.svg';
+// import { ReactComponent as NexusIcon } from '../../assets/chain-icons/nexus.svg';
 import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
 import BasePage from '../base/BasePage';
 import BridgeGraph from "../../assets/Bridge-Graph.svg";
@@ -26,12 +26,13 @@ const HomePage: React.FC = () => {
       icon: VectorIcon,
       borderColor:'#F25041'
     },
-    { 
+    // TODO af - nexus removed for now
+    /* { 
       value: 'nexus',
       label: 'Nexus',
       icon: NexusIcon,
       borderColor: '#F27B50'
-    }
+    } */
   ];
 
 
