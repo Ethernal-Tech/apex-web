@@ -2,6 +2,7 @@ import { Box, Typography } from "@mui/material"
 import {ReactComponent as Done1icon} from "../../../assets/bridge-status-icons/step-done1.svg"
 import {ReactComponent as Done2icon} from "../../../assets/bridge-status-icons/step-done2.svg"
 import {ReactComponent as Done3icon} from "../../../assets/bridge-status-icons/step-done3.svg"
+import ButtonCustom from "../../../components/Buttons/ButtonCustom"
 // import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
 
 const STATUS = {
@@ -108,12 +109,28 @@ const TransferStep = ({step}:TransferStepProps) => {
 
 const TransferProgress = () => {
   return (
-    <Box sx={{
-        display:'flex',
-        justifyContent:"space-evenly",
-        gap:'40px'
-    }}>
-        {steps.map(step=> <TransferStep key={step.number} step={step}/>)}
+    <Box>
+        <Typography sx={{color:'white',mt:4, mb:2, textAlign:'center'}}>Transfer in progress</Typography>
+
+        <Box sx={{
+            mt:4,
+            display:'flex',
+            justifyContent:"space-evenly",
+            gap:'40px'
+        }}>
+            {/* TODO AF - put the entire right side in its own component. organize this better */}
+            {steps.map(step=> <TransferStep key={step.number} step={step}/>)}
+        </Box>
+
+        <Box sx={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'20px',mt:4}}>
+            <ButtonCustom  variant="red" sx={{ gridColumn:'span 1', textTransform:'uppercase'}}>
+                View bridging history
+            </ButtonCustom>
+            
+            <ButtonCustom  variant="white" sx={{ gridColumn:'span 1', textTransform:'uppercase' }}>
+                request a refund
+            </ButtonCustom>
+        </Box>
     </Box>
   )
 }
