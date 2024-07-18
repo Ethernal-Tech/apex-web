@@ -29,10 +29,12 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
       color:'white'
     },
     '& .Mui-disabled':{
-      '-webkit-text-fill-color':'unset',
-    },
-    '& .Mui-disabled .MuiSvgIcon-root':{
-      display:'none'
+      '& .MuiSvgIcon-root':{
+        display:'none'
+      },
+      '& .MuiTypography-root':{
+        '-webkit-text-fill-color':'white',
+      },
     },
     '& .MuiOutlinedInput-root': {
       backgroundColor: 'transparent',
@@ -77,7 +79,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
         disabled={disabled}
         renderValue={(selected) => (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <ListItemIcon style={{ minWidth: 0, marginRight: 8 }}>
+            <ListItemIcon style={{ minWidth: 0, marginRight: 8, color: 'white' }}>
               <IconComponent />
             </ListItemIcon>
             <Typography>{options.find(option => option.value === selected)?.label}</Typography>
