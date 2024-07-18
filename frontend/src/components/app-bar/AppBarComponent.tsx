@@ -11,6 +11,7 @@ import ApexFusionLogo from "../../assets/apex-fusion-logo.svg";
 import { menuDark, white } from "../../containers/theme";
 import ButtonCustom from "../Buttons/ButtonCustom";
 import { RootState } from "../../redux/store";
+import { formatAddress } from "../../utils/generalUtils";
 
 const AppBarComponent = () => {
     const tokenState = useSelector((state: RootState) => state.token);
@@ -21,6 +22,8 @@ const AppBarComponent = () => {
 		},
 		[tokenState]
 	)
+
+    console.log(tokenState)
     
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -78,7 +81,10 @@ const AppBarComponent = () => {
                             onClick={handleClick}
                             sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'lowercase'}}
                             endIcon={<ExpandMoreIcon />}>
-                                addr_test1...lt9cc
+                                
+                                {/* TODO - actually fetch the real address, for prime, vector, eventually nexus */}
+                                {formatAddress('addr_test1qqve8npn3802shm00rxfns4x7ts5zwaaz5nq3kz6nnzjx4jsa5hlerq3wac7hl6vax48tq9lk3rmhg3q90r62ks9udqsynhxp7')}
+                                
                         </Button>
                         ) : (
                         <ButtonCustom 

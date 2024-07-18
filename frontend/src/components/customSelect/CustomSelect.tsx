@@ -33,7 +33,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
         display:'none'
       },
       '& .MuiTypography-root':{
-        '-webkit-text-fill-color':'white',
+        WebkitTextFillColor:'white',
       },
     },
     '& .MuiOutlinedInput-root': {
