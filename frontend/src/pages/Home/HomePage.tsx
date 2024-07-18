@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Typography, Box, Button } from '@mui/material';
 import CustomSelect from '../../components/customSelect/CustomSelect';
 import { ReactComponent as PrimeIcon } from '../../assets/chain-icons/prime.svg';
@@ -9,8 +9,23 @@ import BasePage from '../base/BasePage';
 import BridgeGraph from "../../assets/Bridge-Graph.svg";
 import { white } from "../../containers/theme";
 import ButtonCustom from "../../components/Buttons/ButtonCustom";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/store";
+import { useNavigate } from "react-router-dom";
+import { NEW_TRANSACTION_ROUTE } from "../PageRouter";
 
 const HomePage: React.FC = () => {
+  const tokenState = useSelector((state: RootState) => state.token);
+	
+	const isLoggedInMemo = useMemo(
+		() => {
+			return tokenState.token;
+		},
+		[tokenState]
+	)
+
+  const navigate = useNavigate()
+  
   const [source, setSource] = useState('prime');
   const [destination, setDestination] = useState('vector');
   const options = [
@@ -74,6 +89,7 @@ const HomePage: React.FC = () => {
             label="Source"
             icon={getIconComponent(source)}
             value={source}
+            disabled={isLoggedInMemo ? true : false}
             onChange={(e) => updateSource(e.target.value)}
             options={options}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
@@ -88,6 +104,7 @@ const HomePage: React.FC = () => {
             label="Destination"
             icon={getIconComponent(destination)}
             value={destination}
+            disabled={isLoggedInMemo ? true : false}
             onChange={(e) => updateDestination(e.target.value)}
             options={options}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
@@ -95,19 +112,22 @@ const HomePage: React.FC = () => {
         </Box>
       </Box>
 
-      {/* TODO AF 
-        - conditional display of btn based on log in status.
-        - make button functional (connect to vector networ, or prime network 
-            depending on selected bridge path (not possible to do 2 at once))
-      */}
-      <ButtonCustom 
-        variant="white"
-        sx={{
-          textTransform:'uppercase'
-        }}
-      >
-        Connect Wallet
-      </ButtonCustom>
+      {/* TODO AF - display login button if user is not logged in*/}
+      { !isLoggedInMemo ? (
+        <ButtonCustom 
+          variant="white"
+          sx={{ textTransform:'uppercase'}}>
+            Connect Wallet
+        </ButtonCustom>
+      ): (
+        <ButtonCustom 
+          variant="white"
+          sx={{ textTransform:'uppercase'}}
+          // TODO - updated design for moving funds found here: /test-new-transaction. This still leads to the old one
+          onClick={()=> navigate(NEW_TRANSACTION_ROUTE)}>
+            Move funds
+        </ButtonCustom>
+      )}
     </BasePage>
   );
 };

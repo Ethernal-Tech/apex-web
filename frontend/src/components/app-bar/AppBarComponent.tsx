@@ -1,6 +1,6 @@
 import { AppBar, Button, ListItemIcon, ListItemText, Menu, MenuItem, Toolbar } from "@mui/material"
-import { useCallback, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useCallback, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { TRANSACTIONS_ROUTE, NEW_TRANSACTION_ROUTE, HOME_ROUTE, LOGIN_ROUTE } from "../../pages/PageRouter";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -10,8 +10,18 @@ import { removePKLoginAction } from "../../redux/slices/pkLoginSlice";
 import ApexFusionLogo from "../../assets/apex-fusion-logo.svg";
 import { menuDark, white } from "../../containers/theme";
 import ButtonCustom from "../Buttons/ButtonCustom";
+import { RootState } from "../../redux/store";
 
 const AppBarComponent = () => {
+    const tokenState = useSelector((state: RootState) => state.token);
+	
+	const isLoggedInMemo = useMemo(
+		() => {
+			return tokenState.token;
+		},
+		[tokenState]
+	)
+    
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -59,7 +69,7 @@ const AppBarComponent = () => {
                             Bridging History
                         </ButtonCustom>
                         
-                        {/* TODO af - display button when user is logged in, otherwise display btn underneath */}
+                        {isLoggedInMemo ? (
                         <Button
                             id="basic-button"
                             aria-controls={open ? 'basic-menu' : undefined}
@@ -70,25 +80,14 @@ const AppBarComponent = () => {
                             endIcon={<ExpandMoreIcon />}>
                                 addr_test1...lt9cc
                         </Button>
-                        
-                        {/* TODO af - display button when user is NOT logged in, otherwise display button above */}
-                        {/* <Button
-                            
-                            sx={{ 
-                                border: '1px solid', 
-                                borderColor:'#F25041', 
-                                px: '24px', 
-                                borderRadius:'8px', 
-                                color: white, 
-                                textTransform:'capitalize' 
-                                }}>
-                                </Button> */}
+                        ) : (
                         <ButtonCustom 
                             variant="redNavigation"
                             onClick={() => handleOptionClick(LOGIN_ROUTE)}
                         >
                             Connect Wallet
                         </ButtonCustom>
+                        )}
                     </div>
                     <Menu
                         id="basic-menu"

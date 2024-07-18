@@ -1,7 +1,7 @@
 import { Avatar, Dialog, DialogContent, DialogContentText, DialogTitle, LinearProgress, List, ListItem, ListItemAvatar, ListItemButton, ListItemText } from '@mui/material';
 import { useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { TRANSACTIONS_ROUTE }  from '../PageRouter';
+import { HOME_ROUTE }  from '../PageRouter';
 import { useDispatch } from 'react-redux';
 import { setTokenAction } from '../../redux/slices/tokenSlice';
 import { generateLoginCodeAction, loginAction } from './action';
@@ -62,7 +62,7 @@ function LoginPage() {
 				}
 
 				dispatch(setTokenAction(token));
-				return navigate(TRANSACTIONS_ROUTE);
+				return navigate(HOME_ROUTE);
 			}
 
 		}

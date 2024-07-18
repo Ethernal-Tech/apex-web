@@ -1,5 +1,5 @@
 import React from 'react';
-import { Select, MenuItem, ListItemIcon, ListItemText, FormControl, SelectChangeEvent, SxProps, Theme, Box, lighten } from '@mui/material';
+import { Select, MenuItem, ListItemIcon, ListItemText, FormControl, SelectChangeEvent, SxProps, Theme, Box, lighten, Typography } from '@mui/material';
 import { styled } from '@mui/system';
 import { menuDark } from '../../containers/theme';
 
@@ -14,17 +14,26 @@ interface CustomSelectProps {
   label: string;
   icon: React.FC;
   value: string;
+  disabled?: boolean,
   onChange: (event: SelectChangeEvent<string>) => void;
   options: Option[];
   sx?: SxProps<Theme>;
 }
 
-const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, onChange, options }) => {
+const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, disabled = false, onChange, options }) => {
   const StyledFormControl = styled(FormControl)(({ theme }) => ({
     borderRadius: '4px',
     border: '1px solid',
-    color: 'white',
     borderColor: options.find(option => option.value === value)?.borderColor,
+    '& .MuiTypography-root':{
+      color:'white'
+    },
+    '& .Mui-disabled':{
+      '-webkit-text-fill-color':'unset',
+    },
+    '& .Mui-disabled .MuiSvgIcon-root':{
+      display:'none'
+    },
     '& .MuiOutlinedInput-root': {
       backgroundColor: 'transparent',
       '& fieldset': {
@@ -41,7 +50,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
       },
     },
     '& .MuiSvgIcon-root': {
-      color: 'white',
+      fill: 'white',
     },
     width:'260px' // TODO AF - see if this can be passed in from parent prop, might be more managable
   }));
@@ -65,12 +74,13 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
       <Select
         value={value}
         onChange={onChange}
+        disabled={disabled}
         renderValue={(selected) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', color: 'white' }}>
-            <ListItemIcon style={{ minWidth: 0, marginRight: 8, color: 'white' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <ListItemIcon style={{ minWidth: 0, marginRight: 8 }}>
               <IconComponent />
             </ListItemIcon>
-            {options.find(option => option.value === selected)?.label}
+            <Typography>{options.find(option => option.value === selected)?.label}</Typography>
           </Box>
         )}
         MenuProps={{
