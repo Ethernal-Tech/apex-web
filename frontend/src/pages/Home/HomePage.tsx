@@ -5,6 +5,7 @@ import { ReactComponent as PrimeIcon } from '../../assets/chain-icons/prime.svg'
 import { ReactComponent as VectorIcon } from '../../assets/chain-icons/vector.svg';
 // import { ReactComponent as NexusIcon } from '../../assets/chain-icons/nexus.svg';
 import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
+import { ReactComponent as OneDirectionArrowIcon } from '../../assets/oneDirectionArrow.svg';
 import BasePage from '../base/BasePage';
 import BridgeGraph from "../../assets/Bridge-Graph.svg";
 import { white } from "../../containers/theme";
@@ -95,8 +96,16 @@ const HomePage: React.FC = () => {
             sx={{ width: '240px'}} // Setting minWidth via sx prop
           />
         </Box>
-        <Button onClick={switchValues} sx={{ mt: '20px', mx:'28px', boxShadow: 'none', background:'none' }}>
-          <SwitcherIcon />
+        <Button 
+          onClick={switchValues} 
+          disabled={isLoggedInMemo ? true : false} 
+          sx={{ 
+            mt: '20px', 
+            mx:'28px', 
+            boxShadow: 'none', 
+            background:'none' 
+          }}>
+            {!isLoggedInMemo ? <SwitcherIcon /> : <OneDirectionArrowIcon/>}
         </Button>
         <Box>
           <Typography mb={1} sx={{color: white}} fontWeight="bold">DESTINATION</Typography>
