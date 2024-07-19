@@ -81,10 +81,7 @@ const AppBarComponent = () => {
                             onClick={handleClick}
                             sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'lowercase'}}
                             endIcon={<ExpandMoreIcon />}>
-                                
-                                {/* TODO - actually fetch the real address, for prime, vector, eventually nexus */}
-                                {formatAddress('addr_test1qqve8npn3802shm00rxfns4x7ts5zwaaz5nq3kz6nnzjx4jsa5hlerq3wac7hl6vax48tq9lk3rmhg3q90r62ks9udqsynhxp7')}
-                                
+                                {formatAddress(tokenState.token!.address)}
                         </Button>
                         ) : (
                         <ButtonCustom 

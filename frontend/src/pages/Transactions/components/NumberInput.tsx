@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, styled, SxProps, Theme, Typography } from '@mui/material';
+import { TextField, Button, Box, styled, SxProps, Theme } from '@mui/material';
 // import './CustomStyles.css'; // Import the CSS file
 
-const totalBalance = 5000.000456;  // Define the total balance variable
-const apexPriceInDollars = 0.4 // 1 apex is 0.4$ in this case
+
+const totalBalance = 5000.000456;  // TODO - get total balance
+// const apexPriceInDollars = NaN // fiat price doesn't exist for apex
 
 const CustomTextField = styled(TextField)({
   '& .MuiOutlinedInput-root': {
@@ -105,9 +106,10 @@ const PasteTextInput: React.FC<PasteTextInputProps> = ({ sx }) => {
                 </CustomButton>
             )}
         </Box>
-        <Typography sx={{color: '#A1B3A0'}}>&#36;
+        {/* TODO - removed, as APEX doesn't have a price in fiat equivalent */}
+        {/* <Typography sx={{color: '#A1B3A0'}}>&#36;
             {(+text * apexPriceInDollars).toFixed(2)}
-        </Typography>
+        </Typography> */}
     </Box>
   );
 };

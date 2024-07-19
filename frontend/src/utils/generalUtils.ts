@@ -20,18 +20,14 @@ export const getChainLabelAndColor = (chain: string):{letter:string, color: stri
 };
 
 export const formatAddress = (address:string|undefined):string => {
-    // if address is undefined, return empty string
     if(!address) return '';
   
-    // Check if the address length is appropriate for formatting
-    if (address.length <= 20) {
-      return address; // No need to format if the address is too short
-    }
+    // No need to format if the address is 13 chars long or shorter
+    if (address.length <= 13) return address;
   
-    const firstPart = address.substring(0, 12); // Get the first 8 characters
-    const lastPart = address.substring(address.length - 5); // Get the last 4 characters
-  
-    return `${firstPart}...${lastPart}`; // Combine them with ellipsis
+    const firstPart = address.substring(0, 7);
+    const lastPart = address.substring(address.length - 5);
+    return `${firstPart}...${lastPart}`;
   }
 
   export const dfmToApex = (dfm:number):string =>{

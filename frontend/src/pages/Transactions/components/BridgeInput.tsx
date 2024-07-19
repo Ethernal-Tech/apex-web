@@ -5,10 +5,14 @@ import NumberInput from "../components/NumberInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 
-const BridgeInput = () => {
+type BridgeInputType = {
+    totalBalance: string
+}
+
+const BridgeInput = ({totalBalance}:BridgeInputType) => {
   return (
     <Box sx={{width:'100%'}}>
-        <TotalBalance/>
+        <TotalBalance totalBalance={totalBalance}/>
 
         <Typography sx={{color:'white',mt:4, mb:2}}>Destination Address</Typography>
         <PasteTextInput sx={{width:'50%'}}/>
