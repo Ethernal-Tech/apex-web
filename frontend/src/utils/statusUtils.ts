@@ -36,7 +36,8 @@ export function getStatusColor(status: TransactionStatusEnum) {
 	}
 }
 
-// todo af notes - will show "success", "pending", or "failed". returns src for image to be used, as well as the message to show
+// todo af - will show "success", "pending", or "failed". 
+// returns src for image to be used, as well as the message to show
 export const getStatusIconAndLabel = (status: TransactionStatusEnum) => {
 	switch (status) {
 	  case TransactionStatusEnum.ExecutedOnDestination:

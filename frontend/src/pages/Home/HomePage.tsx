@@ -121,7 +121,6 @@ const HomePage: React.FC = () => {
         </Box>
       </Box>
 
-      {/* TODO AF - display login button if user is not logged in*/}
       { !isLoggedInMemo ? (
         <ButtonCustom 
           variant="white"
@@ -132,7 +131,7 @@ const HomePage: React.FC = () => {
         <ButtonCustom 
           variant="white"
           sx={{ textTransform:'uppercase'}}
-          // TODO - updated design for moving funds found here: /test-new-transaction. This still leads to the old one
+          // TODO - this leads to the old design of the "new transaction" page, should be updated
           onClick={()=> navigate(NEW_TRANSACTION_ROUTE)}>
             Move funds
         </ButtonCustom>

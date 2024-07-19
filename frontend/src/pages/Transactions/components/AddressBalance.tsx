@@ -38,7 +38,7 @@ const AddressBalance = ({totalBalance}: AddressBalanceType) => {
                 
             </Typography>
             
-            {/* TODO - removed for now as APEX doesn't have a price */}
+            {/* TODO af - removed for now as APEX doesn't have a price */}
             {/* <Typography>&#36;5,000.00</Typography> */}
         </Box>
     )

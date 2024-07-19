@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, styled, SxProps, Theme } from '@mui/material';
+import { TextField, Button, Box, styled, SxProps, Theme, Typography } from '@mui/material';
 // import './CustomStyles.css'; // Import the CSS file
 
 
-const totalBalance = 5000.000456;  // TODO - get total balance
 // const apexPriceInDollars = NaN // fiat price doesn't exist for apex
 
 const CustomTextField = styled(TextField)({
@@ -63,11 +62,12 @@ const CustomButton = styled(Button)({
   transform: 'translateY(-50%)',
 });
 
-interface PasteTextInputProps {
+interface PasteApexAmountInputProps {
   sx?: SxProps<Theme>;
+  totalBalance: string
 }
 
-const PasteTextInput: React.FC<PasteTextInputProps> = ({ sx }) => {
+const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, totalBalance }) => {
   const [text, setText] = useState('');
 
   const handleMaxClick = () => {
@@ -108,10 +108,10 @@ const PasteTextInput: React.FC<PasteTextInputProps> = ({ sx }) => {
         </Box>
         {/* TODO - removed, as APEX doesn't have a price in fiat equivalent */}
         {/* <Typography sx={{color: '#A1B3A0'}}>&#36;
-            {(+text * apexPriceInDollars).toFixed(2)}
+            {(+totalBalance * apexPriceInDollars).toFixed(2)}
         </Typography> */}
     </Box>
   );
 };
 
-export default PasteTextInput;
+export default PasteApexAmountInput;

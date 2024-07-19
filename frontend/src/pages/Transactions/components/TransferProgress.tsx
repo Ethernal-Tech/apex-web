@@ -48,8 +48,8 @@ const TransferStep = ({step}:TransferStepProps) => {
     return (
         <Box sx={{textAlign:'center'}}>
             
-            {/* waiting status */}
-            {step.status === STATUS.WAITING && (
+            {/* waiting or in_progress status */}
+            {(step.status === STATUS.WAITING || step.status === STATUS.IN_PROGRESS) && (
                 <Box sx={{
                     color:'#F25041',
                     borderRadius:'100px',
@@ -62,20 +62,7 @@ const TransferStep = ({step}:TransferStepProps) => {
                 </Box>
             )}
             
-            {/* waiting status - TODO AF - finish this */}
-            {step.status === STATUS.IN_PROGRESS && (
-                <Box sx={{
-                    color:'#F25041',
-                    borderRadius:'100px',
-                    border:'1px solid #F25041',
-                    display:'inline-block',
-                    width:'24px',
-                    height:'24px',
-                }}>
-                    {step.number}
-                </Box>
-            )}
-            
+            {/* done status */}
             {step.status === STATUS.DONE && (
                 <Box sx={{
                     display:'inline-block',
@@ -86,6 +73,7 @@ const TransferStep = ({step}:TransferStepProps) => {
                 </Box>
             )}
             
+            {/* error status */}
             {step.status === STATUS.ERROR && (
                 <Box sx={{
                     color:'white',

@@ -11,7 +11,7 @@ let transactionInProgress = false; // change to "true" to toogle view
 // TODO: add input validations
 function NewTransactionPage() {
 	
-	const totalBalanceInDfm = 56600000001 // TODO - actually fetch this balance (presented in dfm)
+	const totalBalanceInDfm = 56600000001 // TODO af - actually fetch this balance (presented in dfm)
 	const totalBalanceApex = dfmToApex(totalBalanceInDfm)
 
 	return (
