@@ -5,13 +5,12 @@ import { useNavigate } from "react-router-dom";
 import { TRANSACTIONS_ROUTE, NEW_TRANSACTION_ROUTE, HOME_ROUTE, LOGIN_ROUTE } from "../../pages/PageRouter";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { removeTokenAction } from "../../redux/slices/tokenSlice";
-import { removePKLoginAction } from "../../redux/slices/pkLoginSlice";
 import ApexFusionLogo from "../../assets/apex-fusion-logo.svg";
 import { menuDark, white } from "../../containers/theme";
 import ButtonCustom from "../Buttons/ButtonCustom";
 import { RootState } from "../../redux/store";
 import { formatAddress } from "../../utils/generalUtils";
+import { logout } from "../../actions/logout";
 
 const AppBarComponent = () => {
     const tokenState = useSelector((state: RootState) => state.token);
@@ -38,10 +37,9 @@ const AppBarComponent = () => {
 
     const logoutCallback = useCallback(
 		() => {
-            dispatch(removePKLoginAction());
-			dispatch(removeTokenAction());
+            logout(dispatch);
 		},
-		[dispatch]
+		[dispatch],
 	)
     function handleOptionClick(to: string) {
         handleClose();
