@@ -48,13 +48,13 @@ function NewTransactionPage() {
 				const bindedCreateAction = createTransactionAction.bind(null, new CreateTransactionDto(values));
 				const createResponse = await fetchFunction(bindedCreateAction);
 
-				await signAndSubmitTx(
+				const success = await signAndSubmitTx(
 					values,
 					createResponse,
 					dispatch,
 				);
 
-				navigate(HOME_ROUTE, { replace: true });
+				success && navigate(HOME_ROUTE, { replace: true });
 			}catch(err) {
 				console.log(err);
 			} finally {

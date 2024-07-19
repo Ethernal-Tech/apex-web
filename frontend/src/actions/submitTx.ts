@@ -21,8 +21,11 @@ const signAndSubmitTxUsingWallet = async (
     createResponse: CreateTransactionResponseDto,
     dispatch: Dispatch<UnknownAction>,
 ) => {
-    // TODO: actually implement this, once everything is ready
     const wallet = WalletHandler.getEnabledWallet();
+    if (!wallet) {
+        return false;
+    }
+
     const signedTxRaw = await wallet.signTx(createResponse.txRaw);
     await wallet.submitTx(signedTxRaw);
 
@@ -37,6 +40,8 @@ const signAndSubmitTxUsingWallet = async (
     }));
 
     await tryCatchJsonByAction(bindedSubmittedAction, dispatch);
+
+    return true;
 }
 
 const signAndSubmitTxUsingPrivateKey = async (
@@ -65,4 +70,6 @@ const signAndSubmitTxUsingPrivateKey = async (
     }));
 
     await tryCatchJsonByAction(bindedSubmitAction, dispatch);
+
+    return true;
 }

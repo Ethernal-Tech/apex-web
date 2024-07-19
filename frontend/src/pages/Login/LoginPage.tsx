@@ -3,21 +3,18 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { HOME_ROUTE }  from '../PageRouter';
 import { useDispatch } from 'react-redux';
-import { setTokenAction } from '../../redux/slices/tokenSlice';
-import { generateLoginCodeAction, loginAction } from './action';
-import { ChainEnum, DataSignatureDto, GenerateLoginCodeDto, LoginDto } from '../../swagger/apexBridgeApiService';
-import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
+import { ChainEnum} from '../../swagger/apexBridgeApiService';
 import WalletHandler, { Wallet } from '../../features/WalletHandler';
+import { login } from '../../actions/login';
 
 function LoginPage() {
 	const [connecting, setConnecting] = useState(false);
 	const dispatch = useDispatch();
-	const fetchFunction = useTryCatchJsonByAction();
 	
 	const navigate = useNavigate();
 
 	const installedWallets = useMemo(
-		() => WalletHandler.getInstalledWallets(),
+		() => WalletHandler.getSupportedWallets(),
 		[]
 	)
 
@@ -29,49 +26,10 @@ function LoginPage() {
 		}
 
 		setConnecting(true);
+		const success = await login(selectedWallet.name, chainId, dispatch);
+		setConnecting(false);
 
-		try {
-			const wallet = await WalletHandler.enable(selectedWallet.name);
-			if (WalletHandler.checkWallet(wallet))  {
-				// TODO: this probably should not be stake address
-				const stakeAddress = await WalletHandler.getStakeAddress(wallet);
-				const address = stakeAddress.to_bech32();
-				const bindedGenerateLoginCodeAction = generateLoginCodeAction.bind(null, new GenerateLoginCodeDto({
-					address, chainId,
-				}));
-				const loginCode = await fetchFunction(bindedGenerateLoginCodeAction);
-				if (!loginCode) {
-					setConnecting(false);
-					return;
-				}
-				const messageHex = Buffer.from(loginCode.code).toString("hex");
-
-				const signedData = await wallet.signData(address, messageHex);
-				const loginModel = new LoginDto({
-					address,
-					signedLoginCode: new DataSignatureDto(signedData),
-					chainId,
-				});
-				
-				const bindedLoginAction = loginAction.bind(null, loginModel);
-				const token = await fetchFunction(bindedLoginAction);
-				setConnecting(false);
-
-				if (!token) {
-					return;
-				}
-
-				dispatch(setTokenAction(token));
-				return navigate(HOME_ROUTE);
-			}
-
-		}
-		catch (err: any) {
-			if (err instanceof Error) {
-				console.log(err.stack)
-			}
-			setConnecting(false);
-		}
+		success && navigate(HOME_ROUTE);
 
 	}
 	return (

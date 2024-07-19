@@ -7,8 +7,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FiberNewIcon from '@mui/icons-material/FiberNew';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { removeTokenAction } from "../../redux/slices/tokenSlice";
-import { removePKLoginAction } from "../../redux/slices/pkLoginSlice";
+import { logout } from "../../actions/logout";
 
 const AppBarComponent = () => {
     const navigate = useNavigate();
@@ -24,10 +23,9 @@ const AppBarComponent = () => {
 
     const logoutCallback = useCallback(
 		() => {
-            dispatch(removePKLoginAction());
-			dispatch(removeTokenAction());
+            logout(dispatch);
 		},
-		[dispatch]
+		[dispatch],
 	)
     function handleOptionClick(to: string) {
         handleClose();

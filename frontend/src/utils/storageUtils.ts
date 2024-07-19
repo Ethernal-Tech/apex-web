@@ -43,3 +43,18 @@ export const getPKLogin = () : PKLoginDto | null => {
 export const removePKLogin = () => {
 	localStorage.removeItem(PK_LOGIN);
 }
+
+
+const SELECTED_WALLET = 'selected_wallet';
+
+export const setSelectedWallet = (wallet: string) => {
+	localStorage.setItem(SELECTED_WALLET, wallet);
+}
+
+export const getSelectedWallet = () : string | null => {
+	return localStorage.getItem(SELECTED_WALLET);
+}
+
+export const removeSelectedWallet = () => {
+	localStorage.removeItem(SELECTED_WALLET);
+}

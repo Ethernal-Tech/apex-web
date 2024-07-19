@@ -1,13 +1,14 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import NewTransactionPage from './Transactions/NewTransactionPage';
 import PKLoginPage from './Login/PKLoginPage';
 import LoginPage from './Login/LoginPage';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import TransactionsTablePage from './Transactions/TransactionsTablePage';
 import TransactionDetailPage from './Transactions/TransactionDetailPage';
 import appSettings from '../settings/appSettings';
+import { onLoad } from '../actions/login';
 
 export const LOGIN_ROUTE = '/login';
 export const HOME_ROUTE = '/';
@@ -17,13 +18,17 @@ export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
 
 function PageRouter() {
 	const tokenState = useSelector((state: RootState) => state.token);
+	const walletState = useSelector((state: RootState) => state.wallet);
+	const dispatch = useDispatch();
 	
-	const isLoggedInMemo = useMemo(
-		() => {
-			return tokenState.token;
-		},
-		[tokenState]
-	)
+	const isLoggedInMemo = !!tokenState.token && !!walletState.wallet;
+
+	useEffect(() => {
+		if (isLoggedInMemo) {
+			onLoad(walletState.wallet!, dispatch);
+		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
 
 	const renderLoginPage = useMemo(
 		() => !isLoggedInMemo

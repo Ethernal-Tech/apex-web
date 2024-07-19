@@ -1,9 +1,14 @@
 import { Address, BaseAddress, RewardAddress } from '@emurgo/cardano-serialization-lib-browser';
 import { BrowserWallet, Wallet } from '@meshsdk/core';
 
-let enabledWallet: BrowserWallet
+const SUPPORTED_WALLETS = ['eternl']
+
+let enabledWallet: BrowserWallet | undefined
 
 const getInstalledWallets = () => BrowserWallet.getInstalledWallets();
+
+const getSupportedWallets = () => getInstalledWallets()
+    .filter(wallet => SUPPORTED_WALLETS.some(supportedWallet => wallet.name === supportedWallet))
 
 const enable = async (walletName: string) => {
     enabledWallet = await BrowserWallet.enable(walletName);
@@ -11,6 +16,10 @@ const enable = async (walletName: string) => {
 }
 
 const getEnabledWallet = () => enabledWallet;
+
+const clearEnabledWallet = () => {
+    enabledWallet = undefined
+}
 
 const checkWallet = (wallet: BrowserWallet): boolean => wallet && wallet instanceof BrowserWallet;
 
@@ -29,8 +38,10 @@ const getStakeAddress = async (wallet: BrowserWallet) =>{
 
 const WalletHandler = {
     getInstalledWallets,
+    getSupportedWallets,
     enable,
     getEnabledWallet,
+    clearEnabledWallet,
     checkWallet,
     getStakeAddress,
 }
