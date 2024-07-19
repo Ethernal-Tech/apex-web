@@ -29,7 +29,6 @@ const AddressBalance = ({totalBalance}: AddressBalanceType) => {
                 </Typography>
             </Box>
             <Typography fontWeight={500}>
-                {/* TODO - get actual balance, both this and the decimals */}
                 <Box component='span' sx={{color:'white', fontSize:'18px',lineheight:'27px'}}>
                     {totalBalance.split('.')[0]}
                 </Box>
