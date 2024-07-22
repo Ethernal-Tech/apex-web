@@ -33,6 +33,8 @@ const signAndSubmitTxUsingWallet = async (
         + values.receivers.map(x => x.amount).reduce((acc, cv) => acc + cv, 0);
 
     const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
+        originChain: values.originChain,
+        senderAddress: values.senderAddress,
         destinationChain: values.destinationChain,
         receiverAddrs: values.receivers.map(x => x.address),
         amount,
@@ -62,6 +64,8 @@ const signAndSubmitTxUsingPrivateKey = async (
         + values.receivers.map(x => x.amount).reduce((acc, cv) => acc + cv, 0);
 
     const bindedSubmitAction = submitTransactionAction.bind(null, new SubmitTransactionDto({
+        originChain: values.originChain,
+        senderAddress: values.senderAddress,
         destinationChain: values.destinationChain,
         receiverAddrs: values.receivers.map(x => x.address),
         amount,

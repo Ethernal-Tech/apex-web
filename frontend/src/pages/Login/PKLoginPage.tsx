@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { HOME_ROUTE }  from '../PageRouter';
 import { useDispatch } from 'react-redux';
-import { ChainEnum, GenerateLoginCodeDto } from '../../swagger/apexBridgeApiService';
+import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import { PKLoginDto } from '../../utils/storageUtils';
 import TextFormField from '../../components/Form/TextFormField';
 import FieldBase from '../../components/Form/FieldBase';
@@ -15,11 +15,7 @@ function PKLoginPage() {
 	const [connecting, setConnecting] = useState(false);
 	const dispatch = useDispatch();
 
-	const [values, setValues] = useState(new GenerateLoginCodeDto({
-		chainId: ChainEnum.Prime,
-		address: '',
-	}));
-
+	const [chain, setChain] = useState(ChainEnum.Prime);
 	const [pkLoginValues, setPKLoginValues] = useState<PKLoginDto>({
 		address:  '',
 		privateKey: '',
@@ -49,13 +45,9 @@ function PKLoginPage() {
 			<FormControl>
 				<FieldBase label='Chain'>
 					<Select
-						value={values.chainId}
+						value={chain}
 						onChange={(event) => {
-							setValues((state) => new GenerateLoginCodeDto({
-								...state,
-								chainId: event.target.value as ChainEnum,
-								address: '',
-							}))
+							setChain(event.target.value as ChainEnum)
 							setPKLoginValues((state) => ({
 								...state,
 								address: '',
@@ -69,12 +61,8 @@ function PKLoginPage() {
 				</FieldBase>
 				<TextFormField
 					label='Address'
-					value={values.address}
+					value={pkLoginValues.address}
 					onValueChange={(event) => {
-						setValues((state) => new GenerateLoginCodeDto({
-							...state,
-							address: event.target.value
-						}))
 						setPKLoginValues((state) => ({
 							...state,
 							address: event.target.value

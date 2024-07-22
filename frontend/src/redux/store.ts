@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit'
 import pkLoginSlice from './slices/pkLoginSlice'
 import walletSlice from './slices/walletSlice'
+import chainSlice from './slices/chainSlice'
 
 export const store = configureStore({
 	reducer: {
 		pkLogin: pkLoginSlice,
 		wallet: walletSlice,
+		chain: chainSlice,
 	},
 	middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
 })

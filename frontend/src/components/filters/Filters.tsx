@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Modal from '@mui/material/Modal';
@@ -7,6 +7,8 @@ import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, TextField
 import AppliedFiltersChips from './AppliedFiltersChips';
 import { BridgeTransactionFilterDto, ChainEnum, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
 import { capitalizeWord } from '../../utils/generalUtils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
 
 const style = {
     position: 'absolute' as 'absolute',
@@ -27,6 +29,11 @@ type Props = {
 export default function Filters({ filters, onFilterChange }: Props) {
 	const [values, setValues] = useState(new BridgeTransactionFilterDto(filters));
     const [open, setOpen] = useState(false);
+
+    const chain = useSelector((state: RootState) => state.chain.chain)
+    const accountInfo = useSelector((state: RootState) => state.wallet.accountInfo)
+
+    const destinationChains = useMemo(() => Object.values(ChainEnum).filter(x => x !== chain), [chain])
 
 	const removeFilterCallback = useCallback(
 		(propName: string) => {
@@ -59,11 +66,13 @@ export default function Filters({ filters, onFilterChange }: Props) {
 		() => {
 			// keep sort
 			onFilterChange(new BridgeTransactionFilterDto({
+                originChain: chain,
+                senderAddress: accountInfo?.account || '',
 				order: filters.order,
 				orderBy: filters.orderBy,
 			}))
 		},
-		[onFilterChange, filters.order, filters.orderBy]
+		[onFilterChange, chain, accountInfo?.account, filters.order, filters.orderBy]
 	)
 
 	const changeCallback = useCallback(
@@ -117,7 +126,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                 value={values.destinationChain}
                                 onChange={changeCallback}
                             >
-								{Object.values(ChainEnum).map(chain => (
+								{destinationChains.map(chain => (
 									<MenuItem key={chain} value={chain}>{capitalizeWord(chain)}</MenuItem>
 								))}
                             </Select>

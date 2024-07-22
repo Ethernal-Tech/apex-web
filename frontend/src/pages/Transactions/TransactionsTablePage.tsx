@@ -11,6 +11,8 @@ import { getAllFilteredAction } from './action';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusColor, getStatusText, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord } from '../../utils/generalUtils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
@@ -19,24 +21,41 @@ const TransactionsTablePage = () => {
 	const navigate = useNavigate();
 	const fetchFunction = useTryCatchJsonByAction();
 	
-	const [filters, setFilters] = useState(new BridgeTransactionFilterDto());
+  const chain = useSelector((state: RootState) => state.chain.chain)
+  const accountInfo = useSelector((state: RootState) => state.wallet.accountInfo)
+
+	const [filters, setFilters] = useState(new BridgeTransactionFilterDto({
+    originChain: chain,
+    senderAddress: accountInfo?.account || '',
+  }));
 
     const fetchDataCallback = useCallback(
 		async (hideLoading: boolean = false) => {
+      if (!filters.senderAddress) {
+        return;
+      }
+
 			!hideLoading && setIsLoading(true);
 			const bindedAction = getAllFilteredAction.bind(null, filters);
 			const response = await fetchFunction(bindedAction);
 			setTransactions(response);
 			!hideLoading && setIsLoading(false);
 
-      return response
+      return response;
 		},
 		[filters, fetchFunction]
 	)
 
+  useEffect(() => {
+    setFilters((state) => new BridgeTransactionFilterDto({
+        ...state,
+        senderAddress: accountInfo?.account || '',
+    }))
+  }, [accountInfo?.account])
+
 	useEffect(
 		() => {
-			fetchDataCallback();
+      fetchDataCallback();
 		},
 		[fetchDataCallback]
 	)
@@ -45,7 +64,7 @@ const TransactionsTablePage = () => {
     () => {
       const handle = setInterval(async () => {
         const resp = await fetchDataCallback(true);
-        if (resp.items.every(x => isStatusFinal(x.status))) {
+        if (resp && resp.items.every(x => isStatusFinal(x.status))) {
           clearInterval(handle);
         }
       }, 5000);
@@ -54,8 +73,7 @@ const TransactionsTablePage = () => {
         clearInterval(handle);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [fetchDataCallback]
   )
 
 	const handleChangePage = (
