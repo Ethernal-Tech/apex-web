@@ -18,13 +18,14 @@ export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
 
 function PageRouter() {
 	const walletState = useSelector((state: RootState) => state.wallet);
+	const chainState = useSelector((state: RootState) => state.chain);
 	const dispatch = useDispatch();
 	
 	const isLoggedInMemo = !!walletState.wallet;
 
 	useEffect(() => {
 		if (isLoggedInMemo) {
-			onLoad(walletState.wallet!, dispatch);
+			onLoad(walletState.wallet!, chainState.chain, dispatch);
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])

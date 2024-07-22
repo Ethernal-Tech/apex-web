@@ -3,24 +3,33 @@ import { setAccountInfoAction, setWalletAction } from "../redux/slices/walletSli
 import { Dispatch } from 'redux';
 import { logout } from "./logout";
 import { toast } from "react-toastify";
+import { ChainEnum } from "../swagger/apexBridgeApiService";
+import { areChainsEqual } from "../utils/chainUtils";
 
 let onLoadCalled = false
 
-const enableWallet = async (selectedWalletName: string, dispatch: Dispatch) => {
+const enableWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
     try {
-        const wallet = await walletHandler.enable(selectedWalletName);
-        const success = walletHandler.checkWallet(wallet);
-        if (success) {
-            const networkId = await wallet.getNetworkId();
-            const account = await wallet.getChangeAddress();
+        await walletHandler.enable(selectedWalletName);
+        let success = walletHandler.checkWallet();
 
-            dispatch(setWalletAction(selectedWalletName));
-            dispatch(setAccountInfoAction({
-                account, networkId,
-            }))
+        if (!success) {
+            throw new Error('Check wallet failed.');
         }
 
-        return success;
+        const networkId = await walletHandler.getNetworkId();
+        if (!areChainsEqual(chain, networkId)) {
+            throw new Error(`networkId: ${networkId} not compatible with chain: ${chain}`);
+        }
+
+        const account = await walletHandler.getChangeAddress();
+
+        dispatch(setWalletAction(selectedWalletName));
+        dispatch(setAccountInfoAction({
+            account, networkId,
+        }))
+
+        return true;
     } catch (e) {
         console.log(e)
         toast.error(`${e}`);
@@ -31,17 +40,17 @@ const enableWallet = async (selectedWalletName: string, dispatch: Dispatch) => {
     return false;
 }
 
-export const onLoad = async (selectedWalletName: string, dispatch: Dispatch) => {
+export const onLoad = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
     if (onLoadCalled) {
         return
     }
 
     onLoadCalled = true;
 
-    const success = await enableWallet(selectedWalletName, dispatch);
+    const success = await enableWallet(selectedWalletName, chain, dispatch);
     !success && logout(dispatch);
 }
 
-export const login = async (selectedWalletName: string, dispatch: Dispatch) => {
-    return await enableWallet(selectedWalletName, dispatch);
+export const login = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
+    return await enableWallet(selectedWalletName, chain, dispatch);
 }

@@ -29,7 +29,7 @@ function LoginPage() {
 		}
 
 		setConnecting(true);
-		const success = await login(wallet, dispatch);
+		const success = await login(wallet, chain, dispatch);
 		setConnecting(false);
 
 		if (success) {

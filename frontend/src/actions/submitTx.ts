@@ -21,13 +21,12 @@ const signAndSubmitTxUsingWallet = async (
     createResponse: CreateTransactionResponseDto,
     dispatch: Dispatch<UnknownAction>,
 ) => {
-    const wallet = walletHandler.getEnabledWallet();
-    if (!wallet) {
+    if (!walletHandler.checkWallet()) {
         return false;
     }
 
-    const signedTxRaw = await wallet.signTx(createResponse.txRaw);
-    await wallet.submitTx(signedTxRaw);
+    const signedTxRaw = await walletHandler.signTx(createResponse.txRaw);
+    await walletHandler.submitTx(signedTxRaw!);
 
     const amount = createResponse.bridgingFee
         + values.receivers.map(x => x.amount).reduce((acc, cv) => acc + cv, 0);
