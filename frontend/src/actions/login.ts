@@ -1,4 +1,4 @@
-import WalletHandler from "../features/WalletHandler";
+import walletHandler from "../features/WalletHandler";
 import { setAccountInfoAction, setWalletAction } from "../redux/slices/walletSlice";
 import { Dispatch } from 'redux';
 import { logout } from "./logout";
@@ -8,8 +8,8 @@ let onLoadCalled = false
 
 const enableWallet = async (selectedWalletName: string, dispatch: Dispatch) => {
     try {
-        const wallet = await WalletHandler.enable(selectedWalletName);
-        const success = WalletHandler.checkWallet(wallet);
+        const wallet = await walletHandler.enable(selectedWalletName);
+        const success = walletHandler.checkWallet(wallet);
         if (success) {
             const networkId = await wallet.getNetworkId();
             const account = await wallet.getChangeAddress();
@@ -26,7 +26,7 @@ const enableWallet = async (selectedWalletName: string, dispatch: Dispatch) => {
         toast.error(`${e}`);
     }
 
-    WalletHandler.clearEnabledWallet()
+    walletHandler.clearEnabledWallet()
 
     return false;
 }

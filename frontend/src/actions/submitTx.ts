@@ -4,7 +4,7 @@ import { CreateTransactionDto, CreateTransactionResponseDto, SignTransactionDto,
 import { tryCatchJsonByAction } from "../utils/fetchUtils";
 import { Dispatch, UnknownAction } from 'redux';
 import { store } from "../redux/store";
-import WalletHandler from "../features/WalletHandler";
+import walletHandler from "../features/WalletHandler";
 
 export const signAndSubmitTx = async (
     values: CreateTransactionDto,
@@ -21,7 +21,7 @@ const signAndSubmitTxUsingWallet = async (
     createResponse: CreateTransactionResponseDto,
     dispatch: Dispatch<UnknownAction>,
 ) => {
-    const wallet = WalletHandler.getEnabledWallet();
+    const wallet = walletHandler.getEnabledWallet();
     if (!wallet) {
         return false;
     }

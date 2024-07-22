@@ -1,35 +1,44 @@
-import { BrowserWallet, Wallet } from '@meshsdk/core';
+import { BrowserWallet } from '@meshsdk/core';
+
+type Wallet = {
+    name: string;
+    icon: string;
+    version: string;
+};
 
 const SUPPORTED_WALLETS = ['eternl']
 
-let enabledWallet: BrowserWallet | undefined
+class WalletHandler {
+    private _enabledWallet: BrowserWallet | undefined;
 
-const getInstalledWallets = () => BrowserWallet.getInstalledWallets();
+    getNativeAPI = () => (this._enabledWallet as any)?._walletInstance;
 
-const getSupportedWallets = () => getInstalledWallets()
-    .filter(wallet => SUPPORTED_WALLETS.some(supportedWallet => wallet.name === supportedWallet))
+    getInstalledWallets = (): Wallet[] =>  {
+        if (window.cardano === undefined) return [];
+    
+        return SUPPORTED_WALLETS.filter(
+            (sw) => window.cardano[sw] !== undefined
+        ).map((sw) => ({
+            name: window.cardano[sw].name,
+            icon: window.cardano[sw].icon,
+            version: window.cardano[sw].apiVersion,
+        }));
+    };
 
-const enable = async (walletName: string) => {
-    enabledWallet = await BrowserWallet.enable(walletName);
-    return enabledWallet;
+    enable = async (walletName: string) => {
+        this._enabledWallet = await BrowserWallet.enable(walletName);
+        return this._enabledWallet;
+    }
+
+    getEnabledWallet = () => this._enabledWallet;
+
+    clearEnabledWallet = () => {
+        this._enabledWallet = undefined;
+    }
+
+    checkWallet = (wallet: any): boolean => wallet && wallet instanceof BrowserWallet;
 }
 
-const getEnabledWallet = () => enabledWallet;
-
-const clearEnabledWallet = () => {
-    enabledWallet = undefined
-}
-
-const checkWallet = (wallet: BrowserWallet): boolean => wallet && wallet instanceof BrowserWallet;
-
-const WalletHandler = {
-    getInstalledWallets,
-    getSupportedWallets,
-    enable,
-    getEnabledWallet,
-    clearEnabledWallet,
-    checkWallet,
-}
-
-export default WalletHandler;
+const walletHandler = new WalletHandler();
+export default walletHandler;
 export type { BrowserWallet, Wallet };

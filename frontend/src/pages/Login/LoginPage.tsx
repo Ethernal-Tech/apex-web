@@ -3,7 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { HOME_ROUTE }  from '../PageRouter';
 import { useDispatch } from 'react-redux';
-import WalletHandler, { Wallet } from '../../features/WalletHandler';
+import walletHandler, { Wallet } from '../../features/WalletHandler';
 import { login } from '../../actions/login';
 import FieldBase from '../../components/Form/FieldBase';
 import { ChainEnum } from '../../swagger/apexBridgeApiService';
@@ -19,7 +19,7 @@ function LoginPage() {
 	const navigate = useNavigate();
 
 	const installedWallets = useMemo(
-		() => WalletHandler.getSupportedWallets(),
+		() => walletHandler.getInstalledWallets(),
 		[]
 	)
 

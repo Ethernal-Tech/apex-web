@@ -33,14 +33,14 @@ const AppBarComponent = () => {
     }
 
     // const test = useCallback(async () => {
-    //     const wallet = WalletHandler.getEnabledWallet();
+    //     const wallet = walletHandler.getEnabledWallet();
     //     if (!wallet) {
     //         return
     //     }
 
     //     // native cardano api
-    //     const wi = (wallet as any)._walletInstance
-    //     console.log('inst', wi)
+    //     const nativeAPI = walletHandler.getNativeAPI()
+    //     console.log('nativeAPI', nativeAPI)
     // }, [])
     return (
         <>
