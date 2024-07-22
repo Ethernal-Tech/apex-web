@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit'
 import tokenSlice from './slices/tokenSlice'
 import pkLoginSlice from './slices/pkLoginSlice'
 import walletSlice from './slices/walletSlice'
+import networkSlice from './slices/networkSlice'
 
 export const store = configureStore({
 	reducer: {
 		token: tokenSlice,
 		pkLogin: pkLoginSlice,
 		wallet: walletSlice,
+		network: networkSlice
 	},
 	middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
 })

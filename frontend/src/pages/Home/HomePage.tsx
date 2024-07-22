@@ -10,10 +10,12 @@ import BasePage from '../base/BasePage';
 import BridgeGraph from "../../assets/Bridge-Graph.svg";
 import { white } from "../../containers/theme";
 import ButtonCustom from "../../components/Buttons/ButtonCustom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useNavigate } from "react-router-dom";
 import { NEW_TRANSACTION_ROUTE } from "../PageRouter";
+import { setDestinationNetworktAction, setSourceNetworktAction } from "../../redux/slices/networkSlice";
+import { getDestinationNetwork, getSourceNetwork } from "../../utils/storageUtils";
 
 const HomePage: React.FC = () => {
   const tokenState = useSelector((state: RootState) => state.token);
@@ -26,9 +28,10 @@ const HomePage: React.FC = () => {
 	)
 
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   
-  const [source, setSource] = useState('prime');
-  const [destination, setDestination] = useState('vector');
+  const networkState = useSelector((state: RootState) => state.network);
+  const {source, destination} = networkState.network
   const options = [
     { 
       value: 'prime',
@@ -54,20 +57,22 @@ const HomePage: React.FC = () => {
 
   // if new source is the same as destination, switch the chains
   const updateSource = (value:string)=>{
+    const destination = getDestinationNetwork()
     if(value === destination) return switchValues()
-      setSource(value)
+    dispatch(setSourceNetworktAction(value))
   }
   
   // if new destination is the same as source, switch the chains
   const updateDestination = (value:string)=>{
+    const source = getSourceNetwork()
     if(value === source) return switchValues()
-    setDestination(value)
+    dispatch(setDestinationNetworktAction(value))
   }
 
   const switchValues = () => {
     const temp = source;
-    setSource(destination);
-    setDestination(temp);
+    dispatch(setSourceNetworktAction(destination));
+    dispatch(setDestinationNetworktAction(temp));
   };
 
   const getIconComponent = (value: string): React.FC => {

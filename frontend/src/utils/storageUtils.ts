@@ -58,3 +58,46 @@ export const getSelectedWallet = () : string | null => {
 export const removeSelectedWallet = () => {
 	localStorage.removeItem(SELECTED_WALLET);
 }
+
+// Source network handling
+const SOURCE_NETWORK = 'source_network';
+export const default_source_network = 'prime';
+
+export const setSourceNetwork = (sourceNetwork: string) => {
+	localStorage.setItem(SOURCE_NETWORK, sourceNetwork);
+}
+
+export const getSourceNetwork = () => {
+	const source = localStorage.getItem(SOURCE_NETWORK);
+	if(!source){
+		return default_source_network;
+	}
+	
+	return source;
+}
+
+export const resetSourceNetwork = (sourceNetwork: string) => {
+	localStorage.setItem(SOURCE_NETWORK, sourceNetwork);
+}
+
+
+// Destination network handling
+const DESTINATION_NETWORK = 'destination_network';
+export const default_destination_network = 'vector';
+
+export const setDestinationNetwork = (destinationNetwork: string) => {
+	localStorage.setItem(DESTINATION_NETWORK, destinationNetwork);
+}
+
+export const getDestinationNetwork = () => {
+	const destination = localStorage.getItem(DESTINATION_NETWORK);
+	if(!destination){
+		return default_destination_network;
+	}
+	
+	return destination;
+}
+
+export const resetDestinationNetwork = (destinationNetwork: string) => {
+	localStorage.setItem(DESTINATION_NETWORK, destinationNetwork);
+}

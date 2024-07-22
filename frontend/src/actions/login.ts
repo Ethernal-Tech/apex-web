@@ -76,6 +76,8 @@ export const login = async (selectedWalletName: string, chainId: ChainEnum, disp
         }
 
         dispatch(setTokenAction(token));
+        // dispatch(resetSourceNetworktAction())
+        // dispatch(resetDestinationNetworktAction())
 
         return true;
 
