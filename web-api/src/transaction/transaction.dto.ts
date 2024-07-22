@@ -1,4 +1,4 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
 import { ChainEnum } from 'src/common/enum';
@@ -16,10 +16,13 @@ export class CreateTransactionReceiverDto {
 }
 
 export class CreateTransactionDto {
-	@ApiHideProperty()
+	@IsNotEmpty()
+	@ApiProperty()
 	senderAddress: string;
 
-	@ApiHideProperty()
+	@IsNotEmpty()
+	@IsEnum(ChainEnum)
+	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
 	originChain: ChainEnum;
 
 	@IsNotEmpty()
@@ -53,11 +56,14 @@ export class SignTransactionDto {
 }
 
 export class TransactionSubmittedDto {
-	@ApiHideProperty()
+	@IsNotEmpty()
+	@IsEnum(ChainEnum)
+	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
 	originChain: ChainEnum;
 
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
+	@NotSame('originChain')
 	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
 	destinationChain: ChainEnum;
 
@@ -65,7 +71,8 @@ export class TransactionSubmittedDto {
 	@ApiProperty()
 	originTxHash: string;
 
-	@ApiHideProperty()
+	@IsNotEmpty()
+	@ApiProperty()
 	senderAddress: string;
 
 	@IsNotEmpty()

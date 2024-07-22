@@ -17,11 +17,10 @@ export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
 
 
 function PageRouter() {
-	const tokenState = useSelector((state: RootState) => state.token);
 	const walletState = useSelector((state: RootState) => state.wallet);
 	const dispatch = useDispatch();
 	
-	const isLoggedInMemo = !!tokenState.token && !!walletState.wallet;
+	const isLoggedInMemo = !!walletState.wallet;
 
 	useEffect(() => {
 		if (isLoggedInMemo) {

@@ -3,10 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { HOME_ROUTE }  from '../PageRouter';
 import { useDispatch } from 'react-redux';
-import { setTokenAction } from '../../redux/slices/tokenSlice';
-import { generateLoginCodeAction, loginAction } from './action';
-import { ChainEnum, DataSignatureDto, GenerateLoginCodeDto, LoginDto } from '../../swagger/apexBridgeApiService';
-import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
+import { ChainEnum, GenerateLoginCodeDto } from '../../swagger/apexBridgeApiService';
 import { PKLoginDto } from '../../utils/storageUtils';
 import TextFormField from '../../components/Form/TextFormField';
 import FieldBase from '../../components/Form/FieldBase';
@@ -17,7 +14,6 @@ import { setPKLoginAction } from '../../redux/slices/pkLoginSlice';
 function PKLoginPage() {
 	const [connecting, setConnecting] = useState(false);
 	const dispatch = useDispatch();
-	const fetchFunction = useTryCatchJsonByAction();
 
 	const [values, setValues] = useState(new GenerateLoginCodeDto({
 		chainId: ChainEnum.Prime,
@@ -35,32 +31,7 @@ function PKLoginPage() {
 		setConnecting(true);
 
 		try {
-			const bindedGenerateLoginCodeAction = generateLoginCodeAction.bind(null, new GenerateLoginCodeDto(values));
-			const loginCode = await fetchFunction(bindedGenerateLoginCodeAction);
-			if (!loginCode) {
-				setConnecting(false);
-				return;
-			}
-
-			// TODO: sign data with private key?
-			// const messageHex = Buffer.from(loginCode.code).toString("hex");
-
-			const signedData = {key: '', signature: ''}
-			const loginModel = new LoginDto({
-				...values,
-				signedLoginCode: new DataSignatureDto(signedData),
-			});
-				
-			const bindedLoginAction = loginAction.bind(null, loginModel);
-			const token = await fetchFunction(bindedLoginAction);
-			setConnecting(false);
-
-			if (!token) {
-				return;
-			}
-
 			dispatch(setPKLoginAction(pkLoginValues));
-			dispatch(setTokenAction(token));
 			return navigate(HOME_ROUTE);
 
 		}

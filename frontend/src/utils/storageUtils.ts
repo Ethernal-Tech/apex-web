@@ -1,27 +1,6 @@
-import { TokenDto } from '../swagger/apexBridgeApiService';
-
 export type PKLoginDto = {
     address: string,
     privateKey: string,
-}
-
-const TOKEN = 'token';
-
-export const setToken = (token: TokenDto) => {
-	localStorage.setItem(TOKEN, JSON.stringify(token));
-}
-
-export const getToken = () : TokenDto | null => {
-	const tokenString = localStorage.getItem(TOKEN);
-	if (!tokenString) {
-		return null;
-	}
-
-	return TokenDto.fromJS(JSON.parse(tokenString));
-}
-
-export const removeToken = () => {
-	localStorage.removeItem(TOKEN);
 }
 
 const PK_LOGIN = 'pk_login';

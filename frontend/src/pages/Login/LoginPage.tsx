@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { HOME_ROUTE }  from '../PageRouter';
 import { useDispatch } from 'react-redux';
-import { ChainEnum} from '../../swagger/apexBridgeApiService';
 import WalletHandler, { Wallet } from '../../features/WalletHandler';
 import { login } from '../../actions/login';
 
@@ -18,15 +17,13 @@ function LoginPage() {
 		[]
 	)
 
-	const chainId = ChainEnum.Prime; // hardcoded value for now
-
 	async function handleWalletClick(selectedWallet: Wallet) {
 		if (!selectedWallet) {
 			return;
 		}
 
 		setConnecting(true);
-		const success = await login(selectedWallet.name, chainId, dispatch);
+		const success = await login(selectedWallet.name, dispatch);
 		setConnecting(false);
 
 		success && navigate(HOME_ROUTE);

@@ -1,11 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit'
-import tokenSlice from './slices/tokenSlice'
 import pkLoginSlice from './slices/pkLoginSlice'
 import walletSlice from './slices/walletSlice'
 
 export const store = configureStore({
 	reducer: {
-		token: tokenSlice,
 		pkLogin: pkLoginSlice,
 		wallet: walletSlice,
 	},

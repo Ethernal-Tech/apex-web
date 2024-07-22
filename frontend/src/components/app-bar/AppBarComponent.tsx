@@ -8,6 +8,7 @@ import FiberNewIcon from '@mui/icons-material/FiberNew';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { logout } from "../../actions/logout";
+import WalletHandler from "../../features/WalletHandler";
 
 const AppBarComponent = () => {
     const navigate = useNavigate();
@@ -31,11 +32,25 @@ const AppBarComponent = () => {
         handleClose();
         navigate(to, { replace: true });
     }
+    console.log(WalletHandler.getEnabledWallet())
+  
+    const test = useCallback(async () => {
+        const wallet = WalletHandler.getEnabledWallet();
+        if (!wallet ) {
+            return
+        }
+
+        const balance = await wallet.getBalance()
+        const networkId = await wallet.getNetworkId();
+  
+        console.log('balance', balance)
+        console.log('networkId', networkId)
+    }, [])
     return (
         <>
             <AppBar position='fixed' sx={{ zIndex: 20 }}>
                 <Toolbar sx={{ display: 'flex', flex: 1, flexDirection: 'row', justifyContent: 'space-between', marginLeft: '10px' }}>
-                    <Typography fontSize={'large'} fontWeight={'bold'}>
+                    <Typography fontSize={'large'} fontWeight={'bold'} onClick={test} >
                         Apex MVP Bridge
                     </Typography>
                     <Button

@@ -2,9 +2,8 @@ import { Button, Card, CardContent, CardHeader, LinearProgress, MenuItem, Select
 import { useNavigate } from "react-router-dom";
 import BasePage from '../base/BasePage';
 import TextFormField from '../../components/Form/TextFormField';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../../redux/store';
-import { useCallback, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { useCallback, useState } from 'react';
 import { ChainEnum, CreateTransactionDto, CreateTransactionReceiverDto } from '../../swagger/apexBridgeApiService';
 import { createTransactionAction } from './action';
 import FieldBase from '../../components/Form/FieldBase';
@@ -13,6 +12,7 @@ import appSettings from '../../settings/appSettings';
 import { capitalizeWord } from '../../utils/generalUtils';
 import { HOME_ROUTE } from '../PageRouter';
 import { signAndSubmitTx } from '../../actions/submitTx';
+import WalletHandler from '../../features/WalletHandler';
 
 const chainOptions = [
 	ChainEnum.Prime,
@@ -21,14 +21,8 @@ const chainOptions = [
 
 // TODO: add input validations
 function NewTransactionPage() {
-	const tokenState = useSelector((state: RootState) => state.token);
-	const chainOptionsMemo = useMemo(
-		() => chainOptions.filter(item => item !== tokenState.token!.chainId),
-		[tokenState]
-	);
-
 	const [values, setValues] = useState(new CreateTransactionDto({
-		destinationChain: chainOptionsMemo[0],
+		destinationChain: ChainEnum.Vector, // TODO: from redux
 		receivers: [],
 		bridgingFee: undefined,
 	}));
@@ -72,8 +66,8 @@ function NewTransactionPage() {
 				<Card variant="outlined" sx={{ width: '1200px', maxWidth: '75%', margin: '5px' }}>
 					<CardHeader title="Source" sx={{ padding: '16px 16px 0px 16px' }} />
 					<CardContent sx={{ padding: '0px 16px 16px 16px' }}>
-						<TextFormField label='Address' disabled value={tokenState.token!.address} />
-						<TextFormField label='Chain' disabled value={capitalizeWord(tokenState.token!.chainId)} />
+						<TextFormField label='Address' disabled value={WalletHandler.getAddress() || ''} />
+						<TextFormField label='Chain' disabled value={capitalizeWord(values.destinationChain === ChainEnum.Prime ? ChainEnum.Vector : ChainEnum.Prime)} />
 					</CardContent>
 				</Card>
 				<Card variant="outlined" sx={{ width: '1200px', maxWidth: '75%' }}>
@@ -84,7 +78,7 @@ function NewTransactionPage() {
 								value={values.destinationChain}
 								onChange={(event) => setValues((state) => new CreateTransactionDto({...state, destinationChain: event.target.value as ChainEnum}))}
 							>
-								{chainOptionsMemo.map(option => (
+								{chainOptions.map(option => (
 									<MenuItem key={option} value={option}>{capitalizeWord(option)}</MenuItem>
 								))}
 							</Select>

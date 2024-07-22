@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TransactionModule } from './transaction/transaction.module';
-import { AuthModule } from './auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dbdatasource } from './database/data.source';
 import { BridgeTransactionModule } from './bridgeTransaction/bridgeTransaction.module';
@@ -13,7 +12,6 @@ import { BridgeTransactionModule } from './bridgeTransaction/bridgeTransaction.m
 		}),
 		TypeOrmModule.forRoot(dbdatasource),
 		TransactionModule,
-		AuthModule,
 		BridgeTransactionModule,
 	],
 	controllers: [],

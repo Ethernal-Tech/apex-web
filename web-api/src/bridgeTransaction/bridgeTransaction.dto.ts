@@ -1,4 +1,4 @@
-import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
 import { PaginatedDto } from 'src/common/dto';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
@@ -52,10 +52,13 @@ export class BridgeTransactionDto {
 }
 
 export class BridgeTransactionFilterDto extends PaginatedDto {
-	@ApiHideProperty()
+	@IsNotEmpty()
+	@ApiProperty()
 	senderAddress: string;
 
-	@ApiHideProperty()
+	@IsNotEmpty()
+	@IsEnum(ChainEnum)
+	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
 	originChain: ChainEnum;
 
 	@ApiProperty({
