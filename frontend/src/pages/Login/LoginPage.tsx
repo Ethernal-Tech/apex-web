@@ -14,7 +14,6 @@ function LoginPage() {
 	const [connecting, setConnecting] = useState(false);
 	const dispatch = useDispatch();
 	const [chain, setChain] = useState(ChainEnum.Prime);
-	const [wallet, setWallet] = useState<string | undefined>();
 	
 	const navigate = useNavigate();
 
@@ -22,6 +21,10 @@ function LoginPage() {
 		() => walletHandler.getInstalledWallets(),
 		[]
 	)
+
+	const [wallet, setWallet] = useState<string | undefined>(
+		installedWallets.length > 0 ? installedWallets[0].name : undefined,
+	);
 
 	const handleLogin = useCallback(async() => {
 		if (!wallet) {
@@ -60,6 +63,7 @@ function LoginPage() {
 				</FieldBase>
 				<FieldBase label='Wallet'>
 					<Select
+						value={wallet}
 						disabled={connecting}
 						onChange={(event) => setWallet(event.target.value as string)}
 						>
