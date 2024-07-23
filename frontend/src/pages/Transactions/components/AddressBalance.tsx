@@ -8,7 +8,7 @@ type AddressBalanceType = {
 }
 
 const AddressBalance = ({totalBalance}: AddressBalanceType) => {
-    const tokenState = useSelector((state: RootState) => state.token);
+    const walletState = useSelector((state: RootState) => state.wallet);
 
     return (
         <Box px={'17px'} py='20px' sx={{
@@ -25,7 +25,7 @@ const AddressBalance = ({totalBalance}: AddressBalanceType) => {
                     address 1
                 </Typography>
                 <Typography fontSize="13px" textTransform={'lowercase'} sx={{display:'flex',alignItems:'center', color:'white'}}>
-                    {formatAddress(tokenState.token!.address)}
+                    {formatAddress(walletState.accountInfo?.account)}
                 </Typography>
             </Box>
             <Typography fontWeight={500}>

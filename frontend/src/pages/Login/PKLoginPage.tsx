@@ -1,12 +1,9 @@
 import { Button, Dialog, DialogTitle, FormControl, LinearProgress, MenuItem, Select } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { TRANSACTIONS_ROUTE }  from '../PageRouter';
+import { HOME_ROUTE, TRANSACTIONS_ROUTE }  from '../PageRouter';
 import { useDispatch } from 'react-redux';
-import { setTokenAction } from '../../redux/slices/tokenSlice';
-import { generateLoginCodeAction, loginAction } from './action';
-import { ChainEnum, DataSignatureDto, GenerateLoginCodeDto, LoginDto } from '../../swagger/apexBridgeApiService';
-import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
+import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import { PKLoginDto } from '../../utils/storageUtils';
 import TextFormField from '../../components/Form/TextFormField';
 import FieldBase from '../../components/Form/FieldBase';
@@ -17,13 +14,8 @@ import { setPKLoginAction } from '../../redux/slices/pkLoginSlice';
 function PKLoginPage() {
 	const [connecting, setConnecting] = useState(false);
 	const dispatch = useDispatch();
-	const fetchFunction = useTryCatchJsonByAction();
 
-	const [values, setValues] = useState(new GenerateLoginCodeDto({
-		chainId: ChainEnum.Prime,
-		address: '',
-	}));
-
+	const [chain, setChain] = useState(ChainEnum.Prime);
 	const [pkLoginValues, setPKLoginValues] = useState<PKLoginDto>({
 		address:  '',
 		privateKey: '',
@@ -35,33 +27,8 @@ function PKLoginPage() {
 		setConnecting(true);
 
 		try {
-			const bindedGenerateLoginCodeAction = generateLoginCodeAction.bind(null, new GenerateLoginCodeDto(values));
-			const loginCode = await fetchFunction(bindedGenerateLoginCodeAction);
-			if (!loginCode) {
-				setConnecting(false);
-				return;
-			}
-
-			// TODO: sign data with private key?
-			// const messageHex = Buffer.from(loginCode.code).toString("hex");
-
-			const signedData = {key: '', signature: ''}
-			const loginModel = new LoginDto({
-				...values,
-				signedLoginCode: new DataSignatureDto(signedData),
-			});
-				
-			const bindedLoginAction = loginAction.bind(null, loginModel);
-			const token = await fetchFunction(bindedLoginAction);
-			setConnecting(false);
-
-			if (!token) {
-				return;
-			}
-
 			dispatch(setPKLoginAction(pkLoginValues));
-			dispatch(setTokenAction(token));
-			return navigate(TRANSACTIONS_ROUTE);
+			return navigate(HOME_ROUTE);
 
 		}
 		catch (err: any) {
@@ -78,13 +45,9 @@ function PKLoginPage() {
 			<FormControl>
 				<FieldBase label='Chain'>
 					<Select
-						value={values.chainId}
+						value={chain}
 						onChange={(event) => {
-							setValues((state) => new GenerateLoginCodeDto({
-								...state,
-								chainId: event.target.value as ChainEnum,
-								address: '',
-							}))
+							setChain(event.target.value as ChainEnum)
 							setPKLoginValues((state) => ({
 								...state,
 								address: '',
@@ -98,12 +61,8 @@ function PKLoginPage() {
 				</FieldBase>
 				<TextFormField
 					label='Address'
-					value={values.address}
+					value={pkLoginValues.address}
 					onValueChange={(event) => {
-						setValues((state) => new GenerateLoginCodeDto({
-							...state,
-							address: event.target.value
-						}))
 						setPKLoginValues((state) => ({
 							...state,
 							address: event.target.value

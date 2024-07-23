@@ -13,16 +13,8 @@ import { formatAddress } from "../../utils/generalUtils";
 import { logout } from "../../actions/logout";
 
 const AppBarComponent = () => {
-    const tokenState = useSelector((state: RootState) => state.token);
-	
-	const isLoggedInMemo = useMemo(
-		() => {
-			return tokenState.token;
-		},
-		[tokenState]
-	)
-
-    console.log(tokenState)
+    const walletState = useSelector((state: RootState) => state.wallet);
+    const isLoggedInMemo = !!walletState.wallet;
     
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -45,6 +37,17 @@ const AppBarComponent = () => {
         handleClose();
         navigate(to, { replace: true });
     }
+
+    // const test = useCallback(async () => {
+    //     const wallet = walletHandler.getEnabledWallet();
+    //     if (!wallet) {
+    //         return
+    //     }
+
+    //     // native cardano api
+    //     const nativeAPI = walletHandler.getNativeAPI()
+    //     console.log('nativeAPI', nativeAPI)
+    // }, [])
     return (
         <>
             <AppBar position='fixed' sx={{ zIndex: 20, boxShadow:'none', background: menuDark }}>
@@ -79,7 +82,7 @@ const AppBarComponent = () => {
                             onClick={handleClick}
                             sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'lowercase'}}
                             endIcon={<ExpandMoreIcon />}>
-                                {formatAddress(tokenState.token!.address)}
+                                {formatAddress(walletState.accountInfo?.account)}
                         </Button>
                         ) : (
                         <ButtonCustom 

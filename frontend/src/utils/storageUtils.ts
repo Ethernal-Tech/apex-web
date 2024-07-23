@@ -1,27 +1,8 @@
-import { TokenDto } from '../swagger/apexBridgeApiService';
+import { ChainEnum } from "../swagger/apexBridgeApiService";
 
 export type PKLoginDto = {
     address: string,
     privateKey: string,
-}
-
-const TOKEN = 'token';
-
-export const setToken = (token: TokenDto) => {
-	localStorage.setItem(TOKEN, JSON.stringify(token));
-}
-
-export const getToken = () : TokenDto | null => {
-	const tokenString = localStorage.getItem(TOKEN);
-	if (!tokenString) {
-		return null;
-	}
-
-	return TokenDto.fromJS(JSON.parse(tokenString));
-}
-
-export const removeToken = () => {
-	localStorage.removeItem(TOKEN);
 }
 
 const PK_LOGIN = 'pk_login';
@@ -43,7 +24,6 @@ export const getPKLogin = () : PKLoginDto | null => {
 export const removePKLogin = () => {
 	localStorage.removeItem(PK_LOGIN);
 }
-
 
 const SELECTED_WALLET = 'selected_wallet';
 
@@ -102,4 +82,23 @@ export const getDestinationNetwork = () => {
 
 export const resetDestinationNetwork = (destinationNetwork: string) => {
 	localStorage.setItem(DESTINATION_NETWORK, destinationNetwork);
+}
+
+const SELECTED_CHAIN = 'selected_chain';
+
+export const setSelectedChain = (chain: ChainEnum) => {
+	localStorage.setItem(SELECTED_CHAIN, chain);
+}
+
+export const getSelectedChain = () : ChainEnum | null => {
+	const item = localStorage.getItem(SELECTED_CHAIN);
+	if (item === null) {
+		return item;
+	}
+	
+	return item as ChainEnum;
+}
+
+export const removeSelectedChain = () => {
+	localStorage.removeItem(SELECTED_CHAIN);
 }

@@ -6,9 +6,7 @@ import {
 	HttpStatus,
 	Param,
 	Post,
-	UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from 'src/guards/auth.guard';
 import { BridgeTransactionService } from './bridgeTransaction.service';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
@@ -16,12 +14,9 @@ import {
 	BridgeTransactionFilterDto,
 	BridgeTransactionResponseDto,
 } from './bridgeTransaction.dto';
-import { AuthUser } from 'src/decorators/authUser.decorator';
-import { User } from 'src/auth/auth.entity';
 
 @ApiTags('BridgeTransaction')
 @Controller('bridgeTransaction')
-@UseGuards(AuthGuard)
 export class BridgeTransactionController {
 	constructor(
 		private readonly bridgeTransactionService: BridgeTransactionService,
@@ -52,10 +47,7 @@ export class BridgeTransactionController {
 	@Post('filter')
 	async getAllFiltered(
 		@Body() filter: BridgeTransactionFilterDto,
-		@AuthUser() user: User,
 	): Promise<BridgeTransactionResponseDto> {
-		filter.senderAddress = user.address;
-		filter.originChain = user.chainId;
 		return this.bridgeTransactionService.getAllFiltered(filter);
 	}
 }

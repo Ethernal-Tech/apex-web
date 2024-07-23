@@ -1,11 +1,4 @@
-import {
-	Body,
-	Controller,
-	HttpCode,
-	HttpStatus,
-	Post,
-	UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import {
 	CreateTransactionDto,
@@ -17,13 +10,9 @@ import {
 	TransactionSubmittedDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from 'src/guards/auth.guard';
-import { User } from 'src/auth/auth.entity';
-import { AuthUser } from 'src/decorators/authUser.decorator';
 
 @ApiTags('Transaction')
 @Controller('transaction')
-@UseGuards(AuthGuard)
 export class TransactionController {
 	constructor(private readonly transactionService: TransactionService) {}
 
@@ -39,11 +28,8 @@ export class TransactionController {
 	@HttpCode(HttpStatus.OK)
 	@Post('createBridgingTransaction')
 	async createBridgingTransaction(
-		@AuthUser() user: User,
 		@Body() model: CreateTransactionDto,
 	): Promise<CreateTransactionResponseDto> {
-		model.senderAddress = user.address;
-		model.originChain = user.chainId;
 		return await this.transactionService.createTransaction(model);
 	}
 
@@ -76,11 +62,8 @@ export class TransactionController {
 	@HttpCode(HttpStatus.OK)
 	@Post('submitBridgingTransaction')
 	async submitBridgingTransaction(
-		@AuthUser() user: User,
 		@Body() model: SubmitTransactionDto,
 	): Promise<SubmitTransactionResponseDto> {
-		model.senderAddress = user.address;
-		model.originChain = user.chainId;
 		return this.transactionService.submitTransaction(model);
 	}
 
@@ -95,11 +78,8 @@ export class TransactionController {
 	@HttpCode(HttpStatus.OK)
 	@Post('bridgingTransactionSubmitted')
 	async bridgingTransactionSubmitted(
-		@AuthUser() user: User,
 		@Body() model: TransactionSubmittedDto,
 	): Promise<void> {
-		model.senderAddress = user.address;
-		model.originChain = user.chainId;
 		return this.transactionService.transactionSubmitted(model);
 	}
 }

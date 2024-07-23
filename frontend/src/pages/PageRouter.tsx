@@ -21,16 +21,16 @@ export const NEW_TRANSACTION_ROUTE = '/new-transaction';
 export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
 
 const PageRouter: React.FC = () => {
-  const tokenState = useSelector((state: RootState) => state.token);
 
 	const walletState = useSelector((state: RootState) => state.wallet);
+	const chainState = useSelector((state: RootState) => state.chain);
 	const dispatch = useDispatch();
 	
-	const isLoggedInMemo = !!tokenState.token && !!walletState.wallet;
+	const isLoggedInMemo = !!walletState.wallet;
 
 	useEffect(() => {
 		if (isLoggedInMemo) {
-			onLoad(walletState.wallet!, dispatch);
+			onLoad(walletState.wallet!, chainState.chain, dispatch);
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])

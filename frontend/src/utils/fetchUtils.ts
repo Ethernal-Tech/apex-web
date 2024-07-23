@@ -3,7 +3,6 @@ import { ApiException } from '../swagger/apexBridgeApiService';
 import { useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import { Dispatch, UnknownAction } from 'redux';
-import { logout } from '../actions/logout';
 
 export const catchError = (error: any, dispatch: Dispatch<UnknownAction>) => {
 	// server error
@@ -29,9 +28,9 @@ export const catchError = (error: any, dispatch: Dispatch<UnknownAction>) => {
 
 	// unauthorized error
 	if (error.status === 401) {
-		logout(dispatch);
-
-		toast.error('You are unauthorized for this action. Please login to application and try this action again. If problem remains, please contact system administrator.');
+		// logout(dispatch);
+		toast.error('You are unauthorized for this action.')
+		// toast.error('You are unauthorized for this action. Please login to application and try this action again. If problem remains, please contact system administrator.');
 		return null
 	}
 
