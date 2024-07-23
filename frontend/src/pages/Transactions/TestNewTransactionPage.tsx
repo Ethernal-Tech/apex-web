@@ -5,6 +5,8 @@ import TotalBalance from "./components/TotalBalance";
 import TransferProgress from "./components/TransferProgress";
 import BridgeInput from "./components/BridgeInput";
 import { dfmToApex } from "../../utils/generalUtils";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/store";
 
 let transactionInProgress = false; // change to "true" to toogle view
 
@@ -14,13 +16,26 @@ function NewTransactionPage() {
 	const totalBalanceInDfm = 56600000001 // TODO af - actually fetch this balance (presented in dfm)
 	const totalBalanceApex = dfmToApex(totalBalanceInDfm)
 
+	const {chain, destinationChain} = useSelector((state: RootState)=> state.chain)
+
 	return (
 		<BasePage>
+			
 			<Box width={'100%'} sx={{
 				display:'grid',
 				gridTemplateColumns:'repeat(3,1fr)', 
 				gap:'24px',
 			}}>
+				<Box sx={{ gridColumn:'span 1', color:'white', textTransform:'capitalize'}}>
+					<Typography>Source</Typography>
+					<Typography fontSize={'27px'} fontWeight={500}>{chain}</Typography>
+				</Box>
+
+				<Box sx={{ gridColumn:'span 2', color:'white', textTransform:'capitalize'}}>
+					<Typography>Destination chain</Typography>
+					<Typography fontSize={'27px'} fontWeight={500}>{destinationChain}</Typography>
+				</Box>
+
 				{/* left side */}
 				<Box sx={{
 					gridColumn:'span 1', 
