@@ -13,6 +13,7 @@ import { capitalizeWord } from '../../utils/generalUtils';
 import { HOME_ROUTE } from '../PageRouter';
 import { signAndSubmitTx } from '../../actions/submitTx';
 import { RootState } from '../../redux/store';
+import { toast } from 'react-toastify';
 
 const chainOptions = [
 	ChainEnum.Prime,
@@ -59,6 +60,7 @@ function NewTransactionPage() {
 				success && navigate(HOME_ROUTE, { replace: true });
 			}catch(err) {
 				console.log(err);
+				toast.error(`${err}`)
 			} finally {
 				setLoading(false);
 			}

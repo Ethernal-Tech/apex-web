@@ -77,12 +77,12 @@ class WalletHandler {
         return await this._enabledWallet!.getNetworkId();
     }
 
-    signTx = async (unsignedTx: string, partialSign?: boolean): Promise<string | undefined> => {
+    signTx = async (unsignedTx: string, partialSign?: boolean): Promise<string> => {
         this._checkWalletAndThrow();
         return await this._enabledWallet!.signTx(unsignedTx, partialSign);
     }
 
-    submitTx = async (tx: string): Promise<string | undefined> => {
+    submitTx = async (tx: string): Promise<string> => {
         this._checkWalletAndThrow();
         return await this._enabledWallet!.submitTx(tx);
     };

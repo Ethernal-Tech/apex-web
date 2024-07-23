@@ -1,6 +1,6 @@
-import { bridgingTransactionSubmittedAction, signTransactionAction, submitTransactionAction } from "../pages/Transactions/action";
+import { signTransactionAction, submitTransactionAction } from "../pages/Transactions/action";
 import appSettings from "../settings/appSettings";
-import { CreateTransactionDto, CreateTransactionResponseDto, SignTransactionDto, SubmitTransactionDto, TransactionSubmittedDto } from "../swagger/apexBridgeApiService";
+import { CreateTransactionDto, CreateTransactionResponseDto, SignTransactionDto, SubmitTransactionDto } from "../swagger/apexBridgeApiService";
 import { tryCatchJsonByAction } from "../utils/fetchUtils";
 import { Dispatch, UnknownAction } from 'redux';
 import { store } from "../redux/store";
@@ -26,6 +26,22 @@ const signAndSubmitTxUsingWallet = async (
     }
 
     const signedTxRaw = await walletHandler.signTx(createResponse.txRaw);
+
+    const amount = createResponse.bridgingFee
+        + values.receivers.map(x => x.amount).reduce((acc, cv) => acc + cv, 0);
+
+    const bindedSubmitAction = submitTransactionAction.bind(null, new SubmitTransactionDto({
+        originChain: values.originChain,
+        senderAddress: values.senderAddress,
+        destinationChain: values.destinationChain,
+        receiverAddrs: values.receivers.map(x => x.address),
+        amount,
+        originTxHash: createResponse.txHash,
+        signedTxRaw: signedTxRaw,
+    }));
+
+    await tryCatchJsonByAction(bindedSubmitAction, dispatch);
+    /*
     await walletHandler.submitTx(signedTxRaw!);
 
     const amount = createResponse.bridgingFee
@@ -41,7 +57,7 @@ const signAndSubmitTxUsingWallet = async (
     }));
 
     await tryCatchJsonByAction(bindedSubmittedAction, dispatch);
-
+    */
     return true;
 }
 
