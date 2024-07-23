@@ -2,18 +2,20 @@ import { Button, Dialog, DialogTitle, FormControl, LinearProgress, MenuItem, Sel
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { HOME_ROUTE }  from '../PageRouter';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import walletHandler, { Wallet } from '../../features/WalletHandler';
 import { login } from '../../actions/login';
 import FieldBase from '../../components/Form/FieldBase';
 import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import { setChainAction } from '../../redux/slices/chainSlice';
 import { capitalizeWord } from '../../utils/generalUtils';
+import { RootState } from '../../redux/store';
 
 function LoginPage() {
 	const [connecting, setConnecting] = useState(false);
 	const dispatch = useDispatch();
-	const [chain, setChain] = useState(ChainEnum.Prime);
+
+	const chain = useSelector((state: RootState) => state.chain.chain)
 	
 	const navigate = useNavigate();
 
@@ -48,10 +50,11 @@ function LoginPage() {
 			<FormControl>
 				<FieldBase label='Chain'>
 					<Select
-						disabled={connecting}
+						// disabled={connecting}
+						disabled={true} // always disabled as users select the network on the homepage
 						value={chain}
 						onChange={(event) => {
-							setChain(event.target.value as ChainEnum)
+							dispatch(setChainAction(event.target.value as ChainEnum))
 						}}
 						>
 						{

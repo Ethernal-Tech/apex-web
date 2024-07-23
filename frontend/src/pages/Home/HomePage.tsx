@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
 import { Typography, Box, Button } from '@mui/material';
 import CustomSelect from '../../components/customSelect/CustomSelect';
 import { ReactComponent as PrimeIcon } from '../../assets/chain-icons/prime.svg';
@@ -14,8 +14,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useNavigate } from "react-router-dom";
 import { NEW_TRANSACTION_ROUTE } from "../PageRouter";
-import { setDestinationNetworktAction, setSourceNetworktAction } from "../../redux/slices/networkSlice";
-import { getDestinationNetwork, getSourceNetwork } from "../../utils/storageUtils";
+import { getDestinationChain, getSelectedChain } from "../../utils/storageUtils";
+import { setChainAction, setDestinationChainAction } from "../../redux/slices/chainSlice";
+import { ChainEnum } from "../../swagger/apexBridgeApiService";
 
 const HomePage: React.FC = () => {
   const walletState = useSelector((state: RootState) => state.wallet);
@@ -24,8 +25,10 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   
-  const networkState = useSelector((state: RootState) => state.network);
-  const {source, destination} = networkState.network
+  const chainState = useSelector((state: RootState) => state.chain);
+  const chain = chainState.chain
+  const destinationChain = chainState.destinationChain
+
   const options = [
     { 
       value: 'prime',
@@ -50,23 +53,24 @@ const HomePage: React.FC = () => {
 
 
   // if new source is the same as destination, switch the chains
-  const updateSource = (value:string)=>{
-    const destination = getDestinationNetwork()
+  const updateSource = (value: ChainEnum)=>{
+    const destination = getDestinationChain()
     if(value === destination) return switchValues()
-    dispatch(setSourceNetworktAction(value))
+    dispatch(setChainAction(value))
   }
   
   // if new destination is the same as source, switch the chains
-  const updateDestination = (value:string)=>{
-    const source = getSourceNetwork()
+  const updateDestination = (value: ChainEnum)=>{
+    const source = getSelectedChain()
     if(value === source) return switchValues()
-    dispatch(setDestinationNetworktAction(value))
+    dispatch(setDestinationChainAction(value))
   }
 
   const switchValues = () => {
-    const temp = source;
-    dispatch(setSourceNetworktAction(destination));
-    dispatch(setDestinationNetworktAction(temp));
+    console.log('switch')
+    const temp = chain;
+    dispatch(setChainAction(destinationChain));
+    dispatch(setDestinationChainAction(temp));
   };
 
   const getIconComponent = (value: string): React.FC => {
@@ -87,10 +91,10 @@ const HomePage: React.FC = () => {
           <Typography mb={1} sx={{color: white}} fontWeight="bold">SOURCE</Typography>
           <CustomSelect
             label="Source"
-            icon={getIconComponent(source)}
-            value={source}
+            icon={getIconComponent(chain)}
+            value={chain}
             disabled={isLoggedInMemo ? true : false}
-            onChange={(e) => updateSource(e.target.value)}
+            onChange={(e) => updateSource(e.target.value as ChainEnum)}
             options={options}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
           />
@@ -110,10 +114,10 @@ const HomePage: React.FC = () => {
           <Typography mb={1} sx={{color: white}} fontWeight="bold">DESTINATION</Typography>
           <CustomSelect
             label="Destination"
-            icon={getIconComponent(destination)}
-            value={destination}
+            icon={getIconComponent(destinationChain)}
+            value={destinationChain}
             disabled={isLoggedInMemo ? true : false}
-            onChange={(e) => updateDestination(e.target.value)}
+            onChange={(e) => updateDestination(e.target.value as ChainEnum)}
             options={options}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
           />

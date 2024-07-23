@@ -39,51 +39,6 @@ export const removeSelectedWallet = () => {
 	localStorage.removeItem(SELECTED_WALLET);
 }
 
-// Source network handling
-const SOURCE_NETWORK = 'source_network';
-export const default_source_network = 'prime';
-
-export const setSourceNetwork = (sourceNetwork: string) => {
-	localStorage.setItem(SOURCE_NETWORK, sourceNetwork);
-}
-
-export const getSourceNetwork = () => {
-	const source = localStorage.getItem(SOURCE_NETWORK);
-	if(!source){
-		setSourceNetwork(default_source_network)
-		return default_source_network;
-	}
-	
-	return source;
-}
-
-export const resetSourceNetwork = (sourceNetwork: string) => {
-	localStorage.setItem(SOURCE_NETWORK, sourceNetwork);
-}
-
-
-// Destination network handling
-const DESTINATION_NETWORK = 'destination_network';
-export const default_destination_network = 'vector';
-
-export const setDestinationNetwork = (destinationNetwork: string) => {
-	localStorage.setItem(DESTINATION_NETWORK, destinationNetwork);
-}
-
-export const getDestinationNetwork = () => {
-	const destination = localStorage.getItem(DESTINATION_NETWORK);
-	if(!destination){
-		setDestinationNetwork(default_destination_network);
-		return default_destination_network;
-	}
-	
-	return destination;
-}
-
-export const resetDestinationNetwork = (destinationNetwork: string) => {
-	localStorage.setItem(DESTINATION_NETWORK, destinationNetwork);
-}
-
 const SELECTED_CHAIN = 'selected_chain';
 
 export const setSelectedChain = (chain: ChainEnum) => {
@@ -101,4 +56,50 @@ export const getSelectedChain = () : ChainEnum | null => {
 
 export const removeSelectedChain = () => {
 	localStorage.removeItem(SELECTED_CHAIN);
+}
+
+const DESTINATION_CHAIN = 'destination_chain';
+
+export const setDestinationChain = (chain: ChainEnum) => {
+	localStorage.setItem(DESTINATION_CHAIN, chain);
+}
+
+export const getDestinationChain = () : ChainEnum | null => {
+	const item = localStorage.getItem(DESTINATION_CHAIN);
+	if (item === null) {
+		return item;
+	}
+	
+	return item as ChainEnum;
+}
+
+export const removeDestinationChain = () => {
+	localStorage.removeItem(DESTINATION_CHAIN);
+}
+
+export const initChainsState = () => {
+	const chain = getSelectedChain()
+	const destinationChain = getDestinationChain()
+	const chainValues = Object.values(ChainEnum)
+
+	// reset chains if anything is wrong or missing from localStorage values
+	if(!chain || 
+		!destinationChain || 
+		chain === destinationChain ||
+		!chainValues.includes(chain) ||
+		!chainValues.includes(destinationChain)
+	){
+		setSelectedChain(ChainEnum.Prime)
+		setDestinationChain(ChainEnum.Vector)
+		return {
+			chain: ChainEnum.Prime,
+			destinationChain: ChainEnum.Vector
+		}
+	}
+
+
+	return {
+		chain,
+		destinationChain
+	}
 }
