@@ -70,6 +70,7 @@ export const setSourceNetwork = (sourceNetwork: string) => {
 export const getSourceNetwork = () => {
 	const source = localStorage.getItem(SOURCE_NETWORK);
 	if(!source){
+		setSourceNetwork(default_source_network)
 		return default_source_network;
 	}
 	
@@ -92,6 +93,7 @@ export const setDestinationNetwork = (destinationNetwork: string) => {
 export const getDestinationNetwork = () => {
 	const destination = localStorage.getItem(DESTINATION_NETWORK);
 	if(!destination){
+		setDestinationNetwork(default_destination_network);
 		return default_destination_network;
 	}
 	

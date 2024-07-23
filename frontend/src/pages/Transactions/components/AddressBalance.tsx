@@ -11,7 +11,7 @@ const AddressBalance = ({totalBalance}: AddressBalanceType) => {
     const tokenState = useSelector((state: RootState) => state.token);
 
     return (
-        <Box px={'17px'} py='20px' width={'100%'} sx={{
+        <Box px={'17px'} py='20px' sx={{
                 border:'1px solid',
                 color:'#A1B3A0', 
                 background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',

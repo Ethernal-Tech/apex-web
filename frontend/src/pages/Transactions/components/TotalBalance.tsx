@@ -9,7 +9,7 @@ type TotalBalanceType = {
 
 const TotalBalance = ({totalBalance}:TotalBalanceType) => {
   return (
-    <Box px={'17px'} py='20px' width={'100%'} sx={{border:'1px solid #077368',color:'#A1B3A0', background:'#075159',borderRadius:'4px', fontWeight:'500'}}>
+    <Box px={'17px'} py='20px' sx={{border:'1px solid #077368',color:'#A1B3A0', background:'#075159',borderRadius:'4px', fontWeight:'500'}}>
         <Box sx={{display:'flex', justifyContent:'space-between'}}>
             
             <Typography textTransform={'uppercase'} color={'white'} sx={{display:'flex',alignItems:'center'}}>
