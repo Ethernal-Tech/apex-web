@@ -83,7 +83,7 @@ const HomePage: React.FC = () => {
   return (
     <BasePage>
       <Typography variant="h1" sx={{ color: '#F25041', lineHeight: '128px', fontSize: '64px' }} fontFamily={'Major Mono Display, sans-serif'}>
-        Apex bridge
+        Apex bRidGe
       </Typography>
 
       <img src={BridgeGraph} alt="apex bridge graph" />
