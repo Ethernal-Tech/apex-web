@@ -57,6 +57,7 @@ const BridgeInput = ({totalBalance, setTxInProgress}:BridgeInputType) => {
             
             <ButtonCustom 
                 variant="white"
+                // TODO - implement this to actually execute the tx
                 onClick={()=>setTxInProgress(true)}
                 sx={{
                     gridColumn:'span 1',
