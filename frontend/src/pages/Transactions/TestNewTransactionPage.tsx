@@ -10,10 +10,9 @@ import { RootState } from "../../redux/store";
 import walletHandler from "../../features/WalletHandler";
 import { useState } from "react";
 
-let transactionInProgress = false; // change to "true" to toogle view
-
 // TODO: add input validations
 function NewTransactionPage() {
+	const [txInProgress, setTxInProgress] = useState(false)
 	const [totalDfmBalance, setTotalDfmBalance] = useState<string|null>(null)
 	
 	if(walletHandler.checkWallet()){
@@ -69,7 +68,7 @@ function NewTransactionPage() {
 					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
 				}}>
 					{/* conditional display of right element */}
-					{transactionInProgress === false ? <BridgeInput totalBalance={totalBalanceApex ?? ''}/> :<TransferProgress/>}
+					{txInProgress === false ? <BridgeInput setTxInProgress={setTxInProgress} totalBalance={totalBalanceApex ?? ''}/> :<TransferProgress/>}
 				</Box>
 			</Box>
 		</BasePage>

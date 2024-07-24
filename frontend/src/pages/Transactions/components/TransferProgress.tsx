@@ -3,6 +3,8 @@ import {ReactComponent as Done1icon} from "../../../assets/bridge-status-icons/s
 import {ReactComponent as Done2icon} from "../../../assets/bridge-status-icons/step-done2.svg"
 import {ReactComponent as Done3icon} from "../../../assets/bridge-status-icons/step-done3.svg"
 import ButtonCustom from "../../../components/Buttons/ButtonCustom"
+import { TRANSACTIONS_ROUTE } from "../../PageRouter"
+import { useNavigate } from "react-router-dom"
 // import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
 
 const STATUS = {
@@ -96,6 +98,8 @@ const TransferStep = ({step}:TransferStepProps) => {
 }
 
 const TransferProgress = () => {
+    const navigate = useNavigate()
+    
   return (
     <Box>
         <Typography sx={{color:'white',mt:4, mb:2, textAlign:'center'}}>Transfer in progress</Typography>
@@ -110,7 +114,10 @@ const TransferProgress = () => {
         </Box>
 
         <Box sx={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'20px',mt:4}}>
-            <ButtonCustom  variant="red" sx={{ gridColumn:'span 1', textTransform:'uppercase'}}>
+            <ButtonCustom  
+                variant="red" 
+                onClick={()=> navigate(TRANSACTIONS_ROUTE)}
+                sx={{ gridColumn:'span 1', textTransform:'uppercase'}}>
                 View bridging history
             </ButtonCustom>
             

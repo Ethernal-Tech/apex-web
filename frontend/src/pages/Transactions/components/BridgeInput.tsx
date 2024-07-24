@@ -4,12 +4,14 @@ import PasteTextInput from "../components/PasteTextInput";
 import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
+import { Dispatch, SetStateAction } from 'react';
 
 type BridgeInputType = {
-    totalBalance: string
+    totalBalance: string,
+    setTxInProgress: Dispatch<SetStateAction<boolean>>
 }
 
-const BridgeInput = ({totalBalance}:BridgeInputType) => {
+const BridgeInput = ({totalBalance, setTxInProgress}:BridgeInputType) => {
   return (
     <Box sx={{width:'100%'}}>
         <TotalBalance totalBalance={totalBalance}/>
@@ -55,6 +57,7 @@ const BridgeInput = ({totalBalance}:BridgeInputType) => {
             
             <ButtonCustom 
                 variant="white"
+                onClick={()=>setTxInProgress(true)}
                 sx={{
                     gridColumn:'span 1',
                     textTransform:'uppercase'
