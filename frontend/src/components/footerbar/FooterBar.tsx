@@ -18,13 +18,20 @@ const containerStyles = {
 }
 
 const childStyles = {
+  boxSizing:'border-box',
   width:'calc(100%/3)',
   alignSelf:'center',
+  '&:nth-of-type(1)':{
+    textAlign:'left',
+    paddingLeft:'20px'
+  },
   '&:nth-of-type(2)':{
     textAlign:'center',
+    paddingLeft:'20px'
   },
   '&:nth-of-type(3)':{
-    textAlign:'right'
+    textAlign:'right',
+    paddingRight:'20px'
   }
 }
 
@@ -53,7 +60,7 @@ const FooterBar = () => {
       </Box>
       
       <Box sx={childStyles}>
-        TestNet:[Network]
+        Network: Testnet
       </Box>
     </Box>
   )
