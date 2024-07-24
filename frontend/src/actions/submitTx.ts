@@ -6,6 +6,26 @@ import { Dispatch, UnknownAction } from 'redux';
 import { store } from "../redux/store";
 import walletHandler from "../features/WalletHandler";
 
+const signTxUsingPrivateKey = async () => 'tx signed with private key'; // TODO - should return a signed, non executed tx
+const signTxUsingWallet= async () => 'tx signed with wallet'; // TODO - should return a signed, non executed tx
+
+const submitTxToFallback = async (signedTx:any) => `${signedTx} - SEND to backend`; // submits signed, non executed tx to backend
+
+/* Fallback - for the mock bridge */
+export const signAndSubmitTxFallback =  async (
+    values: CreateTransactionDto,
+    createResponse: CreateTransactionResponseDto,
+    dispatch: Dispatch<UnknownAction>,
+) => {
+    
+    const signFunc = appSettings.usePrivateKey ? signTxUsingPrivateKey : signTxUsingWallet;
+    
+    const signedTx = await signFunc()
+    const success = await submitTxToFallback(signedTx)
+    return success
+}
+
+
 export const signAndSubmitTx = async (
     values: CreateTransactionDto,
     createResponse: CreateTransactionResponseDto,

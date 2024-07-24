@@ -11,7 +11,7 @@ import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import appSettings from '../../settings/appSettings';
 import { capitalizeWord } from '../../utils/generalUtils';
 import { HOME_ROUTE } from '../PageRouter';
-import { signAndSubmitTx } from '../../actions/submitTx';
+import { signAndSubmitTx, signAndSubmitTxFallback } from '../../actions/submitTx';
 import { RootState } from '../../redux/store';
 import { toast } from 'react-toastify';
 
@@ -48,14 +48,32 @@ function NewTransactionPage() {
 		async () => {
 			setLoading(true);
 			try {
+				
 				const bindedCreateAction = createTransactionAction.bind(null, new CreateTransactionDto(values));
-				const createResponse = await fetchFunction(bindedCreateAction);
 
-				const success = await signAndSubmitTx(
-					values,
-					createResponse,
-					dispatch,
-				);
+				// todo - this won't work:
+				// http://localhost:30000/transaction/createBridgingTransaction
+				const createResponse = await fetchFunction(bindedCreateAction);
+				
+				
+				let success;
+				// using fallback bridge
+				if(appSettings.useFallbackBridge){
+					success = await signAndSubmitTxFallback(
+						values,
+						createResponse,
+						dispatch
+					)
+					console.log(success)
+				} else {
+					// using regular bridge
+					success = await signAndSubmitTx(
+						values,
+						createResponse,
+						dispatch,
+					);
+				}
+				
 
 				success && navigate(HOME_ROUTE, { replace: true });
 			}catch(err) {
