@@ -84,6 +84,7 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, totalBa
     }
     
     const dfmValue = convertApexToDfm(apexInput)
+    // TODO - deduct fees from +totalBalance
     if(dfmValue > +totalBalance){
       e.preventDefault()
       return setText(convertDfmToApex(+totalBalance))

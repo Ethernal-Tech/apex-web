@@ -1,5 +1,7 @@
 import React from 'react';
 import { Box, styled, SxProps, Theme, Typography } from '@mui/material';
+import appSettings from '../../../settings/appSettings';
+import { convertDfmToApex } from '../../../utils/generalUtils';
 
 const CustomBox = styled(Box)({
   background:'#075159'
@@ -10,7 +12,6 @@ interface FeeInformationProps {
 }
 
 const FeeInformation: React.FC<FeeInformationProps> = ({ sx }) => {
-
   return (
     <CustomBox sx={{
       color:'white',
@@ -32,19 +33,23 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx }) => {
           </Box>
           <Box component="span">2 APEX</Box>
         </Typography>
-        <Typography sx={{
-          display:'flex',
-          justifyContent:'space-between'
-        }}>
-          <Box 
-            component="span" 
-            sx={{
-              color:'rgba(255,255,255,0.6)'
-            }}>
-              Bridge Transaction Fee:
-          </Box>
-          <Box component="span">2 APEX</Box>
-        </Typography>
+        
+        {appSettings.bridgingFee && (
+          <Typography sx={{
+            display:'flex',
+            justifyContent:'space-between'
+          }}>
+            <Box 
+              component="span" 
+              sx={{
+                color:'rgba(255,255,255,0.6)'
+              }}>
+                Bridge Transaction Fee:
+            </Box>
+            <Box component="span">{convertDfmToApex(appSettings.bridgingFee)} APEX</Box>
+          </Typography>
+        )}
+
         <Typography sx={{
           display:'flex',
           justifyContent:'space-between'

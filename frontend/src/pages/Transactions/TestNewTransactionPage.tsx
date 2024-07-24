@@ -87,7 +87,7 @@ function NewTransactionPage() {
 						gridColumn:'span 6'
 					}
 				}}>
-					{/* conditional display of right element */}
+					{/* conditional display of right side element */}
 					{txInProgress === false ? 
 						<BridgeInput 
 							setTxInProgress={setTxInProgress} 
