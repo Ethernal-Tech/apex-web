@@ -49,16 +49,18 @@ function NewTransactionPage() {
 			setLoading(true);
 			try {
 				
-				const bindedCreateAction = createTransactionAction.bind(null, new CreateTransactionDto(values));
+				const txDto = new CreateTransactionDto(values)
+				const bindedCreateAction = createTransactionAction.bind(null, txDto);
 
-				// todo - this won't work:
-				// http://localhost:30000/transaction/createBridgingTransaction
-				const createResponse = await fetchFunction(bindedCreateAction);
-				
+				// todo - calling bindedCreateAction won't work because of bad ogmios url
+				// http://localhost:30001/transaction/createBridgingTransaction. update apiUrl to work.
+				const createResponse = await fetchFunction(bindedCreateAction);	
+				if(createResponse === null) return
 				
 				let success;
 				// using fallback bridge
 				if(appSettings.useFallbackBridge){
+					// TODO - construct the tx
 					success = await signAndSubmitTxFallback(
 						values,
 						createResponse,
