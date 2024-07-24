@@ -30,11 +30,16 @@ export const formatAddress = (address:string|undefined):string => {
     return `${firstPart}...${lastPart}`;
   }
 
-  export const dfmToApex = (dfm:number):string =>{
-    // Divide the dfm amount by 1,000,000 to get the ADA amount
-    const ada = dfm / 1000000;
-  
-    // Convert the ADA amount to a string with appropriate formatting
-    // Here we use toFixed to ensure two decimal places, adjust if needed
-    return ada.toFixed(6); // Adjust decimal places as required
-  }
+// Convert the APEX amount to a string with appropriate formatting
+export const convertDfmToApex = (dfm:number):string =>{
+  const apex = dfm / (10**6); // divide by 1,000,000 (6 decimals)
+
+  // Here we use toFixed to ensure six decimal places, adjust if needed
+  return apex.toFixed(6); // Adjust decimal places as required
+}
+
+// converts a string representing an APEX amount (300.01) to a it's dfm number equivalent (300010000)
+export const convertApexToDfm = (apex: string|number) => {
+  const dfm = +apex * (10**6) // multiply by 6 decimals
+  return dfm;
+}

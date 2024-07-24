@@ -7,14 +7,14 @@ import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 import { Dispatch, SetStateAction } from 'react';
 
 type BridgeInputType = {
-    totalBalance: string,
+    totalBalance: string|null,
     setTxInProgress: Dispatch<SetStateAction<boolean>>
 }
 
 const BridgeInput = ({totalBalance, setTxInProgress}:BridgeInputType) => {
   return (
     <Box sx={{width:'100%'}}>
-        <TotalBalance totalBalance={totalBalance}/>
+        <TotalBalance totalDfmBalance={totalBalance}/>
 
         <Typography sx={{color:'white',mt:4, mb:2}}>Destination Address</Typography>
         {/* validate inputs */}
@@ -27,7 +27,7 @@ const BridgeInput = ({totalBalance, setTxInProgress}:BridgeInputType) => {
             gap:'20px'
         }}>
             {/* validate inputs */}
-            <PasteApexAmountInput 
+            <PasteApexAmountInput
                 totalBalance={totalBalance}
                 sx={{
                     gridColumn:'span 1',

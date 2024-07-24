@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, styled, SxProps, Theme, Typography } from '@mui/material';
+import { TextField, Button, Box, styled, SxProps, Theme } from '@mui/material';
+import { convertApexToDfm, convertDfmToApex } from '../../../utils/generalUtils';
 // import './CustomStyles.css'; // Import the CSS file
 
 
@@ -64,18 +65,40 @@ const CustomButton = styled(Button)({
 
 interface PasteApexAmountInputProps {
   sx?: SxProps<Theme>;
-  totalBalance: string
+  totalBalance: string|null
 }
 
 const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, totalBalance }) => {
   const [text, setText] = useState('');
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>{
+    if(!totalBalance){
+      return e.preventDefault()
+    }
+
+    const apexInput = e.target.value;
+    // check right side decimals
+    const [,right] = apexInput.split('.')
+    if(right && right.length >6) {
+      return e.preventDefault()
+    }
+    
+    const dfmValue = convertApexToDfm(apexInput)
+    if(dfmValue > +totalBalance){
+      e.preventDefault()
+      return setText(convertDfmToApex(+totalBalance))
+    }
+    setText(apexInput)
+  }
+  
   const handleMaxClick = () => {
-    setText(totalBalance.toString());
+    if(totalBalance){
+      setText(convertDfmToApex(+totalBalance));
+    }
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'e' || event.key === 'E') {
+    if (event.key === 'e' || event.key === 'E' || event.key === 'space') {
       event.preventDefault();
     }
   };
@@ -94,13 +117,14 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, totalBa
                 type="number"  // Set the input type to number
                 variant="outlined"
                 fullWidth
-                placeholder="0.000000"  // Custom placeholder
+                placeholder="0"  // Custom placeholder
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={(e) => handleInputChange(e)}
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
             />
-            {!text && (
+            {/* show max button only if max amount has not been entered */}
+            {totalBalance && convertApexToDfm(+text) < +totalBalance && (
                 <CustomButton variant="contained" onClick={handleMaxClick}>
                 MAX
                 </CustomButton>

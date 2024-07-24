@@ -9,7 +9,7 @@ import { BridgeTransactionDto } from '../../swagger/apexBridgeApiService';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getAction } from './action';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, dfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
+import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
 import { menuDark } from '../../containers/theme';
 import Button from "../../components/Buttons/ButtonCustom";
 
@@ -112,7 +112,7 @@ const TransactionDetailPage = () => {
             </Box>
             <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Amount:</Typography>
-              <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && dfmToApex((transaction?.amount))} APEX</Typography>
+              <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && convertDfmToApex((transaction?.amount))} APEX</Typography>
             </Box>
             <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Sender address:</Typography>

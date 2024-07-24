@@ -1,14 +1,15 @@
 import { Box, Typography } from "@mui/material"
 import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
-import { formatAddress } from "../../../utils/generalUtils";
+import { convertDfmToApex, formatAddress } from "../../../utils/generalUtils";
 
 type AddressBalanceType = {
-    totalBalance: string
+    totalDfmBalance: string|null
 }
 
-const AddressBalance = ({totalBalance}: AddressBalanceType) => {
+const AddressBalance = ({totalDfmBalance: totalBalance}: AddressBalanceType) => {
     const walletState = useSelector((state: RootState) => state.wallet);
+    const totalBalanceInApex = totalBalance ? convertDfmToApex(+totalBalance) : null;
 
     return (
         <Box px={'17px'} py='20px' sx={{
@@ -28,15 +29,16 @@ const AddressBalance = ({totalBalance}: AddressBalanceType) => {
                     {formatAddress(walletState.accountInfo?.account)}
                 </Typography>
             </Box>
+            {totalBalanceInApex &&
             <Typography fontWeight={500}>
                 <Box component='span' sx={{color:'white', fontSize:'18px',lineheight:'27px'}}>
-                    {totalBalance.split('.')[0]}
+                    {totalBalanceInApex.split('.')[0]}
                 </Box>
                 <Box component='span' sx={{fontSize:'12px',lineheight:'24px'}}>
-                    .{totalBalance.split('.')[1]}
-                </Box>
-                
+                    .{totalBalanceInApex.split('.')[1]}
+                </Box>    
             </Typography>
+            }
             
             {/* TODO af - removed for now as APEX doesn't have a price */}
             {/* <Typography>&#36;5,000.00</Typography> */}

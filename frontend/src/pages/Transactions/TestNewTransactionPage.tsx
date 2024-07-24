@@ -4,7 +4,6 @@ import AddressBalance from "./components/AddressBalance";
 import TotalBalance from "./components/TotalBalance";
 import TransferProgress from "./components/TransferProgress";
 import BridgeInput from "./components/BridgeInput";
-import { dfmToApex } from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import walletHandler from "../../features/WalletHandler";
@@ -15,6 +14,9 @@ function NewTransactionPage() {
 	const [txInProgress, setTxInProgress] = useState(false)
 	const [totalDfmBalance, setTotalDfmBalance] = useState<string|null>(null)
 	
+	const {chain, destinationChain} = useSelector((state: RootState)=> state.chain)
+
+	// get and set wallet lovelace balance
 	if(walletHandler.checkWallet()){
 		walletHandler.getBalance().then(result=> {
 			const lovelaceObject = result.find(item=> item.unit === 'lovelace')
@@ -23,10 +25,6 @@ function NewTransactionPage() {
 			}
 		})
 	}
-	
-	const totalBalanceApex = totalDfmBalance ? dfmToApex(+totalDfmBalance) : null;
-
-	const {chain, destinationChain} = useSelector((state: RootState)=> state.chain)
 
 	return (
 		<BasePage>
@@ -53,10 +51,10 @@ function NewTransactionPage() {
 					p:2,
 					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
 				}}>
-					<TotalBalance totalBalance={totalBalanceApex ?? ''}/>
+					<TotalBalance totalDfmBalance={totalDfmBalance}/>
 					
 					<Typography sx={{color:'white',mt:4, mb:2}}>Addresses</Typography>
-					<AddressBalance totalBalance={totalBalanceApex ?? ''}/>
+					<AddressBalance totalDfmBalance={totalDfmBalance}/>
 					
 				</Box>
 				
@@ -68,7 +66,13 @@ function NewTransactionPage() {
 					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
 				}}>
 					{/* conditional display of right element */}
-					{txInProgress === false ? <BridgeInput setTxInProgress={setTxInProgress} totalBalance={totalBalanceApex ?? ''}/> :<TransferProgress/>}
+					{txInProgress === false ? 
+						<BridgeInput 
+							setTxInProgress={setTxInProgress} 
+							totalBalance={totalDfmBalance}
+						/> :
+						<TransferProgress/>
+					}
 				</Box>
 			</Box>
 		</BasePage>

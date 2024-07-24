@@ -10,7 +10,7 @@ import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, dfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
+import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 
@@ -208,7 +208,7 @@ const TransactionsTablePage = () => {
                 </Box>
                 {capitalizeWord(transaction.destinationChain)}
               </TableCell>
-              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{dfmToApex(transaction.amount)} APEX</TableCell>
+              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{convertDfmToApex(transaction.amount)} APEX</TableCell>
               <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{formatAddress(transaction.receiverAddresses)}</TableCell>
               <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{transaction.createdAt.toLocaleString()}</TableCell>
               <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center', color:'white', borderBottom:'1px solid #435F694D'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
