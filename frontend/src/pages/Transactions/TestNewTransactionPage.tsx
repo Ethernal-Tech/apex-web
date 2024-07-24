@@ -17,7 +17,12 @@ function NewTransactionPage() {
 	const [totalDfmBalance, setTotalDfmBalance] = useState<string|null>(null)
 	
 	if(walletHandler.checkWallet()){
-		walletHandler.getBalance().then(result=> setTotalDfmBalance(result[0].quantity))
+		walletHandler.getBalance().then(result=> {
+			const lovelaceObject = result.find(item=> item.unit === 'lovelace')
+			if(lovelaceObject){
+				setTotalDfmBalance(lovelaceObject.quantity)
+			}
+		})
 	}
 	
 	const totalBalanceApex = totalDfmBalance ? dfmToApex(+totalDfmBalance) : null;
