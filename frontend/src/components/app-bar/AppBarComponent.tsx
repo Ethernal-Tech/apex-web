@@ -106,7 +106,7 @@ const AppBarComponent = () => {
                             <ListItemIcon>
                                 <LogoutIcon fontSize="small" />
                             </ListItemIcon>
-                            <ListItemText>Disconnect Wallet</ListItemText>
+                        <ListItemText>Disconnect Wallet</ListItemText>
                         </MenuItem>
                     </Menu>
                 </Toolbar>

@@ -38,9 +38,9 @@ const CustomTextField = styled(TextField)({
     '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
       display: 'none',
     },
-    '-webkit-appearance': 'none',
+    'webkitAppearance': 'none',
     '&[type=number]': {
-      '-moz-appearance': 'textfield', // Firefox
+      'mozAppearance': 'textfield', // Firefox
     },
   },
 });

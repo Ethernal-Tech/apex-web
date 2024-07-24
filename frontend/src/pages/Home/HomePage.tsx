@@ -13,14 +13,14 @@ import ButtonCustom from "../../components/Buttons/ButtonCustom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useNavigate } from "react-router-dom";
-import { NEW_TRANSACTION_ROUTE } from "../PageRouter";
+import { LOGIN_ROUTE, NEW_TRANSACTION_ROUTE } from "../PageRouter";
 import { getDestinationChain, getSelectedChain } from "../../utils/storageUtils";
 import { setChainAction, setDestinationChainAction } from "../../redux/slices/chainSlice";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 
 const HomePage: React.FC = () => {
   const walletState = useSelector((state: RootState) => state.wallet);
-    const isLoggedInMemo = !!walletState.wallet;
+  const isLoggedInMemo = !!walletState.wallet;
 
   const navigate = useNavigate()
   const dispatch = useDispatch()
@@ -127,7 +127,8 @@ const HomePage: React.FC = () => {
       { !isLoggedInMemo ? (
         <ButtonCustom 
           variant="white"
-          sx={{ textTransform:'uppercase'}}>
+          sx={{ textTransform:'uppercase'}}
+          onClick={()=> navigate(LOGIN_ROUTE)}>
             Connect Wallet
         </ButtonCustom>
       ): (

@@ -7,14 +7,20 @@ import BridgeInput from "./components/BridgeInput";
 import { dfmToApex } from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
+import walletHandler from "../../features/WalletHandler";
+import { useState } from "react";
 
 let transactionInProgress = false; // change to "true" to toogle view
 
 // TODO: add input validations
 function NewTransactionPage() {
+	const [totalDfmBalance, setTotalDfmBalance] = useState<string|null>(null)
 	
-	const totalBalanceInDfm = 56600000001 // TODO af - actually fetch this balance (presented in dfm)
-	const totalBalanceApex = dfmToApex(totalBalanceInDfm)
+	if(walletHandler.checkWallet()){
+		walletHandler.getBalance().then(result=> setTotalDfmBalance(result[0].quantity))
+	}
+	
+	const totalBalanceApex = totalDfmBalance ? dfmToApex(+totalDfmBalance) : null;
 
 	const {chain, destinationChain} = useSelector((state: RootState)=> state.chain)
 
@@ -43,10 +49,10 @@ function NewTransactionPage() {
 					p:2,
 					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
 				}}>
-					<TotalBalance totalBalance={totalBalanceApex}/>
+					<TotalBalance totalBalance={totalBalanceApex ?? ''}/>
 					
 					<Typography sx={{color:'white',mt:4, mb:2}}>Addresses</Typography>
-					<AddressBalance totalBalance={totalBalanceApex}/>
+					<AddressBalance totalBalance={totalBalanceApex ?? ''}/>
 					
 				</Box>
 				
@@ -58,7 +64,7 @@ function NewTransactionPage() {
 					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
 				}}>
 					{/* conditional display of right element */}
-					{transactionInProgress === false ? <BridgeInput totalBalance={totalBalanceApex}/> :<TransferProgress/>}
+					{transactionInProgress === false ? <BridgeInput totalBalance={totalBalanceApex ?? ''}/> :<TransferProgress/>}
 				</Box>
 			</Box>
 		</BasePage>
