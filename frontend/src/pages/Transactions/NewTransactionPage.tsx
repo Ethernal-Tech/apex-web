@@ -59,7 +59,7 @@ function NewTransactionPage() {
 				
 				let success;
 				// using fallback bridge
-				if(appSettings.useFallbackBridge){
+				if(appSettings.useFallbackBridgeForVector){
 					// TODO - construct the tx
 					success = await signAndSubmitTxFallback(
 						values,
