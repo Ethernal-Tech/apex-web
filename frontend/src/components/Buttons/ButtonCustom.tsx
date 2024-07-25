@@ -3,6 +3,7 @@ import React from 'react';
 
 interface ButtonCustomProps {
     onClick?: () => void;
+    disabled?: boolean;
     sx?: object;
     children?: React.ReactNode;  // Add children prop
     variant?:'red'|'redNavigation'|'white'|'whiteNavigation'|'navigation'
@@ -67,7 +68,7 @@ const variantStyles  ={
   },
 }
 
-const ButtonCustom: React.FC<ButtonCustomProps> = ({ onClick, sx, children, variant = 'white' }) => {
+const ButtonCustom: React.FC<ButtonCustomProps> = ({ onClick, disabled, sx, children, variant = 'white' }) => {
     const CustomButton = styled(Button)({
         boxShadow: 'none',
         borderRadius: '8px',
@@ -80,6 +81,7 @@ const ButtonCustom: React.FC<ButtonCustomProps> = ({ onClick, sx, children, vari
   return (
     <CustomButton
       onClick={onClick}
+      disabled={disabled}
     >
       {children}
     </CustomButton>

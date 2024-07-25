@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { TextField, Button, Box, styled, SxProps, Theme } from '@mui/material';
 import { convertApexToDfm, convertDfmToApex } from '../../../utils/generalUtils';
 // import './CustomStyles.css'; // Import the CSS file
@@ -65,14 +65,16 @@ const CustomButton = styled(Button)({
 
 interface PasteApexAmountInputProps {
   sx?: SxProps<Theme>;
-  totalBalance: string|null
+  maxAmountDfm: number | null
+  text: string
+  setText: (text: string) => void
+  disabled?: boolean;
 }
 
-const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, totalBalance }) => {
-  const [text, setText] = useState('');
+const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmountDfm, text, setText, disabled }) => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>{
-    if(!totalBalance){
+    if(!maxAmountDfm){
       return e.preventDefault()
     }
 
@@ -84,17 +86,22 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, totalBa
     }
     
     const dfmValue = convertApexToDfm(apexInput)
-    // TODO - deduct fees from +totalBalance
-    if(dfmValue > +totalBalance){
+    
+    if (dfmValue < 0) {
       e.preventDefault()
-      return setText(convertDfmToApex(+totalBalance))
+      return setText('0')
+    }
+
+    if(dfmValue > maxAmountDfm){
+      e.preventDefault()
+      return setText(convertDfmToApex(maxAmountDfm))
     }
     setText(apexInput)
   }
   
   const handleMaxClick = () => {
-    if(totalBalance){
-      setText(convertDfmToApex(+totalBalance));
+    if(maxAmountDfm){
+      setText(convertDfmToApex(maxAmountDfm));
     }
   };
 
@@ -123,9 +130,10 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, totalBa
                 onChange={(e) => handleInputChange(e)}
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
+                disabled={disabled}
             />
             {/* show max button only if max amount has not been entered */}
-            {totalBalance && convertApexToDfm(+text) < +totalBalance && (
+            {maxAmountDfm && convertApexToDfm(+text) < maxAmountDfm && (
                 <CustomButton variant="contained" onClick={handleMaxClick}>
                 MAX
                 </CustomButton>

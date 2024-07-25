@@ -1,6 +1,16 @@
 import { bech32 } from "bech32"
 import { CardanoNetworkType } from "./types"
 
+export type Bech32DecodeData = {
+    prefix: string,
+    data: Uint8Array,
+}
+
+export const IsAddressWithValidPrefix = (addr: string): boolean => {
+    return addr.startsWith('addr') ||
+            addr.startsWith('vector') ||
+            addr.startsWith('stake');
+}
 
 export const GetPrefix = (n: CardanoNetworkType): string => {
 	switch (n) {
@@ -63,10 +73,23 @@ const convertBits = (
 }
 
 export const Bech32EncodeFromBase256 = (hrp: string, data: Uint8Array): (string | undefined) => {
-    const converted = convertBits(data, 8, 5, true);
-    if (!converted) {
-        return;
+    try {
+        const converted = convertBits(data, 8, 5, true);
+        return bech32.encode(hrp, converted, 1000);
+    } catch (e) {
+        console.log('failed to Bech32EncodeFromBase256. err:', e)
     }
+}
 
-    return bech32.encode(hrp, converted, 1000);
+export const Bech32DecodeToBase256 = (raw: string): Bech32DecodeData | undefined => {
+    try {
+        const decoded = bech32.decode(raw, 1000)
+        const converted = convertBits(decoded.words, 5, 8, false);
+        const data = new Uint8Array(converted.length);
+        data.set(converted);
+    
+        return { prefix: decoded.prefix, data };
+    } catch (e) {
+        console.log('failed to Bech32DecodeToBase256. err:', e)
+    }
 }

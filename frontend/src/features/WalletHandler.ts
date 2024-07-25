@@ -1,5 +1,5 @@
 import { BrowserWallet, Asset } from '@meshsdk/core';
-import { NewAddressFromBytes, toBytes } from './utils';
+import { NewAddressFromBytes, toBytes } from './Address/addreses';
 
 type Wallet = {
     name: string;
@@ -67,9 +67,11 @@ class WalletHandler {
         return await this._enabledWallet!.getChangeAddress()
     }
 
-    getBalance = async (): Promise<Asset[]> => {
+    getBalance = async (): Promise<string> => {
         this._checkWalletAndThrow();
-        return await this._enabledWallet!.getBalance();
+        const assets = await this._enabledWallet!.getBalance();
+        const lovelaceObject: Asset | undefined = assets.find(item => item.unit === 'lovelace')
+        return lovelaceObject?.quantity || "0";
     }
 
     getNetworkId = async (): Promise<number> => {

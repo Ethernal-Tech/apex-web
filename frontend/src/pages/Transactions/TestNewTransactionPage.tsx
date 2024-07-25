@@ -4,27 +4,82 @@ import AddressBalance from "./components/AddressBalance";
 import TotalBalance from "./components/TotalBalance";
 import TransferProgress from "./components/TransferProgress";
 import BridgeInput from "./components/BridgeInput";
-import { useSelector } from "react-redux";
+import { validateSubmitTxInputs } from "../../utils/generalUtils";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import walletHandler from "../../features/WalletHandler";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
+import { toast } from "react-toastify";
+import { createTransactionAction } from "./action";
+import { CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
+import appSettings from "../../settings/appSettings";
+import { signAndSubmitTx } from "../../actions/submitTx";
+
+// let transactionInProgress = false; // change to "true" to toogle view
 
 // TODO: add input validations
 function NewTransactionPage() {
-	const [txInProgress, setTxInProgress] = useState(false)
-	const [totalDfmBalance, setTotalDfmBalance] = useState<string|null>(null)
+	const [txInProgress, setTxInProgress] = useState(false);
+	const [loading, setLoading] = useState(false);
+	const [totalDfmBalance, setTotalDfmBalance] = useState<string|null>(null);
 	
-	const {chain, destinationChain} = useSelector((state: RootState)=> state.chain)
+	const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
+    const walletState = useSelector((state: RootState) => state.wallet);
 
 	// get and set wallet lovelace balance
 	if(walletHandler.checkWallet()){
-		walletHandler.getBalance().then(result=> {
-			const lovelaceObject = result.find(item=> item.unit === 'lovelace')
-			if(lovelaceObject){
-				setTotalDfmBalance(lovelaceObject.quantity)
-			}
-		})
+		walletHandler.getBalance().then(result => setTotalDfmBalance(result))
 	}
+	
+	const bridgeTxFee = appSettings.bridgingFee;
+
+	const dispatch = useDispatch();
+	const fetchFunction = useTryCatchJsonByAction();
+
+	const handleSubmitCallback = useCallback(
+		async (address: string, amount: number) => {
+			/*
+			setTransactionInProgress(true)
+			return
+			*/
+
+			const validationErr = validateSubmitTxInputs(destinationChain, address, amount);
+			if (validationErr) {
+				toast.error(validationErr);
+				return;
+			}
+
+			setLoading(true);
+			try {
+				const createTxDto = new CreateTransactionDto({
+					bridgingFee: bridgeTxFee,
+					destinationChain,
+					originChain: chain,
+					senderAddress: walletState.accountInfo?.account || '',
+					receivers: [new CreateTransactionReceiverDto({
+						address, amount,
+					})]
+				})
+				const bindedCreateAction = createTransactionAction.bind(null, createTxDto);
+				const createResponse = await fetchFunction(bindedCreateAction);
+
+				const success = await signAndSubmitTx(
+					createTxDto,
+					createResponse,
+					dispatch,
+				);
+
+				success && setTxInProgress(true);
+			}catch(err) {
+				console.log(err);
+				toast.error(`${err}`)
+			} finally {
+				setLoading(false);
+			}
+		},
+		[bridgeTxFee, chain, destinationChain, dispatch, fetchFunction, walletState.accountInfo?.account],
+	);
 
 	const tabletMediaQuery = '@media (max-width:800px)'
 
@@ -88,10 +143,12 @@ function NewTransactionPage() {
 					}
 				}}>
 					{/* conditional display of right side element */}
-					{txInProgress === false ? 
-						<BridgeInput 
-							setTxInProgress={setTxInProgress} 
-							totalBalance={totalDfmBalance}
+					{txInProgress === false ?
+						<BridgeInput
+							totalDfmBalance={totalDfmBalance}
+							bridgeTxFee={bridgeTxFee}
+							submit={handleSubmitCallback}
+							disabled={loading}
 						/> :
 						<TransferProgress/>
 					}

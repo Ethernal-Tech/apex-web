@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { TextField, Button, Box, styled, SxProps, Theme } from '@mui/material';
 
 const CustomTextField = styled(TextField)({
@@ -45,10 +45,12 @@ const CustomButton = styled(Button)({
 
 interface PasteTextInputProps {
     sx?: SxProps<Theme>;
+    text: string
+    setText: (text: string) => void
+    disabled?: boolean;
   }
 
-const PasteTextInput:React.FC<PasteTextInputProps> = ({sx}) => {
-  const [text, setText] = useState('');
+const PasteTextInput:React.FC<PasteTextInputProps> = ({sx, text, setText, disabled}) => {
 
   const handlePasteClick = async () => {
     try {
@@ -66,6 +68,7 @@ const PasteTextInput:React.FC<PasteTextInputProps> = ({sx}) => {
         fullWidth
         value={text}
         onChange={(e) => setText(e.target.value)}
+        disabled={disabled}
       />
       {!text && (
         <CustomButton variant="contained" onClick={handlePasteClick}>
