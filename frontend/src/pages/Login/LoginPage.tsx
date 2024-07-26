@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogTitle, FormControl, LinearProgress, MenuItem, Select } from '@mui/material';
+import { Box, Button, Dialog, DialogTitle, FormControl, LinearProgress, Link, MenuItem, Select } from '@mui/material';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { HOME_ROUTE }  from '../PageRouter';
@@ -65,29 +65,34 @@ function LoginPage() {
 					</Select>
 				</FieldBase>
 				<FieldBase label='Wallet'>
-					<Select
-						value={wallet}
-						disabled={connecting}
-						onChange={(event) => setWallet(event.target.value as string)}
-						>
-						{
-							installedWallets.map((wallet: Wallet) => (
-								<MenuItem key={`wallet_opt_${wallet.name}`} value={wallet.name}>
-									<div style={{
-										display: 'flex',
-										flexDirection: 'row',
-										justifyContent: 'flex-start',
-										alignItems: 'center',
-									}}>
-										<img src={wallet.icon} alt={wallet.name} height={40} width={40} />
-										<div style={{ marginLeft: 10 }}>
-											{wallet.name}
+					{/* TODO - when nexus is implemented, if selected network is nexus and there is no metamask, tell them to install metamask if not available */}
+					{installedWallets.length <= 0 ?
+						(<Box>No wallets available. Please install the <Link href="https://chromewebstore.google.com/detail/eternl-beta/aafgiaaomjbkmgainbdgjpcndnodkajp" target="_blank">Eternl Beta</Link> Chrome Extension</Box> 
+						):
+						(<Select
+							value={wallet}
+							disabled={connecting}
+							onChange={(event) => setWallet(event.target.value as string)}
+							>
+							{
+								installedWallets.map((wallet: Wallet) => (
+									<MenuItem key={`wallet_opt_${wallet.name}`} value={wallet.name}>
+										<div style={{
+											display: 'flex',
+											flexDirection: 'row',
+											justifyContent: 'flex-start',
+											alignItems: 'center',
+										}}>
+											<img src={wallet.icon} alt={wallet.name} height={40} width={40} />
+											<div style={{ marginLeft: 10 }}>
+												{wallet.name}
+											</div>
 										</div>
-									</div>
-								</MenuItem>
-							))
-						}
-					</Select>
+									</MenuItem>
+								))
+							}
+						</Select>)
+					}
 				</FieldBase>
 				<Button
 					style={{margin: '10px'}}
