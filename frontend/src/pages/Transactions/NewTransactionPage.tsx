@@ -50,10 +50,24 @@ function NewTransactionPage() {
 
 	const handleSubmitCallback = useCallback(
 		async () => {
+			if (values.receivers.length === 0 ||
+				values.receivers.some(x => x.amount < appSettings.minUtxoValue)) {
+				toast.error(`Amount less than minimum: ${appSettings.minUtxoValue}`);
+				return;
+			}
+
+			if (values.receivers.some(x => !x.address)) {
+				toast.error(`Enter destination address`);
+				return;
+			}
+
 			setLoading(true);
 			try {
 				const bindedCreateAction = createTransactionAction.bind(null, new CreateTransactionDto(values));
 				const createResponse = await fetchFunction(bindedCreateAction);
+				if ((createResponse as any).err) {
+					throw new Error((createResponse as any).err)
+				}
 
 				const success = await signAndSubmitTx(
 					values,
