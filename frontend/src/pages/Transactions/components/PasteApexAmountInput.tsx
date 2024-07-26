@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextField, Button, Box, styled, SxProps, Theme } from '@mui/material';
+import { TextField, Button, Box, styled, SxProps, Theme, Typography } from '@mui/material';
 import { convertApexToDfm, convertDfmToApex } from '../../../utils/generalUtils';
 // import './CustomStyles.css'; // Import the CSS file
 
@@ -92,10 +92,6 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
       return setText('0')
     }
 
-    if(dfmValue > maxAmountDfm){
-      e.preventDefault()
-      return setText(convertDfmToApex(maxAmountDfm))
-    }
     setText(apexInput)
   }
   
@@ -120,24 +116,28 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
 
   return (
     <Box sx={sx}>
-        <Box display="flex" alignItems="center" width="100%" position="relative">
+        <Box sx={{position:'relative'}} display="flex" alignItems="center" width="100%" position="relative">
             <CustomTextField
                 type="number"  // Set the input type to number
                 variant="outlined"
                 fullWidth
-                placeholder="0"  // Custom placeholder
+                placeholder="0.000000"  // Custom placeholder
                 value={text}
                 onChange={(e) => handleInputChange(e)}
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
                 disabled={disabled}
+                sx={{paddingRight:'50px'}}
             />
             {/* show max button only if max amount has not been entered */}
-            {maxAmountDfm && convertApexToDfm(+text) < maxAmountDfm && (
+            {maxAmountDfm && convertApexToDfm(+text) !== maxAmountDfm && (
                 <CustomButton variant="contained" onClick={handleMaxClick}>
                 MAX
                 </CustomButton>
             )}
+            { maxAmountDfm && convertApexToDfm(text) > +maxAmountDfm && 
+              <Typography sx={{color:'#ff5e5e',position:'absolute',bottom:0,left:0}}>Insufficient funds</Typography>
+            }
         </Box>
         {/* TODO - removed, as APEX doesn't have a price in fiat equivalent */}
         {/* <Typography sx={{color: '#A1B3A0'}}>&#36;
