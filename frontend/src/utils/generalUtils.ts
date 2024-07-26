@@ -3,6 +3,13 @@ import appSettings from "../settings/appSettings";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { areChainsEqual } from "./chainUtils";
 
+// chain icons
+import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
+import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
+import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
+import { SvgIconClassKey } from "@mui/material";
+import { FunctionComponent, ReactComponentElement, SVGProps } from "react";
+
 export const capitalizeWord = (word: string): string => {
     if (word.length === 0) {
         return word;
@@ -67,4 +74,14 @@ export const validateSubmitTxInputs = (
   if (!areChainsEqual(destinationChain, addr.GetNetwork())) {
     return `Destination address not compatible with destination chain: ${destinationChain}`;
   }
+}
+
+export const chainIcons:{
+  prime:FunctionComponent<SVGProps<SVGSVGElement>>
+  vector:FunctionComponent<SVGProps<SVGSVGElement>>
+  nexus:FunctionComponent<SVGProps<SVGSVGElement>>
+} = {
+  prime:PrimeIcon,
+  vector:VectorIcon,
+  nexus:NexusIcon
 }

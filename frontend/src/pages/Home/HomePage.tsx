@@ -1,9 +1,6 @@
 import React from "react";
 import { Typography, Box, Button } from '@mui/material';
 import CustomSelect from '../../components/customSelect/CustomSelect';
-import { ReactComponent as PrimeIcon } from '../../assets/chain-icons/prime.svg';
-import { ReactComponent as VectorIcon } from '../../assets/chain-icons/vector.svg';
-// import { ReactComponent as NexusIcon } from '../../assets/chain-icons/nexus.svg';
 import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
 import { ReactComponent as OneDirectionArrowIcon } from '../../assets/oneDirectionArrow.svg';
 import BasePage from '../base/BasePage';
@@ -17,6 +14,7 @@ import { LOGIN_ROUTE, NEW_TRANSACTION_ROUTE } from "../PageRouter";
 import { getDestinationChain, getSelectedChain } from "../../utils/storageUtils";
 import { setChainAction, setDestinationChainAction } from "../../redux/slices/chainSlice";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
+import { chainIcons } from "../../utils/generalUtils";
 
 const HomePage: React.FC = () => {
   const walletState = useSelector((state: RootState) => state.wallet);
@@ -29,24 +27,24 @@ const HomePage: React.FC = () => {
   const chain = chainState.chain
   const destinationChain = chainState.destinationChain
 
-  const options = [
+  const supportedChainOptions = [
     { 
       value: 'prime',
       label: 'Prime',
-      icon: PrimeIcon,
+      icon: chainIcons.prime,
       borderColor:'#077368' 
     },
     { 
       value: 'vector', 
       label: 'Vector', 
-      icon: VectorIcon,
+      icon: chainIcons.vector,
       borderColor:'#F25041'
     },
     // TODO af - nexus removed for now
     /* { 
       value: 'nexus',
       label: 'Nexus',
-      icon: NexusIcon,
+      icon: chainIcons.nexus,
       borderColor: '#F27B50'
     } */
   ];
@@ -74,8 +72,8 @@ const HomePage: React.FC = () => {
   };
 
   const getIconComponent = (value: string): React.FC => {
-    const option = options.find(opt => opt.value === value);
-    return option ? option.icon : PrimeIcon; // Default to PrimeIcon if not found
+    const option = supportedChainOptions.find(opt => opt.value === value);
+    return option ? option.icon : chainIcons.prime; // Default to PrimeIcon if not found
   };
 
   return (
@@ -95,7 +93,7 @@ const HomePage: React.FC = () => {
             value={chain}
             disabled={isLoggedInMemo ? true : false}
             onChange={(e) => updateSource(e.target.value as ChainEnum)}
-            options={options}
+            options={supportedChainOptions}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
           />
         </Box>
@@ -118,7 +116,7 @@ const HomePage: React.FC = () => {
             value={destinationChain}
             disabled={isLoggedInMemo ? true : false}
             onChange={(e) => updateDestination(e.target.value as ChainEnum)}
-            options={options}
+            options={supportedChainOptions}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
           />
         </Box>

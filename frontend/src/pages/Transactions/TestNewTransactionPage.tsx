@@ -4,7 +4,7 @@ import AddressBalance from "./components/AddressBalance";
 import TotalBalance from "./components/TotalBalance";
 import TransferProgress from "./components/TransferProgress";
 import BridgeInput from "./components/BridgeInput";
-import { validateSubmitTxInputs } from "../../utils/generalUtils";
+import { chainIcons, validateSubmitTxInputs } from "../../utils/generalUtils";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import walletHandler from "../../features/WalletHandler";
@@ -12,11 +12,9 @@ import { useCallback, useState } from "react";
 import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createTransactionAction } from "./action";
-import { CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
+import { ChainEnum, CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
 import { signAndSubmitTx } from "../../actions/submitTx";
-
-// let transactionInProgress = false; // change to "true" to toogle view
 
 // TODO: add input validations
 function NewTransactionPage() {
@@ -33,6 +31,10 @@ function NewTransactionPage() {
 	}
 	
 	const bridgeTxFee = appSettings.bridgingFee;
+
+	// TODO - update these to check for nexus when implemented
+	const SourceIcon = chain === 'prime' ? chainIcons.prime : chainIcons.vector;
+	const DestinationIcon = destinationChain === 'prime' ? chainIcons.prime : chainIcons.vector;
 
 	const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();
@@ -100,7 +102,12 @@ function NewTransactionPage() {
 						}
 					}}>
 					<Typography>Source</Typography>
-					<Typography fontSize={'27px'} fontWeight={500}>{chain}</Typography>
+					<Box sx={{display:'flex', alignItems:'center'}}>
+						<SourceIcon width={'40px'} height={'40px'}/>
+						<Typography fontSize={'27px'} sx={{marginLeft:'10px', marginTop:'15px'}} fontWeight={500}>
+							{chain}
+						</Typography>
+					</Box>
 				</Box>
 
 				<Box sx={{ 
@@ -111,8 +118,13 @@ function NewTransactionPage() {
 						gridColumn:'span 3'
 					}
 				}}>
-					<Typography>Destination chain</Typography>
-					<Typography fontSize={'27px'} fontWeight={500}>{destinationChain}</Typography>
+					<Typography>Destination</Typography>
+					<Box sx={{display:'flex', alignItems:'center'}}>
+						<DestinationIcon width={'40px'} height={'40px'}/>
+						<Typography fontSize={'27px'} sx={{marginLeft:'10px', marginTop:'15px'}} fontWeight={500}>
+							{destinationChain}
+						</Typography>
+					</Box>
 				</Box>
 
 				{/* left side */}
