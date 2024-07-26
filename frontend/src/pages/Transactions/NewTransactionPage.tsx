@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import BasePage from '../base/BasePage';
 import TextFormField from '../../components/Form/TextFormField';
 import { useDispatch, useSelector } from 'react-redux';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChainEnum, CreateTransactionDto, CreateTransactionReceiverDto } from '../../swagger/apexBridgeApiService';
 import { createTransactionAction } from './action';
 import FieldBase from '../../components/Form/FieldBase';
@@ -33,6 +33,10 @@ function NewTransactionPage() {
 		receivers: [],
 		bridgingFee: undefined,
 	}));
+
+	useEffect(() => {
+		setValues((state) => new CreateTransactionDto({ ...state, originChain, senderAddress: accountInfo?.account || '' }))
+	}, [originChain, accountInfo?.account])
 
 	const chainOptionsMemo = useMemo(() => chainOptions.filter(x => x !== originChain), [originChain])
 
