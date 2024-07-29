@@ -309,6 +309,7 @@ export class BridgeTransactionControllerClient extends BaseClient {
 export enum ChainEnum {
     Prime = "prime",
     Vector = "vector",
+    Nexus = "nexus"
 }
 
 export class CreateTransactionReceiverDto implements ICreateTransactionReceiverDto {

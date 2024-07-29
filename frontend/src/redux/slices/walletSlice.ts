@@ -4,7 +4,7 @@ import { getSelectedWallet, removeSelectedWallet, setSelectedWallet } from '../.
 
 export interface IAccountInfo {
 	account: string,
-	networkId: number,
+	networkId: number|bigint,
 }
 
 export interface IWalletState {

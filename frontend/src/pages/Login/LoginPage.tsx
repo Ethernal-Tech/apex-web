@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { HOME_ROUTE }  from '../PageRouter';
 import { useDispatch, useSelector } from 'react-redux';
 import walletHandler, { Wallet } from '../../features/WalletHandler';
+import evmWalletHandler from '../../features/EvmWalletHandler';
 import { login } from '../../actions/login';
 import FieldBase from '../../components/Form/FieldBase';
 import { ChainEnum } from '../../swagger/apexBridgeApiService';
@@ -20,8 +21,9 @@ function LoginPage() {
 	const navigate = useNavigate();
 
 	const installedWallets = useMemo(
-		() => walletHandler.getInstalledWallets(),
-		[]
+		() => (chain === ChainEnum.Nexus) ? 
+			evmWalletHandler.getInstalledWallets() : walletHandler.getInstalledWallets(),
+		[chain]
 	)
 
 	const [wallet, setWallet] = useState<string | undefined>(

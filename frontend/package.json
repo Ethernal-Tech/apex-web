@@ -25,7 +25,8 @@
     "react-scripts": "5.0.1",
     "react-toastify": "^10.0.5",
     "typescript": "^4.9.5",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "web3": "^4.11.1"
   },
   "scripts": {
     "start": "react-app-rewired start",

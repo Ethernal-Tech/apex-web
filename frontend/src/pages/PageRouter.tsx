@@ -23,10 +23,13 @@ export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
 const PageRouter: React.FC = () => {
 
 	const walletState = useSelector((state: RootState) => state.wallet);
+  console.log(walletState)
 	const chainState = useSelector((state: RootState) => state.chain);
+  console.log(chainState)
 	const dispatch = useDispatch();
 	
 	const isLoggedInMemo = !!walletState.wallet;
+  console.log(isLoggedInMemo)
 
 	useEffect(() => {
 		if (isLoggedInMemo) {

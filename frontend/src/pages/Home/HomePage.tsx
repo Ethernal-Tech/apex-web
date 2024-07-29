@@ -41,12 +41,12 @@ const HomePage: React.FC = () => {
       borderColor:'#F25041'
     },
     // TODO af - nexus removed for now
-    /* { 
+    { 
       value: 'nexus',
       label: 'Nexus',
       icon: chainIcons.nexus,
       borderColor: '#F27B50'
-    } */
+    }
   ];
 
 
