@@ -1,6 +1,9 @@
 import React from 'react';
 import { TextField, Button, Box, styled, SxProps, Theme, Typography } from '@mui/material';
-import { convertApexToDfm, convertDfmToApex } from '../../../utils/generalUtils';
+import { convertApexToNetworkCompatibleDfm, convertDfmToNetworkCompatibleApex } from '../../../utils/generalUtils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../redux/store';
+import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 // import './CustomStyles.css'; // Import the CSS file
 
 
@@ -72,6 +75,7 @@ interface PasteApexAmountInputProps {
 }
 
 const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmountDfm, text, setText, disabled }) => {
+  const chain = useSelector((state: RootState)=> state.chain.chain);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>{
     if(!maxAmountDfm){
@@ -81,11 +85,14 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
     const apexInput = e.target.value;
     // check right side decimals
     const [,right] = apexInput.split('.')
-    if(right && right.length >6) {
+    if(right && chain === ChainEnum.Nexus && right.length >18) {
+      return e.preventDefault()
+    } else if(right && (chain === ChainEnum.Prime || chain === ChainEnum.Vector ) && right.length > 6){
       return e.preventDefault()
     }
     
-    const dfmValue = convertApexToDfm(apexInput)
+    const dfmValue = convertApexToNetworkCompatibleDfm(apexInput,chain)
+    
     
     if (dfmValue < 0) {
       e.preventDefault()
@@ -97,7 +104,7 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
   
   const handleMaxClick = () => {
     if(maxAmountDfm){
-      setText(convertDfmToApex(maxAmountDfm));
+      setText(convertDfmToNetworkCompatibleApex(maxAmountDfm,chain));
     }
   };
 
@@ -130,12 +137,12 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
                 sx={{paddingRight:'50px'}}
             />
             {/* show max button only if max amount has not been entered */}
-            {maxAmountDfm && convertApexToDfm(+text) !== maxAmountDfm && (
+            {maxAmountDfm && convertApexToNetworkCompatibleDfm(+text, chain) !== maxAmountDfm && (
                 <CustomButton variant="contained" onClick={handleMaxClick}>
                 MAX
                 </CustomButton>
             )}
-            { maxAmountDfm && convertApexToDfm(text) > +maxAmountDfm && 
+            { maxAmountDfm && convertApexToNetworkCompatibleDfm(+text, chain) > +maxAmountDfm && 
               <Typography sx={{color:'#ff5e5e',position:'absolute',bottom:0,left:0}}>Insufficient funds</Typography>
             }
         </Box>

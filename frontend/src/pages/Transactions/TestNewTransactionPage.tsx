@@ -12,9 +12,10 @@ import { useCallback, useState } from "react";
 import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createTransactionAction } from "./action";
-import { ChainEnum, CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
+import { CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
 import { signAndSubmitTx } from "../../actions/submitTx";
+import evmWalletHandler from "../../features/EvmWalletHandler";
 
 // TODO: add input validations
 function NewTransactionPage() {
@@ -30,11 +31,17 @@ function NewTransactionPage() {
 		walletHandler.getBalance().then(result => setTotalDfmBalance(result))
 	}
 	
-	const bridgeTxFee = appSettings.bridgingFee;
+	if(evmWalletHandler.checkWallet()){
+		evmWalletHandler.getBalance().then(result => {
+			console.log(result) // in 18 decimals.
+			setTotalDfmBalance(result)
+		})
+	}
+	
+	const bridgeTxFee = appSettings.bridgingFee; // conditionally render based on chain (nexus, vector, prime)
 
-	// TODO - update these to check for nexus when implemented
-	const SourceIcon = chain === 'prime' ? chainIcons.prime : chainIcons.vector;
-	const DestinationIcon = destinationChain === 'prime' ? chainIcons.prime : chainIcons.vector;
+	const SourceIcon = chain === 'prime' ? chainIcons.prime : chain === 'vector' ? chainIcons.vector : chainIcons.nexus;
+	const DestinationIcon = destinationChain === 'prime' ? chainIcons.prime : destinationChain === 'vector' ? chainIcons.vector :chainIcons.nexus;
 
 	const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();

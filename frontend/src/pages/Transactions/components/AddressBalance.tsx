@@ -1,15 +1,16 @@
 import { Box, Typography } from "@mui/material"
 import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
-import { convertDfmToApex, formatAddress } from "../../../utils/generalUtils";
+import { convertDfmToNetworkCompatibleApex, formatAddress } from "../../../utils/generalUtils";
 
 type AddressBalanceType = {
     totalDfmBalance: string|null
 }
 
-const AddressBalance = ({totalDfmBalance: totalBalance}: AddressBalanceType) => {
+const AddressBalance = ({totalDfmBalance}: AddressBalanceType) => {
     const walletState = useSelector((state: RootState) => state.wallet);
-    const totalBalanceInApex = totalBalance ? convertDfmToApex(+totalBalance) : null;
+    const chain = useSelector((state: RootState)=> state.chain.chain);
+    const totalBalanceInApex = totalDfmBalance ? convertDfmToNetworkCompatibleApex(totalDfmBalance, chain) : null;
 
     return (
         <Box px={'17px'} py='20px' sx={{

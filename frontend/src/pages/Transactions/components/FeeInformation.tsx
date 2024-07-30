@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, styled, SxProps, Theme, Typography } from '@mui/material';
-import { convertDfmToApex } from '../../../utils/generalUtils';
+import { convertUtxoDfmToApex } from '../../../utils/generalUtils';
 
 const CustomBox = styled(Box)({
   background:'#075159'
@@ -33,7 +33,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
             }}>
               User Wallet Fee:
           </Box>
-          <Box component="span">{convertDfmToApex(userWalletFee)} APEX</Box>
+          <Box component="span">{convertUtxoDfmToApex(userWalletFee)} APEX</Box>
         </Typography>
         
         {bridgeTxFee && (
@@ -48,7 +48,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               }}>
                 Bridge Transaction Fee:
             </Box>
-            <Box component="span">{convertDfmToApex(bridgeTxFee)} APEX</Box>
+            <Box component="span">{convertUtxoDfmToApex(bridgeTxFee)} APEX</Box>
           </Typography>
         )}
 

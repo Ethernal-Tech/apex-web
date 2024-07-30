@@ -61,7 +61,7 @@ class EvmWalletHandler {
         this._checkWalletAndThrow();
         const accounts = await this.web3!.eth.getAccounts();
         const balance = await this.web3!.eth.getBalance(accounts[0]);
-        return this.web3!.utils.fromWei(balance, 'ether');
+        return this.web3!.utils.fromWei(balance, 'wei');
     };
 
     // TODO - check what the network id will be

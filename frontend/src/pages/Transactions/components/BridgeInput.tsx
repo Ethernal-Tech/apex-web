@@ -5,7 +5,7 @@ import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 import { useCallback, useState } from 'react';
-import { convertApexToDfm } from '../../../utils/generalUtils';
+import { convertApexToUtxoDfm } from '../../../utils/generalUtils';
 
 type BridgeInputType = {
     totalDfmBalance: string|null
@@ -30,7 +30,7 @@ const BridgeInput = ({totalDfmBalance, bridgeTxFee, submit, disabled}:BridgeInpu
     ? (+totalDfmBalance - userWalletFee - bridgeTxFee) : null;
 
   const onSubmit = useCallback(async () => {
-    await submit(destinationAddr, convertApexToDfm(amount || '0'))
+    await submit(destinationAddr, convertApexToUtxoDfm(amount || '0'))
   }, [amount, destinationAddr, submit]) 
 
   return (
