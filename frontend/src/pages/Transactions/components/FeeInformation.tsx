@@ -33,6 +33,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
             }}>
               User Wallet Fee:
           </Box>
+          {/* TODO AF - check this conversion is correct */}
           <Box component="span">{convertUtxoDfmToApex(userWalletFee)} APEX</Box>
         </Typography>
         
@@ -48,6 +49,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               }}>
                 Bridge Transaction Fee:
             </Box>
+            {/* TODO AF - check this conversion is correct */}
             <Box component="span">{convertUtxoDfmToApex(bridgeTxFee)} APEX</Box>
           </Typography>
         )}

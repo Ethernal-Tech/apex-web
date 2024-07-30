@@ -96,7 +96,7 @@ export const chainIcons:{
 }
 
 // format it differently depending on network (nexus is 18 decimals, prime and vector are 6)
-export const convertDfmToNetworkCompatibleApex = (dfm:string|number, network:ChainEnum) =>{
+export const convertDfmToApex = (dfm:string|number, network:ChainEnum) =>{
   switch(network){
       case ChainEnum.Prime:
       case ChainEnum.Vector:
@@ -106,7 +106,7 @@ export const convertDfmToNetworkCompatibleApex = (dfm:string|number, network:Cha
   }
 }
 
-export const convertApexToNetworkCompatibleDfm = (dfm:string|number, network:ChainEnum) =>{
+export const convertApexToDfm = (dfm:string|number, network:ChainEnum) =>{
   switch(network){
       case ChainEnum.Prime:
       case ChainEnum.Vector:

@@ -5,7 +5,9 @@ import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 import { useCallback, useState } from 'react';
-import { convertApexToUtxoDfm } from '../../../utils/generalUtils';
+import { convertApexToDfm } from '../../../utils/generalUtils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../redux/store';
 
 type BridgeInputType = {
     totalDfmBalance: string|null
@@ -15,8 +17,10 @@ type BridgeInputType = {
 }
 
 const BridgeInput = ({totalDfmBalance, bridgeTxFee, submit, disabled}:BridgeInputType) => {
-  const [destinationAddr, setDestinationAddr] = useState('');
-  const [amount, setAmount] = useState('')
+    const chain = useSelector((state: RootState)=> state.chain.chain);
+
+    const [destinationAddr, setDestinationAddr] = useState('');
+    const [amount, setAmount] = useState('')
 
   const onDiscard = () => {
     setDestinationAddr('')
@@ -30,8 +34,8 @@ const BridgeInput = ({totalDfmBalance, bridgeTxFee, submit, disabled}:BridgeInpu
     ? (+totalDfmBalance - userWalletFee - bridgeTxFee) : null;
 
   const onSubmit = useCallback(async () => {
-    await submit(destinationAddr, convertApexToUtxoDfm(amount || '0'))
-  }, [amount, destinationAddr, submit]) 
+    await submit(destinationAddr, convertApexToDfm(amount || '0', chain))
+  }, [amount, destinationAddr, submit, chain]) 
 
   return (
     <Box sx={{width:'100%'}}>

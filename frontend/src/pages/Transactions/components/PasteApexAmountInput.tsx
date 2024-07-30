@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextField, Button, Box, styled, SxProps, Theme, Typography } from '@mui/material';
-import { convertApexToNetworkCompatibleDfm, convertDfmToNetworkCompatibleApex } from '../../../utils/generalUtils';
+import { convertApexToDfm, convertDfmToApex } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import { ChainEnum } from '../../../swagger/apexBridgeApiService';
@@ -91,7 +91,7 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
       return e.preventDefault()
     }
     
-    const dfmValue = convertApexToNetworkCompatibleDfm(apexInput,chain)
+    const dfmValue = convertApexToDfm(apexInput,chain)
     
     
     if (dfmValue < 0) {
@@ -104,7 +104,7 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
   
   const handleMaxClick = () => {
     if(maxAmountDfm){
-      setText(convertDfmToNetworkCompatibleApex(maxAmountDfm,chain));
+      setText(convertDfmToApex(maxAmountDfm,chain));
     }
   };
 
@@ -137,12 +137,12 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
                 sx={{paddingRight:'50px'}}
             />
             {/* show max button only if max amount has not been entered */}
-            {maxAmountDfm && convertApexToNetworkCompatibleDfm(+text, chain) !== maxAmountDfm && (
+            {maxAmountDfm && convertApexToDfm(+text, chain) !== maxAmountDfm && (
                 <CustomButton variant="contained" onClick={handleMaxClick}>
                 MAX
                 </CustomButton>
             )}
-            { maxAmountDfm && convertApexToNetworkCompatibleDfm(+text, chain) > +maxAmountDfm && 
+            { maxAmountDfm && convertApexToDfm(+text, chain) > +maxAmountDfm && 
               <Typography sx={{color:'#ff5e5e',position:'absolute',bottom:0,left:0}}>Insufficient funds</Typography>
             }
         </Box>
