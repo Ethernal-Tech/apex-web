@@ -7,6 +7,7 @@ export class AppSettings {
     public constructor() {
 		const settingsJson = require(process.env.NODE_ENV === 'development' ? './appSettings_development.json' : './appSettings_production.json');
 		this._apiUrl = settingsJson.apiUrl;
+		// TODO - add minEvmValue, and minEvmBridgingFee. And conditional rendering for use
 		this._minUtxoValue = settingsJson.minUtxoValue;
 		this._bridgingFee = settingsJson.bridgingFee;
 		this._usePrivateKey = settingsJson.usePrivateKey;
