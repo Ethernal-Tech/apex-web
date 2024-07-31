@@ -32,3 +32,24 @@ export const fromChainToNetworkId = (chain: ChainEnum): number | undefined => {
 export const areChainsEqual = (chain: ChainEnum, networkId: number): boolean => {
     return chain === fromNetworkIdToChain(networkId);
 }
+
+const PRIME_EXPLORER_URL = 'https://prime-apex.ethernal.tech'
+const VECTOR_EXPLORER_URL = 'https://vector-apex.ethernal.tech'
+
+export const getExplorerTxUrl = (chain: ChainEnum) => {
+    let baseUrl
+    switch (chain) {
+        case ChainEnum.Prime: {
+            baseUrl = PRIME_EXPLORER_URL;
+            break;
+        }
+        case ChainEnum.Vector: {
+            baseUrl = VECTOR_EXPLORER_URL;
+            break;
+        }
+        default:
+            return;
+    }
+
+    return `${baseUrl}/transaction/hash`;
+}

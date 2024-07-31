@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import TransactionsTablePage from './Transactions/TransactionsTablePage';
 import TransactionDetailPage from './Transactions/TransactionDetailPage';
-import TestNewTransactionPage from './Transactions/TestNewTransactionPage';
+import NewTransactionPage from './Transactions/TestNewTransactionPage';
 
 import withMiddleware from '../middleware/withMiddleware';
 import { onLoad } from '../actions/login';
@@ -38,7 +38,7 @@ const PageRouter: React.FC = () => {
   );
 
   const renderNewTransactionPage = useMemo(
-    () => (isLoggedInMemo ? <TestNewTransactionPage /> : <Navigate to={HOME_ROUTE} />),
+    () => (isLoggedInMemo ? <NewTransactionPage /> : <Navigate to={HOME_ROUTE} />),
     [isLoggedInMemo]
   );
 

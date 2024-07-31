@@ -1,4 +1,4 @@
-import { useState, useRef, MouseEvent, ChangeEvent, useEffect, useCallback } from 'react';
+import { useState, useRef, ChangeEvent, useEffect, useCallback } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TablePagination, Box, TableSortLabel, SortDirection, Typography } from '@mui/material';
 import BasePage from '../base/BasePage';
 import { useNavigate } from 'react-router-dom';
@@ -77,7 +77,7 @@ const TransactionsTablePage = () => {
   )
 
 	const handleChangePage = (
-		event: MouseEvent<HTMLButtonElement> | null,
+		_: any,
 		page: number,
 	) => {
 		setFilters(state => new BridgeTransactionFilterDto({

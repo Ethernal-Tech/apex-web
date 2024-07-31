@@ -113,7 +113,11 @@ const TransferProgress = () => {
             {steps.map(step=> <TransferStep key={step.number} step={step}/>)}
         </Box>
 
-        <Box sx={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'20px',mt:4}}>
+        {/*
+            TODO af - gridTemplateColumns:'repeat(2,1fr)'
+            repeat(1,1fr) for now as the second button is currently hidden
+        */}
+        <Box sx={{display:'grid', gridTemplateColumns:'repeat(1,1fr)', gap:'20px',mt:4}}>
             <ButtonCustom  
                 variant="red" 
                 onClick={()=> navigate(TRANSACTIONS_ROUTE)}
@@ -121,9 +125,10 @@ const TransferProgress = () => {
                 View bridging history
             </ButtonCustom>
             
-            <ButtonCustom  variant="white" sx={{ gridColumn:'span 1', textTransform:'uppercase' }}>
+            {/* TODO af - removed for now as bridge doesn't currently support refunds */}
+            {/* <ButtonCustom  variant="white" sx={{ gridColumn:'span 1', textTransform:'uppercase' }}>
                 request a refund
-            </ButtonCustom>
+            </ButtonCustom> */}
         </Box>
     </Box>
   )

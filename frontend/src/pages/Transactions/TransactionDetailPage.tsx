@@ -1,22 +1,24 @@
-import { Link as RouterLink,useParams } from 'react-router-dom';
+import { Link as RouterLink,useNavigate,useParams } from 'react-router-dom';
 import { Box, Link, Typography } from '@mui/material';
 import BasePage from '../base/BasePage';
 import { useCallback, useEffect, useState } from 'react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { TRANSACTIONS_ROUTE } from '../PageRouter';
-import { BridgeTransactionDto } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionDto, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getAction } from './action';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
 import { menuDark } from '../../containers/theme';
 import Button from "../../components/Buttons/ButtonCustom";
+import { getExplorerTxUrl } from '../../utils/chainUtils';
 
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [transaction, setTransaction] = useState<BridgeTransactionDto | undefined>(undefined);
 	const fetchFunction = useTryCatchJsonByAction();
+	const navigate = useNavigate();
 
   const fetchTx = useCallback(async () => {
     if (id) {
@@ -43,6 +45,18 @@ const TransactionDetailPage = () => {
     }
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+  const openExplorer = () => {
+    if (transaction && isStatusFinal(transaction.status)) {
+      if (transaction.status === TransactionStatusEnum.ExecutedOnDestination) {
+        const baseUrl = getExplorerTxUrl(transaction.destinationChain)
+        window.open(`${baseUrl}/${transaction.destinationTxHash}`, '_blank')
+      } else if (transaction.status === TransactionStatusEnum.InvalidRequest) {
+        const baseUrl = getExplorerTxUrl(transaction.originChain)
+        window.open(`${baseUrl}/${transaction.sourceTxHash}`, '_blank')
+      }
+    }
+  }
 
   return (
     <BasePage>
@@ -142,10 +156,9 @@ const TransactionDetailPage = () => {
           </Box>
           <Box sx={{display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap:'10px' }}>
             {/* {transaction && <VerticalStepper steps={transaction?.steps}/>} */}
-            <Button variant="red">Close</Button>
+            <Button variant="red" onClick={() => navigate(TRANSACTIONS_ROUTE)}>Close</Button>
 
-            {/* TODO af - link to the transaction on the explorer */}
-            <Button>View Explorer</Button>
+            <Button onClick={openExplorer}>View Explorer</Button>
           </Box>
         </Box>
       </Box>
