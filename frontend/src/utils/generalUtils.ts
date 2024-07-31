@@ -84,3 +84,10 @@ export const chainIcons:{
   vector:VectorIcon,
   nexus:NexusIcon
 }
+
+export const toBytes = (hex: string): Uint8Array => {
+    if (hex.length % 2 === 0 && /^[0-9A-F]*$/i.test(hex))
+        return Buffer.from(hex, 'hex');
+
+    return Buffer.from(hex, 'utf-8');
+};

@@ -1,5 +1,6 @@
 import { BrowserWallet, Asset } from '@meshsdk/core';
-import { NewAddressFromBytes, toBytes } from './Address/addreses';
+import { NewAddressFromBytes } from './Address/addreses';
+import { toBytes } from '../utils/generalUtils';
 
 type Wallet = {
     name: string;

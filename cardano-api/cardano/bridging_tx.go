@@ -60,23 +60,23 @@ func (bts *BridgingTxSender) CreateTx(
 	senderAddr string,
 	receivers []cardanowallet.TxOutput,
 	feeAmount uint64,
-) ([]byte, string, error) {
+) ([]byte, string, uint64, error) {
 	qtd, err := bts.TxProviderSrc.GetTip(ctx)
 	if err != nil {
-		return nil, "", err
+		return nil, "", 0, err
 	}
 
 	protocolParams := bts.ProtocolParameters
 	if protocolParams == nil {
 		protocolParams, err = bts.TxProviderSrc.GetProtocolParameters(ctx)
 		if err != nil {
-			return nil, "", err
+			return nil, "", 0, err
 		}
 	}
 
 	metadata, err := bts.createMetadata(chain, senderAddr, receivers, feeAmount)
 	if err != nil {
-		return nil, "", err
+		return nil, "", 0, err
 	}
 
 	outputsSum := cardanowallet.GetOutputsSum(receivers) + feeAmount
@@ -90,15 +90,15 @@ func (bts *BridgingTxSender) CreateTx(
 		},
 	}
 
-	inputs, err := cardanowallet.GetUTXOsForAmount(
+	inputs, err := getUTXOsForAmount(
 		ctx, bts.TxProviderSrc, senderAddr, outputsSum+bts.PotentialFee, cardanowallet.MinUTxODefaultValue)
 	if err != nil {
-		return nil, "", err
+		return nil, "", 0, err
 	}
 
 	builder, err := cardanowallet.NewTxBuilder(bts.cardanoCliBinary)
 	if err != nil {
-		return nil, "", err
+		return nil, "", 0, err
 	}
 
 	defer builder.Dispose()
@@ -112,13 +112,13 @@ func (bts *BridgingTxSender) CreateTx(
 
 	fee, err := builder.CalculateFee(0)
 	if err != nil {
-		return nil, "", err
+		return nil, "", 0, err
 	}
 
 	change := inputs.Sum - outputsSum - fee
 	// handle overflow or insufficient amount
 	if change > inputs.Sum || (change > 0 && change < cardanowallet.MinUTxODefaultValue) {
-		return []byte{}, "", fmt.Errorf("insufficient amount %d for %d or min utxo not satisfied",
+		return []byte{}, "", 0, fmt.Errorf("insufficient amount %d for %d or min utxo not satisfied",
 			inputs.Sum, outputsSum+fee)
 	}
 
@@ -130,7 +130,68 @@ func (bts *BridgingTxSender) CreateTx(
 
 	builder.SetFee(fee)
 
-	return builder.Build()
+	txRawBytes, txHash, err := builder.Build()
+
+	return txRawBytes, txHash, fee, err
+}
+
+/*
+a TODO: notify crevar about this bug with amountSum == desired
+
+// balance: 71_654_118
+// utxos: 70_654_118, 1_000_000
+// desired: 70_654_118 - outputsSum + potentialFee
+// min utxo: 1_000_000
+
+"amountSum" in getUTXOsForAmount == "inputs.Sum" in CreateTx
+"desired" in getUTXOsForAmount == "outputsSum + potentialFee" in CreateTx
+change := inputs.Sum - outputsSum - fee in CreateTx
+
+if amountSum == desired
+	=> inputs.Sum == outputsSum + potentialFee
+	=> change := inputs.Sum - outputsSum - fee in CreateTx
+	=> change := outputsSum + potentialFee - outputsSum - fee
+	=> change := potentialFee - fee
+	=> change is always less than utxoMinValue
+
+but if there isn't a amountSum == desired condition, getUTXOsForAmount can take another utxo,
+and everything is fine
+
+*/
+
+func getUTXOsForAmount(
+	ctx context.Context, retriever cardanowallet.IUTxORetriever, addr string, desired uint64, minUtxo uint64,
+) (cardanowallet.TxInputs, error) {
+	utxos, err := retriever.GetUtxos(ctx, addr)
+	if err != nil {
+		return cardanowallet.TxInputs{}, err
+	}
+
+	// Loop through utxos to find first input with enough tokens
+	// If we don't have this UTXO we need to use more of them
+	//nolint:prealloc
+	var (
+		amountSum   = uint64(0)
+		chosenUTXOs []cardanowallet.TxInput
+	)
+
+	for _, utxo := range utxos {
+		amountSum += utxo.Amount
+		chosenUTXOs = append(chosenUTXOs, cardanowallet.TxInput{
+			Hash:  utxo.Hash,
+			Index: utxo.Index,
+		})
+
+		if /*amountSum == desired || */ amountSum >= desired+minUtxo {
+			return cardanowallet.TxInputs{
+				Inputs: chosenUTXOs,
+				Sum:    amountSum,
+			}, nil
+		}
+	}
+
+	return cardanowallet.TxInputs{}, fmt.Errorf(
+		"not enough funds to generate the transaction: %d available vs %d required", amountSum, desired)
 }
 
 func (bts *BridgingTxSender) SendTx(

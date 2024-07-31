@@ -14,6 +14,7 @@ import { createTransactionAction } from "./action";
 import { CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
 import { signAndSubmitTx } from "../../actions/submitTx";
+import { CreateTxResponse } from "./components/types";
 
 // TODO: add input validations
 function NewTransactionPage() {
@@ -33,6 +34,27 @@ function NewTransactionPage() {
 	const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();
 
+	const createTx = useCallback(async (address: string, amount: number): Promise<CreateTxResponse> => {
+		const validationErr = validateSubmitTxInputs(destinationChain, address, amount);
+		if (validationErr) {
+			throw new Error(validationErr);
+		}
+
+		const createTxDto = new CreateTransactionDto({
+			bridgingFee: bridgeTxFee,
+			destinationChain,
+			originChain: chain,
+			senderAddress: walletState.accountInfo?.account || '',
+			receivers: [new CreateTransactionReceiverDto({
+				address, amount,
+			})]
+		})
+		const bindedCreateAction = createTransactionAction.bind(null, createTxDto);
+		const createResponse = await fetchFunction(bindedCreateAction);
+
+		return { createTxDto, createResponse };
+	}, [bridgeTxFee, chain, destinationChain, fetchFunction, walletState.accountInfo?.account])
+
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: number) => {
 			/*
@@ -40,29 +62,13 @@ function NewTransactionPage() {
 			return
 			*/
 
-			const validationErr = validateSubmitTxInputs(destinationChain, address, amount);
-			if (validationErr) {
-				toast.error(validationErr);
-				return;
-			}
-
 			setLoading(true);
 			try {
-				const createTxDto = new CreateTransactionDto({
-					bridgingFee: bridgeTxFee,
-					destinationChain,
-					originChain: chain,
-					senderAddress: walletState.accountInfo?.account || '',
-					receivers: [new CreateTransactionReceiverDto({
-						address, amount,
-					})]
-				})
-				const bindedCreateAction = createTransactionAction.bind(null, createTxDto);
-				const createResponse = await fetchFunction(bindedCreateAction);
+				const createTxResp = await createTx(address, amount);
 
 				const success = await signAndSubmitTx(
-					createTxDto,
-					createResponse,
+					createTxResp.createTxDto,
+					createTxResp.createResponse,
 					dispatch,
 				);
 
@@ -74,7 +80,7 @@ function NewTransactionPage() {
 				setLoading(false);
 			}
 		},
-		[bridgeTxFee, chain, destinationChain, dispatch, fetchFunction, walletState.accountInfo?.account],
+		[createTx, dispatch],
 	);
 
 	const tabletMediaQuery = '@media (max-width:800px)'
@@ -153,6 +159,7 @@ function NewTransactionPage() {
 						<BridgeInput
 							totalDfmBalance={totalDfmBalance}
 							bridgeTxFee={bridgeTxFee}
+							createTx={createTx}
 							submit={handleSubmitCallback}
 							disabled={loading}
 						/> :

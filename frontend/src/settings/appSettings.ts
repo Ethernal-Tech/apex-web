@@ -2,6 +2,7 @@ export class AppSettings {
 	private _apiUrl: string = 'https://localhost:30000';
 	private _minUtxoValue: number = 0;
 	private _bridgingFee: number = 0;
+	private _potentialWalletFee: number = 0;
 	private _usePrivateKey: boolean = false;
 
     public constructor() {
@@ -9,6 +10,7 @@ export class AppSettings {
 		this._apiUrl = settingsJson.apiUrl;
 		this._minUtxoValue = settingsJson.minUtxoValue;
 		this._bridgingFee = settingsJson.bridgingFee;
+		this._potentialWalletFee = settingsJson.potentialWalletFee;
 		this._usePrivateKey = settingsJson.usePrivateKey;
 	}
 
@@ -22,6 +24,10 @@ export class AppSettings {
 
 	get bridgingFee(): number {
 		return this._bridgingFee;
+	}
+
+	get potentialWalletFee(): number {
+		return this._potentialWalletFee;
 	}
 
 	get usePrivateKey(): boolean {

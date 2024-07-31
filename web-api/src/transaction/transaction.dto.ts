@@ -113,6 +113,10 @@ export class CreateTransactionResponseDto extends TransactionResponseDto {
 	@IsPositive()
 	@ApiProperty()
 	bridgingFee: number;
+
+	@IsPositive()
+	@ApiProperty()
+	txFee: number;
 }
 
 export class ProtocolParamsResponseDto {

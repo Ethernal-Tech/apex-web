@@ -4,30 +4,56 @@ import PasteTextInput from "../components/PasteTextInput";
 import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
+import { CreateTxResponse } from './types';
+import { CreateTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
+import appSettings from '../../../settings/appSettings';
 
 type BridgeInputType = {
     totalDfmBalance: string|null
     bridgeTxFee: number
+    createTx: (address: string, amount: number) => Promise<CreateTxResponse>
     submit:(address: string, amount: number) => Promise<void>
     disabled?: boolean;
 }
 
-const BridgeInput = ({totalDfmBalance, bridgeTxFee, submit, disabled}:BridgeInputType) => {
+const BridgeInput = ({totalDfmBalance, bridgeTxFee, createTx, submit, disabled}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
+  const [createdTx, setCreatedTx] = useState<CreateTransactionResponseDto | undefined>();
+  const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
+
+  const fetchCreatedTx = useCallback(async () => {
+    if (!destinationAddr || !amount) {
+        setCreatedTx(undefined);
+        return;
+    }
+
+    try {
+        const createdTxResp = await createTx(destinationAddr, convertApexToDfm(amount || '0'));
+        setCreatedTx(createdTxResp.createResponse);
+    } catch {
+        setCreatedTx(undefined);
+    }
+  }, [amount, createTx, destinationAddr])
+
+  useEffect(() => {
+    if (fetchCreateTxTimeoutRef.current) {
+        clearTimeout(fetchCreateTxTimeoutRef.current);
+        fetchCreateTxTimeoutRef.current = undefined;
+    }
+
+    fetchCreateTxTimeoutRef.current = setTimeout(fetchCreatedTx, 1000);
+  }, [fetchCreatedTx])
 
   const onDiscard = () => {
     setDestinationAddr('')
     setAmount('')
   }
 
-  // TODO: figure out how to calculate this
-  const userWalletFee = +'1000000'
-
   const maxAmountDfm = totalDfmBalance
-    ? (+totalDfmBalance - userWalletFee - bridgeTxFee) : null;
+    ? Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - appSettings.minUtxoValue, 0) : null;
 
   const onSubmit = useCallback(async () => {
     await submit(destinationAddr, convertApexToDfm(amount || '0'))
@@ -63,7 +89,7 @@ const BridgeInput = ({totalDfmBalance, bridgeTxFee, submit, disabled}:BridgeInpu
                 }}/>
             
             <FeeInformation
-                userWalletFee={userWalletFee}
+                userWalletFee={createdTx?.txFee || 0}
                 bridgeTxFee={bridgeTxFee}
                 sx={{
                     gridColumn:'span 1',

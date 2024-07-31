@@ -528,6 +528,7 @@ export class CreateTransactionResponseDto implements ICreateTransactionResponseD
     txRaw!: string;
     txHash!: string;
     bridgingFee!: number;
+    txFee!: number;
 
     constructor(data?: ICreateTransactionResponseDto) {
         if (data) {
@@ -543,6 +544,7 @@ export class CreateTransactionResponseDto implements ICreateTransactionResponseD
             this.txRaw = _data["txRaw"];
             this.txHash = _data["txHash"];
             this.bridgingFee = _data["bridgingFee"];
+            this.txFee = _data["txFee"];
         }
     }
 
@@ -558,6 +560,7 @@ export class CreateTransactionResponseDto implements ICreateTransactionResponseD
         data["txRaw"] = this.txRaw;
         data["txHash"] = this.txHash;
         data["bridgingFee"] = this.bridgingFee;
+        data["txFee"] = this.txFee;
         return data; 
     }
 }
@@ -566,6 +569,7 @@ export interface ICreateTransactionResponseDto {
     txRaw: string;
     txHash: string;
     bridgingFee: number;
+    txFee: number;
 }
 
 export class SignTransactionDto implements ISignTransactionDto {

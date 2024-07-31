@@ -163,7 +163,7 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txRaw, txHash, err := c.createTx(requestBody)
+	txRaw, txHash, txFee, err := c.createTx(requestBody)
 	if err != nil {
 		c.logger.Debug("createBridgingTx request", "err", err.Error(), "url", r.URL)
 
@@ -179,7 +179,7 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	w.Header().Set("Content-Type", "application/json")
 
-	err = json.NewEncoder(w).Encode(response.NewFullBridgingTxResponse(txRaw, txHash, requestBody.BridgingFee))
+	err = json.NewEncoder(w).Encode(response.NewFullBridgingTxResponse(txRaw, txHash, txFee, requestBody.BridgingFee))
 	if err != nil {
 		c.logger.Error("error while writing response", "err", err)
 	}
@@ -308,13 +308,13 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 }
 
 func (c *CardanoTxControllerImpl) createTx(requestBody request.CreateBridgingTxRequest) (
-	string, string, error,
+	string, string, uint64, error,
 ) {
 	sourceChainConfig := c.appConfig.CardanoChains[requestBody.SourceChainID]
 
 	txProvider, err := sourceChainConfig.ChainSpecific.CreateTxProvider()
 	if err != nil {
-		return "", "", fmt.Errorf("failed to create tx provider: %w", err)
+		return "", "", 0, fmt.Errorf("failed to create tx provider: %w", err)
 	}
 
 	bridgingAddress := sourceChainConfig.BridgingAddresses.BridgingAddress
@@ -339,17 +339,17 @@ func (c *CardanoTxControllerImpl) createTx(requestBody request.CreateBridgingTxR
 		}
 	}
 
-	txRawBytes, txHash, err := bridgingTxSender.CreateTx(
+	txRawBytes, txHash, fee, err := bridgingTxSender.CreateTx(
 		context.Background(), requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
 	)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to build tx: %w", err)
+		return "", "", 0, fmt.Errorf("failed to build tx: %w", err)
 	}
 
 	txRaw := hex.EncodeToString(txRawBytes)
 
-	return txRaw, txHash, nil
+	return txRaw, txHash, fee, nil
 }
 
 func (c *CardanoTxControllerImpl) signTx(requestBody request.SignBridgingTxRequest) (

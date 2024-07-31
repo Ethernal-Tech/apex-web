@@ -10,6 +10,7 @@ import { setChainAction } from "../redux/slices/chainSlice";
 import { NavigateFunction } from "react-router-dom";
 import { HOME_ROUTE } from "../pages/PageRouter";
 import { getWalletBalanceAction } from "./balance";
+import { tryCatchJsonByAction } from "../utils/fetchUtils";
 
 let onLoadCalled = false
 
@@ -28,7 +29,7 @@ const enableWallet = async (selectedWalletName: string, chain: ChainEnum, dispat
         }
 
         const account = await walletHandler.getChangeAddress();
-        const balanceResp = await getWalletBalanceAction(chain, account)
+        const balanceResp = await tryCatchJsonByAction(() => getWalletBalanceAction(chain, account), dispatch); 
 
         dispatch(setWalletAction(selectedWalletName));
         dispatch(setAccountInfoAction({
