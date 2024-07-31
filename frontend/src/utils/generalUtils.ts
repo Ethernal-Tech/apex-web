@@ -7,8 +7,7 @@ import { areChainsEqual } from "./chainUtils";
 import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
 import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
 import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
-import { SvgIconClassKey } from "@mui/material";
-import { FunctionComponent, ReactComponentElement, SVGProps } from "react";
+import { FunctionComponent, SVGProps } from "react";
 
 export const capitalizeWord = (word: string): string => {
     if (word.length === 0) {

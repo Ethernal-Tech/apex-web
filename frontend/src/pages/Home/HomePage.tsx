@@ -1,5 +1,5 @@
 import React from "react";
-import { Typography, Box, Button } from '@mui/material';
+import { Typography, Box, Button, CircularProgress } from '@mui/material';
 import CustomSelect from '../../components/customSelect/CustomSelect';
 import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
 import { ReactComponent as OneDirectionArrowIcon } from '../../assets/oneDirectionArrow.svg';
@@ -10,14 +10,16 @@ import ButtonCustom from "../../components/Buttons/ButtonCustom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useNavigate } from "react-router-dom";
-import { LOGIN_ROUTE, NEW_TRANSACTION_ROUTE } from "../PageRouter";
+import { NEW_TRANSACTION_ROUTE } from "../PageRouter";
 import { getDestinationChain, getSelectedChain } from "../../utils/storageUtils";
 import { setChainAction, setDestinationChainAction } from "../../redux/slices/chainSlice";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { chainIcons } from "../../utils/generalUtils";
+import { login } from "../../actions/login";
 
 const HomePage: React.FC = () => {
   const walletState = useSelector((state: RootState) => state.wallet);
+  const loginState = useSelector((state: RootState) => state.login);
   const isLoggedInMemo = !!walletState.wallet;
 
   const navigate = useNavigate()
@@ -71,6 +73,10 @@ const HomePage: React.FC = () => {
     dispatch(setDestinationChainAction(temp));
   };
 
+  const handleConnectClick = async () => {
+    await login(chainState.chain, navigate, dispatch);
+  }
+
   const getIconComponent = (value: string): React.FC => {
     const option = supportedChainOptions.find(opt => opt.value === value);
     return option ? option.icon : chainIcons.prime; // Default to PrimeIcon if not found
@@ -121,23 +127,32 @@ const HomePage: React.FC = () => {
           />
         </Box>
       </Box>
-
-      { !isLoggedInMemo ? (
+      {
+        loginState.connecting ? (
+            <ButtonCustom 
+              variant="white"
+              sx={{ textTransform:'uppercase'}}
+            >
+                Connect Wallet
+                <CircularProgress sx={{ marginLeft: 1 }} size={20}/>
+            </ButtonCustom>
+        ) : (
+       !isLoggedInMemo ? (
         <ButtonCustom 
           variant="white"
           sx={{ textTransform:'uppercase'}}
-          onClick={()=> navigate(LOGIN_ROUTE)}>
+          onClick={handleConnectClick}>
             Connect Wallet
         </ButtonCustom>
       ): (
         <ButtonCustom 
           variant="white"
           sx={{ textTransform:'uppercase'}}
-          // TODO - this leads to the old design of the "new transaction" page, should be updated
           onClick={()=> navigate(NEW_TRANSACTION_ROUTE)}>
             Move funds
         </ButtonCustom>
-      )}
+      )
+    )}
     </BasePage>
   );
 };

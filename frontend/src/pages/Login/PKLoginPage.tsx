@@ -1,7 +1,7 @@
 import { Button, Dialog, DialogTitle, FormControl, LinearProgress, MenuItem, Select } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { HOME_ROUTE, TRANSACTIONS_ROUTE }  from '../PageRouter';
+import { HOME_ROUTE }  from '../PageRouter';
 import { useDispatch } from 'react-redux';
 import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import { PKLoginDto } from '../../utils/storageUtils';

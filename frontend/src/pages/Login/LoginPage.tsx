@@ -1,7 +1,6 @@
 import { Box, Button, Dialog, DialogTitle, FormControl, LinearProgress, Link, MenuItem, Select } from '@mui/material';
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from "react-router-dom";
-import { HOME_ROUTE }  from '../PageRouter';
 import { useDispatch, useSelector } from 'react-redux';
 import walletHandler, { Wallet } from '../../features/WalletHandler';
 import { login } from '../../actions/login';
@@ -34,13 +33,8 @@ function LoginPage() {
 		}
 
 		setConnecting(true);
-		const success = await login(wallet, chain, dispatch);
+		await login(chain, navigate, dispatch);
 		setConnecting(false);
-
-		if (success) {
-			dispatch(setChainAction(chain))
-			navigate(HOME_ROUTE);
-		}
 	}, [chain, dispatch, navigate, wallet])
 
 	return (

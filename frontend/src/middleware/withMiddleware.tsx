@@ -1,4 +1,4 @@
-import { Box, Link, List, ListItem, ListItemText, Typography } from '@mui/material';
+import { Box, Link, List, ListItem, Typography } from '@mui/material';
 import React, { ComponentType } from 'react';
 
 // Middleware to display error text if users is using a mobile device

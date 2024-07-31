@@ -7,7 +7,7 @@ type Wallet = {
     version: string;
 };
 
-const SUPPORTED_WALLETS = ['eternl']
+export const SUPPORTED_WALLETS = ['eternl']
 
 class WalletHandler {
     private _enabledWallet: BrowserWallet | undefined;
