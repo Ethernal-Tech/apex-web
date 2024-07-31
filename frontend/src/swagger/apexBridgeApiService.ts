@@ -203,6 +203,53 @@ export class TransactionControllerClient extends BaseClient {
         }
         return Promise.resolve<void>(<any>null);
     }
+
+    /**
+     * @return Success
+     */
+    getProtocolParams(chain: string): Promise<ProtocolParamsResponseDto> {
+        let url_ = this.baseUrl + "/transaction/getProtocolParams?";
+        if (chain === undefined || chain === null)
+            throw new Error("The parameter 'chain' must be defined and cannot be null.");
+        else
+            url_ += "chain=" + encodeURIComponent("" + chain) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGetProtocolParams(_response);
+        });
+    }
+
+    protected processGetProtocolParams(response: Response): Promise<ProtocolParamsResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ProtocolParamsResponseDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("Not Found", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ProtocolParamsResponseDto>(<any>null);
+    }
 }
 
 export class BridgeTransactionControllerClient extends BaseClient {
@@ -777,6 +824,46 @@ export interface ITransactionSubmittedDto {
     senderAddress: string;
     receiverAddrs: string[];
     amount: number;
+}
+
+export class ProtocolParamsResponseDto implements IProtocolParamsResponseDto {
+    txFeeFixed!: string;
+    txFeePerByte!: string;
+
+    constructor(data?: IProtocolParamsResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.txFeeFixed = _data["txFeeFixed"];
+            this.txFeePerByte = _data["txFeePerByte"];
+        }
+    }
+
+    static fromJS(data: any): ProtocolParamsResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ProtocolParamsResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["txFeeFixed"] = this.txFeeFixed;
+        data["txFeePerByte"] = this.txFeePerByte;
+        return data; 
+    }
+}
+
+export interface IProtocolParamsResponseDto {
+    txFeeFixed: string;
+    txFeePerByte: string;
 }
 
 export enum TransactionStatusEnum {

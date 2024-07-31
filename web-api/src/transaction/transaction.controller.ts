@@ -4,7 +4,6 @@ import {
 	Get,
 	HttpCode,
 	HttpStatus,
-	ParseEnumPipe,
 	Post,
 	Query,
 } from '@nestjs/common';
@@ -105,7 +104,7 @@ export class TransactionController {
 	@HttpCode(HttpStatus.OK)
 	@Get('getProtocolParams')
 	async getProtocolParams(
-		@Query('chain', ParseEnumPipe<ChainEnum>) chain: ChainEnum,
+		@Query('chain') chain: ChainEnum,
 	): Promise<ProtocolParamsResponseDto> {
 		return this.transactionService.getProtocolParams(chain);
 	}
