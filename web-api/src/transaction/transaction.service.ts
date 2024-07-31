@@ -2,12 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 
 import {
 	createBridgingTx,
+	getProtocolParams,
 	signBridgingTx,
 	submitTransaction,
 } from 'src/transaction/transaction.helper';
 import {
 	CreateTransactionDto,
 	CreateTransactionResponseDto,
+	ProtocolParamsResponseDto,
 	SignTransactionDto,
 	SubmitTransactionDto,
 	SubmitTransactionResponseDto,
@@ -106,5 +108,15 @@ export class TransactionService {
 		const txId = await submitTransaction(dto.originChain, dto.signedTxRaw);
 		await this.transactionSubmitted(dto);
 		return { txId };
+	}
+
+	async getProtocolParams(
+		chain: ChainEnum,
+	): Promise<ProtocolParamsResponseDto> {
+		const protocolParameters = await getProtocolParams(chain);
+		return {
+			txFeeFixed: protocolParameters.minFeeConstant.ada.lovelace.toString(10),
+			txFeePerByte: protocolParameters.minFeeCoefficient.toString(10),
+		};
 	}
 }

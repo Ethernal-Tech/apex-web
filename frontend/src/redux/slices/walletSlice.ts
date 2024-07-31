@@ -5,6 +5,7 @@ import { getSelectedWallet, removeSelectedWallet, setSelectedWallet } from '../.
 export interface IAccountInfo {
 	account: string,
 	networkId: number,
+	balance: string,
 }
 
 export interface IWalletState {
@@ -32,6 +33,11 @@ const walletSlice = createSlice({
 		setAccountInfoAction: (state, action: PayloadAction<IAccountInfo>) => {
 			state.accountInfo = action.payload;
 		},
+		updateBalanceAction: (state, action: PayloadAction<string>) => {
+			if (state.accountInfo) {
+				state.accountInfo.balance = action.payload;
+			}
+		},
 		removeAccountInfoAction: (state) => {
 			state.accountInfo = undefined;
 		},
@@ -39,6 +45,6 @@ const walletSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export const { setWalletAction, removeWalletAction, setAccountInfoAction, removeAccountInfoAction } = walletSlice.actions
+export const { setWalletAction, removeWalletAction, setAccountInfoAction, updateBalanceAction, removeAccountInfoAction } = walletSlice.actions
 
 export default walletSlice.reducer

@@ -1,4 +1,7 @@
-import { createTransactionSubmissionClient } from '@cardano-ogmios/client';
+import {
+	createTransactionSubmissionClient,
+	createLedgerStateQueryClient,
+} from '@cardano-ogmios/client';
 import { createInteractionContext } from '@cardano-ogmios/client';
 import { ChainEnum } from 'src/common/enum';
 import {
@@ -109,4 +112,15 @@ export async function submitTransaction(chain: ChainEnum, signedTx: string) {
 	await client.shutdown();
 
 	return txId;
+}
+
+export async function getProtocolParams(chain: ChainEnum) {
+	const context = await createContext(chain);
+	const client = await createLedgerStateQueryClient(context);
+
+	const protocolParams = await client.protocolParameters();
+
+	await client.shutdown();
+
+	return protocolParams;
 }

@@ -115,6 +115,16 @@ export class CreateTransactionResponseDto extends TransactionResponseDto {
 	bridgingFee: number;
 }
 
+export class ProtocolParamsResponseDto {
+	@IsNotEmpty()
+	@ApiProperty()
+	txFeeFixed: string;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	txFeePerByte: string;
+}
+
 export class ErrorResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()

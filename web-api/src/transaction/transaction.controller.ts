@@ -1,8 +1,18 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	ParseEnumPipe,
+	Post,
+	Query,
+} from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import {
 	CreateTransactionDto,
 	CreateTransactionResponseDto,
+	ProtocolParamsResponseDto,
 	SignTransactionDto,
 	SubmitTransactionDto,
 	SubmitTransactionResponseDto,
@@ -10,6 +20,7 @@ import {
 	TransactionSubmittedDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ChainEnum } from 'src/common/enum';
 
 @ApiTags('Transaction')
 @Controller('transaction')
@@ -81,5 +92,21 @@ export class TransactionController {
 		@Body() model: TransactionSubmittedDto,
 	): Promise<void> {
 		return this.transactionService.transactionSubmitted(model);
+	}
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: ProtocolParamsResponseDto,
+		description: 'Success',
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Not Found',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Get('getProtocolParams')
+	async getProtocolParams(
+		@Query('chain', ParseEnumPipe<ChainEnum>) chain: ChainEnum,
+	): Promise<ProtocolParamsResponseDto> {
+		return this.transactionService.getProtocolParams(chain);
 	}
 }

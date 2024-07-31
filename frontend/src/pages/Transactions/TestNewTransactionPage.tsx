@@ -7,35 +7,23 @@ import BridgeInput from "./components/BridgeInput";
 import { chainIcons, validateSubmitTxInputs } from "../../utils/generalUtils";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createTransactionAction } from "./action";
 import { CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
 import { signAndSubmitTx } from "../../actions/submitTx";
-import { getWalletBalanceAction } from "../../actions/balance";
 
 // TODO: add input validations
 function NewTransactionPage() {
 	const [txInProgress, setTxInProgress] = useState(false);
 	const [loading, setLoading] = useState(false);
-	const [totalDfmBalance, setTotalDfmBalance] = useState<string|null>(null);
 	
 	const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
     const walletState = useSelector((state: RootState) => state.wallet);
+	const totalDfmBalance = walletState.accountInfo?.balance || '0';
 
-	const getBalance = useCallback(async () => {
-		if (walletState.accountInfo?.account) {
-			const balanceResp = await getWalletBalanceAction(chain, walletState.accountInfo.account)
-			setTotalDfmBalance(balanceResp.balance)
-		}
-	}, [chain, walletState.accountInfo])
-
-	useEffect(() => {
-		getBalance()
-	}, [getBalance])
-	
 	const bridgeTxFee = appSettings.bridgingFee;
 
 	// TODO - update these to check for nexus when implemented

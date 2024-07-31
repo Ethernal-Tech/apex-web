@@ -9,6 +9,7 @@ import { setConnectingAction } from "../redux/slices/loginSlice";
 import { setChainAction } from "../redux/slices/chainSlice";
 import { NavigateFunction } from "react-router-dom";
 import { HOME_ROUTE } from "../pages/PageRouter";
+import { getWalletBalanceAction } from "./balance";
 
 let onLoadCalled = false
 
@@ -27,10 +28,11 @@ const enableWallet = async (selectedWalletName: string, chain: ChainEnum, dispat
         }
 
         const account = await walletHandler.getChangeAddress();
+        const balanceResp = await getWalletBalanceAction(chain, account)
 
         dispatch(setWalletAction(selectedWalletName));
         dispatch(setAccountInfoAction({
-            account, networkId,
+            account, networkId, balance: balanceResp.balance || '0',
         }))
 
         return true;
