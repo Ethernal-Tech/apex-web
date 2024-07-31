@@ -34,6 +34,13 @@ export class BridgeTransactionDto {
 	destinationChain: ChainEnum;
 
 	@IsNotEmpty()
+	@ApiProperty()
+	sourceTxHash: string;
+
+	@ApiProperty({ nullable: true, required: false })
+	destinationTxHash?: string;
+
+	@IsNotEmpty()
 	@IsEnum(TransactionStatusEnum)
 	@ApiProperty({
 		enum: TransactionStatusEnum,

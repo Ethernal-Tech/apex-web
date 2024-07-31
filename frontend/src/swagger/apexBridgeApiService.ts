@@ -797,6 +797,8 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
     amount!: number;
     originChain!: ChainEnum;
     destinationChain!: ChainEnum;
+    sourceTxHash!: string;
+    destinationTxHash?: string | undefined;
     status!: TransactionStatusEnum;
     createdAt!: Date;
     finishedAt?: Date | undefined;
@@ -818,6 +820,8 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
             this.amount = _data["amount"];
             this.originChain = _data["originChain"];
             this.destinationChain = _data["destinationChain"];
+            this.sourceTxHash = _data["sourceTxHash"];
+            this.destinationTxHash = _data["destinationTxHash"];
             this.status = _data["status"];
             this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : <any>undefined;
             this.finishedAt = _data["finishedAt"] ? new Date(_data["finishedAt"].toString()) : <any>undefined;
@@ -839,6 +843,8 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
         data["amount"] = this.amount;
         data["originChain"] = this.originChain;
         data["destinationChain"] = this.destinationChain;
+        data["sourceTxHash"] = this.sourceTxHash;
+        data["destinationTxHash"] = this.destinationTxHash;
         data["status"] = this.status;
         data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : <any>undefined;
         data["finishedAt"] = this.finishedAt ? this.finishedAt.toISOString() : <any>undefined;
@@ -853,6 +859,8 @@ export interface IBridgeTransactionDto {
     amount: number;
     originChain: ChainEnum;
     destinationChain: ChainEnum;
+    sourceTxHash: string;
+    destinationTxHash?: string | undefined;
     status: TransactionStatusEnum;
     createdAt: Date;
     finishedAt?: Date | undefined;

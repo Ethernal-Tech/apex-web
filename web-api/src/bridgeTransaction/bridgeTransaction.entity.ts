@@ -28,6 +28,10 @@ export class BridgeTransaction {
 	sourceTxHash: string;
 
 	@Column()
+	@Column({ nullable: true })
+	destinationTxHash?: string;
+
+	@Column()
 	createdAt: Date;
 
 	@Column({ nullable: true })

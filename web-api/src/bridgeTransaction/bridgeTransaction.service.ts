@@ -132,6 +132,8 @@ export class BridgeTransactionService {
 		response.destinationChain = entity.destinationChain;
 		response.originChain = entity.originChain;
 		response.amount = entity.amount;
+		response.sourceTxHash = entity.sourceTxHash;
+		response.destinationTxHash = entity.destinationTxHash;
 		response.status = entity.status;
 		response.createdAt = entity.createdAt;
 		response.finishedAt = entity.finishedAt;

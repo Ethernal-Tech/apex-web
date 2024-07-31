@@ -58,6 +58,7 @@ export const updateBridgeTransactionStates = (
 		if (entity.status !== state.status) {
 			entity.status = state.status;
 			if (!notFinalStates[entity.status]) {
+				entity.destinationTxHash = state.destinationTxHash;
 				entity.finishedAt = new Date();
 			}
 
