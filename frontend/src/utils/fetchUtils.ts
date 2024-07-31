@@ -15,6 +15,11 @@ export const catchError = (error: any, dispatch: Dispatch<UnknownAction>) => {
 	if (error.status === 400) {
 		toast.error('There are some validation errors, please fix those and try again.')
 		// error.result is BaseResponseModel all the time (if backend is correctly implemented)
+		const apiException = error as ApiException;
+		if (apiException?.response) {
+			return JSON.parse(apiException?.response);
+		}
+
 		return (error as ApiException).result;
 	}
 

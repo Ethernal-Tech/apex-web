@@ -17,9 +17,11 @@ export const createBridgingTx = async (
 	receivers: CreateTransactionReceiverDto[],
 	bridgingFee?: number,
 ): Promise<CreateTransactionResponseDto> => {
-	const oracleUrl = process.env.ORACLE_URL || 'http://localhost:40000';
-	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
-	const apiUrl = oracleUrl + `/api/CardanoTx/CreateBridgingTx`;
+	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
+	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
+	const endpointUrl = apiUrl + `/api/CardanoTx/CreateBridgingTx`;
+
+	const useCentralizedBridge = process.env.USE_CENTRALIZED_BRIDGE === 'true';
 
 	const body = {
 		senderAddr,
@@ -30,12 +32,13 @@ export const createBridgingTx = async (
 			amount: x.amount,
 		})),
 		bridgingFee,
+		useFallback: useCentralizedBridge,
 	};
 
 	try {
-		const response = await axios.post(apiUrl, body, {
+		const response = await axios.post(endpointUrl, body, {
 			headers: {
-				'X-API-KEY': oracleApiKey,
+				'X-API-KEY': apiKey,
 				'Content-Type': 'application/json',
 			},
 		});
@@ -51,9 +54,9 @@ export const signBridgingTx = async (
 	txRaw: string,
 	txHash: string,
 ): Promise<TransactionResponseDto> => {
-	const oracleUrl = process.env.ORACLE_URL || 'http://localhost:40000';
-	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
-	const apiUrl = oracleUrl + `/api/CardanoTx/SignBridgingTx`;
+	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
+	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
+	const endpointUrl = apiUrl + `/api/CardanoTx/SignBridgingTx`;
 
 	const body = {
 		signingKey: signingKeyHex,
@@ -62,9 +65,9 @@ export const signBridgingTx = async (
 	};
 
 	try {
-		const response = await axios.post(apiUrl, body, {
+		const response = await axios.post(endpointUrl, body, {
 			headers: {
-				'X-API-KEY': oracleApiKey,
+				'X-API-KEY': apiKey,
 			},
 		});
 

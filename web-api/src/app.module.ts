@@ -4,6 +4,7 @@ import { TransactionModule } from './transaction/transaction.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dbdatasource } from './database/data.source';
 import { BridgeTransactionModule } from './bridgeTransaction/bridgeTransaction.module';
+import { WalletModule } from './wallet/wallet.module';
 
 @Module({
 	imports: [
@@ -13,6 +14,7 @@ import { BridgeTransactionModule } from './bridgeTransaction/bridgeTransaction.m
 		TypeOrmModule.forRoot(dbdatasource),
 		TransactionModule,
 		BridgeTransactionModule,
+		WalletModule,
 	],
 	controllers: [],
 	providers: [],
