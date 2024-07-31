@@ -32,38 +32,33 @@ export const getChainLabelAndColor = (chain: string):{letter:string, color: stri
 };
 
 export const formatAddress = (address:string|undefined):string => {
-    if(!address) return '';
-  
-    // No need to format if the address is 13 chars long or shorter
-    if (address.length <= 13) return address;
-  
-    const firstPart = address.substring(0, 7);
-    const lastPart = address.substring(address.length - 5);
-    return `${firstPart}...${lastPart}`;
-  }
+  if(!address) return '';
 
+  // No need to format if the address is 13 chars long or shorter
+  if (address.length <= 13) return address;
 
-const DFM_APEX_UTXO_CONVERSION_RATE = 10**6
+  const firstPart = address.substring(0, 7);
+  const lastPart = address.substring(address.length - 5);
+  return `${firstPart}...${lastPart}`;
+}
 
 // converts dfm to apex (prime and vector)
-const convertUtxoDfmToApex = (dfm:number):string =>{
-  const apex = dfm / DFM_APEX_UTXO_CONVERSION_RATE; // divide by 1,000,000 (6 decimals)
-  return apex.toFixed(6); // Adjust decimal places as required
+const convertUtxoDfmToApex = (dfm:string|number):string =>{
+  return Web3.utils.fromWei(dfm,'lovelace');
 }
 
 // converts apex to dfm (prime and vector)
-const convertApexToUtxoDfm = (apex: number) => {
-  const dfm = +apex * DFM_APEX_UTXO_CONVERSION_RATE // multiply by 6 decimals
-  return dfm;
+const convertApexToUtxoDfm = (apex: string|number) => {
+  return Web3.utils.toWei(apex,'lovelace');
 }
 
 // convert wei to dfm (nexus)
-const convertEvmDfmToApex = (dfm:number):string =>{
+const convertEvmDfmToApex = (dfm:number|number) =>{
   return Web3.utils.fromWei(dfm,'ether');
 }
 
 // convert eth to wei (nexus)
-const convertApexToEvmDfm = (apex: number) => {
+const convertApexToEvmDfm = (apex: number|number) => {
   return Web3.utils.toWei(apex,'wei');
 }
 

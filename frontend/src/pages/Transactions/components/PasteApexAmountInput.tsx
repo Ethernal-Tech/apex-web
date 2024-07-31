@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 // import './CustomStyles.css'; // Import the CSS file
+import web3 from 'web3';
 
 
 // const apexPriceInDollars = NaN // fiat price doesn't exist for apex
@@ -92,9 +93,8 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
     }
     
     const dfmValue = convertApexToDfm(apexInput,chain)
-    
-    
-    if (dfmValue < 0) {
+
+    if (+dfmValue < 0) {
       e.preventDefault()
       return setText('0')
     }
@@ -136,13 +136,13 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
                 disabled={disabled}
                 sx={{paddingRight:'50px'}}
             />
-            {/* show max button only if max amount has not been entered */}
-            {maxAmountDfm && convertApexToDfm(+text, chain) !== maxAmountDfm && (
+            {/* show max button only if enough funds present, and entered value varies from actual max amount */}
+            {maxAmountDfm && maxAmountDfm > 0 && +convertApexToDfm(+text, chain) !== maxAmountDfm && (
                 <CustomButton variant="contained" onClick={handleMaxClick}>
-                MAX
+                  MAX
                 </CustomButton>
             )}
-            { maxAmountDfm && convertApexToDfm(+text, chain) > +maxAmountDfm && 
+            { maxAmountDfm && +convertApexToDfm(+text, chain) > +maxAmountDfm && 
               <Typography sx={{color:'#ff5e5e',position:'absolute',bottom:0,left:0}}>Insufficient funds</Typography>
             }
         </Box>

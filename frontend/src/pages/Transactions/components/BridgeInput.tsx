@@ -30,7 +30,7 @@ const BridgeInput = ({totalDfmBalance, bridgeTxFee, submit, disabled}:BridgeInpu
 
   // TODO: figure out how to calculate this
   // wei or dfm
-  const userWalletFee = chain === ChainEnum.Nexus ? +'20000000000000': +'1000000'
+  const userWalletFee = chain === ChainEnum.Nexus ? +'1000000000000000000': +'1000000'
 
   const maxAmountDfm = totalDfmBalance
     ? (+totalDfmBalance - userWalletFee - bridgeTxFee) : null;
