@@ -8,6 +8,7 @@ import { useCallback, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
+import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 
 type BridgeInputType = {
     totalDfmBalance: string|null
@@ -28,13 +29,14 @@ const BridgeInput = ({totalDfmBalance, bridgeTxFee, submit, disabled}:BridgeInpu
   }
 
   // TODO: figure out how to calculate this
-  const userWalletFee = +'1000000'
+  // wei or dfm
+  const userWalletFee = chain === ChainEnum.Nexus ? +'20000000000000': +'1000000'
 
   const maxAmountDfm = totalDfmBalance
     ? (+totalDfmBalance - userWalletFee - bridgeTxFee) : null;
 
   const onSubmit = useCallback(async () => {
-    await submit(destinationAddr, convertApexToDfm(amount || '0', chain))
+    await submit(destinationAddr, +convertApexToDfm(amount || '0', chain))
   }, [amount, destinationAddr, submit, chain]) 
 
   return (
@@ -69,6 +71,7 @@ const BridgeInput = ({totalDfmBalance, bridgeTxFee, submit, disabled}:BridgeInpu
             <FeeInformation
                 userWalletFee={userWalletFee}
                 bridgeTxFee={bridgeTxFee}
+                chain={chain}
                 sx={{
                     gridColumn:'span 1',
                     border: '1px solid #077368',

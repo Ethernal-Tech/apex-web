@@ -12,7 +12,7 @@ import { useCallback, useState } from "react";
 import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createTransactionAction } from "./action";
-import { CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
+import { ChainEnum, CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
 import { signAndSubmitTx } from "../../actions/submitTx";
 import evmWalletHandler from "../../features/EvmWalletHandler";
@@ -38,10 +38,12 @@ function NewTransactionPage() {
 		})
 	}
 	
-	const bridgeTxFee = appSettings.bridgingFee; // conditionally render based on chain (nexus, vector, prime)
+	// TODO - CHECK AMOUNTS
+	// bridge fee different for prime&vector vs nexus 
+	const bridgeTxFee = chain === ChainEnum.Nexus ? appSettings.evmBridgingFee : appSettings.bridgingFee;
 
-	const SourceIcon = chain === 'prime' ? chainIcons.prime : chain === 'vector' ? chainIcons.vector : chainIcons.nexus;
-	const DestinationIcon = destinationChain === 'prime' ? chainIcons.prime : destinationChain === 'vector' ? chainIcons.vector :chainIcons.nexus;
+	const SourceIcon = chain === ChainEnum.Prime ? chainIcons.prime : chain === ChainEnum.Vector ? chainIcons.vector : chainIcons.nexus;
+	const DestinationIcon = destinationChain === ChainEnum.Prime ? chainIcons.prime : destinationChain === ChainEnum.Vector ? chainIcons.vector :chainIcons.nexus;
 
 	const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();
@@ -53,7 +55,7 @@ function NewTransactionPage() {
 			return
 			*/
 
-			const validationErr = validateSubmitTxInputs(destinationChain, address, amount);
+			const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount);
 			if (validationErr) {
 				toast.error(validationErr);
 				return;

@@ -2,6 +2,7 @@ import { NewAddress } from "../features/Address/addreses";
 import appSettings from "../settings/appSettings";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { areChainsEqual } from "./chainUtils";
+import Web3 from "web3";
 
 // chain icons
 import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
@@ -43,36 +44,36 @@ export const formatAddress = (address:string|undefined):string => {
 
 
 const DFM_APEX_UTXO_CONVERSION_RATE = 10**6
-const DFM_APEX_EVM_CONVERSION_RATE = 10**18
 
-// Convert the APEX amount to a string with appropriate formatting
-export const convertUtxoDfmToApex = (dfm:number):string =>{
+// converts dfm to apex (prime and vector)
+const convertUtxoDfmToApex = (dfm:number):string =>{
   const apex = dfm / DFM_APEX_UTXO_CONVERSION_RATE; // divide by 1,000,000 (6 decimals)
   return apex.toFixed(6); // Adjust decimal places as required
 }
 
-// converts a string representing an APEX amount (300.01) to a it's dfm number equivalent (300010000)
-export const convertApexToUtxoDfm = (apex: string|number) => {
+// converts apex to dfm (prime and vector)
+const convertApexToUtxoDfm = (apex: number) => {
   const dfm = +apex * DFM_APEX_UTXO_CONVERSION_RATE // multiply by 6 decimals
   return dfm;
 }
 
-export const convertEvmDfmToApex = (dfm:number):string =>{
-  const apex = dfm / DFM_APEX_EVM_CONVERSION_RATE;
-  return apex.toString()
-  // return apex.toFixed(6); // TODO - not sure about this for now
+// convert wei to dfm (nexus)
+const convertEvmDfmToApex = (dfm:number):string =>{
+  return Web3.utils.fromWei(dfm,'ether');
 }
 
-export const convertApexToEvmDfm = (apex: string|number) => {
-  const dfm = +apex * DFM_APEX_EVM_CONVERSION_RATE;
-  return dfm;
+// convert eth to wei (nexus)
+const convertApexToEvmDfm = (apex: number) => {
+  return Web3.utils.toWei(apex,'wei');
 }
 
 export const validateSubmitTxInputs = (
-  destinationChain: ChainEnum, destinationAddr: string, amount: number,
+  sourceChain: ChainEnum, destinationChain: ChainEnum, destinationAddr: string, amount: number,
 ): string | undefined => {
-  if (amount < appSettings.minUtxoValue) {
-    return `Amount less than minimum: ${convertUtxoDfmToApex(appSettings.minUtxoValue)} APEX`; // TODO AF - this will work for prime and vector, stll to implement for nexus
+  if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector) && amount < appSettings.minUtxoValue) {
+    return `Amount less than minimum: ${convertUtxoDfmToApex(appSettings.minUtxoValue)} APEX`;
+  } else if(sourceChain === ChainEnum.Nexus && amount < appSettings.minEvmValue){
+    return `Amount less than minimum: ${convertEvmDfmToApex(appSettings.minUtxoValue)} APEX`;
   }
 
   const addr = NewAddress(destinationAddr);

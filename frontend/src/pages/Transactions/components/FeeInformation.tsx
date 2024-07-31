@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, styled, SxProps, Theme, Typography } from '@mui/material';
-import { convertUtxoDfmToApex } from '../../../utils/generalUtils';
+import { convertDfmToApex } from '../../../utils/generalUtils';
+import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 
 const CustomBox = styled(Box)({
   background:'#075159'
@@ -10,9 +11,10 @@ interface FeeInformationProps {
   sx?: SxProps<Theme>;
   userWalletFee: number;
   bridgeTxFee: number;
+  chain: ChainEnum
 }
 
-const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, bridgeTxFee }) => {
+const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, bridgeTxFee, chain }) => {
 
   return (
     <CustomBox sx={{
@@ -34,7 +36,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               User Wallet Fee:
           </Box>
           {/* TODO AF - check this conversion is correct */}
-          <Box component="span">{convertUtxoDfmToApex(userWalletFee)} APEX</Box>
+          <Box component="span">{convertDfmToApex(userWalletFee, chain)} APEX</Box>
         </Typography>
         
         {bridgeTxFee && (
@@ -50,7 +52,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
                 Bridge Transaction Fee:
             </Box>
             {/* TODO AF - check this conversion is correct */}
-            <Box component="span">{convertUtxoDfmToApex(bridgeTxFee)} APEX</Box>
+            <Box component="span">{convertDfmToApex(bridgeTxFee, chain)} APEX</Box>
           </Typography>
         )}
 
