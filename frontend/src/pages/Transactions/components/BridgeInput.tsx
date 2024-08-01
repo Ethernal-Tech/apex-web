@@ -9,20 +9,24 @@ import { convertApexToDfm } from '../../../utils/generalUtils';
 import { CreateTxResponse } from './types';
 import { CreateTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../redux/store';
 
 type BridgeInputType = {
-    totalDfmBalance: string|null
     bridgeTxFee: number
     createTx: (address: string, amount: number) => Promise<CreateTxResponse>
     submit:(address: string, amount: number) => Promise<void>
     disabled?: boolean;
 }
 
-const BridgeInput = ({totalDfmBalance, bridgeTxFee, createTx, submit, disabled}:BridgeInputType) => {
+const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
   const [createdTx, setCreatedTx] = useState<CreateTransactionResponseDto | undefined>();
   const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
+
+  const accountInfoState = useSelector((state: RootState) => state.accountInfo);
+  const totalDfmBalance = accountInfoState.balance;
 
   const fetchCreatedTx = useCallback(async () => {
     if (!destinationAddr || !amount) {
@@ -44,7 +48,14 @@ const BridgeInput = ({totalDfmBalance, bridgeTxFee, createTx, submit, disabled}:
         fetchCreateTxTimeoutRef.current = undefined;
     }
 
-    fetchCreateTxTimeoutRef.current = setTimeout(fetchCreatedTx, 1000);
+    fetchCreateTxTimeoutRef.current = setTimeout(fetchCreatedTx, 500);
+
+    return () => {
+        if (fetchCreateTxTimeoutRef.current) {
+            clearTimeout(fetchCreateTxTimeoutRef.current);
+            fetchCreateTxTimeoutRef.current = undefined;
+        }
+    }
   }, [fetchCreatedTx])
 
   const onDiscard = () => {
@@ -61,7 +72,7 @@ const BridgeInput = ({totalDfmBalance, bridgeTxFee, createTx, submit, disabled}:
 
   return (
     <Box sx={{width:'100%'}}>
-        <TotalBalance totalDfmBalance={totalDfmBalance}/>
+        <TotalBalance/>
 
         <Typography sx={{color:'white',mt:4, mb:2}}>Destination Address</Typography>
         {/* validate inputs */}

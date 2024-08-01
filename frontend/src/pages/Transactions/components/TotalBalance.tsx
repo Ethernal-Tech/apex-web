@@ -3,12 +3,12 @@ import { Box, Typography } from "@mui/material"
 import {ReactComponent as WalletIcon} from "../../../assets/icons/moneyWallet.svg";
 import {ReactComponent as ApexIcon} from "../../../assets/icons/apexTransferIcon.svg";
 import { convertDfmToApex } from "../../../utils/generalUtils";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../redux/store";
 
-type TotalBalanceType = {
-    totalDfmBalance: string|null
-}
-
-const TotalBalance = ({totalDfmBalance}:TotalBalanceType) => {
+const TotalBalance = () => {
+	const accountInfoState = useSelector((state: RootState) => state.accountInfo);
+	const totalDfmBalance = accountInfoState.balance;
     const totalBalanceInApex = totalDfmBalance ? convertDfmToApex(+totalDfmBalance) : null;
     
   return (

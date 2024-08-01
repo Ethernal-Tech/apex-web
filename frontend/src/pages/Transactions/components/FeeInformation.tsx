@@ -63,7 +63,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
             }}>
               Estimated time
             </Box>
-          <Box component="span">~ Less than 1 min</Box>
+          <Box component="span">4-7 minutes</Box>
         </Typography>
     </CustomBox>
   );

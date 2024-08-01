@@ -11,22 +11,24 @@ import { getAllFilteredAction } from './action';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
+import { fetchAndUpdateBalanceAction } from '../../actions/balance';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
 	const [isLoading, setIsLoading] = useState(false);
 	const tableRef = useRef(null);
 	const navigate = useNavigate();
+  const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();
 	
   const chain = useSelector((state: RootState) => state.chain.chain)
-  const accountInfo = useSelector((state: RootState) => state.wallet.accountInfo)
+  const accountInfoState = useSelector((state: RootState) => state.accountInfo);
 
 	const [filters, setFilters] = useState(new BridgeTransactionFilterDto({
     originChain: chain,
-    senderAddress: accountInfo?.account || '',
+    senderAddress: accountInfoState.account,
   }));
 
     const fetchDataCallback = useCallback(
@@ -37,21 +39,26 @@ const TransactionsTablePage = () => {
 
 			!hideLoading && setIsLoading(true);
 			const bindedAction = getAllFilteredAction.bind(null, filters);
-			const response = await fetchFunction(bindedAction);
+
+      const [response] = await Promise.all([
+          fetchFunction(bindedAction),
+          fetchAndUpdateBalanceAction(dispatch),
+      ])
+
 			setTransactions(response);
 			!hideLoading && setIsLoading(false);
 
       return response;
 		},
-		[filters, fetchFunction]
+		[filters, fetchFunction, dispatch]
 	)
 
   useEffect(() => {
     setFilters((state) => new BridgeTransactionFilterDto({
         ...state,
-        senderAddress: accountInfo?.account || '',
+        senderAddress: accountInfoState.account,
     }))
-  }, [accountInfo?.account])
+  }, [accountInfoState.account])
 
 	useEffect(
 		() => {

@@ -5,30 +5,38 @@ import { useCallback, useEffect, useState } from 'react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { TRANSACTIONS_ROUTE } from '../PageRouter';
-import { BridgeTransactionDto, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionDto } from '../../swagger/apexBridgeApiService';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getAction } from './action';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
 import { menuDark } from '../../containers/theme';
 import Button from "../../components/Buttons/ButtonCustom";
-import { getExplorerTxUrl } from '../../utils/chainUtils';
+import { openExplorer } from '../../utils/chainUtils';
+import { fetchAndUpdateBalanceAction } from '../../actions/balance';
+import { useDispatch } from 'react-redux';
 
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [transaction, setTransaction] = useState<BridgeTransactionDto | undefined>(undefined);
 	const fetchFunction = useTryCatchJsonByAction();
+  const dispatch = useDispatch();
 	const navigate = useNavigate();
 
   const fetchTx = useCallback(async () => {
     if (id) {
       const bindedAction = getAction.bind(null, parseInt(id));
-      const response = await fetchFunction(bindedAction);
+
+      const [response] = await Promise.all([
+          fetchFunction(bindedAction),
+          fetchAndUpdateBalanceAction(dispatch),
+      ])
+
       setTransaction(response);
 
       return response;
     }
-  }, [fetchFunction, id])
+  }, [dispatch, fetchFunction, id])
 
 	useEffect(() => {
 		fetchTx()
@@ -46,17 +54,7 @@ const TransactionDetailPage = () => {
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-  const openExplorer = () => {
-    if (transaction && isStatusFinal(transaction.status)) {
-      if (transaction.status === TransactionStatusEnum.ExecutedOnDestination) {
-        const baseUrl = getExplorerTxUrl(transaction.destinationChain)
-        window.open(`${baseUrl}/${transaction.destinationTxHash}`, '_blank')
-      } else if (transaction.status === TransactionStatusEnum.InvalidRequest) {
-        const baseUrl = getExplorerTxUrl(transaction.originChain)
-        window.open(`${baseUrl}/${transaction.sourceTxHash}`, '_blank')
-      }
-    }
-  }
+  const onOpenExplorer = () => openExplorer(transaction);
 
   return (
     <BasePage>
@@ -158,7 +156,7 @@ const TransactionDetailPage = () => {
             {/* {transaction && <VerticalStepper steps={transaction?.steps}/>} */}
             <Button variant="red" onClick={() => navigate(TRANSACTIONS_ROUTE)}>Close</Button>
 
-            <Button onClick={openExplorer}>View Explorer</Button>
+            <Button onClick={onOpenExplorer}>View Explorer</Button>
           </Box>
         </Box>
       </Box>

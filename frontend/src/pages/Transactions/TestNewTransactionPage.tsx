@@ -11,19 +11,18 @@ import { useCallback, useState } from "react";
 import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createTransactionAction } from "./action";
-import { CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
 import { signAndSubmitTx } from "../../actions/submitTx";
 import { CreateTxResponse } from "./components/types";
 
 // TODO: add input validations
 function NewTransactionPage() {
-	const [txInProgress, setTxInProgress] = useState(false);
+	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
 	const [loading, setLoading] = useState(false);
 	
 	const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
-    const walletState = useSelector((state: RootState) => state.wallet);
-	const totalDfmBalance = walletState.accountInfo?.balance || '0';
+	const accountInfoState = useSelector((state: RootState) => state.accountInfo);
 
 	const bridgeTxFee = appSettings.bridgingFee;
 
@@ -44,7 +43,7 @@ function NewTransactionPage() {
 			bridgingFee: bridgeTxFee,
 			destinationChain,
 			originChain: chain,
-			senderAddress: walletState.accountInfo?.account || '',
+			senderAddress: accountInfoState.account,
 			receivers: [new CreateTransactionReceiverDto({
 				address, amount,
 			})]
@@ -53,7 +52,7 @@ function NewTransactionPage() {
 		const createResponse = await fetchFunction(bindedCreateAction);
 
 		return { createTxDto, createResponse };
-	}, [bridgeTxFee, chain, destinationChain, fetchFunction, walletState.accountInfo?.account])
+	}, [bridgeTxFee, chain, destinationChain, fetchFunction, accountInfoState.account])
 
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: number) => {
@@ -66,13 +65,13 @@ function NewTransactionPage() {
 			try {
 				const createTxResp = await createTx(address, amount);
 
-				const success = await signAndSubmitTx(
+				const response = await signAndSubmitTx(
 					createTxResp.createTxDto,
 					createTxResp.createResponse,
 					dispatch,
 				);
 
-				success && setTxInProgress(true);
+				response && setTxInProgress(response.bridgeTx);
 			}catch(err) {
 				console.log(err);
 				toast.error(`${err}`)
@@ -137,10 +136,10 @@ function NewTransactionPage() {
 						gridColumn:'span 6'
 					}
 				}}>
-					<TotalBalance totalDfmBalance={totalDfmBalance}/>
+					<TotalBalance/>
 					
 					<Typography sx={{color:'white',mt:4, mb:2}}>Addresses</Typography>
-					<AddressBalance totalDfmBalance={totalDfmBalance}/>
+					<AddressBalance/>
 					
 				</Box>
 				
@@ -157,13 +156,12 @@ function NewTransactionPage() {
 					{/* conditional display of right side element */}
 					{!txInProgress ?
 						<BridgeInput
-							totalDfmBalance={totalDfmBalance}
 							bridgeTxFee={bridgeTxFee}
 							createTx={createTx}
 							submit={handleSubmitCallback}
 							disabled={loading}
 						/> :
-						<TransferProgress/>
+						<TransferProgress bridgeTx={txInProgress}/>
 					}
 				</Box>
 			</Box>

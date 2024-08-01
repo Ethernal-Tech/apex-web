@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Modal from '@mui/material/Modal';
 import FilterList from '@mui/icons-material/FilterList';
-import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, TextField, Typography, IconButton } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, TextField, Typography } from '@mui/material';
 import AppliedFiltersChips from './AppliedFiltersChips';
 import { BridgeTransactionFilterDto, ChainEnum, TransactionStatusEnum } from '../../swagger/apexBridgeApiService';
 import { capitalizeWord } from '../../utils/generalUtils';
@@ -34,7 +34,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
     const [open, setOpen] = useState(false);
 
     const chain = useSelector((state: RootState) => state.chain.chain)
-    const accountInfo = useSelector((state: RootState) => state.wallet.accountInfo)
+    const accountInfoState = useSelector((state: RootState) => state.accountInfo);
 
     const destinationChains = useMemo(() => Object.values(ChainEnum).filter(x => x !== chain), [chain])
 
@@ -70,12 +70,12 @@ export default function Filters({ filters, onFilterChange }: Props) {
             // keep sort
             onFilterChange(new BridgeTransactionFilterDto({
                 originChain: chain,
-                senderAddress: accountInfo?.account || '',
+                senderAddress: accountInfoState.account,
                 order: filters.order,
                 orderBy: filters.orderBy,
             }))
         },
-        [onFilterChange, chain, accountInfo?.account, filters.order, filters.orderBy]
+        [onFilterChange, chain, accountInfoState.account, filters.order, filters.orderBy]
     )
 
     const changeCallback = useCallback(

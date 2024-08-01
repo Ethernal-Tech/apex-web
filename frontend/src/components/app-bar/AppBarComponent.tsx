@@ -15,9 +15,10 @@ import { login } from "../../actions/login";
 
 const AppBarComponent = () => {
     const walletState = useSelector((state: RootState) => state.wallet);
+    const accountInfoState = useSelector((state: RootState) => state.accountInfo);
     const loginState = useSelector((state: RootState) => state.login);
     const chainState = useSelector((state: RootState) => state.chain);
-    const isLoggedInMemo = !!walletState.wallet;
+	const isLoggedInMemo = !!walletState.wallet && !!accountInfoState.account;
     
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -94,7 +95,7 @@ const AppBarComponent = () => {
                                         onClick={handleClick}
                                         sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'lowercase'}}
                                         endIcon={<ExpandMoreIcon />}>
-                                            {formatAddress(walletState.accountInfo?.account)}
+                                            {formatAddress(accountInfoState.account)}
                                     </Button>
                                     ) : (
                                     <ButtonCustom 

@@ -2,7 +2,7 @@ import { Dispatch } from '@reduxjs/toolkit';
 import { store } from '../redux/store';
 import { ChainEnum, WalletControllerClient } from '../swagger/apexBridgeApiService';
 import { fromNetworkIdToChain } from '../utils/chainUtils';
-import { updateBalanceAction } from '../redux/slices/walletSlice';
+import { updateBalanceAction } from '../redux/slices/accountInfoSlice';
 import { tryCatchJsonByAction } from '../utils/fetchUtils';
 
 export const getWalletBalanceAction = (chain: ChainEnum, address: string) => {
@@ -10,9 +10,9 @@ export const getWalletBalanceAction = (chain: ChainEnum, address: string) => {
     return client.getBalance(chain, address);
 }
 
-export const getAndUpdateBalanceAction = async (dispatch: Dispatch) => {
-    const accountInfo = store.getState().wallet.accountInfo;
-    if (!accountInfo) {
+export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
+    const accountInfo = store.getState().accountInfo;
+    if (!accountInfo.account) {
         return;
     }
     

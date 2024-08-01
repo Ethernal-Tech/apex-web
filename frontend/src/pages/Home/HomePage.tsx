@@ -20,7 +20,8 @@ import { login } from "../../actions/login";
 const HomePage: React.FC = () => {
   const walletState = useSelector((state: RootState) => state.wallet);
   const loginState = useSelector((state: RootState) => state.login);
-  const isLoggedInMemo = !!walletState.wallet;
+  const accountInfoState = useSelector((state: RootState) => state.accountInfo);
+	const isLoggedInMemo = !!walletState.wallet && !!accountInfoState.account;
 
   const navigate = useNavigate()
   const dispatch = useDispatch()

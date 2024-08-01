@@ -1,5 +1,5 @@
 import walletHandler, { SUPPORTED_WALLETS } from "../features/WalletHandler";
-import { setAccountInfoAction, setWalletAction } from "../redux/slices/walletSlice";
+import { setWalletAction } from "../redux/slices/walletSlice";
 import { Dispatch } from 'redux';
 import { logout } from "./logout";
 import { toast } from "react-toastify";
@@ -11,6 +11,7 @@ import { NavigateFunction } from "react-router-dom";
 import { HOME_ROUTE } from "../pages/PageRouter";
 import { getWalletBalanceAction } from "./balance";
 import { tryCatchJsonByAction } from "../utils/fetchUtils";
+import { setAccountInfoAction } from "../redux/slices/accountInfoSlice";
 
 let onLoadCalled = false
 

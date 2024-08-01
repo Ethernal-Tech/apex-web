@@ -3,11 +3,13 @@ import pkLoginSlice from './slices/pkLoginSlice'
 import walletSlice from './slices/walletSlice'
 import chainSlice from './slices/chainSlice'
 import loginSlice from './slices/loginSlice'
+import accountInfoSlice from './slices/accountInfoSlice'
 
 export const store = configureStore({
 	reducer: {
 		pkLogin: pkLoginSlice,
 		wallet: walletSlice,
+		accountInfo: accountInfoSlice,
 		chain: chainSlice,
 		login: loginSlice,
 	},

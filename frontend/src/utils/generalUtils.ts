@@ -10,7 +10,7 @@ import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { FunctionComponent, SVGProps } from "react";
 
 export const capitalizeWord = (word: string): string => {
-    if (word.length === 0) {
+    if (!word || word.length === 0) {
         return word;
     }
 
