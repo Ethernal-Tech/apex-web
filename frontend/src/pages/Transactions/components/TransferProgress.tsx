@@ -129,6 +129,9 @@ const TransferStep = ({step}:TransferStepProps) => {
                     display:'inline-block',
                     width:'24px',
                     height:'24px',
+                    lineHeight:'24px',
+                    fontSize:'16px',
+                    textAlign:'center'
                 }}>
                     {step.number}
                 </Box>
@@ -155,6 +158,9 @@ const TransferStep = ({step}:TransferStepProps) => {
                     display:'inline-block',
                     width:'24px',
                     height:'24px',
+                    lineHeight:'24px',
+                    fontSize:'16px',
+                    textAlign:'center'
                 }}>
                     !
                 </Box>
