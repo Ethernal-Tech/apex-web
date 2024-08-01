@@ -48,17 +48,17 @@ const convertUtxoDfmToApex = (dfm:string|number):string =>{
 }
 
 // converts apex to dfm (prime and vector)
-const convertApexToUtxoDfm = (apex: string|number) => {
+const convertApexToUtxoDfm = (apex: string|number):string => {
   return Web3.utils.toWei(apex,'lovelace');
 }
 
 // convert wei to dfm (nexus)
-const convertEvmDfmToApex = (dfm:number|number) =>{
+const convertEvmDfmToApex = (dfm:string|number):string =>{
   return Web3.utils.fromWei(dfm,'ether');
 }
 
 // convert eth to wei (nexus)
-const convertApexToEvmDfm = (apex: number|number) => {
+const convertApexToEvmDfm = (apex: string|number):string => {
   return Web3.utils.toWei(apex,'wei');
 }
 
@@ -106,8 +106,8 @@ export const convertApexToDfm = (dfm:string|number, network:ChainEnum) =>{
   switch(network){
       case ChainEnum.Prime:
       case ChainEnum.Vector:
-          return convertApexToUtxoDfm(+dfm);
+          return convertApexToUtxoDfm(dfm);
       case ChainEnum.Nexus:
-          return convertApexToEvmDfm(+dfm)
+          return convertApexToEvmDfm(dfm)
   }
 }

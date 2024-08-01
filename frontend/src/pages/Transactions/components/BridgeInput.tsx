@@ -55,7 +55,7 @@ const BridgeInput = ({totalDfmBalance, bridgeTxFee, submit, disabled}:BridgeInpu
         }}>
             {/* validate inputs */}
             <PasteApexAmountInput
-                maxAmountDfm={maxAmountDfm}
+                maxSendableDfm={maxAmountDfm}
                 text={amount}
                 setText={setAmount}
                 disabled={disabled}
