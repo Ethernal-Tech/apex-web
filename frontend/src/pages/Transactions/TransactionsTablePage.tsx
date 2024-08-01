@@ -24,11 +24,11 @@ const TransactionsTablePage = () => {
 	const fetchFunction = useTryCatchJsonByAction();
 	
   const chain = useSelector((state: RootState) => state.chain.chain)
-  const accountInfoState = useSelector((state: RootState) => state.accountInfo);
+  const account = useSelector((state: RootState) => state.accountInfo.account);
 
 	const [filters, setFilters] = useState(new BridgeTransactionFilterDto({
     originChain: chain,
-    senderAddress: accountInfoState.account,
+    senderAddress: account,
   }));
 
     const fetchDataCallback = useCallback(
@@ -56,9 +56,9 @@ const TransactionsTablePage = () => {
   useEffect(() => {
     setFilters((state) => new BridgeTransactionFilterDto({
         ...state,
-        senderAddress: accountInfoState.account,
+        senderAddress: account,
     }))
-  }, [accountInfoState.account])
+  }, [account])
 
 	useEffect(
 		() => {

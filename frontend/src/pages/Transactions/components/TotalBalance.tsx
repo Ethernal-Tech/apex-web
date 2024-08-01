@@ -7,8 +7,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 
 const TotalBalance = () => {
-	const accountInfoState = useSelector((state: RootState) => state.accountInfo);
-	const totalDfmBalance = accountInfoState.balance;
+	const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
     const totalBalanceInApex = totalDfmBalance ? convertDfmToApex(+totalDfmBalance) : null;
     
   return (

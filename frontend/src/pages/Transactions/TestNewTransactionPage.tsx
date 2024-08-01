@@ -21,8 +21,9 @@ function NewTransactionPage() {
 	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
 	const [loading, setLoading] = useState(false);
 	
-	const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
-	const accountInfoState = useSelector((state: RootState) => state.accountInfo);
+	const chain = useSelector((state: RootState)=> state.chain.chain);
+	const destinationChain = useSelector((state: RootState)=> state.chain.destinationChain);
+	const account = useSelector((state: RootState) => state.accountInfo.account);
 
 	const bridgeTxFee = appSettings.bridgingFee;
 
@@ -43,7 +44,7 @@ function NewTransactionPage() {
 			bridgingFee: bridgeTxFee,
 			destinationChain,
 			originChain: chain,
-			senderAddress: accountInfoState.account,
+			senderAddress: account,
 			receivers: [new CreateTransactionReceiverDto({
 				address, amount,
 			})]
@@ -52,7 +53,7 @@ function NewTransactionPage() {
 		const createResponse = await fetchFunction(bindedCreateAction);
 
 		return { createTxDto, createResponse };
-	}, [bridgeTxFee, chain, destinationChain, fetchFunction, accountInfoState.account])
+	}, [bridgeTxFee, chain, destinationChain, fetchFunction, account])
 
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: number) => {

@@ -178,6 +178,7 @@ const TransferProgress = ({
     const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();
     const [tx, setTx] = useState<BridgeTransactionDto>(bridgeTx);
+    const [txStatusToShow, setTxStatusToShow] = useState<TransactionStatusEnum>(bridgeTx.status);
     
     const fetchTx = useCallback(async () => {
         const bindedAction = getAction.bind(null, tx.id);
@@ -188,12 +189,24 @@ const TransferProgress = ({
         ])
 
         setTx(response);
+        setTxStatusToShow(
+            (prev) => {
+                if (prev === TransactionStatusEnum.SubmittedToDestination &&
+                    (response.status === TransactionStatusEnum.IncludedInBatch ||
+                    response.status === TransactionStatusEnum.FailedToExecuteOnDestination)) {
+                    // this happens on bridge sometimes, so to prevent user confusion, we ignore it
+                    return prev;
+                }
+
+                return response.status
+            }
+        )
 
         return response;
     }, [fetchFunction, dispatch, tx.id])
 
 	useEffect(() => {
-		fetchTx()
+		fetchTx();
 
         const handle = setInterval(async () => {
             const tx = await fetchTx();
@@ -211,21 +224,21 @@ const TransferProgress = ({
     const steps = useMemo(() => {
         return defaultSteps.map(dStep => {
             const text = getStepText(dStep.number, tx.originChain, tx.destinationChain);
-            const status = getStepStatus(dStep.number, tx.status);
+            const status = getStepStatus(dStep.number, txStatusToShow);
             return {
                 ...dStep,
                 text,
                 status,
             }
         })
-    }, [tx.destinationChain, tx.originChain, tx.status])
+    }, [tx.destinationChain, tx.originChain, txStatusToShow])
 
     const onOpenExplorer = () => openExplorer(tx);
 
     return (
         <Box>
             <Typography sx={{color:'white',mt:4, mb:2, textAlign:'center'}}>
-                {getTransferProgress(tx.status)}
+                {getTransferProgress(txStatusToShow)}
             </Typography>
 
             <Box sx={{

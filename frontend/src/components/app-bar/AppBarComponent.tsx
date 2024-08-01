@@ -14,11 +14,11 @@ import { logout } from "../../actions/logout";
 import { login } from "../../actions/login";
 
 const AppBarComponent = () => {
-    const walletState = useSelector((state: RootState) => state.wallet);
-    const accountInfoState = useSelector((state: RootState) => state.accountInfo);
-    const loginState = useSelector((state: RootState) => state.login);
-    const chainState = useSelector((state: RootState) => state.chain);
-	const isLoggedInMemo = !!walletState.wallet && !!accountInfoState.account;
+    const wallet = useSelector((state: RootState) => state.wallet.wallet);
+    const account = useSelector((state: RootState) => state.accountInfo.account);
+    const loginConnecting = useSelector((state: RootState) => state.login.connecting);
+    const chain = useSelector((state: RootState) => state.chain.chain);
+	const isLoggedInMemo = !!wallet && !!account;
     
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -44,7 +44,7 @@ const AppBarComponent = () => {
     async function handleConnectClick() {
         handleClose();
         
-        await login(chainState.chain, navigate, dispatch);
+        await login(chain, navigate, dispatch);
     }
 
     return (
@@ -78,7 +78,7 @@ const AppBarComponent = () => {
                         }
 
                         {
-                            loginState.connecting ? (
+                            loginConnecting ? (
                                 <ButtonCustom 
                                 variant="redNavigation"
                                 >
@@ -95,7 +95,7 @@ const AppBarComponent = () => {
                                         onClick={handleClick}
                                         sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'lowercase'}}
                                         endIcon={<ExpandMoreIcon />}>
-                                            {formatAddress(accountInfoState.account)}
+                                            {formatAddress(account)}
                                     </Button>
                                     ) : (
                                     <ButtonCustom 

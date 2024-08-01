@@ -25,8 +25,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
   const [createdTx, setCreatedTx] = useState<CreateTransactionResponseDto | undefined>();
   const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
-  const accountInfoState = useSelector((state: RootState) => state.accountInfo);
-  const totalDfmBalance = accountInfoState.balance;
+  const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
 
   const fetchCreatedTx = useCallback(async () => {
     if (!destinationAddr || !amount) {

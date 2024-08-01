@@ -4,9 +4,9 @@ import { RootState } from "../../../redux/store";
 import { convertDfmToApex, formatAddress } from "../../../utils/generalUtils";
 
 const AddressBalance = () => {
-	const accountInfoState = useSelector((state: RootState) => state.accountInfo);
-	const totalBalance = accountInfoState.balance;
-    const totalBalanceInApex = totalBalance ? convertDfmToApex(+totalBalance) : null;
+	const account = useSelector((state: RootState) => state.accountInfo.account);
+	const balance = useSelector((state: RootState) => state.accountInfo.balance);
+    const totalBalanceInApex = balance ? convertDfmToApex(+balance) : null;
 
     return (
         <Box px={'17px'} py='20px' sx={{
@@ -23,7 +23,7 @@ const AddressBalance = () => {
                     address 1
                 </Typography>
                 <Typography fontSize="13px" textTransform={'lowercase'} sx={{display:'flex',alignItems:'center', color:'white'}}>
-                    {formatAddress(accountInfoState.account)}
+                    {formatAddress(account)}
                 </Typography>
             </Box>
             {totalBalanceInApex &&

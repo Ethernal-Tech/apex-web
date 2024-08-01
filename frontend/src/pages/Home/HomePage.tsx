@@ -18,17 +18,16 @@ import { chainIcons } from "../../utils/generalUtils";
 import { login } from "../../actions/login";
 
 const HomePage: React.FC = () => {
-  const walletState = useSelector((state: RootState) => state.wallet);
-  const loginState = useSelector((state: RootState) => state.login);
-  const accountInfoState = useSelector((state: RootState) => state.accountInfo);
-	const isLoggedInMemo = !!walletState.wallet && !!accountInfoState.account;
+  const wallet = useSelector((state: RootState) => state.wallet.wallet);
+  const loginConnecting = useSelector((state: RootState) => state.login.connecting);
+  const account = useSelector((state: RootState) => state.accountInfo.account);
+	const isLoggedInMemo = !!wallet && !!account;
 
   const navigate = useNavigate()
   const dispatch = useDispatch()
   
-  const chainState = useSelector((state: RootState) => state.chain);
-  const chain = chainState.chain
-  const destinationChain = chainState.destinationChain
+  const chain = useSelector((state: RootState) => state.chain.chain);
+  const destinationChain = useSelector((state: RootState) => state.chain.destinationChain);
 
   const supportedChainOptions = [
     { 
@@ -75,7 +74,7 @@ const HomePage: React.FC = () => {
   };
 
   const handleConnectClick = async () => {
-    await login(chainState.chain, navigate, dispatch);
+    await login(chain, navigate, dispatch);
   }
 
   const getIconComponent = (value: string): React.FC => {
@@ -129,7 +128,7 @@ const HomePage: React.FC = () => {
         </Box>
       </Box>
       {
-        loginState.connecting ? (
+        loginConnecting ? (
             <ButtonCustom 
               variant="white"
               sx={{ textTransform:'uppercase'}}

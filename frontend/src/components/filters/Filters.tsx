@@ -107,7 +107,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
     const [open, setOpen] = useState(false);
 
     const chain = useSelector((state: RootState) => state.chain.chain)
-    const accountInfoState = useSelector((state: RootState) => state.accountInfo);
+    const account = useSelector((state: RootState) => state.accountInfo.account);
 
     const destinationChains = useMemo(() => Object.values(ChainEnum).filter(x => x !== chain), [chain])
 
@@ -143,12 +143,12 @@ export default function Filters({ filters, onFilterChange }: Props) {
             // keep sort
             onFilterChange(new BridgeTransactionFilterDto({
                 originChain: chain,
-                senderAddress: accountInfoState.account,
+                senderAddress: account,
                 order: filters.order,
                 orderBy: filters.orderBy,
             }))
         },
-        [onFilterChange, chain, accountInfoState.account, filters.order, filters.orderBy]
+        [onFilterChange, chain, account, filters.order, filters.orderBy]
     )
 
     const changeCallback = useCallback(

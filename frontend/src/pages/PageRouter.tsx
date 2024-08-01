@@ -17,15 +17,15 @@ export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
 
 const PageRouter: React.FC = () => {
 
-	const walletState = useSelector((state: RootState) => state.wallet);
-	const chainState = useSelector((state: RootState) => state.chain);
+	const wallet = useSelector((state: RootState) => state.wallet.wallet);
+	const chain = useSelector((state: RootState) => state.chain.chain);
 	const dispatch = useDispatch();
 	
-	const isLoggedInMemo = !!walletState.wallet;
+	const isLoggedInMemo = !!wallet;
 
 	useEffect(() => {
 		if (isLoggedInMemo) {
-			onLoad(walletState.wallet!, chainState.chain, dispatch);
+			onLoad(wallet, chain, dispatch);
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
