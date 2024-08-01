@@ -24,6 +24,79 @@ const style = {
     borderRadius: '4px',
 };
 
+const receiverAddressStyle = {
+'& .MuiOutlinedInput-root': {
+    '& fieldset': {
+        borderColor: '#435F69',
+    },
+    '&:hover fieldset': {
+        borderColor: '#435F69',
+    },
+    '&.Mui-focused fieldset': {
+        borderColor: '#435F69',
+    },
+    border: 'none',
+    color: 'white',
+    padding: '0 8px 0 0',
+    width: '100%',
+    caretColor: '#FF5E5E',
+    },
+    input: {
+        color: 'white',
+        caretColor: '#FF5E5E',
+        '&::placeholder': {
+            color: '#a3a3a3',
+            opacity: 1,
+            fontFamily: 'monospace', // Adjust as needed to match the style
+        },
+        // Hide number input arrows
+        '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
+            display: 'none',
+        },
+        'webkitAppearance': 'none',
+        '&[type=number]': {
+            'mozAppearance': 'textfield', // Firefox
+        },
+    }
+};
+
+const amountStyle = {
+'& .MuiOutlinedInput-root': {
+    backgroundColor: 'transparent',
+    '& fieldset': {
+        borderColor: '#435F69',
+    },
+    '&:hover fieldset': {
+        borderColor: '#435F69',
+    },
+    '&.Mui-focused fieldset': {
+        borderColor: '#435F69',
+    },
+    border: 'none',
+    color: 'white',
+},
+'& .MuiOutlinedInput-notchedOutline': {
+    borderColor: '#1a2e3b',
+},
+input: {
+    color: 'white',
+    caretColor: '#FF5E5E',
+    '&::placeholder': {
+        color: '#a3a3a3',
+        opacity: 1,
+        fontFamily: 'monospace', // Adjust as needed to match the style
+    },
+    // Hide number input arrows
+    '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
+        display: 'none',
+    },
+    'webkitAppearance': 'none',
+    '&[type=number]': {
+        'mozAppearance': 'textfield', // Firefox
+    },
+}
+}
+
 type Props = {
     filters: BridgeTransactionFilterDto
     onFilterChange: (newFilters: BridgeTransactionFilterDto) => void
@@ -166,12 +239,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                 onChange={changeCallback}
                                 sx={{
                                     width:'100%',
-                                    '& .MuiOutlinedInput-root': {
-                                        backgroundColor: '#1a2e3b',
-                                    },
-                                    '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#1a2e3b',
-                                    },
+                                    ...receiverAddressStyle
                                 }}
                             />
                             <Button
@@ -204,14 +272,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                     size="small"
                                     value={values.amountFrom}
                                     onChange={changeCallback}
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            backgroundColor: '#1a2e3b',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#1a2e3b',
-                                        },
-                                    }}
+                                    sx={amountStyle}
                                 />
                             </Box>
                             <Box>
@@ -224,14 +285,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                     size="small"
                                     value={values.amountTo}
                                     onChange={changeCallback}
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            backgroundColor: '#1a2e3b',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                            borderColor: '#1a2e3b',
-                                        },
-                                    }}
+                                    sx={amountStyle}
                                 />
                             </Box>
                         </Box>
