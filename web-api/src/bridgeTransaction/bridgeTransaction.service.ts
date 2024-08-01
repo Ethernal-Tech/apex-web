@@ -7,6 +7,7 @@ import {
 	FindOptionsWhere,
 	In,
 	LessThanOrEqual,
+	Like,
 	MoreThanOrEqual,
 	Repository,
 } from 'typeorm';
@@ -58,6 +59,10 @@ export class BridgeTransactionService {
 			where.amount = MoreThanOrEqual(model.amountFrom);
 		} else if (model.amountTo) {
 			where.amount = LessThanOrEqual(model.amountTo);
+		}
+
+		if (model.receiverAddress) {
+			where.receiverAddresses = Like(model.receiverAddress);
 		}
 
 		const page = model.page || 0;

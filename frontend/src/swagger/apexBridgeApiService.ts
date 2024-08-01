@@ -978,6 +978,7 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
     amountTo?: number | undefined;
     orderBy?: string | undefined;
     order?: string | undefined;
+    receiverAddress?: string | undefined;
 
     constructor(data?: IBridgeTransactionFilterDto) {
         if (data) {
@@ -999,6 +1000,7 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
             this.amountTo = _data["amountTo"];
             this.orderBy = _data["orderBy"];
             this.order = _data["order"];
+            this.receiverAddress = _data["receiverAddress"];
         }
     }
 
@@ -1020,6 +1022,7 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
         data["amountTo"] = this.amountTo;
         data["orderBy"] = this.orderBy;
         data["order"] = this.order;
+        data["receiverAddress"] = this.receiverAddress;
         return data; 
     }
 }
@@ -1034,6 +1037,7 @@ export interface IBridgeTransactionFilterDto {
     amountTo?: number | undefined;
     orderBy?: string | undefined;
     order?: string | undefined;
+    receiverAddress?: string | undefined;
 }
 
 export class BridgeTransactionResponseDto implements IBridgeTransactionResponseDto {
