@@ -20,6 +20,7 @@ import {
 } from './transaction.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ChainEnum } from 'src/common/enum';
+import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 
 @ApiTags('Transaction')
 @Controller('transaction')
@@ -79,6 +80,7 @@ export class TransactionController {
 
 	@ApiResponse({
 		status: HttpStatus.OK,
+		type: BridgeTransactionDto,
 		description: 'Success',
 	})
 	@ApiResponse({
@@ -89,7 +91,7 @@ export class TransactionController {
 	@Post('bridgingTransactionSubmitted')
 	async bridgingTransactionSubmitted(
 		@Body() model: TransactionSubmittedDto,
-	): Promise<void> {
+	): Promise<BridgeTransactionDto> {
 		return this.transactionService.transactionSubmitted(model);
 	}
 	@ApiResponse({

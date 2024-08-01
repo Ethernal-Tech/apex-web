@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
+import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 import { ChainEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
@@ -95,7 +96,11 @@ export class SubmitTransactionDto extends TransactionSubmittedDto {
 export class SubmitTransactionResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
-	txId: string;
+	txHash: string;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	bridgeTx: BridgeTransactionDto;
 }
 
 export class TransactionResponseDto {

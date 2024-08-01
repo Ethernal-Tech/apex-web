@@ -164,7 +164,7 @@ export class TransactionControllerClient extends BaseClient {
     /**
      * @return Success
      */
-    bridgingTransactionSubmitted(body: TransactionSubmittedDto): Promise<void> {
+    bridgingTransactionSubmitted(body: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
         let url_ = this.baseUrl + "/transaction/bridgingTransactionSubmitted";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -175,6 +175,7 @@ export class TransactionControllerClient extends BaseClient {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "Accept": "application/json"
             }
         };
 
@@ -185,12 +186,15 @@ export class TransactionControllerClient extends BaseClient {
         });
     }
 
-    protected processBridgingTransactionSubmitted(response: Response): Promise<void> {
+    protected processBridgingTransactionSubmitted(response: Response): Promise<BridgeTransactionDto> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BridgeTransactionDto.fromJS(resultData200);
+            return result200;
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
@@ -201,7 +205,7 @@ export class TransactionControllerClient extends BaseClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(<any>null);
+        return Promise.resolve<BridgeTransactionDto>(<any>null);
     }
 
     /**
@@ -727,10 +731,31 @@ export interface ISubmitTransactionDto {
     signedTxRaw: string;
 }
 
-export class SubmitTransactionResponseDto implements ISubmitTransactionResponseDto {
-    txId!: string;
+export enum TransactionStatusEnum {
+    Pending = "Pending",
+    DiscoveredOnSource = "DiscoveredOnSource",
+    InvalidRequest = "InvalidRequest",
+    SubmittedToBridge = "SubmittedToBridge",
+    IncludedInBatch = "IncludedInBatch",
+    SubmittedToDestination = "SubmittedToDestination",
+    FailedToExecuteOnDestination = "FailedToExecuteOnDestination",
+    ExecutedOnDestination = "ExecutedOnDestination",
+}
 
-    constructor(data?: ISubmitTransactionResponseDto) {
+export class BridgeTransactionDto implements IBridgeTransactionDto {
+    id!: number;
+    senderAddress!: string;
+    receiverAddresses!: string;
+    amount!: number;
+    originChain!: ChainEnum;
+    destinationChain!: ChainEnum;
+    sourceTxHash!: string;
+    destinationTxHash?: string | undefined;
+    status!: TransactionStatusEnum;
+    createdAt!: Date;
+    finishedAt?: Date | undefined;
+
+    constructor(data?: IBridgeTransactionDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -741,7 +766,78 @@ export class SubmitTransactionResponseDto implements ISubmitTransactionResponseD
 
     init(_data?: any) {
         if (_data) {
-            this.txId = _data["txId"];
+            this.id = _data["id"];
+            this.senderAddress = _data["senderAddress"];
+            this.receiverAddresses = _data["receiverAddresses"];
+            this.amount = _data["amount"];
+            this.originChain = _data["originChain"];
+            this.destinationChain = _data["destinationChain"];
+            this.sourceTxHash = _data["sourceTxHash"];
+            this.destinationTxHash = _data["destinationTxHash"];
+            this.status = _data["status"];
+            this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : <any>undefined;
+            this.finishedAt = _data["finishedAt"] ? new Date(_data["finishedAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): BridgeTransactionDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new BridgeTransactionDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["senderAddress"] = this.senderAddress;
+        data["receiverAddresses"] = this.receiverAddresses;
+        data["amount"] = this.amount;
+        data["originChain"] = this.originChain;
+        data["destinationChain"] = this.destinationChain;
+        data["sourceTxHash"] = this.sourceTxHash;
+        data["destinationTxHash"] = this.destinationTxHash;
+        data["status"] = this.status;
+        data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : <any>undefined;
+        data["finishedAt"] = this.finishedAt ? this.finishedAt.toISOString() : <any>undefined;
+        return data; 
+    }
+}
+
+export interface IBridgeTransactionDto {
+    id: number;
+    senderAddress: string;
+    receiverAddresses: string;
+    amount: number;
+    originChain: ChainEnum;
+    destinationChain: ChainEnum;
+    sourceTxHash: string;
+    destinationTxHash?: string | undefined;
+    status: TransactionStatusEnum;
+    createdAt: Date;
+    finishedAt?: Date | undefined;
+}
+
+export class SubmitTransactionResponseDto implements ISubmitTransactionResponseDto {
+    txHash!: string;
+    bridgeTx!: BridgeTransactionDto;
+
+    constructor(data?: ISubmitTransactionResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+        if (!data) {
+            this.bridgeTx = new BridgeTransactionDto();
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.txHash = _data["txHash"];
+            this.bridgeTx = _data["bridgeTx"] ? BridgeTransactionDto.fromJS(_data["bridgeTx"]) : new BridgeTransactionDto();
         }
     }
 
@@ -754,13 +850,15 @@ export class SubmitTransactionResponseDto implements ISubmitTransactionResponseD
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["txId"] = this.txId;
+        data["txHash"] = this.txHash;
+        data["bridgeTx"] = this.bridgeTx ? this.bridgeTx.toJSON() : <any>undefined;
         return data; 
     }
 }
 
 export interface ISubmitTransactionResponseDto {
-    txId: string;
+    txHash: string;
+    bridgeTx: BridgeTransactionDto;
 }
 
 export class TransactionSubmittedDto implements ITransactionSubmittedDto {
@@ -868,93 +966,6 @@ export class ProtocolParamsResponseDto implements IProtocolParamsResponseDto {
 export interface IProtocolParamsResponseDto {
     txFeeFixed: string;
     txFeePerByte: string;
-}
-
-export enum TransactionStatusEnum {
-    Pending = "Pending",
-    DiscoveredOnSource = "DiscoveredOnSource",
-    InvalidRequest = "InvalidRequest",
-    SubmittedToBridge = "SubmittedToBridge",
-    IncludedInBatch = "IncludedInBatch",
-    SubmittedToDestination = "SubmittedToDestination",
-    FailedToExecuteOnDestination = "FailedToExecuteOnDestination",
-    ExecutedOnDestination = "ExecutedOnDestination",
-}
-
-export class BridgeTransactionDto implements IBridgeTransactionDto {
-    id!: number;
-    senderAddress!: string;
-    receiverAddresses!: string;
-    amount!: number;
-    originChain!: ChainEnum;
-    destinationChain!: ChainEnum;
-    sourceTxHash!: string;
-    destinationTxHash?: string | undefined;
-    status!: TransactionStatusEnum;
-    createdAt!: Date;
-    finishedAt?: Date | undefined;
-
-    constructor(data?: IBridgeTransactionDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.senderAddress = _data["senderAddress"];
-            this.receiverAddresses = _data["receiverAddresses"];
-            this.amount = _data["amount"];
-            this.originChain = _data["originChain"];
-            this.destinationChain = _data["destinationChain"];
-            this.sourceTxHash = _data["sourceTxHash"];
-            this.destinationTxHash = _data["destinationTxHash"];
-            this.status = _data["status"];
-            this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : <any>undefined;
-            this.finishedAt = _data["finishedAt"] ? new Date(_data["finishedAt"].toString()) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): BridgeTransactionDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new BridgeTransactionDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["senderAddress"] = this.senderAddress;
-        data["receiverAddresses"] = this.receiverAddresses;
-        data["amount"] = this.amount;
-        data["originChain"] = this.originChain;
-        data["destinationChain"] = this.destinationChain;
-        data["sourceTxHash"] = this.sourceTxHash;
-        data["destinationTxHash"] = this.destinationTxHash;
-        data["status"] = this.status;
-        data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : <any>undefined;
-        data["finishedAt"] = this.finishedAt ? this.finishedAt.toISOString() : <any>undefined;
-        return data; 
-    }
-}
-
-export interface IBridgeTransactionDto {
-    id: number;
-    senderAddress: string;
-    receiverAddresses: string;
-    amount: number;
-    originChain: ChainEnum;
-    destinationChain: ChainEnum;
-    sourceTxHash: string;
-    destinationTxHash?: string | undefined;
-    status: TransactionStatusEnum;
-    createdAt: Date;
-    finishedAt?: Date | undefined;
 }
 
 export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {

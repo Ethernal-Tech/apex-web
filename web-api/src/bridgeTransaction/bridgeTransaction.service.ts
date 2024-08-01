@@ -19,6 +19,7 @@ import {
 import {
 	BridgingRequestNotFinalStates,
 	getBridgingRequestStates,
+	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
 import { ChainEnum } from 'src/common/enum';
@@ -39,7 +40,7 @@ export class BridgeTransactionService {
 			throw new NotFoundException();
 		}
 
-		return this.mapToReponse(entity);
+		return mapBridgeTransactionToResponse(entity);
 	}
 
 	async getAllFiltered(
@@ -79,7 +80,7 @@ export class BridgeTransactionService {
 			});
 
 		return {
-			items: entities.map((entity) => this.mapToReponse(entity)),
+			items: entities.map((entity) => mapBridgeTransactionToResponse(entity)),
 			page: page,
 			perPage: take,
 			total: total,
@@ -122,21 +123,5 @@ export class BridgeTransactionService {
 			job.start();
 			console.log('Job updateStatusesJob executed');
 		}
-	}
-
-	private mapToReponse(entity: BridgeTransaction): BridgeTransactionDto {
-		const response = new BridgeTransactionDto();
-		response.id = entity.id;
-		response.senderAddress = entity.senderAddress;
-		response.receiverAddresses = entity.receiverAddresses;
-		response.destinationChain = entity.destinationChain;
-		response.originChain = entity.originChain;
-		response.amount = entity.amount;
-		response.sourceTxHash = entity.sourceTxHash;
-		response.destinationTxHash = entity.destinationTxHash;
-		response.status = entity.status;
-		response.createdAt = entity.createdAt;
-		response.finishedAt = entity.finishedAt;
-		return response;
 	}
 }
