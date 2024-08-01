@@ -221,17 +221,18 @@ const TransferStep = ({step}:TransferStepProps) => {
 }
 
 interface TransferProgressProps {
-    bridgeTx: BridgeTransactionDto
+    tx: BridgeTransactionDto
+    setTx: React.Dispatch<React.SetStateAction<BridgeTransactionDto | undefined>>
 }
 
 const TransferProgress = ({
-    bridgeTx,
+    tx,
+    setTx,
 }: TransferProgressProps) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();
-    const [tx, setTx] = useState<BridgeTransactionDto>(bridgeTx);
-    const [txStatusToShow, setTxStatusToShow] = useState<TransactionStatusEnum>(bridgeTx.status);
+    const [txStatusToShow, setTxStatusToShow] = useState<TransactionStatusEnum>(tx.status);
     
     const fetchTx = useCallback(async () => {
         const bindedAction = getAction.bind(null, tx.id);
@@ -241,22 +242,24 @@ const TransferProgress = ({
             fetchAndUpdateBalanceAction(dispatch),
         ])
 
-        setTx(response);
-        setTxStatusToShow(
-            (prev) => {
-                if (prev === TransactionStatusEnum.SubmittedToDestination &&
-                    (response.status === TransactionStatusEnum.IncludedInBatch ||
-                    response.status === TransactionStatusEnum.FailedToExecuteOnDestination)) {
-                    // this happens on bridge sometimes, so to prevent user confusion, we ignore it
-                    return prev;
+        if (response) {
+            setTx(response);
+            setTxStatusToShow(
+                (prev) => {
+                    if (prev === TransactionStatusEnum.SubmittedToDestination &&
+                        (response.status === TransactionStatusEnum.IncludedInBatch ||
+                        response.status === TransactionStatusEnum.FailedToExecuteOnDestination)) {
+                        // this happens on bridge sometimes, so to prevent user confusion, we ignore it
+                        return prev;
+                    }
+    
+                    return response.status
                 }
-
-                return response.status
-            }
-        )
+            );
+        }
 
         return response;
-    }, [fetchFunction, dispatch, tx.id])
+    }, [tx.id, fetchFunction, dispatch, setTx])
 
 	useEffect(() => {
 		fetchTx();

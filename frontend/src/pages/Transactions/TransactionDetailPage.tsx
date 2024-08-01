@@ -32,7 +32,7 @@ const TransactionDetailPage = () => {
           fetchAndUpdateBalanceAction(dispatch),
       ])
 
-      setTransaction(response);
+      response && setTransaction(response);
 
       return response;
     }

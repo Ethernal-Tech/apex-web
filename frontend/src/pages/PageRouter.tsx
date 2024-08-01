@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import TransactionsTablePage from './Transactions/TransactionsTablePage';
 import TransactionDetailPage from './Transactions/TransactionDetailPage';
-import NewTransactionPage from './Transactions/TestNewTransactionPage';
+import NewTransactionPage from './Transactions/NewTransactionPage';
 
 import withMiddleware from '../middleware/withMiddleware';
 import { onLoad } from '../actions/login';

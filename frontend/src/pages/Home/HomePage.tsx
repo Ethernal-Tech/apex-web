@@ -14,7 +14,7 @@ import { NEW_TRANSACTION_ROUTE } from "../PageRouter";
 import { getDestinationChain, getSelectedChain } from "../../utils/storageUtils";
 import { setChainAction, setDestinationChainAction } from "../../redux/slices/chainSlice";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
-import { chainIcons } from "../../utils/generalUtils";
+import { capitalizeWord, chainIcons } from "../../utils/generalUtils";
 import { login } from "../../actions/login";
 
 const HomePage: React.FC = () => {
@@ -31,15 +31,15 @@ const HomePage: React.FC = () => {
 
   const supportedChainOptions = [
     { 
-      value: 'prime',
-      label: 'Prime',
-      icon: chainIcons.prime,
+      value: ChainEnum.Prime,
+      label: capitalizeWord(ChainEnum.Prime),
+      icon: chainIcons[ChainEnum.Prime],
       borderColor:'#077368' 
     },
     { 
-      value: 'vector', 
-      label: 'Vector', 
-      icon: chainIcons.vector,
+      value: ChainEnum.Vector,
+      label: capitalizeWord(ChainEnum.Vector),
+      icon: chainIcons[ChainEnum.Vector],
       borderColor:'#F25041'
     },
     // TODO af - nexus removed for now
@@ -79,7 +79,7 @@ const HomePage: React.FC = () => {
 
   const getIconComponent = (value: string): React.FC => {
     const option = supportedChainOptions.find(opt => opt.value === value);
-    return option ? option.icon : chainIcons.prime; // Default to PrimeIcon if not found
+    return option ? option.icon : chainIcons[ChainEnum.Prime]; // Default to PrimeIcon if not found
   };
 
   return (

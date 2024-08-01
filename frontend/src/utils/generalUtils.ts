@@ -76,12 +76,12 @@ export const validateSubmitTxInputs = (
 }
 
 export const chainIcons:{
-  prime:FunctionComponent<SVGProps<SVGSVGElement>>
-  vector:FunctionComponent<SVGProps<SVGSVGElement>>
+  [ChainEnum.Prime]:FunctionComponent<SVGProps<SVGSVGElement>>
+  [ChainEnum.Vector]:FunctionComponent<SVGProps<SVGSVGElement>>
   nexus:FunctionComponent<SVGProps<SVGSVGElement>>
 } = {
-  prime:PrimeIcon,
-  vector:VectorIcon,
+  [ChainEnum.Prime]:PrimeIcon,
+  [ChainEnum.Vector]:VectorIcon,
   nexus:NexusIcon
 }
 
