@@ -162,6 +162,18 @@ export default function Filters({ filters, onFilterChange }: Props) {
         []
     )
 
+    const handlePasteReceiverAddress = async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            setValues((state) => new BridgeTransactionFilterDto({
+                ...state,
+                receiverAddress: text
+            }));
+        } catch (err) {
+            console.error('Failed to read clipboard contents: ', err);
+        }
+    }
+
     return (
         <div>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1 }}>
@@ -235,15 +247,17 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                 name="receiverAddress"
                                 variant="outlined"
                                 size="small"
-                                // value={values.receiverAddress} // TODO - implement receiverAddress as a filter
+                                value={values.receiverAddress}
                                 onChange={changeCallback}
                                 sx={{
                                     width:'100%',
                                     ...receiverAddressStyle
                                 }}
                             />
+                            {!values.receiverAddress &&
                             <Button
                                 variant="text"
+                                onClick={handlePasteReceiverAddress}
                                 sx={{
                                     color: '#F27B50',
                                     backgroundColor: 'transparent',
@@ -259,6 +273,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                             >
                                 PASTE
                             </Button>
+                            }
                         </Box>
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
