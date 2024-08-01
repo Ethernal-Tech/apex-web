@@ -6,7 +6,7 @@ import ButtonCustom from "../../../components/Buttons/ButtonCustom"
 import { TRANSACTIONS_ROUTE } from "../../PageRouter"
 import { useNavigate } from "react-router-dom"
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../../../swagger/apexBridgeApiService"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { FunctionComponent, SVGProps, useCallback, useEffect, useMemo, useState } from "react"
 import { useTryCatchJsonByAction } from "../../../utils/fetchUtils"
 import { isStatusFinal } from "../../../utils/statusUtils"
 import { getAction } from "../action"
@@ -15,6 +15,24 @@ import { openExplorer } from "../../../utils/chainUtils"
 import { fetchAndUpdateBalanceAction } from "../../../actions/balance"
 import { useDispatch } from "react-redux"
 // import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
+
+// asset svgs
+// 
+import {ReactComponent as PrimeInProgressIcon} from "../../../assets/bridge-status-assets/prime-progress.svg"
+import {ReactComponent as PrimeSuccessIcon} from "../../../assets/bridge-status-assets/Prime.svg"
+// import {ReactComponent as PrimeError} from "../../../assets/bridge-status-assets/Prime.svg" // not available
+
+import {ReactComponent as VectorInProgressIcon} from "../../../assets/bridge-status-assets/Vector.svg"
+import {ReactComponent as VectorSuccessIcon} from "../../../assets/bridge-status-assets/vector-success.svg"
+// import {ReactComponent as VectorError} from "../../../assets/bridge-status-assets/vector-success.svg" // not available
+
+
+import {ReactComponent as BridgeInProgressIcon} from "../../../assets/bridge-status-assets/Bridge-Wallet.svg"
+import {ReactComponent as BridgeSuccessIcon} from "../../../assets/bridge-status-assets/bridge-success.svg"
+import {ReactComponent as BridgeErrorIcon} from "../../../assets/bridge-status-assets/Bridge-error.svg"
+
+const PrimeErrorIcon = PrimeInProgressIcon; // TODO - update
+const VectorErrorIcon = VectorInProgressIcon; // TODO - update
 
 const TRANSFER_PROGRESS_TEXT = {
     ERROR: 'Transfer error',
@@ -33,33 +51,56 @@ type StepType = {
     number:number,
     text: string,
     status:string,
-    doneIcon: React.ReactNode
+    doneIcon: React.ReactNode,
+    asset:{ // which svg icon to show
+        inProgress: FunctionComponent<SVGProps<SVGSVGElement>>,
+        done: FunctionComponent<SVGProps<SVGSVGElement>>,
+        error: FunctionComponent<SVGProps<SVGSVGElement>>,
+    }
 }
 
 interface TransferStepProps {
     step: StepType
 }
 
-const defaultSteps:StepType[] = [
-    {
-        number:1,
-        text:'',
-        status:STEP_STATUS.WAITING,
-        doneIcon:<Done1icon/>
-    },
-    {
-        number:2,
-        text:'',
-        status:STEP_STATUS.WAITING,
-        doneIcon:<Done2icon/>
-    },
-    {
-        number:3,
-        text:'',
-        status:STEP_STATUS.WAITING,
-        doneIcon:<Done3icon/>
-    },
-]
+const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):StepType[] =>{
+    return [
+        {
+            number:1,
+            text:'',
+            status:STEP_STATUS.WAITING,
+            doneIcon:<Done1icon/>,
+            asset:{
+                inProgress: sourceChain === ChainEnum.Prime ? PrimeInProgressIcon : VectorInProgressIcon,
+                done: sourceChain === ChainEnum.Prime ? PrimeSuccessIcon : VectorSuccessIcon,
+                error: sourceChain === ChainEnum.Prime ? PrimeErrorIcon : VectorErrorIcon
+            }
+        },
+        {
+            number:2,
+            text:'',
+            status:STEP_STATUS.WAITING,
+            doneIcon:<Done2icon/>,
+            asset:{
+                inProgress: BridgeInProgressIcon,
+                done: BridgeSuccessIcon,
+                error: BridgeErrorIcon
+            }
+        },
+        {
+            number:3,
+            text:'',
+            status:STEP_STATUS.WAITING,
+            doneIcon:<Done3icon/>,
+            asset:{
+                inProgress: destinationChain === ChainEnum.Prime ? PrimeInProgressIcon : VectorInProgressIcon,
+                done: sourceChain === ChainEnum.Prime ? PrimeSuccessIcon : VectorSuccessIcon,
+                error: sourceChain === ChainEnum.Prime ? PrimeErrorIcon : VectorErrorIcon
+            }
+        }
+    ]
+
+}
 
 const getStepText = (stepNumber: number, originChain: ChainEnum, destinationChain: ChainEnum) => {
     if (stepNumber === 1) {
@@ -119,54 +160,60 @@ const getTransferProgress = (txStatus: TransactionStatusEnum) => {
 const TransferStep = ({step}:TransferStepProps) => {
     return (
         <Box sx={{textAlign:'center'}}>
-            
-            {/* waiting or in_progress status */}
-            {(step.status === STEP_STATUS.WAITING || step.status === STEP_STATUS.IN_PROGRESS) && (
-                <Box sx={{
-                    color:'#F25041',
-                    borderRadius:'100px',
-                    border:'1px solid #F25041',
-                    display:'inline-block',
-                    width:'24px',
-                    height:'24px',
-                    lineHeight:'24px',
-                    fontSize:'16px',
-                    textAlign:'center'
-                }}>
-                    {step.number}
+            <Box sx={{ display:'flex',flexDirection:'column', alignItems:'center'}}>
+                {/* conditional display of svg icon depending on status. Different steps have different icons */}
+                <Box sx={{height:'120px',display:'flex',alignItems:'center', marginBottom:'40px'}}>   
+                    {(step.status === STEP_STATUS.WAITING || step.status === STEP_STATUS.IN_PROGRESS) && <step.asset.inProgress/>}
+                    {(step.status === STEP_STATUS.DONE) && <step.asset.done/>}
+                    {(step.status === STEP_STATUS.ERROR) && <step.asset.error/>}
                 </Box>
-            )}
-            
-            {/* done status */}
-            {step.status === STEP_STATUS.DONE && (
-                <Box sx={{
-                    display:'inline-block',
-                    width:'24px',
-                    height:'24px',
-                }}>
-                    {step.doneIcon}
-                </Box>
-            )}
-            
-            {/* error status */}
-            {step.status === STEP_STATUS.ERROR && (
-                <Box sx={{
-                    color:'white',
-                    background:'#F25041',
-                    borderRadius:'100px',
-                    border:'1px solid #F25041',
-                    display:'inline-block',
-                    width:'24px',
-                    height:'24px',
-                    lineHeight:'24px',
-                    fontSize:'16px',
-                    textAlign:'center'
-                }}>
-                    !
-                </Box>
-            )}
+                
+                {/* waiting or in_progress status */}
+                {(step.status === STEP_STATUS.WAITING || step.status === STEP_STATUS.IN_PROGRESS) && (
+                    <Box sx={{
+                        color:'#F25041',
+                        borderRadius:'100px',
+                        border:'1px solid #F25041',
+                        display:'inline-block',
+                        width:'24px',
+                        height:'24px',
+                        fontSize:'16px',
+                        textAlign:'center'
+                    }}>
+                        {step.number}
+                    </Box>
+                )}
+                
+                {/* done status */}
+                {step.status === STEP_STATUS.DONE && (
+                    <Box sx={{
+                        display:'inline-block',
+                        width:'24px',
+                        height:'24px',
+                    }}>
+                        {step.doneIcon}
+                    </Box>
+                )}
+                
+                {/* error status */}
+                {step.status === STEP_STATUS.ERROR && (
+                    <Box sx={{
+                        color:'white',
+                        background:'#F25041',
+                        borderRadius:'100px',
+                        border:'1px solid #F25041',
+                        display:'inline-block',
+                        width:'24px',
+                        height:'24px',
+                        fontSize:'16px',
+                        textAlign:'center'
+                    }}>
+                        !
+                    </Box>
+                )}
+            </Box>
 
-            <Typography sx={{color:'white'}}>
+            <Typography sx={{color:'white', marginTop:'30px'}}>
                 {step.text}
             </Typography>
         </Box>
@@ -228,6 +275,7 @@ const TransferProgress = ({
 	}, []);
 
     const steps = useMemo(() => {
+        const defaultSteps = getDefaultSteps(tx.originChain, tx.destinationChain)
         return defaultSteps.map(dStep => {
             const text = getStepText(dStep.number, tx.originChain, tx.destinationChain);
             const status = getStepStatus(dStep.number, txStatusToShow);
