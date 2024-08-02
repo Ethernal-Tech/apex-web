@@ -67,8 +67,9 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
   const minDfmValue = ChainEnum.Nexus ? 
     appSettings.minEvmValue : appSettings.minUtxoValue;
 
-  const maxAmountDfm = totalDfmBalance
-    ? Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null;
+    const maxAmountDfm = totalDfmBalance ?
+    // +totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue : null;
+    Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null; // this causes 0 on nexus, seems to be a bug
 
   const onSubmit = useCallback(async () => {
     await submit(destinationAddr, +convertApexToDfm(amount || '0', chain))
