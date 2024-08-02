@@ -19,7 +19,7 @@ const withMiddleware = <P extends object>(WrappedComponent: ComponentType<P>) =>
           // top:'50%',
           // transform:'translateY(-50%) translateX(-50%)',
           transform:'translateX(-50%)',
-          width:'100%',
+          width:'90%',
         }}>
         <Typography variant='h3' sx={{textAlign:'center',mt:8}}>Unsupported Device</Typography>
         <Typography sx={{mt:4}}>It looks like you're accessing the Apex Bridge on a mobile device. Apex Bridge is currently only available as a web application and requires a desktop browser with the <Link href="https://chromewebstore.google.com/detail/eternl-beta/aafgiaaomjbkmgainbdgjpcndnodkajp" target="_blank" rel="noreferrer">Eternl Beta</Link> chrome extension.</Typography>
