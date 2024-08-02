@@ -17,19 +17,26 @@ import { useDispatch } from "react-redux"
 // import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
 
 // asset svgs
-// 
+
+// prime icons
 import {ReactComponent as PrimeInProgressIcon} from "../../../assets/bridge-status-assets/prime-progress.svg"
 import {ReactComponent as PrimeSuccessIcon} from "../../../assets/bridge-status-assets/Prime.svg"
 // import {ReactComponent as PrimeError} from "../../../assets/bridge-status-assets/Prime.svg" // not available
 
+// vector icons
 import {ReactComponent as VectorInProgressIcon} from "../../../assets/bridge-status-assets/Vector.svg"
 import {ReactComponent as VectorSuccessIcon} from "../../../assets/bridge-status-assets/vector-success.svg"
 // import {ReactComponent as VectorError} from "../../../assets/bridge-status-assets/vector-success.svg" // not available
 
-
+// bridge icons
 import {ReactComponent as BridgeInProgressIcon} from "../../../assets/bridge-status-assets/Bridge-Wallet.svg"
 import {ReactComponent as BridgeSuccessIcon} from "../../../assets/bridge-status-assets/bridge-success.svg"
 import {ReactComponent as BridgeErrorIcon} from "../../../assets/bridge-status-assets/Bridge-error.svg"
+
+// Step number icons
+import {ReactComponent as Step1} from "../../../assets/bridge-status-assets/steps/step-1.svg"
+import {ReactComponent as Step2} from "../../../assets/bridge-status-assets/steps/step-2.svg"
+import {ReactComponent as Step3} from "../../../assets/bridge-status-assets/steps/step-3.svg"
 
 const PrimeErrorIcon = PrimeInProgressIcon; // TODO - update
 const VectorErrorIcon = VectorInProgressIcon; // TODO - update
@@ -49,6 +56,7 @@ const STEP_STATUS = {
 
 type StepType = {
     number:number,
+    numberIcon:FunctionComponent<SVGProps<SVGSVGElement>>,
     text: string,
     status:string,
     doneIcon: React.ReactNode,
@@ -67,6 +75,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
     return [
         {
             number:1,
+            numberIcon:Step1,
             text:'',
             status:STEP_STATUS.WAITING,
             doneIcon:<Done1icon/>,
@@ -78,6 +87,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
         },
         {
             number:2,
+            numberIcon:Step2,
             text:'',
             status:STEP_STATUS.WAITING,
             doneIcon:<Done2icon/>,
@@ -89,6 +99,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
         },
         {
             number:3,
+            numberIcon:Step3,
             text:'',
             status:STEP_STATUS.WAITING,
             doneIcon:<Done3icon/>,
@@ -171,16 +182,10 @@ const TransferStep = ({step}:TransferStepProps) => {
                 {/* waiting or in_progress status */}
                 {(step.status === STEP_STATUS.WAITING || step.status === STEP_STATUS.IN_PROGRESS) && (
                     <Box sx={{
-                        color:'#F25041',
-                        borderRadius:'100px',
-                        border:'1px solid #F25041',
-                        display:'inline-block',
                         width:'24px',
                         height:'24px',
-                        fontSize:'16px',
-                        textAlign:'center'
                     }}>
-                        {step.number}
+                        <step.numberIcon height='24px' width='24px'/>
                     </Box>
                 )}
                 
