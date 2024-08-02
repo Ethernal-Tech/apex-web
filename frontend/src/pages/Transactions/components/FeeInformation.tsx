@@ -36,7 +36,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               User Wallet Fee:
           </Box>
           {/* TODO AF - check this conversion is correct */}
-          <Box component="span">{convertDfmToApex(userWalletFee, chain)} APEX</Box>
+          <Box component="span">{userWalletFee > 0 ? convertDfmToApex(userWalletFee, chain) : '0'} APEX</Box>
         </Typography>
         
         {bridgeTxFee && (

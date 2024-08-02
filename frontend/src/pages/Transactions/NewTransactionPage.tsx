@@ -11,7 +11,7 @@ import { useCallback, useState } from "react";
 import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createTransactionAction } from "./action";
-import { BridgeTransactionDto, CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, ChainEnum, CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
 import { signAndSubmitTx } from "../../actions/submitTx";
 import { CreateTxResponse } from "./components/types";
@@ -25,7 +25,9 @@ function NewTransactionPage() {
 	const destinationChain = useSelector((state: RootState)=> state.chain.destinationChain);
 	const account = useSelector((state: RootState) => state.accountInfo.account);
 
-	const bridgeTxFee = appSettings.bridgingFee;
+	// conditionally implementing bridgeTxFee depending on selected network
+	const bridgeTxFee = chain === ChainEnum.Nexus ? 
+		appSettings.nexusBridgingFee : appSettings.primeVectorBridgingFee;
 
 	// TODO - update these to check for nexus when implemented
 	const SourceIcon = chainIcons[chain];

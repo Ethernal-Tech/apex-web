@@ -4,8 +4,16 @@ import { ChainEnum, WalletControllerClient } from '../swagger/apexBridgeApiServi
 import { fromNetworkIdToChain } from '../utils/chainUtils';
 import { updateBalanceAction } from '../redux/slices/accountInfoSlice';
 import { tryCatchJsonByAction } from '../utils/fetchUtils';
+import evmWalletHandler from '../features/EvmWalletHandler';
 
-export const getWalletBalanceAction = (chain: ChainEnum, address: string) => {
+export const getWalletBalanceAction = async (chain: ChainEnum, address: string) => {
+    if (chain === ChainEnum.Nexus) { 
+        const nexusBalance = await evmWalletHandler.getBalance()
+        return {
+            balance: nexusBalance
+        }
+    }
+    
     const client = new WalletControllerClient();
     return client.getBalance(chain, address);
 }
