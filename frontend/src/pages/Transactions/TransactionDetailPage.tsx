@@ -80,7 +80,7 @@ const TransactionDetailPage = () => {
                 Transaction Details
                 </Typography>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">
                 Source Chain:
               </Typography>
@@ -93,7 +93,7 @@ const TransactionDetailPage = () => {
                     width: 24,
                     height: 24,
                     textAlign: 'center',
-                    lineHeight: '24px',
+                    lineHeight: '26px',
                     marginRight: 1,
                   }}>
                     {transaction && getChainLabelAndColor(transaction.originChain).letter}
@@ -101,7 +101,7 @@ const TransactionDetailPage = () => {
                 <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500', display:'inline-block' }}>{capitalizeWord(transaction?.originChain || '')}</Typography>
               </Box>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">
                 Destination Chain:
               </Typography>
@@ -114,7 +114,7 @@ const TransactionDetailPage = () => {
                     width: 24,
                     height: 24,
                     textAlign: 'center',
-                    lineHeight: '24px',
+                    lineHeight: '26px',
                     marginRight: 1,
                   }}>
                     {transaction && getChainLabelAndColor(transaction.destinationChain).letter}
@@ -122,27 +122,27 @@ const TransactionDetailPage = () => {
                 <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500', display:'inline-block' }}>{capitalizeWord(transaction?.destinationChain || '')}</Typography>
               </Box>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Amount:</Typography>
               <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && convertDfmToApex((transaction?.amount))} APEX</Typography>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Sender address:</Typography>
               <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{formatAddress(transaction?.senderAddress)}</Typography>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Receiver addresses:</Typography>
               <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{formatAddress(transaction?.receiverAddresses)}</Typography>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Date created:</Typography>
               <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction?.createdAt.toLocaleString()}</Typography>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Date finished:</Typography>
               <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction?.finishedAt?.toLocaleString() || "/"}</Typography>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between'}}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between'}}>
               <Typography variant="subtitle2">Status:</Typography>
               <Box sx={{display:'flex'}}>
                 <Box sx={{marginRight:1}} component='img' src={(transaction && getStatusIconAndLabel(transaction.status).icon) || ''} alt=''/>

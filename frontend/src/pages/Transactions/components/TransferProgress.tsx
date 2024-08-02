@@ -211,7 +211,8 @@ const TransferStep = ({step}:TransferStepProps) => {
                         width:'24px',
                         height:'24px',
                         fontSize:'16px',
-                        textAlign:'center'
+                        textAlign:'center',
+                        lineHeight: '24px',
                     }}>
                         !
                     </Box>

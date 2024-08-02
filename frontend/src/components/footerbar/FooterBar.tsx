@@ -18,6 +18,7 @@ const containerStyles = {
 }
 
 const childStyles = {
+  fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
   boxSizing:'border-box',
   width:'calc(100%/3)',
   alignSelf:'center',
