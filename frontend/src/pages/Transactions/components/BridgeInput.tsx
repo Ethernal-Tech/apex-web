@@ -9,7 +9,7 @@ import { convertApexToDfm } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import { CreateTxResponse } from './types';
-import { CreateTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
+import { ChainEnum, CreateTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 
 type BridgeInputType = {
@@ -63,8 +63,12 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
     setAmount('')
   }
 
+    // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
+  const minDfmValue = ChainEnum.Nexus ? 
+    appSettings.minEvmValue : appSettings.minUtxoValue;
+
   const maxAmountDfm = totalDfmBalance
-    ? Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - appSettings.minUtxoValue, 0) : null;
+    ? Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null;
 
   const onSubmit = useCallback(async () => {
     await submit(destinationAddr, +convertApexToDfm(amount || '0', chain))
