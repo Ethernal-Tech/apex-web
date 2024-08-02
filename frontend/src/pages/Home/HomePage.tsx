@@ -119,6 +119,7 @@ const HomePage: React.FC = () => {
             label="Destination"
             icon={getIconComponent(destinationChain)}
             value={destinationChain}
+            disabled={chain !== ChainEnum.Prime}
             onChange={(e) => updateDestination(e.target.value as ChainEnum)}
             options={supportedChainOptions.filter(x => x.value !== chain)}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
