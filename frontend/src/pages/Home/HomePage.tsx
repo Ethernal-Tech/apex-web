@@ -1,5 +1,5 @@
 import React from "react";
-import { Typography, Box, Button } from '@mui/material';
+import { Typography, Box, Button, CircularProgress } from '@mui/material';
 import CustomSelect from '../../components/customSelect/CustomSelect';
 import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
 import { ReactComponent as OneDirectionArrowIcon } from '../../assets/oneDirectionArrow.svg';
@@ -10,41 +10,43 @@ import ButtonCustom from "../../components/Buttons/ButtonCustom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useNavigate } from "react-router-dom";
-import { LOGIN_ROUTE, NEW_TRANSACTION_ROUTE } from "../PageRouter";
+import { NEW_TRANSACTION_ROUTE } from "../PageRouter";
 import { getDestinationChain, getSelectedChain } from "../../utils/storageUtils";
 import { setChainAction, setDestinationChainAction } from "../../redux/slices/chainSlice";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
-import { chainIcons } from "../../utils/generalUtils";
+import { capitalizeWord, chainIcons } from "../../utils/generalUtils";
+import { login } from "../../actions/login";
 
 const HomePage: React.FC = () => {
-  const walletState = useSelector((state: RootState) => state.wallet);
-  const isLoggedInMemo = !!walletState.wallet;
+  const wallet = useSelector((state: RootState) => state.wallet.wallet);
+  const loginConnecting = useSelector((state: RootState) => state.login.connecting);
+  const account = useSelector((state: RootState) => state.accountInfo.account);
+	const isLoggedInMemo = !!wallet && !!account;
 
   const navigate = useNavigate()
   const dispatch = useDispatch()
   
-  const chainState = useSelector((state: RootState) => state.chain);
-  const chain = chainState.chain
-  const destinationChain = chainState.destinationChain
+  const chain = useSelector((state: RootState) => state.chain.chain);
+  const destinationChain = useSelector((state: RootState) => state.chain.destinationChain);
 
   const supportedChainOptions = [
     { 
-      value: 'prime',
-      label: 'Prime',
-      icon: chainIcons.prime,
+      value: ChainEnum.Prime,
+      label: capitalizeWord(ChainEnum.Prime),
+      icon: chainIcons[ChainEnum.Prime],
       borderColor:'#077368' 
     },
     { 
-      value: 'vector', 
-      label: 'Vector', 
-      icon: chainIcons.vector,
+      value: ChainEnum.Vector,
+      label: capitalizeWord(ChainEnum.Vector),
+      icon: chainIcons[ChainEnum.Vector],
       borderColor:'#F25041'
     },
     // TODO af - nexus removed for now
     { 
-      value: 'nexus',
-      label: 'Nexus',
-      icon: chainIcons.nexus,
+      value: ChainEnum.Nexus,
+      label: capitalizeWord(ChainEnum.Nexus),
+      icon: chainIcons[ChainEnum.Nexus],
       borderColor: '#F27B50'
     }
   ];
@@ -65,15 +67,18 @@ const HomePage: React.FC = () => {
   }
 
   const switchValues = () => {
-    console.log('switch')
     const temp = chain;
     dispatch(setChainAction(destinationChain));
     dispatch(setDestinationChainAction(temp));
   };
 
+  const handleConnectClick = async () => {
+    await login(chain, navigate, dispatch);
+  }
+
   const getIconComponent = (value: string): React.FC => {
     const option = supportedChainOptions.find(opt => opt.value === value);
-    return option ? option.icon : chainIcons.prime; // Default to PrimeIcon if not found
+    return option ? option.icon : chainIcons[ChainEnum.Prime]; // Default to PrimeIcon if not found
   };
 
   return (
@@ -91,7 +96,7 @@ const HomePage: React.FC = () => {
             label="Source"
             icon={getIconComponent(chain)}
             value={chain}
-            disabled={isLoggedInMemo ? true : false}
+            disabled={isLoggedInMemo}
             onChange={(e) => updateSource(e.target.value as ChainEnum)}
             options={supportedChainOptions}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
@@ -99,7 +104,7 @@ const HomePage: React.FC = () => {
         </Box>
         <Button 
           onClick={switchValues} 
-          disabled={isLoggedInMemo ? true : false} 
+          disabled={isLoggedInMemo} 
           sx={{ 
             mt: '20px', 
             mx:'28px', 
@@ -114,30 +119,38 @@ const HomePage: React.FC = () => {
             label="Destination"
             icon={getIconComponent(destinationChain)}
             value={destinationChain}
-            disabled={isLoggedInMemo ? true : false}
             onChange={(e) => updateDestination(e.target.value as ChainEnum)}
-            options={supportedChainOptions}
+            options={supportedChainOptions.filter(x => x.value !== chain)}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
           />
         </Box>
       </Box>
-
-      { !isLoggedInMemo ? (
+      {
+        loginConnecting ? (
+            <ButtonCustom 
+              variant="white"
+              sx={{ textTransform:'uppercase'}}
+            >
+                Connect Wallet
+                <CircularProgress sx={{ marginLeft: 1 }} size={20}/>
+            </ButtonCustom>
+        ) : (
+       !isLoggedInMemo ? (
         <ButtonCustom 
           variant="white"
           sx={{ textTransform:'uppercase'}}
-          onClick={()=> navigate(LOGIN_ROUTE)}>
+          onClick={handleConnectClick}>
             Connect Wallet
         </ButtonCustom>
       ): (
         <ButtonCustom 
           variant="white"
           sx={{ textTransform:'uppercase'}}
-          // TODO - this leads to the old design of the "new transaction" page, should be updated
           onClick={()=> navigate(NEW_TRANSACTION_ROUTE)}>
             Move funds
         </ButtonCustom>
-      )}
+      )
+    )}
     </BasePage>
   );
 };

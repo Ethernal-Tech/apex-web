@@ -164,7 +164,7 @@ export class TransactionControllerClient extends BaseClient {
     /**
      * @return Success
      */
-    bridgingTransactionSubmitted(body: TransactionSubmittedDto): Promise<void> {
+    bridgingTransactionSubmitted(body: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
         let url_ = this.baseUrl + "/transaction/bridgingTransactionSubmitted";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -175,6 +175,7 @@ export class TransactionControllerClient extends BaseClient {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "Accept": "application/json"
             }
         };
 
@@ -185,12 +186,15 @@ export class TransactionControllerClient extends BaseClient {
         });
     }
 
-    protected processBridgingTransactionSubmitted(response: Response): Promise<void> {
+    protected processBridgingTransactionSubmitted(response: Response): Promise<BridgeTransactionDto> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
-            return;
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BridgeTransactionDto.fromJS(resultData200);
+            return result200;
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
@@ -201,7 +205,54 @@ export class TransactionControllerClient extends BaseClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<void>(<any>null);
+        return Promise.resolve<BridgeTransactionDto>(<any>null);
+    }
+
+    /**
+     * @return Success
+     */
+    getProtocolParams(chain: string): Promise<ProtocolParamsResponseDto> {
+        let url_ = this.baseUrl + "/transaction/getProtocolParams?";
+        if (chain === undefined || chain === null)
+            throw new Error("The parameter 'chain' must be defined and cannot be null.");
+        else
+            url_ += "chain=" + encodeURIComponent("" + chain) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGetProtocolParams(_response);
+        });
+    }
+
+    protected processGetProtocolParams(response: Response): Promise<ProtocolParamsResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ProtocolParamsResponseDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("Not Found", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ProtocolParamsResponseDto>(<any>null);
     }
 }
 
@@ -303,6 +354,69 @@ export class BridgeTransactionControllerClient extends BaseClient {
             });
         }
         return Promise.resolve<BridgeTransactionResponseDto>(<any>null);
+    }
+}
+
+export class WalletControllerClient extends BaseClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        super();
+        this.http = http ? http : <any>window;
+        this.baseUrl = this.getBaseUrl("", baseUrl);
+    }
+
+    /**
+     * @return Success
+     */
+    getBalance(chain: string, address: string): Promise<BalanceResponseDto> {
+        let url_ = this.baseUrl + "/wallet/getBalance?";
+        if (chain === undefined || chain === null)
+            throw new Error("The parameter 'chain' must be defined and cannot be null.");
+        else
+            url_ += "chain=" + encodeURIComponent("" + chain) + "&";
+        if (address === undefined || address === null)
+            throw new Error("The parameter 'address' must be defined and cannot be null.");
+        else
+            url_ += "address=" + encodeURIComponent("" + address) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGetBalance(_response);
+        });
+    }
+
+    protected processGetBalance(response: Response): Promise<BalanceResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BalanceResponseDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("Not Found", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BalanceResponseDto>(<any>null);
     }
 }
 
@@ -419,6 +533,7 @@ export class CreateTransactionResponseDto implements ICreateTransactionResponseD
     txRaw!: string;
     txHash!: string;
     bridgingFee!: number;
+    txFee!: number;
 
     constructor(data?: ICreateTransactionResponseDto) {
         if (data) {
@@ -434,6 +549,7 @@ export class CreateTransactionResponseDto implements ICreateTransactionResponseD
             this.txRaw = _data["txRaw"];
             this.txHash = _data["txHash"];
             this.bridgingFee = _data["bridgingFee"];
+            this.txFee = _data["txFee"];
         }
     }
 
@@ -449,6 +565,7 @@ export class CreateTransactionResponseDto implements ICreateTransactionResponseD
         data["txRaw"] = this.txRaw;
         data["txHash"] = this.txHash;
         data["bridgingFee"] = this.bridgingFee;
+        data["txFee"] = this.txFee;
         return data; 
     }
 }
@@ -457,6 +574,7 @@ export interface ICreateTransactionResponseDto {
     txRaw: string;
     txHash: string;
     bridgingFee: number;
+    txFee: number;
 }
 
 export class SignTransactionDto implements ISignTransactionDto {
@@ -614,10 +732,31 @@ export interface ISubmitTransactionDto {
     signedTxRaw: string;
 }
 
-export class SubmitTransactionResponseDto implements ISubmitTransactionResponseDto {
-    txId!: string;
+export enum TransactionStatusEnum {
+    Pending = "Pending",
+    DiscoveredOnSource = "DiscoveredOnSource",
+    InvalidRequest = "InvalidRequest",
+    SubmittedToBridge = "SubmittedToBridge",
+    IncludedInBatch = "IncludedInBatch",
+    SubmittedToDestination = "SubmittedToDestination",
+    FailedToExecuteOnDestination = "FailedToExecuteOnDestination",
+    ExecutedOnDestination = "ExecutedOnDestination",
+}
 
-    constructor(data?: ISubmitTransactionResponseDto) {
+export class BridgeTransactionDto implements IBridgeTransactionDto {
+    id!: number;
+    senderAddress!: string;
+    receiverAddresses!: string;
+    amount!: number;
+    originChain!: ChainEnum;
+    destinationChain!: ChainEnum;
+    sourceTxHash!: string;
+    destinationTxHash?: string | undefined;
+    status!: TransactionStatusEnum;
+    createdAt!: Date;
+    finishedAt?: Date | undefined;
+
+    constructor(data?: IBridgeTransactionDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -628,7 +767,78 @@ export class SubmitTransactionResponseDto implements ISubmitTransactionResponseD
 
     init(_data?: any) {
         if (_data) {
-            this.txId = _data["txId"];
+            this.id = _data["id"];
+            this.senderAddress = _data["senderAddress"];
+            this.receiverAddresses = _data["receiverAddresses"];
+            this.amount = _data["amount"];
+            this.originChain = _data["originChain"];
+            this.destinationChain = _data["destinationChain"];
+            this.sourceTxHash = _data["sourceTxHash"];
+            this.destinationTxHash = _data["destinationTxHash"];
+            this.status = _data["status"];
+            this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : <any>undefined;
+            this.finishedAt = _data["finishedAt"] ? new Date(_data["finishedAt"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): BridgeTransactionDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new BridgeTransactionDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["senderAddress"] = this.senderAddress;
+        data["receiverAddresses"] = this.receiverAddresses;
+        data["amount"] = this.amount;
+        data["originChain"] = this.originChain;
+        data["destinationChain"] = this.destinationChain;
+        data["sourceTxHash"] = this.sourceTxHash;
+        data["destinationTxHash"] = this.destinationTxHash;
+        data["status"] = this.status;
+        data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : <any>undefined;
+        data["finishedAt"] = this.finishedAt ? this.finishedAt.toISOString() : <any>undefined;
+        return data; 
+    }
+}
+
+export interface IBridgeTransactionDto {
+    id: number;
+    senderAddress: string;
+    receiverAddresses: string;
+    amount: number;
+    originChain: ChainEnum;
+    destinationChain: ChainEnum;
+    sourceTxHash: string;
+    destinationTxHash?: string | undefined;
+    status: TransactionStatusEnum;
+    createdAt: Date;
+    finishedAt?: Date | undefined;
+}
+
+export class SubmitTransactionResponseDto implements ISubmitTransactionResponseDto {
+    txHash!: string;
+    bridgeTx!: BridgeTransactionDto;
+
+    constructor(data?: ISubmitTransactionResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+        if (!data) {
+            this.bridgeTx = new BridgeTransactionDto();
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.txHash = _data["txHash"];
+            this.bridgeTx = _data["bridgeTx"] ? BridgeTransactionDto.fromJS(_data["bridgeTx"]) : new BridgeTransactionDto();
         }
     }
 
@@ -641,13 +851,15 @@ export class SubmitTransactionResponseDto implements ISubmitTransactionResponseD
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["txId"] = this.txId;
+        data["txHash"] = this.txHash;
+        data["bridgeTx"] = this.bridgeTx ? this.bridgeTx.toJSON() : <any>undefined;
         return data; 
     }
 }
 
 export interface ISubmitTransactionResponseDto {
-    txId: string;
+    txHash: string;
+    bridgeTx: BridgeTransactionDto;
 }
 
 export class TransactionSubmittedDto implements ITransactionSubmittedDto {
@@ -717,29 +929,11 @@ export interface ITransactionSubmittedDto {
     amount: number;
 }
 
-export enum TransactionStatusEnum {
-    Pending = "Pending",
-    DiscoveredOnSource = "DiscoveredOnSource",
-    InvalidRequest = "InvalidRequest",
-    SubmittedToBridge = "SubmittedToBridge",
-    IncludedInBatch = "IncludedInBatch",
-    SubmittedToDestination = "SubmittedToDestination",
-    FailedToExecuteOnDestination = "FailedToExecuteOnDestination",
-    ExecutedOnDestination = "ExecutedOnDestination",
-}
+export class ProtocolParamsResponseDto implements IProtocolParamsResponseDto {
+    txFeeFixed!: string;
+    txFeePerByte!: string;
 
-export class BridgeTransactionDto implements IBridgeTransactionDto {
-    id!: number;
-    senderAddress!: string;
-    receiverAddresses!: string;
-    amount!: number;
-    originChain!: ChainEnum;
-    destinationChain!: ChainEnum;
-    status!: TransactionStatusEnum;
-    createdAt!: Date;
-    finishedAt?: Date | undefined;
-
-    constructor(data?: IBridgeTransactionDto) {
+    constructor(data?: IProtocolParamsResponseDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -750,50 +944,29 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
 
     init(_data?: any) {
         if (_data) {
-            this.id = _data["id"];
-            this.senderAddress = _data["senderAddress"];
-            this.receiverAddresses = _data["receiverAddresses"];
-            this.amount = _data["amount"];
-            this.originChain = _data["originChain"];
-            this.destinationChain = _data["destinationChain"];
-            this.status = _data["status"];
-            this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : <any>undefined;
-            this.finishedAt = _data["finishedAt"] ? new Date(_data["finishedAt"].toString()) : <any>undefined;
+            this.txFeeFixed = _data["txFeeFixed"];
+            this.txFeePerByte = _data["txFeePerByte"];
         }
     }
 
-    static fromJS(data: any): BridgeTransactionDto {
+    static fromJS(data: any): ProtocolParamsResponseDto {
         data = typeof data === 'object' ? data : {};
-        let result = new BridgeTransactionDto();
+        let result = new ProtocolParamsResponseDto();
         result.init(data);
         return result;
     }
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["senderAddress"] = this.senderAddress;
-        data["receiverAddresses"] = this.receiverAddresses;
-        data["amount"] = this.amount;
-        data["originChain"] = this.originChain;
-        data["destinationChain"] = this.destinationChain;
-        data["status"] = this.status;
-        data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : <any>undefined;
-        data["finishedAt"] = this.finishedAt ? this.finishedAt.toISOString() : <any>undefined;
+        data["txFeeFixed"] = this.txFeeFixed;
+        data["txFeePerByte"] = this.txFeePerByte;
         return data; 
     }
 }
 
-export interface IBridgeTransactionDto {
-    id: number;
-    senderAddress: string;
-    receiverAddresses: string;
-    amount: number;
-    originChain: ChainEnum;
-    destinationChain: ChainEnum;
-    status: TransactionStatusEnum;
-    createdAt: Date;
-    finishedAt?: Date | undefined;
+export interface IProtocolParamsResponseDto {
+    txFeeFixed: string;
+    txFeePerByte: string;
 }
 
 export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
@@ -806,6 +979,7 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
     amountTo?: number | undefined;
     orderBy?: string | undefined;
     order?: string | undefined;
+    receiverAddress?: string | undefined;
 
     constructor(data?: IBridgeTransactionFilterDto) {
         if (data) {
@@ -827,6 +1001,7 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
             this.amountTo = _data["amountTo"];
             this.orderBy = _data["orderBy"];
             this.order = _data["order"];
+            this.receiverAddress = _data["receiverAddress"];
         }
     }
 
@@ -848,6 +1023,7 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
         data["amountTo"] = this.amountTo;
         data["orderBy"] = this.orderBy;
         data["order"] = this.order;
+        data["receiverAddress"] = this.receiverAddress;
         return data; 
     }
 }
@@ -862,6 +1038,7 @@ export interface IBridgeTransactionFilterDto {
     amountTo?: number | undefined;
     orderBy?: string | undefined;
     order?: string | undefined;
+    receiverAddress?: string | undefined;
 }
 
 export class BridgeTransactionResponseDto implements IBridgeTransactionResponseDto {
@@ -921,6 +1098,42 @@ export interface IBridgeTransactionResponseDto {
     page: number;
     perPage: number;
     total: number;
+}
+
+export class BalanceResponseDto implements IBalanceResponseDto {
+    balance!: string;
+
+    constructor(data?: IBalanceResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.balance = _data["balance"];
+        }
+    }
+
+    static fromJS(data: any): BalanceResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new BalanceResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["balance"] = this.balance;
+        return data; 
+    }
+}
+
+export interface IBalanceResponseDto {
+    balance: string;
 }
 
 export class ApiException extends Error {

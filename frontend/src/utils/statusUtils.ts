@@ -27,7 +27,6 @@ const NOT_FINAL_STATES: { [key: string]: boolean } = [
 export function getStatusColor(status: TransactionStatusEnum) {
 	switch (status) {
 		case TransactionStatusEnum.InvalidRequest:
-		case TransactionStatusEnum.FailedToExecuteOnDestination:
 			return 'red';
 		case TransactionStatusEnum.ExecutedOnDestination:
 			return 'green';
@@ -42,7 +41,6 @@ export const getStatusIconAndLabel = (status: TransactionStatusEnum) => {
 	switch (status) {
 	  case TransactionStatusEnum.ExecutedOnDestination:
 		return { icon: SuccessIcon, label: 'success' };
-	  case TransactionStatusEnum.FailedToExecuteOnDestination:
 	  case TransactionStatusEnum.InvalidRequest:
 		return { icon: FailedIcon, label: 'failed' };
 	  case TransactionStatusEnum.Pending:
@@ -50,6 +48,7 @@ export const getStatusIconAndLabel = (status: TransactionStatusEnum) => {
 	  case TransactionStatusEnum.SubmittedToBridge:
 	  case TransactionStatusEnum.IncludedInBatch:
 	  case TransactionStatusEnum.SubmittedToDestination:
+	  case TransactionStatusEnum.FailedToExecuteOnDestination:
 		return { icon: PendingIcon, label: 'pending'};
 	  default:
 		return { icon: null, label: status };

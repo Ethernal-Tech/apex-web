@@ -1,58 +1,36 @@
-import appSettings from '../settings/appSettings';
+import { Dispatch } from '@reduxjs/toolkit';
+import { store } from '../redux/store';
+import { ChainEnum, WalletControllerClient } from '../swagger/apexBridgeApiService';
+import { fromNetworkIdToChain } from '../utils/chainUtils';
+import { updateBalanceAction } from '../redux/slices/accountInfoSlice';
+import { tryCatchJsonByAction } from '../utils/fetchUtils';
 
-export type AddressBalanceRequestModel = {
-    address: string,
-    chainId: string,
+export const getWalletBalanceAction = (chain: ChainEnum, address: string) => {
+    const client = new WalletControllerClient();
+    return client.getBalance(chain, address);
 }
 
-export type BridgeBalanceRequestModel = {
-    chainId: string,
-}
-
-export const requestAddressBalanceAction = async (requestModel: AddressBalanceRequestModel) => {
-
-    const requestHeaders: HeadersInit = new Headers();
-    requestHeaders.set('Content-Type', 'application/json');
-    requestHeaders.set('Accept', 'application/json');
-
-    const requestInit: RequestInit = {
-        method: 'GET',
-        headers: requestHeaders,
-    };
-
-    try {
-        const response = await fetch(
-            `${appSettings.apiUrl}/api/userBalance?address=${requestModel.address}&chainId=${requestModel.chainId}`,
-            requestInit,
-        );
-        const jsonResponse = await response.json();
-        return Number.isInteger(jsonResponse?.message) ? jsonResponse.message : undefined;
+export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
+    const accountInfo = store.getState().accountInfo;
+    if (!accountInfo.account) {
+        return;
     }
-    catch (e) {
-        console.log('Failed startTxAction: ', e);
+    
+    const {
+        account,
+        networkId,
+    } = accountInfo;
+    
+    const chain = fromNetworkIdToChain(networkId);
+
+    if (!chain) {
+        return;
     }
-}
 
-export const requestBridgeBalanceAction = async (requestModel: BridgeBalanceRequestModel) => {
-
-    const requestHeaders: HeadersInit = new Headers();
-    requestHeaders.set('Content-Type', 'application/json');
-    requestHeaders.set('Accept', 'application/json');
-
-    const requestInit: RequestInit = {
-        method: 'GET',
-        headers: requestHeaders,
-    };
-
-    try {
-        const response = await fetch(
-            `${appSettings.apiUrl}/api/bridgingAddressBalance?chainId=${requestModel.chainId}`,
-            requestInit,
-        );
-        const jsonResponse = await response.json();
-        return Number.isInteger(jsonResponse?.message) ? jsonResponse.message : undefined;
+    const balanceResp = await tryCatchJsonByAction(() => getWalletBalanceAction(chain, account), dispatch); 
+    if (!balanceResp.balance) {
+        return;
     }
-    catch (e) {
-        console.log('Failed startTxAction: ', e);
-    }
+
+    dispatch(updateBalanceAction(balanceResp.balance));
 }

@@ -1,9 +1,7 @@
-import { signTransactionAction, submitTransactionAction } from "../pages/Transactions/action";
-import appSettings from "../settings/appSettings";
-import { CreateTransactionDto, CreateTransactionResponseDto, SignTransactionDto, SubmitTransactionDto } from "../swagger/apexBridgeApiService";
+import { submitTransactionAction } from "../pages/Transactions/action";
+import { CreateTransactionDto, CreateTransactionResponseDto, SubmitTransactionDto } from "../swagger/apexBridgeApiService";
 import { tryCatchJsonByAction } from "../utils/fetchUtils";
 import { Dispatch, UnknownAction } from 'redux';
-import { store } from "../redux/store";
 import walletHandler from "../features/WalletHandler";
 
 export const signAndSubmitTx = async (
@@ -11,9 +9,7 @@ export const signAndSubmitTx = async (
     createResponse: CreateTransactionResponseDto,
     dispatch: Dispatch<UnknownAction>,
 ) => {
-    const signAndSubmitFunc = appSettings.usePrivateKey
-        ? signAndSubmitTxUsingPrivateKey : signAndSubmitTxUsingWallet;
-    return await signAndSubmitFunc(values, createResponse, dispatch);
+    return await signAndSubmitTxUsingWallet(values, createResponse, dispatch);
 }
 
 const signAndSubmitTxUsingWallet = async (
@@ -22,7 +18,7 @@ const signAndSubmitTxUsingWallet = async (
     dispatch: Dispatch<UnknownAction>,
 ) => {
     if (!walletHandler.checkWallet()) {
-        return false;
+        throw new Error('Wallet not connected.');
     }
 
     const signedTxRaw = await walletHandler.signTx(createResponse.txRaw);
@@ -40,7 +36,10 @@ const signAndSubmitTxUsingWallet = async (
         signedTxRaw: signedTxRaw,
     }));
 
-    await tryCatchJsonByAction(bindedSubmitAction, dispatch);
+    const response = await tryCatchJsonByAction(bindedSubmitAction, dispatch);
+    if ((response as any).err) {
+        throw new Error((response as any).err)
+    }
     /*
     await walletHandler.submitTx(signedTxRaw!);
 
@@ -58,9 +57,10 @@ const signAndSubmitTxUsingWallet = async (
 
     await tryCatchJsonByAction(bindedSubmittedAction, dispatch);
     */
-    return true;
+    return response;
 }
 
+/*
 const signAndSubmitTxUsingPrivateKey = async (
     values: CreateTransactionDto,
     createResponse: CreateTransactionResponseDto,
@@ -92,3 +92,4 @@ const signAndSubmitTxUsingPrivateKey = async (
 
     return true;
 }
+*/

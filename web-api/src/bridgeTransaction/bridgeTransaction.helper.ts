@@ -2,6 +2,7 @@ import { BridgingRequestStateDto } from 'src/blockchain/dto';
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import axios from 'axios';
 import { TransactionStatusEnum } from 'src/common/enum';
+import { BridgeTransactionDto } from './bridgeTransaction.dto';
 
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
@@ -58,6 +59,7 @@ export const updateBridgeTransactionStates = (
 		if (entity.status !== state.status) {
 			entity.status = state.status;
 			if (!notFinalStates[entity.status]) {
+				entity.destinationTxHash = state.destinationTxHash;
 				entity.finishedAt = new Date();
 			}
 
@@ -66,4 +68,22 @@ export const updateBridgeTransactionStates = (
 	}
 
 	return statusUpdatedBridgeTransactions;
+};
+
+export const mapBridgeTransactionToResponse = (
+	entity: BridgeTransaction,
+): BridgeTransactionDto => {
+	const response = new BridgeTransactionDto();
+	response.id = entity.id;
+	response.senderAddress = entity.senderAddress;
+	response.receiverAddresses = entity.receiverAddresses;
+	response.destinationChain = entity.destinationChain;
+	response.originChain = entity.originChain;
+	response.amount = entity.amount;
+	response.sourceTxHash = entity.sourceTxHash;
+	response.destinationTxHash = entity.destinationTxHash;
+	response.status = entity.status;
+	response.createdAt = entity.createdAt;
+	response.finishedAt = entity.finishedAt;
+	return response;
 };

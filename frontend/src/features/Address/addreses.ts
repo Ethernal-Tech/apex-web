@@ -2,14 +2,6 @@ import { CardanoAddress } from "./interfaces";
 import { StakeCredential, CardanoNetworkType, KeyHashSize, StakeCredentialType } from "./types";
 import { Bech32DecodeToBase256, Bech32EncodeFromBase256, GetPrefix, GetStakePrefix, IsAddressWithValidPrefix } from "./utils";
 
-
-export const toBytes = (hex: string): Uint8Array => {
-    if (hex.length % 2 === 0 && /^[0-9A-F]*$/i.test(hex))
-        return Buffer.from(hex, 'hex');
-
-    return Buffer.from(hex, 'utf-8');
-};
-
 const NewStakeCredential = (data: Uint8Array, isScript: boolean): (StakeCredential | undefined) => {
     if (data.length < KeyHashSize) {
         return;

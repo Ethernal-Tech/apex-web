@@ -1,8 +1,17 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Post,
+	Query,
+} from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import {
 	CreateTransactionDto,
 	CreateTransactionResponseDto,
+	ProtocolParamsResponseDto,
 	SignTransactionDto,
 	SubmitTransactionDto,
 	SubmitTransactionResponseDto,
@@ -10,6 +19,8 @@ import {
 	TransactionSubmittedDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ChainEnum } from 'src/common/enum';
+import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 
 @ApiTags('Transaction')
 @Controller('transaction')
@@ -69,6 +80,7 @@ export class TransactionController {
 
 	@ApiResponse({
 		status: HttpStatus.OK,
+		type: BridgeTransactionDto,
 		description: 'Success',
 	})
 	@ApiResponse({
@@ -79,7 +91,23 @@ export class TransactionController {
 	@Post('bridgingTransactionSubmitted')
 	async bridgingTransactionSubmitted(
 		@Body() model: TransactionSubmittedDto,
-	): Promise<void> {
+	): Promise<BridgeTransactionDto> {
 		return this.transactionService.transactionSubmitted(model);
+	}
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: ProtocolParamsResponseDto,
+		description: 'Success',
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Not Found',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Get('getProtocolParams')
+	async getProtocolParams(
+		@Query('chain') chain: ChainEnum,
+	): Promise<ProtocolParamsResponseDto> {
+		return this.transactionService.getProtocolParams(chain);
 	}
 }

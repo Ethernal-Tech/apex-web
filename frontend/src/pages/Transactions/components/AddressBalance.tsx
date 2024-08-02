@@ -3,14 +3,11 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 import { convertDfmToApex, formatAddress } from "../../../utils/generalUtils";
 
-type AddressBalanceType = {
-    totalDfmBalance: string|null
-}
-
-const AddressBalance = ({totalDfmBalance}: AddressBalanceType) => {
-    const walletState = useSelector((state: RootState) => state.wallet);
+const AddressBalance = () => {
+	const account = useSelector((state: RootState) => state.accountInfo.account);
+	const balance = useSelector((state: RootState) => state.accountInfo.balance);
     const chain = useSelector((state: RootState)=> state.chain.chain);
-    const totalBalanceInApex = totalDfmBalance ? convertDfmToApex(totalDfmBalance, chain) : null;
+    const totalBalanceInApex = balance ? convertDfmToApex(+balance, chain) : null;
 
     return (
         <Box px={'17px'} py='20px' sx={{
@@ -27,7 +24,7 @@ const AddressBalance = ({totalDfmBalance}: AddressBalanceType) => {
                     address 1
                 </Typography>
                 <Typography fontSize="13px" textTransform={'lowercase'} sx={{display:'flex',alignItems:'center', color:'white'}}>
-                    {formatAddress(walletState.accountInfo?.account)}
+                    {formatAddress(account)}
                 </Typography>
             </Box>
             {totalBalanceInApex &&

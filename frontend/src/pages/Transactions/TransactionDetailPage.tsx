@@ -1,4 +1,4 @@
-import { Link as RouterLink,useParams } from 'react-router-dom';
+import { Link as RouterLink,useNavigate,useParams } from 'react-router-dom';
 import { Box, Link, Typography } from '@mui/material';
 import BasePage from '../base/BasePage';
 import { useCallback, useEffect, useState } from 'react';
@@ -12,21 +12,31 @@ import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
 import { menuDark } from '../../containers/theme';
 import Button from "../../components/Buttons/ButtonCustom";
+import { openExplorer } from '../../utils/chainUtils';
+import { fetchAndUpdateBalanceAction } from '../../actions/balance';
+import { useDispatch } from 'react-redux';
 
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [transaction, setTransaction] = useState<BridgeTransactionDto | undefined>(undefined);
 	const fetchFunction = useTryCatchJsonByAction();
+  const dispatch = useDispatch();
+	const navigate = useNavigate();
 
   const fetchTx = useCallback(async () => {
     if (id) {
       const bindedAction = getAction.bind(null, parseInt(id));
-      const response = await fetchFunction(bindedAction);
-      setTransaction(response);
+
+      const [response] = await Promise.all([
+          fetchFunction(bindedAction),
+          fetchAndUpdateBalanceAction(dispatch),
+      ])
+
+      response && setTransaction(response);
 
       return response;
     }
-  }, [fetchFunction, id])
+  }, [dispatch, fetchFunction, id])
 
 	useEffect(() => {
 		fetchTx()
@@ -43,6 +53,8 @@ const TransactionDetailPage = () => {
     }
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+  const onOpenExplorer = () => openExplorer(transaction);
 
   return (
     <BasePage>
@@ -68,7 +80,7 @@ const TransactionDetailPage = () => {
                 Transaction Details
                 </Typography>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">
                 Source Chain:
               </Typography>
@@ -81,7 +93,7 @@ const TransactionDetailPage = () => {
                     width: 24,
                     height: 24,
                     textAlign: 'center',
-                    lineHeight: '24px',
+                    lineHeight: '26px',
                     marginRight: 1,
                   }}>
                     {transaction && getChainLabelAndColor(transaction.originChain).letter}
@@ -89,7 +101,7 @@ const TransactionDetailPage = () => {
                 <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500', display:'inline-block' }}>{capitalizeWord(transaction?.originChain || '')}</Typography>
               </Box>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">
                 Destination Chain:
               </Typography>
@@ -102,7 +114,7 @@ const TransactionDetailPage = () => {
                     width: 24,
                     height: 24,
                     textAlign: 'center',
-                    lineHeight: '24px',
+                    lineHeight: '26px',
                     marginRight: 1,
                   }}>
                     {transaction && getChainLabelAndColor(transaction.destinationChain).letter}
@@ -110,27 +122,27 @@ const TransactionDetailPage = () => {
                 <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500', display:'inline-block' }}>{capitalizeWord(transaction?.destinationChain || '')}</Typography>
               </Box>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Amount:</Typography>
               <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && convertDfmToApex(transaction?.amount, transaction?.originChain)} APEX</Typography>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Sender address:</Typography>
               <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{formatAddress(transaction?.senderAddress)}</Typography>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Receiver addresses:</Typography>
               <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{formatAddress(transaction?.receiverAddresses)}</Typography>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Date created:</Typography>
               <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction?.createdAt.toLocaleString()}</Typography>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Date finished:</Typography>
               <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction?.finishedAt?.toLocaleString() || "/"}</Typography>
             </Box>
-            <Box sx={{ mb: 1, display:'flex', justifyContent: 'space-between'}}>
+            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between'}}>
               <Typography variant="subtitle2">Status:</Typography>
               <Box sx={{display:'flex'}}>
                 <Box sx={{marginRight:1}} component='img' src={(transaction && getStatusIconAndLabel(transaction.status).icon) || ''} alt=''/>
@@ -142,10 +154,9 @@ const TransactionDetailPage = () => {
           </Box>
           <Box sx={{display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap:'10px' }}>
             {/* {transaction && <VerticalStepper steps={transaction?.steps}/>} */}
-            <Button variant="red">Close</Button>
+            <Button variant="red" onClick={() => navigate(TRANSACTIONS_ROUTE)}>Close</Button>
 
-            {/* TODO af - link to the transaction on the explorer */}
-            <Button>View Explorer</Button>
+            <Button onClick={onOpenExplorer}>View Explorer</Button>
           </Box>
         </Box>
       </Box>

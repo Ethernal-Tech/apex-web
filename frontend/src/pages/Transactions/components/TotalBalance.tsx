@@ -6,13 +6,10 @@ import { convertDfmToApex } from "../../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 
-type TotalBalanceType = {
-    totalDfmBalance: string|null
-}
-
-const TotalBalance = ({totalDfmBalance}:TotalBalanceType) => {
+const TotalBalance = () => {
+	const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
     const chain = useSelector((state: RootState)=> state.chain.chain);
-    const totalBalanceInApex = totalDfmBalance ? convertDfmToApex(totalDfmBalance, chain) : null;
+    const totalBalanceInApex = totalDfmBalance ? convertDfmToApex(+totalDfmBalance, chain) : null;
     
   return (
     <Box px={'17px'} py='20px' sx={{border:'1px solid #077368',color:'#A1B3A0', background:'#075159',borderRadius:'4px', fontWeight:'500'}}>

@@ -1,5 +1,6 @@
 import { BrowserWallet, Asset } from '@meshsdk/core';
-import { NewAddressFromBytes, toBytes } from './Address/addreses';
+import { NewAddressFromBytes } from './Address/addreses';
+import { toBytes } from '../utils/generalUtils';
 
 type Wallet = {
     name: string;
@@ -7,7 +8,7 @@ type Wallet = {
     version: string;
 };
 
-const SUPPORTED_WALLETS = ['eternl']
+export const SUPPORTED_WALLETS = ['eternl']
 
 class WalletHandler {
     private _enabledWallet: BrowserWallet | undefined;

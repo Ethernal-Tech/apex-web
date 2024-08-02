@@ -4,36 +4,67 @@ import PasteTextInput from "../components/PasteTextInput";
 import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import { ChainEnum } from '../../../swagger/apexBridgeApiService';
+import { CreateTxResponse } from './types';
+import { CreateTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
+import appSettings from '../../../settings/appSettings';
 
 type BridgeInputType = {
-    totalDfmBalance: string|null
     bridgeTxFee: number
+    createTx: (address: string, amount: number) => Promise<CreateTxResponse>
     submit:(address: string, amount: number) => Promise<void>
     disabled?: boolean;
 }
 
-const BridgeInput = ({totalDfmBalance, bridgeTxFee, submit, disabled}:BridgeInputType) => {
-    const chain = useSelector((state: RootState)=> state.chain.chain);
+const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) => {
+  const [destinationAddr, setDestinationAddr] = useState('');
+  const [amount, setAmount] = useState('')
+  const [createdTx, setCreatedTx] = useState<CreateTransactionResponseDto | undefined>();
+  const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
-    const [destinationAddr, setDestinationAddr] = useState('');
-    const [amount, setAmount] = useState('')
+  const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
+  const chain = useSelector((state: RootState)=> state.chain.chain);
+
+  const fetchCreatedTx = useCallback(async () => {
+    if (!destinationAddr || !amount) {
+        setCreatedTx(undefined);
+        return;
+    }
+
+    try {
+        const createdTxResp = await createTx(destinationAddr, +convertApexToDfm(amount || '0', chain));
+        setCreatedTx(createdTxResp.createResponse);
+    } catch {
+        setCreatedTx(undefined);
+    }
+  }, [amount, chain, createTx, destinationAddr])
+
+  useEffect(() => {
+    if (fetchCreateTxTimeoutRef.current) {
+        clearTimeout(fetchCreateTxTimeoutRef.current);
+        fetchCreateTxTimeoutRef.current = undefined;
+    }
+
+    fetchCreateTxTimeoutRef.current = setTimeout(fetchCreatedTx, 500);
+
+    return () => {
+        if (fetchCreateTxTimeoutRef.current) {
+            clearTimeout(fetchCreateTxTimeoutRef.current);
+            fetchCreateTxTimeoutRef.current = undefined;
+        }
+    }
+  }, [fetchCreatedTx])
 
   const onDiscard = () => {
     setDestinationAddr('')
     setAmount('')
   }
 
-  // TODO: figure out how to calculate this
-  // wei or dfm
-  const userWalletFee = chain === ChainEnum.Nexus ? +'1000000000000000000': +'1000000'
-
   const maxAmountDfm = totalDfmBalance
-    ? (+totalDfmBalance - userWalletFee - bridgeTxFee) : null;
+    ? Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - appSettings.minUtxoValue, 0) : null;
 
   const onSubmit = useCallback(async () => {
     await submit(destinationAddr, +convertApexToDfm(amount || '0', chain))
@@ -41,7 +72,7 @@ const BridgeInput = ({totalDfmBalance, bridgeTxFee, submit, disabled}:BridgeInpu
 
   return (
     <Box sx={{width:'100%'}}>
-        <TotalBalance totalDfmBalance={totalDfmBalance}/>
+        <TotalBalance/>
 
         <Typography sx={{color:'white',mt:4, mb:2}}>Destination Address</Typography>
         {/* validate inputs */}
@@ -69,7 +100,7 @@ const BridgeInput = ({totalDfmBalance, bridgeTxFee, submit, disabled}:BridgeInpu
                 }}/>
             
             <FeeInformation
-                userWalletFee={userWalletFee}
+                userWalletFee={createdTx?.txFee || 0}
                 bridgeTxFee={bridgeTxFee}
                 chain={chain}
                 sx={{

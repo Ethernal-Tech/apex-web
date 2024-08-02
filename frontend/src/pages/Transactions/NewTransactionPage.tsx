@@ -1,63 +1,73 @@
-import { Button, Card, CardContent, CardHeader, LinearProgress, MenuItem, Select, Typography } from '@mui/material';
-import { useNavigate } from "react-router-dom";
-import BasePage from '../base/BasePage';
-import TextFormField from '../../components/Form/TextFormField';
-import { useDispatch, useSelector } from 'react-redux';
-import { useCallback, useMemo, useState } from 'react';
-import { ChainEnum, CreateTransactionDto, CreateTransactionReceiverDto } from '../../swagger/apexBridgeApiService';
-import { createTransactionAction } from './action';
-import FieldBase from '../../components/Form/FieldBase';
-import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
-import appSettings from '../../settings/appSettings';
-import { capitalizeWord } from '../../utils/generalUtils';
-import { HOME_ROUTE } from '../PageRouter';
-import { signAndSubmitTx } from '../../actions/submitTx';
-import { RootState } from '../../redux/store';
-import { toast } from 'react-toastify';
-
-const chainOptions = [
-	ChainEnum.Prime,
-	ChainEnum.Vector
-]
+import { Box, Typography } from "@mui/material";
+import BasePage from "../base/BasePage";
+import AddressBalance from "./components/AddressBalance";
+import TotalBalance from "./components/TotalBalance";
+import TransferProgress from "./components/TransferProgress";
+import BridgeInput from "./components/BridgeInput";
+import { chainIcons, validateSubmitTxInputs } from "../../utils/generalUtils";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "../../redux/store";
+import { useCallback, useState } from "react";
+import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
+import { toast } from "react-toastify";
+import { createTransactionAction } from "./action";
+import { BridgeTransactionDto, CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
+import appSettings from "../../settings/appSettings";
+import { signAndSubmitTx } from "../../actions/submitTx";
+import { CreateTxResponse } from "./components/types";
 
 // TODO: add input validations
 function NewTransactionPage() {
-	const originChain = useSelector((state: RootState) => state.chain.chain);
-	const accountInfo = useSelector((state: RootState) => state.wallet.accountInfo);
-	const destinationChain = originChain === ChainEnum.Prime ? ChainEnum.Vector : ChainEnum.Prime;
-
-	const [values, setValues] = useState(new CreateTransactionDto({
-		originChain,
-		senderAddress: accountInfo?.account || '',
-		destinationChain,
-		receivers: [],
-		bridgingFee: undefined,
-	}));
-
-	const chainOptionsMemo = useMemo(() => chainOptions.filter(x => x !== originChain), [originChain])
-
+	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
 	const [loading, setLoading] = useState(false);
+	
+	const chain = useSelector((state: RootState)=> state.chain.chain);
+	const destinationChain = useSelector((state: RootState)=> state.chain.destinationChain);
+	const account = useSelector((state: RootState) => state.accountInfo.account);
 
-    const navigate = useNavigate();
+	const bridgeTxFee = appSettings.bridgingFee;
+
+	// TODO - update these to check for nexus when implemented
+	const SourceIcon = chainIcons[chain];
+	const DestinationIcon = chainIcons[destinationChain];
 
 	const dispatch = useDispatch();
-
 	const fetchFunction = useTryCatchJsonByAction();
 
+	const createTx = useCallback(async (address: string, amount: number): Promise<CreateTxResponse> => {
+		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount);
+		if (validationErr) {
+			throw new Error(validationErr);
+		}
+
+		const createTxDto = new CreateTransactionDto({
+			bridgingFee: bridgeTxFee,
+			destinationChain,
+			originChain: chain,
+			senderAddress: account,
+			receivers: [new CreateTransactionReceiverDto({
+				address, amount,
+			})]
+		})
+		const bindedCreateAction = createTransactionAction.bind(null, createTxDto);
+		const createResponse = await fetchFunction(bindedCreateAction);
+
+		return { createTxDto, createResponse };
+	}, [bridgeTxFee, chain, destinationChain, fetchFunction, account])
+
 	const handleSubmitCallback = useCallback(
-		async () => {
+		async (address: string, amount: number) => {
 			setLoading(true);
 			try {
-				const bindedCreateAction = createTransactionAction.bind(null, new CreateTransactionDto(values));
-				const createResponse = await fetchFunction(bindedCreateAction);
+				const createTxResp = await createTx(address, amount);
 
-				const success = await signAndSubmitTx(
-					values,
-					createResponse,
+				const response = await signAndSubmitTx(
+					createTxResp.createTxDto,
+					createTxResp.createResponse,
 					dispatch,
 				);
 
-				success && navigate(HOME_ROUTE, { replace: true });
+				response && setTxInProgress(response.bridgeTx);
 			}catch(err) {
 				console.log(err);
 				toast.error(`${err}`)
@@ -65,79 +75,92 @@ function NewTransactionPage() {
 				setLoading(false);
 			}
 		},
-		[dispatch, navigate, fetchFunction, values]
-	)
+		[createTx, dispatch],
+	);
 
-	const receiver = values.receivers && values.receivers.length > 0 ? values.receivers[0] : undefined
-	
+	const tabletMediaQuery = '@media (max-width:800px)'
+
 	return (
 		<BasePage>
-			<>
-				<Card variant="outlined" sx={{ width: '1200px', maxWidth: '75%', margin: '5px' }}>
-					<CardHeader title="Source" sx={{ padding: '16px 16px 0px 16px' }} />
-					<CardContent sx={{ padding: '0px 16px 16px 16px' }}>
-						<TextFormField label='Address' disabled value={values.senderAddress} />
-						<TextFormField label='Chain' disabled value={capitalizeWord(values.originChain)} />
-					</CardContent>
-				</Card>
-				<Card variant="outlined" sx={{ width: '1200px', maxWidth: '75%' }}>
-					<CardHeader title="Destination" sx={{ padding: '16px 16px 0px 16px' }} />
-					<CardContent sx={{ padding: '0px 16px 16px 16px' }}>
-						<FieldBase label='Chain'>
-							<Select
-								value={values.destinationChain}
-								onChange={(event) => setValues((state) => new CreateTransactionDto({...state, destinationChain: event.target.value as ChainEnum}))}
-							>
-								{chainOptionsMemo.map(option => (
-									<MenuItem key={option} value={option}>{capitalizeWord(option)}</MenuItem>
-								))}
-							</Select>
-						</FieldBase>
-						{
-							appSettings.bridgingFee &&
-							<FieldBase label='Bridging fee'>
-								<Typography variant="body1">{appSettings.bridgingFee}</Typography>
-							</FieldBase>
+			
+			<Box width={'100%'} sx={{
+				display:'grid',
+				gridTemplateColumns:'repeat(6,1fr)', 
+				gap:'24px',
+			}}>
+				<Box sx={{ 
+					gridColumn:'span 2', 
+					color:'white', 
+					textTransform:'capitalize',
+					[tabletMediaQuery]:{
+						gridColumn:'span 3'
 						}
-					</CardContent>
-				</Card>
-				<Card variant="outlined" sx={{ width: '1200px', maxWidth: '75%', margin: '5px' }}>
-					<CardContent sx={{ padding: '0px 16px 16px 16px' }}>
-						<TextFormField
-							label='Address'
-							value={receiver?.address || ""}
-							onValueChange={(event) => setValues(
-								(state) =>
-								new CreateTransactionDto({
-									...state,
-									receivers: [new CreateTransactionReceiverDto({
-										address: event.target.value,
-										amount: receiver?.amount || 0,
-									})]
-								})
-							)}
-						/>
-						{/* TODO: use number input */}
-						<TextFormField
-							label='Amount' value={receiver?.amount || 0}
-							onValueChange={
-								(event) => setValues(
-									(state) => new CreateTransactionDto({
-										...state,
-										receivers: [new CreateTransactionReceiverDto({
-											address: receiver?.address || "",
-											amount: parseFloat(event.target.value),
-										})]
-									})
-								)
-							} />
-						<Button style={{margin: '30px 10px 5px 15px'}} variant='outlined' onClick={handleSubmitCallback} disabled={loading}>
-							Send
-						</Button>
-						{loading && <LinearProgress />}
-					</CardContent>
-				</Card>
-			</>
+					}}>
+					<Typography>Source</Typography>
+					<Box sx={{display:'flex', alignItems:'center'}}>
+						<SourceIcon width={'40px'} height={'40px'}/>
+						<Typography fontSize={'27px'} sx={{marginLeft:'10px', marginTop:'15px'}} fontWeight={500}>
+							{chain}
+						</Typography>
+					</Box>
+				</Box>
+
+				<Box sx={{ 
+					gridColumn:'span 4', 
+					color:'white', 
+					textTransform:'capitalize',
+					[tabletMediaQuery]:{
+						gridColumn:'span 3'
+					}
+				}}>
+					<Typography>Destination</Typography>
+					<Box sx={{display:'flex', alignItems:'center'}}>
+						<DestinationIcon width={'40px'} height={'40px'}/>
+						<Typography fontSize={'27px'} sx={{marginLeft:'10px', marginTop:'15px'}} fontWeight={500}>
+							{destinationChain}
+						</Typography>
+					</Box>
+				</Box>
+
+				{/* left side */}
+				<Box sx={{
+					gridColumn:'span 2', 
+					borderTop:'2px solid #077368',
+					p:2,
+					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
+					[tabletMediaQuery]:{
+						gridColumn:'span 6'
+					}
+				}}>
+					<TotalBalance/>
+					
+					<Typography sx={{color:'white',mt:4, mb:2}}>Addresses</Typography>
+					<AddressBalance/>
+					
+				</Box>
+				
+				{/* right side */}
+				<Box sx={{
+					gridColumn:'span 4', 
+					borderTop:'2px solid #F25041',
+					p:2,
+					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
+					[tabletMediaQuery]:{
+						gridColumn:'span 6'
+					}
+				}}>
+					{/* conditional display of right side element */}
+					{!txInProgress ?
+						<BridgeInput
+							bridgeTxFee={bridgeTxFee}
+							createTx={createTx}
+							submit={handleSubmitCallback}
+							disabled={loading}
+						/> :
+						<TransferProgress tx={txInProgress} setTx={setTxInProgress}/>
+					}
+				</Box>
+			</Box>
 		</BasePage>
 	)
 }

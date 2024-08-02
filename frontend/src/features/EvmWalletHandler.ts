@@ -6,6 +6,12 @@ type Wallet = {
     version: string;
 };
 
+export const EVM_SUPPORTED_WALLETS = [{
+    name: 'MetaMask',
+    icon: 'https://metamask.io/images/metamask-logo.png', // MetaMask icon URL
+    version: 'N/A', // MetaMask does not provide API version directly
+}]
+
 class EvmWalletHandler {
     private web3: Web3 | undefined;
 
@@ -18,11 +24,7 @@ class EvmWalletHandler {
     getInstalledWallets = (): Wallet[] => {
         if (typeof window.ethereum === 'undefined') return [];
 
-        return [{
-            name: 'MetaMask',
-            icon: 'https://metamask.io/images/metamask-logo.png', // MetaMask icon URL
-            version: 'N/A', // MetaMask does not provide API version directly
-        }];
+        return EVM_SUPPORTED_WALLETS;
     };
 
     enable = async () => {
@@ -72,7 +74,7 @@ class EvmWalletHandler {
 
     signTx = async (unsignedTx: any): Promise<SignedTransactionInfoAPI> => {
         this._checkWalletAndThrow();
-        const accounts = await this.web3!.eth.getAccounts();
+        // const accounts = await this.web3!.eth.getAccounts();
         return await this.web3!.eth.signTransaction(unsignedTx);
     };
 

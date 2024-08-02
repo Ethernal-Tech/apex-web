@@ -5,9 +5,49 @@ import {ReactComponent as Done3icon} from "../../../assets/bridge-status-icons/s
 import ButtonCustom from "../../../components/Buttons/ButtonCustom"
 import { TRANSACTIONS_ROUTE } from "../../PageRouter"
 import { useNavigate } from "react-router-dom"
+import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../../../swagger/apexBridgeApiService"
+import { FunctionComponent, SVGProps, useCallback, useEffect, useMemo, useState } from "react"
+import { useTryCatchJsonByAction } from "../../../utils/fetchUtils"
+import { isStatusFinal } from "../../../utils/statusUtils"
+import { getAction } from "../action"
+import { capitalizeWord } from "../../../utils/generalUtils"
+import { openExplorer } from "../../../utils/chainUtils"
+import { fetchAndUpdateBalanceAction } from "../../../actions/balance"
+import { useDispatch } from "react-redux"
 // import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
 
-const STATUS = {
+// asset svgs
+
+// prime icons
+import {ReactComponent as PrimeInProgressIcon} from "../../../assets/bridge-status-assets/prime-progress.svg"
+import {ReactComponent as PrimeSuccessIcon} from "../../../assets/bridge-status-assets/Prime.svg"
+// import {ReactComponent as PrimeError} from "../../../assets/bridge-status-assets/Prime.svg" // not available
+
+// vector icons
+import {ReactComponent as VectorInProgressIcon} from "../../../assets/bridge-status-assets/Vector.svg"
+import {ReactComponent as VectorSuccessIcon} from "../../../assets/bridge-status-assets/vector-success.svg"
+// import {ReactComponent as VectorError} from "../../../assets/bridge-status-assets/vector-success.svg" // not available
+
+// bridge icons
+import {ReactComponent as BridgeInProgressIcon} from "../../../assets/bridge-status-assets/Bridge-Wallet.svg"
+import {ReactComponent as BridgeSuccessIcon} from "../../../assets/bridge-status-assets/bridge-success.svg"
+import {ReactComponent as BridgeErrorIcon} from "../../../assets/bridge-status-assets/Bridge-error.svg"
+
+// Step number icons
+import {ReactComponent as Step1} from "../../../assets/bridge-status-assets/steps/step-1.svg"
+import {ReactComponent as Step2} from "../../../assets/bridge-status-assets/steps/step-2.svg"
+import {ReactComponent as Step3} from "../../../assets/bridge-status-assets/steps/step-3.svg"
+
+const PrimeErrorIcon = PrimeInProgressIcon; // TODO - update
+const VectorErrorIcon = VectorInProgressIcon; // TODO - update
+
+const TRANSFER_PROGRESS_TEXT = {
+    ERROR: 'Transfer error',
+    DONE: 'Transfer done',
+    IN_PROGRESS: 'Transfer in progress',
+}
+
+const STEP_STATUS = {
     WAITING:'WAITING',
     IN_PROGRESS:'IN_PROGRESS',
     DONE:'DONE',
@@ -16,117 +56,285 @@ const STATUS = {
 
 type StepType = {
     number:number,
+    numberIcon:FunctionComponent<SVGProps<SVGSVGElement>>,
     text: string,
     status:string,
-    doneIcon: React.ReactNode
+    doneIcon: React.ReactNode,
+    asset:{ // which svg icon to show
+        inProgress: FunctionComponent<SVGProps<SVGSVGElement>>,
+        done: FunctionComponent<SVGProps<SVGSVGElement>>,
+        error: FunctionComponent<SVGProps<SVGSVGElement>>,
+    }
 }
 
 interface TransferStepProps {
     step: StepType
 }
 
-const steps:StepType[] = [
-    {
-        number:1,
-        text:'Your address on the Prime Chain sends assets to the Bridge Wallet.',
-        status:STATUS.DONE,
-        doneIcon:<Done1icon/>
-    },
-    {
-        number:2,
-        text:'There is a blockchain of the bridge that facilitates the transaction.',
-        status:STATUS.ERROR,
-        doneIcon:<Done2icon/>
-    },
-    {
-        number:3,
-        text:'The assets goes from the Bridge Wallet to the address on the Vector Chain.',
-        status:STATUS.IN_PROGRESS,
-        doneIcon:<Done3icon/>
-    },
-]
+const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):StepType[] =>{
+    return [
+        {
+            number:1,
+            numberIcon:Step1,
+            text:'',
+            status:STEP_STATUS.WAITING,
+            doneIcon:<Done1icon/>,
+            asset:{
+                inProgress: sourceChain === ChainEnum.Prime ? PrimeInProgressIcon : VectorInProgressIcon,
+                done: sourceChain === ChainEnum.Prime ? PrimeSuccessIcon : VectorSuccessIcon,
+                error: sourceChain === ChainEnum.Prime ? PrimeErrorIcon : VectorErrorIcon
+            }
+        },
+        {
+            number:2,
+            numberIcon:Step2,
+            text:'',
+            status:STEP_STATUS.WAITING,
+            doneIcon:<Done2icon/>,
+            asset:{
+                inProgress: BridgeInProgressIcon,
+                done: BridgeSuccessIcon,
+                error: BridgeErrorIcon
+            }
+        },
+        {
+            number:3,
+            numberIcon:Step3,
+            text:'',
+            status:STEP_STATUS.WAITING,
+            doneIcon:<Done3icon/>,
+            asset:{
+                inProgress: destinationChain === ChainEnum.Prime ? PrimeInProgressIcon : VectorInProgressIcon,
+                done: sourceChain === ChainEnum.Prime ? PrimeSuccessIcon : VectorSuccessIcon,
+                error: sourceChain === ChainEnum.Prime ? PrimeErrorIcon : VectorErrorIcon
+            }
+        }
+    ]
+
+}
+
+const getStepText = (stepNumber: number, originChain: ChainEnum, destinationChain: ChainEnum) => {
+    if (stepNumber === 1) {
+        return `Your address on the ${capitalizeWord(originChain)} Chain sends assets to the Bridge Wallet.`;
+    }
+
+    if (stepNumber === 3) {
+        return `The assets goes from the Bridge Wallet to the address on the ${capitalizeWord(destinationChain)} Chain.`;
+    }
+
+    return 'There is a blockchain of the bridge that facilitates the transaction.';
+}
+
+const getStepStatus = (stepNumber: number, txStatus: TransactionStatusEnum) => {
+    switch (txStatus) {
+        case TransactionStatusEnum.Pending:
+        case TransactionStatusEnum.DiscoveredOnSource: {
+            return stepNumber === 1 ? STEP_STATUS.IN_PROGRESS : STEP_STATUS.WAITING;
+        }
+        case TransactionStatusEnum.InvalidRequest: {
+            return stepNumber === 1 ? STEP_STATUS.ERROR : STEP_STATUS.WAITING;
+        }
+        case TransactionStatusEnum.SubmittedToBridge:
+        case TransactionStatusEnum.IncludedInBatch:
+        case TransactionStatusEnum.FailedToExecuteOnDestination: {
+            switch (stepNumber) {
+                case 1: return STEP_STATUS.DONE;
+                case 2: return STEP_STATUS.IN_PROGRESS;
+                default: return STEP_STATUS.WAITING;
+            }
+        }
+        case TransactionStatusEnum.SubmittedToDestination: {
+            switch (stepNumber) {
+                case 1:
+                case 2: {
+                    return STEP_STATUS.DONE;
+                }
+                case 3: return STEP_STATUS.IN_PROGRESS;
+                default: return STEP_STATUS.WAITING;
+            }
+        }
+        case TransactionStatusEnum.ExecutedOnDestination: {
+            return STEP_STATUS.DONE;
+        }
+        default: return STEP_STATUS.WAITING;
+    }
+}
+
+const getTransferProgress = (txStatus: TransactionStatusEnum) => {
+    switch (txStatus) {
+        case TransactionStatusEnum.ExecutedOnDestination: return TRANSFER_PROGRESS_TEXT.DONE;
+        case TransactionStatusEnum.InvalidRequest: return TRANSFER_PROGRESS_TEXT.ERROR;
+        default: return TRANSFER_PROGRESS_TEXT.IN_PROGRESS;
+    }
+}
 
 const TransferStep = ({step}:TransferStepProps) => {
     return (
         <Box sx={{textAlign:'center'}}>
-            
-            {/* waiting or in_progress status */}
-            {(step.status === STATUS.WAITING || step.status === STATUS.IN_PROGRESS) && (
-                <Box sx={{
-                    color:'#F25041',
-                    borderRadius:'100px',
-                    border:'1px solid #F25041',
-                    display:'inline-block',
-                    width:'24px',
-                    height:'24px',
-                }}>
-                    {step.number}
+            <Box sx={{ display:'flex',flexDirection:'column', alignItems:'center'}}>
+                {/* conditional display of svg icon depending on status. Different steps have different icons */}
+                <Box sx={{height:'120px',display:'flex',alignItems:'center', marginBottom:'40px'}}>   
+                    {(step.status === STEP_STATUS.WAITING || step.status === STEP_STATUS.IN_PROGRESS) && <step.asset.inProgress/>}
+                    {(step.status === STEP_STATUS.DONE) && <step.asset.done/>}
+                    {(step.status === STEP_STATUS.ERROR) && <step.asset.error/>}
                 </Box>
-            )}
-            
-            {/* done status */}
-            {step.status === STATUS.DONE && (
-                <Box sx={{
-                    display:'inline-block',
-                    width:'24px',
-                    height:'24px',
-                }}>
-                    {step.doneIcon}
-                </Box>
-            )}
-            
-            {/* error status */}
-            {step.status === STATUS.ERROR && (
-                <Box sx={{
-                    color:'white',
-                    background:'#F25041',
-                    borderRadius:'100px',
-                    border:'1px solid #F25041',
-                    display:'inline-block',
-                    width:'24px',
-                    height:'24px',
-                }}>
-                    !
-                </Box>
-            )}
+                
+                {/* waiting or in_progress status */}
+                {(step.status === STEP_STATUS.WAITING || step.status === STEP_STATUS.IN_PROGRESS) && (
+                    <Box sx={{
+                        width:'24px',
+                        height:'24px',
+                    }}>
+                        <step.numberIcon height='24px' width='24px'/>
+                    </Box>
+                )}
+                
+                {/* done status */}
+                {step.status === STEP_STATUS.DONE && (
+                    <Box sx={{
+                        display:'inline-block',
+                        width:'24px',
+                        height:'24px',
+                    }}>
+                        {step.doneIcon}
+                    </Box>
+                )}
+                
+                {/* error status */}
+                {step.status === STEP_STATUS.ERROR && (
+                    <Box sx={{
+                        color:'white',
+                        background:'#F25041',
+                        borderRadius:'100px',
+                        border:'1px solid #F25041',
+                        display:'inline-block',
+                        width:'24px',
+                        height:'24px',
+                        fontSize:'16px',
+                        textAlign:'center',
+                        lineHeight: '24px',
+                    }}>
+                        !
+                    </Box>
+                )}
+            </Box>
 
-            <Typography sx={{color:'white'}}>
+            <Typography sx={{color:'white', marginTop:'30px'}}>
                 {step.text}
             </Typography>
         </Box>
     )
 }
 
-const TransferProgress = () => {
-    const navigate = useNavigate()
+interface TransferProgressProps {
+    tx: BridgeTransactionDto
+    setTx: React.Dispatch<React.SetStateAction<BridgeTransactionDto | undefined>>
+}
+
+const TransferProgress = ({
+    tx,
+    setTx,
+}: TransferProgressProps) => {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+	const fetchFunction = useTryCatchJsonByAction();
+    const [txStatusToShow, setTxStatusToShow] = useState<TransactionStatusEnum>(tx.status);
     
-  return (
-    <Box>
-        <Typography sx={{color:'white',mt:4, mb:2, textAlign:'center'}}>Transfer in progress</Typography>
+    const fetchTx = useCallback(async () => {
+        const bindedAction = getAction.bind(null, tx.id);
 
-        <Box sx={{
-            mt:4,
-            display:'flex',
-            justifyContent:"space-evenly",
-            gap:'40px'
-        }}>
-            {steps.map(step=> <TransferStep key={step.number} step={step}/>)}
-        </Box>
+        const [response] = await Promise.all([
+            fetchFunction(bindedAction),
+            fetchAndUpdateBalanceAction(dispatch),
+        ])
 
-        <Box sx={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'20px',mt:4}}>
-            <ButtonCustom  
-                variant="red" 
-                onClick={()=> navigate(TRANSACTIONS_ROUTE)}
-                sx={{ gridColumn:'span 1', textTransform:'uppercase'}}>
-                View bridging history
-            </ButtonCustom>
-            
-            <ButtonCustom  variant="white" sx={{ gridColumn:'span 1', textTransform:'uppercase' }}>
-                request a refund
-            </ButtonCustom>
+        if (response) {
+            setTx(response);
+            setTxStatusToShow(
+                (prev) => {
+                    if (prev === TransactionStatusEnum.SubmittedToDestination &&
+                        (response.status === TransactionStatusEnum.IncludedInBatch ||
+                        response.status === TransactionStatusEnum.FailedToExecuteOnDestination)) {
+                        // this happens on bridge sometimes, so to prevent user confusion, we ignore it
+                        return prev;
+                    }
+    
+                    return response.status
+                }
+            );
+        }
+
+        return response;
+    }, [tx.id, fetchFunction, dispatch, setTx])
+
+	useEffect(() => {
+		fetchTx();
+
+        const handle = setInterval(async () => {
+            const tx = await fetchTx();
+            if (tx && isStatusFinal(tx.status)) {
+                clearInterval(handle);
+            }
+        }, 5000);
+
+        return () => {
+            clearInterval(handle);
+        }
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+    const steps = useMemo(() => {
+        const defaultSteps = getDefaultSteps(tx.originChain, tx.destinationChain)
+        return defaultSteps.map(dStep => {
+            const text = getStepText(dStep.number, tx.originChain, tx.destinationChain);
+            const status = getStepStatus(dStep.number, txStatusToShow);
+            return {
+                ...dStep,
+                text,
+                status,
+            }
+        })
+    }, [tx.destinationChain, tx.originChain, txStatusToShow])
+
+    const onOpenExplorer = () => openExplorer(tx);
+
+    return (
+        <Box>
+            <Typography sx={{color:'white',mt:4, mb:2, textAlign:'center'}}>
+                {getTransferProgress(txStatusToShow)}
+            </Typography>
+
+            <Box sx={{
+                mt:4,
+                display:'flex',
+                justifyContent:"space-evenly",
+                gap:'40px'
+            }}>
+                {steps.map(step=> <TransferStep key={step.number} step={step}/>)}
+            </Box>
+
+            <Box sx={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'20px',mt:4}}>
+                <ButtonCustom  
+                    variant="red" 
+                    onClick={()=> navigate(TRANSACTIONS_ROUTE)}
+                    sx={{ gridColumn:'span 1', textTransform:'uppercase'}}>
+                    View bridging history
+                </ButtonCustom>
+
+                <ButtonCustom  
+                    variant="white" 
+                    onClick={onOpenExplorer}
+                    sx={{ gridColumn:'span 1', textTransform:'uppercase'}}>
+                    View Explorer
+                </ButtonCustom>
+                
+                {/* TODO af - removed for now as bridge doesn't currently support refunds */}
+                {/* <ButtonCustom  variant="white" sx={{ gridColumn:'span 1', textTransform:'uppercase' }}>
+                    request a refund
+                </ButtonCustom> */}
+            </Box>
         </Box>
-    </Box>
-  )
+    )
 }
 
 export default TransferProgress

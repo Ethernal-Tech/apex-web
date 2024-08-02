@@ -34,6 +34,13 @@ export class BridgeTransactionDto {
 	destinationChain: ChainEnum;
 
 	@IsNotEmpty()
+	@ApiProperty()
+	sourceTxHash: string;
+
+	@ApiProperty({ nullable: true, required: false })
+	destinationTxHash?: string;
+
+	@IsNotEmpty()
 	@IsEnum(TransactionStatusEnum)
 	@ApiProperty({
 		enum: TransactionStatusEnum,
@@ -80,6 +87,9 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 
 	@ApiProperty({ nullable: true, required: false })
 	order?: string;
+
+	@ApiProperty({ nullable: true, required: false })
+	receiverAddress?: string;
 }
 
 export class BridgeTransactionResponseDto {

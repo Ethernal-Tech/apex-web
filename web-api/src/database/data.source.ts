@@ -11,12 +11,11 @@ export const dbdatasource: DataSourceOptions = {
 	username: process.env.DB_USERNAME,
 	password: process.env.DB_PASSWORD,
 	database: process.env.DB_NAME,
-	// TODO: for production set synchronize to false and uncomment code below, and generate migrations
-	synchronize: true,
+	synchronize: process.env.NODE_ENV === 'development',
 	entities: ['dist/**/*.entity.js'],
-	// ssl: process.env.DB_SSL === 'true',
-	// migrations: ['dist/database/migrations/*.js'],
-	// migrationsTableName: '__apex_migrations',
+	ssl: process.env.DB_SSL === 'true',
+	migrations: ['dist/database/migrations/*.js'],
+	migrationsTableName: '__apex_migrations',
 };
 
 const dataSource = new DataSource(dbdatasource);

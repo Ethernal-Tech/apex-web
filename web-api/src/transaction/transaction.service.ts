@@ -2,12 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 
 import {
 	createBridgingTx,
+	getProtocolParams,
 	signBridgingTx,
 	submitTransaction,
 } from 'src/transaction/transaction.helper';
 import {
 	CreateTransactionDto,
 	CreateTransactionResponseDto,
+	ProtocolParamsResponseDto,
 	SignTransactionDto,
 	SubmitTransactionDto,
 	SubmitTransactionResponseDto,
@@ -18,6 +20,8 @@ import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entit
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { mapBridgeTransactionToResponse } from 'src/bridgeTransaction/bridgeTransaction.helper';
+import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 
 @Injectable()
 export class TransactionService {
@@ -79,7 +83,7 @@ export class TransactionService {
 		senderAddress,
 		receiverAddrs,
 		amount,
-	}: TransactionSubmittedDto): Promise<void> {
+	}: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
 		const entity = new BridgeTransaction();
 
 		const receiverAddresses = receiverAddrs.join(', ');
@@ -98,13 +102,25 @@ export class TransactionService {
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
 		await this.bridgeTransactionRepository.save(newBridgeTransaction);
+
+		return mapBridgeTransactionToResponse(newBridgeTransaction);
 	}
 
 	async submitTransaction(
 		dto: SubmitTransactionDto,
 	): Promise<SubmitTransactionResponseDto> {
-		const txId = await submitTransaction(dto.originChain, dto.signedTxRaw);
-		await this.transactionSubmitted(dto);
-		return { txId };
+		const txHash = await submitTransaction(dto.originChain, dto.signedTxRaw);
+		const bridgeTx = await this.transactionSubmitted(dto);
+		return { txHash, bridgeTx };
+	}
+
+	async getProtocolParams(
+		chain: ChainEnum,
+	): Promise<ProtocolParamsResponseDto> {
+		const protocolParameters = await getProtocolParams(chain);
+		return {
+			txFeeFixed: protocolParameters.minFeeConstant.ada.lovelace.toString(10),
+			txFeePerByte: protocolParameters.minFeeCoefficient.toString(10),
+		};
 	}
 }

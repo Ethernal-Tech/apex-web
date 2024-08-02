@@ -11,7 +11,7 @@ import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { FunctionComponent, SVGProps } from "react";
 
 export const capitalizeWord = (word: string): string => {
-    if (word.length === 0) {
+    if (!word || word.length === 0) {
         return word;
     }
 
@@ -71,24 +71,28 @@ export const validateSubmitTxInputs = (
     return `Amount less than minimum: ${convertEvmDfmToApex(appSettings.minUtxoValue)} APEX`;
   }
 
-  const addr = NewAddress(destinationAddr);
-  if (!addr || destinationAddr !== addr.String()) {
-    return `Invalid destination address: ${destinationAddr}`;
-  }
-
-  if (!areChainsEqual(destinationChain, addr.GetNetwork())) {
-    return `Destination address not compatible with destination chain: ${destinationChain}`;
+  if (destinationChain === ChainEnum.Prime || destinationChain === ChainEnum.Vector) {
+    const addr = NewAddress(destinationAddr);
+    if (!addr || destinationAddr !== addr.String()) {
+      return `Invalid destination address: ${destinationAddr}`;
+    }
+  
+    if (!areChainsEqual(destinationChain, addr.GetNetwork())) {
+      return `Destination address not compatible with destination chain: ${destinationChain}`;
+    }
+  } else {
+    // TODO: validate destination evm address
   }
 }
 
 export const chainIcons:{
-  prime:FunctionComponent<SVGProps<SVGSVGElement>>
-  vector:FunctionComponent<SVGProps<SVGSVGElement>>
-  nexus:FunctionComponent<SVGProps<SVGSVGElement>>
+  [ChainEnum.Prime]:FunctionComponent<SVGProps<SVGSVGElement>>
+  [ChainEnum.Vector]:FunctionComponent<SVGProps<SVGSVGElement>>
+  [ChainEnum.Nexus]:FunctionComponent<SVGProps<SVGSVGElement>>
 } = {
-  prime:PrimeIcon,
-  vector:VectorIcon,
-  nexus:NexusIcon
+  [ChainEnum.Prime]:PrimeIcon,
+  [ChainEnum.Vector]:VectorIcon,
+  [ChainEnum.Nexus]:NexusIcon
 }
 
 // format it differently depending on network (nexus is 18 decimals, prime and vector are 6)
@@ -111,3 +115,10 @@ export const convertApexToDfm = (dfm:string|number, network:ChainEnum) =>{
           return convertApexToEvmDfm(dfm)
   }
 }
+
+export const toBytes = (hex: string): Uint8Array => {
+    if (hex.length % 2 === 0 && /^[0-9A-F]*$/i.test(hex))
+        return Buffer.from(hex, 'hex');
+
+    return Buffer.from(hex, 'utf-8');
+};

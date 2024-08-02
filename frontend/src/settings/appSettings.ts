@@ -3,7 +3,7 @@ export class AppSettings {
 	private _minUtxoValue: number = 0;
 	private _minEvmValue: number = 0;
 	private _bridgingFee: number = 0;
-	private _evmBridgingFee: number = 0;
+	private _potentialWalletFee: number = 0;
 	private _usePrivateKey: boolean = false;
 
     public constructor() {
@@ -12,7 +12,7 @@ export class AppSettings {
 		this._minUtxoValue = settingsJson.minUtxoValue;
 		this._minEvmValue = settingsJson.minEvmValue;
 		this._bridgingFee = settingsJson.bridgingFee;
-		this._evmBridgingFee = settingsJson.evmBridgingFee;
+		this._potentialWalletFee = settingsJson.potentialWalletFee;
 		this._usePrivateKey = settingsJson.usePrivateKey;
 	}
 
@@ -31,9 +31,9 @@ export class AppSettings {
 	get bridgingFee(): number {
 		return this._bridgingFee;
 	}
-	
-	get evmBridgingFee(): number {
-		return this._evmBridgingFee;
+
+	get potentialWalletFee(): number {
+		return this._potentialWalletFee;
 	}
 
 	get usePrivateKey(): boolean {
