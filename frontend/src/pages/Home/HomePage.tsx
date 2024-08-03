@@ -121,7 +121,17 @@ const HomePage: React.FC = () => {
             value={destinationChain}
             disabled={chain !== ChainEnum.Prime}
             onChange={(e) => updateDestination(e.target.value as ChainEnum)}
-            options={supportedChainOptions.filter(x => x.value !== chain)}
+            // todo - makeshift fix, check out details later
+            options={supportedChainOptions.filter(x => {
+              // if source chain not prime, destination can only be prime
+              if(chain !== ChainEnum.Prime){
+                // set destination chain to prime if not already
+                if(destinationChain !== ChainEnum.Prime) dispatch(setDestinationChainAction(ChainEnum.Prime));
+                return x.value === ChainEnum.Prime
+              }
+              return x.value !== chain
+              
+            })}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
           />
         </Box>
