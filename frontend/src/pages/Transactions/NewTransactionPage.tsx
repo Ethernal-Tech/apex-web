@@ -3,6 +3,7 @@ import BasePage from "../base/BasePage";
 import AddressBalance from "./components/AddressBalance";
 import TotalBalance from "./components/TotalBalance";
 import TransferProgress from "./components/TransferProgress";
+import FallbackTransferProgress from "./components/TransferProgressFallback";
 import BridgeInput from "./components/BridgeInput";
 import { chainIcons, validateSubmitTxInputs } from "../../utils/generalUtils";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,23 +12,21 @@ import { useCallback, useState } from "react";
 import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createTransactionAction } from "./action";
-import { BridgeTransactionDto, ChainEnum, CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, ChainEnum, CreateTransactionDto, CreateTransactionReceiverDto, TransactionStatusEnum } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
 import { signAndSubmitTx, signAndSubmitNexusToPrimeFallbackTx, signAndSubmitPrimeToNexusFallbackTx } from "../../actions/submitTx";
 import { CreateTxResponse } from "./components/types";
-import web3 from "web3";
-import walletHandler from "../../features/WalletHandler";
-import evmWalletHandler from "../../features/EvmWalletHandler";
 
 // TODO: add input validations
 function NewTransactionPage() {
 	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
+	const [fallbackTxInProgress, setFallbackTxInProgress] = useState<BridgeTransactionDto | undefined>();
+
 	const [loading, setLoading] = useState(false);
 	
 	const chain = useSelector((state: RootState)=> state.chain.chain);
 	const destinationChain = useSelector((state: RootState)=> state.chain.destinationChain);
 	const account = useSelector((state: RootState) => state.accountInfo.account);
-	const wallet = useSelector((state: RootState) => state.wallet.wallet);
 
 
 	// conditionally implementing bridgeTxFee depending on selected network
@@ -67,9 +66,27 @@ function NewTransactionPage() {
 			setLoading(true);
 			try {				
 				if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){ // nexus->prime						
-					const response = await signAndSubmitNexusToPrimeFallbackTx(amount, destinationChain, address)
-					console.log(response)
-					// response && setTxInProgress(response.bridgeTx) // TODO - how to handle the status, build custom dto?
+					// const txReceipt = await signAndSubmitNexusToPrimeFallbackTx(amount, destinationChain, address)
+					
+					const txReceipt = {
+						transactionHash: 'this_is_the_tx_hash'
+					}
+
+					txReceipt && setFallbackTxInProgress(
+						new BridgeTransactionDto({
+							amount: amount,
+							createdAt: new Date(), // removed for fallback bridge
+							destinationChain: ChainEnum.Prime,
+							destinationTxHash: "", // removed for fallback bridge
+							finishedAt: new Date(), // removed for fallback bridge
+							id: 0, // // removed for fallback bridge
+							originChain: ChainEnum.Nexus,
+							receiverAddresses: "", // removed for fallback bridge
+							senderAddress: "", // removed for fallback bridge
+							sourceTxHash: txReceipt.transactionHash.toString(), // tx hash on nexus
+							status: TransactionStatusEnum.Pending,
+						})
+					)
 				} 
 
 				// cardano serialization to be used
@@ -171,15 +188,20 @@ function NewTransactionPage() {
 					}
 				}}>
 					{/* conditional display of right side element */}
-					{!txInProgress ?
+					{!txInProgress && !fallbackTxInProgress &&
 						<BridgeInput
 							bridgeTxFee={bridgeTxFee}
 							createTx={createTx}
 							submit={handleSubmitCallback}
 							loading={loading}
-						/> :
-						<TransferProgress tx={txInProgress} setTx={setTxInProgress}/>
+						/>
 					}
+
+					{/* for regular bridge tx's */}
+					{txInProgress && <TransferProgress tx={txInProgress} setTx={setTxInProgress}/>}
+
+					{/* for nexus->prime->nexus transactions (fallback) */}
+					{fallbackTxInProgress && <FallbackTransferProgress tx={fallbackTxInProgress} setTx={setFallbackTxInProgress}/>}
 				</Box>
 			</Box>
 		</BasePage>

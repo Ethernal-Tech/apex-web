@@ -85,7 +85,7 @@ class EvmWalletHandler {
         
     submitTx = async (tx:any) =>{
         this._checkWalletAndThrow();
-        await this.web3!.eth.sendTransaction(tx);
+        return await this.web3!.eth.sendTransaction(tx);
     }
 }
 
