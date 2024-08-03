@@ -92,10 +92,10 @@ function NewTransactionPage() {
 				// cardano serialization to be used
 				else if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
 					const response = await signAndSubmitPrimeToNexusFallbackTx(amount, destinationChain, address)
-					console.log(response)
+					// txReceipt && setFallbackTxInProgress() // TODO nick - later
 				} 
 				else { // must be "vector-prime-vetor", create tx as usual
-					console.log('create tx, and submit tx using eternl as usual. ')
+					// creating tx as usual
 					const createTxResp = await createTx(address, amount);
 					
 					const response = await signAndSubmitTx(

@@ -26,10 +26,14 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, loading}:BridgeInputType) =
   const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
-  const chain = useSelector((state: RootState)=> state.chain.chain);
+  const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
 
   const fetchCreatedTx = useCallback(async () => {
-    console.log('fetchCreatedTx - this formats the tx')
+    if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
+        // TODO nick - maybe remove this from here?
+        //console.log('must format this with different service') 
+        return;
+    }
     if (!destinationAddr || !amount) {
         setCreatedTx(undefined);
         return;
