@@ -66,7 +66,7 @@ function NewTransactionPage() {
 		async (address: string, amount: number) => {
 			setLoading(true);
 			try {				
-				if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){ // nexus->prime							
+				if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){ // nexus->prime						
 					const response = await signAndSubmitNexusToPrimeFallbackTx(amount, destinationChain, address)
 					console.log(response)
 					// response && setTxInProgress(response.bridgeTx) // TODO - how to handle the status, build custom dto?

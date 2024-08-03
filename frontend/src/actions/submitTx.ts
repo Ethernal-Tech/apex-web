@@ -101,6 +101,8 @@ export const signAndSubmitNexusToPrimeFallbackTx = async (amount:number, destina
         throw new Error('Wallet not connected.');
     }
 
+    // TODO - web3 validator for destinationAddress
+
     const bridgeNexusAddress = '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe'
     const addressFrom = await evmWalletHandler.getChangeAddress()
 

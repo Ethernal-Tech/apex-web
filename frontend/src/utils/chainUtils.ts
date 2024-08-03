@@ -2,8 +2,8 @@ import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagg
 
 const PRIME_NETWORK_ID = 0
 const VECTOR_NETWORK_ID = 2
-// const NEXUS_NETWORK_ID = BigInt(11155111) // TODO - this is for ethereum. Update later
-const NEXUS_NETWORK_ID = BigInt(137) // TODO - this is for ethereum. Update later
+const NEXUS_NETWORK_ID = BigInt(11155111) // TODO - this is for ethereum. Update later
+// const NEXUS_NETWORK_ID = BigInt(137) // TODO - this is for polygon. Update later
 
 export const fromNetworkIdToChain = (networkId: number|bigint): ChainEnum | undefined => {
     switch (networkId) {

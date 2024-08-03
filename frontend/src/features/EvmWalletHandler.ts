@@ -1,4 +1,4 @@
-import Web3, { SignedTransactionInfoAPI } from 'web3';
+import Web3 from 'web3';
 
 type Wallet = {
     name: string;
@@ -82,9 +82,10 @@ class EvmWalletHandler {
         this._checkWalletAndThrow();
         return (await this.web3!.eth.sendSignedTransaction(signedTx)).transactionHash as string;
     }; */
-
+        
     submitTx = async (tx:any) =>{
-        await this.web3!.eth.sendTransaction(tx)
+        this._checkWalletAndThrow();
+        await this.web3!.eth.sendTransaction(tx);
     }
 }
 
