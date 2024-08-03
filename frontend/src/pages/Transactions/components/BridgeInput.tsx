@@ -64,12 +64,12 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
   }
 
     // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
-  const minDfmValue = ChainEnum.Nexus ? 
+  const minDfmValue = chain === ChainEnum.Nexus ? 
     appSettings.minEvmValue : appSettings.minUtxoValue;
 
     const maxAmountDfm = totalDfmBalance ?
-    // +totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue : null;
-    Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null; // this causes 0 on nexus, seems to be a bug
+    +totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue : 0;
+    // Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null; // this causes 0 on nexus, seems to be a bug
 
   const onSubmit = useCallback(async () => {
     await submit(destinationAddr, +convertApexToDfm(amount || '0', chain))
@@ -93,7 +93,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
             <PasteApexAmountInput
                 maxSendableDfm={maxAmountDfm}
                 text={amount}
-                setText={setAmount}
+                setAmount={setAmount}
                 disabled={disabled}
                 sx={{
                     gridColumn:'span 1',

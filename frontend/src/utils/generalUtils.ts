@@ -59,7 +59,7 @@ const convertEvmDfmToApex = (dfm:string|number):string =>{
 
 // convert eth to wei (nexus)
 const convertApexToEvmDfm = (apex: string|number):string => {
-  return Web3.utils.toWei(apex,'wei');
+  return Web3.utils.toWei(apex,'ether');
 }
 
 export const validateSubmitTxInputs = (

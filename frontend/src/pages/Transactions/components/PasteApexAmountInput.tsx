@@ -70,11 +70,11 @@ interface PasteApexAmountInputProps {
   sx?: SxProps<Theme>;
   maxSendableDfm: number | null
   text: string
-  setText: (text: string) => void
+  setAmount: (text: string) => void
   disabled?: boolean;
 }
 
-const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSendableDfm, text, setText, disabled }) => {
+const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSendableDfm, text, setAmount, disabled }) => {
   const chain = useSelector((state: RootState)=> state.chain.chain);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>{
@@ -92,18 +92,17 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSend
     }
     
     const dfmValueInput = convertApexToDfm(apexInput,chain)
-
     if (BigInt(dfmValueInput) < 0) {
       e.preventDefault()
-      return setText('0')
+      return setAmount('')
     }
 
-    setText(apexInput)
+    setAmount(apexInput)
   }
   
   const handleMaxClick = () => {
     if(maxSendableDfm){
-      setText(convertDfmToApex(maxSendableDfm,chain));
+      setAmount(convertDfmToApex(maxSendableDfm,chain));
     }
   };
 
@@ -121,10 +120,10 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSend
   };
 
   // returns true if value of input equals max amount a user can send
-  const maxAmountEntered = () => maxSendableDfm && maxSendableDfm > 0 && convertApexToDfm(text, chain) !== maxSendableDfm.toString();
-
-  // Returns true if entered value to send doesn't exceed the maximum amount a user can send (balance - fees)
-  const hasSufficientBalance = () => maxSendableDfm && BigInt(convertApexToDfm(text, chain)) > maxSendableDfm;
+  const isMaxAmountEntered = () => maxSendableDfm && maxSendableDfm > 0 && convertApexToDfm(text, chain) !== maxSendableDfm.toString();
+  
+  // Returns true if entered value to send exceedes the maximum amount a user can send (balance - fees)
+  const hasInsufficientBalance = () => maxSendableDfm && BigInt(convertApexToDfm(text, chain)) > maxSendableDfm;
 
   return (
     <Box sx={sx}>
@@ -142,12 +141,12 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSend
                 sx={{paddingRight:'50px'}}
             />
             {/* show max button only if enough funds present, and entered value varies from actual max amount */}
-            {maxAmountEntered() && (
+            {isMaxAmountEntered() && (
                 <CustomButton variant="contained" onClick={handleMaxClick}>
                   MAX
                 </CustomButton>
             )}
-            { hasSufficientBalance() &&
+            { hasInsufficientBalance() &&
               <Typography sx={{color:'#ff5e5e',position:'absolute',bottom:0,left:0}}>Insufficient funds</Typography>
             }
         </Box>
