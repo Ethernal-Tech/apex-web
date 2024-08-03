@@ -5,6 +5,7 @@ import { Dispatch, UnknownAction } from 'redux';
 import walletHandler from "../features/WalletHandler";
 import evmWalletHandler from "../features/EvmWalletHandler";
 import web3 from "web3";
+import {isAddress} from "web3-validator"
 
 export const signAndSubmitTx = async (
     values: CreateTransactionDto,
@@ -96,14 +97,22 @@ const signAndSubmitTxUsingPrivateKey = async (
 }
 */
 
-export const signAndSubmitNexusToPrimeFallbackTx = async (amount:number, destinationChain: ChainEnum, destinationAddress:String) => {
+export const signAndSubmitNexusToPrimeFallbackTx = async (amount:number, destinationChain: ChainEnum, destinationAddress:string) => {
     if (!evmWalletHandler.checkWallet()) {
         throw new Error('Wallet not connected.');
     }
 
-    // TODO - web3 validator for destinationAddress
+    // TODO nick - update this to real nexus fallback bridge address
+    const bridgeNexusAddress = '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe' // the fallback bridge address
+    
+    if(!isAddress(destinationAddress)){
+        throw new Error("Invalid destination address.")
+    }
+    
+    if(amount <= 0){
+        throw new Error("Invalid amount.")
+    }
 
-    const bridgeNexusAddress = '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe'
     const addressFrom = await evmWalletHandler.getChangeAddress()
 
     const calldata = web3.utils.asciiToHex(JSON.stringify(
@@ -117,7 +126,7 @@ export const signAndSubmitNexusToPrimeFallbackTx = async (amount:number, destina
         from: addressFrom,
         to: bridgeNexusAddress,
         value: amount,
-        gas: 30000, // Adjust gas limit as necessary TODO - not sure about this
+        gas: 30000, // TODO nick - Adjust gas limit as necessary - not sure about this
         data: calldata
     };
     

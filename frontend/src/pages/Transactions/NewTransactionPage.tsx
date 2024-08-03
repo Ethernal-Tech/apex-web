@@ -66,11 +66,11 @@ function NewTransactionPage() {
 			setLoading(true);
 			try {				
 				if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){ // nexus->prime						
-					// const txReceipt = await signAndSubmitNexusToPrimeFallbackTx(amount, destinationChain, address)
+					const txReceipt = await signAndSubmitNexusToPrimeFallbackTx(amount, destinationChain, address)
 					
-					const txReceipt = {
+					/* const txReceipt = {
 						transactionHash: 'this_is_the_tx_hash'
-					}
+					} */
 
 					txReceipt && setFallbackTxInProgress(
 						new BridgeTransactionDto({
