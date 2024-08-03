@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material"
+import { Box, CircularProgress, Typography } from "@mui/material"
 import {ReactComponent as Done1icon} from "../../../assets/bridge-status-icons/step-done1.svg"
 import {ReactComponent as Done2icon} from "../../../assets/bridge-status-icons/step-done2.svg"
 import {ReactComponent as Done3icon} from "../../../assets/bridge-status-icons/step-done3.svg"
@@ -21,12 +21,17 @@ import { useDispatch } from "react-redux"
 // prime icons
 import {ReactComponent as PrimeInProgressIcon} from "../../../assets/bridge-status-assets/prime-progress.svg"
 import {ReactComponent as PrimeSuccessIcon} from "../../../assets/bridge-status-assets/Prime.svg"
-// import {ReactComponent as PrimeError} from "../../../assets/bridge-status-assets/Prime.svg" // not available
+import {ReactComponent as PrimeErrorIcon} from "../../../assets/bridge-status-assets/prime-error.svg"
 
 // vector icons
 import {ReactComponent as VectorInProgressIcon} from "../../../assets/bridge-status-assets/Vector.svg"
 import {ReactComponent as VectorSuccessIcon} from "../../../assets/bridge-status-assets/vector-success.svg"
-// import {ReactComponent as VectorError} from "../../../assets/bridge-status-assets/vector-success.svg" // not available
+import {ReactComponent as VectorErrorIcon} from "../../../assets/bridge-status-assets/vector-error.svg"
+
+// nexus icons
+import {ReactComponent as NexusInProgressIcon} from "../../../assets/bridge-status-assets/nexus.svg"
+import {ReactComponent as NexusSuccessIcon} from "../../../assets/bridge-status-assets/nexus-success.svg"
+import {ReactComponent as NexusErrorIcon} from "../../../assets/bridge-status-assets/nexus-error.svg"
 
 // bridge icons
 import {ReactComponent as BridgeInProgressIcon} from "../../../assets/bridge-status-assets/Bridge-Wallet.svg"
@@ -37,14 +42,15 @@ import {ReactComponent as BridgeErrorIcon} from "../../../assets/bridge-status-a
 import {ReactComponent as Step1} from "../../../assets/bridge-status-assets/steps/step-1.svg"
 import {ReactComponent as Step2} from "../../../assets/bridge-status-assets/steps/step-2.svg"
 import {ReactComponent as Step3} from "../../../assets/bridge-status-assets/steps/step-3.svg"
-
-const PrimeErrorIcon = PrimeInProgressIcon; // TODO - update
-const VectorErrorIcon = VectorInProgressIcon; // TODO - update
+/* 
+const NexusInProgressIcon = VectorInProgressIcon;
+const NexusSuccessIcon = VectorSuccessIcon;
+const NexusErrorIcon = VectorErrorIcon; */
 
 const TRANSFER_PROGRESS_TEXT = {
-    ERROR: 'Transfer error',
-    DONE: 'Transfer done',
-    IN_PROGRESS: 'Transfer in progress',
+    ERROR: 'Transfer Error',
+    DONE: 'Transfer Complete',
+    IN_PROGRESS: 'Transfer in Progress',
 }
 
 const STEP_STATUS = {
@@ -71,6 +77,15 @@ interface TransferStepProps {
     step: StepType
 }
 
+// returns in progress, done, and error icons for required chain (prime, vector, nexus)
+const getChainIcons = (chain:ChainEnum) => {
+    return {
+        inProgress: chain === ChainEnum.Prime ? PrimeInProgressIcon : chain === ChainEnum.Vector ? VectorInProgressIcon : NexusInProgressIcon,
+        done: chain === ChainEnum.Prime ? PrimeSuccessIcon : chain === ChainEnum.Vector ? VectorSuccessIcon : NexusSuccessIcon,
+        error: chain === ChainEnum.Prime ? PrimeErrorIcon : chain === ChainEnum.Vector ? VectorErrorIcon : NexusErrorIcon,
+    }   
+}
+
 const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):StepType[] =>{
     return [
         {
@@ -79,11 +94,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             text:'',
             status:STEP_STATUS.WAITING,
             doneIcon:<Done1icon/>,
-            asset:{
-                inProgress: sourceChain === ChainEnum.Prime ? PrimeInProgressIcon : VectorInProgressIcon,
-                done: sourceChain === ChainEnum.Prime ? PrimeSuccessIcon : VectorSuccessIcon,
-                error: sourceChain === ChainEnum.Prime ? PrimeErrorIcon : VectorErrorIcon
-            }
+            asset:getChainIcons(sourceChain)
         },
         {
             number:2,
@@ -103,11 +114,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             text:'',
             status:STEP_STATUS.WAITING,
             doneIcon:<Done3icon/>,
-            asset:{
-                inProgress: destinationChain === ChainEnum.Prime ? PrimeInProgressIcon : VectorInProgressIcon,
-                done: sourceChain === ChainEnum.Prime ? PrimeSuccessIcon : VectorSuccessIcon,
-                error: sourceChain === ChainEnum.Prime ? PrimeErrorIcon : VectorErrorIcon
-            }
+            asset: getChainIcons(destinationChain)
         }
     ]
 
@@ -157,14 +164,6 @@ const getStepStatus = (stepNumber: number, txStatus: TransactionStatusEnum) => {
             return STEP_STATUS.DONE;
         }
         default: return STEP_STATUS.WAITING;
-    }
-}
-
-const getTransferProgress = (txStatus: TransactionStatusEnum) => {
-    switch (txStatus) {
-        case TransactionStatusEnum.ExecutedOnDestination: return TRANSFER_PROGRESS_TEXT.DONE;
-        case TransactionStatusEnum.InvalidRequest: return TRANSFER_PROGRESS_TEXT.ERROR;
-        default: return TRANSFER_PROGRESS_TEXT.IN_PROGRESS;
     }
 }
 
@@ -267,6 +266,14 @@ const TransferProgress = ({
         return response;
     }, [tx.id, fetchFunction, dispatch, setTx])
 
+    const transferProgress = (function(txStatus: TransactionStatusEnum){
+        switch (txStatus) {
+            case TransactionStatusEnum.ExecutedOnDestination: return TRANSFER_PROGRESS_TEXT.DONE;
+            case TransactionStatusEnum.InvalidRequest: return TRANSFER_PROGRESS_TEXT.ERROR;
+            default: return TRANSFER_PROGRESS_TEXT.IN_PROGRESS;
+        }
+    })(txStatusToShow)
+
 	useEffect(() => {
 		fetchTx();
 
@@ -297,11 +304,14 @@ const TransferProgress = ({
     }, [tx.destinationChain, tx.originChain, txStatusToShow])
 
     const onOpenExplorer = () => openExplorer(tx);
-
     return (
         <Box>
-            <Typography sx={{color:'white',mt:4, mb:2, textAlign:'center'}}>
-                {getTransferProgress(txStatusToShow)}
+            <Typography variant='h3' fontSize="14px" fontWeight={600} sx={{color:'white',mt:4, mb:2, textAlign:'center', textTransform:'uppercase'}}>
+                {transferProgress}
+
+                {transferProgress !== TRANSFER_PROGRESS_TEXT.DONE && transferProgress !== TRANSFER_PROGRESS_TEXT.ERROR &&
+                    <CircularProgress sx={{ marginLeft: 2, color:'white', position:'relative',top:'5px' }} size={22}/>
+                }
             </Typography>
 
             <Box sx={{
