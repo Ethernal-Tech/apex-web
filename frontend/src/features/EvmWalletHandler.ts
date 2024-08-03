@@ -72,7 +72,7 @@ class EvmWalletHandler {
         return await this.web3!.eth.net.getId();
     };
 
-    signTx = async (unsignedTx: any): Promise<SignedTransactionInfoAPI> => {
+    /* signTx = async (unsignedTx: any): Promise<SignedTransactionInfoAPI> => {
         this._checkWalletAndThrow();
         // const accounts = await this.web3!.eth.getAccounts();
         return await this.web3!.eth.signTransaction(unsignedTx);
@@ -81,7 +81,11 @@ class EvmWalletHandler {
     submitTx = async (signedTx: string): Promise<string> => {
         this._checkWalletAndThrow();
         return (await this.web3!.eth.sendSignedTransaction(signedTx)).transactionHash as string;
-    };
+    }; */
+
+    submitTx = async (tx:any) =>{
+        await this.web3!.eth.sendTransaction(tx)
+    }
 }
 
 const evmWalletHandler = new EvmWalletHandler();

@@ -16,10 +16,10 @@ type BridgeInputType = {
     bridgeTxFee: number
     createTx: (address: string, amount: number) => Promise<CreateTxResponse>
     submit:(address: string, amount: number) => Promise<void>
-    disabled?: boolean;
+    loading?: boolean;
 }
 
-const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) => {
+const BridgeInput = ({bridgeTxFee, createTx, submit, loading}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
   const [createdTx, setCreatedTx] = useState<CreateTransactionResponseDto | undefined>();
@@ -29,6 +29,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
   const chain = useSelector((state: RootState)=> state.chain.chain);
 
   const fetchCreatedTx = useCallback(async () => {
+    console.log('fetchCreatedTx - this formats the tx')
     if (!destinationAddr || !amount) {
         setCreatedTx(undefined);
         return;
@@ -81,7 +82,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
 
         <Typography sx={{color:'white',mt:4, mb:2}}>Destination Address</Typography>
         {/* validate inputs */}
-        <PasteTextInput sx={{width:'50%'}} text={destinationAddr} setText={setDestinationAddr} disabled={disabled}/>
+        <PasteTextInput sx={{width:'50%'}} text={destinationAddr} setText={setDestinationAddr} disabled={loading}/>
 
         <Typography sx={{color:'white',mt:4, mb:1}}>Enter amount to send</Typography>
         <Box sx={{
@@ -94,7 +95,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
                 maxSendableDfm={maxAmountDfm}
                 text={amount}
                 setAmount={setAmount}
-                disabled={disabled}
+                disabled={loading}
                 sx={{
                     gridColumn:'span 1',
                     borderBottom: '2px solid',
@@ -119,7 +120,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
             
             <ButtonCustom
                 onClick={onDiscard}
-                disabled={disabled}
+                disabled={loading}
                 variant="red"						
                 sx={{
                     gridColumn:'span 1',
@@ -131,7 +132,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
             <ButtonCustom 
                 onClick={onSubmit}
                 variant="white"
-                disabled={disabled}
+                disabled={loading || maxAmountDfm <= 0}
                 sx={{
                     gridColumn:'span 1',
                     textTransform:'uppercase'

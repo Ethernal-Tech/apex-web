@@ -1,8 +1,10 @@
 import { submitTransactionAction } from "../pages/Transactions/action";
-import { CreateTransactionDto, CreateTransactionResponseDto, SubmitTransactionDto } from "../swagger/apexBridgeApiService";
+import { ChainEnum, CreateTransactionDto, CreateTransactionResponseDto, SubmitTransactionDto } from "../swagger/apexBridgeApiService";
 import { tryCatchJsonByAction } from "../utils/fetchUtils";
 import { Dispatch, UnknownAction } from 'redux';
 import walletHandler from "../features/WalletHandler";
+import evmWalletHandler from "../features/EvmWalletHandler";
+import web3 from "web3";
 
 export const signAndSubmitTx = async (
     values: CreateTransactionDto,
@@ -93,3 +95,36 @@ const signAndSubmitTxUsingPrivateKey = async (
     return true;
 }
 */
+
+export const signAndSubmitNexusToPrimeFallbackTx = async (amount:number, destinationChain: ChainEnum, destinationAddress:String) => {
+    if (!evmWalletHandler.checkWallet()) {
+        throw new Error('Wallet not connected.');
+    }
+
+    const bridgeNexusAddress = '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe'
+    const addressFrom = await evmWalletHandler.getChangeAddress()
+
+    const calldata = web3.utils.asciiToHex(JSON.stringify(
+        {
+            destinationChain: destinationChain,
+            destnationAddress: destinationAddress
+        }
+    ));					
+    
+    const tx = {
+        from: addressFrom,
+        to: bridgeNexusAddress,
+        value: amount,
+        gas: 30000, // Adjust gas limit as necessary TODO - not sure about this
+        data: calldata
+    };
+    
+    return await evmWalletHandler.submitTx(tx)
+    
+}
+
+// TODO - implement
+export const signAndSubmitPrimeToNexusFallbackTx = async (amount:number, destinationChain: ChainEnum, destinationAddress:String)=>{
+    const text = 'cardano serialization library to be used'
+    return text
+}

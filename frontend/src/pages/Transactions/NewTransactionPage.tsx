@@ -13,8 +13,11 @@ import { toast } from "react-toastify";
 import { createTransactionAction } from "./action";
 import { BridgeTransactionDto, ChainEnum, CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
-import { signAndSubmitTx } from "../../actions/submitTx";
+import { signAndSubmitTx, signAndSubmitNexusToPrimeFallbackTx, signAndSubmitPrimeToNexusFallbackTx } from "../../actions/submitTx";
 import { CreateTxResponse } from "./components/types";
+import web3 from "web3";
+import walletHandler from "../../features/WalletHandler";
+import evmWalletHandler from "../../features/EvmWalletHandler";
 
 // TODO: add input validations
 function NewTransactionPage() {
@@ -24,6 +27,8 @@ function NewTransactionPage() {
 	const chain = useSelector((state: RootState)=> state.chain.chain);
 	const destinationChain = useSelector((state: RootState)=> state.chain.destinationChain);
 	const account = useSelector((state: RootState) => state.accountInfo.account);
+	const wallet = useSelector((state: RootState) => state.wallet.wallet);
+
 
 	// conditionally implementing bridgeTxFee depending on selected network
 	const bridgeTxFee = chain === ChainEnum.Nexus ? 
@@ -60,16 +65,30 @@ function NewTransactionPage() {
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: number) => {
 			setLoading(true);
-			try {
-				const createTxResp = await createTx(address, amount);
+			try {				
+				if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){ // nexus->prime							
+					const response = await signAndSubmitNexusToPrimeFallbackTx(amount, destinationChain, address)
+					console.log(response)
+					// response && setTxInProgress(response.bridgeTx) // TODO - how to handle the status, build custom dto?
+				} 
 
-				const response = await signAndSubmitTx(
-					createTxResp.createTxDto,
-					createTxResp.createResponse,
-					dispatch,
-				);
-
-				response && setTxInProgress(response.bridgeTx);
+				// cardano serialization to be used
+				else if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
+					const response = await signAndSubmitPrimeToNexusFallbackTx(amount, destinationChain, address)
+					console.log(response)
+				} 
+				else { // must be "vector-prime-vetor", create tx as usual
+					console.log('create tx, and submit tx using eternl as usual. ')
+					const createTxResp = await createTx(address, amount);
+					
+					const response = await signAndSubmitTx(
+						createTxResp.createTxDto,
+						createTxResp.createResponse,
+						dispatch,
+					);
+					
+					response && setTxInProgress(response.bridgeTx);
+				}
 			}catch(err) {
 				console.log(err);
 				toast.error(`${err}`)
@@ -157,7 +176,7 @@ function NewTransactionPage() {
 							bridgeTxFee={bridgeTxFee}
 							createTx={createTx}
 							submit={handleSubmitCallback}
-							disabled={loading}
+							loading={loading}
 						/> :
 						<TransferProgress tx={txInProgress} setTx={setTxInProgress}/>
 					}
