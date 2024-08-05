@@ -162,10 +162,10 @@ export const signAndSubmitPrimeToNexusFallbackTx = async (amount:number, destina
       const cardanoNativeApi = walletHandler.getNativeAPI();
   
       // Fetch protocol parameters from a reliable source or hardcode them if you know them
-      const linearFee = LinearFee.new(BigNum.from_str("44"), BigNum.from_str("155381")); // Example values
-      const poolDeposit = BigNum.from_str("500000000");
-      const keyDeposit = BigNum.from_str("2000000");
-      const coinsPerUtxoWord = BigNum.from_str("34482");
+      const linearFee = LinearFee.new(BigNum.from_str("47"), BigNum.from_str("158298")); // Example values
+      const poolDeposit = BigNum.from_str("0");
+      const keyDeposit = BigNum.from_str("0");
+      const coinsPerUtxoByte = BigNum.from_str("4310");
   
       // Initialize TransactionBuilder
       const txBuilder = TransactionBuilder.new(
@@ -175,7 +175,7 @@ export const signAndSubmitPrimeToNexusFallbackTx = async (amount:number, destina
           .key_deposit(keyDeposit)
           .max_value_size(5000)
           .max_tx_size(16384)
-          .coins_per_utxo_word(coinsPerUtxoWord)
+          .coins_per_utxo_byte(coinsPerUtxoByte)
           .build()
       );
   
