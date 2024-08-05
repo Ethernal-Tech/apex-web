@@ -12,4 +12,5 @@ export enum TransactionStatusEnum {
 export enum ChainEnum {
 	Prime = 'prime',
 	Vector = 'vector',
+	Nexus = 'nexus',
 }

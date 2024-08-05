@@ -98,9 +98,8 @@ export class SubmitTransactionResponseDto {
 	@ApiProperty()
 	txHash: string;
 
-	@IsNotEmpty()
-	@ApiProperty()
-	bridgeTx: BridgeTransactionDto;
+	@ApiProperty({ nullable: true })
+	bridgeTx?: BridgeTransactionDto;
 }
 
 export class TransactionResponseDto {

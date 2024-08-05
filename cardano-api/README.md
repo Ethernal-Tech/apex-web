@@ -55,7 +55,7 @@ $ go run main.go generate-configs\
 		--prime-network-magic 3311\
 		--prime-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv"\
 		--prime-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq"\
-		--prime-bridging-fallback-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv"\
+		--prime-bridging-fallback-address "addr_test1vqfuetznnmngqzquslwcu0ygn2hq29vjlpytlpwss762vcgun5vvw"\
 		--prime-ogmios-url "http://ogmios.prime.testnet.apexfusion.org:1337"\
 		--vector-network-id 2\
 		--vector-network-magic 1127\

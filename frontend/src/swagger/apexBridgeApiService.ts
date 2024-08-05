@@ -423,6 +423,7 @@ export class WalletControllerClient extends BaseClient {
 export enum ChainEnum {
     Prime = "prime",
     Vector = "vector",
+    Nexus = "nexus",
 }
 
 export class CreateTransactionReceiverDto implements ICreateTransactionReceiverDto {
@@ -820,7 +821,7 @@ export interface IBridgeTransactionDto {
 
 export class SubmitTransactionResponseDto implements ISubmitTransactionResponseDto {
     txHash!: string;
-    bridgeTx!: BridgeTransactionDto;
+    bridgeTx!: BridgeTransactionDto | undefined;
 
     constructor(data?: ISubmitTransactionResponseDto) {
         if (data) {
@@ -829,15 +830,12 @@ export class SubmitTransactionResponseDto implements ISubmitTransactionResponseD
                     (<any>this)[property] = (<any>data)[property];
             }
         }
-        if (!data) {
-            this.bridgeTx = new BridgeTransactionDto();
-        }
     }
 
     init(_data?: any) {
         if (_data) {
             this.txHash = _data["txHash"];
-            this.bridgeTx = _data["bridgeTx"] ? BridgeTransactionDto.fromJS(_data["bridgeTx"]) : new BridgeTransactionDto();
+            this.bridgeTx = _data["bridgeTx"] ? BridgeTransactionDto.fromJS(_data["bridgeTx"]) : <any>undefined;
         }
     }
 
@@ -858,7 +856,7 @@ export class SubmitTransactionResponseDto implements ISubmitTransactionResponseD
 
 export interface ISubmitTransactionResponseDto {
     txHash: string;
-    bridgeTx: BridgeTransactionDto;
+    bridgeTx: BridgeTransactionDto | undefined;
 }
 
 export class TransactionSubmittedDto implements ITransactionSubmittedDto {

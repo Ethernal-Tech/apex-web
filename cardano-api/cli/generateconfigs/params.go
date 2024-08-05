@@ -408,6 +408,13 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 				},
 			},
 		},
+		EthChains: map[string]*core.EthChainConfig{
+			common.ChainIDStrNexus: {
+				BridgingAddresses: core.BridgingAddresses{
+					FeeAddress: "",
+				},
+			},
+		},
 		BridgingSettings: core.BridgingSettings{
 			MinFeeForBridging:              1000010,
 			UtxoMinValue:                   1000000,

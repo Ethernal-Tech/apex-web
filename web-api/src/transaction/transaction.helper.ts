@@ -15,8 +15,8 @@ import { BadRequestException } from '@nestjs/common';
 
 export const createBridgingTx = async (
 	senderAddr: string,
-	sourceChainId: string,
-	destinationChainId: string,
+	sourceChainId: ChainEnum,
+	destinationChainId: ChainEnum,
 	receivers: CreateTransactionReceiverDto[],
 	bridgingFee?: number,
 ): Promise<CreateTransactionResponseDto> => {
@@ -24,7 +24,7 @@ export const createBridgingTx = async (
 	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 	const endpointUrl = apiUrl + `/api/CardanoTx/CreateBridgingTx`;
 
-	const useCentralizedBridge = process.env.USE_CENTRALIZED_BRIDGE === 'true';
+	const useCentralizedBridge = shouldUseCentralizedBridge(destinationChainId);
 
 	const body = {
 		senderAddr,
@@ -123,4 +123,13 @@ export async function getProtocolParams(chain: ChainEnum) {
 	await client.shutdown();
 
 	return protocolParams;
+}
+
+export function shouldUseCentralizedBridge(destinationChain: ChainEnum) {
+	const useCentralizedBridgeForNexus =
+		process.env.USE_CENTRALIZED_BRIDGE_FOR_NEXUS === 'true';
+	return (
+		process.env.USE_CENTRALIZED_BRIDGE === 'true' ||
+		(destinationChain === ChainEnum.Nexus && useCentralizedBridgeForNexus)
+	);
 }
