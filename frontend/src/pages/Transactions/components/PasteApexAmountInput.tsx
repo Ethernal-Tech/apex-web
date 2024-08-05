@@ -68,7 +68,7 @@ const CustomButton = styled(Button)({
 
 interface PasteApexAmountInputProps {
   sx?: SxProps<Theme>;
-  maxSendableDfm: number | null
+  maxSendableDfm: string | null
   text: string
   setAmount: (text: string) => void
   disabled?: boolean;
@@ -120,10 +120,10 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSend
   };
 
   // returns true if value of input equals max amount a user can send
-  const isMaxAmountEntered = () => maxSendableDfm && maxSendableDfm > 0 && convertApexToDfm(text, chain) !== maxSendableDfm.toString();
+  const isMaxAmountEntered = () => maxSendableDfm && BigInt(maxSendableDfm) > 0 && convertApexToDfm(text, chain) !== maxSendableDfm.toString();
   
   // Returns true if entered value to send exceedes the maximum amount a user can send (balance - fees)
-  const hasInsufficientBalance = () => maxSendableDfm && BigInt(convertApexToDfm(text, chain)) > maxSendableDfm;
+  const hasInsufficientBalance = () => maxSendableDfm && BigInt(convertApexToDfm(text, chain)) > BigInt(maxSendableDfm);
 
   return (
     <Box sx={sx}>

@@ -76,9 +76,9 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, loading}:BridgeInputType) =
     // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
   const minDfmValue = chain === ChainEnum.Nexus ? 
     appSettings.minEvmValue : appSettings.minUtxoValue;
-
-    const maxAmountDfm = totalDfmBalance ?
-    +totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue : 0;
+    
+    const maxAmountDfm:string = totalDfmBalance ?
+    (BigInt(totalDfmBalance) - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString() : '0';
     // Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null; // this causes 0 on nexus, seems to be a bug
 
   const onSubmit = useCallback(async () => {
@@ -141,7 +141,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, loading}:BridgeInputType) =
             <ButtonCustom 
                 onClick={onSubmit}
                 variant="white"
-                disabled={loading || maxAmountDfm <= 0}
+                disabled={loading || BigInt(maxAmountDfm) <= 0}
                 sx={{
                     gridColumn:'span 1',
                     textTransform:'uppercase'

@@ -111,6 +111,8 @@ export const signAndSubmitNexusToPrimeFallbackTx = async (amount:number, destina
         throw new Error('Wallet not connected.');
     }
 
+    // TODO - validate address when from nexus to prime
+
     // Bridge destination address for fallback
     const bridgeNexusAddress = '0xEe639cDA5D46Bd32D0013bB75f60F3E691D9839f' // the fallback bridge address
     
