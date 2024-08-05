@@ -30,10 +30,15 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, loading}:BridgeInputType) =
 
   const fetchCreatedTx = useCallback(async () => {
     if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
-        // TODO nick - maybe remove this from here?
-        //console.log('must format this with different service') 
+        // TODO - remove this once the tx-formatting-service works for prime->nexus
         return;
     }
+
+    if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){
+        // not used as tx is formatted in frontend (nexus->prime)
+        return;
+    }
+
     if (!destinationAddr || !amount) {
         setCreatedTx(undefined);
         return;

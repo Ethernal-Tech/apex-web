@@ -9,7 +9,7 @@ import { RootState } from "../../../redux/store";
 const TotalBalance = () => {
 	const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
     const chain = useSelector((state: RootState)=> state.chain.chain);
-    const totalBalanceInApex = totalDfmBalance ? convertDfmToApex(+totalDfmBalance, chain) : null;
+    const totalBalanceInApex = totalDfmBalance ? convertDfmToApex(totalDfmBalance, chain) : null;
     
   return (
     <Box px={'17px'} py='20px' sx={{border:'1px solid #077368',color:'#A1B3A0', background:'#075159',borderRadius:'4px', fontWeight:'500'}}>
@@ -31,9 +31,13 @@ const TotalBalance = () => {
             <Box component='span' sx={{color:'#F25041', fontWeight:'600', fontSize:'32px',lineheight:'32px'}}>
                 {totalBalanceInApex.split('.')[0]}
             </Box>
+            
+            {/* show decimals if applicable */}
+            {totalBalanceInApex.includes('.') &&
             <Box component='span' sx={{fontSize:'20px',lineheight:'24px'}}>
                 .{totalBalanceInApex.split('.')[1]}
             </Box>
+            }
         </Typography>
         }
         

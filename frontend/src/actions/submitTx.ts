@@ -111,8 +111,8 @@ export const signAndSubmitNexusToPrimeFallbackTx = async (amount:number, destina
         throw new Error('Wallet not connected.');
     }
 
-    // TODO nick - update this to real nexus fallback bridge address
-    const bridgeNexusAddress = '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe' // the fallback bridge address
+    // Bridge destination address for fallback
+    const bridgeNexusAddress = '0xEe639cDA5D46Bd32D0013bB75f60F3E691D9839f' // the fallback bridge address
     
     if(amount <= 0){
         throw new Error("Invalid amount.")
@@ -131,8 +131,9 @@ export const signAndSubmitNexusToPrimeFallbackTx = async (amount:number, destina
         from: addressFrom,
         to: bridgeNexusAddress,
         value: amount,
-        gas: 30000, // TODO nick - Adjust gas limit as necessary - not sure about this
-        data: calldata
+        data: calldata,
+        gas: 21000, // TODO nick - Adjust gas limit as necessary - not sure about this
+        gasPrice: web3.utils.toHex(web3.utils.toWei('10', 'gwei')) // TODO - adjust gas price
     };
     
     return await evmWalletHandler.submitTx(tx)

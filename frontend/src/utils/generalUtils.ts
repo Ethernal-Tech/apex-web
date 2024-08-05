@@ -97,22 +97,28 @@ export const chainIcons:{
 
 // format it differently depending on network (nexus is 18 decimals, prime and vector are 6)
 export const convertDfmToApex = (dfm:string|number, network:ChainEnum) =>{
+  // avoiding rounding errors
+  if(typeof dfm === 'number') dfm = BigInt(dfm).toString()
+
   switch(network){
       case ChainEnum.Prime:
       case ChainEnum.Vector:
-          return convertUtxoDfmToApex(+dfm);
+          return convertUtxoDfmToApex(dfm);
       case ChainEnum.Nexus:
-          return convertEvmDfmToApex(+dfm)
+          return convertEvmDfmToApex(dfm)
   }
 }
 
-export const convertApexToDfm = (dfm:string|number, network:ChainEnum) =>{
+export const convertApexToDfm = (apex:string|number, network:ChainEnum) =>{
+  // avoiding errors
+  if(typeof apex === 'number') apex = apex.toString()
+
   switch(network){
       case ChainEnum.Prime:
       case ChainEnum.Vector:
-          return convertApexToUtxoDfm(dfm);
+          return convertApexToUtxoDfm(apex);
       case ChainEnum.Nexus:
-          return convertApexToEvmDfm(dfm)
+          return convertApexToEvmDfm(apex)
   }
 }
 

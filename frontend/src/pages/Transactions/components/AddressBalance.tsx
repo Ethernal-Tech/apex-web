@@ -7,8 +7,7 @@ const AddressBalance = () => {
 	const account = useSelector((state: RootState) => state.accountInfo.account);
 	const balance = useSelector((state: RootState) => state.accountInfo.balance);
     const chain = useSelector((state: RootState)=> state.chain.chain);
-    const totalBalanceInApex = balance ? convertDfmToApex(+balance, chain) : null;
-
+    const totalBalanceInApex = balance ? convertDfmToApex(balance, chain) : null;
     return (
         <Box px={'17px'} py='20px' sx={{
                 border:'1px solid',
@@ -27,14 +26,19 @@ const AddressBalance = () => {
                     {formatAddress(account)}
                 </Typography>
             </Box>
+
             {totalBalanceInApex &&
             <Typography fontWeight={500}>
                 <Box component='span' sx={{color:'white', fontSize:'18px',lineheight:'27px'}}>
                     {totalBalanceInApex.split('.')[0]}
                 </Box>
+                
+                {/* show decimals if applicable */}
+                {totalBalanceInApex.includes('.') &&
                 <Box component='span' sx={{fontSize:'12px',lineheight:'24px'}}>
                     .{totalBalanceInApex.split('.')[1]}
-                </Box>    
+                </Box>
+                }    
             </Typography>
             }
             
