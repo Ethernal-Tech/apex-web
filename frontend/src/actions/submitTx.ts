@@ -132,8 +132,8 @@ export const signAndSubmitNexusToPrimeFallbackTx = async (amount:number, destina
         to: bridgeNexusAddress,
         value: amount,
         data: calldata,
-        gas: 21000, // TODO nick - Adjust gas limit as necessary - not sure about this
-        gasPrice: web3.utils.toHex(web3.utils.toWei('10', 'gwei')) // TODO - adjust gas price
+        gas: 30000, // TODO nick - Adjust gas limit as necessary - not sure about this
+        gasPrice: 1000000000 // TODO - adjust gas price
     };
     
     return await evmWalletHandler.submitTx(tx)
