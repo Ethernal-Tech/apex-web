@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper
 import BasePage from '../base/BasePage';
 import { useNavigate } from 'react-router-dom';
 import FullPageSpinner from '../../components/spinner/Spinner';
-import { BridgeTransactionFilterDto, BridgeTransactionResponseDto } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionDto, BridgeTransactionFilterDto, BridgeTransactionResponseDto, ChainEnum } from '../../swagger/apexBridgeApiService';
 import Filters from '../../components/filters/Filters';
 import { visuallyHidden } from '@mui/utils';
 import { headCells } from './tableConfig';
@@ -44,6 +44,51 @@ const TransactionsTablePage = () => {
           fetchFunction(bindedAction),
           fetchAndUpdateBalanceAction(dispatch),
       ])
+
+      /* fetching results from fallback db, mapping, and contactenating the items */
+      // if connected to vector - ignore try block underneath, no array merging, only use data from first response
+      if(chain !== ChainEnum.Vector){
+        try {
+          
+          let apiUrl;
+
+          if(chain === ChainEnum.Nexus){
+            // connected to nexus - only show results where destination is prime
+            apiUrl = 'https://developers.apexfusion.org/api/bridge/transactions?perPage=10000&destinationChain=prime'
+          } else {
+            
+            // showing all results as user must be connected to prime chain
+            apiUrl = 'https://developers.apexfusion.org/api/bridge/transactions?perPage=10000&destinationChain=nexus'
+          }
+          
+          const res = await fetch(apiUrl)
+          const fallbackTxs = await res.json();
+          if(fallbackTxs.BridgeTransactionResponseDto && fallbackTxs.BridgeTransactionResponseDto.items){
+            const items = fallbackTxs.BridgeTransactionResponseDto.items
+            
+
+            let newItems = items.map((item:any)=>{
+              return new BridgeTransactionDto({
+                amount: item.amount,
+                createdAt: item.createdAt,
+                destinationChain: item.destinationChain,
+                destinationTxHash: item.destinationTxHash,
+                finishedAt: item.finishedAt,
+                id: item.id,
+                originChain: item.originChain,
+                receiverAddresses: item.receiverAddress,
+                senderAddress: item.senderAddress,
+                sourceTxHash: item.sourceTxHash,
+                status: item.status
+              })
+            })
+
+            response.items = response.items.concat(newItems)
+          }
+        } catch(e){
+          console.log(e)
+        }
+      }
 
 			setTransactions(response);
 			!hideLoading && setIsLoading(false);
@@ -94,7 +139,7 @@ const TransactionsTablePage = () => {
 			
 	};
 		
-	const handleChangeRowsPerPage = (
+	/* const handleChangeRowsPerPage = (
 		event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => {
 		setFilters(state => new BridgeTransactionFilterDto({
@@ -102,7 +147,7 @@ const TransactionsTablePage = () => {
 			page: 0,
 			perPage: parseInt(event.target.value)
 		}));
-	};
+	}; */
 
 	const createSortHandler =
 		(property: string) => (event: React.MouseEvent<unknown>) => {
@@ -215,8 +260,15 @@ const TransactionsTablePage = () => {
                 </Box>
                 {capitalizeWord(transaction.destinationChain)}
               </TableCell>
-              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{convertDfmToApex(transaction.amount, transaction.originChain)} APEX</TableCell>
-              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{formatAddress(transaction.receiverAddresses)}</TableCell>
+              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
+                {convertDfmToApex(transaction.amount, transaction.originChain)} APEX
+              </TableCell>
+              
+              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
+                
+                {formatAddress(transaction.receiverAddresses)}
+              </TableCell>
+
               <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{transaction.createdAt.toLocaleString()}</TableCell>
               <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center', color:'white', borderBottom:'1px solid #435F694D'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
               <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
@@ -237,7 +289,7 @@ const TransactionsTablePage = () => {
         </TableBody>
       </Table>
     </TableContainer>
-    {!!transactions?.total &&<TablePagination
+    {/* {!!transactions?.total &&<TablePagination
           component="div"
           count={transactions.total}
           page={transactions.page}
@@ -259,7 +311,7 @@ const TransactionsTablePage = () => {
               }
             }
           }}
-    />}
+    />} */}
     </BasePage>
   );
 };
