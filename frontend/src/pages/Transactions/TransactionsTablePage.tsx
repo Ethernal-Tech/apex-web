@@ -26,6 +26,21 @@ const TransactionsTablePage = () => {
   const chain = useSelector((state: RootState) => state.chain.chain)
   const account = useSelector((state: RootState) => state.accountInfo.account);
 
+  // used to parse date returned from fallback database
+  function parseDateString(dateString:string):Date {
+    // Split the date string into components
+    const parts = dateString.split(' ');
+    const month = parts[1];
+    const day = parts[2];
+    const year = parts[3];
+    const time = parts[4];
+
+    // Create a new date string in a format that Date() can parse
+    const formattedDateString = `${month} ${day}, ${year} ${time} GMT+00:00`;
+    
+    return new Date(formattedDateString);
+  }
+
 	const [filters, setFilters] = useState(new BridgeTransactionFilterDto({
     originChain: chain,
     senderAddress: account,
@@ -66,14 +81,13 @@ const TransactionsTablePage = () => {
           if(fallbackTxs.BridgeTransactionResponseDto && fallbackTxs.BridgeTransactionResponseDto.items){
             const items = fallbackTxs.BridgeTransactionResponseDto.items
             
-
             let newItems = items.map((item:any)=>{
               return new BridgeTransactionDto({
                 amount: item.amount,
-                createdAt: item.createdAt,
+                createdAt: item.createdAt && parseDateString(item.createdAt),
                 destinationChain: item.destinationChain,
                 destinationTxHash: item.destinationTxHash,
-                finishedAt: item.finishedAt,
+                finishedAt: item.finishedAt && parseDateString(item.finishedAt),
                 id: item.id,
                 originChain: item.originChain,
                 receiverAddresses: item.receiverAddress,
@@ -84,12 +98,14 @@ const TransactionsTablePage = () => {
             })
 
             response.items = response.items.concat(newItems)
+            console.log(response.items[0].createdAt)
+
+            console.log(typeof response.items[0].createdAt)
           }
         } catch(e){
           console.log(e)
         }
       }
-
 			setTransactions(response);
 			!hideLoading && setIsLoading(false);
 
