@@ -3,6 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
 	createBridgingTx,
 	getProtocolParams,
+	shouldUseCentralizedBridge,
 	signBridgingTx,
 	submitTransaction,
 } from 'src/transaction/transaction.helper';
@@ -110,8 +111,16 @@ export class TransactionService {
 		dto: SubmitTransactionDto,
 	): Promise<SubmitTransactionResponseDto> {
 		const txHash = await submitTransaction(dto.originChain, dto.signedTxRaw);
-		const bridgeTx = await this.transactionSubmitted(dto);
-		return { txHash, bridgeTx };
+
+		const useCentralizedBridge = shouldUseCentralizedBridge(
+			dto.destinationChain,
+		);
+		if (!useCentralizedBridge) {
+			const bridgeTx = await this.transactionSubmitted(dto);
+			return { txHash, bridgeTx };
+		}
+
+		return { txHash };
 	}
 
 	async getProtocolParams(

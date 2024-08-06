@@ -91,14 +91,28 @@ function NewTransactionPage() {
 					// const response = await signAndSubmitPrimeToNexusFallbackTx(amount, destinationChain, address)
 
 					const createTxResp = await createTx(address, amount);
-					
-					const response = await signAndSubmitTx(
+
+					const txReceipt = await signAndSubmitTx(
 						createTxResp.createTxDto,
 						createTxResp.createResponse,
 						dispatch,
 					);
-					
-					response && setFallbackTxInProgress(response.bridgeTx);
+
+					txReceipt && setFallbackTxInProgress(
+						new BridgeTransactionDto({
+							amount: amount,
+							createdAt: new Date(), // removed for fallback bridge
+							destinationChain: ChainEnum.Nexus,
+							destinationTxHash: "", // removed for fallback bridge
+							finishedAt: new Date(), // removed for fallback bridge
+							id: 0, // // removed for fallback bridge
+							originChain: ChainEnum.Prime,
+							receiverAddresses: "", // removed for fallback bridge
+							senderAddress: "", // removed for fallback bridge
+							sourceTxHash: txReceipt.txHash.toString(), // tx hash on nexus
+							status: TransactionStatusEnum.Pending,
+						})
+					)
 				} 
 				// "vector-prime-vetor", so tx created and status shown as usual
 				else { 

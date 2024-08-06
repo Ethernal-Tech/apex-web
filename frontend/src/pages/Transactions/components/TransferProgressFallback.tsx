@@ -9,14 +9,10 @@ import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../../..
 import { FunctionComponent, SVGProps, useCallback, useEffect, useMemo, useState } from "react"
 import { useTryCatchJsonByAction } from "../../../utils/fetchUtils"
 import { isStatusFinal } from "../../../utils/statusUtils"
-import { getAction } from "../action"
 import { capitalizeWord } from "../../../utils/generalUtils"
 import { openExplorer } from "../../../utils/chainUtils"
-import { fetchAndUpdateBalanceAction } from "../../../actions/balance"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 // import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
-
-// asset svgs
 
 // prime icons
 import {ReactComponent as PrimeInProgressIcon} from "../../../assets/bridge-status-assets/prime-progress.svg"
@@ -42,6 +38,7 @@ import {ReactComponent as BridgeErrorIcon} from "../../../assets/bridge-status-a
 import {ReactComponent as Step1} from "../../../assets/bridge-status-assets/steps/step-1.svg"
 import {ReactComponent as Step2} from "../../../assets/bridge-status-assets/steps/step-2.svg"
 import {ReactComponent as Step3} from "../../../assets/bridge-status-assets/steps/step-3.svg"
+import { RootState } from "../../../redux/store"
 /* 
 const NexusInProgressIcon = VectorInProgressIcon;
 const NexusSuccessIcon = VectorSuccessIcon;
@@ -238,13 +235,27 @@ const TransferProgress = ({
     const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();
     const [txStatusToShow, setTxStatusToShow] = useState<TransactionStatusEnum>(tx.status);
-    
+    const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
+
     const fetchTx = useCallback(async () => {
        try {
         // TODO nick - add link to actual api here
         // const response = await fetch('http://127.0.0.1/txstatus/primeToNexus/' + tx.sourceTxHash) as unknown as BridgeTransactionDto
 
-        const res = await fetch('https://api.npoint.io/00f76d974a3df3f7e3ba')
+        let apiUrl;
+        if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
+            apiUrl = `https://developers.apexfusion.org/api/txStatus/primeToNexus/${tx.sourceTxHash}`;
+        } else if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){
+            apiUrl = `https://developers.apexfusion.org/api/txStatus/nexusToPrime/${tx.sourceTxHash}`;
+        }
+        
+        if(!apiUrl){
+            return console.error('Unable to query for tx status - Not a fallback path.')
+        }
+
+        const res = await fetch(apiUrl);
+        // const res = await fetch('https://api.npoint.io/00f76d974a3df3f7e3ba')
+
         const response = await res.json() as unknown as BridgeTransactionDto
 
         // const response = { status: TransactionStatusEnum.ExecutedOnDestination}

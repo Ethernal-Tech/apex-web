@@ -22,6 +22,11 @@ type BridgingAddresses struct {
 	FallbackAddress string `json:"fallbackAddress"`
 }
 
+type EthChainConfig struct {
+	ChainID           string            `json:"-"`
+	BridgingAddresses BridgingAddresses `json:"bridgingAddresses"`
+}
+
 type CardanoChainConfig struct {
 	ChainID           string                           `json:"-"`
 	NetworkMagic      uint32                           `json:"networkMagic"`
@@ -42,6 +47,7 @@ type BridgingSettings struct {
 
 type AppConfig struct {
 	CardanoChains    map[string]*CardanoChainConfig `json:"cardanoChains"`
+	EthChains        map[string]*EthChainConfig     `json:"ethChains"`
 	Settings         AppSettings                    `json:"appSettings"`
 	BridgingSettings BridgingSettings               `json:"bridgingSettings"`
 	APIConfig        APIConfig                      `json:"api"`
@@ -53,4 +59,20 @@ func (appConfig *AppConfig) FillOut() {
 		cardanoChainConfig.ChainSpecific.NetworkID = cardanoChainConfig.NetworkID
 		cardanoChainConfig.ChainSpecific.NetworkMagic = cardanoChainConfig.NetworkMagic
 	}
+
+	for chainID, ethChainConfig := range appConfig.EthChains {
+		ethChainConfig.ChainID = chainID
+	}
+}
+
+func GetChainConfig(appConfig *AppConfig, chainID string) (*CardanoChainConfig, *EthChainConfig) {
+	if cardanoChainConfig, exists := appConfig.CardanoChains[chainID]; exists {
+		return cardanoChainConfig, nil
+	}
+
+	if ethChainConfig, exists := appConfig.EthChains[chainID]; exists {
+		return nil, ethChainConfig
+	}
+
+	return nil, nil
 }
