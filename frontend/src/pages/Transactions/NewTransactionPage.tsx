@@ -64,13 +64,10 @@ function NewTransactionPage() {
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: number) => {
 			setLoading(true);
-			try {				
+			try {	
+				// nexus->prime
 				if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){ // nexus->prime						
 					const txReceipt = await signAndSubmitNexusToPrimeFallbackTx(amount, destinationChain, address)
-					
-					/* const txReceipt = {
-						transactionHash: 'this_is_the_tx_hash'
-					} */
 
 					txReceipt && setFallbackTxInProgress(
 						new BridgeTransactionDto({
@@ -89,13 +86,22 @@ function NewTransactionPage() {
 					)
 				} 
 
-				// cardano serialization to be used
+				// prime->nexus, API service formats tx as fallBack, and setFallbackTxInProgress is used 
 				else if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
-					const response = await signAndSubmitPrimeToNexusFallbackTx(amount, destinationChain, address)
-					// txReceipt && setFallbackTxInProgress() // TODO nick - later
+					// const response = await signAndSubmitPrimeToNexusFallbackTx(amount, destinationChain, address)
+
+					const createTxResp = await createTx(address, amount);
+					
+					const response = await signAndSubmitTx(
+						createTxResp.createTxDto,
+						createTxResp.createResponse,
+						dispatch,
+					);
+					
+					response && setFallbackTxInProgress(response.bridgeTx);
 				} 
-				else { // must be "vector-prime-vetor", create tx as usual
-					// creating tx as usual
+				// "vector-prime-vetor", so tx created and status shown as usual
+				else { 
 					const createTxResp = await createTx(address, amount);
 					
 					const response = await signAndSubmitTx(

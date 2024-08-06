@@ -29,10 +29,10 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, loading}:BridgeInputType) =
   const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
 
   const fetchCreatedTx = useCallback(async () => {
-    if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
+    /* if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
         // TODO - remove this once the tx-formatting-service works for prime->nexus
         return;
-    }
+    } */
 
     if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){
         // not used as tx is formatted in frontend (nexus->prime)
