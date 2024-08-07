@@ -1,7 +1,7 @@
 import { useState, useRef, ChangeEvent, useEffect, useCallback } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TablePagination, Box, TableSortLabel, SortDirection, Typography } from '@mui/material';
 import BasePage from '../base/BasePage';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { BridgeTransactionDto, BridgeTransactionFilterDto, BridgeTransactionResponseDto, ChainEnum } from '../../swagger/apexBridgeApiService';
 import Filters from '../../components/filters/Filters';
@@ -19,7 +19,6 @@ const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
 	const [isLoading, setIsLoading] = useState(false);
 	const tableRef = useRef(null);
-	const navigate = useNavigate();
   const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();
 	
@@ -50,19 +49,24 @@ const TransactionsTablePage = () => {
       if(chain !== ChainEnum.Vector){
         try {
           
-          let apiUrl;
+          // const apiUrl = `https://developers.apexfusion.org/api/bridge/transactions?perPage=10000&originChain=${chain}`; // might not need origin chain
+          const apiUrl = `https://developers.apexfusion.org/api/bridge/transactions?perPage=1000000`; // applied automatically
 
-          if(chain === ChainEnum.Nexus){
-            // connected to nexus - only show results where destination is prime
-            apiUrl = 'https://developers.apexfusion.org/api/bridge/transactions?perPage=10000&destinationChain=prime'
-          } else {
-            
-            // showing all results as user must be connected to prime chain
-            apiUrl = 'https://developers.apexfusion.org/api/bridge/transactions?perPage=10000&destinationChain=nexus'
-          }
+          console.log('filters:')
+          console.log(filters)
           
-          const res = await fetch(apiUrl)
+          // construct query string for applied filters
+          let queryString = Object.entries(filters)
+            .filter(([key, value]) => value !== undefined && key !== 'page' && key !== 'perPage') // pagination disabled for url
+            .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+            .join('&');
+          
+          const fullApiUrl = apiUrl + '&' + queryString
+          console.log(fullApiUrl)
+
+          const res = await fetch(fullApiUrl)
           const fallbackTxs = await res.json();
+          
           if(fallbackTxs.BridgeTransactionResponseDto && fallbackTxs.BridgeTransactionResponseDto.items){
             const items = fallbackTxs.BridgeTransactionResponseDto.items
             
@@ -82,7 +86,13 @@ const TransactionsTablePage = () => {
               })
             })
 
-            response.items = response.items.concat(newItems)
+            let mergedItems = response.items.concat(newItems)
+            
+            // filtering based on amounts
+            mergedItems = mergedItems.filter((item)=> filters.amountFrom ? item.amount >= filters.amountFrom : true)
+            mergedItems = mergedItems.filter((item)=> filters.amountTo ? item.amount <= filters.amountTo : true)
+            
+            response.items = mergedItems;
           }
         } catch(e){
           console.error(e)
