@@ -1,7 +1,7 @@
 import { useState, useRef, ChangeEvent, useEffect, useCallback } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TablePagination, Box, TableSortLabel, SortDirection, Typography } from '@mui/material';
 import BasePage from '../base/BasePage';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { BridgeTransactionDto, BridgeTransactionFilterDto, BridgeTransactionResponseDto, ChainEnum } from '../../swagger/apexBridgeApiService';
 import Filters from '../../components/filters/Filters';
@@ -10,7 +10,7 @@ import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
+import { capitalizeWord, convertDfmToApex, formatAddress, formatTxDetailUrl, getChainLabelAndColor, parseDateString } from '../../utils/generalUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { fetchAndUpdateBalanceAction } from '../../actions/balance';
@@ -25,21 +25,6 @@ const TransactionsTablePage = () => {
 	
   const chain = useSelector((state: RootState) => state.chain.chain)
   const account = useSelector((state: RootState) => state.accountInfo.account);
-
-  // used to parse date returned from fallback database
-  function parseDateString(dateString:string):Date {
-    // Split the date string into components
-    const parts = dateString.split(' ');
-    const month = parts[1];
-    const day = parts[2];
-    const year = parts[3];
-    const time = parts[4];
-
-    // Create a new date string in a format that Date() can parse
-    const formattedDateString = `${month} ${day}, ${year} ${time} GMT+00:00`;
-    
-    return new Date(formattedDateString);
-  }
 
 	const [filters, setFilters] = useState(new BridgeTransactionFilterDto({
     originChain: chain,
@@ -98,12 +83,9 @@ const TransactionsTablePage = () => {
             })
 
             response.items = response.items.concat(newItems)
-            console.log(response.items[0].createdAt)
-
-            console.log(typeof response.items[0].createdAt)
           }
         } catch(e){
-          console.log(e)
+          console.error(e)
         }
       }
 			setTransactions(response);
@@ -296,9 +278,10 @@ const TransactionsTablePage = () => {
                 </Box>
               </TableCell>
               <TableCell sx={{ borderBottom:'1px solid #435F694D'}}>
-                <Button variant="text" sx={{color:'red', background:'none'}} onClick={() => navigate(`/transaction/${transaction.id}`)}>
+                
+                <Link style={{color:'red', background:'none',textDecoration:'none'}} to={formatTxDetailUrl(transaction)}>
                   View Details
-                </Button>
+                </Link>
               </TableCell>
             </TableRow>
           ))}

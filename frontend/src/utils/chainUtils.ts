@@ -44,23 +44,28 @@ export const areChainsEqual = (chain: ChainEnum, networkId: number|bigint): bool
 
 const PRIME_EXPLORER_URL = 'https://prime-apex.ethernal.tech'
 const VECTOR_EXPLORER_URL = 'https://vector-apex.ethernal.tech'
+const NEXUS_EXPLORER_URL = 'https://explorer-testnet.af.route3.dev'
 
 const getExplorerTxUrl = (chain: ChainEnum) => {
-    let baseUrl
+    let url
     switch (chain) {
         case ChainEnum.Prime: {
-            baseUrl = PRIME_EXPLORER_URL;
+            url = `${PRIME_EXPLORER_URL}/transaction/hash`;
             break;
         }
         case ChainEnum.Vector: {
-            baseUrl = VECTOR_EXPLORER_URL;
+            url = `${VECTOR_EXPLORER_URL}/transaction/hash`;
+            break;
+        }
+        case ChainEnum.Nexus: {
+            url = `${NEXUS_EXPLORER_URL}/tx`;
             break;
         }
         default:
             return;
     }
 
-    return `${baseUrl}/transaction/hash`;
+    return url;
 }
 
 export const openExplorer = (tx: BridgeTransactionDto | undefined) => {

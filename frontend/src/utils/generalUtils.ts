@@ -1,6 +1,6 @@
 import { NewAddress } from "../features/Address/addreses";
 import appSettings from "../settings/appSettings";
-import { ChainEnum } from "../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, ChainEnum } from "../swagger/apexBridgeApiService";
 import { areChainsEqual } from "./chainUtils";
 import Web3 from "web3";
 
@@ -127,4 +127,39 @@ export const toBytes = (hex: string): Uint8Array => {
         return Buffer.from(hex, 'hex');
 
     return Buffer.from(hex, 'utf-8');
+};
+
+// used to parse date returned from fallback database
+export const parseDateString = (dateString:string):Date => {
+  // Split the date string into components
+  const parts = dateString.split(' ');
+  const month = parts[1];
+  const day = parts[2];
+  const year = parts[3];
+  const time = parts[4];
+
+  // Create a new date string in a format that Date() can parse
+  const formattedDateString = `${month} ${day}, ${year} ${time} GMT+00:00`;
+  
+  return new Date(formattedDateString);
+}
+
+export const formatTxDetailUrl = (transaction:BridgeTransactionDto): string =>{
+  const idParam = 
+  (
+    (transaction.originChain === ChainEnum.Prime && transaction.destinationChain === ChainEnum.Nexus)
+    || (transaction.originChain === ChainEnum.Nexus && transaction.destinationChain === ChainEnum.Prime)
+  ) 
+  ? transaction.sourceTxHash 
+  : transaction.id;
+
+  return `/transaction/${idParam}?originChain=${transaction.originChain}&destinationChain=${transaction.destinationChain}`
+}
+
+export const isHexTransactionHash = (value: string): boolean => {
+  return /^0x([A-Fa-f0-9]{64})$/.test(value);
+};
+
+export const isPrimeVectorTransactionHash = (value: string): boolean => {
+  return /^[A-Fa-f0-9]{64}$/.test(value);
 };
