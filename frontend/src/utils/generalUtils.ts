@@ -144,6 +144,7 @@ export const parseDateString = (dateString:string):Date => {
   return new Date(formattedDateString);
 }
 
+
 export const formatTxDetailUrl = (transaction:BridgeTransactionDto): string =>{
   const idParam = 
   (
@@ -156,10 +157,40 @@ export const formatTxDetailUrl = (transaction:BridgeTransactionDto): string =>{
   return `/transaction/${idParam}?originChain=${transaction.originChain}&destinationChain=${transaction.destinationChain}`
 }
 
-export const isHexTransactionHash = (value: string): boolean => {
-  return /^0x([A-Fa-f0-9]{64})$/.test(value);
-};
+/* Used to sort transactions in frontend based on order and orderBy filter parameters */
+export const sortTransactions = (transactions: BridgeTransactionDto[], order: 'asc'|'desc', orderBy:string)=>{
+  switch(orderBy){
+    case 'amount':
+      return transactions.sort((a,b)=> order === 'asc' ? a.amount - b.amount : b.amount - a.amount);
 
-export const isPrimeVectorTransactionHash = (value: string): boolean => {
-  return /^[A-Fa-f0-9]{64}$/.test(value);
-};
+    case 'createdAt':
+      return transactions.sort((a,b)=> {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : -Infinity;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : -Infinity;
+        return order === 'asc' ? dateA - dateB : dateB - dateA;
+      })
+
+    case 'finishedAt':
+      return transactions.sort((a,b)=>{
+        const dateA = a.finishedAt ? new Date(a.finishedAt).getTime() : -Infinity;
+        const dateB = b.finishedAt ? new Date(b.finishedAt).getTime() : -Infinity;
+      
+        return order === 'asc' ? dateA - dateB : dateB - dateA;
+      })
+
+    case 'status':
+    case 'originChain':
+    case 'destinationChain':
+    case 'receiverAddresses':
+      return transactions.sort((a,b)=>{
+        const itemA = a[orderBy];
+        const itemB = b[orderBy];
+
+      
+        return order === 'asc' ? itemA.localeCompare(itemB) : itemB.localeCompare(itemA);
+      })
+
+    default:
+      return transactions
+  }
+}

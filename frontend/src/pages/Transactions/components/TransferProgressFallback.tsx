@@ -1,7 +1,7 @@
 import { Box, CircularProgress, Typography } from "@mui/material"
-import {ReactComponent as Done1icon} from "../../../assets/bridge-status-icons/step-done1.svg"
-import {ReactComponent as Done2icon} from "../../../assets/bridge-status-icons/step-done2.svg"
-import {ReactComponent as Done3icon} from "../../../assets/bridge-status-icons/step-done3.svg"
+import {ReactComponent as DoneGreenIcon} from "../../../assets/bridge-status-icons/step-done1.svg"
+import {ReactComponent as DoneBridgeIcon} from "../../../assets/bridge-status-icons/step-done2.svg"
+import {ReactComponent as DoneRedIcon} from "../../../assets/bridge-status-icons/step-done3.svg"
 import ButtonCustom from "../../../components/Buttons/ButtonCustom"
 import { TRANSACTIONS_ROUTE } from "../../PageRouter"
 import { useNavigate } from "react-router-dom"
@@ -90,7 +90,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step1,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<Done1icon/>,
+            doneIcon: sourceChain === ChainEnum.Prime ? <DoneGreenIcon/> : <DoneRedIcon/>,
             asset:getChainIcons(sourceChain)
         },
         {
@@ -98,7 +98,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step2,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<Done2icon/>,
+            doneIcon:<DoneBridgeIcon/>,
             asset:{
                 inProgress: BridgeInProgressIcon,
                 done: BridgeSuccessIcon,
@@ -110,7 +110,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step3,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<Done3icon/>,
+            doneIcon: destinationChain === ChainEnum.Prime ? <DoneGreenIcon/> : <DoneRedIcon/>,
             asset: getChainIcons(destinationChain)
         }
     ]
@@ -239,9 +239,6 @@ const TransferProgress = ({
 
     const fetchTx = useCallback(async () => {
        try {
-        // TODO nick - add link to actual api here
-        // const response = await fetch('http://127.0.0.1/txstatus/primeToNexus/' + tx.sourceTxHash) as unknown as BridgeTransactionDto
-
         let apiUrl;
         if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
             apiUrl = `https://developers.apexfusion.org/api/txStatus/primeToNexus/${tx.sourceTxHash}`;
@@ -254,7 +251,6 @@ const TransferProgress = ({
         }
 
         const res = await fetch(apiUrl);
-        // const res = await fetch('https://api.npoint.io/00f76d974a3df3f7e3ba')
 
         const response = await res.json() as unknown as BridgeTransactionDto
 

@@ -10,7 +10,7 @@ import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, convertDfmToApex, formatAddress, formatTxDetailUrl, getChainLabelAndColor, parseDateString } from '../../utils/generalUtils';
+import { capitalizeWord, convertDfmToApex, formatAddress, formatTxDetailUrl, getChainLabelAndColor, parseDateString, sortTransactions } from '../../utils/generalUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { fetchAndUpdateBalanceAction } from '../../actions/balance';
@@ -57,7 +57,11 @@ const TransactionsTablePage = () => {
           
           // construct query string for applied filters
           let queryString = Object.entries(filters)
-            .filter(([key, value]) => value !== undefined && key !== 'page' && key !== 'perPage') // pagination disabled for url
+
+            // TODO nick - remove senderAddress key exclusion once backend fixes senderAddress entering
+            .filter(([key, value]) => value !== undefined && key !== 'page' && key !== 'perPage' && key !== 'senderAddress') // pagination from filters disabled for url
+            // .filter(([key, value]) => value !== undefined && key !== 'page' && key !== 'perPage') // TODO nick - this should be used once backend senderAddress entering is fixed
+
             .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
             .join('&');
           
@@ -91,7 +95,15 @@ const TransactionsTablePage = () => {
             // filtering based on amounts
             mergedItems = mergedItems.filter((item)=> filters.amountFrom ? item.amount >= filters.amountFrom : true)
             mergedItems = mergedItems.filter((item)=> filters.amountTo ? item.amount <= filters.amountTo : true)
-            
+
+            // TODO nick - remove this once our backend corrects entering of senderAddress
+            mergedItems = mergedItems.filter((item)=> filters.senderAddress ? item.senderAddress.replaceAll(',','') === filters.senderAddress : true)
+
+            const {order, orderBy} = filters
+            if(orderBy && order && (order === 'asc' || order === 'desc')){
+              mergedItems = sortTransactions(mergedItems, order, orderBy)
+            }
+
             response.items = mergedItems;
           }
         } catch(e){
