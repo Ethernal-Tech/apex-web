@@ -39,22 +39,22 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
           <Box component="span">{userWalletFee > 0 ? convertDfmToApex(userWalletFee, chain) : '0'} APEX</Box>
         </Typography>
         
-        {bridgeTxFee ? (
-          <Typography sx={{
-            display:'flex',
-            justifyContent:'space-between'
-          }}>
-            <Box 
-              component="span" 
-              sx={{
-                color:'rgba(255,255,255,0.6)'
-              }}>
-                Bridge Transaction Fee:
-            </Box>
-            {/* TODO AF - check this conversion is correct */}
-            <Box component="span">{convertDfmToApex(bridgeTxFee, chain)} APEX</Box>
-          </Typography>
-        ) : null}
+        
+        <Typography sx={{
+          display:'flex',
+          justifyContent:'space-between'
+        }}>
+          <Box 
+            component="span" 
+            sx={{
+              color:'rgba(255,255,255,0.6)'
+            }}>
+              Bridge Transaction Fee:
+          </Box>
+          {/* TODO AF - check this conversion is correct */}
+          <Box component="span">{bridgeTxFee > 0 ? convertDfmToApex(bridgeTxFee, chain): '0'} APEX</Box>
+        </Typography>
+        
 
         <Typography sx={{
           display:'flex',
