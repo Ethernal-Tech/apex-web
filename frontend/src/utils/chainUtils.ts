@@ -2,8 +2,9 @@ import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagg
 
 const PRIME_NETWORK_ID = 0
 const VECTOR_NETWORK_ID = 2
+const NEXUS_NETWORK_ID = BigInt(9070) // for Nexus
 
-export const fromNetworkIdToChain = (networkId: number): ChainEnum | undefined => {
+export const fromNetworkIdToChain = (networkId: number|bigint): ChainEnum | undefined => {
     switch (networkId) {
         case PRIME_NETWORK_ID: {
             return ChainEnum.Prime;
@@ -11,12 +12,15 @@ export const fromNetworkIdToChain = (networkId: number): ChainEnum | undefined =
         case VECTOR_NETWORK_ID: {
             return ChainEnum.Vector;
         }
+        case NEXUS_NETWORK_ID: {
+            return ChainEnum.Nexus;
+        }
         default:
             return;
     }
 }
 
-export const fromChainToNetworkId = (chain: ChainEnum): number | undefined => {
+export const fromChainToNetworkId = (chain: ChainEnum): number | bigint | undefined => {
     switch (chain) {
         case ChainEnum.Prime: {
             return PRIME_NETWORK_ID;
@@ -24,34 +28,42 @@ export const fromChainToNetworkId = (chain: ChainEnum): number | undefined => {
         case ChainEnum.Vector: {
             return VECTOR_NETWORK_ID;
         }
+        case ChainEnum.Nexus: {
+            return NEXUS_NETWORK_ID;
+        }
         default:
             return;
     }
 }
 
-export const areChainsEqual = (chain: ChainEnum, networkId: number): boolean => {
+export const areChainsEqual = (chain: ChainEnum, networkId: number|bigint): boolean => {
     return chain === fromNetworkIdToChain(networkId);
 }
 
 const PRIME_EXPLORER_URL = 'https://prime-apex.ethernal.tech'
 const VECTOR_EXPLORER_URL = 'https://vector-apex.ethernal.tech'
+const NEXUS_EXPLORER_URL = 'https://explorer-testnet.af.route3.dev'
 
 const getExplorerTxUrl = (chain: ChainEnum) => {
-    let baseUrl
+    let url
     switch (chain) {
         case ChainEnum.Prime: {
-            baseUrl = PRIME_EXPLORER_URL;
+            url = `${PRIME_EXPLORER_URL}/transaction/hash`;
             break;
         }
         case ChainEnum.Vector: {
-            baseUrl = VECTOR_EXPLORER_URL;
+            url = `${VECTOR_EXPLORER_URL}/transaction/hash`;
+            break;
+        }
+        case ChainEnum.Nexus: {
+            url = `${NEXUS_EXPLORER_URL}/tx`;
             break;
         }
         default:
             return;
     }
 
-    return `${baseUrl}/transaction/hash`;
+    return url;
 }
 
 export const openExplorer = (tx: BridgeTransactionDto | undefined) => {

@@ -1,3 +1,4 @@
+import EvmWalletHandler, { EVM_SUPPORTED_WALLETS } from "../features/EvmWalletHandler";
 import walletHandler, { SUPPORTED_WALLETS } from "../features/WalletHandler";
 import { setWalletAction } from "../redux/slices/walletSlice";
 import { Dispatch } from 'redux';
@@ -5,6 +6,7 @@ import { logout } from "./logout";
 import { toast } from "react-toastify";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { areChainsEqual } from "../utils/chainUtils";
+import evmWalletHandler from "../features/EvmWalletHandler";
 import { setConnectingAction } from "../redux/slices/loginSlice";
 import { setChainAction } from "../redux/slices/chainSlice";
 import { NavigateFunction } from "react-router-dom";
@@ -15,38 +17,79 @@ import { setAccountInfoAction } from "../redux/slices/accountInfoSlice";
 
 let onLoadCalled = false
 
-const enableWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
+const enableEvmWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
+    await EvmWalletHandler.enable();
+    let success = evmWalletHandler.checkWallet()
+
+    if (!success) {
+        throw new Error('Failed to connect to wallet.');
+    }
+
+    const networkId = await evmWalletHandler.getNetworkId();
+
+    if (!areChainsEqual(chain, networkId)) {
+        throw new Error(`chain: ${chain} not compatible with networkId: ${networkId}`);
+    }
+    const account = await evmWalletHandler.getChangeAddress();
+    const balanceResp = await tryCatchJsonByAction(() => getWalletBalanceAction(chain, account), dispatch); 
+
+    dispatch(setWalletAction(selectedWalletName));
+    dispatch(setAccountInfoAction({
+        account, networkId: networkId, balance: balanceResp?.balance || '0',
+    }))
+    
+    return true
+}
+
+const enableCardanoWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
+    await walletHandler.enable(selectedWalletName);
+    let success = walletHandler.checkWallet();
+
+    if (!success) {
+        throw new Error('Failed to connect to wallet.');
+    }
+
+    const networkId = await walletHandler.getNetworkId();
+    if (!areChainsEqual(chain, networkId)) {
+        throw new Error(`chain: ${chain} not compatible with networkId: ${networkId}`);
+    }
+
+    const account = await walletHandler.getChangeAddress();
+    const balanceResp = await tryCatchJsonByAction(() => getWalletBalanceAction(chain, account), dispatch); 
+
+    dispatch(setWalletAction(selectedWalletName));
+    dispatch(setAccountInfoAction({
+        account, networkId, balance: balanceResp?.balance || '0',
+    }))
+
+    return true;
+}
+
+const enableWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {// 1. nexus (evm metamask) wallet login handling
+    if(chain === ChainEnum.Nexus){
+        try {
+            return await enableEvmWallet(selectedWalletName, chain, dispatch)
+        } catch (e) {
+            console.log(e)
+            toast.error(`${e}`);
+        }
+
+        evmWalletHandler.clearEnabledWallet()
+        return false;
+    }
+
+    // 2. prime and vector (cardano eternl) wallet login handling
     try {
-        await walletHandler.enable(selectedWalletName);
-        let success = walletHandler.checkWallet();
-
-        if (!success) {
-            throw new Error('Failed to connect to wallet.');
-        }
-
-        const networkId = await walletHandler.getNetworkId();
-        if (!areChainsEqual(chain, networkId)) {
-            throw new Error(`chain: ${chain} not compatible with networkId: ${networkId}`);
-        }
-
-        const account = await walletHandler.getChangeAddress();
-        const balanceResp = await tryCatchJsonByAction(() => getWalletBalanceAction(chain, account), dispatch); 
-
-        dispatch(setWalletAction(selectedWalletName));
-        dispatch(setAccountInfoAction({
-            account, networkId, balance: balanceResp.balance || '0',
-        }))
-
-        return true;
+        return await enableCardanoWallet(selectedWalletName, chain, dispatch)
     } catch (e) {
         console.log(e)
         toast.error(`${e}`);
     }
 
     walletHandler.clearEnabledWallet()
-
     return false;
 }
+
 
 const connectWallet = async (wallet: string, chain: ChainEnum, dispatch: Dispatch) => {
     dispatch(setConnectingAction(true));
@@ -68,11 +111,20 @@ export const onLoad = async (selectedWalletName: string, chain: ChainEnum, dispa
 }
 
 export const login = async (chain: ChainEnum, navigate: NavigateFunction, dispatch: Dispatch) => {
-    const wallets = walletHandler.getInstalledWallets();
-    const wallet = wallets.length > 0 ? wallets[0].name : undefined;
+    let wallet 
+
+    if (chain === ChainEnum.Nexus) {
+        const wallets = evmWalletHandler.getInstalledWallets();
+        wallet = wallets.length > 0 ? wallets[0].name : undefined;
+    } else {
+        const wallets = walletHandler.getInstalledWallets();
+        wallet = wallets.length > 0 ? wallets[0].name : undefined;
+    }
+
 
     if (!wallet) {
-        toast.error(`Can not find any supported wallets installed. Supported wallets: ${SUPPORTED_WALLETS}`);
+        const supportedWallets = chain === ChainEnum.Nexus ? EVM_SUPPORTED_WALLETS : SUPPORTED_WALLETS;
+        toast.error(`Can not find any supported wallets installed. Supported wallets: ${supportedWallets}`);
         return false;
     }
 

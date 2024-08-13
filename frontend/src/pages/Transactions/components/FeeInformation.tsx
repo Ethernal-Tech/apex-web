@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, styled, SxProps, Theme, Typography } from '@mui/material';
 import { convertDfmToApex } from '../../../utils/generalUtils';
+import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 
 const CustomBox = styled(Box)({
   background:'#075159'
@@ -10,9 +11,10 @@ interface FeeInformationProps {
   sx?: SxProps<Theme>;
   userWalletFee: number;
   bridgeTxFee: number;
+  chain: ChainEnum
 }
 
-const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, bridgeTxFee }) => {
+const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, bridgeTxFee, chain }) => {
 
   return (
     <CustomBox sx={{
@@ -33,24 +35,26 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
             }}>
               User Wallet Fee:
           </Box>
-          <Box component="span">{convertDfmToApex(userWalletFee)} APEX</Box>
+          {/* TODO AF - check this conversion is correct */}
+          <Box component="span">{userWalletFee > 0 ? convertDfmToApex(userWalletFee, chain) : '0'} APEX</Box>
         </Typography>
         
-        {bridgeTxFee && (
-          <Typography sx={{
-            display:'flex',
-            justifyContent:'space-between'
-          }}>
-            <Box 
-              component="span" 
-              sx={{
-                color:'rgba(255,255,255,0.6)'
-              }}>
-                Bridge Transaction Fee:
-            </Box>
-            <Box component="span">{convertDfmToApex(bridgeTxFee)} APEX</Box>
-          </Typography>
-        )}
+        
+        <Typography sx={{
+          display:'flex',
+          justifyContent:'space-between'
+        }}>
+          <Box 
+            component="span" 
+            sx={{
+              color:'rgba(255,255,255,0.6)'
+            }}>
+              Bridge Transaction Fee:
+          </Box>
+          {/* TODO AF - check this conversion is correct */}
+          <Box component="span">{bridgeTxFee > 0 ? convertDfmToApex(bridgeTxFee, chain): '0'} APEX</Box>
+        </Typography>
+        
 
         <Typography sx={{
           display:'flex',

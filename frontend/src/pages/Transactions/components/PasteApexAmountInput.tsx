@@ -1,6 +1,9 @@
 import React from 'react';
 import { TextField, Button, Box, styled, SxProps, Theme, Typography } from '@mui/material';
 import { convertApexToDfm, convertDfmToApex } from '../../../utils/generalUtils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../redux/store';
+import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 // import './CustomStyles.css'; // Import the CSS file
 
 
@@ -65,44 +68,46 @@ const CustomButton = styled(Button)({
 
 interface PasteApexAmountInputProps {
   sx?: SxProps<Theme>;
-  maxAmountDfm: number | null
+  maxSendableDfm: string | null
   text: string
-  setText: (text: string) => void
+  setAmount: (text: string) => void
   disabled?: boolean;
 }
 
-const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmountDfm, text, setText, disabled }) => {
+const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSendableDfm, text, setAmount, disabled }) => {
+  const chain = useSelector((state: RootState)=> state.chain.chain);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>{
-    if(!maxAmountDfm){
+    if(!maxSendableDfm){
       return e.preventDefault()
     }
 
     const apexInput = e.target.value;
     // check right side decimals
     const [,right] = apexInput.split('.')
-    if(right && right.length >6) {
+    if(right && chain === ChainEnum.Nexus && right.length >18) {
+      return e.preventDefault()
+    } else if(right && (chain === ChainEnum.Prime || chain === ChainEnum.Vector ) && right.length > 6){
       return e.preventDefault()
     }
     
-    const dfmValue = convertApexToDfm(apexInput)
-    
-    if (dfmValue < 0) {
+    const dfmValueInput = convertApexToDfm(apexInput,chain)
+    if (BigInt(dfmValueInput) < 0) {
       e.preventDefault()
-      return setText('0')
+      return setAmount('')
     }
 
-    setText(apexInput)
+    setAmount(apexInput)
   }
   
   const handleMaxClick = () => {
-    if(maxAmountDfm){
-      setText(convertDfmToApex(maxAmountDfm));
+    if(maxSendableDfm){
+      setAmount(convertDfmToApex(maxSendableDfm,chain));
     }
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'e' || event.key === 'E' || event.key === 'space') {
+    if (event.key === 'e' || event.key === 'E' || event.key === 'space' || event.key === '-') {
       event.preventDefault();
     }
   };
@@ -113,6 +118,12 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
       event.preventDefault();
     }
   };
+
+  // returns true if value of input equals max amount a user can send
+  const isMaxAmountEntered = () => maxSendableDfm && BigInt(maxSendableDfm) > 0 && convertApexToDfm(text, chain) !== maxSendableDfm.toString();
+  
+  // Returns true if entered value to send exceedes the maximum amount a user can send (balance - fees)
+  const hasInsufficientBalance = () => maxSendableDfm && BigInt(convertApexToDfm(text, chain)) > BigInt(maxSendableDfm);
 
   return (
     <Box sx={sx}>
@@ -129,13 +140,13 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
                 disabled={disabled}
                 sx={{paddingRight:'50px'}}
             />
-            {/* show max button only if max amount has not been entered */}
-            {maxAmountDfm && convertApexToDfm(+text) !== maxAmountDfm && (
+            {/* show max button only if enough funds present, and entered value varies from actual max amount */}
+            {isMaxAmountEntered() && (
                 <CustomButton variant="contained" onClick={handleMaxClick}>
-                MAX
+                  MAX
                 </CustomButton>
             )}
-            { maxAmountDfm && convertApexToDfm(text) > +maxAmountDfm && 
+            { hasInsufficientBalance() &&
               <Typography sx={{color:'#ff5e5e',position:'absolute',bottom:0,left:0}}>Insufficient funds</Typography>
             }
         </Box>

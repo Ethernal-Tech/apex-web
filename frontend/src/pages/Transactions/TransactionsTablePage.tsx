@@ -1,16 +1,16 @@
 import { useState, useRef, ChangeEvent, useEffect, useCallback } from 'react';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TablePagination, Box, TableSortLabel, SortDirection, Typography } from '@mui/material';
 import BasePage from '../base/BasePage';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import FullPageSpinner from '../../components/spinner/Spinner';
-import { BridgeTransactionFilterDto, BridgeTransactionResponseDto } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionDto, BridgeTransactionFilterDto, BridgeTransactionResponseDto, ChainEnum } from '../../swagger/apexBridgeApiService';
 import Filters from '../../components/filters/Filters';
 import { visuallyHidden } from '@mui/utils';
 import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor } from '../../utils/generalUtils';
+import { capitalizeWord, convertDfmToApex, formatAddress, formatTxDetailUrl, getChainLabelAndColor, parseDateString, sortTransactions } from '../../utils/generalUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { fetchAndUpdateBalanceAction } from '../../actions/balance';
@@ -19,7 +19,6 @@ const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
 	const [isLoading, setIsLoading] = useState(false);
 	const tableRef = useRef(null);
-	const navigate = useNavigate();
   const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();
 	
@@ -45,6 +44,72 @@ const TransactionsTablePage = () => {
           fetchAndUpdateBalanceAction(dispatch),
       ])
 
+      /* fetching results from fallback db, mapping, and contactenating the items */
+      // if connected to vector - ignore try block underneath, no array merging, only use data from first response
+      if(chain !== ChainEnum.Vector){
+        try {
+          
+          // const apiUrl = `https://developers.apexfusion.org/api/bridge/transactions?perPage=10000&originChain=${chain}`; // might not need origin chain
+          const apiUrl = `https://developers.apexfusion.org/api/bridge/transactions?perPage=1000000`; // applied automatically
+
+          console.log('filters:')
+          console.log(filters)
+          
+          // construct query string for applied filters
+          let queryString = Object.entries(filters)
+
+            // TODO nick - remove senderAddress key exclusion once backend fixes senderAddress entering
+            .filter(([key, value]) => value !== undefined && key !== 'page' && key !== 'perPage' && key !== 'senderAddress') // pagination from filters disabled for url
+            // .filter(([key, value]) => value !== undefined && key !== 'page' && key !== 'perPage') // TODO nick - this should be used once backend senderAddress entering is fixed
+
+            .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+            .join('&');
+          
+          const fullApiUrl = apiUrl + '&' + queryString
+          console.log(fullApiUrl)
+
+          const res = await fetch(fullApiUrl)
+          const fallbackTxs = await res.json();
+          
+          if(fallbackTxs.BridgeTransactionResponseDto && fallbackTxs.BridgeTransactionResponseDto.items){
+            const items = fallbackTxs.BridgeTransactionResponseDto.items
+            
+            let newItems = items.map((item:any)=>{
+              return new BridgeTransactionDto({
+                amount: item.amount,
+                createdAt: item.createdAt && parseDateString(item.createdAt),
+                destinationChain: item.destinationChain,
+                destinationTxHash: item.destinationTxHash,
+                finishedAt: item.finishedAt && parseDateString(item.finishedAt),
+                id: item.id,
+                originChain: item.originChain,
+                receiverAddresses: item.receiverAddress,
+                senderAddress: item.senderAddress,
+                sourceTxHash: item.sourceTxHash,
+                status: item.status
+              })
+            })
+
+            let mergedItems = response.items.concat(newItems)
+            
+            // filtering based on amounts
+            mergedItems = mergedItems.filter((item)=> filters.amountFrom ? item.amount >= filters.amountFrom : true)
+            mergedItems = mergedItems.filter((item)=> filters.amountTo ? item.amount <= filters.amountTo : true)
+
+            // TODO nick - remove this once our backend corrects entering of senderAddress
+            mergedItems = mergedItems.filter((item)=> filters.senderAddress ? item.senderAddress.replaceAll(',','') === filters.senderAddress : true)
+
+            const {order, orderBy} = filters
+            if(orderBy && order && (order === 'asc' || order === 'desc')){
+              mergedItems = sortTransactions(mergedItems, order, orderBy)
+            }
+
+            response.items = mergedItems;
+          }
+        } catch(e){
+          console.error(e)
+        }
+      }
 			setTransactions(response);
 			!hideLoading && setIsLoading(false);
 
@@ -94,7 +159,7 @@ const TransactionsTablePage = () => {
 			
 	};
 		
-	const handleChangeRowsPerPage = (
+	/* const handleChangeRowsPerPage = (
 		event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
 	) => {
 		setFilters(state => new BridgeTransactionFilterDto({
@@ -102,7 +167,7 @@ const TransactionsTablePage = () => {
 			page: 0,
 			perPage: parseInt(event.target.value)
 		}));
-	};
+	}; */
 
 	const createSortHandler =
 		(property: string) => (event: React.MouseEvent<unknown>) => {
@@ -215,8 +280,15 @@ const TransactionsTablePage = () => {
                 </Box>
                 {capitalizeWord(transaction.destinationChain)}
               </TableCell>
-              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{convertDfmToApex(transaction.amount)} APEX</TableCell>
-              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{formatAddress(transaction.receiverAddresses)}</TableCell>
+              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
+                {convertDfmToApex(transaction.amount, transaction.originChain)} APEX
+              </TableCell>
+              
+              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
+                
+                {formatAddress(transaction.receiverAddresses)}
+              </TableCell>
+
               <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{transaction.createdAt.toLocaleString()}</TableCell>
               <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center', color:'white', borderBottom:'1px solid #435F694D'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
               <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
@@ -228,16 +300,17 @@ const TransactionsTablePage = () => {
                 </Box>
               </TableCell>
               <TableCell sx={{ borderBottom:'1px solid #435F694D'}}>
-                <Button variant="text" sx={{color:'red', background:'none'}} onClick={() => navigate(`/transaction/${transaction.id}`)}>
+                
+                <Link style={{color:'red', background:'none',textDecoration:'none'}} to={formatTxDetailUrl(transaction)}>
                   View Details
-                </Button>
+                </Link>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </TableContainer>
-    {!!transactions?.total &&<TablePagination
+    {/* {!!transactions?.total &&<TablePagination
           component="div"
           count={transactions.total}
           page={transactions.page}
@@ -259,7 +332,7 @@ const TransactionsTablePage = () => {
               }
             }
           }}
-    />}
+    />} */}
     </BasePage>
   );
 };

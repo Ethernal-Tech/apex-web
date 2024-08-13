@@ -3,7 +3,7 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 
 export interface IAccountInfoState {
 	account: string,
-	networkId: number,
+	networkId: number|bigint,
 	balance: string,
 }
 

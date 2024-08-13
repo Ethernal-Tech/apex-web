@@ -43,12 +43,12 @@ const HomePage: React.FC = () => {
       borderColor:'#F25041'
     },
     // TODO af - nexus removed for now
-    /* { 
-      value: 'nexus',
-      label: 'Nexus',
-      icon: chainIcons.nexus,
+    { 
+      value: ChainEnum.Nexus,
+      label: capitalizeWord(ChainEnum.Nexus),
+      icon: chainIcons[ChainEnum.Nexus],
       borderColor: '#F27B50'
-    } */
+    }
   ];
 
 
@@ -67,7 +67,6 @@ const HomePage: React.FC = () => {
   }
 
   const switchValues = () => {
-    console.log('switch')
     const temp = chain;
     dispatch(setChainAction(destinationChain));
     dispatch(setDestinationChainAction(temp));
@@ -97,7 +96,7 @@ const HomePage: React.FC = () => {
             label="Source"
             icon={getIconComponent(chain)}
             value={chain}
-            disabled={isLoggedInMemo ? true : false}
+            disabled={isLoggedInMemo}
             onChange={(e) => updateSource(e.target.value as ChainEnum)}
             options={supportedChainOptions}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
@@ -105,7 +104,7 @@ const HomePage: React.FC = () => {
         </Box>
         <Button 
           onClick={switchValues} 
-          disabled={isLoggedInMemo ? true : false} 
+          disabled={isLoggedInMemo} 
           sx={{ 
             mt: '20px', 
             mx:'28px', 
@@ -120,9 +119,19 @@ const HomePage: React.FC = () => {
             label="Destination"
             icon={getIconComponent(destinationChain)}
             value={destinationChain}
-            disabled={isLoggedInMemo ? true : false}
+            disabled={chain !== ChainEnum.Prime}
             onChange={(e) => updateDestination(e.target.value as ChainEnum)}
-            options={supportedChainOptions}
+            // todo - makeshift fix, check out details later
+            options={supportedChainOptions.filter(x => {
+              // if source chain not prime, destination can only be prime
+              if(chain !== ChainEnum.Prime){
+                // set destination chain to prime if not already
+                if(destinationChain !== ChainEnum.Prime) dispatch(setDestinationChainAction(ChainEnum.Prime));
+                return x.value === ChainEnum.Prime
+              }
+              return x.value !== chain
+              
+            })}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
           />
         </Box>

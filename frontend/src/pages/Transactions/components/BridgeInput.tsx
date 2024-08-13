@@ -6,40 +6,51 @@ import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
-import { CreateTxResponse } from './types';
-import { CreateTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
-import appSettings from '../../../settings/appSettings';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
+import { CreateTxResponse } from './types';
+import { ChainEnum, CreateTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
+import appSettings from '../../../settings/appSettings';
 
 type BridgeInputType = {
     bridgeTxFee: number
     createTx: (address: string, amount: number) => Promise<CreateTxResponse>
     submit:(address: string, amount: number) => Promise<void>
-    disabled?: boolean;
+    loading?: boolean;
 }
 
-const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) => {
+const BridgeInput = ({bridgeTxFee, createTx, submit, loading}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
   const [createdTx, setCreatedTx] = useState<CreateTransactionResponseDto | undefined>();
   const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
+  const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
 
   const fetchCreatedTx = useCallback(async () => {
+    /* if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
+        // TODO - remove this once the tx-formatting-service works for prime->nexus
+        return;
+    } */
+
+    if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){
+        // not used as tx is formatted in frontend (nexus->prime)
+        return;
+    }
+
     if (!destinationAddr || !amount) {
         setCreatedTx(undefined);
         return;
     }
 
     try {
-        const createdTxResp = await createTx(destinationAddr, convertApexToDfm(amount || '0'));
+        const createdTxResp = await createTx(destinationAddr, +convertApexToDfm(amount || '0', chain));
         setCreatedTx(createdTxResp.createResponse);
     } catch {
         setCreatedTx(undefined);
     }
-  }, [amount, createTx, destinationAddr])
+  }, [amount, chain, createTx, destinationAddr])
 
   useEffect(() => {
     if (fetchCreateTxTimeoutRef.current) {
@@ -62,12 +73,17 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
     setAmount('')
   }
 
-  const maxAmountDfm = totalDfmBalance
-    ? Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - appSettings.minUtxoValue, 0) : null;
+    // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
+  const minDfmValue = chain === ChainEnum.Nexus ? 
+    appSettings.minEvmValue : appSettings.minUtxoValue;
+    
+    const maxAmountDfm:string = totalDfmBalance ?
+    (BigInt(totalDfmBalance) - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString() : '0';
+    // Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null; // this causes 0 on nexus, seems to be a bug
 
   const onSubmit = useCallback(async () => {
-    await submit(destinationAddr, convertApexToDfm(amount || '0'))
-  }, [amount, destinationAddr, submit]) 
+    await submit(destinationAddr, +convertApexToDfm(amount || '0', chain))
+  }, [amount, destinationAddr, submit, chain]) 
 
   return (
     <Box sx={{width:'100%'}}>
@@ -75,7 +91,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
 
         <Typography sx={{color:'white',mt:4, mb:2}}>Destination Address</Typography>
         {/* validate inputs */}
-        <PasteTextInput sx={{width:'50%'}} text={destinationAddr} setText={setDestinationAddr} disabled={disabled}/>
+        <PasteTextInput sx={{width:'50%'}} text={destinationAddr} setText={setDestinationAddr} disabled={loading}/>
 
         <Typography sx={{color:'white',mt:4, mb:1}}>Enter amount to send</Typography>
         <Box sx={{
@@ -85,10 +101,10 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
         }}>
             {/* validate inputs */}
             <PasteApexAmountInput
-                maxAmountDfm={maxAmountDfm}
+                maxSendableDfm={maxAmountDfm}
                 text={amount}
-                setText={setAmount}
-                disabled={disabled}
+                setAmount={setAmount}
+                disabled={loading}
                 sx={{
                     gridColumn:'span 1',
                     borderBottom: '2px solid',
@@ -101,6 +117,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
             <FeeInformation
                 userWalletFee={createdTx?.txFee || 0}
                 bridgeTxFee={bridgeTxFee}
+                chain={chain}
                 sx={{
                     gridColumn:'span 1',
                     border: '1px solid #077368',
@@ -112,7 +129,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
             
             <ButtonCustom
                 onClick={onDiscard}
-                disabled={disabled}
+                disabled={loading}
                 variant="red"						
                 sx={{
                     gridColumn:'span 1',
@@ -124,7 +141,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, disabled}:BridgeInputType) 
             <ButtonCustom 
                 onClick={onSubmit}
                 variant="white"
-                disabled={disabled}
+                disabled={loading || BigInt(maxAmountDfm) <= 0}
                 sx={{
                     gridColumn:'span 1',
                     textTransform:'uppercase'

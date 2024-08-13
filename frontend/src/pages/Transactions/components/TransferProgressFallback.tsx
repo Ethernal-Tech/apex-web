@@ -1,7 +1,7 @@
 import { Box, CircularProgress, Typography } from "@mui/material"
-import {ReactComponent as Done1icon} from "../../../assets/bridge-status-icons/step-done1.svg"
-import {ReactComponent as Done2icon} from "../../../assets/bridge-status-icons/step-done2.svg"
-import {ReactComponent as Done3icon} from "../../../assets/bridge-status-icons/step-done3.svg"
+import {ReactComponent as DoneGreenIcon} from "../../../assets/bridge-status-icons/step-done1.svg"
+import {ReactComponent as DoneBridgeIcon} from "../../../assets/bridge-status-icons/step-done2.svg"
+import {ReactComponent as DoneRedIcon} from "../../../assets/bridge-status-icons/step-done3.svg"
 import ButtonCustom from "../../../components/Buttons/ButtonCustom"
 import { TRANSACTIONS_ROUTE } from "../../PageRouter"
 import { useNavigate } from "react-router-dom"
@@ -9,14 +9,10 @@ import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../../..
 import { FunctionComponent, SVGProps, useCallback, useEffect, useMemo, useState } from "react"
 import { useTryCatchJsonByAction } from "../../../utils/fetchUtils"
 import { isStatusFinal } from "../../../utils/statusUtils"
-import { getAction } from "../action"
 import { capitalizeWord } from "../../../utils/generalUtils"
 import { openExplorer } from "../../../utils/chainUtils"
-import { fetchAndUpdateBalanceAction } from "../../../actions/balance"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 // import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
-
-// asset svgs
 
 // prime icons
 import {ReactComponent as PrimeInProgressIcon} from "../../../assets/bridge-status-assets/prime-progress.svg"
@@ -42,6 +38,7 @@ import {ReactComponent as BridgeErrorIcon} from "../../../assets/bridge-status-a
 import {ReactComponent as Step1} from "../../../assets/bridge-status-assets/steps/step-1.svg"
 import {ReactComponent as Step2} from "../../../assets/bridge-status-assets/steps/step-2.svg"
 import {ReactComponent as Step3} from "../../../assets/bridge-status-assets/steps/step-3.svg"
+import { RootState } from "../../../redux/store"
 /* 
 const NexusInProgressIcon = VectorInProgressIcon;
 const NexusSuccessIcon = VectorSuccessIcon;
@@ -93,7 +90,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step1,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<Done1icon/>,
+            doneIcon: sourceChain === ChainEnum.Prime ? <DoneGreenIcon/> : <DoneRedIcon/>,
             asset:getChainIcons(sourceChain)
         },
         {
@@ -101,7 +98,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step2,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<Done2icon/>,
+            doneIcon:<DoneBridgeIcon/>,
             asset:{
                 inProgress: BridgeInProgressIcon,
                 done: BridgeSuccessIcon,
@@ -113,7 +110,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step3,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<Done3icon/>,
+            doneIcon: destinationChain === ChainEnum.Prime ? <DoneGreenIcon/> : <DoneRedIcon/>,
             asset: getChainIcons(destinationChain)
         }
     ]
@@ -238,32 +235,53 @@ const TransferProgress = ({
     const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();
     const [txStatusToShow, setTxStatusToShow] = useState<TransactionStatusEnum>(tx.status);
-    
-    const fetchTx = useCallback(async () => {
-        const bindedAction = getAction.bind(null, tx.id);
+    const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
 
-        const [response] = await Promise.all([
-            fetchFunction(bindedAction),
-            fetchAndUpdateBalanceAction(dispatch),
-        ])
+    const fetchTx = useCallback(async () => {
+       try {
+        let apiUrl;
+        if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
+            apiUrl = `https://developers.apexfusion.org/api/txStatus/primeToNexus/${tx.sourceTxHash}`;
+        } else if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){
+            apiUrl = `https://developers.apexfusion.org/api/txStatus/nexusToPrime/${tx.sourceTxHash}`;
+        }
+        
+        if(!apiUrl){
+            return console.error('Unable to query for tx status - Not a fallback path.')
+        }
+
+        const res = await fetch(apiUrl);
+
+        const response = await res.json() as unknown as BridgeTransactionDto
+
+        // const response = { status: TransactionStatusEnum.ExecutedOnDestination}
 
         if (response) {
-            setTx(response);
+            const status = response.status
+            const newTx = Object.assign({},tx);
+            newTx.status = status; // this will be the new status
+            console.log(status)
+
+            setTx(newTx);
             setTxStatusToShow(
                 (prev) => {
                     if (prev === TransactionStatusEnum.SubmittedToDestination &&
-                        (response.status === TransactionStatusEnum.IncludedInBatch ||
-                        response.status === TransactionStatusEnum.FailedToExecuteOnDestination)) {
+                        (status === TransactionStatusEnum.IncludedInBatch ||
+                        status === TransactionStatusEnum.FailedToExecuteOnDestination)) {
                         // this happens on bridge sometimes, so to prevent user confusion, we ignore it
                         return prev;
                     }
     
-                    return response.status
+                    return status
                 }
             );
         }
-
         return response;
+       } catch(e){
+        console.log(e)
+       }
+
+
     }, [tx.id, fetchFunction, dispatch, setTx])
 
     const transferProgress = (function(txStatus: TransactionStatusEnum){

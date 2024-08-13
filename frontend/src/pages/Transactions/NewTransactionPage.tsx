@@ -3,6 +3,7 @@ import BasePage from "../base/BasePage";
 import AddressBalance from "./components/AddressBalance";
 import TotalBalance from "./components/TotalBalance";
 import TransferProgress from "./components/TransferProgress";
+import FallbackTransferProgress from "./components/TransferProgressFallback";
 import BridgeInput from "./components/BridgeInput";
 import { chainIcons, validateSubmitTxInputs } from "../../utils/generalUtils";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,21 +12,26 @@ import { useCallback, useState } from "react";
 import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createTransactionAction } from "./action";
-import { BridgeTransactionDto, CreateTransactionDto, CreateTransactionReceiverDto } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, ChainEnum, CreateTransactionDto, CreateTransactionReceiverDto, TransactionStatusEnum } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
-import { signAndSubmitTx } from "../../actions/submitTx";
+import { signAndSubmitTx, signAndSubmitNexusToPrimeFallbackTx, signAndSubmitPrimeToNexusFallbackTx } from "../../actions/submitTx";
 import { CreateTxResponse } from "./components/types";
 
 // TODO: add input validations
 function NewTransactionPage() {
 	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
+	const [fallbackTxInProgress, setFallbackTxInProgress] = useState<BridgeTransactionDto | undefined>();
+
 	const [loading, setLoading] = useState(false);
 	
 	const chain = useSelector((state: RootState)=> state.chain.chain);
 	const destinationChain = useSelector((state: RootState)=> state.chain.destinationChain);
 	const account = useSelector((state: RootState) => state.accountInfo.account);
 
-	const bridgeTxFee = appSettings.bridgingFee;
+
+	// conditionally implementing bridgeTxFee depending on selected network
+	const bridgeTxFee = chain === ChainEnum.Nexus ? 
+		appSettings.nexusBridgingFee : appSettings.primeVectorBridgingFee;
 
 	// TODO - update these to check for nexus when implemented
 	const SourceIcon = chainIcons[chain];
@@ -35,7 +41,7 @@ function NewTransactionPage() {
 	const fetchFunction = useTryCatchJsonByAction();
 
 	const createTx = useCallback(async (address: string, amount: number): Promise<CreateTxResponse> => {
-		const validationErr = validateSubmitTxInputs(destinationChain, address, amount);
+		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount);
 		if (validationErr) {
 			throw new Error(validationErr);
 		}
@@ -58,16 +64,68 @@ function NewTransactionPage() {
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: number) => {
 			setLoading(true);
-			try {
-				const createTxResp = await createTx(address, amount);
+			try {	
+				// nexus->prime
+				if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){ // nexus->prime						
+					const txReceipt = await signAndSubmitNexusToPrimeFallbackTx(amount, destinationChain, address)
 
-				const response = await signAndSubmitTx(
-					createTxResp.createTxDto,
-					createTxResp.createResponse,
-					dispatch,
-				);
+					txReceipt && setFallbackTxInProgress(
+						new BridgeTransactionDto({
+							amount: amount,
+							createdAt: new Date(), // removed for fallback bridge
+							destinationChain: ChainEnum.Prime,
+							destinationTxHash: "", // removed for fallback bridge
+							finishedAt: new Date(), // removed for fallback bridge
+							id: 0, // // removed for fallback bridge
+							originChain: ChainEnum.Nexus,
+							receiverAddresses: "", // removed for fallback bridge
+							senderAddress: "", // removed for fallback bridge
+							sourceTxHash: txReceipt.transactionHash.toString(), // tx hash on nexus
+							status: TransactionStatusEnum.Pending,
+						})
+					)
+				} 
 
-				response && setTxInProgress(response.bridgeTx);
+				// prime->nexus, API service formats tx as fallBack, and setFallbackTxInProgress is used 
+				else if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
+					// const response = await signAndSubmitPrimeToNexusFallbackTx(amount, destinationChain, address)
+
+					const createTxResp = await createTx(address, amount);
+
+					const txReceipt = await signAndSubmitTx(
+						createTxResp.createTxDto,
+						createTxResp.createResponse,
+						dispatch,
+					);
+
+					txReceipt && setFallbackTxInProgress(
+						new BridgeTransactionDto({
+							amount: amount,
+							createdAt: new Date(), // removed for fallback bridge
+							destinationChain: ChainEnum.Nexus,
+							destinationTxHash: "", // removed for fallback bridge
+							finishedAt: new Date(), // removed for fallback bridge
+							id: 0, // // removed for fallback bridge
+							originChain: ChainEnum.Prime,
+							receiverAddresses: "", // removed for fallback bridge
+							senderAddress: "", // removed for fallback bridge
+							sourceTxHash: txReceipt.txHash.toString(), // tx hash on nexus
+							status: TransactionStatusEnum.Pending,
+						})
+					)
+				} 
+				// "vector-prime-vetor", so tx created and status shown as usual
+				else { 
+					const createTxResp = await createTx(address, amount);
+					
+					const response = await signAndSubmitTx(
+						createTxResp.createTxDto,
+						createTxResp.createResponse,
+						dispatch,
+					);
+					
+					response && setTxInProgress(response.bridgeTx);
+				}
 			}catch(err) {
 				console.log(err);
 				toast.error(`${err}`)
@@ -125,7 +183,7 @@ function NewTransactionPage() {
 				{/* left side */}
 				<Box sx={{
 					gridColumn:'span 2', 
-					borderTop:'2px solid #077368',
+					borderTop:`2px solid ${chain === ChainEnum.Prime ? '#077368' : '#F25041'}`,
 					p:2,
 					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
 					[tabletMediaQuery]:{
@@ -142,7 +200,7 @@ function NewTransactionPage() {
 				{/* right side */}
 				<Box sx={{
 					gridColumn:'span 4', 
-					borderTop:'2px solid #F25041',
+					borderTop:`2px solid ${destinationChain === ChainEnum.Prime ? '#077368' : '#F25041'}`,
 					p:2,
 					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
 					[tabletMediaQuery]:{
@@ -150,15 +208,20 @@ function NewTransactionPage() {
 					}
 				}}>
 					{/* conditional display of right side element */}
-					{!txInProgress ?
+					{!txInProgress && !fallbackTxInProgress &&
 						<BridgeInput
 							bridgeTxFee={bridgeTxFee}
 							createTx={createTx}
 							submit={handleSubmitCallback}
-							disabled={loading}
-						/> :
-						<TransferProgress tx={txInProgress} setTx={setTxInProgress}/>
+							loading={loading}
+						/>
 					}
+
+					{/* for regular bridge tx's */}
+					{txInProgress && <TransferProgress tx={txInProgress} setTx={setTxInProgress}/>}
+
+					{/* for nexus->prime->nexus transactions (fallback) */}
+					{fallbackTxInProgress && <FallbackTransferProgress tx={fallbackTxInProgress} setTx={setFallbackTxInProgress}/>}
 				</Box>
 			</Box>
 		</BasePage>

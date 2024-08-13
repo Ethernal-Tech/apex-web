@@ -1,7 +1,8 @@
 import { NewAddress } from "../features/Address/addreses";
 import appSettings from "../settings/appSettings";
-import { ChainEnum } from "../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, ChainEnum } from "../swagger/apexBridgeApiService";
 import { areChainsEqual } from "./chainUtils";
+import Web3 from "web3";
 
 // chain icons
 import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
@@ -31,58 +32,94 @@ export const getChainLabelAndColor = (chain: string):{letter:string, color: stri
 };
 
 export const formatAddress = (address:string|undefined):string => {
-    if(!address) return '';
-  
-    // No need to format if the address is 13 chars long or shorter
-    if (address.length <= 13) return address;
-  
-    const firstPart = address.substring(0, 7);
-    const lastPart = address.substring(address.length - 5);
-    return `${firstPart}...${lastPart}`;
-  }
+  if(!address) return '';
 
+  // No need to format if the address is 13 chars long or shorter
+  if (address.length <= 13) return address;
 
-const DFM_APEX_CONVERSION_RATE = 10**6
-
-// Convert the APEX amount to a string with appropriate formatting
-export const convertDfmToApex = (dfm:number):string =>{
-  const apex = dfm / DFM_APEX_CONVERSION_RATE; // divide by 1,000,000 (6 decimals)
-
-  // Here we use toFixed to ensure six decimal places, adjust if needed
-  return apex.toFixed(6); // Adjust decimal places as required
+  const firstPart = address.substring(0, 7);
+  const lastPart = address.substring(address.length - 5);
+  return `${firstPart}...${lastPart}`;
 }
 
-// converts a string representing an APEX amount (300.01) to a it's dfm number equivalent (300010000)
-export const convertApexToDfm = (apex: string|number) => {
-  const dfm = +apex * DFM_APEX_CONVERSION_RATE // multiply by 6 decimals
-  return dfm;
+// converts dfm to apex (prime and vector)
+const convertUtxoDfmToApex = (dfm:string|number):string =>{
+  return Web3.utils.fromWei(dfm,'lovelace');
+}
+
+// converts apex to dfm (prime and vector)
+const convertApexToUtxoDfm = (apex: string|number):string => {
+  return Web3.utils.toWei(apex,'lovelace');
+}
+
+// convert wei to dfm (nexus)
+const convertEvmDfmToApex = (dfm:string|number):string =>{
+  return Web3.utils.fromWei(dfm,'ether');
+}
+
+// convert eth to wei (nexus)
+const convertApexToEvmDfm = (apex: string|number):string => {
+  return Web3.utils.toWei(apex,'ether');
 }
 
 export const validateSubmitTxInputs = (
-  destinationChain: ChainEnum, destinationAddr: string, amount: number,
+  sourceChain: ChainEnum, destinationChain: ChainEnum, destinationAddr: string, amount: number,
 ): string | undefined => {
-  if (amount < appSettings.minUtxoValue) {
-    return `Amount less than minimum: ${convertDfmToApex(appSettings.minUtxoValue)} APEX`;
+  if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector) && amount < appSettings.minUtxoValue) {
+    return `Amount less than minimum: ${convertUtxoDfmToApex(appSettings.minUtxoValue)} APEX`;
+  } else if(sourceChain === ChainEnum.Nexus && amount < appSettings.minEvmValue){
+    return `Amount less than minimum: ${convertEvmDfmToApex(appSettings.minUtxoValue)} APEX`;
   }
 
-  const addr = NewAddress(destinationAddr);
-  if (!addr || destinationAddr !== addr.String()) {
-    return `Invalid destination address: ${destinationAddr}`;
-  }
-
-  if (!areChainsEqual(destinationChain, addr.GetNetwork())) {
-    return `Destination address not compatible with destination chain: ${destinationChain}`;
+  if (destinationChain === ChainEnum.Prime || destinationChain === ChainEnum.Vector) {
+    const addr = NewAddress(destinationAddr);
+    if (!addr || destinationAddr !== addr.String()) {
+      return `Invalid destination address: ${destinationAddr}`;
+    }
+  
+    if (!areChainsEqual(destinationChain, addr.GetNetwork())) {
+      return `Destination address not compatible with destination chain: ${destinationChain}`;
+    }
+  } else {
+    // TODO: validate destination evm address
   }
 }
 
 export const chainIcons:{
   [ChainEnum.Prime]:FunctionComponent<SVGProps<SVGSVGElement>>
   [ChainEnum.Vector]:FunctionComponent<SVGProps<SVGSVGElement>>
-  nexus:FunctionComponent<SVGProps<SVGSVGElement>>
+  [ChainEnum.Nexus]:FunctionComponent<SVGProps<SVGSVGElement>>
 } = {
   [ChainEnum.Prime]:PrimeIcon,
   [ChainEnum.Vector]:VectorIcon,
-  nexus:NexusIcon
+  [ChainEnum.Nexus]:NexusIcon
+}
+
+// format it differently depending on network (nexus is 18 decimals, prime and vector are 6)
+export const convertDfmToApex = (dfm:string|number, network:ChainEnum) =>{
+  // avoiding rounding errors
+  if(typeof dfm === 'number') dfm = BigInt(dfm).toString()
+
+  switch(network){
+      case ChainEnum.Prime:
+      case ChainEnum.Vector:
+          return convertUtxoDfmToApex(dfm);
+      case ChainEnum.Nexus:
+          return convertEvmDfmToApex(dfm)
+  }
+}
+
+export const convertApexToDfm = (apex:string|number, network:ChainEnum) =>{
+  // avoiding errors
+  if(typeof apex === 'number') apex = apex.toString()
+
+  switch(network){
+      case ChainEnum.Prime:
+      case ChainEnum.Vector:
+          return convertApexToUtxoDfm(apex);
+      case ChainEnum.Nexus:
+          return convertApexToEvmDfm(apex)
+  }
 }
 
 export const toBytes = (hex: string): Uint8Array => {
@@ -91,3 +128,69 @@ export const toBytes = (hex: string): Uint8Array => {
 
     return Buffer.from(hex, 'utf-8');
 };
+
+// used to parse date returned from fallback database
+export const parseDateString = (dateString:string):Date => {
+  // Split the date string into components
+  const parts = dateString.split(' ');
+  const month = parts[1];
+  const day = parts[2];
+  const year = parts[3];
+  const time = parts[4];
+
+  // Create a new date string in a format that Date() can parse
+  const formattedDateString = `${month} ${day}, ${year} ${time} GMT+00:00`;
+  
+  return new Date(formattedDateString);
+}
+
+
+export const formatTxDetailUrl = (transaction:BridgeTransactionDto): string =>{
+  const idParam = 
+  (
+    (transaction.originChain === ChainEnum.Prime && transaction.destinationChain === ChainEnum.Nexus)
+    || (transaction.originChain === ChainEnum.Nexus && transaction.destinationChain === ChainEnum.Prime)
+  ) 
+  ? transaction.sourceTxHash 
+  : transaction.id;
+
+  return `/transaction/${idParam}?originChain=${transaction.originChain}&destinationChain=${transaction.destinationChain}`
+}
+
+/* Used to sort transactions in frontend based on order and orderBy filter parameters */
+export const sortTransactions = (transactions: BridgeTransactionDto[], order: 'asc'|'desc', orderBy:string)=>{
+  switch(orderBy){
+    case 'amount':
+      return transactions.sort((a,b)=> order === 'asc' ? a.amount - b.amount : b.amount - a.amount);
+
+    case 'createdAt':
+      return transactions.sort((a,b)=> {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : -Infinity;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : -Infinity;
+        return order === 'asc' ? dateA - dateB : dateB - dateA;
+      })
+
+    case 'finishedAt':
+      return transactions.sort((a,b)=>{
+        const dateA = a.finishedAt ? new Date(a.finishedAt).getTime() : -Infinity;
+        const dateB = b.finishedAt ? new Date(b.finishedAt).getTime() : -Infinity;
+      
+        return order === 'asc' ? dateA - dateB : dateB - dateA;
+      })
+
+    case 'status':
+    case 'originChain':
+    case 'destinationChain':
+    case 'receiverAddresses':
+      return transactions.sort((a,b)=>{
+        const itemA = a[orderBy];
+        const itemB = b[orderBy];
+
+      
+        return order === 'asc' ? itemA.localeCompare(itemB) : itemB.localeCompare(itemA);
+      })
+
+    default:
+      return transactions
+  }
+}
