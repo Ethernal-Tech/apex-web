@@ -49,12 +49,11 @@ const PageRouter: React.FC = () => {
 
   return (
     <Routes>
-      <Route path={HOME_ROUTE} element={withMiddleware(() => renderHomePage)({})} />
-      <Route path={TRANSACTIONS_ROUTE} element={withMiddleware(() => renderTransactionsPage)({})} />
-      <Route path={NEW_TRANSACTION_ROUTE} element={withMiddleware(() => renderNewTransactionPage)({})} />
-      <Route path={TRANSACTION_DETAILS_ROUTE} element={withMiddleware(() => renderTransactionDetailsPage)({})} />
-
-      <Route path='*' element={withMiddleware(() => renderHomePage)({})} />
+        <Route path={HOME_ROUTE} element={withMiddleware(() => renderHomePage)({})} />
+        <Route path={TRANSACTIONS_ROUTE} element={withMiddleware(() => renderTransactionsPage)({})} />
+        <Route path={NEW_TRANSACTION_ROUTE} element={withMiddleware(() => renderNewTransactionPage)({})} />
+        <Route path={TRANSACTION_DETAILS_ROUTE} element={withMiddleware(() => renderTransactionDetailsPage)({})} />
+        <Route path='*' element={withMiddleware(() => renderHomePage)({})} />
     </Routes>
   );
 };
