@@ -1,7 +1,7 @@
 import { AppBar, Button, CircularProgress, ListItemIcon, ListItemText, Menu, MenuItem, Toolbar } from "@mui/material"
 import { useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { TRANSACTIONS_ROUTE, NEW_TRANSACTION_ROUTE, HOME_ROUTE } from "../../pages/PageRouter";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -21,6 +21,7 @@ const AppBarComponent = () => {
 	const isLoggedInMemo = !!wallet && !!account;
     
     const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useDispatch();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -47,6 +48,10 @@ const AppBarComponent = () => {
         await login(chain, navigate, dispatch);
     }
 
+    function isActiveNavLink(route:string){
+        return route === location.pathname;
+    }
+
     return (
         <>
             <AppBar position='fixed' sx={{ zIndex: 20, boxShadow:'none', background: menuDark }}>
@@ -63,13 +68,13 @@ const AppBarComponent = () => {
                             isLoggedInMemo &&
                             <>
                                 <ButtonCustom 
-                                    variant="navigation"
+                                    variant={isActiveNavLink(NEW_TRANSACTION_ROUTE) ? "navigationActive" : "navigation"}
                                     onClick={() => handleOptionClick(NEW_TRANSACTION_ROUTE)}
                                 >
                                 Transfer
                                 </ButtonCustom>
                                 <ButtonCustom
-                                    variant="navigation"
+                                    variant={isActiveNavLink(TRANSACTIONS_ROUTE) ? "navigationActive" : "navigation"}
                                     onClick={() => handleOptionClick(TRANSACTIONS_ROUTE)}
                                 >
                                     Bridging History
