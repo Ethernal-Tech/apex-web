@@ -65,7 +65,13 @@ const FooterBar = () => {
       </Box>
       
       <Box sx={childStyles}>
-        Network: Testnet
+        <Box component='span' sx={{marginRight:'2px'}}>Network: </Box>
+        <Box component='span' sx={{
+          backgroundColor:'#fa7b14',
+          display:'inline-block',
+          padding:'4px 12px',
+          borderRadius:'100px'
+        }}>Testnet</Box>
       </Box>
     </Box>
   )
