@@ -18,7 +18,7 @@ const variantStyles  ={
       padding: '14px 24px',
       '&:hover':{
           boxShadow: 'none',
-          backgroundColor:'transparent'
+          backgroundColor:'#F25041'
       }
   },
   redNavigation:{
@@ -34,14 +34,13 @@ const variantStyles  ={
       py:'10px'
   },
   white: {
-      border: '1px solid',
-      borderColor: 'white',
+      border: 'none',
       color: 'black',
       backgroundColor: 'white',
       padding: '14px 24px',
       '&:hover':{
           boxShadow: 'none',
-          backgroundColor:'white'
+          backgroundColor:'#F27B50'
       }
   },
   whiteNavigation:{
