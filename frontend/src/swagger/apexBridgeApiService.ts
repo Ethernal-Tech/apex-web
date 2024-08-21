@@ -23,8 +23,8 @@ export class TransactionControllerClient extends BaseClient {
     /**
      * @return Success
      */
-    createBridgingTransaction(body: CreateTransactionDto): Promise<CreateTransactionResponseDto> {
-        let url_ = this.baseUrl + "/transaction/createBridgingTransaction";
+    createCardano(body: CreateTransactionDto): Promise<CreateCardanoTransactionResponseDto> {
+        let url_ = this.baseUrl + "/transaction/createCardano";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -41,18 +41,18 @@ export class TransactionControllerClient extends BaseClient {
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.processCreateBridgingTransaction(_response);
+            return this.processCreateCardano(_response);
         });
     }
 
-    protected processCreateBridgingTransaction(response: Response): Promise<CreateTransactionResponseDto> {
+    protected processCreateCardano(response: Response): Promise<CreateCardanoTransactionResponseDto> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = CreateTransactionResponseDto.fromJS(resultData200);
+            result200 = CreateCardanoTransactionResponseDto.fromJS(resultData200);
             return result200;
             });
         } else if (status === 400) {
@@ -64,14 +64,14 @@ export class TransactionControllerClient extends BaseClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<CreateTransactionResponseDto>(<any>null);
+        return Promise.resolve<CreateCardanoTransactionResponseDto>(<any>null);
     }
 
     /**
      * @return Success
      */
-    signBridgingTransaction(body: SignTransactionDto): Promise<TransactionResponseDto> {
-        let url_ = this.baseUrl + "/transaction/signBridgingTransaction";
+    submitCardano(body: SubmitCardanoTransactionDto): Promise<SubmitCardanoTransactionResponseDto> {
+        let url_ = this.baseUrl + "/transaction/submitCardano";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -88,65 +88,18 @@ export class TransactionControllerClient extends BaseClient {
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.processSignBridgingTransaction(_response);
+            return this.processSubmitCardano(_response);
         });
     }
 
-    protected processSignBridgingTransaction(response: Response): Promise<TransactionResponseDto> {
+    protected processSubmitCardano(response: Response): Promise<SubmitCardanoTransactionResponseDto> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = TransactionResponseDto.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            return throwException("Not Found", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<TransactionResponseDto>(<any>null);
-    }
-
-    /**
-     * @return Success
-     */
-    submitBridgingTransaction(body: SubmitTransactionDto): Promise<SubmitTransactionResponseDto> {
-        let url_ = this.baseUrl + "/transaction/submitBridgingTransaction";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_ = <RequestInit>{
-            body: content_,
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-        };
-
-        return this.transformOptions(options_).then(transformedOptions_ => {
-            return this.http.fetch(url_, transformedOptions_);
-        }).then((_response: Response) => {
-            return this.processSubmitBridgingTransaction(_response);
-        });
-    }
-
-    protected processSubmitBridgingTransaction(response: Response): Promise<SubmitTransactionResponseDto> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = SubmitTransactionResponseDto.fromJS(resultData200);
+            result200 = SubmitCardanoTransactionResponseDto.fromJS(resultData200);
             return result200;
             });
         } else if (status === 400) {
@@ -158,7 +111,54 @@ export class TransactionControllerClient extends BaseClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<SubmitTransactionResponseDto>(<any>null);
+        return Promise.resolve<SubmitCardanoTransactionResponseDto>(<any>null);
+    }
+
+    /**
+     * @return Success
+     */
+    createEth(body: CreateTransactionDto): Promise<CreateEthTransactionResponseDto> {
+        let url_ = this.baseUrl + "/transaction/createEth";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ = <RequestInit>{
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processCreateEth(_response);
+        });
+    }
+
+    protected processCreateEth(response: Response): Promise<CreateEthTransactionResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateEthTransactionResponseDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CreateEthTransactionResponseDto>(<any>null);
     }
 
     /**
@@ -206,53 +206,6 @@ export class TransactionControllerClient extends BaseClient {
             });
         }
         return Promise.resolve<BridgeTransactionDto>(<any>null);
-    }
-
-    /**
-     * @return Success
-     */
-    getProtocolParams(chain: string): Promise<ProtocolParamsResponseDto> {
-        let url_ = this.baseUrl + "/transaction/getProtocolParams?";
-        if (chain === undefined || chain === null)
-            throw new Error("The parameter 'chain' must be defined and cannot be null.");
-        else
-            url_ += "chain=" + encodeURIComponent("" + chain) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_ = <RequestInit>{
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.transformOptions(options_).then(transformedOptions_ => {
-            return this.http.fetch(url_, transformedOptions_);
-        }).then((_response: Response) => {
-            return this.processGetProtocolParams(_response);
-        });
-    }
-
-    protected processGetProtocolParams(response: Response): Promise<ProtocolParamsResponseDto> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = ProtocolParamsResponseDto.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status === 404) {
-            return response.text().then((_responseText) => {
-            return throwException("Not Found", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<ProtocolParamsResponseDto>(<any>null);
     }
 }
 
@@ -426,52 +379,13 @@ export enum ChainEnum {
     Nexus = "nexus",
 }
 
-export class CreateTransactionReceiverDto implements ICreateTransactionReceiverDto {
-    address!: string;
-    amount!: number;
-
-    constructor(data?: ICreateTransactionReceiverDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.address = _data["address"];
-            this.amount = _data["amount"];
-        }
-    }
-
-    static fromJS(data: any): CreateTransactionReceiverDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new CreateTransactionReceiverDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["address"] = this.address;
-        data["amount"] = this.amount;
-        return data; 
-    }
-}
-
-export interface ICreateTransactionReceiverDto {
-    address: string;
-    amount: number;
-}
-
 export class CreateTransactionDto implements ICreateTransactionDto {
     senderAddress!: string;
     originChain!: ChainEnum;
     destinationChain!: ChainEnum;
-    receivers!: CreateTransactionReceiverDto[];
-    bridgingFee!: number | undefined;
+    destinationAddress!: string;
+    amount!: string;
+    bridgingFee!: string | undefined;
 
     constructor(data?: ICreateTransactionDto) {
         if (data) {
@@ -480,9 +394,6 @@ export class CreateTransactionDto implements ICreateTransactionDto {
                     (<any>this)[property] = (<any>data)[property];
             }
         }
-        if (!data) {
-            this.receivers = [];
-        }
     }
 
     init(_data?: any) {
@@ -490,11 +401,8 @@ export class CreateTransactionDto implements ICreateTransactionDto {
             this.senderAddress = _data["senderAddress"];
             this.originChain = _data["originChain"];
             this.destinationChain = _data["destinationChain"];
-            if (Array.isArray(_data["receivers"])) {
-                this.receivers = [] as any;
-                for (let item of _data["receivers"])
-                    this.receivers!.push(CreateTransactionReceiverDto.fromJS(item));
-            }
+            this.destinationAddress = _data["destinationAddress"];
+            this.amount = _data["amount"];
             this.bridgingFee = _data["bridgingFee"];
         }
     }
@@ -511,11 +419,8 @@ export class CreateTransactionDto implements ICreateTransactionDto {
         data["senderAddress"] = this.senderAddress;
         data["originChain"] = this.originChain;
         data["destinationChain"] = this.destinationChain;
-        if (Array.isArray(this.receivers)) {
-            data["receivers"] = [];
-            for (let item of this.receivers)
-                data["receivers"].push(item.toJSON());
-        }
+        data["destinationAddress"] = this.destinationAddress;
+        data["amount"] = this.amount;
         data["bridgingFee"] = this.bridgingFee;
         return data; 
     }
@@ -525,17 +430,19 @@ export interface ICreateTransactionDto {
     senderAddress: string;
     originChain: ChainEnum;
     destinationChain: ChainEnum;
-    receivers: CreateTransactionReceiverDto[];
-    bridgingFee: number | undefined;
+    destinationAddress: string;
+    amount: string;
+    bridgingFee: string | undefined;
 }
 
-export class CreateTransactionResponseDto implements ICreateTransactionResponseDto {
+export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransactionResponseDto {
     txRaw!: string;
     txHash!: string;
     bridgingFee!: number;
     txFee!: number;
+    isCentralized!: boolean;
 
-    constructor(data?: ICreateTransactionResponseDto) {
+    constructor(data?: ICreateCardanoTransactionResponseDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -550,12 +457,13 @@ export class CreateTransactionResponseDto implements ICreateTransactionResponseD
             this.txHash = _data["txHash"];
             this.bridgingFee = _data["bridgingFee"];
             this.txFee = _data["txFee"];
+            this.isCentralized = _data["isCentralized"];
         }
     }
 
-    static fromJS(data: any): CreateTransactionResponseDto {
+    static fromJS(data: any): CreateCardanoTransactionResponseDto {
         data = typeof data === 'object' ? data : {};
-        let result = new CreateTransactionResponseDto();
+        let result = new CreateCardanoTransactionResponseDto();
         result.init(data);
         return result;
     }
@@ -566,111 +474,30 @@ export class CreateTransactionResponseDto implements ICreateTransactionResponseD
         data["txHash"] = this.txHash;
         data["bridgingFee"] = this.bridgingFee;
         data["txFee"] = this.txFee;
+        data["isCentralized"] = this.isCentralized;
         return data; 
     }
 }
 
-export interface ICreateTransactionResponseDto {
+export interface ICreateCardanoTransactionResponseDto {
     txRaw: string;
     txHash: string;
     bridgingFee: number;
     txFee: number;
+    isCentralized: boolean;
 }
 
-export class SignTransactionDto implements ISignTransactionDto {
-    signingKeyHex!: string;
-    txRaw!: string;
-    txHash!: string;
-
-    constructor(data?: ISignTransactionDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.signingKeyHex = _data["signingKeyHex"];
-            this.txRaw = _data["txRaw"];
-            this.txHash = _data["txHash"];
-        }
-    }
-
-    static fromJS(data: any): SignTransactionDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new SignTransactionDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["signingKeyHex"] = this.signingKeyHex;
-        data["txRaw"] = this.txRaw;
-        data["txHash"] = this.txHash;
-        return data; 
-    }
-}
-
-export interface ISignTransactionDto {
-    signingKeyHex: string;
-    txRaw: string;
-    txHash: string;
-}
-
-export class TransactionResponseDto implements ITransactionResponseDto {
-    txRaw!: string;
-    txHash!: string;
-
-    constructor(data?: ITransactionResponseDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.txRaw = _data["txRaw"];
-            this.txHash = _data["txHash"];
-        }
-    }
-
-    static fromJS(data: any): TransactionResponseDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new TransactionResponseDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["txRaw"] = this.txRaw;
-        data["txHash"] = this.txHash;
-        return data; 
-    }
-}
-
-export interface ITransactionResponseDto {
-    txRaw: string;
-    txHash: string;
-}
-
-export class SubmitTransactionDto implements ISubmitTransactionDto {
+export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto {
     originChain!: ChainEnum;
     destinationChain!: ChainEnum;
     originTxHash!: string;
     senderAddress!: string;
     receiverAddrs!: string[];
-    amount!: number;
+    amount!: string;
+    isCentralized!: boolean;
     signedTxRaw!: string;
 
-    constructor(data?: ISubmitTransactionDto) {
+    constructor(data?: ISubmitCardanoTransactionDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -694,13 +521,14 @@ export class SubmitTransactionDto implements ISubmitTransactionDto {
                     this.receiverAddrs!.push(item);
             }
             this.amount = _data["amount"];
+            this.isCentralized = _data["isCentralized"];
             this.signedTxRaw = _data["signedTxRaw"];
         }
     }
 
-    static fromJS(data: any): SubmitTransactionDto {
+    static fromJS(data: any): SubmitCardanoTransactionDto {
         data = typeof data === 'object' ? data : {};
-        let result = new SubmitTransactionDto();
+        let result = new SubmitCardanoTransactionDto();
         result.init(data);
         return result;
     }
@@ -717,18 +545,20 @@ export class SubmitTransactionDto implements ISubmitTransactionDto {
                 data["receiverAddrs"].push(item);
         }
         data["amount"] = this.amount;
+        data["isCentralized"] = this.isCentralized;
         data["signedTxRaw"] = this.signedTxRaw;
         return data; 
     }
 }
 
-export interface ISubmitTransactionDto {
+export interface ISubmitCardanoTransactionDto {
     originChain: ChainEnum;
     destinationChain: ChainEnum;
     originTxHash: string;
     senderAddress: string;
     receiverAddrs: string[];
-    amount: number;
+    amount: string;
+    isCentralized: boolean;
     signedTxRaw: string;
 }
 
@@ -747,7 +577,7 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
     id!: number;
     senderAddress!: string;
     receiverAddresses!: string;
-    amount!: number;
+    amount!: string;
     originChain!: ChainEnum;
     destinationChain!: ChainEnum;
     sourceTxHash!: string;
@@ -809,7 +639,7 @@ export interface IBridgeTransactionDto {
     id: number;
     senderAddress: string;
     receiverAddresses: string;
-    amount: number;
+    amount: string;
     originChain: ChainEnum;
     destinationChain: ChainEnum;
     sourceTxHash: string;
@@ -819,11 +649,11 @@ export interface IBridgeTransactionDto {
     finishedAt?: Date | undefined;
 }
 
-export class SubmitTransactionResponseDto implements ISubmitTransactionResponseDto {
+export class SubmitCardanoTransactionResponseDto implements ISubmitCardanoTransactionResponseDto {
     txHash!: string;
     bridgeTx!: BridgeTransactionDto | undefined;
 
-    constructor(data?: ISubmitTransactionResponseDto) {
+    constructor(data?: ISubmitCardanoTransactionResponseDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -839,9 +669,9 @@ export class SubmitTransactionResponseDto implements ISubmitTransactionResponseD
         }
     }
 
-    static fromJS(data: any): SubmitTransactionResponseDto {
+    static fromJS(data: any): SubmitCardanoTransactionResponseDto {
         data = typeof data === 'object' ? data : {};
-        let result = new SubmitTransactionResponseDto();
+        let result = new SubmitCardanoTransactionResponseDto();
         result.init(data);
         return result;
     }
@@ -854,9 +684,65 @@ export class SubmitTransactionResponseDto implements ISubmitTransactionResponseD
     }
 }
 
-export interface ISubmitTransactionResponseDto {
+export interface ISubmitCardanoTransactionResponseDto {
     txHash: string;
     bridgeTx: BridgeTransactionDto | undefined;
+}
+
+export class CreateEthTransactionResponseDto implements ICreateEthTransactionResponseDto {
+    from!: string;
+    to!: string;
+    value?: string | undefined;
+    data!: string;
+    bridgingFee!: string;
+    isCentralized!: boolean;
+
+    constructor(data?: ICreateEthTransactionResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.from = _data["from"];
+            this.to = _data["to"];
+            this.value = _data["value"];
+            this.data = _data["data"];
+            this.bridgingFee = _data["bridgingFee"];
+            this.isCentralized = _data["isCentralized"];
+        }
+    }
+
+    static fromJS(data: any): CreateEthTransactionResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateEthTransactionResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["from"] = this.from;
+        data["to"] = this.to;
+        data["value"] = this.value;
+        data["data"] = this.data;
+        data["bridgingFee"] = this.bridgingFee;
+        data["isCentralized"] = this.isCentralized;
+        return data; 
+    }
+}
+
+export interface ICreateEthTransactionResponseDto {
+    from: string;
+    to: string;
+    value?: string | undefined;
+    data: string;
+    bridgingFee: string;
+    isCentralized: boolean;
 }
 
 export class TransactionSubmittedDto implements ITransactionSubmittedDto {
@@ -865,7 +751,8 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
     originTxHash!: string;
     senderAddress!: string;
     receiverAddrs!: string[];
-    amount!: number;
+    amount!: string;
+    isCentralized!: boolean;
 
     constructor(data?: ITransactionSubmittedDto) {
         if (data) {
@@ -891,6 +778,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
                     this.receiverAddrs!.push(item);
             }
             this.amount = _data["amount"];
+            this.isCentralized = _data["isCentralized"];
         }
     }
 
@@ -913,6 +801,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
                 data["receiverAddrs"].push(item);
         }
         data["amount"] = this.amount;
+        data["isCentralized"] = this.isCentralized;
         return data; 
     }
 }
@@ -923,47 +812,8 @@ export interface ITransactionSubmittedDto {
     originTxHash: string;
     senderAddress: string;
     receiverAddrs: string[];
-    amount: number;
-}
-
-export class ProtocolParamsResponseDto implements IProtocolParamsResponseDto {
-    txFeeFixed!: string;
-    txFeePerByte!: string;
-
-    constructor(data?: IProtocolParamsResponseDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.txFeeFixed = _data["txFeeFixed"];
-            this.txFeePerByte = _data["txFeePerByte"];
-        }
-    }
-
-    static fromJS(data: any): ProtocolParamsResponseDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new ProtocolParamsResponseDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["txFeeFixed"] = this.txFeeFixed;
-        data["txFeePerByte"] = this.txFeePerByte;
-        return data; 
-    }
-}
-
-export interface IProtocolParamsResponseDto {
-    txFeeFixed: string;
-    txFeePerByte: string;
+    amount: string;
+    isCentralized: boolean;
 }
 
 export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
@@ -972,8 +822,8 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
     senderAddress!: string;
     originChain!: ChainEnum;
     destinationChain?: ChainEnum | undefined;
-    amountFrom?: number | undefined;
-    amountTo?: number | undefined;
+    amountFrom?: string | undefined;
+    amountTo?: string | undefined;
     orderBy?: string | undefined;
     order?: string | undefined;
     receiverAddress?: string | undefined;
@@ -1031,8 +881,8 @@ export interface IBridgeTransactionFilterDto {
     senderAddress: string;
     originChain: ChainEnum;
     destinationChain?: ChainEnum | undefined;
-    amountFrom?: number | undefined;
-    amountTo?: number | undefined;
+    amountFrom?: string | undefined;
+    amountTo?: string | undefined;
     orderBy?: string | undefined;
     order?: string | undefined;
     receiverAddress?: string | undefined;

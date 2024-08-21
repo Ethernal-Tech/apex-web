@@ -20,6 +20,8 @@ import {
 import {
 	BridgingRequestNotFinalStates,
 	getBridgingRequestStates,
+	GetBridgingRequestStatesModel,
+	getCentralizedBridgingRequestStates,
 	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
@@ -98,27 +100,34 @@ export class BridgeTransactionService {
 		const job = this.schedulerRegistry.getCronJob('updateStatusesJob');
 		job.stop();
 		try {
-			const chains = [ChainEnum.Prime, ChainEnum.Vector];
-			for (const chain of chains) {
+			for (const chain of Object.values(ChainEnum)) {
 				const entities = await this.bridgeTransactionRepository.find({
 					where: {
 						status: In(BridgingRequestNotFinalStates),
+						originChain: chain,
 					},
 				});
 				if (entities.length > 0) {
-					const notFinalStateTxHashes = entities.map(
-						(entity) => entity.sourceTxHash,
-					);
+					const models: GetBridgingRequestStatesModel[] = [];
+					const modelsCentralized: GetBridgingRequestStatesModel[] = [];
+					for (const entity of entities) {
+						const arr = entity.isCentralized ? modelsCentralized : models;
+						arr.push({
+							txHash: entity.sourceTxHash,
+							destinationChainId: entity.destinationChain,
+						});
+					}
 
-					const bridgingRequestStates = await getBridgingRequestStates(
-						chain,
-						notFinalStateTxHashes,
-					);
+					const [states, statesCentralized] = await Promise.all([
+						getBridgingRequestStates(chain, models),
+						getCentralizedBridgingRequestStates(chain, modelsCentralized),
+					]);
 
 					const updatedBridgeTransactions = updateBridgeTransactionStates(
 						entities,
-						bridgingRequestStates,
+						{ ...states, ...statesCentralized },
 					);
+
 					await this.bridgeTransactionRepository.save(
 						updatedBridgeTransactions,
 					);

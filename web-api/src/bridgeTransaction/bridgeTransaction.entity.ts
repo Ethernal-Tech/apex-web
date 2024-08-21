@@ -12,8 +12,8 @@ export class BridgeTransaction {
 	@Column()
 	receiverAddresses: string;
 
-	@Column()
-	amount: number;
+	@Column('bigint', { default: '0' })
+	amount: string;
 
 	@Column({ enum: ChainEnum, enumName: 'ChainEnum' })
 	originChain: ChainEnum;
@@ -27,7 +27,6 @@ export class BridgeTransaction {
 	@Column()
 	sourceTxHash: string;
 
-	@Column()
 	@Column({ nullable: true })
 	destinationTxHash?: string;
 
@@ -36,4 +35,7 @@ export class BridgeTransaction {
 
 	@Column({ nullable: true })
 	finishedAt?: Date;
+
+	@Column({ default: false })
+	isCentralized: boolean;
 }

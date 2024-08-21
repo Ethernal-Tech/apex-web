@@ -5,17 +5,16 @@ import { useCallback, useEffect, useState } from 'react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { TRANSACTIONS_ROUTE } from '../PageRouter';
-import { BridgeTransactionDto, ChainEnum } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionDto } from '../../swagger/apexBridgeApiService';
 import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getAction } from './action';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor, parseDateString } from '../../utils/generalUtils';
+import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor, toFixed } from '../../utils/generalUtils';
 import { menuDark } from '../../containers/theme';
 import Button from "../../components/Buttons/ButtonCustom";
 import { openExplorer } from '../../utils/chainUtils';
 import { fetchAndUpdateBalanceAction } from '../../actions/balance';
 import { useDispatch } from 'react-redux';
-import { useSearchParams } from 'react-router-dom';
 
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,22 +23,9 @@ const TransactionDetailPage = () => {
   const dispatch = useDispatch();
 	const navigate = useNavigate();
 
-  const [searchParams] = useSearchParams();
-  const queryParamOriginChain = searchParams.get('originChain')
-  const queryParamDestinationChain = searchParams.get('destinationChain')
-
   const fetchTx = useCallback(async () => {
     if (id) {      
-      
-      // if query params are missing, or indicate prime->vector->prime path, query default db. Otherwise fallback db
-      const queryDefaultDb = 
-        !queryParamOriginChain 
-        || !queryParamDestinationChain 
-        ||(queryParamOriginChain === ChainEnum.Prime && queryParamDestinationChain === ChainEnum.Vector)
-        || (queryParamOriginChain === ChainEnum.Vector && queryParamDestinationChain === ChainEnum.Prime);
-
-      if(queryDefaultDb){
-        const bindedAction = getAction.bind(null, parseInt(id));
+      const bindedAction = getAction.bind(null, parseInt(id));
 
         const [response] = await Promise.all([
           fetchFunction(bindedAction),
@@ -48,42 +34,6 @@ const TransactionDetailPage = () => {
         
         response && setTransaction(response);
         return response;
-      } 
-      // contact fallback db if query param present
-      else {
-        try {
-          const response = await fetch(`https://developers.apexfusion.org/api/bridge/transactions?originChain=${queryParamOriginChain}&sourceTxHash=${id}`)
-          const data = await response.json()
-
-          if(data && data.BridgeTransactionResponseDto && data.BridgeTransactionResponseDto.items){
-            const item = data.BridgeTransactionResponseDto.items[0]
-
-            if(!item) {
-              throw new Error('There was an erorr. Please make sure the URL is valid.')
-            }
-
-            const updatedItem = new BridgeTransactionDto({
-                amount: item.amount,
-                createdAt: item.createdAt && parseDateString(item.createdAt),
-                destinationChain: item.destinationChain,
-                destinationTxHash: item.destinationTxHash,
-                finishedAt: item.finishedAt && parseDateString(item.finishedAt),
-                id: item.id,
-                originChain: item.originChain,
-                receiverAddresses: item.receiverAddress,
-                senderAddress: item.senderAddress,
-                sourceTxHash: item.sourceTxHash,
-                status: item.status
-              })
-
-            response && setTransaction(updatedItem);
-            return updatedItem
-          }
-
-        } catch(e){
-          console.error(e)
-        }
-      }
     }
   }, [dispatch, fetchFunction, id])
 
@@ -173,7 +123,7 @@ const TransactionDetailPage = () => {
             </Box>
             <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Amount:</Typography>
-              <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && convertDfmToApex(transaction?.amount, transaction?.originChain)} APEX</Typography>
+              <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && toFixed(convertDfmToApex(transaction?.amount, transaction?.originChain), 6)} APEX</Typography>
             </Box>
             <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Sender address:</Typography>

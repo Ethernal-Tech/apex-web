@@ -3,12 +3,15 @@ import appSettings from "../settings/appSettings";
 import { BridgeTransactionDto, ChainEnum } from "../swagger/apexBridgeApiService";
 import { areChainsEqual } from "./chainUtils";
 import Web3 from "web3";
+import {Numbers} from "web3-types";
+import {EtherUnits} from "web3-utils";
 
 // chain icons
 import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
 import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
 import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { FunctionComponent, SVGProps } from "react";
+import { isAddress } from "web3-validator";
 
 export const capitalizeWord = (word: string): string => {
     if (!word || word.length === 0) {
@@ -46,33 +49,43 @@ export const formatAddress = (
   return `${firstPart}...${lastPart}`;
 }
 
+const fromWei = (number: Numbers, unit: EtherUnits | number): string => {
+    const val = Web3.utils.fromWei(number, unit);
+    return val.endsWith('.') ? val.slice(0, -1) : val;
+}
+
+const toWei = (number: Numbers, unit: EtherUnits | number): string => {
+  const val = Web3.utils.toWei(number, unit);
+  return val.endsWith('.') ? val.slice(0, -1) : val;
+}
+
 // converts dfm to apex (prime and vector)
 const convertUtxoDfmToApex = (dfm:string|number):string =>{
-  return Web3.utils.fromWei(dfm,'lovelace');
+  return fromWei(dfm,'lovelace');
 }
 
 // converts apex to dfm (prime and vector)
 const convertApexToUtxoDfm = (apex: string|number):string => {
-  return Web3.utils.toWei(apex,'lovelace');
+  return toWei(apex,'lovelace');
 }
 
 // convert wei to dfm (nexus)
 const convertEvmDfmToApex = (dfm:string|number):string =>{
-  return Web3.utils.fromWei(dfm,'ether');
+  return fromWei(dfm,'ether');
 }
 
 // convert eth to wei (nexus)
 const convertApexToEvmDfm = (apex: string|number):string => {
-  return Web3.utils.toWei(apex,'ether');
+  return toWei(apex,'ether');
 }
 
 export const validateSubmitTxInputs = (
-  sourceChain: ChainEnum, destinationChain: ChainEnum, destinationAddr: string, amount: number,
+  sourceChain: ChainEnum, destinationChain: ChainEnum, destinationAddr: string, amount: string,
 ): string | undefined => {
-  if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector) && amount < appSettings.minUtxoValue) {
+  if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector) && BigInt(amount) < BigInt(appSettings.minUtxoValue)) {
     return `Amount less than minimum: ${convertUtxoDfmToApex(appSettings.minUtxoValue)} APEX`;
-  } else if(sourceChain === ChainEnum.Nexus && amount < appSettings.minEvmValue){
-    return `Amount less than minimum: ${convertEvmDfmToApex(appSettings.minUtxoValue)} APEX`;
+  } else if(sourceChain === ChainEnum.Nexus && BigInt(amount) < BigInt(appSettings.minEvmValue)){
+    return `Amount less than minimum: ${convertEvmDfmToApex(appSettings.minEvmValue)} APEX`;
   }
 
   if (destinationChain === ChainEnum.Prime || destinationChain === ChainEnum.Vector) {
@@ -84,8 +97,10 @@ export const validateSubmitTxInputs = (
     if (!areChainsEqual(destinationChain, addr.GetNetwork())) {
       return `Destination address not compatible with destination chain: ${destinationChain}`;
     }
-  } else {
-    // TODO: validate destination evm address
+  } else if (destinationChain === ChainEnum.Nexus) {
+    if (!isAddress(destinationAddr)) {
+      return `Invalid destination address: ${destinationAddr}`;
+    }
   }
 }
 
@@ -150,51 +165,14 @@ export const parseDateString = (dateString:string):Date => {
 
 
 export const formatTxDetailUrl = (transaction:BridgeTransactionDto): string =>{
-  const idParam = 
-  (
-    (transaction.originChain === ChainEnum.Prime && transaction.destinationChain === ChainEnum.Nexus)
-    || (transaction.originChain === ChainEnum.Nexus && transaction.destinationChain === ChainEnum.Prime)
-  ) 
-  ? transaction.sourceTxHash 
-  : transaction.id;
-
-  return `/transaction/${idParam}?originChain=${transaction.originChain}&destinationChain=${transaction.destinationChain}`
+  return `/transaction/${transaction.id}`
 }
 
-/* Used to sort transactions in frontend based on order and orderBy filter parameters */
-export const sortTransactions = (transactions: BridgeTransactionDto[], order: 'asc'|'desc', orderBy:string)=>{
-  switch(orderBy){
-    case 'amount':
-      return transactions.sort((a,b)=> order === 'asc' ? a.amount - b.amount : b.amount - a.amount);
+export const toFixed = (n: number | string, decimals: number) => {
+  return (+n).toFixed(decimals);
+}
 
-    case 'createdAt':
-      return transactions.sort((a,b)=> {
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : -Infinity;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : -Infinity;
-        return order === 'asc' ? dateA - dateB : dateB - dateA;
-      })
-
-    case 'finishedAt':
-      return transactions.sort((a,b)=>{
-        const dateA = a.finishedAt ? new Date(a.finishedAt).getTime() : -Infinity;
-        const dateB = b.finishedAt ? new Date(b.finishedAt).getTime() : -Infinity;
-      
-        return order === 'asc' ? dateA - dateB : dateB - dateA;
-      })
-
-    case 'status':
-    case 'originChain':
-    case 'destinationChain':
-    case 'receiverAddresses':
-      return transactions.sort((a,b)=>{
-        const itemA = a[orderBy];
-        const itemB = b[orderBy];
-
-      
-        return order === 'asc' ? itemA.localeCompare(itemB) : itemB.localeCompare(itemA);
-      })
-
-    default:
-      return transactions
-  }
+export const toFixedFloor = (n: number | string, decimals: number) => {
+  const exp = Math.pow(10, decimals)
+  return (Math.floor(+n * exp) / exp).toFixed(decimals);
 }

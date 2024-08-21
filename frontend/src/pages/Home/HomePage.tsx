@@ -42,7 +42,6 @@ const HomePage: React.FC = () => {
       icon: chainIcons[ChainEnum.Vector],
       borderColor:'#F25041'
     },
-    // TODO af - nexus removed for now
     { 
       value: ChainEnum.Nexus,
       label: capitalizeWord(ChainEnum.Nexus),

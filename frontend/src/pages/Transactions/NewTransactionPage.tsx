@@ -3,7 +3,6 @@ import BasePage from "../base/BasePage";
 import AddressBalance from "./components/AddressBalance";
 import TotalBalance from "./components/TotalBalance";
 import TransferProgress from "./components/TransferProgress";
-import FallbackTransferProgress from "./components/TransferProgressFallback";
 import BridgeInput from "./components/BridgeInput";
 import { chainIcons, validateSubmitTxInputs } from "../../utils/generalUtils";
 import { useDispatch, useSelector } from "react-redux";
@@ -11,16 +10,14 @@ import { RootState } from "../../redux/store";
 import { useCallback, useState } from "react";
 import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
-import { createTransactionAction } from "./action";
-import { BridgeTransactionDto, ChainEnum, CreateTransactionDto, CreateTransactionReceiverDto, TransactionStatusEnum } from "../../swagger/apexBridgeApiService";
+import { createCardanoTransactionAction, createEthTransactionAction } from "./action";
+import { BridgeTransactionDto, ChainEnum, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
-import { signAndSubmitTx, signAndSubmitNexusToPrimeFallbackTx, signAndSubmitPrimeToNexusFallbackTx } from "../../actions/submitTx";
-import { CreateTxResponse } from "./components/types";
+import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
+import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 
-// TODO: add input validations
 function NewTransactionPage() {
 	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
-	const [fallbackTxInProgress, setFallbackTxInProgress] = useState<BridgeTransactionDto | undefined>();
 
 	const [loading, setLoading] = useState(false);
 	
@@ -33,98 +30,78 @@ function NewTransactionPage() {
 	const bridgeTxFee = chain === ChainEnum.Nexus ? 
 		appSettings.nexusBridgingFee : appSettings.primeVectorBridgingFee;
 
-	// TODO - update these to check for nexus when implemented
 	const SourceIcon = chainIcons[chain];
 	const DestinationIcon = chainIcons[destinationChain];
 
 	const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();
 
-	const createTx = useCallback(async (address: string, amount: number): Promise<CreateTxResponse> => {
+	const createCardanoTx = useCallback(async (address: string, amount: string): Promise<CreateCardanoTxResponse> => {
 		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount);
 		if (validationErr) {
 			throw new Error(validationErr);
 		}
 
 		const createTxDto = new CreateTransactionDto({
-			bridgingFee: bridgeTxFee,
+			bridgingFee: `${bridgeTxFee}`,
 			destinationChain,
 			originChain: chain,
 			senderAddress: account,
-			receivers: [new CreateTransactionReceiverDto({
-				address, amount,
-			})]
+			destinationAddress: address,
+			amount,
 		})
-		const bindedCreateAction = createTransactionAction.bind(null, createTxDto);
+		const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
+		const createResponse = await fetchFunction(bindedCreateAction);
+
+		return { createTxDto, createResponse };
+	}, [bridgeTxFee, chain, destinationChain, fetchFunction, account])
+
+	const createEthTx = useCallback(async (address: string, amount: string): Promise<CreateEthTxResponse> => {
+		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount);
+		if (validationErr) {
+			throw new Error(validationErr);
+		}
+
+		const createTxDto = new CreateTransactionDto({
+			bridgingFee: `${bridgeTxFee}`,
+			destinationChain,
+			originChain: chain,
+			senderAddress: account,
+			destinationAddress: address,
+			amount,
+		})
+		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
 		const createResponse = await fetchFunction(bindedCreateAction);
 
 		return { createTxDto, createResponse };
 	}, [bridgeTxFee, chain, destinationChain, fetchFunction, account])
 
 	const handleSubmitCallback = useCallback(
-		async (address: string, amount: number) => {
+		async (address: string, amount: string) => {
 			setLoading(true);
-			try {	
-				// nexus->prime
-				if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){ // nexus->prime						
-					const txReceipt = await signAndSubmitNexusToPrimeFallbackTx(amount, destinationChain, address)
-
-					txReceipt && setFallbackTxInProgress(
-						new BridgeTransactionDto({
-							amount: amount,
-							createdAt: new Date(), // removed for fallback bridge
-							destinationChain: ChainEnum.Prime,
-							destinationTxHash: "", // removed for fallback bridge
-							finishedAt: new Date(), // removed for fallback bridge
-							id: 0, // // removed for fallback bridge
-							originChain: ChainEnum.Nexus,
-							receiverAddresses: "", // removed for fallback bridge
-							senderAddress: "", // removed for fallback bridge
-							sourceTxHash: txReceipt.transactionHash.toString(), // tx hash on nexus
-							status: TransactionStatusEnum.Pending,
-						})
-					)
-				} 
-
-				// prime->nexus, API service formats tx as fallBack, and setFallbackTxInProgress is used 
-				else if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
-					// const response = await signAndSubmitPrimeToNexusFallbackTx(amount, destinationChain, address)
-
-					const createTxResp = await createTx(address, amount);
-
-					const txReceipt = await signAndSubmitTx(
-						createTxResp.createTxDto,
-						createTxResp.createResponse,
-						dispatch,
-					);
-
-					txReceipt && setFallbackTxInProgress(
-						new BridgeTransactionDto({
-							amount: amount,
-							createdAt: new Date(), // removed for fallback bridge
-							destinationChain: ChainEnum.Nexus,
-							destinationTxHash: "", // removed for fallback bridge
-							finishedAt: new Date(), // removed for fallback bridge
-							id: 0, // // removed for fallback bridge
-							originChain: ChainEnum.Prime,
-							receiverAddresses: "", // removed for fallback bridge
-							senderAddress: "", // removed for fallback bridge
-							sourceTxHash: txReceipt.txHash.toString(), // tx hash on nexus
-							status: TransactionStatusEnum.Pending,
-						})
-					)
-				} 
-				// "vector-prime-vetor", so tx created and status shown as usual
-				else { 
-					const createTxResp = await createTx(address, amount);
+			try {
+				if (chain === ChainEnum.Prime || chain === ChainEnum.Vector) {
+					const createTxResp = await createCardanoTx(address, amount);
 					
-					const response = await signAndSubmitTx(
+					const response = await signAndSubmitCardanoTx(
 						createTxResp.createTxDto,
 						createTxResp.createResponse,
 						dispatch,
 					);
 					
-					response && setTxInProgress(response.bridgeTx);
+					response && setTxInProgress(response);
+				} else if (chain === ChainEnum.Nexus) {
+					const createTxResp = await createEthTx(address, amount);
+					
+					const response = await signAndSubmitEthTx(
+						createTxResp.createTxDto,
+						createTxResp.createResponse,
+						dispatch,
+					);
+					
+					response && setTxInProgress(response);
+				} else {
+					throw new Error(`Unsupported source chain: ${chain}`);
 				}
 			}catch(err) {
 				console.log(err);
@@ -133,7 +110,7 @@ function NewTransactionPage() {
 				setLoading(false);
 			}
 		},
-		[createTx, dispatch],
+		[chain, createCardanoTx, createEthTx, dispatch],
 	);
 
 	const tabletMediaQuery = '@media (max-width:800px)'
@@ -208,20 +185,17 @@ function NewTransactionPage() {
 					}
 				}}>
 					{/* conditional display of right side element */}
-					{!txInProgress && !fallbackTxInProgress &&
+					{!txInProgress &&
 						<BridgeInput
 							bridgeTxFee={bridgeTxFee}
-							createTx={createTx}
+							createCardanoTx={createCardanoTx}
+							createEthTx={createEthTx}
 							submit={handleSubmitCallback}
 							loading={loading}
 						/>
 					}
 
-					{/* for regular bridge tx's */}
 					{txInProgress && <TransferProgress tx={txInProgress} setTx={setTxInProgress}/>}
-
-					{/* for nexus->prime->nexus transactions (fallback) */}
-					{fallbackTxInProgress && <FallbackTransferProgress tx={fallbackTxInProgress} setTx={setFallbackTxInProgress}/>}
 				</Box>
 			</Box>
 		</BasePage>

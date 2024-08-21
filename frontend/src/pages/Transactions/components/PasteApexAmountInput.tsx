@@ -1,9 +1,8 @@
 import React from 'react';
 import { TextField, Button, Box, styled, SxProps, Theme, Typography } from '@mui/material';
-import { convertApexToDfm, convertDfmToApex } from '../../../utils/generalUtils';
+import { convertApexToDfm, convertDfmToApex, toFixedFloor } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 // import './CustomStyles.css'; // Import the CSS file
 
 
@@ -85,9 +84,7 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSend
     const apexInput = e.target.value;
     // check right side decimals
     const [,right] = apexInput.split('.')
-    if(right && chain === ChainEnum.Nexus && right.length >18) {
-      return e.preventDefault()
-    } else if(right && (chain === ChainEnum.Prime || chain === ChainEnum.Vector ) && right.length > 6){
+    if(right && right.length >6) {
       return e.preventDefault()
     }
     
@@ -102,7 +99,7 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSend
   
   const handleMaxClick = () => {
     if(maxSendableDfm){
-      setAmount(convertDfmToApex(maxSendableDfm,chain));
+      setAmount(toFixedFloor(convertDfmToApex(maxSendableDfm,chain), 6));
     }
   };
 

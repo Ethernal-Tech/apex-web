@@ -1,21 +1,17 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 
 import {
-	createBridgingTx,
-	getProtocolParams,
-	shouldUseCentralizedBridge,
-	signBridgingTx,
-	submitTransaction,
+	createCardanoBridgingTx,
+	createEthBridgingTx,
+	submitCardanoTransaction,
 } from 'src/transaction/transaction.helper';
 import {
 	CreateTransactionDto,
-	CreateTransactionResponseDto,
-	ProtocolParamsResponseDto,
-	SignTransactionDto,
-	SubmitTransactionDto,
-	SubmitTransactionResponseDto,
-	TransactionResponseDto,
+	CreateCardanoTransactionResponseDto,
+	SubmitCardanoTransactionDto,
+	SubmitCardanoTransactionResponseDto,
 	TransactionSubmittedDto,
+	CreateEthTransactionResponseDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
@@ -31,26 +27,32 @@ export class TransactionService {
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 	) {}
 
-	async createTransaction({
-		senderAddress,
-		originChain,
-		destinationChain,
-		receivers,
-		bridgingFee,
-	}: CreateTransactionDto): Promise<CreateTransactionResponseDto> {
-		if (bridgingFee !== undefined && bridgingFee < 0) {
-			const error = 'bridgingFee negative';
-			console.log(error);
-			throw new BadRequestException(error);
+	async createCardano(
+		dto: CreateTransactionDto,
+	): Promise<CreateCardanoTransactionResponseDto> {
+		if (
+			dto.originChain !== ChainEnum.Prime &&
+			dto.originChain !== ChainEnum.Vector
+		) {
+			throw new BadRequestException('Invalid origin chain');
 		}
 
-		const tx = await createBridgingTx(
-			senderAddress,
-			originChain,
-			destinationChain,
-			receivers,
-			bridgingFee,
-		);
+		if (
+			dto.originChain === ChainEnum.Prime &&
+			dto.destinationChain !== ChainEnum.Vector &&
+			dto.destinationChain !== ChainEnum.Nexus
+		) {
+			throw new BadRequestException('Invalid destination chain');
+		}
+
+		if (
+			dto.originChain === ChainEnum.Vector &&
+			dto.destinationChain !== ChainEnum.Prime
+		) {
+			throw new BadRequestException('Invalid destination chain');
+		}
+
+		const tx = await createCardanoBridgingTx(dto);
 
 		if (!tx) {
 			const error = 'error while creating bridging tx';
@@ -61,15 +63,33 @@ export class TransactionService {
 		return tx;
 	}
 
-	async signTransaction({
-		signingKeyHex,
-		txRaw,
-		txHash,
-	}: SignTransactionDto): Promise<TransactionResponseDto> {
-		const tx = await signBridgingTx(signingKeyHex, txRaw, txHash);
+	async submitCardano(
+		dto: SubmitCardanoTransactionDto,
+	): Promise<SubmitCardanoTransactionResponseDto> {
+		const txHash = await submitCardanoTransaction(
+			dto.originChain,
+			dto.signedTxRaw,
+		);
+		const bridgeTx = await this.transactionSubmitted(dto);
+
+		return { txHash, bridgeTx };
+	}
+
+	async createEth(
+		dto: CreateTransactionDto,
+	): Promise<CreateEthTransactionResponseDto> {
+		if (dto.originChain !== ChainEnum.Nexus) {
+			throw new BadRequestException('Invalid origin chain');
+		}
+
+		if (dto.destinationChain !== ChainEnum.Prime) {
+			throw new BadRequestException('Invalid destination chain');
+		}
+
+		const tx = await createEthBridgingTx(dto);
 
 		if (!tx) {
-			const error = 'error while signing bridging tx';
+			const error = 'error while creating bridging tx';
 			console.log(error);
 			throw new BadRequestException(error);
 		}
@@ -84,6 +104,7 @@ export class TransactionService {
 		senderAddress,
 		receiverAddrs,
 		amount,
+		isCentralized,
 	}: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
 		const entity = new BridgeTransaction();
 
@@ -94,42 +115,17 @@ export class TransactionService {
 		entity.receiverAddresses = receiverAddresses ?? entity.receiverAddresses;
 		entity.destinationChain =
 			(destinationChain as ChainEnum) ?? entity.destinationChain;
-		entity.amount = amount ? Number(amount) : entity.amount;
+		entity.amount = amount ? amount : entity.amount;
 
 		entity.originChain = originChain;
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;
+		entity.isCentralized = isCentralized;
 
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
 		await this.bridgeTransactionRepository.save(newBridgeTransaction);
 
 		return mapBridgeTransactionToResponse(newBridgeTransaction);
-	}
-
-	async submitTransaction(
-		dto: SubmitTransactionDto,
-	): Promise<SubmitTransactionResponseDto> {
-		const txHash = await submitTransaction(dto.originChain, dto.signedTxRaw);
-
-		const useCentralizedBridge = shouldUseCentralizedBridge(
-			dto.destinationChain,
-		);
-		if (!useCentralizedBridge) {
-			const bridgeTx = await this.transactionSubmitted(dto);
-			return { txHash, bridgeTx };
-		}
-
-		return { txHash };
-	}
-
-	async getProtocolParams(
-		chain: ChainEnum,
-	): Promise<ProtocolParamsResponseDto> {
-		const protocolParameters = await getProtocolParams(chain);
-		return {
-			txFeeFixed: protocolParameters.minFeeConstant.ada.lovelace.toString(10),
-			txFeePerByte: protocolParameters.minFeeCoefficient.toString(10),
-		};
 	}
 }

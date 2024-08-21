@@ -1,4 +1,5 @@
 import Web3 from 'web3';
+import { Transaction } from 'web3-types';
 
 type Wallet = {
     name: string;
@@ -15,12 +16,6 @@ export const EVM_SUPPORTED_WALLETS = [{
 class EvmWalletHandler {
     private web3: Web3 | undefined;
 
-    constructor() {
-        if (typeof window.ethereum !== 'undefined') {
-            this.web3 = new Web3(window.ethereum);
-        }
-    }
-
     getInstalledWallets = (): Wallet[] => {
         if (typeof window.ethereum === 'undefined') return [];
 
@@ -28,6 +23,10 @@ class EvmWalletHandler {
     };
 
     enable = async () => {
+        if (typeof window.ethereum !== 'undefined') {
+            this.web3 = new Web3(window.ethereum);
+        }
+
         if (this.web3) {
             try {
                 await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -53,7 +52,7 @@ class EvmWalletHandler {
 
     // PROXY
 
-    getChangeAddress = async (): Promise<string> => {
+    getAddress = async (): Promise<string> => {
         this._checkWalletAndThrow();
         const accounts = await this.web3!.eth.getAccounts();
         return accounts[0];
@@ -66,26 +65,24 @@ class EvmWalletHandler {
         return this.web3!.utils.fromWei(balance, 'wei');
     };
 
-    // TODO - check what the network id will be
     getNetworkId = async (): Promise<bigint> => {
         this._checkWalletAndThrow();
         return await this.web3!.eth.net.getId();
     };
-
-    /* signTx = async (unsignedTx: any): Promise<SignedTransactionInfoAPI> => {
-        this._checkWalletAndThrow();
-        // const accounts = await this.web3!.eth.getAccounts();
-        return await this.web3!.eth.signTransaction(unsignedTx);
-    };
-
-    submitTx = async (signedTx: string): Promise<string> => {
-        this._checkWalletAndThrow();
-        return (await this.web3!.eth.sendSignedTransaction(signedTx)).transactionHash as string;
-    }; */
         
-    submitTx = async (tx:any) =>{
+    submitTx = async (tx:Transaction) =>{
         this._checkWalletAndThrow();
         return await this.web3!.eth.sendTransaction(tx);
+    }
+
+    estimateGas = async (tx:Transaction) =>{
+        this._checkWalletAndThrow();
+        return await this.web3!.eth.estimateGas(tx);
+    }
+
+    getGasPrice = async () =>{
+        this._checkWalletAndThrow();
+        return await this.web3!.eth.getGasPrice();
     }
 }
 

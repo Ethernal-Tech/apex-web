@@ -14,6 +14,10 @@ import (
 	"github.com/sethvargo/go-retry"
 )
 
+const (
+	EthZeroAddr = "0x0000000000000000000000000000000000000000"
+)
+
 func IsValidURL(input string) bool {
 	_, err := url.ParseRequestURI(input)
 

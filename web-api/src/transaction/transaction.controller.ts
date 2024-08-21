@@ -1,25 +1,14 @@
-import {
-	Body,
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Post,
-	Query,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import {
-	CreateTransactionDto,
-	CreateTransactionResponseDto,
-	ProtocolParamsResponseDto,
-	SignTransactionDto,
-	SubmitTransactionDto,
-	SubmitTransactionResponseDto,
-	TransactionResponseDto,
+	CreateCardanoTransactionResponseDto,
+	SubmitCardanoTransactionDto,
+	SubmitCardanoTransactionResponseDto,
 	TransactionSubmittedDto,
+	CreateTransactionDto,
+	CreateEthTransactionResponseDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ChainEnum } from 'src/common/enum';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 
 @ApiTags('Transaction')
@@ -29,7 +18,7 @@ export class TransactionController {
 
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: CreateTransactionResponseDto,
+		type: CreateCardanoTransactionResponseDto,
 		description: 'Success',
 	})
 	@ApiResponse({
@@ -37,33 +26,16 @@ export class TransactionController {
 		description: 'Bad Request',
 	})
 	@HttpCode(HttpStatus.OK)
-	@Post('createBridgingTransaction')
-	async createBridgingTransaction(
+	@Post('createCardano')
+	async createCardano(
 		@Body() model: CreateTransactionDto,
-	): Promise<CreateTransactionResponseDto> {
-		return await this.transactionService.createTransaction(model);
+	): Promise<CreateCardanoTransactionResponseDto> {
+		return await this.transactionService.createCardano(model);
 	}
 
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: TransactionResponseDto,
-		description: 'Success',
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Not Found',
-	})
-	@HttpCode(HttpStatus.OK)
-	@Post('signBridgingTransaction')
-	async signBridgingTransaction(
-		@Body() model: SignTransactionDto,
-	): Promise<TransactionResponseDto> {
-		return await this.transactionService.signTransaction(model);
-	}
-
-	@ApiResponse({
-		status: HttpStatus.OK,
-		type: SubmitTransactionResponseDto,
+		type: SubmitCardanoTransactionResponseDto,
 		description: 'Success',
 	})
 	@ApiResponse({
@@ -71,11 +43,28 @@ export class TransactionController {
 		description: 'Bad Request',
 	})
 	@HttpCode(HttpStatus.OK)
-	@Post('submitBridgingTransaction')
-	async submitBridgingTransaction(
-		@Body() model: SubmitTransactionDto,
-	): Promise<SubmitTransactionResponseDto> {
-		return this.transactionService.submitTransaction(model);
+	@Post('submitCardano')
+	async submitCardano(
+		@Body() model: SubmitCardanoTransactionDto,
+	): Promise<SubmitCardanoTransactionResponseDto> {
+		return this.transactionService.submitCardano(model);
+	}
+
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: CreateEthTransactionResponseDto,
+		description: 'Success',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('createEth')
+	async createEth(
+		@Body() model: CreateTransactionDto,
+	): Promise<CreateEthTransactionResponseDto> {
+		return await this.transactionService.createEth(model);
 	}
 
 	@ApiResponse({
@@ -93,21 +82,5 @@ export class TransactionController {
 		@Body() model: TransactionSubmittedDto,
 	): Promise<BridgeTransactionDto> {
 		return this.transactionService.transactionSubmitted(model);
-	}
-	@ApiResponse({
-		status: HttpStatus.OK,
-		type: ProtocolParamsResponseDto,
-		description: 'Success',
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Not Found',
-	})
-	@HttpCode(HttpStatus.OK)
-	@Get('getProtocolParams')
-	async getProtocolParams(
-		@Query('chain') chain: ChainEnum,
-	): Promise<ProtocolParamsResponseDto> {
-		return this.transactionService.getProtocolParams(chain);
 	}
 }

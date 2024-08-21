@@ -1,41 +1,47 @@
-import {
-	createTransactionSubmissionClient,
-	createLedgerStateQueryClient,
-} from '@cardano-ogmios/client';
+import { createTransactionSubmissionClient } from '@cardano-ogmios/client';
 import { createInteractionContext } from '@cardano-ogmios/client';
 import { ChainEnum } from 'src/common/enum';
 import {
-	CreateTransactionReceiverDto,
-	CreateTransactionResponseDto,
+	CreateCardanoTransactionResponseDto,
 	ErrorResponseDto,
-	TransactionResponseDto,
+	CreateTransactionDto,
+	CreateEthTransactionResponseDto,
 } from './transaction.dto';
 import axios from 'axios';
 import { BadRequestException } from '@nestjs/common';
+import web3, { Web3 } from 'web3';
+import { isAddress } from 'web3-validator';
+import { NewAddress } from 'src/utils/Address/addreses';
+import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
+import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
 
-export const createBridgingTx = async (
-	senderAddr: string,
-	sourceChainId: ChainEnum,
-	destinationChainId: ChainEnum,
-	receivers: CreateTransactionReceiverDto[],
-	bridgingFee?: number,
-): Promise<CreateTransactionResponseDto> => {
+export const createCardanoBridgingTx = async (
+	dto: CreateTransactionDto,
+): Promise<CreateCardanoTransactionResponseDto> => {
 	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
 	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 	const endpointUrl = apiUrl + `/api/CardanoTx/CreateBridgingTx`;
 
-	const useCentralizedBridge = shouldUseCentralizedBridge(destinationChainId);
+	// centralized bridge currently doesn't support prime->vector, vector->prime
+	const nexusInvolved =
+		dto.originChain === ChainEnum.Nexus ||
+		dto.destinationChain === ChainEnum.Nexus;
+
+	const isCentralized =
+		process.env.USE_CENTRALIZED_BRIDGE === 'true' && nexusInvolved;
 
 	const body = {
-		senderAddr,
-		sourceChainId,
-		destinationChainId,
-		transactions: receivers.map((x) => ({
-			addr: x.address,
-			amount: x.amount,
-		})),
-		bridgingFee,
-		useFallback: useCentralizedBridge,
+		senderAddr: dto.senderAddress,
+		sourceChainId: dto.originChain,
+		destinationChainId: dto.destinationChain,
+		transactions: [
+			{
+				addr: dto.destinationAddress,
+				amount: +dto.amount,
+			},
+		],
+		bridgingFee: dto.bridgingFee ? +dto.bridgingFee : undefined,
+		useFallback: isCentralized,
 	};
 
 	try {
@@ -46,38 +52,118 @@ export const createBridgingTx = async (
 			},
 		});
 
-		return response.data as CreateTransactionResponseDto;
+		return {
+			...response.data,
+			isCentralized,
+		} as CreateCardanoTransactionResponseDto;
 	} catch (error) {
 		throw new BadRequestException(error.response.data as ErrorResponseDto);
 	}
 };
 
-export const signBridgingTx = async (
-	signingKeyHex: string,
-	txRaw: string,
-	txHash: string,
-): Promise<TransactionResponseDto> => {
-	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
-	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
-	const endpointUrl = apiUrl + `/api/CardanoTx/SignBridgingTx`;
-
-	const body = {
-		signingKey: signingKeyHex,
-		txRaw,
-		txHash,
-	};
-
-	try {
-		const response = await axios.post(endpointUrl, body, {
-			headers: {
-				'X-API-KEY': apiKey,
-			},
-		});
-
-		return response.data as TransactionResponseDto;
-	} catch (error) {
-		throw new BadRequestException(error.response.data as ErrorResponseDto);
+export const createEthBridgingTx = async (
+	dto: CreateTransactionDto,
+): Promise<CreateEthTransactionResponseDto> => {
+	if (!isAddress(dto.senderAddress)) {
+		throw new BadRequestException('Invalid sender address');
 	}
+
+	const minValue = BigInt(process.env.NEXUS_MIN_VALUE || '1000000000000000000');
+	const amount = BigInt(dto.amount);
+
+	if (amount < minValue) {
+		throw new BadRequestException(
+			`Amount: ${amount} less than minimum: ${minValue}`,
+		);
+	}
+
+	const addr = NewAddress(dto.destinationAddress);
+	if (!addr || dto.destinationAddress !== addr.String()) {
+		throw new BadRequestException(
+			`Invalid destination address: ${dto.destinationAddress}`,
+		);
+	}
+
+	if (!areChainsEqual(dto.destinationChain, addr.GetNetwork())) {
+		throw new BadRequestException(
+			`Destination address: ${dto.destinationAddress} not compatible with destination chain: ${dto.destinationChain}`,
+		);
+	}
+
+	const minBridgingFee = BigInt(
+		process.env.NEXUS_MIN_BRIDGING_FEE || '1000010000000000000',
+	);
+
+	let bridgingFee = BigInt(dto.bridgingFee || '0');
+	bridgingFee = bridgingFee < minBridgingFee ? minBridgingFee : bridgingFee;
+
+	const value = BigInt(dto.amount) + bridgingFee;
+
+	const isCentralized = process.env.USE_CENTRALIZED_BRIDGE === 'true';
+
+	const createFunc = isCentralized ? ethCentralizedBridgingTx : ethBridgingTx;
+	return await createFunc(dto, value, bridgingFee);
+};
+
+const ethBridgingTx = async (
+	dto: CreateTransactionDto,
+	value: bigint,
+	bridgingFee: bigint,
+): Promise<CreateEthTransactionResponseDto> => {
+	const to = process.env.NEXUS_BRIDGING_ADDR;
+	if (!to) {
+		throw new BadRequestException('Empty to address');
+	}
+
+	const web3Obj = new Web3();
+	const nexusBridgingContract = new web3Obj.eth.Contract(
+		JSON.parse(nexusBridgingContractABI),
+		to,
+	);
+
+	const calldata = nexusBridgingContract.methods
+		.withdraw(
+			toNumChainID(dto.destinationChain),
+			[{ receiver: dto.destinationAddress, amount: dto.amount }],
+			web3.utils.toHex(bridgingFee),
+		)
+		.encodeABI();
+
+	return {
+		from: dto.senderAddress,
+		to,
+		bridgingFee: web3.utils.toHex(bridgingFee),
+		value: web3.utils.toHex(value),
+		data: calldata,
+		isCentralized: false,
+	};
+};
+
+const ethCentralizedBridgingTx = async (
+	dto: CreateTransactionDto,
+	value: bigint,
+	bridgingFee: bigint,
+): Promise<CreateEthTransactionResponseDto> => {
+	const to = process.env.NEXUS_CENTRALIZED_BRIDGING_ADDR;
+	if (!to) {
+		throw new BadRequestException('Empty to address');
+	}
+
+	const calldata = web3.utils.asciiToHex(
+		JSON.stringify({
+			destinationChain: dto.destinationChain,
+			destnationAddress: dto.destinationAddress,
+		}),
+	);
+
+	return {
+		from: dto.senderAddress,
+		to,
+		bridgingFee: web3.utils.toHex(bridgingFee),
+		value: web3.utils.toHex(value),
+		data: calldata,
+		isCentralized: true,
+	};
 };
 
 export const createContext = (chain: ChainEnum) => {
@@ -103,7 +189,10 @@ export const createContext = (chain: ChainEnum) => {
 	);
 };
 
-export async function submitTransaction(chain: ChainEnum, signedTx: string) {
+export async function submitCardanoTransaction(
+	chain: ChainEnum,
+	signedTx: string,
+) {
 	const context = await createContext(chain);
 	const client = await createTransactionSubmissionClient(context);
 
@@ -112,24 +201,4 @@ export async function submitTransaction(chain: ChainEnum, signedTx: string) {
 	await client.shutdown();
 
 	return txId;
-}
-
-export async function getProtocolParams(chain: ChainEnum) {
-	const context = await createContext(chain);
-	const client = await createLedgerStateQueryClient(context);
-
-	const protocolParams = await client.protocolParameters();
-
-	await client.shutdown();
-
-	return protocolParams;
-}
-
-export function shouldUseCentralizedBridge(destinationChain: ChainEnum) {
-	const useCentralizedBridgeForNexus =
-		process.env.USE_CENTRALIZED_BRIDGE_FOR_NEXUS === 'true';
-	return (
-		process.env.USE_CENTRALIZED_BRIDGE === 'true' ||
-		(destinationChain === ChainEnum.Nexus && useCentralizedBridgeForNexus)
-	);
 }

@@ -11,12 +11,14 @@ type Props = {
 const mapKeyToWord: { [key: string]: string } = {
 	amountFrom: 'From',
 	amountTo: 'To',
+	receiverAddress: 'Receiver',
 	destinationChain: 'Destination chain',
 }
 
 const filterProps: string[] = [
 	'amountTo',
 	'amountFrom',
+	'receiverAddress',
 	'destinationChain',
 ]
 
@@ -44,6 +46,10 @@ function AppliedFiltersChips({ filters, removeFilter, resetFilters }: Props) {
 						'&:hover':{
 							color:'white',
 						}
+					},
+					'& .MuiChip-label':{
+						paddingLeft: '8px',
+						paddingBottom: '2px',
 					}
 				}}
 

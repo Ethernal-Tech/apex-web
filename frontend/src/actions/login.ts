@@ -5,7 +5,7 @@ import { Dispatch } from 'redux';
 import { logout } from "./logout";
 import { toast } from "react-toastify";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
-import { areChainsEqual } from "../utils/chainUtils";
+import { areChainsEqual, fromChainToNetworkId } from "../utils/chainUtils";
 import evmWalletHandler from "../features/EvmWalletHandler";
 import { setConnectingAction } from "../redux/slices/loginSlice";
 import { setChainAction } from "../redux/slices/chainSlice";
@@ -28,9 +28,9 @@ const enableEvmWallet = async (selectedWalletName: string, chain: ChainEnum, dis
     const networkId = await evmWalletHandler.getNetworkId();
 
     if (!areChainsEqual(chain, networkId)) {
-        throw new Error(`chain: ${chain} not compatible with networkId: ${networkId}`);
+        throw new Error(`Chain: ${chain} not compatible with networkId: ${networkId}. Expected networkId: ${fromChainToNetworkId(chain)}. Please select ${chain} network in your wallet.`);
     }
-    const account = await evmWalletHandler.getChangeAddress();
+    const account = await evmWalletHandler.getAddress();
     const balanceResp = await tryCatchJsonByAction(() => getWalletBalanceAction(chain, account), dispatch); 
 
     dispatch(setWalletAction(selectedWalletName));
@@ -51,7 +51,7 @@ const enableCardanoWallet = async (selectedWalletName: string, chain: ChainEnum,
 
     const networkId = await walletHandler.getNetworkId();
     if (!areChainsEqual(chain, networkId)) {
-        throw new Error(`chain: ${chain} not compatible with networkId: ${networkId}`);
+        throw new Error(`Chain: ${chain} not compatible with networkId: ${networkId}. Expected networkId: ${fromChainToNetworkId(chain)}. Please select ${chain} network in your wallet.`);
     }
 
     const account = await walletHandler.getChangeAddress();

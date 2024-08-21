@@ -23,8 +23,7 @@ type BridgingAddresses struct {
 }
 
 type EthChainConfig struct {
-	ChainID           string            `json:"-"`
-	BridgingAddresses BridgingAddresses `json:"bridgingAddresses"`
+	ChainID string `json:"-"`
 }
 
 type CardanoChainConfig struct {

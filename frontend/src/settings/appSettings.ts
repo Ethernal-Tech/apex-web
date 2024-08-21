@@ -1,11 +1,10 @@
 export class AppSettings {
 	private _apiUrl: string = 'https://localhost:30000';
-	private _minUtxoValue: number = 0;
-	private _minEvmValue: number = 0;
-	private _primeVectorBridgingFee: number = 0;
-	private _nexusBridgingFee: number = 0;
+	private _minUtxoValue: string = '0';
+	private _minEvmValue: string = '0';
+	private _primeVectorBridgingFee: string = '0';
+	private _nexusBridgingFee: string = '0';
 	private _potentialWalletFee: number = 0;
-	private _usePrivateKey: boolean = false;
 
     public constructor() {
 		const settingsJson = require(process.env.NODE_ENV === 'development' ? './appSettings_development.json' : './appSettings_production.json');
@@ -15,35 +14,30 @@ export class AppSettings {
 		this._primeVectorBridgingFee = settingsJson.primeVectorBridgingFee;
 		this._nexusBridgingFee = settingsJson.nexusBridgingFee;
 		this._potentialWalletFee = settingsJson.potentialWalletFee;
-		this._usePrivateKey = settingsJson.usePrivateKey;
 	}
 
 	get apiUrl(): string {
 		return this._apiUrl;
 	}
 
-	get minUtxoValue(): number {
+	get minUtxoValue(): string {
 		return this._minUtxoValue;
 	}
 	
-	get minEvmValue(): number {
+	get minEvmValue(): string {
 		return this._minEvmValue;
 	}
 
-	get primeVectorBridgingFee(): number {
+	get primeVectorBridgingFee(): string {
 		return this._primeVectorBridgingFee;
 	}
 	
-	get nexusBridgingFee(): number {
+	get nexusBridgingFee(): string {
 		return this._nexusBridgingFee;
 	}
 
 	get potentialWalletFee(): number {
 		return this._potentialWalletFee;
-	}
-
-	get usePrivateKey(): boolean {
-		return this._usePrivateKey;
 	}
 }
 

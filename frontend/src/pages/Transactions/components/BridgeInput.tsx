@@ -8,49 +8,56 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import { CreateTxResponse } from './types';
-import { ChainEnum, CreateTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
+import { CreateCardanoTxResponse, CreateEthTxResponse } from './types';
+import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
+import { estimateEthGas } from '../../../actions/submitTx';
 
 type BridgeInputType = {
-    bridgeTxFee: number
-    createTx: (address: string, amount: number) => Promise<CreateTxResponse>
-    submit:(address: string, amount: number) => Promise<void>
+    bridgeTxFee: string
+    createCardanoTx: (address: string, amount: string) => Promise<CreateCardanoTxResponse>
+    createEthTx: (address: string, amount: string) => Promise<CreateEthTxResponse>
+    submit:(address: string, amount: string) => Promise<void>
     loading?: boolean;
 }
 
-const BridgeInput = ({bridgeTxFee, createTx, submit, loading}:BridgeInputType) => {
+const BridgeInput = ({bridgeTxFee, createCardanoTx, createEthTx, submit, loading}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
-  const [createdTx, setCreatedTx] = useState<CreateTransactionResponseDto | undefined>();
+  const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
   const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
-  const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
+  const {chain} = useSelector((state: RootState)=> state.chain);
 
-  const fetchCreatedTx = useCallback(async () => {
-    /* if(chain === ChainEnum.Prime && destinationChain === ChainEnum.Nexus){
-        // TODO - remove this once the tx-formatting-service works for prime->nexus
-        return;
-    } */
-
-    if(chain === ChainEnum.Nexus && destinationChain === ChainEnum.Prime){
-        // not used as tx is formatted in frontend (nexus->prime)
-        return;
-    }
-
+  const fetchWalletFee = useCallback(async () => {
     if (!destinationAddr || !amount) {
-        setCreatedTx(undefined);
+        setUserWalletFee(undefined);
         return;
     }
 
     try {
-        const createdTxResp = await createTx(destinationAddr, +convertApexToDfm(amount || '0', chain));
-        setCreatedTx(createdTxResp.createResponse);
-    } catch {
-        setCreatedTx(undefined);
+        if (chain === ChainEnum.Prime || chain === ChainEnum.Vector) {
+            const createdTxResp = await createCardanoTx(destinationAddr, convertApexToDfm(amount || '0', chain));
+            setUserWalletFee((createdTxResp.createResponse?.txFee || 0).toString());
+
+            return;
+        } else if (chain === ChainEnum.Nexus) {
+            const createdTxResp = await createEthTx(destinationAddr, convertApexToDfm(amount || '0', chain));
+            const { bridgingFee, isCentralized, ...tx } = createdTxResp.createResponse;
+
+            const fee = await estimateEthGas(tx, isCentralized);
+            setUserWalletFee(fee.toString());
+
+            return;
+        }
+    } catch (e) {
+        console.log('error while calculating wallet fee', e)
     }
-  }, [amount, chain, createTx, destinationAddr])
+
+    setUserWalletFee(undefined);
+    
+  }, [amount, chain, createCardanoTx, createEthTx, destinationAddr])
 
   useEffect(() => {
     if (fetchCreateTxTimeoutRef.current) {
@@ -58,7 +65,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, loading}:BridgeInputType) =
         fetchCreateTxTimeoutRef.current = undefined;
     }
 
-    fetchCreateTxTimeoutRef.current = setTimeout(fetchCreatedTx, 500);
+    fetchCreateTxTimeoutRef.current = setTimeout(fetchWalletFee, 500);
 
     return () => {
         if (fetchCreateTxTimeoutRef.current) {
@@ -66,7 +73,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, loading}:BridgeInputType) =
             fetchCreateTxTimeoutRef.current = undefined;
         }
     }
-  }, [fetchCreatedTx])
+  }, [fetchWalletFee])
 
   const onDiscard = () => {
     setDestinationAddr('')
@@ -77,12 +84,16 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, loading}:BridgeInputType) =
   const minDfmValue = chain === ChainEnum.Nexus ? 
     appSettings.minEvmValue : appSettings.minUtxoValue;
     
-    const maxAmountDfm:string = totalDfmBalance ?
-    (BigInt(totalDfmBalance) - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString() : '0';
+    const maxAmountDfm:string = totalDfmBalance
+        ? ( chain === ChainEnum.Prime || chain === ChainEnum.Vector
+            ? (BigInt(totalDfmBalance) - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString()
+            : (BigInt(totalDfmBalance) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString() // for nexus, using minDfm value as substitute to user wallet fee / potential fee
+        )
+        : '0';
     // Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null; // this causes 0 on nexus, seems to be a bug
 
   const onSubmit = useCallback(async () => {
-    await submit(destinationAddr, +convertApexToDfm(amount || '0', chain))
+    await submit(destinationAddr, convertApexToDfm(amount || '0', chain))
   }, [amount, destinationAddr, submit, chain]) 
 
   return (
@@ -115,7 +126,7 @@ const BridgeInput = ({bridgeTxFee, createTx, submit, loading}:BridgeInputType) =
                 }}/>
             
             <FeeInformation
-                userWalletFee={createdTx?.txFee || 0}
+                userWalletFee={userWalletFee || '0'}
                 bridgeTxFee={bridgeTxFee}
                 chain={chain}
                 sx={{

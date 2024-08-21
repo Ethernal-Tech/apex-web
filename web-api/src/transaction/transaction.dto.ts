@@ -1,20 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 import { ChainEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
-
-export class CreateTransactionReceiverDto {
-	@IsNotEmpty()
-	@ApiProperty()
-	address: string;
-
-	@IsNotEmpty()
-	@IsPositive()
-	@ApiProperty()
-	amount: number;
-}
 
 export class CreateTransactionDto {
 	@IsNotEmpty()
@@ -32,28 +20,16 @@ export class CreateTransactionDto {
 	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
 	destinationChain: ChainEnum;
 
-	@Type(() => Array<CreateTransactionReceiverDto>)
 	@IsNotEmpty()
-	@ApiProperty({ isArray: true, type: CreateTransactionReceiverDto })
-	@IsArray({ each: true })
-	receivers: CreateTransactionReceiverDto[];
+	@ApiProperty()
+	destinationAddress: string;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	amount: string;
 
 	@ApiProperty({ nullable: true })
-	bridgingFee?: number;
-}
-
-export class SignTransactionDto {
-	@IsNotEmpty()
-	@ApiProperty()
-	signingKeyHex: string;
-
-	@IsNotEmpty()
-	@ApiProperty()
-	txRaw: string;
-
-	@IsNotEmpty()
-	@ApiProperty()
-	txHash: string;
+	bridgingFee?: string;
 }
 
 export class TransactionSubmittedDto {
@@ -82,18 +58,20 @@ export class TransactionSubmittedDto {
 	receiverAddrs: string[];
 
 	@IsNotEmpty()
-	@IsPositive()
 	@ApiProperty()
-	amount: number;
+	amount: string;
+
+	@ApiProperty()
+	isCentralized: boolean;
 }
 
-export class SubmitTransactionDto extends TransactionSubmittedDto {
+export class SubmitCardanoTransactionDto extends TransactionSubmittedDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	signedTxRaw: string;
 }
 
-export class SubmitTransactionResponseDto {
+export class SubmitCardanoTransactionResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	txHash: string;
@@ -102,7 +80,7 @@ export class SubmitTransactionResponseDto {
 	bridgeTx?: BridgeTransactionDto;
 }
 
-export class TransactionResponseDto {
+export class CreateCardanoTransactionResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	txRaw: string;
@@ -110,9 +88,7 @@ export class TransactionResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	txHash: string;
-}
 
-export class CreateTransactionResponseDto extends TransactionResponseDto {
 	@IsNotEmpty()
 	@IsPositive()
 	@ApiProperty()
@@ -121,16 +97,33 @@ export class CreateTransactionResponseDto extends TransactionResponseDto {
 	@IsPositive()
 	@ApiProperty()
 	txFee: number;
+
+	@ApiProperty()
+	isCentralized: boolean;
 }
 
-export class ProtocolParamsResponseDto {
+export class CreateEthTransactionResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
-	txFeeFixed: string;
+	from: string;
 
 	@IsNotEmpty()
 	@ApiProperty()
-	txFeePerByte: string;
+	to: string;
+
+	@ApiProperty({ nullable: true, required: false })
+	value?: string;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	data: string;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	bridgingFee: string;
+
+	@ApiProperty()
+	isCentralized: boolean;
 }
 
 export class ErrorResponseDto {

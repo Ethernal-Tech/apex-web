@@ -2,14 +2,14 @@ import { Box, Typography } from "@mui/material"
 
 import {ReactComponent as WalletIcon} from "../../../assets/icons/moneyWallet.svg";
 import {ReactComponent as ApexIcon} from "../../../assets/icons/apexTransferIcon.svg";
-import { convertDfmToApex } from "../../../utils/generalUtils";
+import { convertDfmToApex, toFixed } from "../../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 
 const TotalBalance = () => {
 	const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
     const chain = useSelector((state: RootState)=> state.chain.chain);
-    const totalBalanceInApex = totalDfmBalance ? convertDfmToApex(totalDfmBalance, chain) : null;
+    const totalBalanceInApex = totalDfmBalance ? toFixed(convertDfmToApex(totalDfmBalance, chain), 6) : null;
     
   return (
     <Box px={'17px'} py='20px' sx={{border:'1px solid #077368',color:'#A1B3A0', background:'#075159',borderRadius:'4px', fontWeight:'500'}}>
