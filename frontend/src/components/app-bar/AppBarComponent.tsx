@@ -84,12 +84,9 @@ const AppBarComponent = () => {
 
                         {
                             loginConnecting ? (
-                                <ButtonCustom 
-                                variant="redNavigation"
-                                >
-                                    Connect Wallet
+                                <Button sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'lowercase'}}>
                                     <CircularProgress sx={{ marginLeft: 1 }} size={20}/>
-                                </ButtonCustom>
+                                </Button>
                             ) : (
                                 isLoggedInMemo ? (
                                     <Button 
@@ -102,14 +99,7 @@ const AppBarComponent = () => {
                                         endIcon={<ExpandMoreIcon />}>
                                             {formatAddress(account)}
                                     </Button>
-                                    ) : (
-                                    <ButtonCustom 
-                                        variant="redNavigation"
-                                        onClick={handleConnectClick}
-                                    >
-                                        Connect Wallet
-                                    </ButtonCustom>
-                                    )
+                                ) : null
                             )
                         }
                         
