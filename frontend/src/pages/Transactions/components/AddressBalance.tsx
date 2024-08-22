@@ -1,9 +1,19 @@
-import { Box, Typography } from "@mui/material"
+import { Box, Button, Typography } from "@mui/material"
 import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 import { formatAddress } from "../../../utils/generalUtils";
+import {ReactComponent as CopyIcon} from "../../../assets/icons/copy-icon.svg";
 
 const AddressBalance = () => {
+
+    
+/* Use the Clipboard API to write text to the clipboard */
+    function copyToClipboard(text:string) {
+        navigator.clipboard.writeText(text).catch(function(err) {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+
 	const account = useSelector((state: RootState) => state.accountInfo.account);
     return (
         <Box px={'17px'} py='20px' sx={{
@@ -15,12 +25,17 @@ const AddressBalance = () => {
                 borderImageSource: 'linear-gradient(180deg, #435F69 10.63%, rgba(67, 95, 105, 0) 130.31%)',
                 borderImageSlice: 1,
                 }}>
-            <Box sx={{display:'flex', justifyContent:'space-between'}}>
-                <Typography fontSize="13px" textTransform={'lowercase'} sx={{display:'flex',alignItems:'center', color:'white'}}>
-                    {formatAddress(account,14,4)}
-                    {/* TODO NICK - add copy to clipboard btn */}
-                </Typography>
-            </Box>
+                    
+            {account && (
+                <Box sx={{display:'flex', justifyContent:'space-between'}}>
+                    <Typography fontSize="13px" textTransform={'lowercase'} sx={{display:'flex',alignItems:'center', color:'white'}}>
+                        {formatAddress(account,14,4)}
+                    </Typography>
+                    <Button onClick={()=> account && copyToClipboard(account)}>
+                        <CopyIcon/>
+                    </Button>
+                </Box>
+            )}
         </Box>
     )
 }
