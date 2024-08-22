@@ -31,14 +31,18 @@ export const getChainLabelAndColor = (chain: string):{letter:string, color: stri
   }
 };
 
-export const formatAddress = (address:string|undefined):string => {
+export const formatAddress = (
+    address:string|undefined, 
+    firstLettersToShow = 7, 
+    lastLettersToShow = 5
+  ):string => {
   if(!address) return '';
 
   // No need to format if the address is 13 chars long or shorter
   if (address.length <= 13) return address;
 
-  const firstPart = address.substring(0, 7);
-  const lastPart = address.substring(address.length - 5);
+  const firstPart = address.substring(0, firstLettersToShow);
+  const lastPart = address.substring(address.length - lastLettersToShow);
   return `${firstPart}...${lastPart}`;
 }
 
