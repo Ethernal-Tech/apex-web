@@ -21,10 +21,13 @@ interface CustomSelectProps {
 }
 
 const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, disabled = false, onChange, options }) => {
-  const StyledFormControl = styled(FormControl)(({ theme }) => ({
+  const StyledFormControl = styled(FormControl)(() => ({
     borderRadius: '4px',
     border: '1px solid',
     borderColor: options.find(option => option.value === value)?.borderColor,
+    '& .MuiSelect-select':{
+      padding:'12px 15px',
+    },
     '& .MuiTypography-root':{
       color:'white'
     },
