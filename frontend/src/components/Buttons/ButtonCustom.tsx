@@ -6,7 +6,7 @@ interface ButtonCustomProps {
     disabled?: boolean;
     sx?: object;
     children?: React.ReactNode;  // Add children prop
-    variant?:'red'|'redNavigation'|'white'|'whiteNavigation'|'navigation'
+    variant?:'red'|'redNavigation'|'white'|'whiteNavigation'|'navigation'|'navigationActive'
   }
 
 const variantStyles  ={
@@ -18,7 +18,7 @@ const variantStyles  ={
       padding: '14px 24px',
       '&:hover':{
           boxShadow: 'none',
-          backgroundColor:'transparent'
+          backgroundColor:'#F25041'
       }
   },
   redNavigation:{
@@ -34,14 +34,13 @@ const variantStyles  ={
       py:'10px'
   },
   white: {
-      border: '1px solid',
-      borderColor: 'white',
+      border: 'none',
       color: 'black',
       backgroundColor: 'white',
       padding: '14px 24px',
       '&:hover':{
           boxShadow: 'none',
-          backgroundColor:'white'
+          backgroundColor:'#F27B50'
       }
   },
   whiteNavigation:{
@@ -59,6 +58,17 @@ const variantStyles  ={
     border: '1px solid',
     borderColor: 'transparent',
     color: 'white',
+    backgroundColor: 'transparent',
+    padding: '10px 24px',
+    '&:hover':{
+      boxShadow: 'none',
+      backgroundColor:'transparent'
+    },
+  },
+  navigationActive:{
+    border: '1px solid',
+    borderColor: 'transparent',
+    color: '#F25041',
     backgroundColor: 'transparent',
     padding: '10px 24px',
     '&:hover':{

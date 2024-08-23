@@ -192,7 +192,7 @@ function NewTransactionPage() {
 				}}>
 					<TotalBalance/>
 					
-					<Typography sx={{color:'white',mt:4, mb:2}}>Addresses</Typography>
+					<Typography sx={{color:'white',mt:4, mb:2}}>Address</Typography>
 					<AddressBalance/>
 					
 				</Box>

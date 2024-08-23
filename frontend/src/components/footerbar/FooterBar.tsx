@@ -2,6 +2,7 @@ import { Box, Button } from "@mui/material"
 import {ReactComponent as ApexIcon} from "../../assets/external-links/Apex.svg";
 import {ReactComponent as LinkedinIcon} from "../../assets/external-links/LN.svg";
 import {ReactComponent as XIcon} from "../../assets/external-links/X.svg";
+import {ReactComponent as DiscordIcon} from "../../assets/external-links/Discord.svg";
 
 const containerStyles = {
   width:'100%',
@@ -40,7 +41,7 @@ const FooterBar = () => {
   return (
     <Box sx={containerStyles}>
       <Box sx={childStyles}>
-        &copy;{new Date().getFullYear()}, Apex Fusion, All Rights Reserved
+        &copy;{new Date().getFullYear()} Apex Fusion. All Rights Reserved.
       </Box>
 
       <Box sx={{
@@ -58,10 +59,19 @@ const FooterBar = () => {
         <Button component='a' href="https://x.com/apexfusion" target="_blank">
           <XIcon/>
         </Button>
+        <Button component='a' href="https://discord.com/invite/2nSBGyvjpZ" target="_blank">
+          <DiscordIcon/>
+        </Button>
       </Box>
       
       <Box sx={childStyles}>
-        Network: Testnet
+        <Box component='span' sx={{marginRight:'2px'}}>Network: </Box>
+        <Box component='span' sx={{
+          backgroundColor:'#fa7b14',
+          display:'inline-block',
+          padding:'4px 12px',
+          borderRadius:'100px'
+        }}>Testnet</Box>
       </Box>
     </Box>
   )

@@ -1,13 +1,20 @@
-import { Box, Typography } from "@mui/material"
+import { Box, Button, Typography } from "@mui/material"
 import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
-import { convertDfmToApex, formatAddress } from "../../../utils/generalUtils";
+import { formatAddress } from "../../../utils/generalUtils";
+import {ReactComponent as CopyIcon} from "../../../assets/icons/copy-icon.svg";
 
 const AddressBalance = () => {
+
+    
+/* Use the Clipboard API to write text to the clipboard */
+    function copyToClipboard(text:string) {
+        navigator.clipboard.writeText(text).catch(function(err) {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+
 	const account = useSelector((state: RootState) => state.accountInfo.account);
-	const balance = useSelector((state: RootState) => state.accountInfo.balance);
-    const chain = useSelector((state: RootState)=> state.chain.chain);
-    const totalBalanceInApex = balance ? convertDfmToApex(balance, chain) : null;
     return (
         <Box px={'17px'} py='20px' sx={{
                 border:'1px solid',
@@ -18,32 +25,17 @@ const AddressBalance = () => {
                 borderImageSource: 'linear-gradient(180deg, #435F69 10.63%, rgba(67, 95, 105, 0) 130.31%)',
                 borderImageSlice: 1,
                 }}>
-            <Box sx={{display:'flex', justifyContent:'space-between'}} mb={1}>
-                <Typography fontSize="14px" textTransform={'uppercase'} color={'white'} sx={{display:'flex',alignItems:'center'}}>
-                    address 1
-                </Typography>
-                <Typography fontSize="13px" textTransform={'lowercase'} sx={{display:'flex',alignItems:'center', color:'white'}}>
-                    {formatAddress(account)}
-                </Typography>
-            </Box>
-
-            {totalBalanceInApex &&
-            <Typography fontWeight={500}>
-                <Box component='span' sx={{color:'white', fontSize:'18px',lineheight:'27px'}}>
-                    {totalBalanceInApex.split('.')[0]}
+                    
+            {account && (
+                <Box sx={{display:'flex', justifyContent:'space-between'}}>
+                    <Typography fontSize="13px" textTransform={'lowercase'} sx={{display:'flex',alignItems:'center', color:'white'}}>
+                        {formatAddress(account,14,4)}
+                    </Typography>
+                    <Button onClick={()=> account && copyToClipboard(account)}>
+                        <CopyIcon/>
+                    </Button>
                 </Box>
-                
-                {/* show decimals if applicable */}
-                {totalBalanceInApex.includes('.') &&
-                <Box component='span' sx={{fontSize:'12px',lineheight:'24px'}}>
-                    .{totalBalanceInApex.split('.')[1]}
-                </Box>
-                }    
-            </Typography>
-            }
-            
-            {/* TODO af - removed for now as APEX doesn't have a price */}
-            {/* <Typography>&#36;5,000.00</Typography> */}
+            )}
         </Box>
     )
 }

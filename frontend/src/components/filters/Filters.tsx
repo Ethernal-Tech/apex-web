@@ -9,6 +9,30 @@ import { BridgeTransactionFilterDto, ChainEnum, TransactionStatusEnum } from '..
 import { capitalizeWord } from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
+import styled from '@emotion/styled';
+
+const StyledFormControl = styled(FormControl)({
+    '& .MuiSelect-select': {
+        backgroundColor: '#1a2e3b',
+        borderColor: '#1a2e3b',
+        color:'white',
+    },
+    '& .MuiSvgIcon-root':{
+        color:'white'
+    },
+
+    '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#1a2e3b',
+    },
+})
+
+const CustomMenuItem = styled(MenuItem)({
+    backgroundColor: '#1a2e3b',
+    color: '#ffffff',
+    '&:hover': {
+        backgroundColor: '#2b4a5a',
+    },
+});
 
 const style = {
     position: 'absolute' as 'absolute',
@@ -216,7 +240,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                         <Typography variant="h6" sx={{ textTransform: 'uppercase' }}>Filter</Typography>
 
                         <InputLabel sx={{color:'white'}} id="destination-chain-label">Destination Chain</InputLabel>
-                        <FormControl sx={{ minWidth: 220 }} variant="outlined" size='small'>
+                        <StyledFormControl sx={{ minWidth: 220 }} variant="outlined" size='small'>
                             <Select
                                 id="destination-chain"
                                 labelId='destination-chain-label'
@@ -224,21 +248,22 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                 variant="outlined"
                                 value={values.destinationChain}
                                 onChange={changeCallback}
-                                sx={{
-                                    '& .MuiSelect-select': {
-                                        backgroundColor: '#1a2e3b',
-                                        borderColor: '#1a2e3b',
-                                    },
-                                    '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#1a2e3b',
+                                MenuProps={{
+                                    PaperProps: {
+                                        sx: {
+                                            bgcolor: '#1a2e3b',
+                                            '& .MuiMenuItem-root': {
+                                                color: '#ffffff',
+                                            },
+                                        },
                                     },
                                 }}
                             >
                                 {destinationChains.map(chain => (
-                                    <MenuItem key={chain} value={chain}>{capitalizeWord(chain)}</MenuItem>
+                                    <CustomMenuItem key={chain} value={chain}>{capitalizeWord(chain)}</CustomMenuItem>
                                 ))}
                             </Select>
-                        </FormControl>
+                        </StyledFormControl>
 
                         <InputLabel sx={{color:'white'}} id="receiver-address">Receiver Address</InputLabel>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, position:'relative' }}>

@@ -1,7 +1,7 @@
-import { AppBar, Button, CircularProgress, ListItemIcon, ListItemText, Menu, MenuItem, Toolbar } from "@mui/material"
+import { AppBar, Button, CircularProgress, ListItemIcon, ListItemText, Menu, MenuItem, styled, Toolbar } from "@mui/material"
 import { useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { TRANSACTIONS_ROUTE, NEW_TRANSACTION_ROUTE, HOME_ROUTE } from "../../pages/PageRouter";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -11,16 +11,31 @@ import ButtonCustom from "../Buttons/ButtonCustom";
 import { RootState } from "../../redux/store";
 import { formatAddress } from "../../utils/generalUtils";
 import { logout } from "../../actions/logout";
-import { login } from "../../actions/login";
+
+const CustomMenu = styled(Menu)({
+    // backgroundColor: 'rgba(0,0,0, 0.4)',
+    '.MuiPaper-root':{
+        backgroundColor: '#051D26',
+        border:'1px solid #435F69'
+    },
+})
+
+const CustomMenuItem = styled(MenuItem)({
+    backgroundColor: '#051D26',
+    '&:hover': {
+      backgroundColor: '#073B4C',
+    },
+    color: '#ffffff',
+  });
 
 const AppBarComponent = () => {
     const wallet = useSelector((state: RootState) => state.wallet.wallet);
     const account = useSelector((state: RootState) => state.accountInfo.account);
     const loginConnecting = useSelector((state: RootState) => state.login.connecting);
-    const chain = useSelector((state: RootState) => state.chain.chain);
 	const isLoggedInMemo = !!wallet && !!account;
     
     const navigate = useNavigate();
+    const location = useLocation();
     const dispatch = useDispatch();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -41,10 +56,9 @@ const AppBarComponent = () => {
         handleClose();
         navigate(to, { replace: true });
     }
-    async function handleConnectClick() {
-        handleClose();
-        
-        await login(chain, navigate, dispatch);
+
+    function isActiveNavLink(route:string){
+        return route === location.pathname;
     }
 
     return (
@@ -63,13 +77,13 @@ const AppBarComponent = () => {
                             isLoggedInMemo &&
                             <>
                                 <ButtonCustom 
-                                    variant="navigation"
+                                    variant={isActiveNavLink(NEW_TRANSACTION_ROUTE) ? "navigationActive" : "navigation"}
                                     onClick={() => handleOptionClick(NEW_TRANSACTION_ROUTE)}
                                 >
                                 Transfer
                                 </ButtonCustom>
                                 <ButtonCustom
-                                    variant="navigation"
+                                    variant={isActiveNavLink(TRANSACTIONS_ROUTE) ? "navigationActive" : "navigation"}
                                     onClick={() => handleOptionClick(TRANSACTIONS_ROUTE)}
                                 >
                                     Bridging History
@@ -79,12 +93,9 @@ const AppBarComponent = () => {
 
                         {
                             loginConnecting ? (
-                                <ButtonCustom 
-                                variant="redNavigation"
-                                >
-                                    Connect Wallet
+                                <Button sx={{ border: '1px solid', borderColor:'#435F69', px: '24px', py: '10px', borderRadius:'8px', color: white, textTransform:'lowercase'}}>
                                     <CircularProgress sx={{ marginLeft: 1 }} size={20}/>
-                                </ButtonCustom>
+                                </Button>
                             ) : (
                                 isLoggedInMemo ? (
                                     <Button 
@@ -97,20 +108,13 @@ const AppBarComponent = () => {
                                         endIcon={<ExpandMoreIcon />}>
                                             {formatAddress(account)}
                                     </Button>
-                                    ) : (
-                                    <ButtonCustom 
-                                        variant="redNavigation"
-                                        onClick={handleConnectClick}
-                                    >
-                                        Connect Wallet
-                                    </ButtonCustom>
-                                    )
+                                ) : null
                             )
                         }
                         
                         
                     </div>
-                    <Menu
+                    <CustomMenu
                         id="basic-menu"
                         anchorEl={anchorEl}
                         open={open}
@@ -119,13 +123,13 @@ const AppBarComponent = () => {
                             'aria-labelledby': 'basic-button',
                         }}
                     >
-                        <MenuItem onClick={logoutCallback}>
+                        <CustomMenuItem onClick={logoutCallback}>
                             <ListItemIcon>
-                                <LogoutIcon fontSize="small" />
+                                <LogoutIcon fontSize="small" sx={{color:'white'}}/>
                             </ListItemIcon>
-                        <ListItemText>Disconnect Wallet</ListItemText>
-                        </MenuItem>
-                    </Menu>
+                            <ListItemText>Disconnect Wallet</ListItemText>
+                        </CustomMenuItem>
+                    </CustomMenu>
                 </Toolbar>
             </AppBar>
             <Toolbar />

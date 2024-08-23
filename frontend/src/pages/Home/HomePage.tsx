@@ -83,15 +83,15 @@ const HomePage: React.FC = () => {
 
   return (
     <BasePage>
-      <Typography variant="h1" sx={{ color: '#F25041', lineHeight: '128px', fontSize: '64px' }} fontFamily={'Major Mono Display, sans-serif'}>
-        Apex bRidGe
+      <Typography variant="h1" sx={{ color: '#F25041', lineHeight: '', fontSize: '44px' }} fontFamily={'Major Mono Display, sans-serif'}>
+        ReactoR bRidge
       </Typography>
 
-      <img src={BridgeGraph} alt="apex bridge graph" />
+      <img src={BridgeGraph} alt="apex bridge graph" style={{width:'280px',marginTop:'32px'}}/>
 
-      <Box display="flex" alignItems="center" justifyContent="space-between" p={4}>
+      <Box display="flex" alignItems="center" justifyContent="space-between" pt={2} pb={4}>
         <Box>
-          <Typography mb={1} sx={{color: white}} fontWeight="bold">SOURCE</Typography>
+          <Typography mb={'7px'} fontWeight={500} sx={{color: white, fontSize:'13px'}}>SOURCE</Typography>
           <CustomSelect
             label="Source"
             icon={getIconComponent(chain)}
@@ -114,7 +114,7 @@ const HomePage: React.FC = () => {
             {!isLoggedInMemo ? <SwitcherIcon /> : <OneDirectionArrowIcon/>}
         </Button>
         <Box>
-          <Typography mb={1} sx={{color: white}} fontWeight="bold">DESTINATION</Typography>
+          <Typography mb={'7px'} fontWeight={500} sx={{color: white, fontSize:'13px'}}>DESTINATION</Typography>
           <CustomSelect
             label="Destination"
             icon={getIconComponent(destinationChain)}
