@@ -1,4 +1,4 @@
-import { AppBar, Button, CircularProgress, ListItemIcon, ListItemText, Menu, MenuItem, Toolbar } from "@mui/material"
+import { AppBar, Button, CircularProgress, ListItemIcon, ListItemText, Menu, MenuItem, styled, Toolbar } from "@mui/material"
 import { useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -12,6 +12,22 @@ import { RootState } from "../../redux/store";
 import { formatAddress } from "../../utils/generalUtils";
 import { logout } from "../../actions/logout";
 import { login } from "../../actions/login";
+
+const CustomMenu = styled(Menu)({
+    // backgroundColor: 'rgba(0,0,0, 0.4)',
+    '.MuiPaper-root':{
+        backgroundColor: '#051D26',
+        border:'1px solid #435F69'
+    },
+})
+
+const CustomMenuItem = styled(MenuItem)({
+    backgroundColor: '#051D26',
+    '&:hover': {
+      backgroundColor: '#073B4C',
+    },
+    color: '#ffffff',
+  });
 
 const AppBarComponent = () => {
     const wallet = useSelector((state: RootState) => state.wallet.wallet);
@@ -42,11 +58,11 @@ const AppBarComponent = () => {
         handleClose();
         navigate(to, { replace: true });
     }
-    async function handleConnectClick() {
+/*     async function handleConnectClick() {
         handleClose();
         
         await login(chain, navigate, dispatch);
-    }
+    } */
 
     function isActiveNavLink(route:string){
         return route === location.pathname;
@@ -105,7 +121,7 @@ const AppBarComponent = () => {
                         
                         
                     </div>
-                    <Menu
+                    <CustomMenu
                         id="basic-menu"
                         anchorEl={anchorEl}
                         open={open}
@@ -114,13 +130,13 @@ const AppBarComponent = () => {
                             'aria-labelledby': 'basic-button',
                         }}
                     >
-                        <MenuItem onClick={logoutCallback}>
+                        <CustomMenuItem onClick={logoutCallback}>
                             <ListItemIcon>
-                                <LogoutIcon fontSize="small" />
+                                <LogoutIcon fontSize="small" sx={{color:'white'}}/>
                             </ListItemIcon>
-                        <ListItemText>Disconnect Wallet</ListItemText>
-                        </MenuItem>
-                    </Menu>
+                            <ListItemText>Disconnect Wallet</ListItemText>
+                        </CustomMenuItem>
+                    </CustomMenu>
                 </Toolbar>
             </AppBar>
             <Toolbar />
