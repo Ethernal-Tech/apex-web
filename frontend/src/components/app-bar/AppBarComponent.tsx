@@ -11,7 +11,6 @@ import ButtonCustom from "../Buttons/ButtonCustom";
 import { RootState } from "../../redux/store";
 import { formatAddress } from "../../utils/generalUtils";
 import { logout } from "../../actions/logout";
-import { login } from "../../actions/login";
 
 const CustomMenu = styled(Menu)({
     // backgroundColor: 'rgba(0,0,0, 0.4)',
@@ -33,7 +32,6 @@ const AppBarComponent = () => {
     const wallet = useSelector((state: RootState) => state.wallet.wallet);
     const account = useSelector((state: RootState) => state.accountInfo.account);
     const loginConnecting = useSelector((state: RootState) => state.login.connecting);
-    const chain = useSelector((state: RootState) => state.chain.chain);
 	const isLoggedInMemo = !!wallet && !!account;
     
     const navigate = useNavigate();
@@ -58,11 +56,6 @@ const AppBarComponent = () => {
         handleClose();
         navigate(to, { replace: true });
     }
-/*     async function handleConnectClick() {
-        handleClose();
-        
-        await login(chain, navigate, dispatch);
-    } */
 
     function isActiveNavLink(route:string){
         return route === location.pathname;
