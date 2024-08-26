@@ -66,7 +66,6 @@ class EvmWalletHandler {
         return this.web3!.utils.fromWei(balance, 'wei');
     };
 
-    // TODO - check what the network id will be
     getNetworkId = async (): Promise<bigint> => {
         this._checkWalletAndThrow();
         return await this.web3!.eth.net.getId();

@@ -42,7 +42,6 @@ const HomePage: React.FC = () => {
       icon: chainIcons[ChainEnum.Vector],
       borderColor:'#F25041'
     },
-    // TODO af - nexus removed for now
     { 
       value: ChainEnum.Nexus,
       label: capitalizeWord(ChainEnum.Nexus),
@@ -51,18 +50,15 @@ const HomePage: React.FC = () => {
     }
   ];
 
-
-  // if new source is the same as destination, switch the chains
   const updateSource = (value: ChainEnum)=>{
     const destination = getDestinationChain()
     if(value === destination) return switchValues()
     dispatch(setChainAction(value))
   }
   
-  // if new destination is the same as source, switch the chains
   const updateDestination = (value: ChainEnum)=>{
     const source = getSelectedChain()
-    if(value === source) return switchValues()
+    if(value === source) return switchValues() // if new destination is the same as source, switch the chains
     dispatch(setDestinationChainAction(value))
   }
 
