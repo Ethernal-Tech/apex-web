@@ -14,6 +14,7 @@ import {
     GeneralTransactionMetadata, AuxiliaryData, TransactionMetadatum,
     MetadataMap
   } from '@emurgo/cardano-serialization-lib-browser';
+import appSettings from "../settings/appSettings";
 
 
 export const signAndSubmitTx = async (
@@ -132,7 +133,7 @@ export const signAndSubmitNexusToPrimeFallbackTx = async (amount:number, destina
     const tx = {
         from: addressFrom,
         to: bridgeNexusAddress,
-        value: amount,
+        value: amount + appSettings.nexusBridgingFee,
         data: calldata,
         gas: 30000, // TODO nick - Adjust gas limit as necessary - not sure about this
         gasPrice: 1000000000 // TODO - adjust gas price
