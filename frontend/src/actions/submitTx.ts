@@ -14,6 +14,7 @@ import {
     GeneralTransactionMetadata, AuxiliaryData, TransactionMetadatum,
     MetadataMap
   } from '@emurgo/cardano-serialization-lib-browser';
+import appSettings from "../settings/appSettings";
 
 
 export const signAndSubmitTx = async (
@@ -116,8 +117,9 @@ export const signAndSubmitNexusToPrimeFallbackTx = async (amount:number, destina
     // Bridge destination address for fallback
     const bridgeNexusAddress = '0xEe639cDA5D46Bd32D0013bB75f60F3E691D9839f' // the fallback bridge address
     
-    if(amount <= 0){
-        throw new Error("Invalid amount.")
+    // 1 APEX in wei is minimum
+    if(amount < 1*10**18){
+        throw new Error("Amount less than minimum: 1 APEX")
     }
 
     const addressFrom = await evmWalletHandler.getChangeAddress()
@@ -132,7 +134,7 @@ export const signAndSubmitNexusToPrimeFallbackTx = async (amount:number, destina
     const tx = {
         from: addressFrom,
         to: bridgeNexusAddress,
-        value: amount,
+        value: amount + appSettings.nexusBridgingFee,
         data: calldata,
         gas: 30000, // TODO nick - Adjust gas limit as necessary - not sure about this
         gasPrice: 1000000000 // TODO - adjust gas price

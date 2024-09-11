@@ -39,6 +39,7 @@ import {ReactComponent as Step1} from "../../../assets/bridge-status-assets/step
 import {ReactComponent as Step2} from "../../../assets/bridge-status-assets/steps/step-2.svg"
 import {ReactComponent as Step3} from "../../../assets/bridge-status-assets/steps/step-3.svg"
 import { RootState } from "../../../redux/store"
+import { fetchAndUpdateBalanceAction } from "../../../actions/balance"
 /* 
 const NexusInProgressIcon = VectorInProgressIcon;
 const NexusSuccessIcon = VectorSuccessIcon;
@@ -299,6 +300,7 @@ const TransferProgress = ({
             const tx = await fetchTx();
             if (tx && isStatusFinal(tx.status)) {
                 clearInterval(handle);
+                await fetchAndUpdateBalanceAction(dispatch) // balance updated after funds are fully bridged
             }
         }, 5000);
 
