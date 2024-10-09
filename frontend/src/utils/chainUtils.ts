@@ -42,7 +42,7 @@ export const areChainsEqual = (chain: ChainEnum, networkId: number|bigint): bool
 
 const PRIME_EXPLORER_URL = 'https://prime-apex.ethernal.tech'
 const VECTOR_EXPLORER_URL = 'https://vector-apex.ethernal.tech'
-const NEXUS_EXPLORER_URL = 'https://explorer-testnet.af.route3.dev'
+const NEXUS_EXPLORER_URL = 'https://explorer.nexus.testnet.apexfusion.org'
 
 const getExplorerTxUrl = (chain: ChainEnum) => {
     let url
