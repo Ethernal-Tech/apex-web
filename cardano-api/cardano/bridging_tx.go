@@ -182,8 +182,9 @@ func (bts *BridgingTxSender) createMetadata(
 	}
 
 	for _, x := range receivers {
+		addr := strings.TrimPrefix(x.Addr, "0x")
 		metadataObj.Transactions = append(metadataObj.Transactions, common.BridgingRequestMetadataTransaction{
-			Address: common.SplitString(x.Addr, splitStringLength),
+			Address: common.SplitString(addr, splitStringLength),
 			Amount:  x.Amount,
 		})
 	}
