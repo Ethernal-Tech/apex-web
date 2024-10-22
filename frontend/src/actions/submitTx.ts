@@ -27,7 +27,7 @@ export const signAndSubmitCardanoTx = async (
         amount: amount.toString(),
         originTxHash: createResponse.txHash,
         signedTxRaw,
-        isCentralized: createResponse.isCentralized,
+        isFallback: createResponse.isFallback,
     }));
 
     const response = await tryCatchJsonByAction(bindedSubmitAction, dispatch);
@@ -41,7 +41,7 @@ export const signAndSubmitCardanoTx = async (
 
 const DEFAULT_GAS_PRICE = 1000000000 // TODO - adjust gas price
 
-export const fillOutEthTx = async (tx: Transaction, isCentralized: boolean) => {
+export const fillOutEthTx = async (tx: Transaction, isFallback: boolean) => {
     let gasPrice = await evmWalletHandler.getGasPrice();
     if (gasPrice === BigInt(0)) {
         gasPrice = BigInt(DEFAULT_GAS_PRICE || 0);
@@ -50,16 +50,16 @@ export const fillOutEthTx = async (tx: Transaction, isCentralized: boolean) => {
     return {
         ...tx,
         gasPrice,
-        gas: isCentralized ? 30000 : undefined,
+        gas: isFallback ? 30000 : undefined,
     }
 }
 
-export const estimateEthGas = async (tx: Transaction, isCentralized: boolean) => {
+export const estimateEthGas = async (tx: Transaction, isFallback: boolean) => {
     if (!evmWalletHandler.checkWallet()) {
       return BigInt(0);
     }
 
-    const filledTx = await fillOutEthTx(tx, isCentralized)
+    const filledTx = await fillOutEthTx(tx, isFallback)
     const estimateTx = {
         ...filledTx,
     }
@@ -81,8 +81,8 @@ export const signAndSubmitEthTx = async (
       throw new Error('Wallet not connected.');
   }
 
-  const {bridgingFee, isCentralized, ...txParts} = createResponse;
-  const tx = await fillOutEthTx(txParts, isCentralized);
+  const {bridgingFee, isFallback, ...txParts} = createResponse;
+  const tx = await fillOutEthTx(txParts, isFallback);
 
   const receipt = await evmWalletHandler.submitTx(tx);
 
@@ -95,7 +95,7 @@ export const signAndSubmitEthTx = async (
       senderAddress: values.senderAddress,
       receiverAddrs: [values.destinationAddress],
       amount: amount.toString(),
-      isCentralized: createResponse.isCentralized,
+      isFallback: createResponse.isFallback,
   }));
 
   const response = await tryCatchJsonByAction(bindedSubmittedAction, dispatch);

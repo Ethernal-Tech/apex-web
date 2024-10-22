@@ -440,7 +440,7 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
     txHash!: string;
     bridgingFee!: number;
     txFee!: number;
-    isCentralized!: boolean;
+    isFallback!: boolean;
 
     constructor(data?: ICreateCardanoTransactionResponseDto) {
         if (data) {
@@ -457,7 +457,7 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
             this.txHash = _data["txHash"];
             this.bridgingFee = _data["bridgingFee"];
             this.txFee = _data["txFee"];
-            this.isCentralized = _data["isCentralized"];
+            this.isFallback = _data["isFallback"];
         }
     }
 
@@ -474,7 +474,7 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
         data["txHash"] = this.txHash;
         data["bridgingFee"] = this.bridgingFee;
         data["txFee"] = this.txFee;
-        data["isCentralized"] = this.isCentralized;
+        data["isFallback"] = this.isFallback;
         return data; 
     }
 }
@@ -484,7 +484,7 @@ export interface ICreateCardanoTransactionResponseDto {
     txHash: string;
     bridgingFee: number;
     txFee: number;
-    isCentralized: boolean;
+    isFallback: boolean;
 }
 
 export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto {
@@ -494,7 +494,7 @@ export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto
     senderAddress!: string;
     receiverAddrs!: string[];
     amount!: string;
-    isCentralized!: boolean;
+    isFallback!: boolean;
     signedTxRaw!: string;
 
     constructor(data?: ISubmitCardanoTransactionDto) {
@@ -521,7 +521,7 @@ export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto
                     this.receiverAddrs!.push(item);
             }
             this.amount = _data["amount"];
-            this.isCentralized = _data["isCentralized"];
+            this.isFallback = _data["isFallback"];
             this.signedTxRaw = _data["signedTxRaw"];
         }
     }
@@ -545,7 +545,7 @@ export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto
                 data["receiverAddrs"].push(item);
         }
         data["amount"] = this.amount;
-        data["isCentralized"] = this.isCentralized;
+        data["isFallback"] = this.isFallback;
         data["signedTxRaw"] = this.signedTxRaw;
         return data; 
     }
@@ -558,7 +558,7 @@ export interface ISubmitCardanoTransactionDto {
     senderAddress: string;
     receiverAddrs: string[];
     amount: string;
-    isCentralized: boolean;
+    isFallback: boolean;
     signedTxRaw: string;
 }
 
@@ -695,7 +695,7 @@ export class CreateEthTransactionResponseDto implements ICreateEthTransactionRes
     value?: string | undefined;
     data!: string;
     bridgingFee!: string;
-    isCentralized!: boolean;
+    isFallback!: boolean;
 
     constructor(data?: ICreateEthTransactionResponseDto) {
         if (data) {
@@ -713,7 +713,7 @@ export class CreateEthTransactionResponseDto implements ICreateEthTransactionRes
             this.value = _data["value"];
             this.data = _data["data"];
             this.bridgingFee = _data["bridgingFee"];
-            this.isCentralized = _data["isCentralized"];
+            this.isFallback = _data["isFallback"];
         }
     }
 
@@ -731,7 +731,7 @@ export class CreateEthTransactionResponseDto implements ICreateEthTransactionRes
         data["value"] = this.value;
         data["data"] = this.data;
         data["bridgingFee"] = this.bridgingFee;
-        data["isCentralized"] = this.isCentralized;
+        data["isFallback"] = this.isFallback;
         return data; 
     }
 }
@@ -742,7 +742,7 @@ export interface ICreateEthTransactionResponseDto {
     value?: string | undefined;
     data: string;
     bridgingFee: string;
-    isCentralized: boolean;
+    isFallback: boolean;
 }
 
 export class TransactionSubmittedDto implements ITransactionSubmittedDto {
@@ -752,7 +752,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
     senderAddress!: string;
     receiverAddrs!: string[];
     amount!: string;
-    isCentralized!: boolean;
+    isFallback!: boolean;
 
     constructor(data?: ITransactionSubmittedDto) {
         if (data) {
@@ -778,7 +778,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
                     this.receiverAddrs!.push(item);
             }
             this.amount = _data["amount"];
-            this.isCentralized = _data["isCentralized"];
+            this.isFallback = _data["isFallback"];
         }
     }
 
@@ -801,7 +801,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
                 data["receiverAddrs"].push(item);
         }
         data["amount"] = this.amount;
-        data["isCentralized"] = this.isCentralized;
+        data["isFallback"] = this.isFallback;
         return data; 
     }
 }
@@ -813,7 +813,7 @@ export interface ITransactionSubmittedDto {
     senderAddress: string;
     receiverAddrs: string[];
     amount: string;
-    isCentralized: boolean;
+    isFallback: boolean;
 }
 
 export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {

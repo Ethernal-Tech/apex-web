@@ -44,9 +44,9 @@ const BridgeInput = ({bridgeTxFee, createCardanoTx, createEthTx, submit, loading
             return;
         } else if (chain === ChainEnum.Nexus) {
             const createdTxResp = await createEthTx(destinationAddr, convertApexToDfm(amount || '0', chain));
-            const { bridgingFee, isCentralized, ...tx } = createdTxResp.createResponse;
+            const { bridgingFee, isFallback, ...tx } = createdTxResp.createResponse;
 
-            const fee = await estimateEthGas(tx, isCentralized);
+            const fee = await estimateEthGas(tx, isFallback);
             setUserWalletFee(fee.toString());
 
             return;
