@@ -104,7 +104,7 @@ export class TransactionService {
 		senderAddress,
 		receiverAddrs,
 		amount,
-		isCentralized,
+		isFallback,
 	}: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
 		const entity = new BridgeTransaction();
 
@@ -120,7 +120,7 @@ export class TransactionService {
 		entity.originChain = originChain;
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;
-		entity.isCentralized = isCentralized;
+		entity.isCentralized = isFallback;
 
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);

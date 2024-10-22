@@ -1,7 +1,5 @@
-github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20240719115837-c737ddfbe04c h1:zTiJ5iCqh27+MHDHet3C+Mb+93CThqMoUuiuapwVEFk=
-github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20240719115837-c737ddfbe04c/go.mod h1:m3DIz2jbqTg7ky6jw4Iwu5xN1oPbWCXB64yjqXBEt3U=
-github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20240816140343-80b36ef5dd94 h1:oUrWGxZlsHZQu6WqX+LM1P8W/X5ceiaU3774XGJjKz4=
-github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20240816140343-80b36ef5dd94/go.mod h1:m3DIz2jbqTg7ky6jw4Iwu5xN1oPbWCXB64yjqXBEt3U=
+github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20241015091129-fb2b41db6164 h1:mmwoxbCpH2aKLzGofki/2t6VH9qiC72pU7wDzw+LSwY=
+github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20241015091129-fb2b41db6164/go.mod h1:m3DIz2jbqTg7ky6jw4Iwu5xN1oPbWCXB64yjqXBEt3U=
 github.com/blinklabs-io/gouroboros v0.79.0 h1:baURwZB1Br7d0jPi5Da3M/3ulNe/R/2tuf8QyTx4NPw=
 github.com/blinklabs-io/gouroboros v0.79.0/go.mod h1:wqeaBdd92uMfBdtLrpbY8HtWyDu0kP+U/wBylh/b9TM=
 github.com/blinklabs-io/ouroboros-mock v0.3.0 h1:6VRWyhAv0k7nQEgzFpuqhS/n8OM+OAaLN/sCT5K2Hbc=

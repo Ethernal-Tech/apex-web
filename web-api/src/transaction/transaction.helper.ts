@@ -54,7 +54,7 @@ export const createCardanoBridgingTx = async (
 
 		return {
 			...response.data,
-			isCentralized,
+			isFallback: isCentralized,
 		} as CreateCardanoTransactionResponseDto;
 	} catch (error) {
 		throw new BadRequestException(error.response.data as ErrorResponseDto);
@@ -135,7 +135,7 @@ const ethBridgingTx = async (
 		bridgingFee: web3.utils.toHex(bridgingFee),
 		value: web3.utils.toHex(value),
 		data: calldata,
-		isCentralized: false,
+		isFallback: false,
 	};
 };
 
@@ -162,7 +162,7 @@ const ethCentralizedBridgingTx = async (
 		bridgingFee: web3.utils.toHex(bridgingFee),
 		value: web3.utils.toHex(value),
 		data: calldata,
-		isCentralized: true,
+		isFallback: true,
 	};
 };
 

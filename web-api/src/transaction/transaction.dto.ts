@@ -62,7 +62,7 @@ export class TransactionSubmittedDto {
 	amount: string;
 
 	@ApiProperty()
-	isCentralized: boolean;
+	isFallback: boolean;
 }
 
 export class SubmitCardanoTransactionDto extends TransactionSubmittedDto {
@@ -99,7 +99,7 @@ export class CreateCardanoTransactionResponseDto {
 	txFee: number;
 
 	@ApiProperty()
-	isCentralized: boolean;
+	isFallback: boolean;
 }
 
 export class CreateEthTransactionResponseDto {
@@ -123,7 +123,7 @@ export class CreateEthTransactionResponseDto {
 	bridgingFee: string;
 
 	@ApiProperty()
-	isCentralized: boolean;
+	isFallback: boolean;
 }
 
 export class ErrorResponseDto {

@@ -95,7 +95,9 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 
 	txProvider, err := chainConfig.ChainSpecific.CreateTxProvider()
 	if err != nil {
-		c.logger.Debug("getBalance request", "err", "failed to create tx provider", "url", r.URL)
+		c.logger.Debug("getBalance request",
+			"err", fmt.Errorf("failed to create tx provider. err: %w", err),
+			"url", r.URL)
 
 		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, "failed to create tx provider")
 		if rerr != nil {
@@ -107,7 +109,9 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 
 	utxos, err := txProvider.GetUtxos(context.Background(), address)
 	if err != nil {
-		c.logger.Debug("getBalance request", "err", "failed to get utxos", "url", r.URL)
+		c.logger.Debug("getBalance request",
+			"err", fmt.Errorf("failed to get utxos. err: %w", err),
+			"url", r.URL)
 
 		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, "failed to get utxos")
 		if rerr != nil {

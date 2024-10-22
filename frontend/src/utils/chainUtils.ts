@@ -73,9 +73,13 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
 
     if (tx.status === TransactionStatusEnum.ExecutedOnDestination && tx.destinationTxHash) {
         const baseUrl = getExplorerTxUrl(tx.destinationChain)
-        window.open(`${baseUrl}/${tx.destinationTxHash}`, '_blank')
+        const txHash = tx.destinationChain === ChainEnum.Nexus && !tx.destinationTxHash.startsWith('0x')
+            ? `0x${tx.destinationTxHash}` : tx.destinationTxHash;
+        window.open(`${baseUrl}/${txHash}`, '_blank')
     } else if (tx.sourceTxHash) {
+        const txHash = tx.originChain === ChainEnum.Nexus && !tx.sourceTxHash.startsWith('0x')
+            ? `0x${tx.sourceTxHash}` : tx.sourceTxHash;
         const baseUrl = getExplorerTxUrl(tx.originChain)
-        window.open(`${baseUrl}/${tx.sourceTxHash}`, '_blank')
+        window.open(`${baseUrl}/${txHash}`, '_blank')
     }
 }
