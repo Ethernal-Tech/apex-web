@@ -60,6 +60,14 @@ func RetryForever(ctx context.Context, interval time.Duration, fn func(context.C
 	return err
 }
 
+type IsRecoverableErrorFn func(err error) bool
+
+var ErrExecutionTimeout = errors.New("timeout while trying to execute with retry")
+
+func OgmiosIsRecoverableError(err error) bool {
+	return strings.Contains(err.Error(), "status code 500")
+}
+
 // IsContextDoneErr returns true if the error is due to the context being cancelled
 // or expired. This is useful for determining if a function should retry.
 func IsContextDoneErr(err error) bool {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"time"
 
 	"github.com/Ethernal-Tech/cardano-api/api/model/request"
 	"github.com/Ethernal-Tech/cardano-api/api/model/response"
@@ -56,7 +57,7 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 
 	chainIDArr, exists := queryValues["chainId"]
 	if !exists || len(chainIDArr) == 0 {
-		c.logger.Debug("getBalance request", "err", "chainId missing from query", "url", r.URL)
+		c.logger.Error("getBalance request", "err", "chainId missing from query", "url", r.URL)
 
 		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, "chainId missing from query")
 		if rerr != nil {
@@ -68,7 +69,7 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 
 	addressArr, exists := queryValues["address"]
 	if !exists || len(addressArr) == 0 {
-		c.logger.Debug("getBalance request", "err", "address missing from query", "url", r.URL)
+		c.logger.Error("getBalance request", "err", "address missing from query", "url", r.URL)
 
 		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, "address missing from query")
 		if rerr != nil {
@@ -83,7 +84,7 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 
 	chainConfig, exists := c.appConfig.CardanoChains[chainID]
 	if !exists {
-		c.logger.Debug("getBalance request", "err", "chainID not registered", "url", r.URL)
+		c.logger.Error("getBalance request", "err", "chainID not registered", "url", r.URL)
 
 		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, "chainID not registered")
 		if rerr != nil {
@@ -95,7 +96,7 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 
 	txProvider, err := chainConfig.ChainSpecific.CreateTxProvider()
 	if err != nil {
-		c.logger.Debug("getBalance request",
+		c.logger.Error("getBalance request",
 			"err", fmt.Errorf("failed to create tx provider. err: %w", err),
 			"url", r.URL)
 
@@ -107,9 +108,17 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	utxos, err := txProvider.GetUtxos(context.Background(), address)
+	var utxos []wallet.Utxo
+
+	err = wallet.ExecuteWithRetry(context.Background(), 10, 1*time.Second,
+		func() (bool, error) {
+			utxos, err = txProvider.GetUtxos(context.Background(), address)
+
+			return err == nil, err
+		}, common.OgmiosIsRecoverableError)
+
 	if err != nil {
-		c.logger.Debug("getBalance request",
+		c.logger.Error("getBalance request",
 			"err", fmt.Errorf("failed to get utxos. err: %w", err),
 			"url", r.URL)
 
@@ -144,7 +153,7 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
 	if err != nil {
-		c.logger.Debug("createBridgingTx request", "err", err.Error(), "url", r.URL)
+		c.logger.Error("createBridgingTx request", "err", err.Error(), "url", r.URL)
 
 		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		if rerr != nil {
@@ -158,7 +167,7 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	err = c.validateAndFillOutCreateBridgingTxRequest(&requestBody)
 	if err != nil {
-		c.logger.Debug("createBridgingTx request", "err", err.Error(), "url", r.URL)
+		c.logger.Error("createBridgingTx request", "err", err.Error(), "url", r.URL)
 
 		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		if rerr != nil {
@@ -170,7 +179,7 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	txRaw, txHash, txFee, err := c.createTx(requestBody)
 	if err != nil {
-		c.logger.Debug("createBridgingTx request", "err", err.Error(), "url", r.URL)
+		c.logger.Error("createBridgingTx request", "err", err.Error(), "url", r.URL)
 
 		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		if rerr != nil {
@@ -197,7 +206,7 @@ func (c *CardanoTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.
 
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
 	if err != nil {
-		c.logger.Debug("signBridgingTx request", "err", err.Error(), "url", r.URL)
+		c.logger.Error("signBridgingTx request", "err", err.Error(), "url", r.URL)
 
 		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		if rerr != nil {
@@ -208,7 +217,7 @@ func (c *CardanoTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.
 	}
 
 	if requestBody.TxRaw == "" || requestBody.SigningKeyHex == "" || requestBody.TxHash == "" {
-		c.logger.Debug("signBridgingTx request", "txRaw", requestBody.TxRaw,
+		c.logger.Error("signBridgingTx request", "txRaw", requestBody.TxRaw,
 			"signingKeyHex", requestBody.SigningKeyHex, "txHash", requestBody.TxHash)
 
 		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, "invalid input data")
@@ -223,7 +232,7 @@ func (c *CardanoTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.
 
 	signedTx, err := c.signTx(requestBody)
 	if err != nil {
-		c.logger.Debug("signBridgingTx request", "err", err.Error(), "url", r.URL)
+		c.logger.Error("signBridgingTx request", "err", err.Error(), "url", r.URL)
 
 		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		if rerr != nil {
@@ -346,6 +355,7 @@ func (c *CardanoTxControllerImpl) createTx(requestBody request.CreateBridgingTxR
 		txProvider, nil, uint(sourceChainConfig.NetworkMagic),
 		bridgingAddress,
 		sourceChainConfig.ChainSpecific.TTLSlotNumberInc,
+		c.logger,
 	)
 
 	bridgingTxSender.PotentialFee = sourceChainConfig.ChainSpecific.PotentialFee
