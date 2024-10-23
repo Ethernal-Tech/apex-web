@@ -368,10 +368,15 @@ func (c *CardanoTxControllerImpl) createTx(requestBody request.CreateBridgingTxR
 		}
 	}
 
+	skipUtxos := make([]wallet.Utxo, len(requestBody.SkipUtxos))
+	for i, utxo := range requestBody.SkipUtxos {
+		skipUtxos[i] = wallet.Utxo{Hash: utxo.Hash, Index: utxo.Index}
+	}
+
 	txRawBytes, txHash, fee, err := bridgingTxSender.CreateTx(
 		context.Background(), requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
-		requestBody.SkipUtxoHashes,
+		skipUtxos,
 	)
 	if err != nil {
 		return "", "", 0, fmt.Errorf("failed to build tx: %w", err)

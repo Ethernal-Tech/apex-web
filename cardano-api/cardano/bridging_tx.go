@@ -64,7 +64,7 @@ func (bts *BridgingTxSender) CreateTx(
 	senderAddr string,
 	receivers []cardanowallet.TxOutput,
 	feeAmount uint64,
-	skipUtxoHashes []string,
+	skipUtxos []cardanowallet.Utxo,
 ) ([]byte, string, uint64, error) {
 	var (
 		qtd cardanowallet.QueryTipData
@@ -117,7 +117,7 @@ func (bts *BridgingTxSender) CreateTx(
 	desiredSum := outputsSum + bts.PotentialFee + cardanowallet.MinUTxODefaultValue
 
 	inputs, err := bts.getUTXOsForAmount(
-		ctx, bts.TxProviderSrc, skipUtxoHashes, senderAddr, desiredSum, desiredSum)
+		ctx, bts.TxProviderSrc, skipUtxos, senderAddr, desiredSum, desiredSum)
 	if err != nil {
 		return nil, "", 0, err
 	}
@@ -217,7 +217,7 @@ func (bts *BridgingTxSender) createMetadata(
 }
 
 func (bts *BridgingTxSender) getUTXOsForAmount(
-	ctx context.Context, retriever cardanowallet.IUTxORetriever, skipUtxoHashes []string,
+	ctx context.Context, retriever cardanowallet.IUTxORetriever, skipUtxos []cardanowallet.Utxo,
 	addr string, exactSum uint64, atLeastSum uint64,
 ) (cardanowallet.TxInputs, error) {
 	var (
@@ -236,22 +236,22 @@ func (bts *BridgingTxSender) getUTXOsForAmount(
 		return cardanowallet.TxInputs{}, err
 	}
 
-	if len(skipUtxoHashes) > 0 {
-		skipUtxosMap := make(map[string]bool, len(skipUtxoHashes))
-		for _, skipUtxoHash := range skipUtxoHashes {
-			skipUtxosMap[skipUtxoHash] = true
+	if len(skipUtxos) > 0 {
+		skipUtxosMap := make(map[string]bool, len(skipUtxos))
+		for _, utxo := range skipUtxos {
+			skipUtxosMap[fmt.Sprintf("%s_%d", utxo.Hash, utxo.Index)] = true
 		}
 
 		utxos = make([]cardanowallet.Utxo, 0, len(allUtxos))
 		for _, utxo := range allUtxos {
-			_, skip := skipUtxosMap[utxo.Hash]
+			_, skip := skipUtxosMap[fmt.Sprintf("%s_%d", utxo.Hash, utxo.Index)]
 			if !skip {
 				utxos = append(utxos, utxo)
 			}
 		}
 
 		bts.logger.Debug("getUTXOsForAmount", "allUtxos", allUtxos)
-		bts.logger.Debug("getUTXOsForAmount", "skipUtxoHashes", skipUtxoHashes)
+		bts.logger.Debug("getUTXOsForAmount", "skipUtxos", skipUtxos)
 		bts.logger.Debug("getUTXOsForAmount", "utxos", utxos)
 	} else {
 		utxos = allUtxos
