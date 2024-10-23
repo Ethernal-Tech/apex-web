@@ -64,6 +64,7 @@ func (bts *BridgingTxSender) CreateTx(
 	senderAddr string,
 	receivers []cardanowallet.TxOutput,
 	feeAmount uint64,
+	skipUtxoHashes []string,
 ) ([]byte, string, uint64, error) {
 	var (
 		qtd cardanowallet.QueryTipData
@@ -115,16 +116,8 @@ func (bts *BridgingTxSender) CreateTx(
 
 	desiredSum := outputsSum + bts.PotentialFee + cardanowallet.MinUTxODefaultValue
 
-	var inputs cardanowallet.TxInputs
-
-	err = cardanowallet.ExecuteWithRetry(ctx, 2, 1*time.Second,
-		func() (bool, error) {
-			inputs, err = cardanowallet.GetUTXOsForAmount(
-				ctx, bts.TxProviderSrc, senderAddr, desiredSum, desiredSum)
-
-			return err == nil, err
-		}, common.OgmiosIsRecoverableError)
-
+	inputs, err := bts.getUTXOsForAmount(
+		ctx, bts.TxProviderSrc, skipUtxoHashes, senderAddr, desiredSum, desiredSum)
 	if err != nil {
 		return nil, "", 0, err
 	}
@@ -221,6 +214,74 @@ func (bts *BridgingTxSender) createMetadata(
 	}
 
 	return common.MarshalMetadata(common.MetadataEncodingTypeJSON, metadataObj)
+}
+
+func (bts *BridgingTxSender) getUTXOsForAmount(
+	ctx context.Context, retriever cardanowallet.IUTxORetriever, skipUtxoHashes []string,
+	addr string, exactSum uint64, atLeastSum uint64,
+) (cardanowallet.TxInputs, error) {
+	var (
+		allUtxos []cardanowallet.Utxo
+		utxos    []cardanowallet.Utxo
+		err      error
+	)
+
+	err = cardanowallet.ExecuteWithRetry(ctx, 2, 1*time.Second,
+		func() (bool, error) {
+			allUtxos, err = retriever.GetUtxos(ctx, addr)
+			return err == nil, err
+		}, common.OgmiosIsRecoverableError)
+
+	if err != nil {
+		return cardanowallet.TxInputs{}, err
+	}
+
+	if len(skipUtxoHashes) > 0 {
+		skipUtxosMap := make(map[string]bool, len(skipUtxoHashes))
+		for _, skipUtxoHash := range skipUtxoHashes {
+			skipUtxosMap[skipUtxoHash] = true
+		}
+
+		utxos = make([]cardanowallet.Utxo, 0, len(allUtxos))
+		for _, utxo := range allUtxos {
+			_, skip := skipUtxosMap[utxo.Hash]
+			if !skip {
+				utxos = append(utxos, utxo)
+			}
+		}
+
+		bts.logger.Debug("getUTXOsForAmount", "allUtxos", allUtxos)
+		bts.logger.Debug("getUTXOsForAmount", "skipUtxoHashes", skipUtxoHashes)
+		bts.logger.Debug("getUTXOsForAmount", "utxos", utxos)
+	} else {
+		utxos = allUtxos
+	}
+
+	// Loop through utxos to find first input with enough tokens
+	// If we don't have this UTXO we need to use more of them
+	//nolint:prealloc
+	var (
+		amountSum   = uint64(0)
+		chosenUTXOs []cardanowallet.TxInput
+	)
+
+	for _, utxo := range utxos {
+		amountSum += utxo.Amount
+		chosenUTXOs = append(chosenUTXOs, cardanowallet.TxInput{
+			Hash:  utxo.Hash,
+			Index: utxo.Index,
+		})
+
+		if amountSum == exactSum || amountSum >= atLeastSum {
+			return cardanowallet.TxInputs{
+				Inputs: chosenUTXOs,
+				Sum:    amountSum,
+			}, nil
+		}
+	}
+
+	return cardanowallet.TxInputs{}, fmt.Errorf("not enough funds for the transaction: (available, exact, at least) = (%d, %d, %d)",
+		amountSum, exactSum, atLeastSum)
 }
 
 func IsAddressInOutputs(
