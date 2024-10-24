@@ -7,7 +7,7 @@ import {
 	CreateTransactionDto,
 	CreateEthTransactionResponseDto,
 } from './transaction.dto';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { BadRequestException } from '@nestjs/common';
 import web3, { Web3 } from 'web3';
 import { isAddress } from 'web3-validator';
@@ -41,6 +41,12 @@ export const createCardanoBridgingTx = async (
 			},
 		],
 		bridgingFee: dto.bridgingFee ? +dto.bridgingFee : undefined,
+		// skipUtxos: [
+		// 	{
+		// 		hash: '361330f0a83183b640c97650786f689435de117d05937d0133b864e9d3b4be4b',
+		// 		index: 1,
+		// 	},
+		// ],
 		useFallback: isCentralized,
 	};
 
@@ -57,7 +63,13 @@ export const createCardanoBridgingTx = async (
 			isFallback: isCentralized,
 		} as CreateCardanoTransactionResponseDto;
 	} catch (error) {
-		throw new BadRequestException(error.response.data as ErrorResponseDto);
+		if (error instanceof AxiosError) {
+			if (error.response) {
+				throw new BadRequestException(error.response.data as ErrorResponseDto);
+			}
+		}
+
+		throw new BadRequestException();
 	}
 };
 

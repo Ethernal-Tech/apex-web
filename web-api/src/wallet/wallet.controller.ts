@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { BalanceResponseDto } from './wallet.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 
 @ApiTags('Wallet')
@@ -46,7 +46,15 @@ export class WalletController {
 
 			return response.data as BalanceResponseDto;
 		} catch (error) {
-			throw new BadRequestException(error.response.data as ErrorResponseDto);
+			if (error instanceof AxiosError) {
+				if (error.response) {
+					throw new BadRequestException(
+						error.response.data as ErrorResponseDto,
+					);
+				}
+			}
+
+			throw new BadRequestException();
 		}
 	}
 }

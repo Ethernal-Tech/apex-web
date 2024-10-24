@@ -22,10 +22,11 @@ import {
 	getBridgingRequestStates,
 	GetBridgingRequestStatesModel,
 	getCentralizedBridgingRequestStates,
+	getHasTxFailedRequestStates,
 	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
-import { ChainEnum } from 'src/common/enum';
+import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 
 @Injectable()
 export class BridgeTransactionService {
@@ -109,23 +110,39 @@ export class BridgeTransactionService {
 				});
 				if (entities.length > 0) {
 					const models: GetBridgingRequestStatesModel[] = [];
+					const modelsPending: GetBridgingRequestStatesModel[] = [];
 					const modelsCentralized: GetBridgingRequestStatesModel[] = [];
 					for (const entity of entities) {
-						const arr = entity.isCentralized ? modelsCentralized : models;
-						arr.push({
+						const model: GetBridgingRequestStatesModel = {
 							txHash: entity.sourceTxHash,
 							destinationChainId: entity.destinationChain,
-						});
+							txRaw: entity.txRaw,
+						};
+
+						const arr = entity.isCentralized ? modelsCentralized : models;
+						arr.push(model);
+
+						if (
+							entity.status === TransactionStatusEnum.Pending &&
+							!!entity.txRaw &&
+							!entity.isCentralized
+						) {
+							modelsPending.push(model);
+						}
 					}
 
-					const [states, statesCentralized] = await Promise.all([
-						getBridgingRequestStates(chain, models),
-						getCentralizedBridgingRequestStates(chain, modelsCentralized),
-					]);
+					const [states, statesCentralized, statesTxFailed] = await Promise.all(
+						[
+							getBridgingRequestStates(chain, models),
+							getCentralizedBridgingRequestStates(chain, modelsCentralized),
+							getHasTxFailedRequestStates(chain, modelsPending),
+						],
+					);
 
 					const updatedBridgeTransactions = updateBridgeTransactionStates(
 						entities,
 						{ ...states, ...statesCentralized },
+						statesTxFailed,
 					);
 
 					await this.bridgeTransactionRepository.save(
