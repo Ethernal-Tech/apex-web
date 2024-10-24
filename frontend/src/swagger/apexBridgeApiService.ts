@@ -494,6 +494,7 @@ export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto
     senderAddress!: string;
     receiverAddrs!: string[];
     amount!: string;
+    txRaw!: string;
     isFallback!: boolean;
     signedTxRaw!: string;
 
@@ -521,6 +522,7 @@ export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto
                     this.receiverAddrs!.push(item);
             }
             this.amount = _data["amount"];
+            this.txRaw = _data["txRaw"];
             this.isFallback = _data["isFallback"];
             this.signedTxRaw = _data["signedTxRaw"];
         }
@@ -545,6 +547,7 @@ export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto
                 data["receiverAddrs"].push(item);
         }
         data["amount"] = this.amount;
+        data["txRaw"] = this.txRaw;
         data["isFallback"] = this.isFallback;
         data["signedTxRaw"] = this.signedTxRaw;
         return data; 
@@ -558,6 +561,7 @@ export interface ISubmitCardanoTransactionDto {
     senderAddress: string;
     receiverAddrs: string[];
     amount: string;
+    txRaw: string;
     isFallback: boolean;
     signedTxRaw: string;
 }
@@ -752,6 +756,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
     senderAddress!: string;
     receiverAddrs!: string[];
     amount!: string;
+    txRaw!: string;
     isFallback!: boolean;
 
     constructor(data?: ITransactionSubmittedDto) {
@@ -778,6 +783,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
                     this.receiverAddrs!.push(item);
             }
             this.amount = _data["amount"];
+            this.txRaw = _data["txRaw"];
             this.isFallback = _data["isFallback"];
         }
     }
@@ -801,6 +807,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
                 data["receiverAddrs"].push(item);
         }
         data["amount"] = this.amount;
+        data["txRaw"] = this.txRaw;
         data["isFallback"] = this.isFallback;
         return data; 
     }
@@ -813,6 +820,7 @@ export interface ITransactionSubmittedDto {
     senderAddress: string;
     receiverAddrs: string[];
     amount: string;
+    txRaw: string;
     isFallback: boolean;
 }
 
