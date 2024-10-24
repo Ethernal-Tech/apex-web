@@ -61,6 +61,10 @@ export class TransactionSubmittedDto {
 	@ApiProperty()
 	amount: string;
 
+	@IsNotEmpty()
+	@ApiProperty()
+	txRaw: string;
+
 	@ApiProperty()
 	isFallback: boolean;
 }

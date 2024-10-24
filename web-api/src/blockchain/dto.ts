@@ -7,3 +7,8 @@ export type BridgingRequestStateDto = {
 	status: TransactionStatusEnum;
 	destinationTxHash: string;
 };
+
+export type Utxo = {
+	hash: string;
+	index: number;
+};

@@ -26,6 +26,7 @@ export const signAndSubmitCardanoTx = async (
         receiverAddrs: [values.destinationAddress],
         amount: amount.toString(),
         originTxHash: createResponse.txHash,
+        txRaw: createResponse.txRaw,
         signedTxRaw,
         isFallback: createResponse.isFallback,
     }));
@@ -94,6 +95,7 @@ export const signAndSubmitEthTx = async (
       originTxHash: receipt.transactionHash.toString(),
       senderAddress: values.senderAddress,
       receiverAddrs: [values.destinationAddress],
+      txRaw: JSON.stringify({ ...tx, block: receipt.blockNumber.toString() }),
       amount: amount.toString(),
       isFallback: createResponse.isFallback,
   }));

@@ -3,6 +3,9 @@ import axios from 'axios';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { BridgeTransactionDto } from './bridgeTransaction.dto';
 import { capitalizeWord } from 'src/utils/stringUtils';
+import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization-lib-nodejs';
+import { Utxo } from 'src/blockchain/dto';
+import { Transaction as EthTransaction } from 'web3-types';
 
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
@@ -165,4 +168,35 @@ export const mapBridgeTransactionToResponse = (
 	response.createdAt = entity.createdAt;
 	response.finishedAt = entity.finishedAt;
 	return response;
+};
+
+export const getInputUtxos = (txRaw: string): Utxo[] => {
+	const tx = CardanoTransaction.from_hex(txRaw);
+	const inputs = tx.body().inputs();
+	const inputsLen = inputs.len();
+
+	const utxos: Utxo[] = [];
+	for (let i = 0; i < inputsLen; ++i) {
+		const input = tx.body().inputs().get(i);
+		const inputJs = input.to_js_value();
+
+		utxos.push({ hash: inputJs.transaction_id, index: inputJs.index });
+	}
+
+	return utxos;
+};
+
+export const getCardanoTTL = (txRaw: string): bigint | undefined => {
+	const tx = CardanoTransaction.from_hex(txRaw);
+	const ttl = tx.body().ttl_bignum();
+	return ttl ? BigInt(ttl.to_str()) : undefined;
+};
+
+type TxWithBlockNumber = EthTransaction & {
+	block: string;
+};
+
+export const getEthTTL = (txRaw: string): bigint => {
+	const tx: TxWithBlockNumber = JSON.parse(txRaw);
+	return BigInt(tx.block) + BigInt(process.env.ETH_TX_TTL_INC || 50);
 };

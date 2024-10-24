@@ -36,6 +36,9 @@ export class BridgeTransaction {
 	@Column({ nullable: true })
 	finishedAt?: Date;
 
+	@Column({ default: '' })
+	txRaw: string;
+
 	@Column({ default: false })
 	isCentralized: boolean;
 }
