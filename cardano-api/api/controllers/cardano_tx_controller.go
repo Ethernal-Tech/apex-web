@@ -33,7 +33,7 @@ func NewCardanoTxController(
 ) *CardanoTxControllerImpl {
 	return &CardanoTxControllerImpl{
 		appConfig:      appConfig,
-		usedUtxoCacher: utils.NewUsedUtxoCacher(time.Second * 90),
+		usedUtxoCacher: utils.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
 		logger:         logger,
 	}
 }
@@ -197,7 +197,7 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 	if err != nil {
 		c.logger.Error("getBridgingTxFee request", "err", err.Error(), "url", r.URL)
 
-		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		rerr := utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 		if rerr != nil {
 			c.logger.Error("error while WriteErrorResponse", "err", rerr)
 		}
@@ -264,7 +264,7 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 	if err != nil {
 		c.logger.Error("createBridgingTx request", "err", err.Error(), "url", r.URL)
 
-		rerr := utils.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		rerr := utils.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 		if rerr != nil {
 			c.logger.Error("error while WriteErrorResponse", "err", rerr)
 		}

@@ -35,7 +35,7 @@ func (c *UsedUtxoCacher) Add(addr string, txInputs []wallet.TxInput) {
 
 	// remove old ones
 	for k, v := range submap {
-		if tm.Sub(v) > c.timeout {
+		if tm.Sub(v) >= c.timeout {
 			delete(submap, k)
 		}
 	}
@@ -58,7 +58,7 @@ func (c *UsedUtxoCacher) Get(addr string) []wallet.TxInput {
 
 	// retrieve those that are still valid (remove expired)
 	for k, v := range submap {
-		if tm.Sub(v) > c.timeout {
+		if tm.Sub(v) >= c.timeout {
 			delete(submap, k)
 		} else {
 			parts := strings.Split(k, "#")

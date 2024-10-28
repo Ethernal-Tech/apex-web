@@ -1,6 +1,8 @@
 package core
 
 import (
+	"time"
+
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-infrastructure/logger"
 	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
@@ -47,6 +49,7 @@ type BridgingSettings struct {
 type AppConfig struct {
 	CardanoChains    map[string]*CardanoChainConfig `json:"cardanoChains"`
 	EthChains        map[string]*EthChainConfig     `json:"ethChains"`
+	UtxoCacheTimeout time.Duration                  `json:"utxoCacheTimeout"`
 	Settings         AppSettings                    `json:"appSettings"`
 	BridgingSettings BridgingSettings               `json:"bridgingSettings"`
 	APIConfig        APIConfig                      `json:"api"`

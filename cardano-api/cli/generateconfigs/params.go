@@ -3,6 +3,7 @@ package cligenerateconfigs
 import (
 	"fmt"
 	"path"
+	"time"
 
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
@@ -36,7 +37,8 @@ const (
 	vectorSocketPathFlag              = "vector-socket-path"
 	vectorTTLSlotIncFlag              = "vector-ttl-slot-inc"
 
-	logsPathFlag = "logs-path"
+	logsPathFlag         = "logs-path"
+	utxoCacheTimeoutFlag = "utxo-cache-timeout"
 
 	apiPortFlag = "api-port"
 	apiKeysFlag = "api-keys"
@@ -66,7 +68,8 @@ const (
 	vectorSocketPathFlagDesc              = "socket path for vector network"
 	vectorTTLSlotIncFlagDesc              = "TTL slot increment for vector"
 
-	logsPathFlagDesc = "path to where logs will be stored"
+	logsPathFlagDesc        = "path to where logs will be stored"
+	utxoCacheTimeoutFlagDec = "for how long should a UTXO be reserved in the cache"
 
 	apiPortFlagDesc = "port at which API should run"
 	apiKeysFlagDesc = "(mandatory) list of keys for API access"
@@ -78,6 +81,7 @@ const (
 	defaultVectorBlockConfirmationCount = 10
 	defaultNetworkMagic                 = 0
 	defaultLogsPath                     = "./logs"
+	defaultUtxoCacheTimeout             = time.Second * 90
 	defaultAPIPort                      = 10000
 	defaultOutputDir                    = "./"
 	defaultOutputFileName               = "config.json"
@@ -108,7 +112,8 @@ type generateConfigsParams struct {
 	vectorSocketPath              string
 	vectorTTLSlotInc              uint64
 
-	logsPath string
+	logsPath         string
+	utxoCacheTimeout time.Duration
 
 	apiPort uint32
 	apiKeys []string
@@ -340,6 +345,13 @@ func (p *generateConfigsParams) setFlags(cmd *cobra.Command) {
 		logsPathFlagDesc,
 	)
 
+	cmd.Flags().DurationVar(
+		&p.utxoCacheTimeout,
+		utxoCacheTimeoutFlag,
+		defaultUtxoCacheTimeout,
+		utxoCacheTimeoutFlagDec,
+	)
+
 	cmd.Flags().Uint32Var(
 		&p.apiPort,
 		apiPortFlag,
@@ -416,6 +428,7 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 			UtxoMinValue:                   1000000,
 			MaxReceiversPerBridgingRequest: 4, // 4 + 1 for fee
 		},
+		UtxoCacheTimeout: p.utxoCacheTimeout,
 		Settings: core.AppSettings{
 			Logger: logger.LoggerConfig{
 				LogFilePath:   path.Join(p.logsPath, "cardano-api.log"),
