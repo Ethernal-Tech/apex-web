@@ -56,6 +56,10 @@ function NewTransactionPage() {
 		const createTxDto = prepareCreateCardanoTx(address, amount);
 		const bindedCreateAction = getCardanoTransactionFeeAction.bind(null, createTxDto);
 		const feeResponse = await fetchFunction(bindedCreateAction);
+		const error = (feeResponse as any).err || (feeResponse as any).error
+		if (error) {
+			throw new Error(error)
+		}
 
 		return feeResponse;
 	}, [prepareCreateCardanoTx, fetchFunction])
@@ -64,6 +68,10 @@ function NewTransactionPage() {
 		const createTxDto = prepareCreateCardanoTx(address, amount);
 		const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
 		const createResponse = await fetchFunction(bindedCreateAction);
+		const error = (createResponse as any).err || (createResponse as any).error
+		if (error) {
+			throw new Error(error)
+		}
 
 		return { createTxDto, createResponse };
 	}, [prepareCreateCardanoTx, fetchFunction])

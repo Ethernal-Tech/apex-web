@@ -79,7 +79,7 @@ export const getCardanoBridgingTxFee = async (
 ): Promise<CardanoTransactionFeeResponseDto> => {
 	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
 	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
-	const endpointUrl = apiUrl + `/api/CardanoTx/CreateBridgingTx`;
+	const endpointUrl = apiUrl + `/api/CardanoTx/GetBridgingTxFee`;
 
 	const body = prepareCreateCardanoBridgingTx(dto);
 
