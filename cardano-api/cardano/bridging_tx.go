@@ -15,7 +15,6 @@ import (
 
 const (
 	splitStringLength = 40
-	potentialFee      = 250_000
 
 	retryWait       = time.Millisecond * 1000
 	retriesMaxCount = 10
@@ -43,6 +42,7 @@ func NewBridgingTxSender(
 	testNetMagic uint,
 	multiSigAddr string,
 	ttlSlotNumberInc uint64,
+	potentialFee uint64,
 	logger hclog.Logger,
 ) *BridgingTxSender {
 	return &BridgingTxSender{
@@ -64,87 +64,25 @@ func (bts *BridgingTxSender) CreateTx(
 	senderAddr string,
 	receivers []cardanowallet.TxOutput,
 	feeAmount uint64,
-	skipUtxos []cardanowallet.Utxo,
-) ([]byte, string, uint64, error) {
-	var (
-		qtd cardanowallet.QueryTipData
-		err error
-	)
-
-	err = cardanowallet.ExecuteWithRetry(ctx, 10, 1*time.Second,
-		func() (bool, error) {
-			qtd, err = bts.TxProviderSrc.GetTip(ctx)
-
-			return err == nil, err
-		}, common.OgmiosIsRecoverableError)
-
+	skipUtxos []cardanowallet.TxInput,
+) ([]byte, string, []cardanowallet.TxInput, error) {
+	outputsSum, inputs, builder, err := bts.getTxBuilderData(
+		ctx, chain, senderAddr, receivers, feeAmount, skipUtxos)
 	if err != nil {
-		return nil, "", 0, err
-	}
-
-	protocolParams := bts.ProtocolParameters
-	if protocolParams == nil {
-		err = cardanowallet.ExecuteWithRetry(ctx, 10, 1*time.Second,
-			func() (bool, error) {
-				protocolParams, err = bts.TxProviderSrc.GetProtocolParameters(ctx)
-
-				return err == nil, err
-			}, common.OgmiosIsRecoverableError)
-
-		if err != nil {
-			return nil, "", 0, err
-		}
-
-		bts.ProtocolParameters = protocolParams
-	}
-
-	metadata, err := bts.createMetadata(chain, senderAddr, receivers, feeAmount)
-	if err != nil {
-		return nil, "", 0, err
-	}
-
-	outputsSum := cardanowallet.GetOutputsSum(receivers) + feeAmount
-	outputs := []cardanowallet.TxOutput{
-		{
-			Addr:   bts.MultiSigAddrSrc,
-			Amount: outputsSum,
-		},
-		{
-			Addr: senderAddr,
-		},
-	}
-
-	desiredSum := outputsSum + bts.PotentialFee + cardanowallet.MinUTxODefaultValue
-
-	inputs, err := bts.getUTXOsForAmount(
-		ctx, bts.TxProviderSrc, skipUtxos, senderAddr, desiredSum, desiredSum)
-	if err != nil {
-		return nil, "", 0, err
-	}
-
-	builder, err := cardanowallet.NewTxBuilder(bts.cardanoCliBinary)
-	if err != nil {
-		return nil, "", 0, err
+		return nil, "", nil, err
 	}
 
 	defer builder.Dispose()
 
-	builder.SetMetaData(metadata).
-		SetProtocolParameters(protocolParams).
-		SetTimeToLive(qtd.Slot + bts.TTLSlotNumberInc).
-		SetTestNetMagic(bts.TestNetMagicSrc).
-		AddInputs(inputs.Inputs...).
-		AddOutputs(outputs...)
-
 	fee, err := builder.CalculateFee(0)
 	if err != nil {
-		return nil, "", 0, err
+		return nil, "", nil, err
 	}
 
 	change := inputs.Sum - outputsSum - fee
 	// handle overflow or insufficient amount
 	if change > inputs.Sum || (change > 0 && change < cardanowallet.MinUTxODefaultValue) {
-		return []byte{}, "", 0, fmt.Errorf("insufficient amount %d for %d or min utxo not satisfied",
+		return nil, "", nil, fmt.Errorf("insufficient amount %d for %d or min utxo not satisfied",
 			inputs.Sum, outputsSum+fee)
 	}
 
@@ -156,9 +94,31 @@ func (bts *BridgingTxSender) CreateTx(
 
 	builder.SetFee(fee)
 
-	txRawBytes, txHash, err := builder.Build()
+	tx, hash, err := builder.Build()
+	if err != nil {
+		return nil, "", nil, err
+	}
 
-	return txRawBytes, txHash, fee, err
+	return tx, hash, inputs.Inputs, nil
+}
+
+func (bts *BridgingTxSender) GetTxFee(
+	ctx context.Context,
+	chain string,
+	senderAddr string,
+	receivers []cardanowallet.TxOutput,
+	feeAmount uint64,
+	skipUtxos []cardanowallet.TxInput,
+) (uint64, error) {
+	_, _, builder, err := bts.getTxBuilderData(
+		ctx, chain, senderAddr, receivers, feeAmount, skipUtxos)
+	if err != nil {
+		return 0, err
+	}
+
+	defer builder.Dispose()
+
+	return builder.CalculateFee(0)
 }
 
 func (bts *BridgingTxSender) SendTx(
@@ -217,7 +177,7 @@ func (bts *BridgingTxSender) createMetadata(
 }
 
 func (bts *BridgingTxSender) getUTXOsForAmount(
-	ctx context.Context, retriever cardanowallet.IUTxORetriever, skipUtxos []cardanowallet.Utxo,
+	ctx context.Context, retriever cardanowallet.IUTxORetriever, skipUtxos []cardanowallet.TxInput,
 	addr string, exactSum uint64, atLeastSum uint64,
 ) (cardanowallet.TxInputs, error) {
 	var (
@@ -229,6 +189,7 @@ func (bts *BridgingTxSender) getUTXOsForAmount(
 	err = cardanowallet.ExecuteWithRetry(ctx, 2, 1*time.Second,
 		func() (bool, error) {
 			allUtxos, err = retriever.GetUtxos(ctx, addr)
+
 			return err == nil, err
 		}, common.OgmiosIsRecoverableError)
 
@@ -242,16 +203,21 @@ func (bts *BridgingTxSender) getUTXOsForAmount(
 			skipUtxosMap[fmt.Sprintf("%s_%d", utxo.Hash, utxo.Index)] = true
 		}
 
-		utxos = make([]cardanowallet.Utxo, 0, len(allUtxos))
+		bts.logger.Debug("getUTXOsForAmount", "allUtxos", allUtxos)
+		bts.logger.Debug("getUTXOsForAmount", "skipUtxos", skipUtxos)
+
+		count := 0
+
 		for _, utxo := range allUtxos {
 			_, skip := skipUtxosMap[fmt.Sprintf("%s_%d", utxo.Hash, utxo.Index)]
 			if !skip {
-				utxos = append(utxos, utxo)
+				allUtxos[count] = utxo
+				count++
 			}
 		}
 
-		bts.logger.Debug("getUTXOsForAmount", "allUtxos", allUtxos)
-		bts.logger.Debug("getUTXOsForAmount", "skipUtxos", skipUtxos)
+		utxos = allUtxos[:count] // new slice contains only unskipped utxos
+
 		bts.logger.Debug("getUTXOsForAmount", "utxos", utxos)
 	} else {
 		utxos = allUtxos
@@ -280,8 +246,88 @@ func (bts *BridgingTxSender) getUTXOsForAmount(
 		}
 	}
 
-	return cardanowallet.TxInputs{}, fmt.Errorf("not enough funds for the transaction: (available, exact, at least) = (%d, %d, %d)",
-		amountSum, exactSum, atLeastSum)
+	return cardanowallet.TxInputs{},
+		fmt.Errorf("not enough funds for the transaction: (available, exact, at least) = (%d, %d, %d)",
+			amountSum, exactSum, atLeastSum)
+}
+
+func (bts *BridgingTxSender) getTxBuilderData(
+	ctx context.Context, chain string, senderAddr string,
+	receivers []cardanowallet.TxOutput, feeAmount uint64, skipUtxos []cardanowallet.TxInput,
+) (uint64, cardanowallet.TxInputs, *cardanowallet.TxBuilder, error) {
+	qtd, protocolParams, err := bts.getTipAndProtocolParameters(ctx)
+	if err != nil {
+		return 0, cardanowallet.TxInputs{}, nil, err
+	}
+
+	metadata, err := bts.createMetadata(chain, senderAddr, receivers, feeAmount)
+	if err != nil {
+		return 0, cardanowallet.TxInputs{}, nil, err
+	}
+
+	outputsSum := cardanowallet.GetOutputsSum(receivers) + feeAmount
+	outputs := []cardanowallet.TxOutput{
+		{
+			Addr:   bts.MultiSigAddrSrc,
+			Amount: outputsSum,
+		},
+		{
+			Addr: senderAddr,
+		},
+	}
+
+	desiredSum := outputsSum + bts.PotentialFee + cardanowallet.MinUTxODefaultValue
+
+	inputs, err := bts.getUTXOsForAmount(
+		ctx, bts.TxProviderSrc, skipUtxos, senderAddr, desiredSum, desiredSum)
+	if err != nil {
+		return 0, cardanowallet.TxInputs{}, nil, err
+	}
+
+	builder, err := cardanowallet.NewTxBuilder(bts.cardanoCliBinary)
+	if err != nil {
+		return 0, cardanowallet.TxInputs{}, nil, err
+	}
+
+	builder.SetMetaData(metadata).
+		SetProtocolParameters(protocolParams).
+		SetTimeToLive(qtd.Slot + bts.TTLSlotNumberInc).
+		SetTestNetMagic(bts.TestNetMagicSrc).
+		AddInputs(inputs.Inputs...).
+		AddOutputs(outputs...)
+
+	return outputsSum, inputs, builder, nil
+}
+
+func (bts *BridgingTxSender) getTipAndProtocolParameters(
+	ctx context.Context,
+) (qtd cardanowallet.QueryTipData, protocolParams []byte, err error) {
+	err = cardanowallet.ExecuteWithRetry(ctx, 10, 1*time.Second,
+		func() (bool, error) {
+			qtd, err = bts.TxProviderSrc.GetTip(ctx)
+
+			return err == nil, err
+		}, common.OgmiosIsRecoverableError)
+	if err != nil {
+		return qtd, nil, err
+	}
+
+	protocolParams = bts.ProtocolParameters
+	if protocolParams == nil {
+		err = cardanowallet.ExecuteWithRetry(ctx, 10, 1*time.Second,
+			func() (bool, error) {
+				protocolParams, err = bts.TxProviderSrc.GetProtocolParameters(ctx)
+
+				return err == nil, err
+			}, common.OgmiosIsRecoverableError)
+		if err != nil {
+			return qtd, nil, err
+		}
+
+		bts.ProtocolParameters = protocolParams
+	}
+
+	return qtd, protocolParams, nil
 }
 
 func IsAddressInOutputs(

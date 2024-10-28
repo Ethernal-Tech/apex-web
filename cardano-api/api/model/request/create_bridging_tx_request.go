@@ -1,5 +1,10 @@
 package request
 
+import (
+	"encoding/json"
+	"io"
+)
+
 type CreateBridgingTxTransactionRequest struct {
 	Addr   string `json:"addr"`
 	Amount uint64 `json:"amount"`
@@ -16,6 +21,11 @@ type CreateBridgingTxRequest struct {
 	DestinationChainID string                               `json:"destinationChainId"`
 	Transactions       []CreateBridgingTxTransactionRequest `json:"transactions"`
 	BridgingFee        uint64                               `json:"bridgingFee"`
-	SkipUtxos          []UtxoRequest                        `json:"skipUtxos"`
 	UseFallback        bool                                 `json:"useFallback"`
+}
+
+func NewCreateBridgingTxRequestFromIO(data io.Reader) (result CreateBridgingTxRequest, err error) {
+	err = json.NewDecoder(data).Decode(&result)
+
+	return result, err
 }
