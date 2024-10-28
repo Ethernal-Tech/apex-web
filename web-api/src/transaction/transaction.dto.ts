@@ -98,12 +98,14 @@ export class CreateCardanoTransactionResponseDto {
 	@ApiProperty()
 	bridgingFee: number;
 
-	@IsPositive()
-	@ApiProperty()
-	txFee: number;
-
 	@ApiProperty()
 	isFallback: boolean;
+}
+
+export class CardanoTransactionFeeResponseDto {
+	@IsPositive()
+	@ApiProperty()
+	fee: number;
 }
 
 export class CreateEthTransactionResponseDto {

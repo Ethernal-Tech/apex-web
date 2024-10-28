@@ -7,6 +7,7 @@ import {
 	TransactionSubmittedDto,
 	CreateTransactionDto,
 	CreateEthTransactionResponseDto,
+	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
@@ -31,6 +32,23 @@ export class TransactionController {
 		@Body() model: CreateTransactionDto,
 	): Promise<CreateCardanoTransactionResponseDto> {
 		return await this.transactionService.createCardano(model);
+	}
+
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: CardanoTransactionFeeResponseDto,
+		description: 'Success',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('getCardanoTxFee')
+	async getCardanoTxFee(
+		@Body() model: CreateTransactionDto,
+	): Promise<CardanoTransactionFeeResponseDto> {
+		return await this.transactionService.getCardanoTxFee(model);
 	}
 
 	@ApiResponse({

@@ -6,6 +6,7 @@ import {
 	ErrorResponseDto,
 	CreateTransactionDto,
 	CreateEthTransactionResponseDto,
+	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
 import axios, { AxiosError } from 'axios';
 import { BadRequestException } from '@nestjs/common';
@@ -15,13 +16,7 @@ import { NewAddress } from 'src/utils/Address/addreses';
 import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
 import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
 
-export const createCardanoBridgingTx = async (
-	dto: CreateTransactionDto,
-): Promise<CreateCardanoTransactionResponseDto> => {
-	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
-	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
-	const endpointUrl = apiUrl + `/api/CardanoTx/CreateBridgingTx`;
-
+const prepareCreateCardanoBridgingTx = (dto: CreateTransactionDto) => {
 	// centralized bridge currently doesn't support prime->vector, vector->prime
 	const nexusInvolved =
 		dto.originChain === ChainEnum.Nexus ||
@@ -41,14 +36,20 @@ export const createCardanoBridgingTx = async (
 			},
 		],
 		bridgingFee: dto.bridgingFee ? +dto.bridgingFee : undefined,
-		// skipUtxos: [
-		// 	{
-		// 		hash: '361330f0a83183b640c97650786f689435de117d05937d0133b864e9d3b4be4b',
-		// 		index: 1,
-		// 	},
-		// ],
 		useFallback: isCentralized,
 	};
+
+	return body;
+};
+
+export const createCardanoBridgingTx = async (
+	dto: CreateTransactionDto,
+): Promise<CreateCardanoTransactionResponseDto> => {
+	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
+	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
+	const endpointUrl = apiUrl + `/api/CardanoTx/CreateBridgingTx`;
+
+	const body = prepareCreateCardanoBridgingTx(dto);
 
 	try {
 		const response = await axios.post(endpointUrl, body, {
@@ -60,8 +61,37 @@ export const createCardanoBridgingTx = async (
 
 		return {
 			...response.data,
-			isFallback: isCentralized,
+			isFallback: body.useFallback,
 		} as CreateCardanoTransactionResponseDto;
+	} catch (error) {
+		if (error instanceof AxiosError) {
+			if (error.response) {
+				throw new BadRequestException(error.response.data as ErrorResponseDto);
+			}
+		}
+
+		throw new BadRequestException();
+	}
+};
+
+export const getCardanoBridgingTxFee = async (
+	dto: CreateTransactionDto,
+): Promise<CardanoTransactionFeeResponseDto> => {
+	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
+	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
+	const endpointUrl = apiUrl + `/api/CardanoTx/CreateBridgingTx`;
+
+	const body = prepareCreateCardanoBridgingTx(dto);
+
+	try {
+		const response = await axios.post(endpointUrl, body, {
+			headers: {
+				'X-API-KEY': apiKey,
+				'Content-Type': 'application/json',
+			},
+		});
+
+		return response.data as CardanoTransactionFeeResponseDto;
 	} catch (error) {
 		if (error instanceof AxiosError) {
 			if (error.response) {

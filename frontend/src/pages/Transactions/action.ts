@@ -15,6 +15,11 @@ export const createCardanoTransactionAction = (model: CreateTransactionDto) => {
 	return client.createCardano(model);
 }
 
+export const getCardanoTransactionFeeAction = (model: CreateTransactionDto) => {
+	const client = new TransactionControllerClient();
+	return client.getCardanoTxFee(model);
+}
+
 export const submitCardanoTransactionAction = (model: SubmitCardanoTransactionDto) => {
 	const client = new TransactionControllerClient();
 	return client.submitCardano(model);

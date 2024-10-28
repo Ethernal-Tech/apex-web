@@ -8,20 +8,20 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import { CreateCardanoTxResponse, CreateEthTxResponse } from './types';
-import { ChainEnum } from '../../../swagger/apexBridgeApiService';
+import { CreateEthTxResponse } from './types';
+import { CardanoTransactionFeeResponseDto, ChainEnum } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
 
 type BridgeInputType = {
     bridgeTxFee: string
-    createCardanoTx: (address: string, amount: string) => Promise<CreateCardanoTxResponse>
+    getCardanoTxFee: (address: string, amount: string) => Promise<CardanoTransactionFeeResponseDto>
     createEthTx: (address: string, amount: string) => Promise<CreateEthTxResponse>
     submit:(address: string, amount: string) => Promise<void>
     loading?: boolean;
 }
 
-const BridgeInput = ({bridgeTxFee, createCardanoTx, createEthTx, submit, loading}:BridgeInputType) => {
+const BridgeInput = ({bridgeTxFee, getCardanoTxFee, createEthTx, submit, loading}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
   const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
@@ -38,8 +38,8 @@ const BridgeInput = ({bridgeTxFee, createCardanoTx, createEthTx, submit, loading
 
     try {
         if (chain === ChainEnum.Prime || chain === ChainEnum.Vector) {
-            const createdTxResp = await createCardanoTx(destinationAddr, convertApexToDfm(amount || '0', chain));
-            setUserWalletFee((createdTxResp.createResponse?.txFee || 0).toString());
+            const feeResp = await getCardanoTxFee(destinationAddr, convertApexToDfm(amount || '0', chain));
+            setUserWalletFee((feeResp?.fee || 0).toString());
 
             return;
         } else if (chain === ChainEnum.Nexus) {
@@ -57,7 +57,7 @@ const BridgeInput = ({bridgeTxFee, createCardanoTx, createEthTx, submit, loading
 
     setUserWalletFee(undefined);
     
-  }, [amount, chain, createCardanoTx, createEthTx, destinationAddr])
+  }, [amount, chain, createEthTx, destinationAddr, getCardanoTxFee])
 
   useEffect(() => {
     if (fetchCreateTxTimeoutRef.current) {

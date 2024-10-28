@@ -70,6 +70,53 @@ export class TransactionControllerClient extends BaseClient {
     /**
      * @return Success
      */
+    getCardanoTxFee(body: CreateTransactionDto): Promise<CardanoTransactionFeeResponseDto> {
+        let url_ = this.baseUrl + "/transaction/getCardanoTxFee";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ = <RequestInit>{
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGetCardanoTxFee(_response);
+        });
+    }
+
+    protected processGetCardanoTxFee(response: Response): Promise<CardanoTransactionFeeResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CardanoTransactionFeeResponseDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CardanoTransactionFeeResponseDto>(<any>null);
+    }
+
+    /**
+     * @return Success
+     */
     submitCardano(body: SubmitCardanoTransactionDto): Promise<SubmitCardanoTransactionResponseDto> {
         let url_ = this.baseUrl + "/transaction/submitCardano";
         url_ = url_.replace(/[?&]$/, "");
@@ -439,7 +486,6 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
     txRaw!: string;
     txHash!: string;
     bridgingFee!: number;
-    txFee!: number;
     isFallback!: boolean;
 
     constructor(data?: ICreateCardanoTransactionResponseDto) {
@@ -456,7 +502,6 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
             this.txRaw = _data["txRaw"];
             this.txHash = _data["txHash"];
             this.bridgingFee = _data["bridgingFee"];
-            this.txFee = _data["txFee"];
             this.isFallback = _data["isFallback"];
         }
     }
@@ -473,7 +518,6 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
         data["txRaw"] = this.txRaw;
         data["txHash"] = this.txHash;
         data["bridgingFee"] = this.bridgingFee;
-        data["txFee"] = this.txFee;
         data["isFallback"] = this.isFallback;
         return data; 
     }
@@ -483,8 +527,43 @@ export interface ICreateCardanoTransactionResponseDto {
     txRaw: string;
     txHash: string;
     bridgingFee: number;
-    txFee: number;
     isFallback: boolean;
+}
+
+export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeResponseDto {
+    fee!: number;
+
+    constructor(data?: ICardanoTransactionFeeResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fee = _data["fee"];
+        }
+    }
+
+    static fromJS(data: any): CardanoTransactionFeeResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CardanoTransactionFeeResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fee"] = this.fee;
+        return data; 
+    }
+}
+
+export interface ICardanoTransactionFeeResponseDto {
+    fee: number;
 }
 
 export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto {

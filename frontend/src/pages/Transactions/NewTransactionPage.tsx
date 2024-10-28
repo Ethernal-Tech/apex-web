@@ -10,8 +10,8 @@ import { RootState } from "../../redux/store";
 import { useCallback, useState } from "react";
 import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
-import { createCardanoTransactionAction, createEthTransactionAction } from "./action";
-import { BridgeTransactionDto, ChainEnum, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
+import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
@@ -36,13 +36,13 @@ function NewTransactionPage() {
 	const dispatch = useDispatch();
 	const fetchFunction = useTryCatchJsonByAction();
 
-	const createCardanoTx = useCallback(async (address: string, amount: string): Promise<CreateCardanoTxResponse> => {
+	const prepareCreateCardanoTx = useCallback((address: string, amount: string): CreateTransactionDto => {
 		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount);
 		if (validationErr) {
 			throw new Error(validationErr);
 		}
 
-		const createTxDto = new CreateTransactionDto({
+		return new CreateTransactionDto({
 			bridgingFee: `${bridgeTxFee}`,
 			destinationChain,
 			originChain: chain,
@@ -50,11 +50,23 @@ function NewTransactionPage() {
 			destinationAddress: address,
 			amount,
 		})
+	}, [account, bridgeTxFee, chain, destinationChain])
+
+	const getCardanoTxFee = useCallback(async (address: string, amount: string): Promise<CardanoTransactionFeeResponseDto> => {
+		const createTxDto = prepareCreateCardanoTx(address, amount);
+		const bindedCreateAction = getCardanoTransactionFeeAction.bind(null, createTxDto);
+		const feeResponse = await fetchFunction(bindedCreateAction);
+
+		return feeResponse;
+	}, [prepareCreateCardanoTx, fetchFunction])
+
+	const createCardanoTx = useCallback(async (address: string, amount: string): Promise<CreateCardanoTxResponse> => {
+		const createTxDto = prepareCreateCardanoTx(address, amount);
 		const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
 		const createResponse = await fetchFunction(bindedCreateAction);
 
 		return { createTxDto, createResponse };
-	}, [bridgeTxFee, chain, destinationChain, fetchFunction, account])
+	}, [prepareCreateCardanoTx, fetchFunction])
 
 	const createEthTx = useCallback(async (address: string, amount: string): Promise<CreateEthTxResponse> => {
 		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount);
@@ -188,7 +200,7 @@ function NewTransactionPage() {
 					{!txInProgress &&
 						<BridgeInput
 							bridgeTxFee={bridgeTxFee}
-							createCardanoTx={createCardanoTx}
+							getCardanoTxFee={getCardanoTxFee}
 							createEthTx={createEthTx}
 							submit={handleSubmitCallback}
 							loading={loading}

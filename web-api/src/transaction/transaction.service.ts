@@ -3,6 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
 	createCardanoBridgingTx,
 	createEthBridgingTx,
+	getCardanoBridgingTxFee,
 	submitCardanoTransaction,
 } from 'src/transaction/transaction.helper';
 import {
@@ -12,6 +13,7 @@ import {
 	SubmitCardanoTransactionResponseDto,
 	TransactionSubmittedDto,
 	CreateEthTransactionResponseDto,
+	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
@@ -27,9 +29,7 @@ export class TransactionService {
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 	) {}
 
-	async createCardano(
-		dto: CreateTransactionDto,
-	): Promise<CreateCardanoTransactionResponseDto> {
+	private async validateCreateCardanoTx(dto: CreateTransactionDto) {
 		if (
 			dto.originChain !== ChainEnum.Prime &&
 			dto.originChain !== ChainEnum.Vector
@@ -51,6 +51,12 @@ export class TransactionService {
 		) {
 			throw new BadRequestException('Invalid destination chain');
 		}
+	}
+
+	async createCardano(
+		dto: CreateTransactionDto,
+	): Promise<CreateCardanoTransactionResponseDto> {
+		this.validateCreateCardanoTx(dto);
 
 		const tx = await createCardanoBridgingTx(dto);
 
@@ -61,6 +67,22 @@ export class TransactionService {
 		}
 
 		return tx;
+	}
+
+	async getCardanoTxFee(
+		dto: CreateTransactionDto,
+	): Promise<CardanoTransactionFeeResponseDto> {
+		this.validateCreateCardanoTx(dto);
+
+		const feeResp = await getCardanoBridgingTxFee(dto);
+
+		if (!feeResp) {
+			const error = 'error while getting bridging tx fee';
+			console.log(error);
+			throw new BadRequestException(error);
+		}
+
+		return feeResp;
 	}
 
 	async submitCardano(
