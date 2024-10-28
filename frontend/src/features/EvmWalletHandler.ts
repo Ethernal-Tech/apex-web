@@ -15,6 +15,7 @@ export const EVM_SUPPORTED_WALLETS = [{
 
 class EvmWalletHandler {
     private web3: Web3 | undefined;
+    private onAccountsChanged: (accounts: string[]) => Promise<void> = async () => undefined
 
     getInstalledWallets = (): Wallet[] => {
         if (typeof window.ethereum === 'undefined') return [];
@@ -22,12 +23,18 @@ class EvmWalletHandler {
         return EVM_SUPPORTED_WALLETS;
     };
 
-    enable = async () => {
+    accountsChanged = async (accounts: string[]) => await this.onAccountsChanged(accounts)
+
+    enable = async (onAccountsChanged: (accounts: string[]) => Promise<void>) => {
         if (typeof window.ethereum !== 'undefined') {
             this.web3 = new Web3(window.ethereum);
+            this.web3.transactionBlockTimeout = 200;
         }
 
         if (this.web3) {
+            this.onAccountsChanged = onAccountsChanged
+            window.ethereum.on('accountsChanged', this.accountsChanged)
+
             try {
                 await window.ethereum.request({ method: 'eth_requestAccounts' });
             } catch (error) {
@@ -38,6 +45,7 @@ class EvmWalletHandler {
 
     clearEnabledWallet = () => {
         this.web3 = undefined;
+        window.ethereum.removeListener('accountsChanged', this.accountsChanged)
     };
 
     private _isEnabled = () => !!this.web3;
@@ -52,10 +60,10 @@ class EvmWalletHandler {
 
     // PROXY
 
-    getAddress = async (): Promise<string> => {
+    getAddress = async (): Promise<string | undefined> => {
         this._checkWalletAndThrow();
         const accounts = await this.web3!.eth.getAccounts();
-        return accounts[0];
+        return accounts.length > 0 ? accounts[0] : undefined;
     };
 
     getBalance = async (): Promise<string> => {

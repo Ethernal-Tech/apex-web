@@ -1,4 +1,3 @@
-import EvmWalletHandler, { EVM_SUPPORTED_WALLETS } from "../features/EvmWalletHandler";
 import walletHandler, { SUPPORTED_WALLETS } from "../features/WalletHandler";
 import { setWalletAction } from "../redux/slices/walletSlice";
 import { Dispatch } from 'redux';
@@ -6,7 +5,7 @@ import { logout } from "./logout";
 import { toast } from "react-toastify";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { areChainsEqual, fromChainToNetworkId } from "../utils/chainUtils";
-import evmWalletHandler from "../features/EvmWalletHandler";
+import evmWalletHandler, { EVM_SUPPORTED_WALLETS } from "../features/EvmWalletHandler";
 import { setConnectingAction } from "../redux/slices/loginSlice";
 import { setChainAction } from "../redux/slices/chainSlice";
 import { NavigateFunction } from "react-router-dom";
@@ -17,26 +16,47 @@ import { setAccountInfoAction } from "../redux/slices/accountInfoSlice";
 
 let onLoadCalled = false
 
-const enableEvmWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
-    await EvmWalletHandler.enable();
-    let success = evmWalletHandler.checkWallet()
-
-    if (!success) {
-        throw new Error('Failed to connect to wallet.');
-    }
-
+const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
     const networkId = await evmWalletHandler.getNetworkId();
 
     if (!areChainsEqual(chain, networkId)) {
         throw new Error(`Chain: ${chain} not compatible with networkId: ${networkId}. Expected networkId: ${fromChainToNetworkId(chain)}. Please select ${chain} network in your wallet.`);
     }
     const account = await evmWalletHandler.getAddress();
+    if (!account) {
+        throw new Error('No accounts connected')
+    }
+
     const balanceResp = await tryCatchJsonByAction(() => getWalletBalanceAction(chain, account), dispatch); 
 
     dispatch(setWalletAction(selectedWalletName));
     dispatch(setAccountInfoAction({
         account, networkId: networkId, balance: balanceResp?.balance || '0',
     }))
+}
+
+const onEvmAccountsChanged = async (_accounts: string[], selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch): Promise<void> => {
+    try {
+        await checkAndSetEvmData(selectedWalletName, chain, dispatch)
+    } catch (e) {
+        const we = `Error on evm accounts changed. ${e}`
+        console.log(we)
+        toast.error(we);
+
+        await logout(dispatch)
+    }
+}
+
+const enableEvmWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
+    await evmWalletHandler.enable(
+        (accounts: string[]) => onEvmAccountsChanged(accounts, selectedWalletName, chain, dispatch));
+    let success = evmWalletHandler.checkWallet()
+
+    if (!success) {
+        throw new Error('Failed to connect to wallet.');
+    }
+
+    await checkAndSetEvmData(selectedWalletName, chain, dispatch)
     
     return true
 }
