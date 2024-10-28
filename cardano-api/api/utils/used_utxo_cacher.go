@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"sync"
 	"time"
 
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
@@ -14,6 +15,7 @@ type txInputWithTime struct {
 type UsedUtxoCacher struct {
 	timeout time.Duration
 	data    map[string]map[string]txInputWithTime
+	lock    sync.Mutex
 }
 
 func NewUsedUtxoCacher(timeout time.Duration) *UsedUtxoCacher {
@@ -24,6 +26,9 @@ func NewUsedUtxoCacher(timeout time.Duration) *UsedUtxoCacher {
 }
 
 func (c *UsedUtxoCacher) Add(addr string, txInputs []wallet.TxInput) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
 	var (
 		submap map[string]txInputWithTime
 		tm     = time.Now().UTC()
@@ -53,6 +58,9 @@ func (c *UsedUtxoCacher) Add(addr string, txInputs []wallet.TxInput) {
 }
 
 func (c *UsedUtxoCacher) Get(addr string) []wallet.TxInput {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
 	tm := time.Now().UTC()
 	submap, exists := c.data[addr]
 
