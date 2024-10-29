@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import HomePage from './Home/HomePage';
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,6 +9,7 @@ import NewTransactionPage from './Transactions/NewTransactionPage';
 
 import withMiddleware from '../middleware/withMiddleware';
 import { onLoad } from '../actions/login';
+import { fetchAndUpdateBalanceAction } from '../actions/balance';
 
 export const HOME_ROUTE = '/';
 export const TRANSACTIONS_ROUTE = '/transactions';
@@ -20,6 +21,9 @@ const PageRouter: React.FC = () => {
 	const wallet = useSelector((state: RootState) => state.wallet.wallet);
 	const chain = useSelector((state: RootState) => state.chain.chain);
 	const dispatch = useDispatch();
+  const account = useSelector((state: RootState) => state.accountInfo.account);
+	const isFullyLoggedIn = !!wallet && !!account;
+  const balanceIntervalHandle = useRef<NodeJS.Timer>();
 	
 	const isLoggedInMemo = !!wallet;
 
@@ -29,6 +33,29 @@ const PageRouter: React.FC = () => {
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
+
+  useEffect(() => {
+    if (balanceIntervalHandle.current) {
+      clearInterval(balanceIntervalHandle.current)
+      balanceIntervalHandle.current = undefined
+    }
+
+    if (!isFullyLoggedIn) {
+      return
+    }
+
+    balanceIntervalHandle.current = setInterval(async () => {
+      await fetchAndUpdateBalanceAction(dispatch)
+    }, 30000)
+
+    return () => {
+      if (balanceIntervalHandle.current) {
+        clearInterval(balanceIntervalHandle.current)
+        balanceIntervalHandle.current = undefined
+      }
+    }
+  }, [dispatch, isFullyLoggedIn])
+
 
   const renderHomePage = <HomePage />;
 

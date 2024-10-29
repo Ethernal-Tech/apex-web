@@ -11,15 +11,13 @@ import { getAllFilteredAction } from './action';
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord, convertDfmToApex, formatAddress, formatTxDetailUrl, getChainLabelAndColor, toFixed } from '../../utils/generalUtils';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
-import { fetchAndUpdateBalanceAction } from '../../actions/balance';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
 	const [isLoading, setIsLoading] = useState(false);
 	const tableRef = useRef(null);
-  const dispatch = useDispatch();
 	
   const chain = useSelector((state: RootState) => state.chain.chain)
   const account = useSelector((state: RootState) => state.accountInfo.account);
@@ -38,10 +36,7 @@ const TransactionsTablePage = () => {
 			!hideLoading && setIsLoading(true);
 			const bindedAction = getAllFilteredAction.bind(null, filters);
 
-      const [response] = await Promise.all([
-          tryCatchJsonByAction(bindedAction),
-          fetchAndUpdateBalanceAction(dispatch),
-      ])
+      const response = await tryCatchJsonByAction(bindedAction)
 
       if (!(response instanceof ErrorResponse)) {
         setTransactions(response);
@@ -52,7 +47,7 @@ const TransactionsTablePage = () => {
       
       !hideLoading && setIsLoading(false);
 		},
-		[filters, dispatch]
+		[filters]
 	)
 
   useEffect(() => {

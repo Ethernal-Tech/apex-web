@@ -13,29 +13,23 @@ import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor,
 import { menuDark } from '../../containers/theme';
 import Button from "../../components/Buttons/ButtonCustom";
 import { openExplorer } from '../../utils/chainUtils';
-import { fetchAndUpdateBalanceAction } from '../../actions/balance';
-import { useDispatch } from 'react-redux';
 
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [transaction, setTransaction] = useState<BridgeTransactionDto | undefined>(undefined);
-  const dispatch = useDispatch();
 	const navigate = useNavigate();
 
   const fetchTx = useCallback(async () => {
     if (id) {      
       const bindedAction = getAction.bind(null, parseInt(id));
 
-        const [response] = await Promise.all([
-          tryCatchJsonByAction(bindedAction),
-          fetchAndUpdateBalanceAction(dispatch),
-        ])
+        const response = await tryCatchJsonByAction(bindedAction)
         if (!(response instanceof ErrorResponse)) {
           setTransaction(response)
           return response;
         }
     }
-  }, [dispatch, id])
+  }, [id])
 
 	useEffect(() => {
 		fetchTx()

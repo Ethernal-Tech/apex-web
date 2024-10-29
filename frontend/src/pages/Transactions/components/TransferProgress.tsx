@@ -12,8 +12,6 @@ import { isStatusFinal } from "../../../utils/statusUtils"
 import { getAction } from "../action"
 import { capitalizeWord } from "../../../utils/generalUtils"
 import { openExplorer } from "../../../utils/chainUtils"
-import { fetchAndUpdateBalanceAction } from "../../../actions/balance"
-import { useDispatch } from "react-redux"
 // import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
 
 // asset svgs
@@ -235,16 +233,12 @@ const TransferProgress = ({
     setTx,
 }: TransferProgressProps) => {
     const navigate = useNavigate();
-    const dispatch = useDispatch();
     const [txStatusToShow, setTxStatusToShow] = useState<TransactionStatusEnum>(tx.status);
     
     const fetchTx = useCallback(async () => {
         const bindedAction = getAction.bind(null, tx.id);
 
-        const [response] = await Promise.all([
-            tryCatchJsonByAction(bindedAction),
-            fetchAndUpdateBalanceAction(dispatch),
-        ])
+        const response = await tryCatchJsonByAction(bindedAction)
 
         if (!(response instanceof ErrorResponse)) {
             setTx(response);
@@ -263,7 +257,7 @@ const TransferProgress = ({
 
             return response;
         }
-    }, [tx.id, dispatch, setTx])
+    }, [tx.id, setTx])
 
     const transferProgress = (function(txStatus: TransactionStatusEnum){
         switch (txStatus) {
