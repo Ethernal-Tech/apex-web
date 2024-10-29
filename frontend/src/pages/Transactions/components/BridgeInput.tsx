@@ -8,20 +8,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import { CreateEthTxResponse } from './types';
-import { CardanoTransactionFeeResponseDto, ChainEnum } from '../../../swagger/apexBridgeApiService';
+import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
 
 type BridgeInputType = {
     bridgeTxFee: string
     getCardanoTxFee: (address: string, amount: string) => Promise<CardanoTransactionFeeResponseDto>
-    createEthTx: (address: string, amount: string) => Promise<CreateEthTxResponse>
+    getEthTxFee: (address: string, amount: string) => Promise<CreateEthTransactionResponseDto>
     submit:(address: string, amount: string) => Promise<void>
     loading?: boolean;
 }
 
-const BridgeInput = ({bridgeTxFee, getCardanoTxFee, createEthTx, submit, loading}:BridgeInputType) => {
+const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
   const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
@@ -43,8 +42,8 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, createEthTx, submit, loading
 
             return;
         } else if (chain === ChainEnum.Nexus) {
-            const createdTxResp = await createEthTx(destinationAddr, convertApexToDfm(amount || '0', chain));
-            const { bridgingFee, isFallback, ...tx } = createdTxResp.createResponse;
+            const feeResp = await getEthTxFee(destinationAddr, convertApexToDfm(amount || '0', chain));
+            const { bridgingFee, isFallback, ...tx } = feeResp;
 
             const fee = await estimateEthGas(tx, isFallback);
             setUserWalletFee(fee.toString());
@@ -57,7 +56,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, createEthTx, submit, loading
 
     setUserWalletFee(undefined);
     
-  }, [amount, chain, createEthTx, destinationAddr, getCardanoTxFee])
+  }, [amount, chain, getEthTxFee, destinationAddr, getCardanoTxFee])
 
   useEffect(() => {
     if (fetchCreateTxTimeoutRef.current) {

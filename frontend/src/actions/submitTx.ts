@@ -1,7 +1,6 @@
 import { bridgingTransactionSubmittedAction, submitCardanoTransactionAction } from "../pages/Transactions/action";
 import { CreateTransactionDto, CreateCardanoTransactionResponseDto, SubmitCardanoTransactionDto, CreateEthTransactionResponseDto, TransactionSubmittedDto } from "../swagger/apexBridgeApiService";
-import { tryCatchJsonByAction } from "../utils/fetchUtils";
-import { Dispatch, UnknownAction } from 'redux';
+import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
 import walletHandler from "../features/WalletHandler";
 import evmWalletHandler from "../features/EvmWalletHandler";
 import { Transaction } from 'web3-types';
@@ -9,7 +8,6 @@ import { Transaction } from 'web3-types';
 export const signAndSubmitCardanoTx = async (
     values: CreateTransactionDto,
     createResponse: CreateCardanoTransactionResponseDto,
-    dispatch: Dispatch<UnknownAction>,
 ) => {
     if (!walletHandler.checkWallet()) {
         throw new Error('Wallet not connected.');
@@ -31,10 +29,9 @@ export const signAndSubmitCardanoTx = async (
         isFallback: createResponse.isFallback,
     }));
 
-    const response = await tryCatchJsonByAction(bindedSubmitAction, dispatch);
-    const error = (response as any).err || (response as any).error
-    if (error) {
-        throw new Error(error)
+    const response = await tryCatchJsonByAction(bindedSubmitAction, false);
+    if (response instanceof ErrorResponse) {
+        throw new Error(response.err)
     }
 
     return response.bridgeTx;
@@ -76,7 +73,6 @@ export const estimateEthGas = async (tx: Transaction, isFallback: boolean) => {
 export const signAndSubmitEthTx = async (
   values: CreateTransactionDto,
   createResponse: CreateEthTransactionResponseDto,
-  dispatch: Dispatch<UnknownAction>,
 ) => {
   if (!evmWalletHandler.checkWallet()) {
       throw new Error('Wallet not connected.');
@@ -100,10 +96,9 @@ export const signAndSubmitEthTx = async (
       isFallback: createResponse.isFallback,
   }));
 
-  const response = await tryCatchJsonByAction(bindedSubmittedAction, dispatch);
-  const error = (response as any).err || (response as any).error
-  if (error) {
-      throw new Error(error)
+  const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
+  if (response instanceof ErrorResponse) {
+      throw new Error(response.err)
   }
   
   return response;

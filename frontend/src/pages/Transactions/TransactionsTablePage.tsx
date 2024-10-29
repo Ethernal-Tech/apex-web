@@ -8,7 +8,7 @@ import Filters from '../../components/filters/Filters';
 import { visuallyHidden } from '@mui/utils';
 import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
-import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
+import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord, convertDfmToApex, formatAddress, formatTxDetailUrl, getChainLabelAndColor, toFixed } from '../../utils/generalUtils';
 import { useDispatch, useSelector } from 'react-redux';
@@ -20,7 +20,6 @@ const TransactionsTablePage = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const tableRef = useRef(null);
   const dispatch = useDispatch();
-	const fetchFunction = useTryCatchJsonByAction();
 	
   const chain = useSelector((state: RootState) => state.chain.chain)
   const account = useSelector((state: RootState) => state.accountInfo.account);
@@ -40,16 +39,20 @@ const TransactionsTablePage = () => {
 			const bindedAction = getAllFilteredAction.bind(null, filters);
 
       const [response] = await Promise.all([
-          fetchFunction(bindedAction),
+          tryCatchJsonByAction(bindedAction),
           fetchAndUpdateBalanceAction(dispatch),
       ])
 
-			setTransactions(response);
-			!hideLoading && setIsLoading(false);
+      if (!(response instanceof ErrorResponse)) {
+        setTransactions(response);
+        !hideLoading && setIsLoading(false);
 
-      return response;
+        return response
+      }
+      
+      !hideLoading && setIsLoading(false);
 		},
-		[filters, fetchFunction, dispatch]
+		[filters, dispatch]
 	)
 
   useEffect(() => {

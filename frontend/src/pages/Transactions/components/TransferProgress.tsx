@@ -7,7 +7,7 @@ import { TRANSACTIONS_ROUTE } from "../../PageRouter"
 import { useNavigate } from "react-router-dom"
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../../../swagger/apexBridgeApiService"
 import { FunctionComponent, SVGProps, useCallback, useEffect, useMemo, useState } from "react"
-import { useTryCatchJsonByAction } from "../../../utils/fetchUtils"
+import { ErrorResponse, tryCatchJsonByAction } from "../../../utils/fetchUtils"
 import { isStatusFinal } from "../../../utils/statusUtils"
 import { getAction } from "../action"
 import { capitalizeWord } from "../../../utils/generalUtils"
@@ -236,18 +236,17 @@ const TransferProgress = ({
 }: TransferProgressProps) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
-	const fetchFunction = useTryCatchJsonByAction();
     const [txStatusToShow, setTxStatusToShow] = useState<TransactionStatusEnum>(tx.status);
     
     const fetchTx = useCallback(async () => {
         const bindedAction = getAction.bind(null, tx.id);
 
         const [response] = await Promise.all([
-            fetchFunction(bindedAction),
+            tryCatchJsonByAction(bindedAction),
             fetchAndUpdateBalanceAction(dispatch),
         ])
 
-        if (response) {
+        if (!(response instanceof ErrorResponse)) {
             setTx(response);
             setTxStatusToShow(
                 (prev) => {
@@ -261,10 +260,10 @@ const TransferProgress = ({
                     return response.status
                 }
             );
-        }
 
-        return response;
-    }, [tx.id, fetchFunction, dispatch, setTx])
+            return response;
+        }
+    }, [tx.id, dispatch, setTx])
 
     const transferProgress = (function(txStatus: TransactionStatusEnum){
         switch (txStatus) {

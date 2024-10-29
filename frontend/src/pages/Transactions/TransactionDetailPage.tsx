@@ -6,7 +6,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { TRANSACTIONS_ROUTE } from '../PageRouter';
 import { BridgeTransactionDto } from '../../swagger/apexBridgeApiService';
-import { useTryCatchJsonByAction } from '../../utils/fetchUtils';
+import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getAction } from './action';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor, toFixed } from '../../utils/generalUtils';
@@ -19,7 +19,6 @@ import { useDispatch } from 'react-redux';
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [transaction, setTransaction] = useState<BridgeTransactionDto | undefined>(undefined);
-	const fetchFunction = useTryCatchJsonByAction();
   const dispatch = useDispatch();
 	const navigate = useNavigate();
 
@@ -28,14 +27,15 @@ const TransactionDetailPage = () => {
       const bindedAction = getAction.bind(null, parseInt(id));
 
         const [response] = await Promise.all([
-          fetchFunction(bindedAction),
+          tryCatchJsonByAction(bindedAction),
           fetchAndUpdateBalanceAction(dispatch),
         ])
-        
-        response && setTransaction(response);
-        return response;
+        if (!(response instanceof ErrorResponse)) {
+          setTransaction(response)
+          return response;
+        }
     }
-  }, [dispatch, fetchFunction, id])
+  }, [dispatch, id])
 
 	useEffect(() => {
 		fetchTx()

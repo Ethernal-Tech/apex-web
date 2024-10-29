@@ -5,13 +5,13 @@ import TotalBalance from "./components/TotalBalance";
 import TransferProgress from "./components/TransferProgress";
 import BridgeInput from "./components/BridgeInput";
 import { chainIcons, validateSubmitTxInputs } from "../../utils/generalUtils";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useCallback, useState } from "react";
-import { useTryCatchJsonByAction } from "../../utils/fetchUtils";
+import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
-import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
 import appSettings from "../../settings/appSettings";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
@@ -33,9 +33,6 @@ function NewTransactionPage() {
 	const SourceIcon = chainIcons[chain];
 	const DestinationIcon = chainIcons[destinationChain];
 
-	const dispatch = useDispatch();
-	const fetchFunction = useTryCatchJsonByAction();
-
 	const prepareCreateCardanoTx = useCallback((address: string, amount: string): CreateTransactionDto => {
 		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount);
 		if (validationErr) {
@@ -55,34 +52,32 @@ function NewTransactionPage() {
 	const getCardanoTxFee = useCallback(async (address: string, amount: string): Promise<CardanoTransactionFeeResponseDto> => {
 		const createTxDto = prepareCreateCardanoTx(address, amount);
 		const bindedCreateAction = getCardanoTransactionFeeAction.bind(null, createTxDto);
-		const feeResponse = await fetchFunction(bindedCreateAction);
-		const error = (feeResponse as any).err || (feeResponse as any).error
-		if (error) {
-			throw new Error(error)
+		const feeResponse = await tryCatchJsonByAction(bindedCreateAction);
+		if (feeResponse instanceof ErrorResponse) {
+			throw new Error(feeResponse.err)
 		}
 
 		return feeResponse;
-	}, [prepareCreateCardanoTx, fetchFunction])
+	}, [prepareCreateCardanoTx])
 
 	const createCardanoTx = useCallback(async (address: string, amount: string): Promise<CreateCardanoTxResponse> => {
 		const createTxDto = prepareCreateCardanoTx(address, amount);
 		const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
-		const createResponse = await fetchFunction(bindedCreateAction);
-		const error = (createResponse as any).err || (createResponse as any).error
-		if (error) {
-			throw new Error(error)
+		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
+		if (createResponse instanceof ErrorResponse) {
+			throw new Error(createResponse.err)
 		}
 
 		return { createTxDto, createResponse };
-	}, [prepareCreateCardanoTx, fetchFunction])
+	}, [prepareCreateCardanoTx])
 
-	const createEthTx = useCallback(async (address: string, amount: string): Promise<CreateEthTxResponse> => {
+	const prepareCreateEthTx = useCallback((address: string, amount: string): CreateTransactionDto => {
 		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount);
 		if (validationErr) {
 			throw new Error(validationErr);
 		}
 
-		const createTxDto = new CreateTransactionDto({
+		return new CreateTransactionDto({
 			bridgingFee: `${bridgeTxFee}`,
 			destinationChain,
 			originChain: chain,
@@ -90,11 +85,29 @@ function NewTransactionPage() {
 			destinationAddress: address,
 			amount,
 		})
+	}, [account, bridgeTxFee, chain, destinationChain])
+
+	const getEthTxFee = useCallback(async (address: string, amount: string): Promise<CreateEthTransactionResponseDto> => {
+		const createTxDto = prepareCreateEthTx(address, amount);
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
-		const createResponse = await fetchFunction(bindedCreateAction);
+		const feeResponse = await tryCatchJsonByAction(bindedCreateAction);
+		if (feeResponse instanceof ErrorResponse) {
+			throw new Error(feeResponse.err)
+		}
+
+		return feeResponse;
+	}, [prepareCreateEthTx])
+
+	const createEthTx = useCallback(async (address: string, amount: string): Promise<CreateEthTxResponse> => {
+		const createTxDto = prepareCreateEthTx(address, amount);
+		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
+		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
+		if (createResponse instanceof ErrorResponse) {
+			throw new Error(createResponse.err)
+		}
 
 		return { createTxDto, createResponse };
-	}, [bridgeTxFee, chain, destinationChain, fetchFunction, account])
+	}, [prepareCreateEthTx])
 
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: string) => {
@@ -106,7 +119,6 @@ function NewTransactionPage() {
 					const response = await signAndSubmitCardanoTx(
 						createTxResp.createTxDto,
 						createTxResp.createResponse,
-						dispatch,
 					);
 					
 					response && setTxInProgress(response);
@@ -116,7 +128,6 @@ function NewTransactionPage() {
 					const response = await signAndSubmitEthTx(
 						createTxResp.createTxDto,
 						createTxResp.createResponse,
-						dispatch,
 					);
 					
 					response && setTxInProgress(response);
@@ -130,7 +141,7 @@ function NewTransactionPage() {
 				setLoading(false);
 			}
 		},
-		[chain, createCardanoTx, createEthTx, dispatch],
+		[chain, createCardanoTx, createEthTx],
 	);
 
 	const tabletMediaQuery = '@media (max-width:800px)'
@@ -209,7 +220,7 @@ function NewTransactionPage() {
 						<BridgeInput
 							bridgeTxFee={bridgeTxFee}
 							getCardanoTxFee={getCardanoTxFee}
-							createEthTx={createEthTx}
+							getEthTxFee={getEthTxFee}
 							submit={handleSubmitCallback}
 							loading={loading}
 						/>
