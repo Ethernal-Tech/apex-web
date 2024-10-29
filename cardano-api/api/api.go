@@ -129,10 +129,7 @@ func withAPIKeyAuth(
 	return func(w http.ResponseWriter, r *http.Request) {
 		apiKeyHeaderValue := r.Header.Get(apiConfig.APIKeyHeader)
 		if apiKeyHeaderValue == "" {
-			err := utils.WriteUnauthorizedResponse(w)
-			if err != nil {
-				logger.Error("error while WriteUnauthorizedResponse", "err", err)
-			}
+			utils.WriteUnauthorizedResponse(w, r, logger)
 
 			return
 		}
@@ -148,10 +145,7 @@ func withAPIKeyAuth(
 		}
 
 		if !authorized {
-			err := utils.WriteUnauthorizedResponse(w)
-			if err != nil {
-				logger.Error("error while WriteUnauthorizedResponse", "err", err)
-			}
+			utils.WriteUnauthorizedResponse(w, r, logger)
 
 			return
 		}

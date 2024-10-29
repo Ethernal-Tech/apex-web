@@ -246,9 +246,11 @@ func (bts *BridgingTxSender) getUTXOsForAmount(
 		}
 	}
 
+	bts.logger.Error("not enough funds for the transaction",
+		"available", amountSum, "exact", exactSum, "at least", atLeastSum)
+
 	return cardanowallet.TxInputs{},
-		fmt.Errorf("not enough funds for the transaction: (available, exact, at least) = (%d, %d, %d)",
-			amountSum, exactSum, atLeastSum)
+		fmt.Errorf("not enough funds for the transaction: available = %d", amountSum)
 }
 
 func (bts *BridgingTxSender) getTxBuilderData(
