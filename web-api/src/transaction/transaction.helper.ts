@@ -12,7 +12,7 @@ import axios, { AxiosError } from 'axios';
 import { BadRequestException } from '@nestjs/common';
 import web3, { Web3 } from 'web3';
 import { isAddress } from 'web3-validator';
-import { NewAddress } from 'src/utils/Address/addreses';
+import { NewAddress, RewardAddress } from 'src/utils/Address/addreses';
 import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
 import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
 
@@ -120,7 +120,11 @@ export const createEthBridgingTx = async (
 	}
 
 	const addr = NewAddress(dto.destinationAddress);
-	if (!addr || dto.destinationAddress !== addr.String()) {
+	if (
+		!addr ||
+		addr instanceof RewardAddress ||
+		dto.destinationAddress !== addr.String()
+	) {
 		throw new BadRequestException(
 			`Invalid destination address: ${dto.destinationAddress}`,
 		);

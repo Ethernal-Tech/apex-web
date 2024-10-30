@@ -1,4 +1,4 @@
-import { NewAddress } from "../features/Address/addreses";
+import { NewAddress, RewardAddress } from "../features/Address/addreses";
 import appSettings from "../settings/appSettings";
 import { BridgeTransactionDto, ChainEnum } from "../swagger/apexBridgeApiService";
 import { areChainsEqual } from "./chainUtils";
@@ -90,7 +90,7 @@ export const validateSubmitTxInputs = (
 
   if (destinationChain === ChainEnum.Prime || destinationChain === ChainEnum.Vector) {
     const addr = NewAddress(destinationAddr);
-    if (!addr || destinationAddr !== addr.String()) {
+    if (!addr || addr instanceof RewardAddress || destinationAddr !== addr.String()) {
       return `Invalid destination address: ${destinationAddr}`;
     }
   

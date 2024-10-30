@@ -279,8 +279,7 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 				break
 			}
 
-			addr, err := wallet.NewAddress(receiver.Addr)
-			if err != nil || addr.GetNetwork() != cardanoDestConfig.NetworkID {
+			if !cardanotx.IsValidOutputAddress(receiver.Addr, cardanoDestConfig.NetworkID) {
 				foundAnInvalidReceiverAddr = true
 
 				break
@@ -308,14 +307,6 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		}
 	}
 
-	requestBody.BridgingFee += feeSum
-	requestBody.Transactions = transactions
-
-	// this is just convinient way to setup default min fee
-	if requestBody.BridgingFee == 0 {
-		requestBody.BridgingFee = c.appConfig.BridgingSettings.MinFeeForBridging
-	}
-
 	if foundAUtxoValueBelowMinimumValue {
 		return fmt.Errorf("found a utxo value below minimum value in request body receivers: %v", requestBody)
 	}
@@ -326,6 +317,14 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 	if requestBody.BridgingFee < c.appConfig.BridgingSettings.MinFeeForBridging {
 		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
+	}
+
+	requestBody.BridgingFee += feeSum
+	requestBody.Transactions = transactions
+
+	// this is just convinient way to setup default min fee
+	if requestBody.BridgingFee == 0 {
+		requestBody.BridgingFee = c.appConfig.BridgingSettings.MinFeeForBridging
 	}
 
 	return nil
