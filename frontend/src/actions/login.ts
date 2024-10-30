@@ -10,8 +10,6 @@ import { setConnectingAction } from "../redux/slices/loginSlice";
 import { setChainAction } from "../redux/slices/chainSlice";
 import { NavigateFunction } from "react-router-dom";
 import { HOME_ROUTE } from "../pages/PageRouter";
-import { getWalletBalanceAction } from "./balance";
-import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
 import { setAccountInfoAction } from "../redux/slices/accountInfoSlice";
 
 let onLoadCalled = false
@@ -27,14 +25,9 @@ const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainEnum, 
         throw new Error('No accounts connected')
     }
 
-    const balanceResp = await tryCatchJsonByAction(() => getWalletBalanceAction(chain, account), false);
-    if (balanceResp instanceof ErrorResponse) {
-        throw new Error(balanceResp.err)
-    }
-
     dispatch(setWalletAction(selectedWalletName));
     dispatch(setAccountInfoAction({
-        account, networkId: networkId, balance: balanceResp?.balance || '0',
+        account, networkId: networkId, balance: '0',
     }))
 }
 
@@ -78,14 +71,10 @@ const enableCardanoWallet = async (selectedWalletName: string, chain: ChainEnum,
     }
 
     const account = await walletHandler.getChangeAddress();
-    const balanceResp = await tryCatchJsonByAction(() => getWalletBalanceAction(chain, account), false);
-    if (balanceResp instanceof ErrorResponse) {
-        throw new Error(balanceResp.err)
-    }
 
     dispatch(setWalletAction(selectedWalletName));
     dispatch(setAccountInfoAction({
-        account, networkId, balance: balanceResp?.balance || '0',
+        account, networkId, balance: '0',
     }))
 
     return true;

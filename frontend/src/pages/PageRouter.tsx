@@ -44,6 +44,8 @@ const PageRouter: React.FC = () => {
       return
     }
 
+    fetchAndUpdateBalanceAction(dispatch)
+
     balanceIntervalHandle.current = setInterval(async () => {
       await fetchAndUpdateBalanceAction(dispatch)
     }, 30000)
