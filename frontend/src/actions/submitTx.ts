@@ -91,7 +91,10 @@ export const signAndSubmitEthTx = async (
       originTxHash: receipt.transactionHash.toString(),
       senderAddress: values.senderAddress,
       receiverAddrs: [values.destinationAddress],
-      txRaw: JSON.stringify({ ...tx, block: receipt.blockNumber.toString() }),
+      txRaw: JSON.stringify(
+        { ...tx, block: receipt.blockNumber.toString() },
+        (_: string, value: any) => typeof value === 'bigint' ? `bigint:${value.toString()}` : value,
+      ),
       amount: amount.toString(),
       isFallback: createResponse.isFallback,
   }));

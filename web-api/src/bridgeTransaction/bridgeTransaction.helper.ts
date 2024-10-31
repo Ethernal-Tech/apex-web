@@ -294,6 +294,10 @@ type TxWithBlockNumber = EthTransaction & {
 };
 
 export const getEthTTL = (txRaw: string): bigint => {
-	const tx: TxWithBlockNumber = JSON.parse(txRaw);
+	const tx: TxWithBlockNumber = JSON.parse(txRaw, (_: string, value: any) =>
+		typeof value === 'string' && value.startsWith('bigint:')
+			? BigInt(value.substring('bigint:'.length))
+			: value,
+	);
 	return BigInt(tx.block) + BigInt(process.env.ETH_TX_TTL_INC || 50);
 };
