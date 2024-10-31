@@ -45,7 +45,9 @@ class EvmWalletHandler {
 
     clearEnabledWallet = () => {
         this.web3 = undefined;
-        window.ethereum.removeListener('accountsChanged', this.accountsChanged)
+        if (typeof window.ethereum !== 'undefined') {
+            window.ethereum.removeListener('accountsChanged', this.accountsChanged)
+        }
     };
 
     private _isEnabled = () => !!this.web3;
