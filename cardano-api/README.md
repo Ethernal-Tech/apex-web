@@ -65,7 +65,7 @@ $ go run main.go generate-configs\
 		--vector-bridging-fallback-address "vector_test1w2h482rf4gf44ek0rekamxksulazkr64yf2fhmm7f5gxjpsdm4zsg"\
 		--vector-ogmios-url "http://ogmios.vector.testnet.apexfusion.org:1337"\
 		--logs-path "./logs"\
-                --utxo-cache-timeout 1m30s\
+		--utxo-cache-timeout 1m30s\
 		--api-port 41000\
 		--api-keys "cardano_api_key_1"\
 		--api-keys "cardano_api_key_2"
