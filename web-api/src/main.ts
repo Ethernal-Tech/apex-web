@@ -2,11 +2,17 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { winstonLogger } from './logger';
+import { HttpExceptionFilter } from './utils/httpException.filter';
+import { LoggingInterceptor } from './utils/logging.interceptor';
 
 const port = process.env.PORT || 3500;
 
 async function bootstrap() {
-	const app = await NestFactory.create(AppModule);
+	const app = await NestFactory.create(AppModule, {
+		autoFlushLogs: true,
+		logger: winstonLogger,
+	});
 
 	if (
 		process.env.NODE_ENV === 'production' &&
@@ -28,6 +34,9 @@ async function bootstrap() {
 	const document = SwaggerModule.createDocument(app, config);
 	SwaggerModule.setup('swagger', app, document);
 	app.useGlobalPipes(new ValidationPipe());
+	app.useGlobalFilters(new HttpExceptionFilter());
+	app.useGlobalInterceptors(new LoggingInterceptor());
+
 	await app.listen(port);
 }
 bootstrap();

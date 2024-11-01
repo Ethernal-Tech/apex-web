@@ -61,9 +61,7 @@ export class TransactionService {
 		const tx = await createCardanoBridgingTx(dto);
 
 		if (!tx) {
-			const error = 'error while creating bridging tx';
-			console.log(error);
-			throw new BadRequestException(error);
+			throw new BadRequestException('error while creating bridging tx');
 		}
 
 		return tx;
@@ -77,9 +75,7 @@ export class TransactionService {
 		const feeResp = await getCardanoBridgingTxFee(dto);
 
 		if (!feeResp) {
-			const error = 'error while getting bridging tx fee';
-			console.log(error);
-			throw new BadRequestException(error);
+			throw new BadRequestException('error while getting bridging tx fee');
 		}
 
 		return feeResp;
@@ -111,9 +107,7 @@ export class TransactionService {
 		const tx = await createEthBridgingTx(dto);
 
 		if (!tx) {
-			const error = 'error while creating bridging tx';
-			console.log(error);
-			throw new BadRequestException(error);
+			throw new BadRequestException('error while creating bridging tx');
 		}
 
 		return tx;

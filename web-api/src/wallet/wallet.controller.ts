@@ -4,6 +4,7 @@ import {
 	Get,
 	HttpCode,
 	HttpStatus,
+	Logger,
 	Query,
 } from '@nestjs/common';
 import { BalanceResponseDto } from './wallet.dto';
@@ -36,6 +37,8 @@ export class WalletController {
 		const endpointUrl =
 			apiUrl + `/api/CardanoTx/GetBalance?chainId=${chain}&address=${address}`;
 
+		Logger.debug(`axios.get: ${endpointUrl}`);
+
 		try {
 			const response = await axios.get(endpointUrl, {
 				headers: {
@@ -43,6 +46,8 @@ export class WalletController {
 					'Content-Type': 'application/json',
 				},
 			});
+
+			Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
 			return response.data as BalanceResponseDto;
 		} catch (error) {

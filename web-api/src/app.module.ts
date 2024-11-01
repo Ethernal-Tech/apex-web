@@ -18,5 +18,6 @@ import { WalletModule } from './wallet/wallet.module';
 	],
 	controllers: [],
 	providers: [],
+	exports: [],
 })
 export class AppModule {}

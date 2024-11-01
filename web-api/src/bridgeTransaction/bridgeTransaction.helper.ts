@@ -6,6 +6,7 @@ import { capitalizeWord } from 'src/utils/stringUtils';
 import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization-lib-nodejs';
 import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
+import { Logger } from '@nestjs/common';
 
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
@@ -43,26 +44,31 @@ export const getBridgingRequestStates = async (
 ) => {
 	const oracleUrl = process.env.ORACLE_URL || 'http://localhost:40000';
 	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
-	let apiUrl =
+	let endpointUrl =
 		oracleUrl + `/api/BridgingRequestState/GetMultiple?chainId=${chainId}`;
 
 	for (const model of models) {
-		apiUrl += `&txHash=${model.txHash}`;
+		endpointUrl += `&txHash=${model.txHash}`;
 	}
 
+	Logger.debug(`axios.get: ${endpointUrl}`);
 	try {
-		const response = await axios.get(apiUrl, {
+		const response = await axios.get(endpointUrl, {
 			headers: {
 				'X-API-KEY': oracleApiKey,
 			},
 		});
 
+		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 		return response.data as { [key: string]: BridgingRequestState };
 	} catch (e) {
 		if (e instanceof AxiosError) {
-			console.error('Error while getBridgingRequestStates', e.cause);
+			Logger.error(
+				`Error while getBridgingRequestStates: ${e}. response: ${JSON.stringify(e.response?.data)}`,
+				e.stack,
+			);
 		} else {
-			console.error('Error while getBridgingRequestStates', e);
+			Logger.error(`Error while getBridgingRequestStates: ${e}`, e.stack);
 		}
 		return {};
 	}
@@ -110,16 +116,19 @@ export const getHasTxFailedRequestState = async (
 
 	const oracleUrl = process.env.ORACLE_URL || 'http://localhost:40000';
 	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
-	const apiUrl =
+	const endpointUrl =
 		oracleUrl +
 		`/api/OracleState/GetHasTxFailed?chainId=${chainId}&txHash=${model.txHash}&ttl=${ttl.toString(10)}`;
 
+	Logger.debug(`axios.get: ${endpointUrl}`);
 	try {
-		const response = await axios.get(apiUrl, {
+		const response = await axios.get(endpointUrl, {
 			headers: {
 				'X-API-KEY': oracleApiKey,
 			},
 		});
+
+		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
 		const responseData = response.data as HasTxFailedResponse;
 		if (!responseData.failed) {
@@ -132,9 +141,12 @@ export const getHasTxFailedRequestState = async (
 		} as BridgingRequestState;
 	} catch (e) {
 		if (e instanceof AxiosError) {
-			console.error('Error while getHasTxFailedRequestState', e.cause);
+			Logger.error(
+				`Error while getHasTxFailedRequestState: ${e}. response: ${JSON.stringify(e.response?.data)}`,
+				e.stack,
+			);
 		} else {
-			console.error('Error while getHasTxFailedRequestState', e);
+			Logger.error(`Error while getHasTxFailedRequestState: ${e}`, e.stack);
 		}
 	}
 };
@@ -167,7 +179,10 @@ export const getCentralizedBridgingRequestState = async (
 	const statusApiUrl = `${centralizedApiUrl}/api/txStatus/${direction}/${model.txHash}`;
 
 	try {
+		Logger.debug(`axios.get: ${statusApiUrl}`);
 		const statusResponse = await axios.get(statusApiUrl);
+		Logger.debug(`axios.response: ${JSON.stringify(statusResponse.data)}`);
+
 		if (!statusResponse.data?.status) {
 			return;
 		}
@@ -177,7 +192,10 @@ export const getCentralizedBridgingRequestState = async (
 
 		if (!BridgingRequestNotFinalStatesMap[status]) {
 			const apiUrl = `${centralizedApiUrl}/api/bridge/transactions?originChain=${chainId}&sourceTxHash=${model.txHash}`;
+
+			Logger.debug(`axios.get: ${apiUrl}`);
 			const response = await axios.get(apiUrl);
+			Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
 			if (response.data?.BridgeTransactionResponseDto?.items) {
 				const items: any[] = response.data.BridgeTransactionResponseDto.items;
@@ -194,9 +212,12 @@ export const getCentralizedBridgingRequestState = async (
 		} as BridgingRequestState;
 	} catch (e) {
 		if (e instanceof AxiosError) {
-			console.error('Error while getBridgingRequestState', e.cause);
+			Logger.error(
+				`Error while getBridgingRequestState: ${e}. response: ${JSON.stringify(e.response?.data)}`,
+				e.stack,
+			);
 		} else {
-			console.error('Error while getBridgingRequestState', e);
+			Logger.error(`Error while getBridgingRequestState: ${e}`, e.stack);
 		}
 	}
 };

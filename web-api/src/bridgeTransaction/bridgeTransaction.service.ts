@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, SchedulerRegistry } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
@@ -139,11 +139,29 @@ export class BridgeTransactionService {
 						],
 					);
 
+					Object.keys(states).length > 0 &&
+						Logger.debug(
+							`updateStatuses - got bridging request states: ${JSON.stringify(states)}`,
+						);
+					Object.keys(statesCentralized).length > 0 &&
+						Logger.debug(
+							`updateStatuses - got centralized bridging request states: ${JSON.stringify(statesCentralized)}`,
+						);
+					Object.keys(statesTxFailed).length > 0 &&
+						Logger.debug(
+							`updateStatuses - got has tx failed request states: ${JSON.stringify(statesTxFailed)}`,
+						);
+
 					const updatedBridgeTransactions = updateBridgeTransactionStates(
 						entities,
 						{ ...states, ...statesCentralized },
 						statesTxFailed,
 					);
+
+					Object.keys(updatedBridgeTransactions).length > 0 &&
+						Logger.debug(
+							`updateStatuses - updatedBridgeTransactions: ${JSON.stringify(updatedBridgeTransactions)}`,
+						);
 
 					await this.bridgeTransactionRepository.save(
 						updatedBridgeTransactions,
@@ -152,7 +170,8 @@ export class BridgeTransactionService {
 			}
 		} finally {
 			job.start();
-			console.log('Job updateStatusesJob executed');
+
+			Logger.debug('Job updateStatusesJob executed');
 		}
 	}
 }

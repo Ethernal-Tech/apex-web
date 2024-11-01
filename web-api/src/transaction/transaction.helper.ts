@@ -9,7 +9,7 @@ import {
 	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
 import axios, { AxiosError } from 'axios';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import web3, { Web3 } from 'web3';
 import { isAddress } from 'web3-validator';
 import { NewAddress, RewardAddress } from 'src/utils/Address/addreses';
@@ -52,12 +52,15 @@ export const createCardanoBridgingTx = async (
 	const body = prepareCreateCardanoBridgingTx(dto);
 
 	try {
+		Logger.debug(`axios.post: ${endpointUrl}, body: ${JSON.stringify(body)}`);
 		const response = await axios.post(endpointUrl, body, {
 			headers: {
 				'X-API-KEY': apiKey,
 				'Content-Type': 'application/json',
 			},
 		});
+
+		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
 		return {
 			...response.data,
@@ -84,12 +87,15 @@ export const getCardanoBridgingTxFee = async (
 	const body = prepareCreateCardanoBridgingTx(dto);
 
 	try {
+		Logger.debug(`axios.post: ${endpointUrl}, body: ${JSON.stringify(body)}`);
 		const response = await axios.post(endpointUrl, body, {
 			headers: {
 				'X-API-KEY': apiKey,
 				'Content-Type': 'application/json',
 			},
 		});
+
+		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
 		return response.data as CardanoTransactionFeeResponseDto;
 	} catch (error) {
@@ -229,8 +235,8 @@ export const createContext = (chain: ChainEnum) => {
 	}
 
 	return createInteractionContext(
-		(err) => console.error(err),
-		() => console.log('Connection closed.'),
+		(err) => Logger.error(err),
+		() => Logger.debug('Ogmios connection closed.'),
 		{ connection: { host, port } },
 	);
 };
@@ -239,12 +245,16 @@ export async function submitCardanoTransaction(
 	chain: ChainEnum,
 	signedTx: string,
 ) {
+	Logger.debug(`submitting cardano tx using ogmios`);
+
 	const context = await createContext(chain);
 	const client = await createTransactionSubmissionClient(context);
 
 	const txId = await client.submitTransaction(signedTx);
 
 	await client.shutdown();
+
+	Logger.debug(`done submitting cardano tx using ogmios. txId: ${txId}`);
 
 	return txId;
 }
