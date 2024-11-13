@@ -20,7 +20,7 @@ export const winstonLogger = WinstonModule.createLogger({
 	handleExceptions: true,
 	handleRejections: true,
 	exitOnError: false,
-	level: 'debug',
+	level: process.env.LOG_LEVEL,
 	format: winston.format.errors({ stack: true }),
 	transports: [
 		new winston.transports.Console({
@@ -32,3 +32,17 @@ export const winstonLogger = WinstonModule.createLogger({
 		drfTransport,
 	],
 });
+
+/*
+LOG LEVELS:
+{
+  emerg: 0,
+  alert: 1,
+  crit: 2,
+  error: 3,
+  warning: 4,
+  notice: 5,
+  info: 6,
+  debug: 7
+}
+*/
