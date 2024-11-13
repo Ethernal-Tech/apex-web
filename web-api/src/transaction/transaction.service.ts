@@ -25,6 +25,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { mapBridgeTransactionToResponse } from 'src/bridgeTransaction/bridgeTransaction.helper';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
+import { SettingsService } from 'src/settings/settings.service';
 import { Semaphore } from 'src/utils/semaphore';
 import { retry } from 'src/utils/generalUtils';
 
@@ -47,6 +48,7 @@ export class TransactionService {
 	constructor(
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
+		private readonly settingsService: SettingsService,
 	) {}
 
 	private async validateCreateCardanoTx(dto: CreateTransactionDto) {
@@ -143,7 +145,10 @@ export class TransactionService {
 			throw new BadRequestException('Invalid destination chain');
 		}
 
-		const tx = await createEthBridgingTx(dto);
+		const tx = await createEthBridgingTx(
+			dto,
+			this.settingsService.BridgingSettings,
+		);
 
 		if (!tx) {
 			throw new BadRequestException('error while creating bridging tx');

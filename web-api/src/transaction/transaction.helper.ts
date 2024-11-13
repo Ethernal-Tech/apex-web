@@ -15,6 +15,8 @@ import { isAddress } from 'web3-validator';
 import { NewAddress, RewardAddress } from 'src/utils/Address/addreses';
 import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
 import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
+import { SettingsResponseDto } from 'src/settings/settings.dto';
+import { convertDfmToWei } from 'src/utils/generalUtils';
 
 const prepareCreateCardanoBridgingTx = (dto: CreateTransactionDto) => {
 	// centralized bridge currently doesn't support prime->vector, vector->prime
@@ -111,12 +113,15 @@ export const getCardanoBridgingTxFee = async (
 
 export const createEthBridgingTx = async (
 	dto: CreateTransactionDto,
+	bridgingSettings: SettingsResponseDto,
 ): Promise<CreateEthTransactionResponseDto> => {
 	if (!isAddress(dto.senderAddress)) {
 		throw new BadRequestException('Invalid sender address');
 	}
 
-	const minValue = BigInt(process.env.NEXUS_MIN_VALUE || '1000000000000000000');
+	const minValue = BigInt(
+		convertDfmToWei(bridgingSettings.minUtxoValue) || '1000000000000000000',
+	);
 	const amount = BigInt(dto.amount);
 
 	if (amount < minValue) {
@@ -143,13 +148,24 @@ export const createEthBridgingTx = async (
 	}
 
 	const minBridgingFee = BigInt(
-		process.env.NEXUS_MIN_BRIDGING_FEE || '1000010000000000000',
+		convertDfmToWei(bridgingSettings.minFeeForBridging) ||
+			'1000010000000000000',
 	);
 
 	let bridgingFee = BigInt(dto.bridgingFee || '0');
 	bridgingFee = bridgingFee < minBridgingFee ? minBridgingFee : bridgingFee;
 
 	const value = BigInt(dto.amount) + bridgingFee;
+
+	const maxAllowedToBridge = BigInt(
+		convertDfmToWei(bridgingSettings.maxAmountAllowedToBridge) || '0',
+	);
+
+	if (maxAllowedToBridge !== BigInt(0) && maxAllowedToBridge < value) {
+		throw new BadRequestException(
+			`Amount+Fee: ${value} more than max allowed: ${maxAllowedToBridge}`,
+		);
+	}
 
 	const isCentralized = process.env.USE_CENTRALIZED_BRIDGE === 'true';
 

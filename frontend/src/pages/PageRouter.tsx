@@ -10,6 +10,7 @@ import NewTransactionPage from './Transactions/NewTransactionPage';
 import withMiddleware from '../middleware/withMiddleware';
 import { onLoad } from '../actions/login';
 import { fetchAndUpdateBalanceAction } from '../actions/balance';
+import { fetchAndUpdateSettingsAction } from '../actions/settings';
 
 export const HOME_ROUTE = '/';
 export const TRANSACTIONS_ROUTE = '/transactions';
@@ -31,6 +32,11 @@ const PageRouter: React.FC = () => {
 		if (isLoggedInMemo) {
 			onLoad(wallet, chain, dispatch);
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
+
+	useEffect(() => {
+		fetchAndUpdateSettingsAction(dispatch)
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 

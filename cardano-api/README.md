@@ -28,6 +28,8 @@ $ go run ./main.go generate-configs \
         --vector-ttl-slot-inc <ttl slot increment for vector> \
         --logs-path "<path to where logs will be stored>" \
         --utxo-cache-timeout <how long should utxos be locked> \
+        --oracle-api-url <URL of Oracle API> \
+        --oracle-api-key <API Key of Oracle API> \
         --api-port <port at which API should run> \
         --api-keys "<api key 1>" \
         --api-keys "<api key 2>"
@@ -44,6 +46,8 @@ $ go run ./main.go generate-configs \
         --vector-bridging-address "addr_example" \
         --vector-bridging-fee-address "addr_example" \
         --vector-blockfrost-url "https://cardano-preview.blockfrost.io/api/v0" \
+        --oracle-api-url "http://bridge-api-testnet.apexfusion.org:10003" \
+        --oracle-api-key "test-api-key-001" \
         --api-keys "test_api_key_1"
 ```
 
@@ -66,6 +70,8 @@ $ go run main.go generate-configs\
 		--vector-ogmios-url "http://ogmios.vector.testnet.apexfusion.org:1337"\
 		--logs-path "./logs"\
 		--utxo-cache-timeout 1m30s\
+                --oracle-api-url "http://bridge-api-testnet.apexfusion.org:10003" \
+                --oracle-api-key "test-api-key-001" \
 		--api-port 41000\
 		--api-keys "cardano_api_key_1"\
 		--api-keys "cardano_api_key_2"

@@ -3,9 +3,15 @@ package common
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"math/big"
+	"net"
+	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,8 +24,35 @@ const (
 	EthZeroAddr = "0x0000000000000000000000000000000000000000"
 )
 
-func IsValidURL(input string) bool {
-	_, err := url.ParseRequestURI(input)
+func IsValidHTTPURL(input string) bool {
+	u, err := url.Parse(input)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return false
+	}
+
+	return IsValidNetworkAddress(u.Host)
+}
+
+func IsValidNetworkAddress(input string) bool {
+	host, port, err := net.SplitHostPort(input)
+	if err != nil {
+		// If there's an error, it might be because the port is not included, so treat the input as the host
+		if !strings.Contains(err.Error(), "missing port in address") {
+			return false
+		}
+
+		host = input
+	} else if portVal, err := strconv.ParseInt(port, 10, 32); err != nil || portVal < 0 {
+		return false
+	}
+
+	// Check if host is a valid IP address
+	if net.ParseIP(host) != nil {
+		return true
+	}
+
+	// Check if the host is a valid domain name by trying to resolve it
+	_, err = net.LookupHost(host)
 
 	return err == nil
 }
@@ -106,4 +139,34 @@ func SafeSubtract(a, b, def uint64) uint64 {
 
 func MustHashToBytes32(hash string) (res [32]byte) {
 	return indexer.NewHashFromHexString(hash)
+}
+
+func HTTPGet[T any](ctx context.Context, requestURL string, apiKey string) (t T, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
+	if err != nil {
+		return t, err
+	}
+
+	req.Header.Set("X-API-KEY", apiKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return t, err
+	} else if resp.StatusCode != http.StatusOK {
+		return t, fmt.Errorf("http status for %s code is %d", requestURL, resp.StatusCode)
+	}
+
+	resBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return t, err
+	}
+
+	var responseModel T
+
+	err = json.Unmarshal(resBody, &responseModel)
+	if err != nil {
+		return t, err
+	}
+
+	return responseModel, nil
 }

@@ -45,9 +45,17 @@ func runCommand(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	config.FillOut()
-
 	logger, err := loggerInfra.NewLogger(config.Settings.Logger)
+	if err != nil {
+		outputter.SetError(err)
+
+		return
+	}
+
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
+
+	err = config.FillOut(ctx, logger)
 	if err != nil {
 		outputter.SetError(err)
 
@@ -60,9 +68,6 @@ func runCommand(cmd *cobra.Command, _ []string) {
 			outputter.SetError(fmt.Errorf("%v", r))
 		}
 	}()
-
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	defer cancelCtx()
 
 	apiControllers := []core.APIController{
 		controllers.NewCardanoTxController(

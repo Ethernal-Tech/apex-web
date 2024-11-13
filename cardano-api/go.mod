@@ -5,26 +5,26 @@ go 1.22
 toolchain go1.22.7
 
 require (
-	github.com/blinklabs-io/gouroboros v0.103.0 // indirect
+	github.com/blinklabs-io/gouroboros v0.103.6 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/jinzhu/copier v0.4.0 // indirect
-	github.com/utxorpc/go-codegen v0.11.0 // indirect
+	github.com/utxorpc/go-codegen v0.12.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
-	golang.org/x/crypto v0.28.0 // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
+	golang.org/x/crypto v0.29.0 // indirect
+	google.golang.org/protobuf v1.35.2 // indirect
 )
 
 require (
-	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20241028094359-f52184b2474c
+	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20241107104837-4bec009ec640
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/spf13/cobra v1.8.1
-	golang.org/x/sys v0.26.0 // indirect
+	golang.org/x/sys v0.27.0 // indirect
 )
 
 require (

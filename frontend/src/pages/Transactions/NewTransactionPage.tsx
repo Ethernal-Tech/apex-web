@@ -4,7 +4,7 @@ import AddressBalance from "./components/AddressBalance";
 import TotalBalance from "./components/TotalBalance";
 import TransferProgress from "./components/TransferProgress";
 import BridgeInput from "./components/BridgeInput";
-import { chainIcons, validateSubmitTxInputs } from "../../utils/generalUtils";
+import { chainIcons, convertDfmToWei, validateSubmitTxInputs } from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useCallback, useState } from "react";
@@ -12,7 +12,6 @@ import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
 import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
-import appSettings from "../../settings/appSettings";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 
@@ -24,17 +23,17 @@ function NewTransactionPage() {
 	const chain = useSelector((state: RootState)=> state.chain.chain);
 	const destinationChain = useSelector((state: RootState)=> state.chain.destinationChain);
 	const account = useSelector((state: RootState) => state.accountInfo.account);
-
+	const settings = useSelector((state: RootState) => state.settings);
 
 	// conditionally implementing bridgeTxFee depending on selected network
 	const bridgeTxFee = chain === ChainEnum.Nexus ? 
-		appSettings.nexusBridgingFee : appSettings.primeVectorBridgingFee;
+		convertDfmToWei(settings.minBridgingFee) : settings.minBridgingFee;
 
 	const SourceIcon = chainIcons[chain];
 	const DestinationIcon = chainIcons[destinationChain];
 
 	const prepareCreateCardanoTx = useCallback((address: string, amount: string): CreateTransactionDto => {
-		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount);
+		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
 		if (validationErr) {
 			throw new Error(validationErr);
 		}
@@ -47,7 +46,7 @@ function NewTransactionPage() {
 			destinationAddress: address,
 			amount,
 		})
-	}, [account, bridgeTxFee, chain, destinationChain])
+	}, [account, bridgeTxFee, chain, destinationChain, settings])
 
 	const getCardanoTxFee = useCallback(async (address: string, amount: string): Promise<CardanoTransactionFeeResponseDto> => {
 		const createTxDto = prepareCreateCardanoTx(address, amount);
@@ -72,7 +71,7 @@ function NewTransactionPage() {
 	}, [prepareCreateCardanoTx])
 
 	const prepareCreateEthTx = useCallback((address: string, amount: string): CreateTransactionDto => {
-		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount);
+		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
 		if (validationErr) {
 			throw new Error(validationErr);
 		}
@@ -85,7 +84,7 @@ function NewTransactionPage() {
 			destinationAddress: address,
 			amount,
 		})
-	}, [account, bridgeTxFee, chain, destinationChain])
+	}, [account, bridgeTxFee, chain, destinationChain, settings])
 
 	const getEthTxFee = useCallback(async (address: string, amount: string): Promise<CreateEthTransactionResponseDto> => {
 		const createTxDto = prepareCreateEthTx(address, amount);

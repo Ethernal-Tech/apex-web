@@ -5,7 +5,7 @@ import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { convertApexToDfm } from '../../../utils/generalUtils';
+import { convertApexToDfm, convertDfmToWei } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
@@ -28,6 +28,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
 
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
   const {chain} = useSelector((state: RootState)=> state.chain);
+  const minUtxoValueDfm = useSelector((state: RootState) => state.settings.minUtxoValue);
 
   const fetchWalletFee = useCallback(async () => {
     if (!destinationAddr || !amount) {
@@ -81,7 +82,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
 
     // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
   const minDfmValue = chain === ChainEnum.Nexus ? 
-    appSettings.minEvmValue : appSettings.minUtxoValue;
+    convertDfmToWei(minUtxoValueDfm) : minUtxoValueDfm;
     
     const maxAmountDfm:string = totalDfmBalance
         ? ( chain === ChainEnum.Prime || chain === ChainEnum.Vector

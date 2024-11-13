@@ -40,6 +40,9 @@ const (
 	logsPathFlag         = "logs-path"
 	utxoCacheTimeoutFlag = "utxo-cache-timeout"
 
+	oracleAPIURLFlag = "oracle-api-url"
+	oracleAPIKeyFlag = "oracle-api-key"
+
 	apiPortFlag = "api-port"
 	apiKeysFlag = "api-keys"
 
@@ -70,6 +73,9 @@ const (
 
 	logsPathFlagDesc        = "path to where logs will be stored"
 	utxoCacheTimeoutFlagDec = "for how long should a UTXO be reserved in the cache"
+
+	oracleAPIURLFlagDesc = "(mandatory) URL of Oracle API"
+	oracleAPIKeyFlagDesc = "(mandatory) API Key of Oracle API" //nolint:gosec
 
 	apiPortFlagDesc = "port at which API should run"
 	apiKeysFlagDesc = "(mandatory) list of keys for API access"
@@ -114,6 +120,9 @@ type generateConfigsParams struct {
 
 	logsPath         string
 	utxoCacheTimeout time.Duration
+
+	oracleAPIURL string
+	oracleAPIKey string
 
 	apiPort uint32
 	apiKeys []string
@@ -166,11 +175,11 @@ func (p *generateConfigsParams) validateFlags() error {
 			primeBlockfrostURLFlag, primeSocketPathFlag, primeOgmiosURLFlag)
 	}
 
-	if p.primeBlockfrostURL != "" && !common.IsValidURL(p.primeBlockfrostURL) {
+	if p.primeBlockfrostURL != "" && !common.IsValidHTTPURL(p.primeBlockfrostURL) {
 		return fmt.Errorf("invalid prime blockfrost url: %s", p.primeBlockfrostURL)
 	}
 
-	if p.primeOgmiosURL != "" && !common.IsValidURL(p.primeOgmiosURL) {
+	if p.primeOgmiosURL != "" && !common.IsValidHTTPURL(p.primeOgmiosURL) {
 		return fmt.Errorf("invalid prime ogmios url: %s", p.primeOgmiosURL)
 	}
 
@@ -195,17 +204,25 @@ func (p *generateConfigsParams) validateFlags() error {
 		return err
 	}
 
-	if p.vectorBlockfrostURL != "" && !common.IsValidURL(p.vectorBlockfrostURL) {
+	if p.vectorBlockfrostURL != "" && !common.IsValidHTTPURL(p.vectorBlockfrostURL) {
 		return fmt.Errorf("invalid vector blockfrost url: %s", p.vectorBlockfrostURL)
 	}
 
-	if p.vectorOgmiosURL != "" && !common.IsValidURL(p.vectorOgmiosURL) {
+	if p.vectorOgmiosURL != "" && !common.IsValidHTTPURL(p.vectorOgmiosURL) {
 		return fmt.Errorf("invalid vector ogmios url: %s", p.vectorOgmiosURL)
 	}
 
 	if p.vectorBlockfrostURL == "" && p.vectorSocketPath == "" && p.vectorOgmiosURL == "" {
 		return fmt.Errorf("specify at least one of: %s, %s, %s",
 			vectorBlockfrostURLFlag, vectorSocketPathFlag, vectorOgmiosURLFlag)
+	}
+
+	if !common.IsValidHTTPURL(p.oracleAPIURL) {
+		return fmt.Errorf("invalid oracle API url: %s", p.oracleAPIURL)
+	}
+
+	if p.oracleAPIKey == "" {
+		return fmt.Errorf("missing %s", oracleAPIKeyFlag)
 	}
 
 	if len(p.apiKeys) == 0 {
@@ -352,6 +369,19 @@ func (p *generateConfigsParams) setFlags(cmd *cobra.Command) {
 		utxoCacheTimeoutFlagDec,
 	)
 
+	cmd.Flags().StringVar(
+		&p.oracleAPIURL,
+		oracleAPIURLFlag,
+		"",
+		oracleAPIURLFlagDesc,
+	)
+	cmd.Flags().StringVar(
+		&p.oracleAPIKey,
+		oracleAPIKeyFlag,
+		"",
+		oracleAPIKeyFlagDesc,
+	)
+
 	cmd.Flags().Uint32Var(
 		&p.apiPort,
 		apiPortFlag,
@@ -423,12 +453,11 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 		EthChains: map[string]*core.EthChainConfig{
 			common.ChainIDStrNexus: {},
 		},
-		BridgingSettings: core.BridgingSettings{
-			MinFeeForBridging:              1000010,
-			UtxoMinValue:                   1000000,
-			MaxReceiversPerBridgingRequest: 4, // 4 + 1 for fee
-		},
 		UtxoCacheTimeout: p.utxoCacheTimeout,
+		OracleAPI: core.OracleAPISettings{
+			URL:    p.oracleAPIURL,
+			APIKey: p.oracleAPIKey,
+		},
 		Settings: core.AppSettings{
 			Logger: logger.LoggerConfig{
 				LogFilePath:   path.Join(p.logsPath, "cardano-api.log"),

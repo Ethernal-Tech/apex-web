@@ -52,8 +52,6 @@ func (c *CardanoTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 }
 
 func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Request) {
-	c.logger.Debug("getBalance called", "url", r.URL)
-
 	queryValues := r.URL.Query()
 	c.logger.Debug("getBalance request", "query values", queryValues, "url", r.URL)
 
@@ -119,14 +117,10 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 		balance.Add(balance, new(big.Int).SetUint64(utxo.Amount))
 	}
 
-	c.logger.Debug("getBalance success", "url", r.URL)
-
 	utils.WriteResponse(w, r, http.StatusOK, response.NewBalanceResponse(balance), c.logger)
 }
 
 func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
-	c.logger.Debug("getBridgingTxFee called", "url", r.URL)
-
 	requestBody, ok := utils.DecodeModel[request.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
@@ -163,14 +157,10 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	c.logger.Debug("getBridgingTxFee success", "url", r.URL)
-
 	utils.WriteResponse(w, r, http.StatusOK, response.NewBridgingTxFeeResponse(fee), c.logger)
 }
 
 func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
-	c.logger.Debug("createBridgingTx called", "url", r.URL)
-
 	requestBody, ok := utils.DecodeModel[request.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
@@ -209,16 +199,12 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	c.usedUtxoCacher.Add(requestBody.SenderAddr, txInputs) // cache chosen txInputs
 
-	c.logger.Debug("createBridgingTx success", "url", r.URL)
-
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		response.NewFullBridgingTxResponse(txRawBytes, txHash, requestBody.BridgingFee), c.logger)
 }
 
 func (c *CardanoTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.Request) {
-	c.logger.Debug("signBridgingTx called", "url", r.URL)
-
 	requestBody, ok := utils.DecodeModel[request.SignBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
@@ -240,8 +226,6 @@ func (c *CardanoTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.
 
 		return
 	}
-
-	c.logger.Debug("signBridgingTx success", "url", r.URL)
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
@@ -266,6 +250,7 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			len(requestBody.Transactions), c.appConfig.BridgingSettings.MaxReceiversPerBridgingRequest, requestBody)
 	}
 
+	receiverAmountSum := big.NewInt(0)
 	feeSum := uint64(0)
 	foundAUtxoValueBelowMinimumValue := false
 	foundAnInvalidReceiverAddr := false
@@ -291,6 +276,7 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 				feeSum += receiver.Amount
 			} else {
 				transactions = append(transactions, receiver)
+				receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(receiver.Amount))
 			}
 		} else if ethDestConfig != nil {
 			if !goEthCommon.IsHexAddress(receiver.Addr) {
@@ -303,6 +289,7 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 				feeSum += receiver.Amount
 			} else {
 				transactions = append(transactions, receiver)
+				receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(receiver.Amount))
 			}
 		}
 	}
@@ -315,16 +302,25 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		return fmt.Errorf("found an invalid receiver addr in request body: %v", requestBody)
 	}
 
-	if requestBody.BridgingFee < c.appConfig.BridgingSettings.MinFeeForBridging {
-		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
-	}
-
 	requestBody.BridgingFee += feeSum
 	requestBody.Transactions = transactions
 
 	// this is just convinient way to setup default min fee
 	if requestBody.BridgingFee == 0 {
 		requestBody.BridgingFee = c.appConfig.BridgingSettings.MinFeeForBridging
+	}
+
+	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))
+
+	if requestBody.BridgingFee < c.appConfig.BridgingSettings.MinFeeForBridging {
+		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
+	}
+
+	if c.appConfig.BridgingSettings.MaxAmountAllowedToBridge != nil &&
+		c.appConfig.BridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 &&
+		receiverAmountSum.Cmp(c.appConfig.BridgingSettings.MaxAmountAllowedToBridge) == 1 {
+		return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
+			c.appConfig.BridgingSettings.MaxAmountAllowedToBridge, requestBody)
 	}
 
 	return nil

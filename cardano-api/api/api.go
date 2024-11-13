@@ -51,6 +51,8 @@ func NewAPI(
 				endpointHandler = withAPIKeyAuth(apiConfig, endpointHandler, logger)
 			}
 
+			endpointHandler = endpointWrapper(endpoint.Path, endpointHandler, logger)
+
 			router.HandleFunc(endpointPath, endpointHandler).Methods(endpoint.Method)
 
 			logger.Debug("Registered api endpoint", "endpoint", endpointPath, "method", endpoint.Method)
@@ -121,6 +123,14 @@ func (api *APIImpl) Dispose() error {
 	api.logger.Debug("Finished disposing")
 
 	return errors.Join(apiErrors...)
+}
+
+func endpointWrapper(path string, handler core.APIEndpointHandler, logger hclog.Logger) core.APIEndpointHandler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger.Debug("endpoint called", "path", path, "url", r.URL)
+		handler(w, r)
+		logger.Debug("endpoint call finished", "path", path, "url", r.URL)
+	}
 }
 
 func withAPIKeyAuth(

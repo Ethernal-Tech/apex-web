@@ -4,6 +4,7 @@ import walletSlice from './slices/walletSlice'
 import chainSlice from './slices/chainSlice'
 import loginSlice from './slices/loginSlice'
 import accountInfoSlice from './slices/accountInfoSlice'
+import settingsSlice from './slices/settingsSlice'
 
 export const store = configureStore({
 	reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
 		accountInfo: accountInfoSlice,
 		chain: chainSlice,
 		login: loginSlice,
+		settings: settingsSlice,
 	},
 	middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
 })

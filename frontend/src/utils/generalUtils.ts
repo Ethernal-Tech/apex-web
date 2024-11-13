@@ -1,5 +1,4 @@
 import { NewAddress, RewardAddress } from "../features/Address/addreses";
-import appSettings from "../settings/appSettings";
 import { BridgeTransactionDto, ChainEnum } from "../swagger/apexBridgeApiService";
 import { areChainsEqual } from "./chainUtils";
 import Web3 from "web3";
@@ -12,6 +11,7 @@ import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
 import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { FunctionComponent, SVGProps } from "react";
 import { isAddress } from "web3-validator";
+import { ISettingsState } from "../redux/slices/settingsSlice";
 
 export const capitalizeWord = (word: string): string => {
     if (!word || word.length === 0) {
@@ -79,13 +79,42 @@ const convertApexToEvmDfm = (apex: string|number):string => {
   return toWei(apex,'ether');
 }
 
+export const convertWeiToDfm = (wei: string | number): string => {
+	return fromWei(wei, 12);
+};
+
+export const convertDfmToWei = (dfm: string | number): string => {
+	return toWei(dfm, 12);
+};
+
 export const validateSubmitTxInputs = (
-  sourceChain: ChainEnum, destinationChain: ChainEnum, destinationAddr: string, amount: string,
+  settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
+  destinationAddr: string, amount: string, bridgeTxFee: string,
 ): string | undefined => {
-  if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector) && BigInt(amount) < BigInt(appSettings.minUtxoValue)) {
-    return `Amount less than minimum: ${convertUtxoDfmToApex(appSettings.minUtxoValue)} APEX`;
-  } else if(sourceChain === ChainEnum.Nexus && BigInt(amount) < BigInt(appSettings.minEvmValue)){
-    return `Amount less than minimum: ${convertEvmDfmToApex(appSettings.minEvmValue)} APEX`;
+  if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector)) {
+    if (BigInt(amount) < BigInt(settings.minUtxoValue)) {
+      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minUtxoValue)} APEX`;
+    }
+
+    const maxAllowedToBridgeDfm = BigInt(settings.maxAllowedToBridge)
+
+    if (maxAllowedToBridgeDfm > 0 &&
+        BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeDfm) {
+      const maxAllowed = maxAllowedToBridgeDfm - BigInt(bridgeTxFee);
+      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} APEX`;
+    } 
+  } else if(sourceChain === ChainEnum.Nexus){
+    if (BigInt(amount) < BigInt(convertDfmToWei(settings.minUtxoValue))) {
+      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minUtxoValue)} APEX`;
+    }
+
+    const maxAllowedToBridgeWei = BigInt(convertDfmToWei(settings.maxAllowedToBridge));
+
+    if (maxAllowedToBridgeWei > 0 &&
+        BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeWei) {
+      const maxAllowed = maxAllowedToBridgeWei - BigInt(bridgeTxFee);
+      return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowed.toString(10))} APEX`;
+    } 
   }
 
   if (destinationChain === ChainEnum.Prime || destinationChain === ChainEnum.Vector) {
@@ -176,3 +205,43 @@ export const toFixedFloor = (n: number | string, decimals: number) => {
   const exp = Math.pow(10, decimals)
   return (Math.floor(+n * exp) / exp).toFixed(decimals);
 }
+
+export const wait = async (durationMs: number) =>
+	new Promise((res) => setTimeout(res, durationMs));
+
+export const retryForever = async (
+	callback: () => Promise<void> | void,
+	retryDelayMs: number = 1000,
+) => {
+	while (true) {
+		try {
+			await callback();
+
+			return;
+		} catch (e) {
+			console.log('Error while retryForever', e);
+
+			await wait(retryDelayMs);
+		}
+	}
+};
+
+export const retry = async (
+	callback: () => Promise<void> | void,
+	tryCount: number,
+	retryDelayMs: number = 1000,
+) => {
+	for (let i = 0; i < tryCount; ++i) {
+		try {
+			await callback();
+
+			return;
+		} catch (e) {
+			console.log('Error while retry', e);
+
+			await wait(retryDelayMs);
+		}
+	}
+
+	throw new Error(`failed to execute callback. tryCount: ${tryCount}`);
+};
