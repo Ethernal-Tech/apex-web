@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+	BadRequestException,
+	Injectable,
+	InternalServerErrorException,
+} from '@nestjs/common';
 
 import {
 	createCardanoBridgingTx,
@@ -21,6 +25,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { mapBridgeTransactionToResponse } from 'src/bridgeTransaction/bridgeTransaction.helper';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
+import { Semaphore } from 'src/utils/semaphore';
+import { retry } from 'src/utils/generalUtils';
+
+const submitCardanoSemaphore = new Semaphore(10, '<submitCardanoSemaphore> - ');
 
 @Injectable()
 export class TransactionService {
@@ -84,13 +92,32 @@ export class TransactionService {
 	async submitCardano(
 		dto: SubmitCardanoTransactionDto,
 	): Promise<SubmitCardanoTransactionResponseDto> {
-		const txHash = await submitCardanoTransaction(
-			dto.originChain,
-			dto.signedTxRaw,
-		);
+		let txHash: string;
+		try {
+			await retry(
+				async () => {
+					await submitCardanoSemaphore.acquire();
+					try {
+						txHash = await submitCardanoTransaction(
+							dto.originChain,
+							dto.signedTxRaw,
+						);
+					} catch (e) {
+						throw e;
+					} finally {
+						submitCardanoSemaphore.release();
+					}
+				},
+				5,
+				5000,
+			);
+		} catch (e) {
+			throw new InternalServerErrorException(e);
+		}
+
 		const bridgeTx = await this.transactionSubmitted(dto);
 
-		return { txHash, bridgeTx };
+		return { txHash: txHash!, bridgeTx };
 	}
 
 	async createEth(
