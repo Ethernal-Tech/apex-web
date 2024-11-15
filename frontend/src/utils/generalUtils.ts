@@ -172,9 +172,9 @@ export const convertApexToDfm = (apex:string|number, network:ChainEnum) =>{
 
 export const toBytes = (hex: string): Uint8Array => {
     if (hex.length % 2 === 0 && /^[0-9A-F]*$/i.test(hex))
-        return Buffer.from(hex, 'hex');
+        return Buffer.from(hex, 'hex') as unknown as Uint8Array;
 
-    return Buffer.from(hex, 'utf-8');
+    return Buffer.from(hex, 'utf-8') as unknown as Uint8Array;
 };
 
 // used to parse date returned from fallback database
