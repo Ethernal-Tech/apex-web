@@ -101,11 +101,11 @@ export class TransactionService {
 	): Promise<SubmitCardanoTransactionResponseDto> {
 		let txHash: string;
 		try {
-			await retry(
+			txHash = await retry(
 				async () => {
 					await submitCardanoSemaphore.acquire();
 					try {
-						txHash = await submitCardanoTransaction(
+						return await submitCardanoTransaction(
 							dto.originChain,
 							dto.signedTxRaw,
 						);
@@ -124,7 +124,7 @@ export class TransactionService {
 
 		const bridgeTx = await this.transactionSubmitted(dto);
 
-		return { txHash: txHash!, bridgeTx };
+		return { txHash, bridgeTx };
 	}
 
 	async createEth(
