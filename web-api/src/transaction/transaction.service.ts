@@ -28,7 +28,14 @@ import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dt
 import { Semaphore } from 'src/utils/semaphore';
 import { retry } from 'src/utils/generalUtils';
 
-const submitCardanoSemaphore = new Semaphore(10, '<submitCardanoSemaphore> - ');
+const SEMAPHORE_MAX = 6;
+const SUBMIT_CARDANO_TX_TRY_COUNT = 5;
+const SUBMIT_CARDANO_TX_RETRY_WAIT_TIME = 5000;
+
+const submitCardanoSemaphore = new Semaphore(
+	SEMAPHORE_MAX,
+	'<submitCardanoSemaphore> - ',
+);
 
 @Injectable()
 export class TransactionService {
@@ -108,8 +115,8 @@ export class TransactionService {
 						submitCardanoSemaphore.release();
 					}
 				},
-				5,
-				5000,
+				SUBMIT_CARDANO_TX_TRY_COUNT,
+				SUBMIT_CARDANO_TX_RETRY_WAIT_TIME,
 			);
 		} catch (e) {
 			throw new InternalServerErrorException(e);

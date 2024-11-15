@@ -14,35 +14,38 @@ export class Semaphore {
 		this.loggerPrefix = loggerPrefix;
 	}
 
+	stateStr = () =>
+		`[m|c|ql]=[${this.max}|${this.current}|${this.queue.length}]`;
+
 	acquire(): Promise<void> {
 		return new Promise((resolve) => {
-			Logger.debug(
-				`${this.loggerPrefix}acquiring - [c|m|ql]=[${this.current}|${this.max}|${this.queue.length}]`,
-			);
+			const prevState = this.stateStr();
+
 			if (this.current < this.max) {
 				++this.current;
 				resolve();
 			} else {
 				this.queue.push(resolve);
 			}
+
 			Logger.debug(
-				`${this.loggerPrefix}acquired - [c|m|ql]=[${this.current}|${this.max}|${this.queue.length}]`,
+				`${this.loggerPrefix}acquired - ${prevState} => ${this.stateStr()}`,
 			);
 		});
 	}
 
 	release(): void {
-		Logger.debug(
-			`${this.loggerPrefix}releasing - [c|m|ql]=[${this.current}|${this.max}|${this.queue.length}]`,
-		);
+		const prevState = this.stateStr();
+
 		if (this.queue.length > 0) {
 			const next = this.queue.shift();
 			next && next();
 		} else {
 			this.current = Math.max(this.current - 1, 0);
 		}
+
 		Logger.debug(
-			`${this.loggerPrefix}released - [c|m|ql]=[${this.current}|${this.max}|${this.queue.length}]`,
+			`${this.loggerPrefix}released - ${prevState} => ${this.stateStr()}`,
 		);
 	}
 }
