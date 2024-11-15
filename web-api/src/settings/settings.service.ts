@@ -4,6 +4,8 @@ import { retryForever } from 'src/utils/generalUtils';
 import { SettingsResponseDto } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 
+const RETRY_DELAY_MS = 5000;
+
 @Injectable()
 export class SettingsService {
 	BridgingSettings: SettingsResponseDto;
@@ -20,9 +22,10 @@ export class SettingsService {
 
 		const endpointUrl = apiUrl + `/api/Settings/Get`;
 
-		await retryForever(async () => {
-			this.BridgingSettings = await this.fetchOnce(endpointUrl, apiKey);
-		}, 5000);
+		this.BridgingSettings = await retryForever(
+			() => this.fetchOnce(endpointUrl, apiKey),
+			RETRY_DELAY_MS,
+		);
 	}
 
 	private async fetchOnce(

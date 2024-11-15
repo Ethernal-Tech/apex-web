@@ -206,18 +206,18 @@ export const toFixedFloor = (n: number | string, decimals: number) => {
   return (Math.floor(+n * exp) / exp).toFixed(decimals);
 }
 
+const DEFAULT_RETRY_DELAY_MS = 1000;
+
 export const wait = async (durationMs: number) =>
 	new Promise((res) => setTimeout(res, durationMs));
 
-export const retryForever = async (
-	callback: () => Promise<void> | void,
-	retryDelayMs: number = 1000,
-) => {
+export const retryForever = async <T>(
+	callback: () => Promise<T> | T,
+	retryDelayMs: number = DEFAULT_RETRY_DELAY_MS,
+): Promise<T> => {
 	while (true) {
 		try {
-			await callback();
-
-			return;
+			return await callback();
 		} catch (e) {
 			console.log('Error while retryForever', e);
 
@@ -226,16 +226,14 @@ export const retryForever = async (
 	}
 };
 
-export const retry = async (
-	callback: () => Promise<void> | void,
+export const retry = async <T>(
+	callback: () => Promise<T> | T,
 	tryCount: number,
-	retryDelayMs: number = 1000,
-) => {
+	retryDelayMs: number = DEFAULT_RETRY_DELAY_MS,
+): Promise<T> => {
 	for (let i = 0; i < tryCount; ++i) {
 		try {
-			await callback();
-
-			return;
+			return await callback();
 		} catch (e) {
 			console.log('Error while retry', e);
 
