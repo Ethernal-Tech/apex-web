@@ -17,80 +17,112 @@ export const TRANSACTIONS_ROUTE = '/transactions';
 export const NEW_TRANSACTION_ROUTE = '/new-transaction';
 export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
 
-const PageRouter: React.FC = () => {
+const BALANCE_FETCH_INTERVAL_MS = 30000;
 
+const PageRouter: React.FC = () => {
 	const wallet = useSelector((state: RootState) => state.wallet.wallet);
 	const chain = useSelector((state: RootState) => state.chain.chain);
 	const dispatch = useDispatch();
-  const account = useSelector((state: RootState) => state.accountInfo.account);
+	const account = useSelector(
+		(state: RootState) => state.accountInfo.account,
+	);
 	const isFullyLoggedIn = !!wallet && !!account;
-  const balanceIntervalHandle = useRef<NodeJS.Timer>();
-	
+	const balanceIntervalHandle = useRef<NodeJS.Timer>();
+
 	const isLoggedInMemo = !!wallet;
 
 	useEffect(() => {
 		if (isLoggedInMemo) {
 			onLoad(wallet, chain, dispatch);
 		}
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	useEffect(() => {
-		fetchAndUpdateSettingsAction(dispatch)
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+		fetchAndUpdateSettingsAction(dispatch);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
-  useEffect(() => {
-    if (balanceIntervalHandle.current) {
-      clearInterval(balanceIntervalHandle.current)
-      balanceIntervalHandle.current = undefined
-    }
+	useEffect(() => {
+		if (balanceIntervalHandle.current) {
+			clearInterval(balanceIntervalHandle.current);
+			balanceIntervalHandle.current = undefined;
+		}
 
-    if (!isFullyLoggedIn) {
-      return
-    }
+		if (!isFullyLoggedIn) {
+			return;
+		}
 
-    fetchAndUpdateBalanceAction(dispatch)
+		fetchAndUpdateBalanceAction(dispatch);
 
-    balanceIntervalHandle.current = setInterval(async () => {
-      await fetchAndUpdateBalanceAction(dispatch)
-    }, 30000)
+		balanceIntervalHandle.current = setInterval(async () => {
+			await fetchAndUpdateBalanceAction(dispatch);
+		}, BALANCE_FETCH_INTERVAL_MS);
 
-    return () => {
-      if (balanceIntervalHandle.current) {
-        clearInterval(balanceIntervalHandle.current)
-        balanceIntervalHandle.current = undefined
-      }
-    }
-  }, [dispatch, isFullyLoggedIn])
+		return () => {
+			if (balanceIntervalHandle.current) {
+				clearInterval(balanceIntervalHandle.current);
+				balanceIntervalHandle.current = undefined;
+			}
+		};
+	}, [dispatch, isFullyLoggedIn]);
 
+	const renderHomePage = <HomePage />;
 
-  const renderHomePage = <HomePage />;
+	const renderTransactionsPage = useMemo(
+		() =>
+			isLoggedInMemo ? (
+				<TransactionsTablePage />
+			) : (
+				<Navigate to={HOME_ROUTE} />
+			),
+		[isLoggedInMemo],
+	);
 
-  const renderTransactionsPage = useMemo(
-    () => (isLoggedInMemo ? <TransactionsTablePage /> : <Navigate to={HOME_ROUTE} />),
-    [isLoggedInMemo]
-  );
+	const renderNewTransactionPage = useMemo(
+		() =>
+			isLoggedInMemo ? (
+				<NewTransactionPage />
+			) : (
+				<Navigate to={HOME_ROUTE} />
+			),
+		[isLoggedInMemo],
+	);
 
-  const renderNewTransactionPage = useMemo(
-    () => (isLoggedInMemo ? <NewTransactionPage /> : <Navigate to={HOME_ROUTE} />),
-    [isLoggedInMemo]
-  );
+	const renderTransactionDetailsPage = useMemo(
+		() =>
+			isLoggedInMemo ? (
+				<TransactionDetailPage />
+			) : (
+				<Navigate to={HOME_ROUTE} />
+			),
+		[isLoggedInMemo],
+	);
 
-  const renderTransactionDetailsPage = useMemo(
-    () => (isLoggedInMemo ? <TransactionDetailPage /> : <Navigate to={HOME_ROUTE} />),
-    [isLoggedInMemo]
-  );
-
-  return (
-    <Routes>
-        <Route path={HOME_ROUTE} element={withMiddleware(() => renderHomePage)({})} />
-        <Route path={TRANSACTIONS_ROUTE} element={withMiddleware(() => renderTransactionsPage)({})} />
-        <Route path={NEW_TRANSACTION_ROUTE} element={withMiddleware(() => renderNewTransactionPage)({})} />
-        <Route path={TRANSACTION_DETAILS_ROUTE} element={withMiddleware(() => renderTransactionDetailsPage)({})} />
-        <Route path='*' element={withMiddleware(() => renderHomePage)({})} />
-    </Routes>
-  );
+	return (
+		<Routes>
+			<Route
+				path={HOME_ROUTE}
+				element={withMiddleware(() => renderHomePage)({})}
+			/>
+			<Route
+				path={TRANSACTIONS_ROUTE}
+				element={withMiddleware(() => renderTransactionsPage)({})}
+			/>
+			<Route
+				path={NEW_TRANSACTION_ROUTE}
+				element={withMiddleware(() => renderNewTransactionPage)({})}
+			/>
+			<Route
+				path={TRANSACTION_DETAILS_ROUTE}
+				element={withMiddleware(() => renderTransactionDetailsPage)({})}
+			/>
+			<Route
+				path="*"
+				element={withMiddleware(() => renderHomePage)({})}
+			/>
+		</Routes>
+	);
 };
 
 export default PageRouter;

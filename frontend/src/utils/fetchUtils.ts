@@ -2,11 +2,11 @@ import { toast } from 'react-toastify';
 import { ApiException } from '../swagger/apexBridgeApiService';
 
 export class ErrorResponse {
-    err: string;
+	err: string;
 
-    constructor({ err }: { err: string }) {
-        this.err = err
-    }
+	constructor({ err }: { err: string }) {
+		this.err = err;
+	}
 }
 
 const toErrResponse = (error: any): ErrorResponse => {
@@ -15,20 +15,22 @@ const toErrResponse = (error: any): ErrorResponse => {
 		if (apiException?.response) {
 			try {
 				const parsed = JSON.parse(apiException?.response);
-				const inner = parsed.message || parsed.err || parsed.error
+				const inner = parsed.message || parsed.err || parsed.error;
 				if (inner) {
-					return new ErrorResponse({ err: `${inner}` })
+					return new ErrorResponse({ err: `${inner}` });
 				}
+				// eslint-disable-next-line no-empty
 			} catch {}
 
-			return new ErrorResponse({ err: `${apiException.response}` })
+			return new ErrorResponse({ err: `${apiException.response}` });
 		} else if (apiException?.result) {
-			return new ErrorResponse({ err: `${apiException.result}` })
+			return new ErrorResponse({ err: `${apiException.result}` });
 		}
+		// eslint-disable-next-line no-empty
 	} catch {}
 
-	return new ErrorResponse({ err: `${error}` })
-}
+	return new ErrorResponse({ err: `${error}` });
+};
 
 export const catchError = (error: any, showUIError = true): ErrorResponse => {
 	// server error
@@ -40,13 +42,16 @@ export const catchError = (error: any, showUIError = true): ErrorResponse => {
 
 	// validation error
 	if (error.status === 400) {
-		showUIError && toast.error('There are some validation errors, please fix those and try again.')
+		showUIError &&
+			toast.error(
+				'There are some validation errors, please fix those and try again.',
+			);
 		return toErrResponse(error);
 	}
 
 	// forbidden, there is no permission for this user or action is not possible (example: cannot delete entity that is used)
 	if (error.status === 403) {
-		const err = 'You don\'t have permission to perform this action';
+		const err = "You don't have permission to perform this action";
 		showUIError && toast.error(err);
 		return toErrResponse(err);
 	}
@@ -68,16 +73,18 @@ export const catchError = (error: any, showUIError = true): ErrorResponse => {
 	const err = 'Unknown error, please contact system administrator';
 	showUIError && toast.error(err);
 	return toErrResponse(err);
-}
+};
 
-export const tryCatchJsonByAction = async <P>(fetchFunction: (...args: any[]) => Promise<P>, showUIError = true): Promise<P | ErrorResponse> => {
+export const tryCatchJsonByAction = async <P>(
+	fetchFunction: (...args: any[]) => Promise<P>,
+	showUIError = true,
+): Promise<P | ErrorResponse> => {
 	const fetchPromise = fetchFunction();
 
 	try {
 		const response = await fetchPromise;
 		return response;
-	}
-	catch (error: any) {
+	} catch (error: any) {
 		return catchError(error, showUIError);
 	}
-}
+};

@@ -1,29 +1,32 @@
-import { createSlice } from '@reduxjs/toolkit'
-import type { PayloadAction } from '@reduxjs/toolkit'
+import { createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
 export interface IAccountInfoState {
-	account: string,
-	networkId: number|bigint,
-	balance: string,
+	account: string;
+	networkId: number | bigint;
+	balance: string;
 }
 
 const initialState: IAccountInfoState = {
 	account: '',
 	networkId: 0,
 	balance: '0',
-}
+};
 
 const accountInfoSlice = createSlice({
 	name: 'accountInfo',
 	initialState,
 	reducers: {
-		setAccountInfoAction: (state, action: PayloadAction<IAccountInfoState>) => {
+		setAccountInfoAction: (
+			state,
+			action: PayloadAction<IAccountInfoState>,
+		) => {
 			state.account = action.payload.account;
 			state.networkId = action.payload.networkId;
 			state.balance = action.payload.balance;
 		},
 		updateBalanceAction: (state, action: PayloadAction<string>) => {
-            state.balance = action.payload;
+			state.balance = action.payload;
 		},
 		removeAccountInfoAction: (state) => {
 			state.account = '';
@@ -31,9 +34,13 @@ const accountInfoSlice = createSlice({
 			state.balance = '0';
 		},
 	},
-})
+});
 
 // Action creators are generated for each case reducer function
-export const { setAccountInfoAction, updateBalanceAction, removeAccountInfoAction } = accountInfoSlice.actions
+export const {
+	setAccountInfoAction,
+	updateBalanceAction,
+	removeAccountInfoAction,
+} = accountInfoSlice.actions;
 
-export default accountInfoSlice.reducer
+export default accountInfoSlice.reducer;

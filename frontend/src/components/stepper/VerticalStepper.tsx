@@ -6,43 +6,43 @@ import Typography from '@mui/material/Typography';
 import { StepType } from '../../features/types';
 
 type VerticalStepperProps = {
-  steps: StepType[]
-}
+	steps: StepType[];
+};
 
 export default function VerticalStepper({ steps }: VerticalStepperProps) {
-  const isStepFailed = (step: StepType) => {
-    return step.status === 'rejected';
-  };
+	const isStepFailed = (step: StepType) => {
+		return step.status === 'rejected';
+	};
 
-  const getActiveIndex = () => {
-    const indexOfActiveStep = steps.findIndex(step => step.active);
-    return indexOfActiveStep === -1 ? steps.length : indexOfActiveStep;
-  }
+	const getActiveIndex = () => {
+		const indexOfActiveStep = steps.findIndex((step) => step.active);
+		return indexOfActiveStep === -1 ? steps.length : indexOfActiveStep;
+	};
 
-  return (
-    <Box sx={{ width: '100%' }}>
-      <Stepper activeStep={getActiveIndex()} orientation='vertical'>
-        {steps.map((step, index) => {
-          const labelProps: {
-            optional?: React.ReactNode;
-            error?: boolean;
-          } = {};
-          if (isStepFailed(step)) {
-            labelProps.optional = (
-              <Typography variant="caption" color="error">
-                Alert message
-              </Typography>
-            );
-            labelProps.error = true;
-          }
+	return (
+		<Box sx={{ width: '100%' }}>
+			<Stepper activeStep={getActiveIndex()} orientation="vertical">
+				{steps.map((step) => {
+					const labelProps: {
+						optional?: React.ReactNode;
+						error?: boolean;
+					} = {};
+					if (isStepFailed(step)) {
+						labelProps.optional = (
+							<Typography variant="caption" color="error">
+								Alert message
+							</Typography>
+						);
+						labelProps.error = true;
+					}
 
-          return (
-            <Step key={step.label}>
-              <StepLabel {...labelProps}>{step.label}</StepLabel>
-            </Step>
-          );
-        })}
-      </Stepper>
-    </Box>
-  );
+					return (
+						<Step key={step.label}>
+							<StepLabel {...labelProps}>{step.label}</StepLabel>
+						</Step>
+					);
+				})}
+			</Stepper>
+		</Box>
+	);
 }

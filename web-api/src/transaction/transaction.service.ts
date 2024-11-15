@@ -116,8 +116,6 @@ export class TransactionService {
 							dto.originChain,
 							dto.signedTxRaw,
 						);
-					} catch (e) {
-						throw e;
 					} finally {
 						submitCardanoSemaphore.release();
 					}

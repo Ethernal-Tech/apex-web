@@ -30,6 +30,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 					? JSON.parse(eResponseStr)
 					: eResponseStr;
 			error = eResponse.error || eResponse.err;
+			// eslint-disable-next-line no-empty
 		} catch {}
 
 		response.status(status).json({

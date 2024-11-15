@@ -1,4 +1,4 @@
-export const KeyHashSize = 28
+export const KeyHashSize = 28;
 
 export enum CardanoNetworkType {
 	VectorMainNetNetwork = 3,
@@ -8,12 +8,12 @@ export enum CardanoNetworkType {
 }
 
 export enum StakeCredentialType {
-    KeyStakeCredentialType = 0,
-    ScriptStakeCredentialType = 1,
-    EmptyStakeCredentialType = 2,
+	KeyStakeCredentialType = 0,
+	ScriptStakeCredentialType = 1,
+	EmptyStakeCredentialType = 2,
 }
 
 export type StakeCredential = {
-    Kind: StakeCredentialType,
-    Payload: Uint8Array,
-}
+	Kind: StakeCredentialType;
+	Payload: Uint8Array;
+};

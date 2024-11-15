@@ -1,5 +1,5 @@
 export type StepType = {
-    label: string,
-    status: 'success' | 'pending' | 'rejected',
-    active: boolean
-}
+	label: string;
+	status: 'success' | 'pending' | 'rejected';
+	active: boolean;
+};

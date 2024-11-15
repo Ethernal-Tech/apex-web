@@ -1,13 +1,13 @@
-import { createSlice } from '@reduxjs/toolkit'
-import type { PayloadAction } from '@reduxjs/toolkit'
+import { createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
 
 export interface ILoginState {
-	connecting: boolean
+	connecting: boolean;
 }
 
 const initialState: ILoginState = {
 	connecting: false,
-}
+};
 
 const loginSlice = createSlice({
 	name: 'login',
@@ -17,9 +17,9 @@ const loginSlice = createSlice({
 			state.connecting = action.payload;
 		},
 	},
-})
+});
 
 // Action creators are generated for each case reducer function
-export const { setConnectingAction } = loginSlice.actions
+export const { setConnectingAction } = loginSlice.actions;
 
-export default loginSlice.reducer
+export default loginSlice.reducer;
