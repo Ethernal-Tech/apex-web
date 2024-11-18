@@ -3,7 +3,7 @@ import {
 	Injectable,
 	InternalServerErrorException,
 } from '@nestjs/common';
-
+import dotenv from 'dotenv';
 import {
 	createCardanoBridgingTx,
 	createEthBridgingTx,
@@ -28,12 +28,17 @@ import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dt
 import { Semaphore } from 'src/utils/semaphore';
 import { retry } from 'src/utils/generalUtils';
 
-const SEMAPHORE_MAX = 6;
+// Load env file
+dotenv.config({ path: '.env' });
+
+const DEFAULT_SEMAPHORE_MAX = 6;
 const SUBMIT_CARDANO_TX_TRY_COUNT = 5;
 const SUBMIT_CARDANO_TX_RETRY_WAIT_TIME = 5000;
 
 const submitCardanoSemaphore = new Semaphore(
-	SEMAPHORE_MAX,
+	process.env.SUBMIT_CARDANO_SEMAPHORE_MAX
+		? +process.env.SUBMIT_CARDANO_SEMAPHORE_MAX
+		: DEFAULT_SEMAPHORE_MAX,
 	'<submitCardanoSemaphore> - ',
 );
 
