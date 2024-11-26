@@ -10,7 +10,7 @@ import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, convertDfmToApex, formatAddress, formatTxDetailUrl, getChainLabelAndColor, toFixed } from '../../utils/generalUtils';
+import { capitalizeWord, convertApexToDfm, convertDfmToApex, formatAddress, formatTxDetailUrl, getChainLabelAndColor, toFixed } from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 
@@ -33,8 +33,17 @@ const TransactionsTablePage = () => {
         return;
       }
 
+      const filtersCorrected = new BridgeTransactionFilterDto({ ...filters });
+      if (filtersCorrected.amountFrom) {
+        filtersCorrected.amountFrom = convertApexToDfm(filtersCorrected.amountFrom, chain)
+      }
+
+      if (filtersCorrected.amountTo) {
+        filtersCorrected.amountTo = convertApexToDfm(filtersCorrected.amountTo, chain)
+      }
+
 			!hideLoading && setIsLoading(true);
-			const bindedAction = getAllFilteredAction.bind(null, filters);
+			const bindedAction = getAllFilteredAction.bind(null, filtersCorrected);
 
       const response = await tryCatchJsonByAction(bindedAction)
 
@@ -47,7 +56,7 @@ const TransactionsTablePage = () => {
       
       !hideLoading && setIsLoading(false);
 		},
-		[filters]
+		[chain, filters]
 	)
 
   useEffect(() => {
