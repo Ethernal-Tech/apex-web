@@ -12,7 +12,7 @@ export class BridgeTransaction {
 	@Column()
 	receiverAddresses: string;
 
-	@Column('bigint', { default: '0' })
+	@Column('numeric', { default: '0', scale: 0, precision: 1000 })
 	amount: string;
 
 	@Column({ enum: ChainEnum, enumName: 'ChainEnum' })
