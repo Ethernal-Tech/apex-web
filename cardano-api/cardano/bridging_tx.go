@@ -18,9 +18,6 @@ const (
 
 	retryWait       = time.Millisecond * 1000
 	retriesMaxCount = 10
-
-	retriesTxHashInUtxosCount = 60
-	retriesTxHashInUtxosWait  = time.Millisecond * 4000
 )
 
 type BridgingTxSender struct {
@@ -323,16 +320,4 @@ func (bts *BridgingTxSender) getTipAndProtocolParameters(
 	}
 
 	return qtd, protocolParams, nil
-}
-
-func IsAddressInOutputs(
-	receivers []cardanowallet.TxOutput, addr string,
-) bool {
-	for _, x := range receivers {
-		if x.Addr == addr {
-			return true
-		}
-	}
-
-	return false
 }
