@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/Ethernal-Tech/cardano-api/common"
+	infracom "github.com/Ethernal-Tech/cardano-infrastructure/common"
 	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	"github.com/hashicorp/go-hclog"
 )
@@ -141,17 +141,12 @@ func (bts *BridgingTxSender) SendTx(
 		return err
 	}
 
-	return cardanowallet.ExecuteWithRetry(ctx, retriesMaxCount, retryWait, func() (bool, error) {
-		err := bts.TxProviderSrc.SubmitTx(ctx, txSigned)
+	_, err = infracom.ExecuteWithRetry(ctx,
+		func(ctx context.Context) (bool, error) {
+			return true, bts.TxProviderSrc.SubmitTx(ctx, txSigned)
+		}, infracom.WithRetryCount(retriesMaxCount), infracom.WithRetryWaitTime(retryWait))
 
-		return err == nil, err
-	}, common.OgmiosIsRecoverableError)
-}
-
-func (bts *BridgingTxSender) WaitForTx(
-	ctx context.Context, receivers []cardanowallet.TxOutput,
-) error {
-	return WaitForTx(ctx, bts.TxUtxoRetrieverDst, receivers)
+	return err
 }
 
 func (bts *BridgingTxSender) createMetadata(
@@ -186,12 +181,10 @@ func (bts *BridgingTxSender) getUTXOsForAmount(
 		err      error
 	)
 
-	err = cardanowallet.ExecuteWithRetry(ctx, 2, 1*time.Second,
-		func() (bool, error) {
-			allUtxos, err = retriever.GetUtxos(ctx, addr)
-
-			return err == nil, err
-		}, common.OgmiosIsRecoverableError)
+	allUtxos, err = infracom.ExecuteWithRetry(ctx,
+		func(ctx context.Context) ([]cardanowallet.Utxo, error) {
+			return retriever.GetUtxos(ctx, addr)
+		}, infracom.WithRetryCount(2), infracom.WithRetryWaitTime(time.Second))
 
 	if err != nil {
 		return cardanowallet.TxInputs{}, err
@@ -308,24 +301,20 @@ func (bts *BridgingTxSender) getTxBuilderData(
 func (bts *BridgingTxSender) getTipAndProtocolParameters(
 	ctx context.Context,
 ) (qtd cardanowallet.QueryTipData, protocolParams []byte, err error) {
-	err = cardanowallet.ExecuteWithRetry(ctx, 10, 1*time.Second,
-		func() (bool, error) {
-			qtd, err = bts.TxProviderSrc.GetTip(ctx)
-
-			return err == nil, err
-		}, common.OgmiosIsRecoverableError)
+	qtd, err = infracom.ExecuteWithRetry(ctx,
+		func(ctx context.Context) (cardanowallet.QueryTipData, error) {
+			return bts.TxProviderSrc.GetTip(ctx)
+		}, infracom.WithRetryCount(10), infracom.WithRetryWaitTime(time.Second))
 	if err != nil {
 		return qtd, nil, err
 	}
 
 	protocolParams = bts.ProtocolParameters
 	if protocolParams == nil {
-		err = cardanowallet.ExecuteWithRetry(ctx, 10, 1*time.Second,
-			func() (bool, error) {
-				protocolParams, err = bts.TxProviderSrc.GetProtocolParameters(ctx)
-
-				return err == nil, err
-			}, common.OgmiosIsRecoverableError)
+		protocolParams, err = infracom.ExecuteWithRetry(ctx,
+			func(ctx context.Context) ([]byte, error) {
+				return bts.TxProviderSrc.GetProtocolParameters(ctx)
+			}, infracom.WithRetryCount(10), infracom.WithRetryWaitTime(time.Second))
 		if err != nil {
 			return qtd, nil, err
 		}
@@ -346,44 +335,4 @@ func IsAddressInOutputs(
 	}
 
 	return false
-}
-
-func WaitForTx(
-	ctx context.Context, txUtxoRetriever cardanowallet.IUTxORetriever, receivers []cardanowallet.TxOutput,
-) error {
-	errs := make([]error, len(receivers))
-	wg := sync.WaitGroup{}
-
-	for i, x := range receivers {
-		wg.Add(1)
-
-		go func(idx int, recv cardanowallet.TxOutput) {
-			defer wg.Done()
-
-			var expectedAmount uint64
-
-			errs[idx] = cardanowallet.ExecuteWithRetry(ctx, retriesMaxCount, retryWait, func() (bool, error) {
-				utxos, err := txUtxoRetriever.GetUtxos(ctx, recv.Addr)
-				expectedAmount = cardanowallet.GetUtxosSum(utxos)
-
-				return err == nil, err
-			}, common.OgmiosIsRecoverableError)
-
-			if errs[idx] != nil {
-				return
-			}
-
-			expectedAmount += recv.Amount
-
-			errs[idx] = cardanowallet.WaitForAmount(
-				ctx, txUtxoRetriever, recv.Addr, func(newAmount uint64) bool {
-					return newAmount >= expectedAmount
-				},
-				retriesTxHashInUtxosCount, retriesTxHashInUtxosWait, common.OgmiosIsRecoverableError)
-		}(i, x)
-	}
-
-	wg.Wait()
-
-	return errors.Join(errs...)
 }

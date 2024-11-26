@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.7
 
 require (
-	github.com/blinklabs-io/gouroboros v0.103.6 // indirect
+	github.com/blinklabs-io/gouroboros v0.103.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/hashicorp/go-hclog v1.6.3
@@ -17,7 +17,7 @@ require (
 )
 
 require (
-	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20241107104837-4bec009ec640
+	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20241118151934-6e8bd4af74ae
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
@@ -44,7 +44,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quasilyte/go-ruleguard v0.4.2
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

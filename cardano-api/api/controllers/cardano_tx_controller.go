@@ -14,6 +14,7 @@ import (
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
+	infracom "github.com/Ethernal-Tech/cardano-infrastructure/common"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	goEthCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/hashicorp/go-hclog"
@@ -94,14 +95,10 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var utxos []wallet.Utxo
-
-	err = wallet.ExecuteWithRetry(context.Background(), 10, 1*time.Second,
-		func() (bool, error) {
-			utxos, err = txProvider.GetUtxos(context.Background(), address)
-
-			return err == nil, err
-		}, common.OgmiosIsRecoverableError)
+	utxos, err := infracom.ExecuteWithRetry(context.Background(),
+		func(ctx context.Context) ([]wallet.Utxo, error) {
+			return txProvider.GetUtxos(context.Background(), address)
+		}, infracom.WithRetryCount(10), infracom.WithRetryWaitTime(time.Second))
 
 	if err != nil {
 		utils.WriteErrorResponse(
