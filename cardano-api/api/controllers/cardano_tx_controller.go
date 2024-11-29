@@ -146,7 +146,7 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 	fee, err := bridgingTxSender.GetTxFee(
 		context.Background(), requestBody.DestinationChainID,
 		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
-		c.usedUtxoCacher.Get(requestBody.SenderAddr),
+		c.usedUtxoCacher.Get(requestBody.SenderAddr), c.appConfig.BridgingSettings.UtxoMinValue,
 	)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
@@ -186,7 +186,7 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 	txRawBytes, txHash, txInputs, err := bridgingTxSender.CreateTx(
 		context.Background(), requestBody.DestinationChainID,
 		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
-		c.usedUtxoCacher.Get(requestBody.SenderAddr),
+		c.usedUtxoCacher.Get(requestBody.SenderAddr), c.appConfig.BridgingSettings.UtxoMinValue,
 	)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
@@ -382,12 +382,7 @@ func (c *CardanoTxControllerImpl) signTx(requestBody request.SignBridgingTxReque
 
 	defer txBuilder.Dispose()
 
-	witness, err := wallet.CreateTxWitness(requestBody.TxHash, senderWallet)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create witness: %w", err)
-	}
-
-	signedTxBytes, err := txBuilder.AssembleTxWitnesses(txRawBytes, [][]byte{witness})
+	signedTxBytes, err := txBuilder.SignTx(txRawBytes, []wallet.ITxSigner{senderWallet})
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign tx: %w", err)
 	}
