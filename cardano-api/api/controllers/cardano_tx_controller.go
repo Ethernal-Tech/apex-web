@@ -143,10 +143,12 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
+	skipUtxos, _ := getSkipUtxos(requestBody, c.appConfig, c.usedUtxoCacher)
+
 	fee, err := bridgingTxSender.GetTxFee(
 		context.Background(), requestBody.DestinationChainID,
 		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
-		c.usedUtxoCacher.Get(requestBody.SenderAddr), c.appConfig.BridgingSettings.UtxoMinValue,
+		skipUtxos, c.appConfig.BridgingSettings.UtxoMinValue,
 	)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
@@ -183,10 +185,12 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
+	skipUtxos, usingUtxoCacher := getSkipUtxos(requestBody, c.appConfig, c.usedUtxoCacher)
+
 	txRawBytes, txHash, txInputs, err := bridgingTxSender.CreateTx(
 		context.Background(), requestBody.DestinationChainID,
 		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
-		c.usedUtxoCacher.Get(requestBody.SenderAddr), c.appConfig.BridgingSettings.UtxoMinValue,
+		skipUtxos, c.appConfig.BridgingSettings.UtxoMinValue,
 	)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
@@ -194,7 +198,9 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	c.usedUtxoCacher.Add(requestBody.SenderAddr, txInputs) // cache chosen txInputs
+	if usingUtxoCacher {
+		c.usedUtxoCacher.Add(requestBody.SenderAddr, txInputs) // cache chosen txInputs
+	}
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
@@ -388,4 +394,31 @@ func (c *CardanoTxControllerImpl) signTx(requestBody request.SignBridgingTxReque
 	}
 
 	return signedTxBytes, nil
+}
+
+func getSkipUtxos(
+	requestBody request.CreateBridgingTxRequest, appConfig *core.AppConfig, usedUtxoCacher *utils.UsedUtxoCacher,
+) (skipUtxos []wallet.TxInput, useCaching bool) {
+	shouldUseUsedUtxoCacher := false
+
+	if desiredKey := requestBody.UTXOCacheKey; desiredKey != "" {
+		for _, key := range appConfig.APIConfig.UTXOCacheKeys {
+			if key == desiredKey {
+				shouldUseUsedUtxoCacher = true
+
+				break
+			}
+		}
+	}
+
+	if shouldUseUsedUtxoCacher {
+		return usedUtxoCacher.Get(requestBody.SenderAddr), true
+	}
+
+	return common.Map(requestBody.SkipUtxos, func(x request.UtxoRequest) wallet.TxInput {
+		return wallet.TxInput{
+			Hash:  x.Hash,
+			Index: x.Index,
+		}
+	}), false
 }

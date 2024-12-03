@@ -37,8 +37,10 @@ const (
 	vectorSocketPathFlag              = "vector-socket-path"
 	vectorTTLSlotIncFlag              = "vector-ttl-slot-inc"
 
-	logsPathFlag         = "logs-path"
+	logsPathFlag = "logs-path"
+
 	utxoCacheTimeoutFlag = "utxo-cache-timeout"
+	utxoCacheKeysFlag    = "utxo-cache-keys"
 
 	oracleAPIURLFlag = "oracle-api-url"
 	oracleAPIKeyFlag = "oracle-api-key"
@@ -71,8 +73,10 @@ const (
 	vectorSocketPathFlagDesc              = "socket path for vector network"
 	vectorTTLSlotIncFlagDesc              = "TTL slot increment for vector"
 
-	logsPathFlagDesc        = "path to where logs will be stored"
+	logsPathFlagDesc = "path to where logs will be stored"
+
 	utxoCacheTimeoutFlagDec = "for how long should a UTXO be reserved in the cache"
+	utxoCacheKeysFlagDesc   = "list of keys for UTXO cache functionality"
 
 	oracleAPIURLFlagDesc = "(mandatory) URL of Oracle API"
 	oracleAPIKeyFlagDesc = "(mandatory) API Key of Oracle API" //nolint:gosec
@@ -120,6 +124,7 @@ type generateConfigsParams struct {
 
 	logsPath         string
 	utxoCacheTimeout time.Duration
+	utxoCacheKeys    []string
 
 	oracleAPIURL string
 	oracleAPIKey string
@@ -368,6 +373,12 @@ func (p *generateConfigsParams) setFlags(cmd *cobra.Command) {
 		defaultUtxoCacheTimeout,
 		utxoCacheTimeoutFlagDec,
 	)
+	cmd.Flags().StringArrayVar(
+		&p.utxoCacheKeys,
+		utxoCacheKeysFlag,
+		nil,
+		utxoCacheKeysFlagDesc,
+	)
 
 	cmd.Flags().StringVar(
 		&p.oracleAPIURL,
@@ -483,8 +494,9 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 				"OPTIONS",
 				"DELETE",
 			},
-			APIKeyHeader: "x-api-key",
-			APIKeys:      p.apiKeys,
+			APIKeyHeader:  "x-api-key",
+			APIKeys:       p.apiKeys,
+			UTXOCacheKeys: p.utxoCacheKeys,
 		},
 	}
 
