@@ -32,7 +32,9 @@ $ go run ./main.go generate-configs \
         --oracle-api-key <API Key of Oracle API> \
         --api-port <port at which API should run> \
         --api-keys "<api key 1>" \
-        --api-keys "<api key 2>"
+        --api-keys "<api key 2>" \
+        --utxo-cache-keys "<utxo cache key 1>" \
+        --utxo-cache-keys "<utxo cache key 2>"
 ```
 
 Minimal example
@@ -48,7 +50,8 @@ $ go run ./main.go generate-configs \
         --vector-blockfrost-url "https://cardano-preview.blockfrost.io/api/v0" \
         --oracle-api-url "http://bridge-api-testnet.apexfusion.org:10003" \
         --oracle-api-key "test-api-key-001" \
-        --api-keys "test_api_key_1"
+        --api-keys "test_api_key_1" \
+        --utxo-cache-keys "utxo_cache_test_api_key_1"
 ```
 
 Full example
@@ -74,7 +77,9 @@ $ go run main.go generate-configs\
                 --oracle-api-key "test-api-key-001" \
 		--api-port 41000\
 		--api-keys "cardano_api_key_1"\
-		--api-keys "cardano_api_key_2"
+		--api-keys "cardano_api_key_2" \
+                --utxo-cache-keys "utxo_cache_api_key_1" \
+                --utxo-cache-keys "utxo_cache_api_key_2"
 ```
 
 # How to start cardano api
