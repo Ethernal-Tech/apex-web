@@ -45,6 +45,7 @@ function NewTransactionPage() {
 			senderAddress: account,
 			destinationAddress: address,
 			amount,
+			utxoCacheKey: undefined,
 		})
 	}, [account, bridgeTxFee, chain, destinationChain, settings])
 
@@ -83,6 +84,7 @@ function NewTransactionPage() {
 			senderAddress: account,
 			destinationAddress: address,
 			amount,
+			utxoCacheKey: undefined,
 		})
 	}, [account, bridgeTxFee, chain, destinationChain, settings])
 
