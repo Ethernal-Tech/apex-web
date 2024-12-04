@@ -536,6 +536,7 @@ export class CreateTransactionDto implements ICreateTransactionDto {
     destinationAddress!: string;
     amount!: string;
     bridgingFee!: string | undefined;
+    utxoCacheKey!: string | undefined;
 
     constructor(data?: ICreateTransactionDto) {
         if (data) {
@@ -554,6 +555,7 @@ export class CreateTransactionDto implements ICreateTransactionDto {
             this.destinationAddress = _data["destinationAddress"];
             this.amount = _data["amount"];
             this.bridgingFee = _data["bridgingFee"];
+            this.utxoCacheKey = _data["utxoCacheKey"];
         }
     }
 
@@ -572,6 +574,7 @@ export class CreateTransactionDto implements ICreateTransactionDto {
         data["destinationAddress"] = this.destinationAddress;
         data["amount"] = this.amount;
         data["bridgingFee"] = this.bridgingFee;
+        data["utxoCacheKey"] = this.utxoCacheKey;
         return data; 
     }
 }
@@ -583,6 +586,7 @@ export interface ICreateTransactionDto {
     destinationAddress: string;
     amount: string;
     bridgingFee: string | undefined;
+    utxoCacheKey: string | undefined;
 }
 
 export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransactionResponseDto {

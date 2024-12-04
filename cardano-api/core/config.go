@@ -21,6 +21,7 @@ type APIConfig struct {
 	AllowedMethods []string `json:"allowedMethods"`
 	APIKeyHeader   string   `json:"apiKeyHeader"`
 	APIKeys        []string `json:"apiKeys"`
+	UTXOCacheKeys  []string `json:"utxoCacheKeys"`
 }
 
 type BridgingAddresses struct {

@@ -39,6 +39,7 @@ const prepareCreateCardanoBridgingTx = (dto: CreateTransactionDto) => {
 		],
 		bridgingFee: dto.bridgingFee ? +dto.bridgingFee : undefined,
 		useFallback: isCentralized,
+		utxoCacheKey: dto.utxoCacheKey,
 	};
 
 	return body;

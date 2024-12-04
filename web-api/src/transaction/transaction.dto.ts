@@ -30,6 +30,9 @@ export class CreateTransactionDto {
 
 	@ApiProperty({ nullable: true })
 	bridgingFee?: string;
+
+	@ApiProperty({ nullable: true })
+	utxoCacheKey?: string;
 }
 
 export class TransactionSubmittedDto {

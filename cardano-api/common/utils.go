@@ -172,3 +172,17 @@ func HTTPGet[T any](ctx context.Context, requestURL string, apiKey string) (t T,
 
 	return responseModel, nil
 }
+
+func Map[T, V any](items []T, fn func(T) V) []V {
+	if items == nil {
+		return nil
+	}
+
+	result := make([]V, len(items))
+
+	for i, x := range items {
+		result[i] = fn(x)
+	}
+
+	return result
+}
