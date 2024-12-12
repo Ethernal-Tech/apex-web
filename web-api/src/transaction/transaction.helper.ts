@@ -121,7 +121,7 @@ export const createEthBridgingTx = async (
 	}
 
 	const minValue = BigInt(
-		convertDfmToWei(bridgingSettings.minUtxoValue) || '1000000000000000000',
+		convertDfmToWei(bridgingSettings.minUtxoChainValue.get(dto.destinationChain)?.toString() ||  '1000000000000000000'),
 	);
 	const amount = BigInt(dto.amount);
 
@@ -149,8 +149,8 @@ export const createEthBridgingTx = async (
 	}
 
 	const minBridgingFee = BigInt(
-		convertDfmToWei(bridgingSettings.minFeeForBridging) ||
-			'1000010000000000000',
+		convertDfmToWei(bridgingSettings.minChainFeeForBridging.get(dto.destinationChain)?.toString() ||
+			'1000010000000000000'),
 	);
 
 	let bridgingFee = BigInt(dto.bridgingFee || '0');
