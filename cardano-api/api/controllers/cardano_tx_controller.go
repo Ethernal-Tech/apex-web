@@ -157,7 +157,7 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 	fee, err := bridgingTxSender.GetTxFee(
 		context.Background(), requestBody.DestinationChainID,
 		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
-		skipUtxos, minUtxoValue,
+		skipUtxos, c.appConfig.BridgingSettings.MinUtxoChainValue[requestBody.SourceChainID],
 	)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
@@ -208,7 +208,7 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 	txRawBytes, txHash, txInputs, err := bridgingTxSender.CreateTx(
 		context.Background(), requestBody.DestinationChainID,
 		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
-		skipUtxos, minUtxoValue,
+		skipUtxos, c.appConfig.BridgingSettings.MinUtxoChainValue[requestBody.SourceChainID],
 	)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
@@ -279,7 +279,7 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 	for _, receiver := range requestBody.Transactions {
 		if cardanoDestConfig != nil {
-			if receiver.Amount < c.appConfig.BridgingSettings.MinValueToBridge {
+			if receiver.Amount < c.appConfig.BridgingSettings.MinUtxoChainValue[cardanoDestConfig.ChainID] {
 				foundAUtxoValueBelowMinimumValue = true
 
 				break
@@ -328,17 +328,12 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 	// this is just convinient way to setup default min fee
 	if requestBody.BridgingFee == 0 {
-		requestBody.BridgingFee = c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.DestinationChainID]
+		requestBody.BridgingFee = c.appConfig.BridgingSettings.MinUtxoChainValue[requestBody.DestinationChainID]
 	}
 
 	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))
 
-	minFee, found := c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.DestinationChainID]
-	if !found {
-		return fmt.Errorf("no minimal fee for chain: %s", requestBody.DestinationChainID)
-	}
-
-	if requestBody.BridgingFee < minFee {
+	if requestBody.BridgingFee < c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.DestinationChainID] {
 		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
 	}
 
