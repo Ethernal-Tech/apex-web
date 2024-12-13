@@ -120,8 +120,15 @@ export const createEthBridgingTx = async (
 		throw new BadRequestException('Invalid sender address');
 	}
 
+	const destMinUtxo = bridgingSettings.minUtxoChainValue[dto.destinationChain];
+	if (!destMinUtxo) {
+		throw new BadRequestException(
+			`No MinUtxoValue for destination chain: ${dto.destinationChain}`
+		)
+	}
+
 	const minValue = BigInt(
-		convertDfmToWei(bridgingSettings.minUtxoChainValue.get(dto.destinationChain)?.toString() ||  '1000000000000000000'),
+		convertDfmToWei(destMinUtxo ||  '1000000000000000000'),
 	);
 	const amount = BigInt(dto.amount);
 
@@ -148,8 +155,14 @@ export const createEthBridgingTx = async (
 		);
 	}
 
+	const destMinFee = bridgingSettings.minChainFeeForBridging[dto.destinationChain];
+	if (!destMinFee) {
+		throw new BadRequestException(
+			`No minFee for destination chain: ${dto.destinationChain}`
+		)
+	}
 	const minBridgingFee = BigInt(
-		convertDfmToWei(bridgingSettings.minChainFeeForBridging.get(dto.destinationChain)?.toString() ||
+		convertDfmToWei(destMinFee ||
 			'1000010000000000000'),
 	);
 

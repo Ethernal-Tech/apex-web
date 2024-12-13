@@ -145,10 +145,19 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 
 	skipUtxos, _ := getSkipUtxos(requestBody, c.appConfig, c.usedUtxoCacher)
 
+	minUtxoValue, found := c.appConfig.BridgingSettings.MinUtxoChainValue[requestBody.SourceChainID]
+	if !found {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("no minimal UTXO value for chain: %s", requestBody.SourceChainID), c.logger)
+
+		return
+	}
+
 	fee, err := bridgingTxSender.GetTxFee(
 		context.Background(), requestBody.DestinationChainID,
 		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
-		skipUtxos, c.appConfig.BridgingSettings.MinUtxoChainValue[requestBody.SourceChainID],
+		skipUtxos, minUtxoValue,
 	)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
@@ -187,10 +196,19 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	skipUtxos, usingUtxoCacher := getSkipUtxos(requestBody, c.appConfig, c.usedUtxoCacher)
 
+	minUtxoValue, found := c.appConfig.BridgingSettings.MinUtxoChainValue[requestBody.SourceChainID]
+	if !found {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("no minimal UTXO value for chain: %s", requestBody.SourceChainID), c.logger)
+
+		return
+	}
+
 	txRawBytes, txHash, txInputs, err := bridgingTxSender.CreateTx(
 		context.Background(), requestBody.DestinationChainID,
 		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
-		skipUtxos, c.appConfig.BridgingSettings.MinUtxoChainValue[requestBody.SourceChainID],
+		skipUtxos, minUtxoValue,
 	)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
@@ -315,7 +333,12 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))
 
-	if requestBody.BridgingFee < c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.DestinationChainID] {
+	minUtxoValue, found := c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.DestinationChainID]
+	if !found {
+		return fmt.Errorf("no minimal UTXO value for chain: %s", requestBody.DestinationChainID)
+	}
+
+	if requestBody.BridgingFee < minUtxoValue {
 		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
 	}
 
