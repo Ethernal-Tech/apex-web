@@ -5,12 +5,12 @@ export class SettingsResponseDto {
 	@IsNotEmpty()
 	@IsPositive()
 	@ApiProperty()
-	minChainFeeForBridging: Map<string, number>;
+	minChainFeeForBridging: { [ key: string ]: number };
 
 	@IsNotEmpty()
 	@IsPositive()
 	@ApiProperty()
-	minUtxoChainValue: Map<string, number>;
+	minUtxoChainValue:{ [ key: string ]: number };
 
 	@IsNotEmpty()
 	@IsPositive()
