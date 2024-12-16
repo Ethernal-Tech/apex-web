@@ -22,6 +22,10 @@ export class BridgeTransactionDto {
 	amount: string;
 
 	@IsNotEmpty()
+	@ApiProperty()
+	nativeTokenAmount: string;
+
+	@IsNotEmpty()
 	@IsEnum(ChainEnum)
 	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
 	originChain: ChainEnum;

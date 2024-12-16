@@ -280,6 +280,7 @@ export const mapBridgeTransactionToResponse = (
 	response.destinationChain = entity.destinationChain;
 	response.originChain = entity.originChain;
 	response.amount = entity.amount.toString();
+	response.nativeTokenAmount = entity.nativeTokenAmount.toString();
 	response.sourceTxHash = entity.sourceTxHash;
 	response.destinationTxHash = entity.destinationTxHash;
 	response.status = entity.status;

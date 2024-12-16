@@ -164,6 +164,7 @@ export class TransactionService {
 		senderAddress,
 		receiverAddrs,
 		amount,
+		nativeTokenAmount,
 		txRaw,
 		isFallback,
 	}: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
@@ -177,6 +178,9 @@ export class TransactionService {
 		entity.destinationChain =
 			(destinationChain as ChainEnum) ?? entity.destinationChain;
 		entity.amount = amount ? amount : entity.amount;
+		entity.nativeTokenAmount = nativeTokenAmount
+			? nativeTokenAmount
+			: entity.nativeTokenAmount;
 
 		entity.originChain = originChain;
 		entity.createdAt = new Date();

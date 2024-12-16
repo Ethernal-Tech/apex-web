@@ -27,10 +27,12 @@ const prepareCreateCardanoBridgingTx = (dto: CreateTransactionDto) => {
 	const isCentralized =
 		process.env.USE_CENTRALIZED_BRIDGE === 'true' && nexusInvolved;
 
+	// TODO: we will know this model, when cardano api definition is finished
 	const body = {
 		senderAddr: dto.senderAddress,
 		sourceChainId: dto.originChain,
 		destinationChainId: dto.destinationChain,
+		sourceTokenId: dto.sourceToken,
 		transactions: [
 			{
 				addr: dto.destinationAddress,

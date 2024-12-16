@@ -3,11 +3,14 @@ import { ChainEnum } from 'src/common/enum';
 const PRIME_NETWORK_ID = 0;
 const VECTOR_NETWORK_ID = 2;
 const NEXUS_NETWORK_ID = BigInt(9070); // for Nexus
+// TODO: check cardano network ID
+const CARDANO_NETWORK_ID = 0;
 
 const CHAIN_TO_CHAIN_ID = {
 	[ChainEnum.Prime]: 1,
 	[ChainEnum.Vector]: 2,
 	[ChainEnum.Nexus]: 3,
+	[ChainEnum.Cardano]: 4,
 };
 
 export const fromNetworkIdToChain = (
@@ -22,6 +25,9 @@ export const fromNetworkIdToChain = (
 		}
 		case NEXUS_NETWORK_ID: {
 			return ChainEnum.Nexus;
+		}
+		case CARDANO_NETWORK_ID: {
+			return ChainEnum.Cardano;
 		}
 		default:
 			return;
@@ -40,6 +46,9 @@ export const fromChainToNetworkId = (
 		}
 		case ChainEnum.Nexus: {
 			return NEXUS_NETWORK_ID;
+		}
+		case ChainEnum.Cardano: {
+			return CARDANO_NETWORK_ID;
 		}
 		default:
 			return;
