@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
-import { ChainEnum } from 'src/common/enum';
+import { ChainEnum, SourceTokenEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
 export class CreateTransactionDto {
@@ -33,6 +33,11 @@ export class CreateTransactionDto {
 
 	@ApiProperty({ nullable: true })
 	utxoCacheKey?: string;
+
+	@IsNotEmpty()
+	@IsEnum(SourceTokenEnum)
+	@ApiProperty({ enum: SourceTokenEnum, enumName: 'SourceTokenEnum' })
+	sourceToken: SourceTokenEnum;
 }
 
 export class TransactionSubmittedDto {
@@ -63,6 +68,10 @@ export class TransactionSubmittedDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	amount: string;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	nativeTokenAmount: string;
 
 	@IsNotEmpty()
 	@ApiProperty()
