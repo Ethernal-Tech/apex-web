@@ -279,7 +279,7 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 	for _, receiver := range requestBody.Transactions {
 		if cardanoDestConfig != nil {
-			if receiver.Amount < c.appConfig.BridgingSettings.MinUtxoChainValue[cardanoDestConfig.ChainID] {
+			if receiver.Amount < c.appConfig.BridgingSettings.MinValueToBridge {
 				foundAUtxoValueBelowMinimumValue = true
 
 				break
@@ -328,17 +328,17 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 	// this is just convinient way to setup default min fee
 	if requestBody.BridgingFee == 0 {
-		requestBody.BridgingFee = c.appConfig.BridgingSettings.MinUtxoChainValue[requestBody.DestinationChainID]
+		requestBody.BridgingFee = c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.DestinationChainID]
 	}
 
 	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))
 
-	minUtxoValue, found := c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.DestinationChainID]
+	minFee, found := c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.DestinationChainID]
 	if !found {
-		return fmt.Errorf("no minimal UTXO value for chain: %s", requestBody.DestinationChainID)
+		return fmt.Errorf("no minimal fee for chain: %s", requestBody.DestinationChainID)
 	}
 
-	if requestBody.BridgingFee < minUtxoValue {
+	if requestBody.BridgingFee < minFee {
 		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
 	}
 
