@@ -186,8 +186,24 @@ export class TransactionService {
 
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
-		await this.bridgeTransactionRepository.save(newBridgeTransaction);
 
-		return mapBridgeTransactionToResponse(newBridgeTransaction);
+		try {
+			await this.bridgeTransactionRepository.save(newBridgeTransaction);
+			return mapBridgeTransactionToResponse(newBridgeTransaction);
+		} catch (e) {
+			const dbTxs = await this.bridgeTransactionRepository.find({
+				where: {
+					sourceTxHash: entity.sourceTxHash,
+				}
+			});
+			
+			// we expect only one tx to return since there is a unique constraint
+			if (dbTxs.length != 0) {
+				return mapBridgeTransactionToResponse(dbTxs[0]);
+			}
+			else {
+				throw new BadRequestException(`error while confirming tx submittion: ${e}`)
+			}
+		}
 	}
 }
