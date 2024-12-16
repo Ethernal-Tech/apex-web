@@ -184,7 +184,7 @@ export class TransactionService {
 		entity.txRaw = txRaw;
 		entity.isCentralized = isFallback;
 
-		let newBridgeTransaction =
+		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
 
 		try {
