@@ -476,8 +476,9 @@ export class WalletControllerClient extends BaseClient {
 }
 
 export class SettingsResponseDto implements ISettingsResponseDto {
-    minFeeForBridging!: number;
-    minUtxoValue!: number;
+    minChainFeeForBridging!: { [key: string]: number };
+    minUtxoChainValue!: { [key: string]: number };
+    minValueToBridge!: number;
     maxAmountAllowedToBridge!: string;
     maxReceiversPerBridgingRequest!: number;
 
@@ -492,8 +493,9 @@ export class SettingsResponseDto implements ISettingsResponseDto {
 
     init(_data?: any) {
         if (_data) {
-            this.minFeeForBridging = _data["minFeeForBridging"];
-            this.minUtxoValue = _data["minUtxoValue"];
+            this.minChainFeeForBridging = _data["minChainFeeForBridging"];
+            this.minUtxoChainValue = _data["minUtxoChainValue"];
+            this.minValueToBridge = _data["minValueToBridge"];
             this.maxAmountAllowedToBridge = _data["maxAmountAllowedToBridge"];
             this.maxReceiversPerBridgingRequest = _data["maxReceiversPerBridgingRequest"];
         }
@@ -508,8 +510,9 @@ export class SettingsResponseDto implements ISettingsResponseDto {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["minFeeForBridging"] = this.minFeeForBridging;
-        data["minUtxoValue"] = this.minUtxoValue;
+        data["minChainFeeForBridging"] = this.minChainFeeForBridging;
+        data["minUtxoChainValue"] = this.minUtxoChainValue;
+        data["minValueToBridge"] = this.minValueToBridge;
         data["maxAmountAllowedToBridge"] = this.maxAmountAllowedToBridge;
         data["maxReceiversPerBridgingRequest"] = this.maxReceiversPerBridgingRequest;
         return data; 
@@ -517,8 +520,9 @@ export class SettingsResponseDto implements ISettingsResponseDto {
 }
 
 export interface ISettingsResponseDto {
-    minFeeForBridging: number;
-    minUtxoValue: number;
+    minChainFeeForBridging: { [key: string]: number };
+    minUtxoChainValue: { [key: string]: number };
+    minValueToBridge: number;
     maxAmountAllowedToBridge: string;
     maxReceiversPerBridgingRequest: number;
 }

@@ -28,7 +28,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
 
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
   const {chain} = useSelector((state: RootState)=> state.chain);
-  const minUtxoValueDfm = useSelector((state: RootState) => state.settings.minUtxoValue);
+  const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge);
 
   const fetchWalletFee = useCallback(async () => {
     if (!destinationAddr || !amount) {
@@ -82,7 +82,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
 
     // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
   const minDfmValue = chain === ChainEnum.Nexus ? 
-    convertDfmToWei(minUtxoValueDfm) : minUtxoValueDfm;
+    convertDfmToWei(minValueToBridge) : minValueToBridge;
     
     const maxAmountDfm:string = totalDfmBalance
         ? ( chain === ChainEnum.Prime || chain === ChainEnum.Vector

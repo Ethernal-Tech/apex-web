@@ -27,7 +27,7 @@ function NewTransactionPage() {
 
 	// conditionally implementing bridgeTxFee depending on selected network
 	const bridgeTxFee = chain === ChainEnum.Nexus ? 
-		convertDfmToWei(settings.minBridgingFee) : settings.minBridgingFee;
+		convertDfmToWei(settings.minChainFeeForBridging[ChainEnum.Nexus]) : settings.minChainFeeForBridging[chain];
 
 	const SourceIcon = chainIcons[chain];
 	const DestinationIcon = chainIcons[destinationChain];
