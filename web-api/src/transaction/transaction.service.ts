@@ -184,10 +184,27 @@ export class TransactionService {
 		entity.txRaw = txRaw;
 		entity.isCentralized = isFallback;
 
-		const newBridgeTransaction =
+		var newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
-		await this.bridgeTransactionRepository.save(newBridgeTransaction);
 
-		return mapBridgeTransactionToResponse(newBridgeTransaction);
+		try {
+			await this.bridgeTransactionRepository.save(newBridgeTransaction);
+		} catch (e) {
+			const dbTxs = await this.bridgeTransactionRepository.find({
+				where: {
+					sourceTxHash: entity.sourceTxHash,
+				}
+			});
+			
+			// we expect only one tx to return since there is a unique constraint
+			if (dbTxs.length != 0) {
+				newBridgeTransaction = dbTxs[0];
+			}
+			else {
+				throw new BadRequestException(`error while confirming tx submittion: ${e}`)
+			}
+		} finally {
+			return mapBridgeTransactionToResponse(newBridgeTransaction);
+		}
 	}
 }
