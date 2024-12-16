@@ -24,7 +24,7 @@ export class BridgeTransaction {
 	@Column({ enum: TransactionStatusEnum, enumName: 'TransactionStatusEnum' })
 	status: TransactionStatusEnum;
 
-	@Column()
+	@Column({ unique: true })
 	sourceTxHash: string;
 
 	@Column({ nullable: true })
