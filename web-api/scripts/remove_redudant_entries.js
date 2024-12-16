@@ -22,8 +22,7 @@ async function removeRedudantEntries() {
         await client.connect();
 
         const deleteQuery = `
-            DELETE t1
-            FROM "bridgeTransactions" t1
+            DELETE FROM "bridgeTransactions" t1
             USING "bridgeTransactions" t2
             WHERE t1."sourceTxHash" = t2."sourceTxHash"
             AND t1."id" > t2."id";
