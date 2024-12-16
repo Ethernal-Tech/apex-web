@@ -305,20 +305,28 @@ export const getInputUtxos = (txRaw: string): Utxo[] => {
 };
 
 export const getCardanoTTL = (txRaw: string): bigint | undefined => {
-	const tx = CardanoTransaction.from_hex(txRaw);
-	const ttl = tx.body().ttl_bignum();
-	return ttl ? BigInt(ttl.to_str()) : undefined;
+	try {
+		const tx = CardanoTransaction.from_hex(txRaw);
+		const ttl = tx.body().ttl_bignum();
+		return ttl ? BigInt(ttl.to_str()) : undefined;
+	} catch (e) {
+		Logger.warn(`Error while getCardanoTTL: ${e}`, e.stack);
+	}
 };
 
 type TxWithBlockNumber = EthTransaction & {
 	block: string;
 };
 
-export const getEthTTL = (txRaw: string): bigint => {
-	const tx: TxWithBlockNumber = JSON.parse(txRaw, (_: string, value: any) =>
-		typeof value === 'string' && value.startsWith('bigint:')
-			? BigInt(value.substring('bigint:'.length))
-			: value,
-	);
-	return BigInt(tx.block) + BigInt(process.env.ETH_TX_TTL_INC || 50);
+export const getEthTTL = (txRaw: string): bigint | undefined => {
+	try {
+		const tx: TxWithBlockNumber = JSON.parse(txRaw, (_: string, value: any) =>
+			typeof value === 'string' && value.startsWith('bigint:')
+				? BigInt(value.substring('bigint:'.length))
+				: value,
+		);
+		return BigInt(tx.block) + BigInt(process.env.ETH_TX_TTL_INC || 50);
+	} catch (e) {
+		Logger.warn(`Error while getEthTTL: ${e}`, e.stack);
+	}
 };
