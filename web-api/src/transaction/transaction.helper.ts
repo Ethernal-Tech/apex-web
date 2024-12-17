@@ -121,7 +121,7 @@ export const createEthBridgingTx = async (
 	}
 
 	const minValue = BigInt(
-		convertDfmToWei(bridgingSettings.minValueToBridge ||  '1000000'),
+		convertDfmToWei(bridgingSettings.minValueToBridge || '1000000'),
 	);
 	const amount = BigInt(dto.amount);
 
@@ -148,16 +148,14 @@ export const createEthBridgingTx = async (
 		);
 	}
 
-	const destMinFee = bridgingSettings.minChainFeeForBridging[dto.destinationChain];
+	const destMinFee =
+		bridgingSettings.minChainFeeForBridging[dto.destinationChain];
 	if (!destMinFee) {
 		throw new BadRequestException(
-			`No minFee for destination chain: ${dto.destinationChain}`
-		)
+			`No minFee for destination chain: ${dto.destinationChain}`,
+		);
 	}
-	const minBridgingFee = BigInt(
-		convertDfmToWei(destMinFee ||
-			'1000010'),
-	);
+	const minBridgingFee = BigInt(convertDfmToWei(destMinFee || '1000010'));
 
 	let bridgingFee = BigInt(dto.bridgingFee || '0');
 	bridgingFee = bridgingFee < minBridgingFee ? minBridgingFee : bridgingFee;
