@@ -60,6 +60,7 @@ type BridgingSettings struct {
 }
 
 type AppConfig struct {
+	RunMode          common.VCRunMode               `json:"runMode"`
 	CardanoChains    map[string]*CardanoChainConfig `json:"cardanoChains"`
 	EthChains        map[string]*EthChainConfig     `json:"ethChains"`
 	UtxoCacheTimeout time.Duration                  `json:"utxoCacheTimeout"`

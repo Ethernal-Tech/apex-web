@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Ethernal-Tech/cardano-api/api/model/response"
+	"github.com/Ethernal-Tech/cardano-api/api/model/reactor/response"
 	"github.com/hashicorp/go-hclog"
 )
 

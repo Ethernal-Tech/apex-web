@@ -425,6 +425,7 @@ func (p *generateConfigsParams) setFlags(cmd *cobra.Command) {
 
 func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 	config := &core.AppConfig{
+		RunMode: common.ReactorMode,
 		CardanoChains: map[string]*core.CardanoChainConfig{
 			common.ChainIDStrPrime: {
 				NetworkID:    wallet.CardanoNetworkType(p.primeNetworkID),
