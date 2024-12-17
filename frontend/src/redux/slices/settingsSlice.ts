@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import appSettings from '../../settings/appSettings'
-import { ChainEnum, SettingsResponseDto } from '../../swagger/apexBridgeApiService'
+import { SettingsResponseDto } from '../../swagger/apexBridgeApiService'
 
 export interface ISettingsState {
 	minUtxoChainValue: { [key: string]: string }
@@ -27,8 +27,7 @@ const settingsSlice = createSlice({
 				return acc;
 			}, {} as { [key: string]: string });
 			state.minChainFeeForBridging = Object.entries(action.payload.minChainFeeForBridging).reduce((acc, [key, value]) => {
-				const chainKey = key as ChainEnum;
-				acc[chainKey] = value.toString();
+				acc[key] = value.toString();
 				return acc;
 			}, {} as { [key: string]: string });
 			state.minValueToBridge = action.payload.minValueToBridge.toString();
