@@ -4,13 +4,19 @@ import { IsNotEmpty, IsPositive } from 'class-validator';
 export class SettingsResponseDto {
 	@IsNotEmpty()
 	@IsPositive()
-	@ApiProperty()
-	minChainFeeForBridging: { [ key: string ]: number };
+	@ApiProperty({
+		type: Object,
+		additionalProperties: { type: 'number' },
+	})
+	minChainFeeForBridging: { [key: string]: number };
 
 	@IsNotEmpty()
 	@IsPositive()
-	@ApiProperty()
-	minUtxoChainValue:{ [ key: string ]: number };
+	@ApiProperty({
+		type: Object,
+		additionalProperties: { type: 'number' },
+	})
+	minUtxoChainValue: { [key: string]: number };
 
 	@IsNotEmpty()
 	@IsPositive()
