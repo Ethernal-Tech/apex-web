@@ -1,5 +1,3 @@
-import { ChainEnum } from "../swagger/apexBridgeApiService";
-
 export class AppSettings {
 	private _apiUrl: string = 'https://localhost:30000';
 
@@ -8,7 +6,7 @@ export class AppSettings {
 		vector: "0"
 	};
 
-	private _minChainFeeForBridging: { [key in ChainEnum]: string } = {
+	private _minChainFeeForBridging: { [key: string]: string } = {
 		nexus: "0",
 		prime: "0",
 		vector: "0"
@@ -36,7 +34,7 @@ export class AppSettings {
 		return this._minUtxoChainValue;
 	}
 
-	get minChainFeeForBridging(): { [key in ChainEnum]: string } {
+	get minChainFeeForBridging(): { [key: string]: string } {
 		return this._minChainFeeForBridging;
 	}
 

@@ -5,7 +5,7 @@ import { ChainEnum, SettingsResponseDto } from '../../swagger/apexBridgeApiServi
 
 export interface ISettingsState {
 	minUtxoChainValue: { [key: string]: string }
-	minChainFeeForBridging: { [key in ChainEnum]: string }
+	minChainFeeForBridging: { [key: string]: string }
 	maxAmountAllowedToBridge: string
 	minValueToBridge: string
 }
@@ -30,7 +30,7 @@ const settingsSlice = createSlice({
 				const chainKey = key as ChainEnum;
 				acc[chainKey] = value.toString();
 				return acc;
-			}, {} as { [key in ChainEnum]: string });
+			}, {} as { [key: string]: string });
 			state.minValueToBridge = action.payload.minValueToBridge.toString();
 			state.maxAmountAllowedToBridge = action.payload.maxAmountAllowedToBridge;
 		},
