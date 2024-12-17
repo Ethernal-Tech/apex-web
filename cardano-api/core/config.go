@@ -52,10 +52,11 @@ type AppSettings struct {
 }
 
 type BridgingSettings struct {
-	MinFeeForBridging              uint64   `json:"minFeeForBridging"`
-	UtxoMinValue                   uint64   `json:"utxoMinValue"`
-	MaxAmountAllowedToBridge       *big.Int `json:"maxAmountAllowedToBridge"`
-	MaxReceiversPerBridgingRequest int      `json:"maxReceiversPerBridgingRequest"`
+	MinChainFeeForBridging         map[string]uint64 `json:"minChainFeeForBridging"`
+	MinUtxoChainValue              map[string]uint64 `json:"minUtxoChainValue"`
+	MinValueToBridge               uint64            `json:"minValueToBridge"`
+	MaxAmountAllowedToBridge       *big.Int          `json:"maxAmountAllowedToBridge"`
+	MaxReceiversPerBridgingRequest int               `json:"maxReceiversPerBridgingRequest"`
 }
 
 type AppConfig struct {
@@ -99,8 +100,9 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 		}
 
 		appConfig.BridgingSettings = BridgingSettings{
-			MinFeeForBridging:              settingsResponse.MinFeeForBridging,
-			UtxoMinValue:                   settingsResponse.MinUtxoValue,
+			MinChainFeeForBridging:         settingsResponse.MinChainFeeForBridging,
+			MinUtxoChainValue:              settingsResponse.MinUtxoChainValue,
+			MinValueToBridge:               settingsResponse.MinValueToBridge,
 			MaxAmountAllowedToBridge:       maxAmountAllowedToBridge,
 			MaxReceiversPerBridgingRequest: settingsResponse.MaxReceiversPerBridgingRequest,
 		}

@@ -1,18 +1,28 @@
 export class AppSettings {
 	private _apiUrl: string = 'https://localhost:30000';
 
-    private _minUtxoValue: string = "0";
-    private _minBridgingFee: string = "0";
-    private _maxAllowedToBridge: string = "0";
-	
+    private _minUtxoChainValue: { [key: string]: string } = {
+		prime: "0",
+		vector: "0"
+	};
+
+	private _minChainFeeForBridging: { [key: string]: string } = {
+		nexus: "0",
+		prime: "0",
+		vector: "0"
+	};
+
+    private _maxAmountAllowedToBridge: string = "0";
+    private _minValueToBridge: string = "0";
 	private _potentialWalletFee: number = 0;
 
     public constructor() {
 		const settingsJson = require(process.env.NODE_ENV === 'development' ? './appSettings_development.json' : './appSettings_production.json');
 		this._apiUrl = settingsJson.apiUrl;
-		this._minUtxoValue = settingsJson.minUtxoValue;
-		this._minBridgingFee = settingsJson.minBridgingFee;
-		this._maxAllowedToBridge = settingsJson.maxAllowedToBridge;
+		this._minUtxoChainValue = settingsJson.minUtxoChainValue;
+		this._minChainFeeForBridging = settingsJson.minChainFeeForBridging;
+		this._maxAmountAllowedToBridge = settingsJson.maxAmountAllowedToBridge;
+		this._minValueToBridge = settingsJson.minValueToBridge;
 		this._potentialWalletFee = settingsJson.potentialWalletFee;
 	}
 
@@ -20,16 +30,20 @@ export class AppSettings {
 		return this._apiUrl;
 	}
 
-	get minUtxoValue(): string {
-		return this._minUtxoValue;
+	get minUtxoChainValue(): { [key: string]: string } {
+		return this._minUtxoChainValue;
 	}
 
-	get minBridgingFee(): string {
-		return this._minBridgingFee;
+	get minChainFeeForBridging(): { [key: string]: string } {
+		return this._minChainFeeForBridging;
 	}
 
-	get maxAllowedToBridge(): string {
-		return this._maxAllowedToBridge;
+	get maxAmountAllowedToBridge(): string {
+		return this._maxAmountAllowedToBridge;
+	}
+
+	get minValueToBridge(): string {
+		return this._minValueToBridge;
 	}
 
 	get potentialWalletFee(): number {
