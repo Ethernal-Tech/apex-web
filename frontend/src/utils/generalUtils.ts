@@ -92,11 +92,11 @@ export const validateSubmitTxInputs = (
   destinationAddr: string, amount: string, bridgeTxFee: string,
 ): string | undefined => {
   if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector)) {
-    if (BigInt(amount) < BigInt(settings.minUtxoValue)) {
-      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minUtxoValue)} APEX`;
+    if (BigInt(amount) < BigInt(settings.minValueToBridge)) {
+      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} APEX`;
     }
 
-    const maxAllowedToBridgeDfm = BigInt(settings.maxAllowedToBridge)
+    const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
 
     if (maxAllowedToBridgeDfm > 0 &&
         BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeDfm) {
@@ -104,11 +104,11 @@ export const validateSubmitTxInputs = (
       return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} APEX`;
     } 
   } else if(sourceChain === ChainEnum.Nexus){
-    if (BigInt(amount) < BigInt(convertDfmToWei(settings.minUtxoValue))) {
-      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minUtxoValue)} APEX`;
+    if (BigInt(amount) < BigInt(convertDfmToWei(settings.minValueToBridge))) {
+      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} APEX`;
     }
 
-    const maxAllowedToBridgeWei = BigInt(convertDfmToWei(settings.maxAllowedToBridge));
+    const maxAllowedToBridgeWei = BigInt(convertDfmToWei(settings.maxAmountAllowedToBridge));
 
     if (maxAllowedToBridgeWei > 0 &&
         BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeWei) {

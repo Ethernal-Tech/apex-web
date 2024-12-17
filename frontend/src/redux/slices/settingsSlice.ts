@@ -4,15 +4,17 @@ import appSettings from '../../settings/appSettings'
 import { SettingsResponseDto } from '../../swagger/apexBridgeApiService'
 
 export interface ISettingsState {
-	minUtxoValue: string
-	minBridgingFee: string
-	maxAllowedToBridge: string
+	minUtxoChainValue: { [key: string]: string }
+	minChainFeeForBridging: { [key: string]: string }
+	maxAmountAllowedToBridge: string
+	minValueToBridge: string
 }
 
 const initialState: ISettingsState = {
-	minUtxoValue: appSettings.minUtxoValue,
-	minBridgingFee: appSettings.minBridgingFee,
-	maxAllowedToBridge: appSettings.maxAllowedToBridge,
+	minUtxoChainValue: appSettings.minUtxoChainValue,
+	minChainFeeForBridging: appSettings.minChainFeeForBridging,
+	maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,
+	minValueToBridge: appSettings.minValueToBridge,
 }
 
 const settingsSlice = createSlice({
@@ -20,9 +22,16 @@ const settingsSlice = createSlice({
 	initialState,
 	reducers: {
 		setSettingsAction: (state, action: PayloadAction<SettingsResponseDto>) => {
-			state.minUtxoValue = action.payload.minUtxoValue.toString()
-			state.minBridgingFee = action.payload.minFeeForBridging.toString()
-			state.maxAllowedToBridge = action.payload.maxAmountAllowedToBridge
+			state.minUtxoChainValue = Object.entries(action.payload.minUtxoChainValue).reduce((acc, [key, value]) => {
+				acc[key] = value.toString();
+				return acc;
+			}, {} as { [key: string]: string });
+			state.minChainFeeForBridging = Object.entries(action.payload.minChainFeeForBridging).reduce((acc, [key, value]) => {
+				acc[key] = value.toString();
+				return acc;
+			}, {} as { [key: string]: string });
+			state.minValueToBridge = action.payload.minValueToBridge.toString();
+			state.maxAmountAllowedToBridge = action.payload.maxAmountAllowedToBridge;
 		},
 	},
 })

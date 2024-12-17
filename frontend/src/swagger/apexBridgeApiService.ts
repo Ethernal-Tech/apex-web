@@ -476,8 +476,9 @@ export class WalletControllerClient extends BaseClient {
 }
 
 export class SettingsResponseDto implements ISettingsResponseDto {
-    minFeeForBridging!: number;
-    minUtxoValue!: number;
+    minChainFeeForBridging!: { [key: string]: number; };
+    minUtxoChainValue!: { [key: string]: number; };
+    minValueToBridge!: number;
     maxAmountAllowedToBridge!: string;
     maxReceiversPerBridgingRequest!: number;
 
@@ -488,12 +489,29 @@ export class SettingsResponseDto implements ISettingsResponseDto {
                     (<any>this)[property] = (<any>data)[property];
             }
         }
+        if (!data) {
+            this.minChainFeeForBridging = {};
+            this.minUtxoChainValue = {};
+        }
     }
 
     init(_data?: any) {
         if (_data) {
-            this.minFeeForBridging = _data["minFeeForBridging"];
-            this.minUtxoValue = _data["minUtxoValue"];
+            if (_data["minChainFeeForBridging"]) {
+                this.minChainFeeForBridging = {} as any;
+                for (let key in _data["minChainFeeForBridging"]) {
+                    if (_data["minChainFeeForBridging"].hasOwnProperty(key))
+                        this.minChainFeeForBridging![key] = _data["minChainFeeForBridging"][key];
+                }
+            }
+            if (_data["minUtxoChainValue"]) {
+                this.minUtxoChainValue = {} as any;
+                for (let key in _data["minUtxoChainValue"]) {
+                    if (_data["minUtxoChainValue"].hasOwnProperty(key))
+                        this.minUtxoChainValue![key] = _data["minUtxoChainValue"][key];
+                }
+            }
+            this.minValueToBridge = _data["minValueToBridge"];
             this.maxAmountAllowedToBridge = _data["maxAmountAllowedToBridge"];
             this.maxReceiversPerBridgingRequest = _data["maxReceiversPerBridgingRequest"];
         }
@@ -508,8 +526,21 @@ export class SettingsResponseDto implements ISettingsResponseDto {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["minFeeForBridging"] = this.minFeeForBridging;
-        data["minUtxoValue"] = this.minUtxoValue;
+        if (this.minChainFeeForBridging) {
+            data["minChainFeeForBridging"] = {};
+            for (let key in this.minChainFeeForBridging) {
+                if (this.minChainFeeForBridging.hasOwnProperty(key))
+                    data["minChainFeeForBridging"][key] = this.minChainFeeForBridging[key];
+            }
+        }
+        if (this.minUtxoChainValue) {
+            data["minUtxoChainValue"] = {};
+            for (let key in this.minUtxoChainValue) {
+                if (this.minUtxoChainValue.hasOwnProperty(key))
+                    data["minUtxoChainValue"][key] = this.minUtxoChainValue[key];
+            }
+        }
+        data["minValueToBridge"] = this.minValueToBridge;
         data["maxAmountAllowedToBridge"] = this.maxAmountAllowedToBridge;
         data["maxReceiversPerBridgingRequest"] = this.maxReceiversPerBridgingRequest;
         return data; 
@@ -517,8 +548,9 @@ export class SettingsResponseDto implements ISettingsResponseDto {
 }
 
 export interface ISettingsResponseDto {
-    minFeeForBridging: number;
-    minUtxoValue: number;
+    minChainFeeForBridging: { [key: string]: number; };
+    minUtxoChainValue: { [key: string]: number; };
+    minValueToBridge: number;
     maxAmountAllowedToBridge: string;
     maxReceiversPerBridgingRequest: number;
 }
