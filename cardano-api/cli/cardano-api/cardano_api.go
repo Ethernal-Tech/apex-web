@@ -76,7 +76,7 @@ func runCommand(cmd *cobra.Command, _ []string) {
 	case common.ReactorMode:
 		apiControllers = append(
 			apiControllers,
-			controllers.NewCardanoTxController(config, logger.Named("cardano_tx_controller")),
+			controllers.NewReactorTxController(config, logger.Named("reactor_tx_controller")),
 		)
 	case common.SkylineMode:
 		apiControllers = append(

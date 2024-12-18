@@ -28,7 +28,7 @@ type ReactorTxControllerImpl struct {
 
 var _ core.APIController = (*ReactorTxControllerImpl)(nil)
 
-func NewCardanoTxController(
+func NewReactorTxController(
 	appConfig *core.AppConfig,
 	logger hclog.Logger,
 ) *ReactorTxControllerImpl {
