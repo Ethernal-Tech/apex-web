@@ -222,7 +222,10 @@ func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		response.NewFullBridgingTxResponse(txRawBytes, txHash, requestBody.BridgingFee), c.logger)
+		response.NewFullBridgingTxResponse(
+			txRawBytes, txHash, requestBody.BridgingFee,
+			wallet.GetOutputsSum(outputs)[wallet.AdaTokenName]),
+		c.logger)
 }
 
 func (c *ReactorTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.Request) {
