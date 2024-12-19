@@ -128,9 +128,13 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	var txHash string
 
+	var amount uint64
+
+	var nativeTokenAmount uint64
+
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		response.NewFullBridgingTxResponse(txRawBytes, txHash, requestBody.BridgingFee), c.logger)
+		response.NewFullBridgingTxResponse(txRawBytes, txHash, requestBody.BridgingFee, amount, nativeTokenAmount), c.logger)
 }
 
 func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
