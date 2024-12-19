@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Ethernal-Tech/cardano-api/api/model/request"
-	"github.com/Ethernal-Tech/cardano-api/api/model/response"
+	"github.com/Ethernal-Tech/cardano-api/api/model/reactor/request"
+	"github.com/Ethernal-Tech/cardano-api/api/model/reactor/response"
 	"github.com/Ethernal-Tech/cardano-api/api/utils"
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
@@ -20,30 +20,30 @@ import (
 	"github.com/hashicorp/go-hclog"
 )
 
-type CardanoTxControllerImpl struct {
+type ReactorTxControllerImpl struct {
 	appConfig      *core.AppConfig
 	usedUtxoCacher *utils.UsedUtxoCacher
 	logger         hclog.Logger
 }
 
-var _ core.APIController = (*CardanoTxControllerImpl)(nil)
+var _ core.APIController = (*ReactorTxControllerImpl)(nil)
 
-func NewCardanoTxController(
+func NewReactorTxController(
 	appConfig *core.AppConfig,
 	logger hclog.Logger,
-) *CardanoTxControllerImpl {
-	return &CardanoTxControllerImpl{
+) *ReactorTxControllerImpl {
+	return &ReactorTxControllerImpl{
 		appConfig:      appConfig,
 		usedUtxoCacher: utils.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
 		logger:         logger,
 	}
 }
 
-func (*CardanoTxControllerImpl) GetPathPrefix() string {
+func (*ReactorTxControllerImpl) GetPathPrefix() string {
 	return "CardanoTx"
 }
 
-func (c *CardanoTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
+func (c *ReactorTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	return []*core.APIEndpoint{
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx, APIKeyAuth: true},
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee, APIKeyAuth: true},
@@ -52,7 +52,7 @@ func (c *CardanoTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	}
 }
 
-func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Request) {
+func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Request) {
 	queryValues := r.URL.Query()
 	c.logger.Debug("getBalance request", "query values", queryValues, "url", r.URL)
 
@@ -117,7 +117,7 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 	utils.WriteResponse(w, r, http.StatusOK, response.NewBalanceResponse(balance), c.logger)
 }
 
-func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
+func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
 	requestBody, ok := utils.DecodeModel[request.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
@@ -168,7 +168,7 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 	utils.WriteResponse(w, r, http.StatusOK, response.NewBridgingTxFeeResponse(fee), c.logger)
 }
 
-func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
+func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
 	requestBody, ok := utils.DecodeModel[request.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
@@ -222,10 +222,13 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		response.NewFullBridgingTxResponse(txRawBytes, txHash, requestBody.BridgingFee), c.logger)
+		response.NewFullBridgingTxResponse(
+			txRawBytes, txHash, requestBody.BridgingFee,
+			wallet.GetOutputsSum(outputs)[wallet.AdaTokenName]),
+		c.logger)
 }
 
-func (c *CardanoTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.Request) {
+func (c *ReactorTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.Request) {
 	requestBody, ok := utils.DecodeModel[request.SignBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
@@ -253,7 +256,7 @@ func (c *CardanoTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.
 		response.NewBridgingTxResponse(signedTx, requestBody.TxHash), c.logger)
 }
 
-func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
+func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody *request.CreateBridgingTxRequest,
 ) error {
 	cardanoSrcConfig, _ := core.GetChainConfig(c.appConfig, requestBody.SourceChainID)
@@ -352,7 +355,7 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	return nil
 }
 
-func (c *CardanoTxControllerImpl) getBridgingTxSenderAndOutputs(
+func (c *ReactorTxControllerImpl) getBridgingTxSenderAndOutputs(
 	requestBody request.CreateBridgingTxRequest,
 ) (*cardanotx.BridgingTxSender, []wallet.TxOutput, error) {
 	sourceChainConfig, exists := c.appConfig.CardanoChains[requestBody.SourceChainID]
@@ -389,7 +392,7 @@ func (c *CardanoTxControllerImpl) getBridgingTxSenderAndOutputs(
 	return bridgingTxSender, receivers, nil
 }
 
-func (c *CardanoTxControllerImpl) signTx(requestBody request.SignBridgingTxRequest) ([]byte, error) {
+func (c *ReactorTxControllerImpl) signTx(requestBody request.SignBridgingTxRequest) ([]byte, error) {
 	signingKeyBytes, err := common.DecodeHex(requestBody.SigningKeyHex)
 	if err != nil {
 		return nil, fmt.Errorf("failed to decode singing key hex: %w", err)

@@ -20,6 +20,13 @@ import (
 	"github.com/sethvargo/go-retry"
 )
 
+type VCRunMode string
+
+const (
+	ReactorMode VCRunMode = "reactor"
+	SkylineMode VCRunMode = "skyline"
+)
+
 const (
 	EthZeroAddr = "0x0000000000000000000000000000000000000000"
 

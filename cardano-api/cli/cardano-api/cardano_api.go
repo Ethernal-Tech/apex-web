@@ -2,6 +2,7 @@ package clicardanoapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -69,9 +70,23 @@ func runCommand(cmd *cobra.Command, _ []string) {
 		}
 	}()
 
-	apiControllers := []core.APIController{
-		controllers.NewCardanoTxController(
-			config, logger.Named("cardano_tx_controller")),
+	apiControllers := []core.APIController{}
+
+	switch config.RunMode {
+	case common.ReactorMode:
+		apiControllers = append(
+			apiControllers,
+			controllers.NewReactorTxController(config, logger.Named("reactor_tx_controller")),
+		)
+	case common.SkylineMode:
+		apiControllers = append(
+			apiControllers, controllers.NewSkylineTxController(config, logger.Named("skyline_tx_controller")),
+		)
+	default:
+		logger.Error("cardano api creation failed", "err", "run mode is invalid.")
+		outputter.SetError(errors.New("run mode is invalid"))
+
+		return
 	}
 
 	apiObj, err := api.NewAPI(ctx, config.APIConfig, apiControllers, logger.Named("api"))
