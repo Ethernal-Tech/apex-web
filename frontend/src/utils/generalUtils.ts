@@ -29,6 +29,8 @@ export const getChainLabelAndColor = (chain: string):{letter:string, color: stri
       return { letter: 'N', color: '#F27B50' };
     case 'vector':
       return { letter: 'V', color: '#F25041' };
+    case 'cardano':
+      return { letter: 'C', color: '#5856D6' };
     default:
       return { letter: '', color: 'transparent' };
   }
@@ -91,7 +93,7 @@ export const validateSubmitTxInputs = (
   settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
   destinationAddr: string, amount: string, bridgeTxFee: string,
 ): string | undefined => {
-  if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector)) {
+  if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector || sourceChain === ChainEnum.Cardano)) {
     if (BigInt(amount) < BigInt(settings.minValueToBridge)) {
       return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} APEX`;
     }
@@ -117,7 +119,7 @@ export const validateSubmitTxInputs = (
     } 
   }
 
-  if (destinationChain === ChainEnum.Prime || destinationChain === ChainEnum.Vector) {
+  if (destinationChain === ChainEnum.Prime || destinationChain === ChainEnum.Vector || sourceChain === ChainEnum.Cardano) {
     const addr = NewAddress(destinationAddr);
     if (!addr || addr instanceof RewardAddress || destinationAddr !== addr.String()) {
       return `Invalid destination address: ${destinationAddr}`;
@@ -137,10 +139,12 @@ export const chainIcons:{
   [ChainEnum.Prime]:FunctionComponent<SVGProps<SVGSVGElement>>
   [ChainEnum.Vector]:FunctionComponent<SVGProps<SVGSVGElement>>
   [ChainEnum.Nexus]:FunctionComponent<SVGProps<SVGSVGElement>>
+  [ChainEnum.Cardano]:FunctionComponent<SVGProps<SVGSVGElement>>
 } = {
   [ChainEnum.Prime]:PrimeIcon,
   [ChainEnum.Vector]:VectorIcon,
-  [ChainEnum.Nexus]:NexusIcon
+  [ChainEnum.Nexus]:NexusIcon,
+  [ChainEnum.Cardano]:NexusIcon // TODO: change Icon
 }
 
 // format it differently depending on network (nexus is 18 decimals, prime and vector are 6)
@@ -151,6 +155,7 @@ export const convertDfmToApex = (dfm:string|number, network:ChainEnum) =>{
   switch(network){
       case ChainEnum.Prime:
       case ChainEnum.Vector:
+      case ChainEnum.Cardano:
           return convertUtxoDfmToApex(dfm);
       case ChainEnum.Nexus:
           return convertEvmDfmToApex(dfm)
@@ -164,6 +169,7 @@ export const convertApexToDfm = (apex:string|number, network:ChainEnum) =>{
   switch(network){
       case ChainEnum.Prime:
       case ChainEnum.Vector:
+      case ChainEnum.Cardano:
           return convertApexToUtxoDfm(apex);
       case ChainEnum.Nexus:
           return convertApexToEvmDfm(apex)

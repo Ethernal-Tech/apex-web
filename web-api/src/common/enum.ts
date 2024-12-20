@@ -15,10 +15,3 @@ export enum ChainEnum {
 	Nexus = 'nexus',
 	Cardano = 'cardano',
 }
-
-export enum SourceTokenEnum {
-	Ada = 'Ada',
-	WAda = 'WAda',
-	APEX = 'APEX',
-	WAPEX = 'WAPEX',
-}

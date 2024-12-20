@@ -3,6 +3,9 @@ import { IsNotEmpty } from 'class-validator';
 
 export class BalanceResponseDto {
 	@IsNotEmpty()
-	@ApiProperty()
-	balance: string;
+	@ApiProperty({
+		type: Object,
+		additionalProperties: { type: 'string' },
+	})
+	balance: { [key: string]: string };
 }

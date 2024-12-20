@@ -64,6 +64,17 @@ export class BridgeTransactionService {
 			where.amount = LessThanOrEqual(model.amountTo);
 		}
 
+		if (model.nativeTokenAmountFrom && model.nativeTokenAmountTo) {
+			where.nativeTokenAmount = Between(
+				model.nativeTokenAmountFrom,
+				model.nativeTokenAmountTo,
+			);
+		} else if (model.nativeTokenAmountFrom) {
+			where.nativeTokenAmount = MoreThanOrEqual(model.nativeTokenAmountFrom);
+		} else if (model.nativeTokenAmountTo) {
+			where.nativeTokenAmount = LessThanOrEqual(model.nativeTokenAmountTo);
+		}
+
 		if (model.receiverAddress) {
 			where.receiverAddresses = Like(model.receiverAddress);
 		}

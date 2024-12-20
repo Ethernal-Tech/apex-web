@@ -27,6 +27,7 @@ export const signAndSubmitCardanoTx = async (
         txRaw: createResponse.txRaw,
         signedTxRaw,
         isFallback: createResponse.isFallback,
+        nativeTokenAmount: createResponse.nativeTokenAmount.toString(),
     }));
 
     const response = await tryCatchJsonByAction(bindedSubmitAction, false);
@@ -97,6 +98,7 @@ export const signAndSubmitEthTx = async (
       ),
       amount: amount.toString(),
       isFallback: createResponse.isFallback,
+      nativeTokenAmount: '0',
   }));
 
   const response = await tryCatchJsonByAction(bindedSubmittedAction, false);

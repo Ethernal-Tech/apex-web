@@ -10,6 +10,7 @@ import { capitalizeWord } from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import styled from '@emotion/styled';
+import appSettings from '../../settings/appSettings';
 
 const StyledFormControl = styled(FormControl)({
     '& .MuiSelect-select': {
@@ -133,7 +134,16 @@ export default function Filters({ filters, onFilterChange }: Props) {
     const chain = useSelector((state: RootState) => state.chain.chain)
     const account = useSelector((state: RootState) => state.accountInfo.account);
 
-    const destinationChains = useMemo(() => Object.values(ChainEnum).filter(x => x !== chain), [chain])
+    const destinationChains = useMemo(
+        () => {
+            if (appSettings.isSkyline) {
+                return chain === ChainEnum.Prime ? [ChainEnum.Cardano] : [ChainEnum.Prime];
+            }
+
+            return Object.values(ChainEnum).filter(x => x !== chain && x !== ChainEnum.Cardano)
+        }, 
+        [chain]
+    )
 
     const removeFilterCallback = useCallback(
         (propName: string) => {
@@ -246,7 +256,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                 labelId='destination-chain-label'
                                 name='destinationChain'
                                 variant="outlined"
-                                value={values.destinationChain}
+                                value={values.destinationChain || ''}
                                 onChange={changeCallback}
                                 MenuProps={{
                                     PaperProps: {
@@ -272,7 +282,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                 name="receiverAddress"
                                 variant="outlined"
                                 size="small"
-                                value={values.receiverAddress}
+                                value={values.receiverAddress || ''}
                                 onChange={changeCallback}
                                 sx={{
                                     width:'100%',
@@ -310,7 +320,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                     type="number"
                                     variant="outlined"
                                     size="small"
-                                    value={values.amountFrom}
+                                    value={values.amountFrom || ''}
                                     onChange={changeCallback}
                                     sx={amountStyle}
                                 />
@@ -323,12 +333,43 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                     type="number"
                                     variant="outlined"
                                     size="small"
-                                    value={values.amountTo}
+                                    value={values.amountTo || ''}
                                     onChange={changeCallback}
                                     sx={amountStyle}
                                 />
                             </Box>
                         </Box>
+                        {
+                            appSettings.isSkyline &&
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Box>
+                                    <Typography>Token Amount From</Typography>
+                                    <TextField
+                                        id="native-token-amount-from"
+                                        name='nativeTokenAmountFrom'
+                                        type="number"
+                                        variant="outlined"
+                                        size="small"
+                                        value={values.nativeTokenAmountFrom || ''}
+                                        onChange={changeCallback}
+                                        sx={amountStyle}
+                                    />
+                                </Box>
+                                <Box>
+                                <Typography>Token Amount To</Typography>
+                                    <TextField
+                                        id="native-token-amount-to"
+                                        name='nativeTokenAmountTo'
+                                        type="number"
+                                        variant="outlined"
+                                        size="small"
+                                        value={values.nativeTokenAmountTo || ''}
+                                        onChange={changeCallback}
+                                        sx={amountStyle}
+                                    />
+                                </Box>
+                            </Box>
+                        }
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                         <Button
