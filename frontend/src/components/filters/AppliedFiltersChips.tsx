@@ -11,6 +11,8 @@ type Props = {
 const mapKeyToWord: { [key: string]: string } = {
 	amountFrom: 'From',
 	amountTo: 'To',
+	nativeTokenAmountFrom: 'Token From',
+	nativeTokenAmountTo: 'Token To',
 	receiverAddress: 'Receiver',
 	destinationChain: 'Destination chain',
 }
@@ -18,6 +20,8 @@ const mapKeyToWord: { [key: string]: string } = {
 const filterProps: string[] = [
 	'amountTo',
 	'amountFrom',
+	'nativeTokenAmountTo',
+	'nativeTokenAmountFrom',
 	'receiverAddress',
 	'destinationChain',
 ]

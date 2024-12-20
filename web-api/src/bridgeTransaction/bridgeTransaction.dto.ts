@@ -86,6 +86,12 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 	amountTo?: string;
 
 	@ApiProperty({ nullable: true, required: false })
+	nativeTokenAmountFrom?: string;
+
+	@ApiProperty({ nullable: true, required: false })
+	nativeTokenAmountTo?: string;
+
+	@ApiProperty({ nullable: true, required: false })
 	orderBy?: string;
 
 	@ApiProperty({ nullable: true, required: false })

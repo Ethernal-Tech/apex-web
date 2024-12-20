@@ -54,7 +54,8 @@ export class TransactionService {
 	private async validateCreateCardanoTx(dto: CreateTransactionDto) {
 		if (
 			dto.originChain !== ChainEnum.Prime &&
-			dto.originChain !== ChainEnum.Vector
+			dto.originChain !== ChainEnum.Vector &&
+			dto.originChain !== ChainEnum.Cardano
 		) {
 			throw new BadRequestException('Invalid origin chain');
 		}
@@ -62,13 +63,21 @@ export class TransactionService {
 		if (
 			dto.originChain === ChainEnum.Prime &&
 			dto.destinationChain !== ChainEnum.Vector &&
-			dto.destinationChain !== ChainEnum.Nexus
+			dto.destinationChain !== ChainEnum.Nexus &&
+			dto.destinationChain !== ChainEnum.Cardano
 		) {
 			throw new BadRequestException('Invalid destination chain');
 		}
 
 		if (
 			dto.originChain === ChainEnum.Vector &&
+			dto.destinationChain !== ChainEnum.Prime
+		) {
+			throw new BadRequestException('Invalid destination chain');
+		}
+
+		if (
+			dto.originChain === ChainEnum.Cardano &&
 			dto.destinationChain !== ChainEnum.Prime
 		) {
 			throw new BadRequestException('Invalid destination chain');

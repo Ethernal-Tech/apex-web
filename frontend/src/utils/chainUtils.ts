@@ -1,3 +1,4 @@
+import { TokenEnum } from "../features/enums";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
 const PRIME_NETWORK_ID = 0
@@ -82,4 +83,38 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
         const baseUrl = getExplorerTxUrl(tx.originChain)
         window.open(`${baseUrl}/${txHash}`, '_blank')
     }
+}
+
+export const fromChainToChainCurrency = (chain: ChainEnum): TokenEnum => {
+    switch (chain) {
+        case ChainEnum.Prime: {
+            return TokenEnum.APEX;
+        }
+        case ChainEnum.Cardano: {
+            return TokenEnum.Ada;
+        }
+        default:
+            return TokenEnum.APEX;
+    }
+}
+
+export const fromChainToChainNativeToken = (chain: ChainEnum): TokenEnum => {
+    switch (chain) {
+        case ChainEnum.Prime: {
+            return TokenEnum.WAda;
+        }
+        case ChainEnum.Cardano: {
+            return TokenEnum.WAPEX;
+        }
+        default:
+            return TokenEnum.WAda;
+    }
+}
+
+export const getIsNativeToken = (chain: ChainEnum, sourceToken: TokenEnum) => {
+    if (chain === ChainEnum.Prime) {
+        return sourceToken === TokenEnum.WAda;
+    }
+
+    return sourceToken === TokenEnum.WAPEX;
 }

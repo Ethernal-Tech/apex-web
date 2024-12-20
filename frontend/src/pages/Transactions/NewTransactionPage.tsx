@@ -32,7 +32,7 @@ function NewTransactionPage() {
 	const SourceIcon = chainIcons[chain];
 	const DestinationIcon = chainIcons[destinationChain];
 
-	const prepareCreateCardanoTx = useCallback((address: string, amount: string): CreateTransactionDto => {
+	const prepareCreateCardanoTx = useCallback((address: string, amount: string, isNativeToken: boolean = false): CreateTransactionDto => {
 		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
 		if (validationErr) {
 			throw new Error(validationErr);
@@ -46,6 +46,7 @@ function NewTransactionPage() {
 			destinationAddress: address,
 			amount,
 			utxoCacheKey: undefined,
+			isNativeToken,
 		})
 	}, [account, bridgeTxFee, chain, destinationChain, settings])
 
@@ -60,8 +61,8 @@ function NewTransactionPage() {
 		return feeResponse;
 	}, [prepareCreateCardanoTx])
 
-	const createCardanoTx = useCallback(async (address: string, amount: string): Promise<CreateCardanoTxResponse> => {
-		const createTxDto = prepareCreateCardanoTx(address, amount);
+	const createCardanoTx = useCallback(async (address: string, amount: string, isNativeToken: boolean): Promise<CreateCardanoTxResponse> => {
+		const createTxDto = prepareCreateCardanoTx(address, amount, isNativeToken);
 		const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (createResponse instanceof ErrorResponse) {
@@ -85,6 +86,7 @@ function NewTransactionPage() {
 			destinationAddress: address,
 			amount,
 			utxoCacheKey: undefined,
+			isNativeToken: false,
 		})
 	}, [account, bridgeTxFee, chain, destinationChain, settings])
 
@@ -111,11 +113,11 @@ function NewTransactionPage() {
 	}, [prepareCreateEthTx])
 
 	const handleSubmitCallback = useCallback(
-		async (address: string, amount: string) => {
+		async (address: string, amount: string, isNativeToken: boolean) => {
 			setLoading(true);
 			try {
-				if (chain === ChainEnum.Prime || chain === ChainEnum.Vector) {
-					const createTxResp = await createCardanoTx(address, amount);
+				if (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano) {
+					const createTxResp = await createCardanoTx(address, amount, isNativeToken);
 					
 					const response = await signAndSubmitCardanoTx(
 						createTxResp.createTxDto,

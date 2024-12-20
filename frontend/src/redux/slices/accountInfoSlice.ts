@@ -4,13 +4,13 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 export interface IAccountInfoState {
 	account: string,
 	networkId: number|bigint,
-	balance: string,
+	balance: { [key: string]: string },
 }
 
 const initialState: IAccountInfoState = {
 	account: '',
 	networkId: 0,
-	balance: '0',
+	balance: {},
 }
 
 const accountInfoSlice = createSlice({
@@ -22,13 +22,13 @@ const accountInfoSlice = createSlice({
 			state.networkId = action.payload.networkId;
 			state.balance = action.payload.balance;
 		},
-		updateBalanceAction: (state, action: PayloadAction<string>) => {
+		updateBalanceAction: (state, action: PayloadAction<{ [key: string]: string }>) => {
             state.balance = action.payload;
 		},
 		removeAccountInfoAction: (state) => {
 			state.account = '';
 			state.networkId = 0;
-			state.balance = '0';
+			state.balance = {};
 		},
 	},
 })

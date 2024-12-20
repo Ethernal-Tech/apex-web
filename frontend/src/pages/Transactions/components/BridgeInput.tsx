@@ -5,30 +5,67 @@ import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { convertApexToDfm, convertDfmToWei } from '../../../utils/generalUtils';
+import { chainIcons, convertApexToDfm, convertDfmToWei } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
+import CustomSelect from '../../../components/customSelect/CustomSelect';
+import { white } from '../../../containers/theme';
+import { getIsNativeToken } from '../../../utils/chainUtils';
+import { TokenEnum } from '../../../features/enums';
 
 type BridgeInputType = {
     bridgeTxFee: string
     getCardanoTxFee: (address: string, amount: string) => Promise<CardanoTransactionFeeResponseDto>
     getEthTxFee: (address: string, amount: string) => Promise<CreateEthTransactionResponseDto>
-    submit:(address: string, amount: string) => Promise<void>
+    submit:(address: string, amount: string, isNativeToken: boolean) => Promise<void>
     loading?: boolean;
 }
+
+const primeSourceTokenOptions = [
+  { 
+    value: TokenEnum.APEX,
+    label: TokenEnum.APEX,
+    icon: chainIcons[ChainEnum.Prime],
+    borderColor:'#077368' 
+  },
+  { 
+    value: TokenEnum.WAda,
+    label: TokenEnum.WAda,
+    icon: chainIcons[ChainEnum.Prime],
+    borderColor:'#077368' 
+  },
+];
+
+const cardanoSourceTokenOptions = [
+  { 
+    value: TokenEnum.Ada,
+    label: TokenEnum.Ada,
+    icon: chainIcons[ChainEnum.Cardano],
+    borderColor: '#5856D6'
+  },
+  { 
+    value: TokenEnum.WAPEX,
+    label: TokenEnum.WAPEX,
+    icon: chainIcons[ChainEnum.Cardano],
+    borderColor: '#5856D6'
+  }
+];
 
 const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
   const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
+  const [sourceToken, setSourceToken] = useState<TokenEnum>(TokenEnum.APEX);
   const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
   const {chain} = useSelector((state: RootState)=> state.chain);
   const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge);
+
+  const supportedSourceTokenOptions = chain === ChainEnum.Prime ? primeSourceTokenOptions : cardanoSourceTokenOptions;
 
   const fetchWalletFee = useCallback(async () => {
     if (!destinationAddr || !amount) {
@@ -37,7 +74,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
     }
 
     try {
-        if (chain === ChainEnum.Prime || chain === ChainEnum.Vector) {
+        if (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano) {
             const feeResp = await getCardanoTxFee(destinationAddr, convertApexToDfm(amount || '0', chain));
             setUserWalletFee((feeResp?.fee || 0).toString());
 
@@ -58,6 +95,10 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
     setUserWalletFee(undefined);
     
   }, [amount, chain, getEthTxFee, destinationAddr, getCardanoTxFee])
+
+  useEffect(() => {
+    setSourceToken(chain === ChainEnum.Prime ? TokenEnum.APEX : TokenEnum.Ada);
+  }, [chain])
 
   useEffect(() => {
     if (fetchCreateTxTimeoutRef.current) {
@@ -84,17 +125,17 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
   const minDfmValue = chain === ChainEnum.Nexus ? 
     convertDfmToWei(minValueToBridge) : minValueToBridge;
     
-    const maxAmountDfm:string = totalDfmBalance
-        ? ( chain === ChainEnum.Prime || chain === ChainEnum.Vector
-            ? (BigInt(totalDfmBalance) - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString()
-            : (BigInt(totalDfmBalance) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString() // for nexus, using minDfm value as substitute to user wallet fee / potential fee
-        )
-        : '0';
-    // Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null; // this causes 0 on nexus, seems to be a bug
+  const maxAmountDfm:string = totalDfmBalance
+    ? (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano
+      ? (BigInt(totalDfmBalance[sourceToken]) - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString()
+      : (BigInt(totalDfmBalance[sourceToken]) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString() // for nexus, using minDfm value as substitute to user wallet fee / potential fee
+    )
+    : '0';
+  // Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null; // this causes 0 on nexus, seems to be a bug
 
   const onSubmit = useCallback(async () => {
-    await submit(destinationAddr, convertApexToDfm(amount || '0', chain))
-  }, [amount, destinationAddr, submit, chain]) 
+    await submit(destinationAddr, convertApexToDfm(amount || '0', chain), getIsNativeToken(chain, sourceToken))
+  }, [amount, destinationAddr, submit, chain, sourceToken]) 
 
   return (
     <Box sx={{width:'100%'}}>
@@ -103,6 +144,20 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
         <Typography sx={{color:'white',mt:4, mb:2}}>Destination Address</Typography>
         {/* validate inputs */}
         <PasteTextInput sx={{width:'50%'}} text={destinationAddr} setText={setDestinationAddr} disabled={loading}/>
+        {
+          appSettings.isSkyline &&
+          <Box sx={{ mt: '20px' }}>
+              <Typography mb={'7px'} sx={{ color: white }}>Source Token</Typography>
+              <CustomSelect
+                  label="SourceToken"
+                  icon={chainIcons[ChainEnum.Prime]}
+                  value={sourceToken}
+                  onChange={(e) => setSourceToken(e.target.value as TokenEnum)}
+                  options={supportedSourceTokenOptions}
+                  width='50%'
+              />
+          </Box>
+        }
 
         <Typography sx={{color:'white',mt:4, mb:1}}>Enter amount to send</Typography>
         <Box sx={{

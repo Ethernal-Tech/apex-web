@@ -27,7 +27,7 @@ const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainEnum, 
 
     dispatch(setWalletAction(selectedWalletName));
     dispatch(setAccountInfoAction({
-        account, networkId: networkId, balance: '0',
+        account, networkId: networkId, balance: {},
     }))
 }
 
@@ -39,7 +39,7 @@ const onEvmAccountsChanged = async (_accounts: string[], selectedWalletName: str
         console.log(we)
         toast.error(we);
 
-        await logout(dispatch)
+        logout(dispatch)
     }
 }
 
@@ -74,7 +74,7 @@ const enableCardanoWallet = async (selectedWalletName: string, chain: ChainEnum,
 
     dispatch(setWalletAction(selectedWalletName));
     dispatch(setAccountInfoAction({
-        account, networkId, balance: '0',
+        account, networkId, balance: {},
     }))
 
     return true;
