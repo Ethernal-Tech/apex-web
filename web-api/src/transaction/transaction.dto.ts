@@ -116,9 +116,8 @@ export class CreateCardanoTransactionResponseDto {
 	@ApiProperty()
 	amount: number;
 
-	@IsNotEmpty()
-	@ApiProperty()
-	nativeTokenAmount: number;
+	@ApiProperty({ nullable: true })
+	nativeTokenAmount?: number;
 }
 
 export class CardanoTransactionFeeResponseDto {

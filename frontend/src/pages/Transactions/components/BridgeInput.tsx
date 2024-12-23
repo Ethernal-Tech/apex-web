@@ -97,7 +97,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
   }, [amount, chain, getEthTxFee, destinationAddr, getCardanoTxFee])
 
   useEffect(() => {
-    setSourceToken(chain === ChainEnum.Prime ? TokenEnum.APEX : TokenEnum.Ada);
+    setSourceToken(!appSettings.isSkyline || chain === ChainEnum.Prime ? TokenEnum.APEX : TokenEnum.Ada);
   }, [chain])
 
   useEffect(() => {
@@ -121,9 +121,12 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
     setAmount('')
   }
 
-    // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
-  const minDfmValue = chain === ChainEnum.Nexus ? 
-    convertDfmToWei(minValueToBridge) : minValueToBridge;
+  // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
+  const minDfmValue = chain === ChainEnum.Nexus 
+    ? convertDfmToWei(minValueToBridge) 
+    : appSettings.isSkyline 
+      ? appSettings.minUtxoChainValue[chain] 
+      : minValueToBridge;
     
   const maxAmountDfm:string = totalDfmBalance
     ? (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano
@@ -132,6 +135,11 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
     )
     : '0';
   // Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null; // this causes 0 on nexus, seems to be a bug
+
+  // TODO: use this to validate input of in case of wrapped token selection
+  const maxWrappedAmount: string = totalDfmBalance
+    ? totalDfmBalance[sourceToken]
+    : '0';
 
   const onSubmit = useCallback(async () => {
     await submit(destinationAddr, convertApexToDfm(amount || '0', chain), getIsNativeToken(chain, sourceToken))
@@ -168,6 +176,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
             {/* validate inputs */}
             <PasteApexAmountInput
                 maxSendableDfm={maxAmountDfm}
+                maxWrappedAmount={maxWrappedAmount}
                 text={amount}
                 setAmount={setAmount}
                 disabled={loading}

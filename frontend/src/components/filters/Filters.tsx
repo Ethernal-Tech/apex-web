@@ -11,6 +11,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import styled from '@emotion/styled';
 import appSettings from '../../settings/appSettings';
+import { reactorChains, skylineChains } from '../../utils/chainUtils';
 
 const StyledFormControl = styled(FormControl)({
     '& .MuiSelect-select': {
@@ -134,16 +135,8 @@ export default function Filters({ filters, onFilterChange }: Props) {
     const chain = useSelector((state: RootState) => state.chain.chain)
     const account = useSelector((state: RootState) => state.accountInfo.account);
 
-    const destinationChains = useMemo(
-        () => {
-            if (appSettings.isSkyline) {
-                return chain === ChainEnum.Prime ? [ChainEnum.Cardano] : [ChainEnum.Prime];
-            }
-
-            return Object.values(ChainEnum).filter(x => x !== chain && x !== ChainEnum.Cardano)
-        }, 
-        [chain]
-    )
+    const supportedChains = appSettings.isSkyline ? skylineChains : reactorChains;
+    const destinationChains = useMemo(() => supportedChains.filter(x => x !== chain), [supportedChains, chain])
 
     const removeFilterCallback = useCallback(
         (propName: string) => {

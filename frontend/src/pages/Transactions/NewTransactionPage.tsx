@@ -4,7 +4,7 @@ import AddressBalance from "./components/AddressBalance";
 import TotalBalance from "./components/TotalBalance";
 import TransferProgress from "./components/TransferProgress";
 import BridgeInput from "./components/BridgeInput";
-import { chainIcons, convertDfmToWei, validateSubmitTxInputs } from "../../utils/generalUtils";
+import { chainIcons, convertDfmToWei, validateSubmitTxInputs, validateSubmitTxInputsSkyline } from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useCallback, useState } from "react";
@@ -14,6 +14,7 @@ import { createCardanoTransactionAction, createEthTransactionAction, getCardanoT
 import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
+import appSettings from "../../settings/appSettings";
 
 function NewTransactionPage() {
 	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
@@ -25,15 +26,16 @@ function NewTransactionPage() {
 	const account = useSelector((state: RootState) => state.accountInfo.account);
 	const settings = useSelector((state: RootState) => state.settings);
 
-	// conditionally implementing bridgeTxFee depending on selected network
-	const bridgeTxFee = chain === ChainEnum.Nexus ? 
-		convertDfmToWei(settings.minChainFeeForBridging[ChainEnum.Nexus]) : settings.minChainFeeForBridging[chain];
+	const bridgeTxFee = chain === ChainEnum.Nexus ?
+		convertDfmToWei(settings.minChainFeeForBridging[destinationChain]) : settings.minChainFeeForBridging[destinationChain];
 
 	const SourceIcon = chainIcons[chain];
 	const DestinationIcon = chainIcons[destinationChain];
 
 	const prepareCreateCardanoTx = useCallback((address: string, amount: string, isNativeToken: boolean = false): CreateTransactionDto => {
-		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
+		const validationErr = appSettings.isSkyline
+			? validateSubmitTxInputsSkyline(settings, chain, destinationChain, address, amount, bridgeTxFee, isNativeToken) 
+			: validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
 		if (validationErr) {
 			throw new Error(validationErr);
 		}

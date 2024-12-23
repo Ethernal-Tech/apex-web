@@ -632,7 +632,7 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
     bridgingFee!: number;
     isFallback!: boolean;
     amount!: number;
-    nativeTokenAmount!: number;
+    nativeTokenAmount!: number | undefined;
 
     constructor(data?: ICreateCardanoTransactionResponseDto) {
         if (data) {
@@ -679,7 +679,7 @@ export interface ICreateCardanoTransactionResponseDto {
     bridgingFee: number;
     isFallback: boolean;
     amount: number;
-    nativeTokenAmount: number;
+    nativeTokenAmount: number | undefined;
 }
 
 export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeResponseDto {

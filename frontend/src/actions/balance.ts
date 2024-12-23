@@ -10,7 +10,6 @@ import { TokenEnum } from '../features/enums';
 export const getWalletBalanceAction = async (chain: ChainEnum, address: string) => {
     if (chain === ChainEnum.Nexus) { 
         const nexusBalance = await evmWalletHandler.getBalance()
-        // TODO: check if key should be TokenEnum.APEX
         return new BalanceResponseDto({ balance: { [TokenEnum.APEX]: nexusBalance } })
     }
     

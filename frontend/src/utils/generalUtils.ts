@@ -135,6 +135,35 @@ export const validateSubmitTxInputs = (
   }
 }
 
+export const validateSubmitTxInputsSkyline = (
+  settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
+  destinationAddr: string, amount: string, bridgeTxFee: string, isNativeToken: boolean
+): string | undefined => {
+  if (BigInt(amount) < BigInt(settings.minValueToBridge)) {
+    return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} APEX`;
+  }
+
+  const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
+  if (maxAllowedToBridgeDfm > 0 && BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeDfm) {
+    const maxAllowed = maxAllowedToBridgeDfm - BigInt(bridgeTxFee);
+    return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} APEX`;
+  }
+
+  const addr = NewAddress(destinationAddr);
+  if (!addr || addr instanceof RewardAddress || destinationAddr !== addr.String()) {
+    return `Invalid destination address: ${destinationAddr}`;
+  }
+
+  if (!areChainsEqual(destinationChain, addr.GetNetwork())) {
+    return `Destination address not compatible with destination chain: ${destinationChain}`;
+  }
+
+  const chain = isNativeToken ? destinationChain : sourceChain;
+  if (BigInt(amount) < BigInt(settings.minUtxoChainValue[chain])) {
+    return 'Amount less than minimum';
+  }
+}
+
 export const chainIcons:{
   [ChainEnum.Prime]:FunctionComponent<SVGProps<SVGSVGElement>>
   [ChainEnum.Vector]:FunctionComponent<SVGProps<SVGSVGElement>>

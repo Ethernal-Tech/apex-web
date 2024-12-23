@@ -15,7 +15,7 @@ const TotalBalance = () => {
     const chainNativeToken = fromChainToChainNativeToken(chain);
 
     const totalBalanceInApex = totalDfmBalance[chainCurrency] ? toFixed(convertDfmToApex(totalDfmBalance[chainCurrency], chain), 6) : null;
-    const totalBalanceInNativeToken = totalDfmBalance[chainNativeToken] ? toFixed(convertDfmToApex(totalDfmBalance[chainNativeToken], chain), 6) : null;
+    const totalBalanceInNativeToken = appSettings.isSkyline && totalDfmBalance[chainNativeToken] ? toFixed(convertDfmToApex(totalDfmBalance[chainNativeToken], chain), 6) : null;
 
     if (appSettings.isSkyline) {
         return (

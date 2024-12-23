@@ -68,6 +68,7 @@ const CustomButton = styled(Button)({
 interface PasteApexAmountInputProps {
   sx?: SxProps<Theme>;
   maxSendableDfm: string | null
+  maxWrappedAmount: string | null
   text: string
   setAmount: (text: string) => void
   disabled?: boolean;

@@ -135,7 +135,7 @@ const HomePage: React.FC = () => {
             label="Destination"
             icon={getIconComponent(destinationChain)}
             value={destinationChain}
-            disabled={appSettings.isSkyline ? true : chain !== ChainEnum.Prime}
+            disabled={appSettings.isSkyline || chain !== ChainEnum.Prime}
             onChange={(e) => updateDestination(e.target.value as ChainEnum)}
             // todo - makeshift fix, check out details later
             options={supportedChainOptions.filter(x => {

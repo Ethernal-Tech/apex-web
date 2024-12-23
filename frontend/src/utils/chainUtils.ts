@@ -118,3 +118,14 @@ export const getIsNativeToken = (chain: ChainEnum, sourceToken: TokenEnum) => {
 
     return sourceToken === TokenEnum.WAPEX;
 }
+
+export const skylineChains: ChainEnum[] = [
+    ChainEnum.Prime,
+    ChainEnum.Cardano,
+]
+
+export const reactorChains: ChainEnum[] = [
+    ChainEnum.Prime,
+    ChainEnum.Vector,
+    ChainEnum.Nexus,
+]
