@@ -1,6 +1,6 @@
 import { NewAddress, RewardAddress } from "../features/Address/addreses";
 import { BridgeTransactionDto, ChainEnum } from "../swagger/apexBridgeApiService";
-import { areChainsEqual } from "./chainUtils";
+import { areChainsEqual, fromChainToChainCurrency } from "./chainUtils";
 import Web3 from "web3";
 import {Numbers} from "web3-types";
 import {EtherUnits} from "web3-utils";
@@ -139,14 +139,17 @@ export const validateSubmitTxInputsSkyline = (
   settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
   destinationAddr: string, amount: string, bridgeTxFee: string, isNativeToken: boolean
 ): string | undefined => {
-  if (BigInt(amount) < BigInt(settings.minValueToBridge)) {
-    return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} APEX`;
+  const chain = isNativeToken ? destinationChain : sourceChain;
+  if (BigInt(amount) < BigInt(settings.minUtxoChainValue[chain])) {
+    return `Amount less than minimum: ${convertUtxoDfmToApex(BigInt(settings.minUtxoChainValue[chain]).toString(10))} ${fromChainToChainCurrency(chain)}`;
   }
 
-  const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
-  if (maxAllowedToBridgeDfm > 0 && BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeDfm) {
-    const maxAllowed = maxAllowedToBridgeDfm - BigInt(bridgeTxFee);
-    return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} APEX`;
+  if (!isNativeToken) {
+    const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
+    if (maxAllowedToBridgeDfm > 0 && BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeDfm) {
+      const maxAllowed = maxAllowedToBridgeDfm - BigInt(bridgeTxFee);
+      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} ${fromChainToChainCurrency(sourceChain)}`;
+    }
   }
 
   const addr = NewAddress(destinationAddr);
@@ -156,11 +159,6 @@ export const validateSubmitTxInputsSkyline = (
 
   if (!areChainsEqual(destinationChain, addr.GetNetwork())) {
     return `Destination address not compatible with destination chain: ${destinationChain}`;
-  }
-
-  const chain = isNativeToken ? destinationChain : sourceChain;
-  if (BigInt(amount) < BigInt(settings.minUtxoChainValue[chain])) {
-    return 'Amount less than minimum';
   }
 }
 

@@ -136,7 +136,6 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
     : '0';
   // Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null; // this causes 0 on nexus, seems to be a bug
 
-  // TODO: use this to validate input of in case of wrapped token selection
   const maxWrappedAmount: string = totalDfmBalance
     ? totalDfmBalance[sourceToken]
     : '0';
@@ -175,8 +174,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
         }}>
             {/* validate inputs */}
             <PasteApexAmountInput
-                maxSendableDfm={maxAmountDfm}
-                maxWrappedAmount={maxWrappedAmount}
+                maxSendable={getIsNativeToken(chain, sourceToken) ? maxWrappedAmount : maxAmountDfm}
                 text={amount}
                 setAmount={setAmount}
                 disabled={loading}

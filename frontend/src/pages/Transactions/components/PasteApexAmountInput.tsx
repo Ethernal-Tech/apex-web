@@ -67,18 +67,19 @@ const CustomButton = styled(Button)({
 
 interface PasteApexAmountInputProps {
   sx?: SxProps<Theme>;
-  maxSendableDfm: string | null
-  maxWrappedAmount: string | null
+  maxSendable: string | null
   text: string
   setAmount: (text: string) => void
   disabled?: boolean;
 }
 
-const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSendableDfm, text, setAmount, disabled }) => {
+const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSendable, text, setAmount, disabled }) => {
   const chain = useSelector((state: RootState)=> state.chain.chain);
 
+  // TODO: depending on selected token, update logic for maxSendable because we use same input.
+  // To do this we need to know logic for validating/parsing native token amount (WAda / WAPEX)
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>{
-    if(!maxSendableDfm){
+    if(!maxSendable){
       return e.preventDefault()
     }
 
@@ -99,8 +100,8 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSend
   }
   
   const handleMaxClick = () => {
-    if(maxSendableDfm){
-      setAmount(toFixedFloor(convertDfmToApex(maxSendableDfm,chain), 6));
+    if(maxSendable){
+      setAmount(toFixedFloor(convertDfmToApex(maxSendable,chain), 6));
     }
   };
 
@@ -118,10 +119,10 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSend
   };
 
   // returns true if value of input equals max amount a user can send
-  const isMaxAmountEntered = () => maxSendableDfm && BigInt(maxSendableDfm) > 0 && convertApexToDfm(text, chain) !== maxSendableDfm.toString();
+  const isMaxAmountEntered = () => maxSendable && BigInt(maxSendable) > 0 && convertApexToDfm(text, chain) !== maxSendable.toString();
   
   // Returns true if entered value to send exceedes the maximum amount a user can send (balance - fees)
-  const hasInsufficientBalance = () => maxSendableDfm && BigInt(convertApexToDfm(text, chain)) > BigInt(maxSendableDfm);
+  const hasInsufficientBalance = () => maxSendable && BigInt(convertApexToDfm(text, chain)) > BigInt(maxSendable);
 
   return (
     <Box sx={sx}>
