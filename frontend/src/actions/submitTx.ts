@@ -15,7 +15,7 @@ export const signAndSubmitCardanoTx = async (
 
     const signedTxRaw = await walletHandler.signTx(createResponse.txRaw);
 
-    const amount = BigInt(createResponse.bridgingFee) + BigInt(values.amount);
+    const amount = BigInt(createResponse.bridgingFee) + BigInt(createResponse.amount);
 
     const bindedSubmitAction = submitCardanoTransactionAction.bind(null, new SubmitCardanoTransactionDto({
         originChain: values.originChain,
@@ -27,6 +27,7 @@ export const signAndSubmitCardanoTx = async (
         txRaw: createResponse.txRaw,
         signedTxRaw,
         isFallback: createResponse.isFallback,
+        nativeTokenAmount: (createResponse.nativeTokenAmount || 0).toString(),
     }));
 
     const response = await tryCatchJsonByAction(bindedSubmitAction, false);
@@ -97,6 +98,7 @@ export const signAndSubmitEthTx = async (
       ),
       amount: amount.toString(),
       isFallback: createResponse.isFallback,
+      nativeTokenAmount: '0',
   }));
 
   const response = await tryCatchJsonByAction(bindedSubmittedAction, false);

@@ -17,11 +17,12 @@ interface CustomSelectProps {
   disabled?: boolean,
   onChange: (event: SelectChangeEvent<string>) => void;
   options: Option[];
+  width?: string;
   sx?: SxProps<Theme>;
 }
 
-const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, disabled = false, onChange, options }) => {
-  const StyledFormControl = styled(FormControl)(() => ({
+const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, disabled = false, onChange, options, width }) => {
+  const StyledFormControl = styled(FormControl)<{ width?: string }>(({ width }) => ({
     borderRadius: '4px',
     border: '1px solid',
     borderColor: options.find(option => option.value === value)?.borderColor,
@@ -57,7 +58,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
     '& .MuiSvgIcon-root': {
       fill: 'white',
     },
-    width:'260px' // TODO AF - see if this can be passed in from parent prop, might be more managable
+    width: width ? width : '260px'
   }));
 
   const StyledMenuItem = styled(MenuItem)(({ theme }) => ({
@@ -75,7 +76,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
   }));
 
   return (
-    <StyledFormControl>
+    <StyledFormControl width={width}>
       <Select
         value={value}
         onChange={onChange}

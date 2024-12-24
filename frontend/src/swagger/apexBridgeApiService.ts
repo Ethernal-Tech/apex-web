@@ -559,6 +559,7 @@ export enum ChainEnum {
     Prime = "prime",
     Vector = "vector",
     Nexus = "nexus",
+    Cardano = "cardano",
 }
 
 export class CreateTransactionDto implements ICreateTransactionDto {
@@ -569,6 +570,7 @@ export class CreateTransactionDto implements ICreateTransactionDto {
     amount!: string;
     bridgingFee!: string | undefined;
     utxoCacheKey!: string | undefined;
+    isNativeToken!: boolean;
 
     constructor(data?: ICreateTransactionDto) {
         if (data) {
@@ -588,6 +590,7 @@ export class CreateTransactionDto implements ICreateTransactionDto {
             this.amount = _data["amount"];
             this.bridgingFee = _data["bridgingFee"];
             this.utxoCacheKey = _data["utxoCacheKey"];
+            this.isNativeToken = _data["isNativeToken"];
         }
     }
 
@@ -607,6 +610,7 @@ export class CreateTransactionDto implements ICreateTransactionDto {
         data["amount"] = this.amount;
         data["bridgingFee"] = this.bridgingFee;
         data["utxoCacheKey"] = this.utxoCacheKey;
+        data["isNativeToken"] = this.isNativeToken;
         return data; 
     }
 }
@@ -619,6 +623,7 @@ export interface ICreateTransactionDto {
     amount: string;
     bridgingFee: string | undefined;
     utxoCacheKey: string | undefined;
+    isNativeToken: boolean;
 }
 
 export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransactionResponseDto {
@@ -626,6 +631,8 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
     txHash!: string;
     bridgingFee!: number;
     isFallback!: boolean;
+    amount!: number;
+    nativeTokenAmount!: number | undefined;
 
     constructor(data?: ICreateCardanoTransactionResponseDto) {
         if (data) {
@@ -642,6 +649,8 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
             this.txHash = _data["txHash"];
             this.bridgingFee = _data["bridgingFee"];
             this.isFallback = _data["isFallback"];
+            this.amount = _data["amount"];
+            this.nativeTokenAmount = _data["nativeTokenAmount"];
         }
     }
 
@@ -658,6 +667,8 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
         data["txHash"] = this.txHash;
         data["bridgingFee"] = this.bridgingFee;
         data["isFallback"] = this.isFallback;
+        data["amount"] = this.amount;
+        data["nativeTokenAmount"] = this.nativeTokenAmount;
         return data; 
     }
 }
@@ -667,6 +678,8 @@ export interface ICreateCardanoTransactionResponseDto {
     txHash: string;
     bridgingFee: number;
     isFallback: boolean;
+    amount: number;
+    nativeTokenAmount: number | undefined;
 }
 
 export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeResponseDto {
@@ -712,6 +725,7 @@ export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto
     senderAddress!: string;
     receiverAddrs!: string[];
     amount!: string;
+    nativeTokenAmount!: string;
     txRaw!: string;
     isFallback!: boolean;
     signedTxRaw!: string;
@@ -740,6 +754,7 @@ export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto
                     this.receiverAddrs!.push(item);
             }
             this.amount = _data["amount"];
+            this.nativeTokenAmount = _data["nativeTokenAmount"];
             this.txRaw = _data["txRaw"];
             this.isFallback = _data["isFallback"];
             this.signedTxRaw = _data["signedTxRaw"];
@@ -765,6 +780,7 @@ export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto
                 data["receiverAddrs"].push(item);
         }
         data["amount"] = this.amount;
+        data["nativeTokenAmount"] = this.nativeTokenAmount;
         data["txRaw"] = this.txRaw;
         data["isFallback"] = this.isFallback;
         data["signedTxRaw"] = this.signedTxRaw;
@@ -779,6 +795,7 @@ export interface ISubmitCardanoTransactionDto {
     senderAddress: string;
     receiverAddrs: string[];
     amount: string;
+    nativeTokenAmount: string;
     txRaw: string;
     isFallback: boolean;
     signedTxRaw: string;
@@ -800,6 +817,7 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
     senderAddress!: string;
     receiverAddresses!: string;
     amount!: string;
+    nativeTokenAmount!: string;
     originChain!: ChainEnum;
     destinationChain!: ChainEnum;
     sourceTxHash!: string;
@@ -823,6 +841,7 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
             this.senderAddress = _data["senderAddress"];
             this.receiverAddresses = _data["receiverAddresses"];
             this.amount = _data["amount"];
+            this.nativeTokenAmount = _data["nativeTokenAmount"];
             this.originChain = _data["originChain"];
             this.destinationChain = _data["destinationChain"];
             this.sourceTxHash = _data["sourceTxHash"];
@@ -846,6 +865,7 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
         data["senderAddress"] = this.senderAddress;
         data["receiverAddresses"] = this.receiverAddresses;
         data["amount"] = this.amount;
+        data["nativeTokenAmount"] = this.nativeTokenAmount;
         data["originChain"] = this.originChain;
         data["destinationChain"] = this.destinationChain;
         data["sourceTxHash"] = this.sourceTxHash;
@@ -862,6 +882,7 @@ export interface IBridgeTransactionDto {
     senderAddress: string;
     receiverAddresses: string;
     amount: string;
+    nativeTokenAmount: string;
     originChain: ChainEnum;
     destinationChain: ChainEnum;
     sourceTxHash: string;
@@ -974,6 +995,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
     senderAddress!: string;
     receiverAddrs!: string[];
     amount!: string;
+    nativeTokenAmount!: string;
     txRaw!: string;
     isFallback!: boolean;
 
@@ -1001,6 +1023,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
                     this.receiverAddrs!.push(item);
             }
             this.amount = _data["amount"];
+            this.nativeTokenAmount = _data["nativeTokenAmount"];
             this.txRaw = _data["txRaw"];
             this.isFallback = _data["isFallback"];
         }
@@ -1025,6 +1048,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
                 data["receiverAddrs"].push(item);
         }
         data["amount"] = this.amount;
+        data["nativeTokenAmount"] = this.nativeTokenAmount;
         data["txRaw"] = this.txRaw;
         data["isFallback"] = this.isFallback;
         return data; 
@@ -1038,6 +1062,7 @@ export interface ITransactionSubmittedDto {
     senderAddress: string;
     receiverAddrs: string[];
     amount: string;
+    nativeTokenAmount: string;
     txRaw: string;
     isFallback: boolean;
 }
@@ -1050,6 +1075,8 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
     destinationChain?: ChainEnum | undefined;
     amountFrom?: string | undefined;
     amountTo?: string | undefined;
+    nativeTokenAmountFrom?: string | undefined;
+    nativeTokenAmountTo?: string | undefined;
     orderBy?: string | undefined;
     order?: string | undefined;
     receiverAddress?: string | undefined;
@@ -1072,6 +1099,8 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
             this.destinationChain = _data["destinationChain"];
             this.amountFrom = _data["amountFrom"];
             this.amountTo = _data["amountTo"];
+            this.nativeTokenAmountFrom = _data["nativeTokenAmountFrom"];
+            this.nativeTokenAmountTo = _data["nativeTokenAmountTo"];
             this.orderBy = _data["orderBy"];
             this.order = _data["order"];
             this.receiverAddress = _data["receiverAddress"];
@@ -1094,6 +1123,8 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
         data["destinationChain"] = this.destinationChain;
         data["amountFrom"] = this.amountFrom;
         data["amountTo"] = this.amountTo;
+        data["nativeTokenAmountFrom"] = this.nativeTokenAmountFrom;
+        data["nativeTokenAmountTo"] = this.nativeTokenAmountTo;
         data["orderBy"] = this.orderBy;
         data["order"] = this.order;
         data["receiverAddress"] = this.receiverAddress;
@@ -1109,6 +1140,8 @@ export interface IBridgeTransactionFilterDto {
     destinationChain?: ChainEnum | undefined;
     amountFrom?: string | undefined;
     amountTo?: string | undefined;
+    nativeTokenAmountFrom?: string | undefined;
+    nativeTokenAmountTo?: string | undefined;
     orderBy?: string | undefined;
     order?: string | undefined;
     receiverAddress?: string | undefined;
@@ -1174,7 +1207,7 @@ export interface IBridgeTransactionResponseDto {
 }
 
 export class BalanceResponseDto implements IBalanceResponseDto {
-    balance!: string;
+    balance!: { [key: string]: string; };
 
     constructor(data?: IBalanceResponseDto) {
         if (data) {
@@ -1183,11 +1216,20 @@ export class BalanceResponseDto implements IBalanceResponseDto {
                     (<any>this)[property] = (<any>data)[property];
             }
         }
+        if (!data) {
+            this.balance = {};
+        }
     }
 
     init(_data?: any) {
         if (_data) {
-            this.balance = _data["balance"];
+            if (_data["balance"]) {
+                this.balance = {} as any;
+                for (let key in _data["balance"]) {
+                    if (_data["balance"].hasOwnProperty(key))
+                        this.balance![key] = _data["balance"][key];
+                }
+            }
         }
     }
 
@@ -1200,13 +1242,19 @@ export class BalanceResponseDto implements IBalanceResponseDto {
 
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
-        data["balance"] = this.balance;
+        if (this.balance) {
+            data["balance"] = {};
+            for (let key in this.balance) {
+                if (this.balance.hasOwnProperty(key))
+                    data["balance"][key] = this.balance[key];
+            }
+        }
         return data; 
     }
 }
 
 export interface IBalanceResponseDto {
-    balance: string;
+    balance: { [key: string]: string; };
 }
 
 export class ApiException extends Error {

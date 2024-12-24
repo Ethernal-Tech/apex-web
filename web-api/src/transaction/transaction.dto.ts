@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
-import { ChainEnum, SourceTokenEnum } from 'src/common/enum';
+import { ChainEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
 export class CreateTransactionDto {
@@ -35,9 +35,8 @@ export class CreateTransactionDto {
 	utxoCacheKey?: string;
 
 	@IsNotEmpty()
-	@IsEnum(SourceTokenEnum)
-	@ApiProperty({ enum: SourceTokenEnum, enumName: 'SourceTokenEnum' })
-	sourceToken: SourceTokenEnum;
+	@ApiProperty()
+	isNativeToken: boolean;
 }
 
 export class TransactionSubmittedDto {
@@ -112,6 +111,13 @@ export class CreateCardanoTransactionResponseDto {
 
 	@ApiProperty()
 	isFallback: boolean;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	amount: number;
+
+	@ApiProperty({ nullable: true })
+	nativeTokenAmount?: number;
 }
 
 export class CardanoTransactionFeeResponseDto {

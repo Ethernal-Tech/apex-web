@@ -1,3 +1,4 @@
+import appSettings from "../settings/appSettings";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 
 export type PKLoginDto = {
@@ -90,13 +91,12 @@ export const initChainsState = () => {
 		!chainValues.includes(destinationChain)
 	){
 		setSelectedChain(ChainEnum.Prime)
-		setDestinationChain(ChainEnum.Vector)
+		setDestinationChain(appSettings.isSkyline ? ChainEnum.Cardano : ChainEnum.Vector)
 		return {
 			chain: ChainEnum.Prime,
-			destinationChain: ChainEnum.Vector
+			destinationChain: appSettings.isSkyline ? ChainEnum.Cardano : ChainEnum.Vector
 		}
 	}
-
 
 	return {
 		chain,

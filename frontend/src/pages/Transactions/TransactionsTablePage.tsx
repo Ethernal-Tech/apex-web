@@ -6,13 +6,15 @@ import FullPageSpinner from '../../components/spinner/Spinner';
 import { BridgeTransactionFilterDto, BridgeTransactionResponseDto } from '../../swagger/apexBridgeApiService';
 import Filters from '../../components/filters/Filters';
 import { visuallyHidden } from '@mui/utils';
-import { headCells } from './tableConfig';
+import { reactorHeadCells, skylineHeadCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord, convertApexToDfm, convertDfmToApex, formatAddress, formatTxDetailUrl, getChainLabelAndColor, toFixed } from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
+import appSettings from '../../settings/appSettings';
+import { fromChainToChainNativeToken } from '../../utils/chainUtils';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
@@ -22,12 +24,14 @@ const TransactionsTablePage = () => {
   const chain = useSelector((state: RootState) => state.chain.chain)
   const account = useSelector((state: RootState) => state.accountInfo.account);
 
+  const headCells = appSettings.isSkyline ? skylineHeadCells : reactorHeadCells;
+
 	const [filters, setFilters] = useState(new BridgeTransactionFilterDto({
     originChain: chain,
     senderAddress: account,
   }));
 
-    const fetchDataCallback = useCallback(
+  const fetchDataCallback = useCallback(
 		async (hideLoading: boolean = false) => {
       if (!filters.senderAddress) {
         return;
@@ -40,6 +44,14 @@ const TransactionsTablePage = () => {
 
       if (filtersCorrected.amountTo) {
         filtersCorrected.amountTo = convertApexToDfm(filtersCorrected.amountTo, chain)
+      }
+
+      if (filtersCorrected.nativeTokenAmountFrom) {
+        filtersCorrected.nativeTokenAmountFrom = convertApexToDfm(filtersCorrected.nativeTokenAmountFrom, chain)
+      }
+
+      if (filtersCorrected.nativeTokenAmountTo) {
+        filtersCorrected.nativeTokenAmountTo = convertApexToDfm(filtersCorrected.nativeTokenAmountTo, chain)
       }
 
 			!hideLoading && setIsLoading(true);
@@ -224,6 +236,12 @@ const TransactionsTablePage = () => {
               <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
                 {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} APEX
               </TableCell>
+              {
+                appSettings.isSkyline &&
+                <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
+                  {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {fromChainToChainNativeToken(chain)}
+                </TableCell>
+              }
               
               <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
                 

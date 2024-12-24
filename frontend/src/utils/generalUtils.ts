@@ -1,6 +1,6 @@
 import { NewAddress, RewardAddress } from "../features/Address/addreses";
 import { BridgeTransactionDto, ChainEnum } from "../swagger/apexBridgeApiService";
-import { areChainsEqual } from "./chainUtils";
+import { areChainsEqual, fromChainToChainCurrency, fromChainToChainNativeToken } from "./chainUtils";
 import Web3 from "web3";
 import {Numbers} from "web3-types";
 import {EtherUnits} from "web3-utils";
@@ -29,6 +29,8 @@ export const getChainLabelAndColor = (chain: string):{letter:string, color: stri
       return { letter: 'N', color: '#F27B50' };
     case 'vector':
       return { letter: 'V', color: '#F25041' };
+    case 'cardano':
+      return { letter: 'C', color: '#5856D6' };
     default:
       return { letter: '', color: 'transparent' };
   }
@@ -91,7 +93,7 @@ export const validateSubmitTxInputs = (
   settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
   destinationAddr: string, amount: string, bridgeTxFee: string,
 ): string | undefined => {
-  if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector)) {
+  if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector || sourceChain === ChainEnum.Cardano)) {
     if (BigInt(amount) < BigInt(settings.minValueToBridge)) {
       return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} APEX`;
     }
@@ -117,7 +119,7 @@ export const validateSubmitTxInputs = (
     } 
   }
 
-  if (destinationChain === ChainEnum.Prime || destinationChain === ChainEnum.Vector) {
+  if (destinationChain === ChainEnum.Prime || destinationChain === ChainEnum.Vector || sourceChain === ChainEnum.Cardano) {
     const addr = NewAddress(destinationAddr);
     if (!addr || addr instanceof RewardAddress || destinationAddr !== addr.String()) {
       return `Invalid destination address: ${destinationAddr}`;
@@ -133,14 +135,43 @@ export const validateSubmitTxInputs = (
   }
 }
 
+export const validateSubmitTxInputsSkyline = (
+  settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
+  destinationAddr: string, amount: string, bridgeTxFee: string, isNativeToken: boolean
+): string | undefined => {
+  const chain = isNativeToken ? destinationChain : sourceChain;
+  if (BigInt(amount) < BigInt(settings.minUtxoChainValue[chain])) {
+    return `Amount less than minimum: ${convertUtxoDfmToApex(BigInt(settings.minUtxoChainValue[chain]).toString(10))} ${isNativeToken ? fromChainToChainNativeToken(sourceChain) : fromChainToChainCurrency(sourceChain)}`;
+  }
+
+  if (!isNativeToken) {
+    const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
+    if (maxAllowedToBridgeDfm > 0 && BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeDfm) {
+      const maxAllowed = maxAllowedToBridgeDfm - BigInt(bridgeTxFee);
+      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} ${fromChainToChainCurrency(sourceChain)}`;
+    }
+  }
+
+  const addr = NewAddress(destinationAddr);
+  if (!addr || addr instanceof RewardAddress || destinationAddr !== addr.String()) {
+    return `Invalid destination address: ${destinationAddr}`;
+  }
+
+  if (!areChainsEqual(destinationChain, addr.GetNetwork())) {
+    return `Destination address not compatible with destination chain: ${destinationChain}`;
+  }
+}
+
 export const chainIcons:{
   [ChainEnum.Prime]:FunctionComponent<SVGProps<SVGSVGElement>>
   [ChainEnum.Vector]:FunctionComponent<SVGProps<SVGSVGElement>>
   [ChainEnum.Nexus]:FunctionComponent<SVGProps<SVGSVGElement>>
+  [ChainEnum.Cardano]:FunctionComponent<SVGProps<SVGSVGElement>>
 } = {
   [ChainEnum.Prime]:PrimeIcon,
   [ChainEnum.Vector]:VectorIcon,
-  [ChainEnum.Nexus]:NexusIcon
+  [ChainEnum.Nexus]:NexusIcon,
+  [ChainEnum.Cardano]:NexusIcon // TODO: change Icon
 }
 
 // format it differently depending on network (nexus is 18 decimals, prime and vector are 6)
@@ -151,6 +182,7 @@ export const convertDfmToApex = (dfm:string|number, network:ChainEnum) =>{
   switch(network){
       case ChainEnum.Prime:
       case ChainEnum.Vector:
+      case ChainEnum.Cardano:
           return convertUtxoDfmToApex(dfm);
       case ChainEnum.Nexus:
           return convertEvmDfmToApex(dfm)
@@ -164,6 +196,7 @@ export const convertApexToDfm = (apex:string|number, network:ChainEnum) =>{
   switch(network){
       case ChainEnum.Prime:
       case ChainEnum.Vector:
+      case ChainEnum.Cardano:
           return convertApexToUtxoDfm(apex);
       case ChainEnum.Nexus:
           return convertApexToEvmDfm(apex)

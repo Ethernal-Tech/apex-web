@@ -16,6 +16,43 @@ import { setChainAction, setDestinationChainAction } from "../../redux/slices/ch
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { capitalizeWord, chainIcons } from "../../utils/generalUtils";
 import { login } from "../../actions/login";
+import appSettings from "../../settings/appSettings";
+
+const reactorChainOptions = [
+  { 
+    value: ChainEnum.Prime,
+    label: capitalizeWord(ChainEnum.Prime),
+    icon: chainIcons[ChainEnum.Prime],
+    borderColor:'#077368' 
+  },
+  { 
+    value: ChainEnum.Vector,
+    label: capitalizeWord(ChainEnum.Vector),
+    icon: chainIcons[ChainEnum.Vector],
+    borderColor:'#F25041'
+  },
+  { 
+    value: ChainEnum.Nexus,
+    label: capitalizeWord(ChainEnum.Nexus),
+    icon: chainIcons[ChainEnum.Nexus],
+    borderColor: '#F27B50'
+  },
+];
+
+const skylineChainOptions = [
+  { 
+    value: ChainEnum.Prime,
+    label: capitalizeWord(ChainEnum.Prime),
+    icon: chainIcons[ChainEnum.Prime],
+    borderColor:'#077368' 
+  },
+  { 
+    value: ChainEnum.Cardano,
+    label: capitalizeWord(ChainEnum.Cardano),
+    icon: chainIcons[ChainEnum.Cardano],
+    borderColor: '#5856D6'
+  }
+];
 
 const HomePage: React.FC = () => {
   const wallet = useSelector((state: RootState) => state.wallet.wallet);
@@ -29,27 +66,7 @@ const HomePage: React.FC = () => {
   const chain = useSelector((state: RootState) => state.chain.chain);
   const destinationChain = useSelector((state: RootState) => state.chain.destinationChain);
 
-  const supportedChainOptions = [
-    { 
-      value: ChainEnum.Prime,
-      label: capitalizeWord(ChainEnum.Prime),
-      icon: chainIcons[ChainEnum.Prime],
-      borderColor:'#077368' 
-    },
-    { 
-      value: ChainEnum.Vector,
-      label: capitalizeWord(ChainEnum.Vector),
-      icon: chainIcons[ChainEnum.Vector],
-      borderColor:'#F25041'
-    },
-    { 
-      value: ChainEnum.Nexus,
-      label: capitalizeWord(ChainEnum.Nexus),
-      icon: chainIcons[ChainEnum.Nexus],
-      borderColor: '#F27B50'
-    }
-  ];
-
+  const supportedChainOptions = appSettings.isSkyline ? skylineChainOptions : reactorChainOptions;
 
   // if new source is the same as destination, switch the chains
   const updateSource = (value: ChainEnum)=>{
@@ -83,7 +100,7 @@ const HomePage: React.FC = () => {
   return (
     <BasePage>
       <Typography variant="h1" sx={{ color: '#F25041', lineHeight: '', fontSize: '44px' }} fontFamily={'Major Mono Display, sans-serif'}>
-        ReactoR bRidge
+        {appSettings.isSkyline ? 'sKyline bRidge' : 'ReactoR bRidge'}
       </Typography>
 
       <img src={BridgeGraph} alt="apex bridge graph" style={{width:'280px',marginTop:'32px'}}/>
@@ -118,7 +135,7 @@ const HomePage: React.FC = () => {
             label="Destination"
             icon={getIconComponent(destinationChain)}
             value={destinationChain}
-            disabled={chain !== ChainEnum.Prime}
+            disabled={appSettings.isSkyline || chain !== ChainEnum.Prime}
             onChange={(e) => updateDestination(e.target.value as ChainEnum)}
             // todo - makeshift fix, check out details later
             options={supportedChainOptions.filter(x => {

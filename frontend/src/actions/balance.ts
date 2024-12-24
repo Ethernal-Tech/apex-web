@@ -5,11 +5,12 @@ import { fromNetworkIdToChain } from '../utils/chainUtils';
 import { updateBalanceAction } from '../redux/slices/accountInfoSlice';
 import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
 import evmWalletHandler from '../features/EvmWalletHandler';
+import { TokenEnum } from '../features/enums';
 
 export const getWalletBalanceAction = async (chain: ChainEnum, address: string) => {
     if (chain === ChainEnum.Nexus) { 
         const nexusBalance = await evmWalletHandler.getBalance()
-        return new BalanceResponseDto({ balance: nexusBalance})
+        return new BalanceResponseDto({ balance: { [TokenEnum.APEX]: nexusBalance } })
     }
     
     const client = new WalletControllerClient();
