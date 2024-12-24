@@ -124,13 +124,15 @@ $ go run ./main.go generate-configs skyline \
 Minimal example
 ``` shell
 $ go run ./main.go generate-configs skyline \
-        --prime-network-magic 142 \
-        --prime-bridging-address "addr_example" \
-        --prime-bridging-fee-address "addr_example" \
+        --prime-network-id 0\
+        --prime-network-magic 3311 \
+        --prime-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv" \
+        --prime-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq" \
         --prime-blockfrost-url "https://cardano-preview.blockfrost.io/api/v0" \
-        --cardano-network-magic 142 \
-        --cardano-bridging-address "addr_example" \
-        --cardano-bridging-fee-address "addr_example" \
+        --cardano-network-id 0\
+        --cardano-network-magic 3311 \
+        --cardano-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv" \
+        --cardano-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq" \
         --cardano-blockfrost-url "https://cardano-preview.blockfrost.io/api/v0" \
         --oracle-api-url "http://bridge-api-testnet.apexfusion.org:10003" \
         --oracle-api-key "test-api-key-001" \
