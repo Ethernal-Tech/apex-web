@@ -142,17 +142,17 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 		return err
 	}
 
+	if p.cardanoBlockfrostURL == "" && p.cardanoSocketPath == "" && p.cardanoOgmiosURL == "" {
+		return fmt.Errorf("specify at least one of: %s, %s, %s",
+			cardanoBlockfrostURLFlag, cardanoSocketPathFlag, cardanoOgmiosURLFlag)
+	}
+
 	if p.cardanoBlockfrostURL != "" && !common.IsValidHTTPURL(p.cardanoBlockfrostURL) {
 		return fmt.Errorf("invalid cardano blockfrost url: %s", p.cardanoBlockfrostURL)
 	}
 
 	if p.cardanoOgmiosURL != "" && !common.IsValidHTTPURL(p.cardanoOgmiosURL) {
 		return fmt.Errorf("invalid cardano ogmios url: %s", p.cardanoOgmiosURL)
-	}
-
-	if p.cardanoBlockfrostURL == "" && p.cardanoSocketPath == "" && p.cardanoOgmiosURL == "" {
-		return fmt.Errorf("specify at least one of: %s, %s, %s",
-			cardanoBlockfrostURLFlag, cardanoSocketPathFlag, cardanoOgmiosURLFlag)
 	}
 
 	if !common.IsValidHTTPURL(p.oracleAPIURL) {
