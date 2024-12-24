@@ -389,6 +389,18 @@ func (p *skylineGenerateConfigsParams) Execute(
 					SocketPath:       p.primeSocketPath,
 					PotentialFee:     300000,
 					TTLSlotNumberInc: p.primeTTLSlotInc,
+					Destinations: []cardanotx.CardanoConfigTokenExchange{
+						{
+							Chain:        common.ChainIDStrCardano,
+							SrcTokenName: wallet.AdaTokenName,
+							DstTokenName: p.cardanoPrimeWrappedTokenName,
+						},
+						{
+							Chain:        common.ChainIDStrCardano,
+							SrcTokenName: p.primeCardanoWrappedTokenName,
+							DstTokenName: wallet.AdaTokenName,
+						},
+					},
 				},
 			},
 			common.ChainIDStrCardano: {
@@ -406,6 +418,18 @@ func (p *skylineGenerateConfigsParams) Execute(
 					SocketPath:       p.cardanoSocketPath,
 					PotentialFee:     300000,
 					TTLSlotNumberInc: p.cardanoTTLSlotInc,
+					Destinations: []cardanotx.CardanoConfigTokenExchange{
+						{
+							Chain:        common.ChainIDStrPrime,
+							SrcTokenName: wallet.AdaTokenName,
+							DstTokenName: p.primeCardanoWrappedTokenName,
+						},
+						{
+							Chain:        common.ChainIDStrPrime,
+							SrcTokenName: p.cardanoPrimeWrappedTokenName,
+							DstTokenName: wallet.AdaTokenName,
+						},
+					},
 				},
 			},
 		},
