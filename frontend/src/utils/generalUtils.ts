@@ -1,6 +1,6 @@
 import { NewAddress, RewardAddress } from "../features/Address/addreses";
 import { BridgeTransactionDto, ChainEnum } from "../swagger/apexBridgeApiService";
-import { areChainsEqual, fromChainToChainCurrency } from "./chainUtils";
+import { areChainsEqual, fromChainToChainCurrency, fromChainToChainNativeToken } from "./chainUtils";
 import Web3 from "web3";
 import {Numbers} from "web3-types";
 import {EtherUnits} from "web3-utils";
@@ -141,7 +141,7 @@ export const validateSubmitTxInputsSkyline = (
 ): string | undefined => {
   const chain = isNativeToken ? destinationChain : sourceChain;
   if (BigInt(amount) < BigInt(settings.minUtxoChainValue[chain])) {
-    return `Amount less than minimum: ${convertUtxoDfmToApex(BigInt(settings.minUtxoChainValue[chain]).toString(10))} ${fromChainToChainCurrency(chain)}`;
+    return `Amount less than minimum: ${convertUtxoDfmToApex(BigInt(settings.minUtxoChainValue[chain]).toString(10))} ${isNativeToken ? fromChainToChainNativeToken(sourceChain) : fromChainToChainCurrency(sourceChain)}`;
   }
 
   if (!isNativeToken) {
