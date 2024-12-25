@@ -423,7 +423,9 @@ func (p *generateConfigsParams) setFlags(cmd *cobra.Command) {
 	cmd.MarkFlagsMutuallyExclusive(vectorBlockfrostURLFlag, vectorSocketPathFlag, vectorOgmiosURLFlag)
 }
 
-func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
+func (p *generateConfigsParams) Execute(
+	_ common.OutputFormatter,
+) (common.ICommandResult, error) {
 	config := &core.AppConfig{
 		RunMode: common.ReactorMode,
 		CardanoChains: map[string]*core.CardanoChainConfig{

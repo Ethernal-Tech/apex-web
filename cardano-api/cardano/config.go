@@ -9,6 +9,14 @@ import (
 	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 )
 
+// CardanoConfigTokenExchange holds src and dst token to exchange with destionation chain
+// full token name[policyID.hex(name)or lovelace or "" for eth
+type CardanoConfigTokenExchange struct {
+	Chain        string
+	SrcTokenName string
+	DstTokenName string
+}
+
 type CardanoChainConfig struct {
 	NetworkID        cardanowallet.CardanoNetworkType `json:"-"`
 	NetworkMagic     uint32                           `json:"-"`
@@ -18,6 +26,7 @@ type CardanoChainConfig struct {
 	SocketPath       string                           `json:"socketPath,omitempty"`
 	PotentialFee     uint64                           `json:"potentialFee"`
 	TTLSlotNumberInc uint64                           `json:"ttlSlotNumberIncrement"`
+	Destinations     []CardanoConfigTokenExchange     `json:"destinations"`
 }
 
 var _ common.ChainSpecificConfig = (*CardanoChainConfig)(nil)
