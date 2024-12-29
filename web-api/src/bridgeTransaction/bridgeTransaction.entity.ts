@@ -1,4 +1,4 @@
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import { ChainEnum, TransactionStatusEnum } from '../common/enum';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('bridgeTransactions')

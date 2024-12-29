@@ -1,12 +1,12 @@
-import { ChainEnum } from 'src/common/enum';
+import { ChainEnum } from '../common/enum';
 
-const PRIME_NETWORK_ID = 0;
-const VECTOR_NETWORK_ID = 2;
-const NEXUS_NETWORK_ID = BigInt(9070); // for Nexus
+export const PRIME_NETWORK_ID = 0;
+export const VECTOR_NETWORK_ID = 2;
+export const NEXUS_NETWORK_ID = BigInt(9070); // for Nexus
 // TODO: check cardano network ID
-const CARDANO_NETWORK_ID = 0;
+export const CARDANO_NETWORK_ID = 4;
 
-const CHAIN_TO_CHAIN_ID = {
+export const CHAIN_TO_CHAIN_ID = {
 	[ChainEnum.Prime]: 1,
 	[ChainEnum.Vector]: 2,
 	[ChainEnum.Nexus]: 3,

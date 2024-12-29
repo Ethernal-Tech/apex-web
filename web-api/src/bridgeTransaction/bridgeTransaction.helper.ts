@@ -1,10 +1,10 @@
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import axios, { AxiosError } from 'axios';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import { ChainEnum, TransactionStatusEnum } from '../common/enum';
 import { BridgeTransactionDto } from './bridgeTransaction.dto';
-import { capitalizeWord } from 'src/utils/stringUtils';
+import { capitalizeWord } from '../utils/stringUtils';
 import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization-lib-nodejs';
-import { Utxo } from 'src/blockchain/dto';
+import { Utxo } from '../blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
 
@@ -279,8 +279,8 @@ export const mapBridgeTransactionToResponse = (
 	response.receiverAddresses = entity.receiverAddresses;
 	response.destinationChain = entity.destinationChain;
 	response.originChain = entity.originChain;
-	response.amount = entity.amount.toString();
-	response.nativeTokenAmount = entity.nativeTokenAmount.toString();
+	response.amount = entity.amount?.toString();
+	response.nativeTokenAmount = entity.nativeTokenAmount?.toString();
 	response.sourceTxHash = entity.sourceTxHash;
 	response.destinationTxHash = entity.destinationTxHash;
 	response.status = entity.status;
