@@ -1,15 +1,18 @@
 package controllers
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"math/big"
 	"net/http"
+	"time"
 
 	"github.com/Ethernal-Tech/cardano-api/api/model/skyline/request"
 	"github.com/Ethernal-Tech/cardano-api/api/model/skyline/response"
 	"github.com/Ethernal-Tech/cardano-api/api/utils"
 	"github.com/Ethernal-Tech/cardano-api/core"
+	infracom "github.com/Ethernal-Tech/cardano-infrastructure/common"
+	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	"github.com/hashicorp/go-hclog"
 )
 
@@ -48,11 +51,20 @@ func (c *SkylineTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 	queryValues := r.URL.Query()
 	c.logger.Debug("getBalance request", "query values", queryValues, "url", r.URL)
 
-	chainIDArr, exists := queryValues["chainId"]
-	if !exists || len(chainIDArr) == 0 {
+	srcChainIDArr, exists := queryValues["srcChainId"]
+	if !exists || len(srcChainIDArr) == 0 {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
-			errors.New("chainId missing from query"), c.logger)
+			errors.New("srcChainId missing from query"), c.logger)
+
+		return
+	}
+
+	dstChainIDArr, exists := queryValues["dstChainId"]
+	if !exists || len(dstChainIDArr) == 0 {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			errors.New("dstChainId missing from query"), c.logger)
 
 		return
 	}
@@ -66,19 +78,60 @@ func (c *SkylineTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	chainID := chainIDArr[0]
+	srcChainID := srcChainIDArr[0]
+	dstChainID := dstChainIDArr[0]
 	address := addressArr[0]
 
-	_ = chainID
-	_ = address
+	chainConfig, exists := c.appConfig.CardanoChains[srcChainID]
+	if !exists {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			errors.New("chainID not registered"), c.logger)
 
-	// a TODO: get balance
-
-	balances := map[string]*big.Int{
-		"Ada":  big.NewInt(0),
-		"WAda": big.NewInt(0),
+		return
 	}
-	utils.WriteResponse(w, r, http.StatusOK, response.NewBalanceResponse(balances), c.logger)
+
+	txProvider, err := chainConfig.ChainSpecific.CreateTxProvider()
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("failed to create tx provider. err: %w", err), c.logger)
+
+		return
+	}
+
+	utxos, err := infracom.ExecuteWithRetry(context.Background(),
+		func(ctx context.Context) ([]wallet.Utxo, error) {
+			return txProvider.GetUtxos(context.Background(), address)
+		}, infracom.WithRetryCount(10), infracom.WithRetryWaitTime(time.Second))
+
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("failed to get utxos. err: %w", err), c.logger)
+
+		return
+	}
+
+	balanceMap := wallet.GetUtxosSum(utxos)
+
+	keys := make([]string, 0, len(balanceMap))
+	for key := range balanceMap {
+		keys = append(keys, key)
+	}
+
+	for _, tokenName := range keys {
+		for _, dst := range chainConfig.ChainSpecific.Destinations {
+			if dst.Chain == dstChainID && dst.SrcTokenName == tokenName {
+				balanceMap[string(dst.SrcTokenEnumName)] = balanceMap[tokenName]
+				delete(balanceMap, dst.SrcTokenName)
+
+				break
+			}
+		}
+	}
+
+	utils.WriteResponse(w, r, http.StatusOK, response.NewBalanceResponse(balanceMap), c.logger)
 }
 
 func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
