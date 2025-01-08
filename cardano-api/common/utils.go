@@ -29,10 +29,10 @@ const (
 )
 
 const (
-	Ada   TokenName = "Ada"
-	WAda  TokenName = "WAda"
-	APEX  TokenName = "APEX"
-	WAPEX TokenName = "WAPEX"
+	AdaToken   TokenName = "Ada"
+	WAdaToken  TokenName = "WAda"
+	APEXToken  TokenName = "APEX"
+	WAPEXToken TokenName = "WAPEX"
 )
 
 const (

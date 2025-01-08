@@ -56,11 +56,11 @@ func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 	queryValues := r.URL.Query()
 	c.logger.Debug("getBalance request", "query values", queryValues, "url", r.URL)
 
-	chainIDArr, exists := queryValues["chainId"]
-	if !exists || len(chainIDArr) == 0 {
+	srcChainIDArr, exists := queryValues["srcChainId"]
+	if !exists || len(srcChainIDArr) == 0 {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
-			errors.New("chainId missing from query"), c.logger)
+			errors.New("srcChainId missing from query"), c.logger)
 
 		return
 	}
@@ -74,10 +74,10 @@ func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	chainID := chainIDArr[0]
+	srcChainID := srcChainIDArr[0]
 	address := addressArr[0]
 
-	chainConfig, exists := c.appConfig.CardanoChains[chainID]
+	chainConfig, exists := c.appConfig.CardanoChains[srcChainID]
 	if !exists {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,

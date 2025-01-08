@@ -35,7 +35,7 @@ export class WalletController {
 		const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
 		const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 		const endpointUrl =
-			apiUrl + `/api/CardanoTx/GetBalance?chainId=${chain}&address=${address}`;
+			apiUrl + `/api/CardanoTx/GetBalance?srcChainId=${chain}&address=${address}`;
 
 		Logger.debug(`axios.get: ${endpointUrl}`);
 

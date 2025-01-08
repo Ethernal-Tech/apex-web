@@ -10,6 +10,7 @@ import (
 	"github.com/Ethernal-Tech/cardano-api/api/model/skyline/request"
 	"github.com/Ethernal-Tech/cardano-api/api/model/skyline/response"
 	"github.com/Ethernal-Tech/cardano-api/api/utils"
+	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
 	infracom "github.com/Ethernal-Tech/cardano-infrastructure/common"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
@@ -115,23 +116,16 @@ func (c *SkylineTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 
 	balanceMap := wallet.GetUtxosSum(utxos)
 
-	keys := make([]string, 0, len(balanceMap))
-	for key := range balanceMap {
-		keys = append(keys, key)
-	}
-
-	for _, tokenName := range keys {
+	balances := make(map[common.TokenName]uint64)
+	for tokenName := range balanceMap {
 		for _, dst := range chainConfig.ChainSpecific.Destinations {
 			if dst.Chain == dstChainID && dst.SrcTokenName == tokenName {
-				balanceMap[string(dst.SrcTokenEnumName)] = balanceMap[tokenName]
-				delete(balanceMap, dst.SrcTokenName)
-
-				break
+				balances[dst.SrcTokenEnumName] = balanceMap[tokenName]
 			}
 		}
 	}
 
-	utils.WriteResponse(w, r, http.StatusOK, response.NewBalanceResponse(balanceMap), c.logger)
+	utils.WriteResponse(w, r, http.StatusOK, response.NewBalanceResponse(balances), c.logger)
 }
 
 func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
