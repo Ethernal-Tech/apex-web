@@ -115,8 +115,8 @@ func (c *SkylineTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 	}
 
 	balanceMap := wallet.GetUtxosSum(utxos)
-
 	balances := make(map[common.TokenName]uint64)
+
 	for tokenName := range balanceMap {
 		for _, dst := range chainConfig.ChainSpecific.Destinations {
 			if dst.Chain == dstChainID && dst.SrcTokenName == tokenName {
