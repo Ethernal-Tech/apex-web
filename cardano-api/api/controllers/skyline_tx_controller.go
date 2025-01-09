@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	commonResponse "github.com/Ethernal-Tech/cardano-api/api/model/common/response"
 	"github.com/Ethernal-Tech/cardano-api/api/model/skyline/request"
 	"github.com/Ethernal-Tech/cardano-api/api/model/skyline/response"
 	"github.com/Ethernal-Tech/cardano-api/api/utils"
@@ -87,7 +88,7 @@ func (c *SkylineTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 	if !exists {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
-			errors.New("chainID not registered"), c.logger)
+			errors.New("srcChainID not registered"), c.logger)
 
 		return
 	}
@@ -125,7 +126,7 @@ func (c *SkylineTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	utils.WriteResponse(w, r, http.StatusOK, response.NewBalanceResponse(balances), c.logger)
+	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBalanceResponse(balances), c.logger)
 }
 
 func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {

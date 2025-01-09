@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	commonResponse "github.com/Ethernal-Tech/cardano-api/api/model/common/response"
 	"github.com/Ethernal-Tech/cardano-api/api/model/reactor/request"
 	"github.com/Ethernal-Tech/cardano-api/api/model/reactor/response"
 	"github.com/Ethernal-Tech/cardano-api/api/utils"
@@ -81,7 +82,7 @@ func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 	if !exists {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
-			errors.New("chainID not registered"), c.logger)
+			errors.New("srcChainID not registered"), c.logger)
 
 		return
 	}
@@ -108,13 +109,15 @@ func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	balance := big.NewInt(0)
-
+	balance := uint64(0)
 	for _, utxo := range utxos {
-		balance.Add(balance, new(big.Int).SetUint64(utxo.Amount))
+		balance += utxo.Amount
 	}
 
-	utils.WriteResponse(w, r, http.StatusOK, response.NewBalanceResponse(balance), c.logger)
+	balances := map[common.TokenName]uint64{
+		common.APEXToken: balance,
+	}
+	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBalanceResponse(balances), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
