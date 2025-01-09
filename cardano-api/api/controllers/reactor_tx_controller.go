@@ -109,14 +109,10 @@ func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	balance := uint64(0)
-	for _, utxo := range utxos {
-		balance += utxo.Amount
+	balances := map[common.TokenName]uint64{
+		common.APEXToken: wallet.GetUtxosSum(utxos)[wallet.AdaTokenName],
 	}
 
-	balances := map[common.TokenName]uint64{
-		common.APEXToken: balance,
-	}
 	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBalanceResponse(balances), c.logger)
 }
 
