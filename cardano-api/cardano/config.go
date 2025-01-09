@@ -12,9 +12,10 @@ import (
 // CardanoConfigTokenExchange holds src and dst token to exchange with destionation chain
 // full token name[policyID.hex(name)or lovelace or "" for eth
 type CardanoConfigTokenExchange struct {
-	Chain        string
-	SrcTokenName string
-	DstTokenName string
+	Chain            string           `json:"chain"`
+	SrcTokenName     string           `json:"srcTokenName"`
+	DstTokenName     string           `json:"dstTokenName"`
+	SrcTokenEnumName common.TokenName `json:"srcTokenEnumName"`
 }
 
 type CardanoChainConfig struct {

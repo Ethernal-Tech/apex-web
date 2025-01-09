@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	commonResponse "github.com/Ethernal-Tech/cardano-api/api/model/common/response"
 	"github.com/Ethernal-Tech/cardano-api/api/model/reactor/request"
 	"github.com/Ethernal-Tech/cardano-api/api/model/reactor/response"
 	"github.com/Ethernal-Tech/cardano-api/api/utils"
@@ -56,11 +57,11 @@ func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 	queryValues := r.URL.Query()
 	c.logger.Debug("getBalance request", "query values", queryValues, "url", r.URL)
 
-	chainIDArr, exists := queryValues["chainId"]
-	if !exists || len(chainIDArr) == 0 {
+	srcChainIDArr, exists := queryValues["srcChainId"]
+	if !exists || len(srcChainIDArr) == 0 {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
-			errors.New("chainId missing from query"), c.logger)
+			errors.New("srcChainId missing from query"), c.logger)
 
 		return
 	}
@@ -74,14 +75,14 @@ func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	chainID := chainIDArr[0]
+	srcChainID := srcChainIDArr[0]
 	address := addressArr[0]
 
-	chainConfig, exists := c.appConfig.CardanoChains[chainID]
+	chainConfig, exists := c.appConfig.CardanoChains[srcChainID]
 	if !exists {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
-			errors.New("chainID not registered"), c.logger)
+			errors.New("srcChainID not registered"), c.logger)
 
 		return
 	}
@@ -108,13 +109,11 @@ func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	balance := big.NewInt(0)
-
-	for _, utxo := range utxos {
-		balance.Add(balance, new(big.Int).SetUint64(utxo.Amount))
+	balances := map[common.TokenName]uint64{
+		common.APEXToken: wallet.GetUtxosSum(utxos)[wallet.AdaTokenName],
 	}
 
-	utils.WriteResponse(w, r, http.StatusOK, response.NewBalanceResponse(balance), c.logger)
+	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBalanceResponse(balances), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {

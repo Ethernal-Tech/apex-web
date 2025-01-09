@@ -21,10 +21,18 @@ import (
 )
 
 type VCRunMode string
+type TokenName string
 
 const (
 	ReactorMode VCRunMode = "reactor"
 	SkylineMode VCRunMode = "skyline"
+)
+
+const (
+	AdaToken   TokenName = "Ada"
+	WAdaToken  TokenName = "WAda"
+	APEXToken  TokenName = "APEX"
+	WAPEXToken TokenName = "WAPEX"
 )
 
 const (
