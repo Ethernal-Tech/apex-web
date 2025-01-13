@@ -2,9 +2,9 @@ import { BridgeTransaction } from './bridgeTransaction.entity';
 import axios, { AxiosError } from 'axios';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { BridgeTransactionDto } from './bridgeTransaction.dto';
-import { capitalizeWord } from '../utils/stringUtils';
+import { capitalizeWord } from 'src/utils/stringUtils';
 import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization-lib-nodejs';
-import { Utxo } from '../blockchain/dto';
+import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
 

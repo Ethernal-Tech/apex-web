@@ -1,4 +1,4 @@
-import { ChainEnum } from '../common/enum';
+import { ChainEnum } from 'src/common/enum';
 
 export const PRIME_NETWORK_ID = 0;
 export const VECTOR_NETWORK_ID = 2;

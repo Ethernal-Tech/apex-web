@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty } from 'class-validator';
-import { PaginatedDto } from '../common/dto';
-import { ChainEnum, TransactionStatusEnum } from '../common/enum';
-import { NotSame } from '../decorators/notSame.decorator';
+import { PaginatedDto } from 'src/common/dto';
+import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import { NotSame } from 'src/decorators/notSame.decorator';
 
 export class BridgeTransactionDto {
 	@IsNotEmpty()

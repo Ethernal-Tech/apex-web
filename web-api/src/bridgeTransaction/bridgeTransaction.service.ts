@@ -26,7 +26,7 @@ import {
 	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
-import { ChainEnum, TransactionStatusEnum } from '../common/enum';
+import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 
 @Injectable()
 export class BridgeTransactionService {
