@@ -128,13 +128,24 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
       ? appSettings.minUtxoChainValue[chain] 
       : minValueToBridge;
     
-  const maxAmountDfm:string = totalDfmBalance
+  // TODO: too complicated to calculate now
+  let maxAmountDfm = '0';
+  if (appSettings.isSkyline) {
+    maxAmountDfm = Number.MAX_SAFE_INTEGER.toString();
+  } else {
+    maxAmountDfm = totalDfmBalance
     ? (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano
       ? (BigInt(totalDfmBalance[sourceToken]) - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString()
       : (BigInt(totalDfmBalance[sourceToken]) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString() // for nexus, using minDfm value as substitute to user wallet fee / potential fee
     )
     : '0';
-  // Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null; // this causes 0 on nexus, seems to be a bug
+  }
+  // const maxAmountDfm:string = totalDfmBalance
+  //   ? (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano
+  //     ? (BigInt(totalDfmBalance[sourceToken]) - BigInt(appSettings.potentialWalletFee) - BigInt('1000010') - BigInt(minDfmValue)).toString()
+  //     : (BigInt(totalDfmBalance[sourceToken]) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString() // for nexus, using minDfm value as substitute to user wallet fee / potential fee
+  //   )
+  //   : '0';
 
   const maxWrappedAmount: string = totalDfmBalance
     ? totalDfmBalance[sourceToken]
@@ -189,7 +200,8 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
             
             <FeeInformation
                 userWalletFee={userWalletFee || '0'}
-                bridgeTxFee={bridgeTxFee}
+                // TODO: remove || '0' later when minChainFeeForBridging['cardano'] is returned properly
+                bridgeTxFee={bridgeTxFee || '0'}
                 chain={chain}
                 sx={{
                     gridColumn:'span 1',

@@ -29,13 +29,15 @@ export class WalletController {
 	@HttpCode(HttpStatus.OK)
 	@Get('getBalance')
 	async getBalance(
-		@Query('chain') chain: string,
+		@Query('srcChain') srcChain: string,
 		@Query('address') address: string,
+		@Query('dstChain') dstChain: string,
 	): Promise<BalanceResponseDto> {
 		const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
 		const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 		const endpointUrl =
-			apiUrl + `/api/CardanoTx/GetBalance?srcChainId=${chain}&address=${address}`;
+			apiUrl +
+			`/api/CardanoTx/GetBalance?srcChainId=${srcChain}&address=${address}&dstChainId=${dstChain}`;
 
 		Logger.debug(`axios.get: ${endpointUrl}`);
 
