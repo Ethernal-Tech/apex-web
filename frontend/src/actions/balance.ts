@@ -7,19 +7,20 @@ import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
 import evmWalletHandler from '../features/EvmWalletHandler';
 import { TokenEnum } from '../features/enums';
 
-export const getWalletBalanceAction = async (chain: ChainEnum, address: string) => {
-    if (chain === ChainEnum.Nexus) { 
+export const getWalletBalanceAction = async (srcChain: ChainEnum, address: string, dstChain: ChainEnum) => {
+    if (srcChain === ChainEnum.Nexus) { 
         const nexusBalance = await evmWalletHandler.getBalance()
         return new BalanceResponseDto({ balance: { [TokenEnum.APEX]: nexusBalance } })
     }
     
     const client = new WalletControllerClient();
-    return client.getBalance(chain, address);
+    return client.getBalance(srcChain, address, dstChain);
 }
 
 export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
     const accountInfo = store.getState().accountInfo;
-    if (!accountInfo.account) {
+    const chainInfo = store.getState().chain;
+    if (!accountInfo.account || !chainInfo.destinationChain) {
         return;
     }
     
@@ -28,13 +29,13 @@ export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
         networkId,
     } = accountInfo;
     
-    const chain = fromNetworkIdToChain(networkId);
+    const srcChain = fromNetworkIdToChain(networkId);
 
-    if (!chain) {
+    if (!srcChain) {
         return;
     }
 
-    const balanceResp = await tryCatchJsonByAction(() => getWalletBalanceAction(chain, account)); 
+    const balanceResp = await tryCatchJsonByAction(() => getWalletBalanceAction(srcChain, account, chainInfo.destinationChain)); 
     if (balanceResp instanceof ErrorResponse) {
         console.log(`Error while fetching wallet balance: ${balanceResp.err}`)
         return;

@@ -426,16 +426,20 @@ export class WalletControllerClient extends BaseClient {
     /**
      * @return Success
      */
-    getBalance(chain: string, address: string): Promise<BalanceResponseDto> {
+    getBalance(srcChain: string, address: string, dstChain: string): Promise<BalanceResponseDto> {
         let url_ = this.baseUrl + "/wallet/getBalance?";
-        if (chain === undefined || chain === null)
-            throw new Error("The parameter 'chain' must be defined and cannot be null.");
+        if (srcChain === undefined || srcChain === null)
+            throw new Error("The parameter 'srcChain' must be defined and cannot be null.");
         else
-            url_ += "chain=" + encodeURIComponent("" + chain) + "&";
+            url_ += "srcChain=" + encodeURIComponent("" + srcChain) + "&";
         if (address === undefined || address === null)
             throw new Error("The parameter 'address' must be defined and cannot be null.");
         else
             url_ += "address=" + encodeURIComponent("" + address) + "&";
+        if (dstChain === undefined || dstChain === null)
+            throw new Error("The parameter 'dstChain' must be defined and cannot be null.");
+        else
+            url_ += "dstChain=" + encodeURIComponent("" + dstChain) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ = <RequestInit>{
