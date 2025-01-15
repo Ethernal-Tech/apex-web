@@ -131,7 +131,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
   // TODO: too complicated to calculate now
   let maxAmountDfm = '0';
   if (appSettings.isSkyline) {
-    maxAmountDfm = '66125520' 
+    maxAmountDfm = Number.MAX_SAFE_INTEGER.toString();
   } else {
     maxAmountDfm = totalDfmBalance
     ? (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano
