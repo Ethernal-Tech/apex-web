@@ -1,0 +1,587 @@
+/* Global styliing */
+body.landing-page {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: initial;
+    min-height: initial;
+    padding-bottom: initial;
+}
+
+.swiper-pagination-bullet {
+    background-color: #FFFFFF !important;
+    opacity: 0.3;
+}
+
+.swiper-pagination-bullet-active {
+    background-color: #FFFFFF !important;
+}
+
+/* SkylineSection styling */
+.skyline-section-container {
+    display: flex;
+    flex-direction: column;
+    background-color: #191919;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    padding: 20px 60px;
+    padding-bottom: 50px;
+}
+
+.skyline-text {
+    font-family: Goldman, sans-serif !important;
+    font-size: 40px !important;
+    font-weight: bold;
+    margin-left: 30px !important;
+}
+
+.content-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-container {
+    max-width: 810px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    margin-bottom: 30px;
+    padding: 0 20px;
+}
+
+.large-heading {
+    font-size: 70px !important;
+    font-weight: bold !important;
+    text-align: center;
+}
+
+.paragraph-text {
+    font-size: 20px !important;
+    text-align: center;
+    max-width: 730px;
+}
+
+.contact-us-button {
+    background-color: #0b5855 !important;
+    text-transform: none !important;
+    border-radius: 0px !important;
+    border: 1px solid #ffffff !important;
+    padding: 10px 45px !important;
+    font-size: 20px !important;
+}
+
+.contact-us-button:hover {
+    box-shadow: none !important;
+    background-color: #0b5855 !important;
+}
+
+.bridge-image-container {
+    position: relative;
+    height: auto;
+}
+
+.bridge-image {
+    width: 100%;
+}
+
+.bridge-image-mobile {
+    display: none;
+}
+
+.gradient-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 55%;
+    background: linear-gradient(to bottom, rgba(25, 25, 25, 0) 0%, #191919 85%);
+}
+
+/* SkylineBridgeSection styling */
+.skyline-bridge-section {
+    display: flex;
+    flex-direction: column;
+    background-color: #191919;
+    padding: 80px 40px;
+}
+
+.skyline-bridge-header {
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+}
+
+.skyline-bridge-title {
+    font-size: 60px !important;
+    font-weight: bold !important;
+    text-align: center;
+}
+
+.skyline-bridge-description {
+    font-size: 20px !important;
+    text-align: center;
+}
+
+.skyline-bridge-content {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding-top: 60px;
+}
+
+.skyline-bridge-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 11fr;
+    align-items: center;
+    gap: 40px;
+}
+
+.skyline-bridge-icon {
+    width: 100px;
+    display: flex;
+    justify-content: center;
+}
+
+.skyline-bridge-text {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.skyline-bridge-item-title {
+    font-size: 40px !important;
+    font-weight: bold !important;
+}
+
+.skyline-bridge-item-description {
+    font-size: 20px !important;
+}
+
+/* UserSection styling */
+.users-section {
+    display: flex;
+    flex-direction: column;
+    background: url('./assets/skyline/linking-background.svg'),
+        linear-gradient(170deg, #0b5855 0%, #191919 60%);
+    background-repeat: no-repeat;
+    /* background-size: cover; */
+    padding: 60px 0;
+}
+
+.users-header {
+    max-width: 810px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    padding-bottom: 60px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.users-title {
+    font-size: 60px !important;
+    font-weight: bold !important;
+    text-align: center;
+}
+
+.users-description {
+    font-size: 20px !important;
+    text-align: center;
+    max-width: 400px;
+}
+
+.users-content {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 0 40px;
+}
+
+.user-cards-container {
+    display: none;
+}
+
+.user-card {
+    width: 300px;
+    height: 300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 60px 30px;
+    background-color: #191919;
+    border-top: 2px solid #0b5855;
+    border-left: 2px solid #0b5855;
+}
+
+.user-feedback {
+    font-size: 20px !important;
+    text-align: center;
+}
+
+.user-name {
+    font-size: 20px !important;
+    text-align: center;
+    font-style: italic;
+}
+
+/* InnovatorsSection styling */
+.innovators-section {
+    background-color: #191919;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 60px;
+    padding: 60px 20px;
+}
+
+.innovators-title {
+    font-size: 60px !important;
+    font-weight: bold !important;
+    text-align: center;
+}
+
+.innovators-logos {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 100px;
+}
+
+.innovators-logos img {
+    height: 136px;
+    transform: scale(0.7);
+}
+
+/* ConnectSection styling */
+.connect-section {
+    display: flex;
+    flex-direction: column;
+    background-color: #191919 !important;
+    background: url('./assets/skyline/linking-background-flipped.svg'),
+        linear-gradient(190deg, #0b5855 0%, #191919 60%);
+    background-repeat: no-repeat;
+    background-position: right;
+    padding: 60px 0;
+}
+
+.connect-content {
+    max-width: 810px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+}
+
+.connect-title {
+    font-size: 60px !important;
+    font-weight: bold !important;
+    text-align: center;
+}
+
+.connect-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.connect-description {
+    font-size: 20px !important;
+    text-align: center;
+}
+
+.connect-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 500px;
+    width: 100%;
+}
+
+.connect-button {
+    background-color: #ffffff !important;
+    text-transform: none !important;
+    border-radius: 0px !important;
+    padding: 15px 45px !important;
+    color: #0b5855 !important;
+    font-size: 20px !important;
+    border-top: 2px solid #0b5855 !important;
+    border-left: 2px solid #0b5855 !important;
+    box-shadow: none !important;
+}
+
+.connect-button:hover {
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+/* FooterSection styling */
+.footer-section {
+    background-color: #191919;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 60px;
+    padding: 60px 20px;
+    text-align: center;
+    color: white;
+}
+
+.footer-title {
+    font-family: "Goldman", sans-serif !important;
+    font-size: 40px !important;
+    font-weight: bold !important;
+}
+
+.footer-subtitle {
+    font-size: 20px !important;
+}
+
+.footer-subtitle-mobile {
+    display: none;
+}
+
+.horizontal-separator {
+    display: none;
+}
+
+.footer-logo {
+    width: 200px;
+    height: 200px;
+}
+
+.footer-icons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 60px;
+}
+
+.footer-icons img {
+    height: 40px;
+    width: 40px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.footer-icons img:hover {
+    transform: scale(1.1);
+}
+
+.footer-copyright {
+    font-size: 15px !important;
+}
+
+@media (max-width: 768px) {
+    .logo-container {
+        justify-content: center;
+    }
+
+    .skyline-logo {
+        height: 60px;
+    }
+
+    .skyline-text {
+        font-size: 30px !important;
+        margin-left: 20px !important;
+    }
+
+    .large-heading {
+        font-size: 30px !important;
+    }
+
+    .paragraph-text {
+        font-size: 16px !important;
+    }
+
+    .contact-us-button {
+        font-size: 16px !important;
+    }
+
+    .bridge-image-container {
+        display: none;
+    }
+
+    .bridge-image-mobile {
+        display: block;
+    }
+
+    .skyline-bridge-section {
+        padding: 40px 20px;
+    }
+
+    .skyline-bridge-title {
+        font-size: 25px !important;
+    }
+
+    .skyline-bridge-description {
+        font-size: 16px !important;
+    }
+
+    .skyline-bridge-content {
+        padding-top: 30px;
+    }
+
+    .skyline-bridge-item {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .skyline-bridge-item-title {
+        font-size: 20px !important;
+    }
+
+    .skyline-bridge-item-description {
+        font-size: 16px !important;
+    }
+
+    .skyline-bridge-text {
+        position: relative;
+    }
+
+    .skyline-bridge-icon {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .users-section {
+        background: url('./assets/skyline/linking-background.svg'),
+            linear-gradient(170deg, #0b5855 0%, #191919 60%);
+        background-size: contain;
+        padding: 40px 0;
+    }
+
+    .users-title {
+        font-size: 25px !important;
+    }
+
+    .users-description {
+        font-size: 16px !important;
+    }
+
+    .users-content {
+        display: none;
+    }
+
+    .user-cards-container {
+        display: flex;
+        padding: 0 20px;
+    }
+
+    .user-card {
+        width: initial;
+        height: 170px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 30px 20px;
+        background-color: #191919;
+        border-top: 2px solid #0b5855;
+        border-left: 2px solid #0b5855;
+    }
+
+    .user-feedback {
+        font-size: 16px !important;
+    }
+
+    .user-name {
+        font-size: 16px !important;
+    }
+
+    .innovators-title {
+        font-size: 25px !important;
+    }
+
+    .innovators-logos {
+        gap: 40px;
+    }
+
+    .innovators-logos img {
+        height: 100px;
+        transform: scale(0.7);
+    }
+
+    .connect-section {
+        background-color: #191919 !important;
+        background: url('./assets/skyline/linking-background-flipped.svg'),
+            linear-gradient(190deg, #0b5855 0%, #191919 45%);
+        background-repeat: no-repeat;
+        background-size: contain;
+        padding: 40px 20px;
+    }
+
+    .connect-title {
+        font-size: 25px !important;
+    }
+
+    .connect-description {
+        font-size: 16px !important;
+    }
+
+    .connect-button {
+        font-size: 16px !important;
+        border-top: 1px solid #0b5855 !important;
+        border-left: 1px solid #0b5855 !important;
+    }
+
+    .footer-subtitle-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .footer-subtitle {
+        display: none;
+    }
+
+    .footer-subtitle-mobile {
+        display: block;
+    }
+
+    .horizontal-separator {
+        display: flex;
+        height: 2px;
+        width: 60px;
+        align-self: center;
+        background-color: white;
+    }
+
+    .footer-logo {
+        width: 150px;
+        height: 150px;
+    }
+
+    .footer-icons {
+        gap: 40px;
+    }
+    
+    .footer-icons img {
+        transform: scale(0.7);
+    }
+
+    .footer-icons img:hover {
+        transform: scale(0.7);
+    }
+
+    .footer-copyright {
+        font-size: 12px !important;
+    }
+}
