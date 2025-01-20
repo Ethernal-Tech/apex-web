@@ -45,9 +45,9 @@ func (*CardanoTxControllerImpl) GetPathPrefix() string {
 
 func (c *CardanoTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	return []*core.APIEndpoint{
-		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx, APIKeyAuth: true},
-		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee, APIKeyAuth: true},
-		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance, APIKeyAuth: true},
+		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
+		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
+		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance},
 	}
 }
 
