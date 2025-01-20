@@ -72,7 +72,7 @@ func (bts *BridgingTxSender) CreateTx(
 
 	defer builder.Dispose()
 
-	fee, err := builder.CalculateFee(0)
+	fee, err := builder.CalculateFee(1)
 	if err != nil {
 		return nil, "", nil, err
 	}
@@ -114,7 +114,7 @@ func (bts *BridgingTxSender) GetTxFee(
 
 	defer builder.Dispose()
 
-	return builder.CalculateFee(0)
+	return builder.CalculateFee(1)
 }
 
 func (bts *BridgingTxSender) SendTx(
