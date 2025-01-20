@@ -9,7 +9,11 @@ import {
 	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
 import axios, { AxiosError } from 'axios';
-import { BadRequestException, Logger } from '@nestjs/common';
+import {
+	BadRequestException,
+	InternalServerErrorException,
+	Logger,
+} from '@nestjs/common';
 import web3, { Web3 } from 'web3';
 import { isAddress } from 'web3-validator';
 import { NewAddress, RewardAddress } from 'src/utils/Address/addreses';
@@ -151,7 +155,7 @@ export const createEthBridgingTx = async (
 	const destMinFee =
 		bridgingSettings.minChainFeeForBridging[dto.destinationChain];
 	if (!destMinFee) {
-		throw new BadRequestException(
+		throw new InternalServerErrorException(
 			`No minFee for destination chain: ${dto.destinationChain}`,
 		);
 	}
