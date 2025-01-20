@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
-import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 import { ChainEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
@@ -70,21 +69,6 @@ export class TransactionSubmittedDto {
 
 	@ApiProperty()
 	isFallback: boolean;
-}
-
-export class SubmitCardanoTransactionDto extends TransactionSubmittedDto {
-	@IsNotEmpty()
-	@ApiProperty()
-	signedTxRaw: string;
-}
-
-export class SubmitCardanoTransactionResponseDto {
-	@IsNotEmpty()
-	@ApiProperty()
-	txHash: string;
-
-	@ApiProperty({ nullable: true })
-	bridgeTx?: BridgeTransactionDto;
 }
 
 export class CreateCardanoTransactionResponseDto {

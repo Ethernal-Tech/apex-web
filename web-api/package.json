@@ -17,7 +17,6 @@
     "migration:run": "npm run build && typeorm-ts-node-esm migration:run --d ./src/database/data.source.ts"
   },
   "dependencies": {
-    "@cardano-ogmios/client": "^6.2.0",
     "@emurgo/cardano-message-signing-nodejs": "^1.0.1",
     "@emurgo/cardano-serialization-lib-nodejs": "^11.5.0",
     "@nestjs/common": "^10.0.0",
