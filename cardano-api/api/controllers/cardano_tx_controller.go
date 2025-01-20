@@ -47,7 +47,6 @@ func (c *CardanoTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	return []*core.APIEndpoint{
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx, APIKeyAuth: true},
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee, APIKeyAuth: true},
-		{Path: "SignBridgingTx", Method: http.MethodPost, Handler: c.signBridgingTx, APIKeyAuth: true},
 		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance, APIKeyAuth: true},
 	}
 }
@@ -225,34 +224,6 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		response.NewFullBridgingTxResponse(txRawBytes, txHash, requestBody.BridgingFee), c.logger)
 }
 
-func (c *CardanoTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.Request) {
-	requestBody, ok := utils.DecodeModel[request.SignBridgingTxRequest](w, r, c.logger)
-	if !ok {
-		return
-	}
-
-	if requestBody.TxRaw == "" || requestBody.SigningKeyHex == "" || requestBody.TxHash == "" {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest, errors.New("invalid input data"), c.logger)
-
-		return
-	}
-
-	c.logger.Debug("signBridgingTx request", "body", requestBody, "url", r.URL)
-
-	signedTx, err := c.signTx(requestBody)
-	if err != nil {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest, errors.New("validation error"), c.logger)
-
-		return
-	}
-
-	utils.WriteResponse(
-		w, r, http.StatusOK,
-		response.NewBridgingTxResponse(signedTx, requestBody.TxHash), c.logger)
-}
-
 func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody *request.CreateBridgingTxRequest,
 ) error {
@@ -387,36 +358,6 @@ func (c *CardanoTxControllerImpl) getBridgingTxSenderAndOutputs(
 	}
 
 	return bridgingTxSender, receivers, nil
-}
-
-func (c *CardanoTxControllerImpl) signTx(requestBody request.SignBridgingTxRequest) ([]byte, error) {
-	signingKeyBytes, err := common.DecodeHex(requestBody.SigningKeyHex)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode singing key hex: %w", err)
-	}
-
-	txRawBytes, err := common.DecodeHex(requestBody.TxRaw)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode raw tx: %w", err)
-	}
-
-	cardanoCliBinary := wallet.ResolveCardanoCliBinary(wallet.CardanoNetworkType(requestBody.NetworkID))
-	senderWallet := wallet.NewWallet(
-		wallet.GetVerificationKeyFromSigningKey(signingKeyBytes), signingKeyBytes)
-
-	txBuilder, err := wallet.NewTxBuilder(cardanoCliBinary)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create tx builder: %w", err)
-	}
-
-	defer txBuilder.Dispose()
-
-	signedTxBytes, err := txBuilder.SignTx(txRawBytes, []wallet.ITxSigner{senderWallet})
-	if err != nil {
-		return nil, fmt.Errorf("failed to sign tx: %w", err)
-	}
-
-	return signedTxBytes, nil
 }
 
 func getSkipUtxos(
