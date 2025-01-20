@@ -7,7 +7,7 @@
     "@emotion/styled": "^11.11.0",
     "@emurgo/cardano-serialization-lib-nodejs": "^11.5.0",
     "@fontsource/roboto": "^5.0.8",
-    "@meshsdk/core": "^1.5.11-beta.6",
+    "@meshsdk/core": "^1.8.12",
     "@mui/icons-material": "^5.15.15",
     "@mui/material": "^5.15.10",
     "@reduxjs/toolkit": "^2.2.2",
