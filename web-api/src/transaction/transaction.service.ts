@@ -49,6 +49,24 @@ export class TransactionService {
 		) {
 			throw new BadRequestException('Invalid destination chain');
 		}
+
+		const destMinFee =
+			this.settingsService.BridgingSettings.minChainFeeForBridging[
+				dto.destinationChain
+			];
+		if (!destMinFee) {
+			throw new InternalServerErrorException(
+				`No minFee for destination chain: ${dto.destinationChain}`,
+			);
+		}
+
+		const minBridgingFee = BigInt(destMinFee);
+		const bridgingFee = BigInt(dto.bridgingFee || '0');
+		if (bridgingFee !== BigInt(0) && bridgingFee < minBridgingFee) {
+			throw new BadRequestException(
+				'Bridging fee in request body is less than minimum',
+			);
+		}
 	}
 
 	async createCardano(
