@@ -11,5 +11,6 @@ func IsValidOutputAddress(addr string, networkID wallet.CardanoNetworkType) bool
 		cardAddr.GetInfo().Network != networkID {
 		return false
 	}
+
 	return true
 }

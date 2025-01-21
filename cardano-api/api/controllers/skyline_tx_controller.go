@@ -229,6 +229,7 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 			break
 		}
+
 		if !receiver.IsNativeToken && receiver.Amount < srcMinUtxoChainValue {
 			foundAUtxoValueBelowMinimumValue = true
 
@@ -251,6 +252,7 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			feeSum += receiver.Amount
 		} else {
 			transactions = append(transactions, receiver)
+
 			if !receiver.IsNativeToken {
 				receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(receiver.Amount))
 			}

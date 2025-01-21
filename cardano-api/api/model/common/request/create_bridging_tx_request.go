@@ -3,7 +3,7 @@ package request
 type CreateBridgingTxTransactionRequest struct {
 	Addr          string `json:"addr"`
 	Amount        uint64 `json:"amount"`
-	IsNativeToken bool   `json:"isNativeToken"` //wada wapex
+	IsNativeToken bool   `json:"isNativeToken"`
 }
 
 type UtxoRequest struct {
