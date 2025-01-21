@@ -297,7 +297,7 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
 	string, string, *sendtx.BridgingRequestMetadata, error,
 ) {
-	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs()
+	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("failed to generate configuration")
 	}

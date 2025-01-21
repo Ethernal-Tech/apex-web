@@ -129,11 +129,11 @@ func GetChainConfig(appConfig *AppConfig, chainID string) (*CardanoChainConfig, 
 	return nil, nil
 }
 
-func (appConfig AppConfig) ToSendTxChainConfigs() (map[string]sendtx.ChainConfig, error) {
+func (appConfig AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]sendtx.ChainConfig, error) {
 	result := make(map[string]sendtx.ChainConfig, len(appConfig.CardanoChains)+len(appConfig.EthChains))
 
 	for chainID, cardanoConfig := range appConfig.CardanoChains {
-		cfg, err := cardanoConfig.ToSendTxChainConfig(&appConfig)
+		cfg, err := cardanoConfig.ToSendTxChainConfig(&appConfig, useFallback)
 		if err != nil {
 			return nil, err
 		}
@@ -149,7 +149,7 @@ func (appConfig AppConfig) ToSendTxChainConfigs() (map[string]sendtx.ChainConfig
 }
 
 func (config CardanoChainConfig) ToSendTxChainConfig(
-	appConfig *AppConfig,
+	appConfig *AppConfig, useFallback bool,
 ) (res sendtx.ChainConfig, err error) {
 	txProvider, err := config.ChainSpecific.CreateTxProvider()
 	if err != nil {
@@ -167,10 +167,15 @@ func (config CardanoChainConfig) ToSendTxChainConfig(
 		}
 	}
 
+	bridgingAddress := config.BridgingAddresses.BridgingAddress
+	if useFallback {
+		bridgingAddress = config.BridgingAddresses.FallbackAddress
+	}
+
 	return sendtx.ChainConfig{
 		CardanoCliBinary:     cardanowallet.ResolveCardanoCliBinary(config.NetworkID),
 		TxProvider:           txProvider,
-		MultiSigAddr:         config.BridgingAddresses.BridgingAddress,
+		MultiSigAddr:         bridgingAddress,
 		TestNetMagic:         uint(config.NetworkMagic),
 		TTLSlotNumberInc:     config.ChainSpecific.TTLSlotNumberInc,
 		MinUtxoValue:         appConfig.BridgingSettings.MinUtxoChainValue[config.ChainID],
