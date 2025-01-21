@@ -9,6 +9,7 @@ import (
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-infrastructure/logger"
+	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	"github.com/hashicorp/go-hclog"
 )
@@ -126,4 +127,60 @@ func GetChainConfig(appConfig *AppConfig, chainID string) (*CardanoChainConfig, 
 	}
 
 	return nil, nil
+}
+
+func (appConfig AppConfig) ToSendTxChainConfigs() (map[string]sendtx.ChainConfig, error) {
+	result := make(map[string]sendtx.ChainConfig, len(appConfig.CardanoChains)+len(appConfig.EthChains))
+
+	for chainID, cardanoConfig := range appConfig.CardanoChains {
+		cfg, err := cardanoConfig.ToSendTxChainConfig(&appConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		result[chainID] = cfg
+	}
+
+	for chainID, config := range appConfig.EthChains {
+		result[chainID] = config.ToSendTxChainConfig()
+	}
+
+	return result, nil
+}
+
+func (config CardanoChainConfig) ToSendTxChainConfig(
+	appConfig *AppConfig,
+) (res sendtx.ChainConfig, err error) {
+	txProvider, err := config.ChainSpecific.CreateTxProvider()
+	if err != nil {
+		return res, err
+	}
+
+	var nativeTokens []sendtx.TokenExchangeConfig
+
+	for _, tdst := range config.ChainSpecific.Destinations {
+		if tdst.SrcTokenName != cardanowallet.AdaTokenName {
+			nativeTokens = append(nativeTokens, sendtx.TokenExchangeConfig{
+				DstChainID: tdst.Chain,
+				TokenName:  tdst.SrcTokenName,
+			})
+		}
+	}
+
+	return sendtx.ChainConfig{
+		CardanoCliBinary:     cardanowallet.ResolveCardanoCliBinary(config.NetworkID),
+		TxProvider:           txProvider,
+		MultiSigAddr:         config.BridgingAddresses.BridgingAddress,
+		TestNetMagic:         uint(config.NetworkMagic),
+		TTLSlotNumberInc:     config.ChainSpecific.TTLSlotNumberInc,
+		MinUtxoValue:         appConfig.BridgingSettings.MinUtxoChainValue[config.ChainID],
+		NativeTokens:         nativeTokens,
+		MinBridgingFeeAmount: appConfig.BridgingSettings.MinChainFeeForBridging[config.ChainID],
+		PotentialFee:         config.ChainSpecific.PotentialFee,
+		ProtocolParameters:   nil,
+	}, nil
+}
+
+func (config EthChainConfig) ToSendTxChainConfig() sendtx.ChainConfig {
+	return sendtx.ChainConfig{}
 }

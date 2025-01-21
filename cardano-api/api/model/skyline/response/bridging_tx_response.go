@@ -31,3 +31,15 @@ func NewBridgingTxFeeResponse(fee uint64) *BridgingTxFeeResponse {
 		Fee: fee,
 	}
 }
+
+func NewFullSkylineBridgingTxResponse(
+	txRaw string, txHash string, bridgingFee uint64, amount uint64, nativeTokenAmount uint64,
+) *BridgingTxResponse {
+	return &BridgingTxResponse{
+		TxRaw:             txRaw,
+		TxHash:            txHash,
+		BridgingFee:       bridgingFee,
+		Amount:            amount,
+		NativeTokenAmount: nativeTokenAmount,
+	}
+}

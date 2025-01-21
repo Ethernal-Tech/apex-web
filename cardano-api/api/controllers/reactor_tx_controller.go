@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	commonRequest "github.com/Ethernal-Tech/cardano-api/api/model/common/request"
 	commonResponse "github.com/Ethernal-Tech/cardano-api/api/model/common/response"
 	"github.com/Ethernal-Tech/cardano-api/api/model/reactor/request"
 	"github.com/Ethernal-Tech/cardano-api/api/model/reactor/response"
@@ -117,7 +118,7 @@ func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
-	requestBody, ok := utils.DecodeModel[request.CreateBridgingTxRequest](w, r, c.logger)
+	requestBody, ok := utils.DecodeModel[commonRequest.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
 	}
@@ -168,7 +169,7 @@ func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 }
 
 func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
-	requestBody, ok := utils.DecodeModel[request.CreateBridgingTxRequest](w, r, c.logger)
+	requestBody, ok := utils.DecodeModel[commonRequest.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
 	}
@@ -256,7 +257,7 @@ func (c *ReactorTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.
 }
 
 func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
-	requestBody *request.CreateBridgingTxRequest,
+	requestBody *commonRequest.CreateBridgingTxRequest,
 ) error {
 	cardanoSrcConfig, _ := core.GetChainConfig(c.appConfig, requestBody.SourceChainID)
 	if cardanoSrcConfig == nil {
@@ -277,7 +278,7 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	feeSum := uint64(0)
 	foundAUtxoValueBelowMinimumValue := false
 	foundAnInvalidReceiverAddr := false
-	transactions := make([]request.CreateBridgingTxTransactionRequest, 0, len(requestBody.Transactions))
+	transactions := make([]commonRequest.CreateBridgingTxTransactionRequest, 0, len(requestBody.Transactions))
 
 	for _, receiver := range requestBody.Transactions {
 		if cardanoDestConfig != nil {
@@ -355,7 +356,7 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 }
 
 func (c *ReactorTxControllerImpl) getBridgingTxSenderAndOutputs(
-	requestBody request.CreateBridgingTxRequest,
+	requestBody commonRequest.CreateBridgingTxRequest,
 ) (*cardanotx.BridgingTxSender, []wallet.TxOutput, error) {
 	sourceChainConfig, exists := c.appConfig.CardanoChains[requestBody.SourceChainID]
 	if !exists {
@@ -422,7 +423,7 @@ func (c *ReactorTxControllerImpl) signTx(requestBody request.SignBridgingTxReque
 }
 
 func getSkipUtxos(
-	requestBody request.CreateBridgingTxRequest, appConfig *core.AppConfig, usedUtxoCacher *utils.UsedUtxoCacher,
+	requestBody commonRequest.CreateBridgingTxRequest, appConfig *core.AppConfig, usedUtxoCacher *utils.UsedUtxoCacher,
 ) (skipUtxos []wallet.TxInput, useCaching bool) {
 	shouldUseUsedUtxoCacher := false
 
@@ -440,7 +441,7 @@ func getSkipUtxos(
 		return usedUtxoCacher.Get(requestBody.SenderAddr), true
 	}
 
-	return common.Map(requestBody.SkipUtxos, func(x request.UtxoRequest) wallet.TxInput {
+	return common.Map(requestBody.SkipUtxos, func(x commonRequest.UtxoRequest) wallet.TxInput {
 		return wallet.TxInput{
 			Hash:  x.Hash,
 			Index: x.Index,
