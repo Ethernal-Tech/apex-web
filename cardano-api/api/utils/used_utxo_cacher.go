@@ -1,11 +1,17 @@
 package utils
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 )
+
+type CacheUtxosTransformer struct {
+	UtxoCacher *UsedUtxoCacher
+	Addr       string
+}
 
 type txInputWithTime struct {
 	wallet.TxInput
@@ -80,4 +86,28 @@ func (c *UsedUtxoCacher) Get(addr string) []wallet.TxInput {
 	}
 
 	return result
+}
+
+func (u *CacheUtxosTransformer) TransformUtxos(utxos []wallet.Utxo) []wallet.Utxo {
+	cachedUtxos := u.UtxoCacher.Get(u.Addr)
+
+	cachedMap := make(map[string]struct{})
+	for _, cachedUtxo := range cachedUtxos {
+		cachedMap[cachedUtxo.String()] = struct{}{}
+	}
+
+	var filteredUtxos []wallet.Utxo
+
+	for _, utxo := range utxos {
+		key := fmt.Sprintf("%s#%d", utxo.Hash, utxo.Index)
+		if _, exists := cachedMap[key]; !exists {
+			filteredUtxos = append(filteredUtxos, utxo)
+		}
+	}
+
+	return filteredUtxos
+}
+
+func (u *CacheUtxosTransformer) UpdateUtxos(usedInputs []wallet.TxInput) {
+	u.UtxoCacher.Add(u.Addr, usedInputs)
 }

@@ -304,7 +304,17 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		return "", "", nil, fmt.Errorf("failed to generate configuration")
 	}
 
-	txSender := sendtx.NewTxSender(txSenderChainsConfig)
+	var options []sendtx.TxSenderOption
+
+	if useUtxoCache(requestBody, c.appConfig) {
+		cacheUtxosTransformer := &utils.CacheUtxosTransformer{
+			UtxoCacher: c.usedUtxoCacher,
+			Addr:       requestBody.SenderAddr,
+		}
+		options = append(options, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
+	}
+
+	txSender := sendtx.NewTxSender(txSenderChainsConfig, options...)
 
 	receivers := make([]sendtx.BridgingTxReceiver, len(requestBody.Transactions))
 	for i, tx := range requestBody.Transactions {
@@ -352,4 +362,22 @@ func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata) (
 	}
 
 	return outputCurrencyLovelace, outputNativeToken, bridgingFee
+}
+
+func useUtxoCache(
+	requestBody commonRequest.CreateBridgingTxRequest, appConfig *core.AppConfig,
+) (useCaching bool) {
+	shouldUseUsedUtxoCacher := false
+
+	if desiredKey := requestBody.UTXOCacheKey; desiredKey != "" {
+		for _, key := range appConfig.APIConfig.UTXOCacheKeys {
+			if key == desiredKey {
+				shouldUseUsedUtxoCacher = true
+
+				break
+			}
+		}
+	}
+
+	return shouldUseUsedUtxoCacher
 }
