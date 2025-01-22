@@ -3,7 +3,11 @@ import SkylineLogo from "../../../assets/skyline/skyline-logo.svg";
 import SkylineBridge from "../../../assets/skyline/skyline-bg.svg";
 import SkylineBridgeMobile from "../../../assets/skyline/skyline-bg-mobile.svg";
 
-const SkylineSection = () => (
+type Props = {
+  onClick(): void;
+};
+
+const SkylineSection = ({ onClick }: Props) => (
   <Box className="skyline-section-container">
     <Box className="logo-container">
       <img src={SkylineLogo} alt="skylineLogo" className="skyline-logo" />
@@ -18,7 +22,11 @@ const SkylineSection = () => (
           Seamlessly bridge digital assets across blockchains—secure, fast, and
           reliable. Skyline Bridge is your gateway to decentralized ecosystems.
         </Typography>
-        <Button variant="contained" className="contact-us-button">
+        <Button
+          variant="contained"
+          className="contact-us-button"
+          onClick={onClick}
+        >
           Contact Us
         </Button>
       </Box>
@@ -26,7 +34,11 @@ const SkylineSection = () => (
         <img src={SkylineBridge} alt="SkylineBridge" className="bridge-image" />
         <Box className="gradient-overlay" />
       </Box>
-      <img src={SkylineBridgeMobile} alt="SkylineBridgeMobile" className="bridge-image-mobile" />
+      <img
+        src={SkylineBridgeMobile}
+        alt="SkylineBridgeMobile"
+        className="bridge-image-mobile"
+      />
     </Box>
   </Box>
 );
