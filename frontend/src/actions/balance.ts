@@ -1,19 +1,18 @@
 import { Dispatch } from '@reduxjs/toolkit';
 import { store } from '../redux/store';
-import { BalanceResponseDto, ChainEnum, WalletControllerClient } from '../swagger/apexBridgeApiService';
+import { BalanceResponseDto, ChainEnum } from '../swagger/apexBridgeApiService';
 import { fromNetworkIdToChain } from '../utils/chainUtils';
 import { updateBalanceAction } from '../redux/slices/accountInfoSlice';
 import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
 import evmWalletHandler from '../features/EvmWalletHandler';
+import walletHandler from '../features/WalletHandler';
 
 export const getWalletBalanceAction = async (chain: ChainEnum, address: string) => {
-    if (chain === ChainEnum.Nexus) { 
-        const nexusBalance = await evmWalletHandler.getBalance()
-        return new BalanceResponseDto({ balance: nexusBalance})
-    }
-    
-    const client = new WalletControllerClient();
-    return client.getBalance(chain, address);
+    const balance = chain === ChainEnum.Nexus
+        ? await evmWalletHandler.getBalance()
+        : await walletHandler.getBalance()
+
+    return new BalanceResponseDto({ balance })
 }
 
 export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
