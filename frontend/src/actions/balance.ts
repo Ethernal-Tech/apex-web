@@ -8,10 +8,12 @@ import evmWalletHandler from '../features/EvmWalletHandler';
 import walletHandler from '../features/WalletHandler';
 
 export const getWalletBalanceAction = async (chain: ChainEnum, address: string) => {
-    const balance = chain === ChainEnum.Nexus
-        ? await evmWalletHandler.getBalance()
-        : await walletHandler.getBalance()
-
+    if (chain === ChainEnum.Nexus) { 
+        const nexusBalance = await evmWalletHandler.getBalance()
+        return new BalanceResponseDto({ balance: nexusBalance})
+    }
+    
+    const balance = await walletHandler.getBalance()
     return new BalanceResponseDto({ balance })
 }
 
