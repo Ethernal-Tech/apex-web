@@ -30,41 +30,41 @@ const PageRouter: React.FC = () => {
 	
 	const isLoggedInMemo = !!wallet;
 
-	useEffect(() => {
-		if (isLoggedInMemo) {
-			onLoad(wallet, chain, dispatch);
-		}
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+	// useEffect(() => {
+	// 	if (isLoggedInMemo) {
+	// 		onLoad(wallet, chain, dispatch);
+	// 	}
+	// // eslint-disable-next-line react-hooks/exhaustive-deps
+	// }, [])
 
-	useEffect(() => {
-		fetchAndUpdateSettingsAction(dispatch)
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+	// useEffect(() => {
+	// 	fetchAndUpdateSettingsAction(dispatch)
+	// // eslint-disable-next-line react-hooks/exhaustive-deps
+	// }, [])
 
-  useEffect(() => {
-    if (balanceIntervalHandle.current) {
-      clearInterval(balanceIntervalHandle.current)
-      balanceIntervalHandle.current = undefined
-    }
+  // useEffect(() => {
+  //   if (balanceIntervalHandle.current) {
+  //     clearInterval(balanceIntervalHandle.current)
+  //     balanceIntervalHandle.current = undefined
+  //   }
 
-    if (!isFullyLoggedIn) {
-      return
-    }
+  //   if (!isFullyLoggedIn) {
+  //     return
+  //   }
 
-    fetchAndUpdateBalanceAction(dispatch)
+  //   fetchAndUpdateBalanceAction(dispatch)
 
-    balanceIntervalHandle.current = setInterval(async () => {
-      await fetchAndUpdateBalanceAction(dispatch)
-    }, 30000)
+  //   balanceIntervalHandle.current = setInterval(async () => {
+  //     await fetchAndUpdateBalanceAction(dispatch)
+  //   }, 30000)
 
-    return () => {
-      if (balanceIntervalHandle.current) {
-        clearInterval(balanceIntervalHandle.current)
-        balanceIntervalHandle.current = undefined
-      }
-    }
-  }, [dispatch, isFullyLoggedIn])
+  //   return () => {
+  //     if (balanceIntervalHandle.current) {
+  //       clearInterval(balanceIntervalHandle.current)
+  //       balanceIntervalHandle.current = undefined
+  //     }
+  //   }
+  // }, [dispatch, isFullyLoggedIn])
 
   useEffect(() => {
     if (location.pathname === '/landing') {
@@ -95,12 +95,13 @@ const PageRouter: React.FC = () => {
 
   return (
     <Routes>
-        <Route path={HOME_ROUTE} element={withMiddleware(() => renderHomePage)({})} />
+        {/* <Route path={HOME_ROUTE} element={withMiddleware(() => renderHomePage)({})} />
         <Route path={TRANSACTIONS_ROUTE} element={withMiddleware(() => renderTransactionsPage)({})} />
         <Route path={NEW_TRANSACTION_ROUTE} element={withMiddleware(() => renderNewTransactionPage)({})} />
-        <Route path={TRANSACTION_DETAILS_ROUTE} element={withMiddleware(() => renderTransactionDetailsPage)({})} />
+        <Route path={TRANSACTION_DETAILS_ROUTE} element={withMiddleware(() => renderTransactionDetailsPage)({})} /> */}
         <Route path={LANDING_ROUTE} element={renderLandingPage} />
-        <Route path='*' element={withMiddleware(() => renderHomePage)({})} />
+        <Route path="*" element={<Navigate to={LANDING_ROUTE} />} />
+        {/* <Route path='*' element={withMiddleware(() => renderHomePage)({})} /> */}
     </Routes>
   );
 };
