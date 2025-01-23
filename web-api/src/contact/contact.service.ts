@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateContactDto } from './contact.dto';
 import { MailerService } from '@nestjs-modules/mailer';
-import { getTestMessageUrl } from 'nodemailer';
 
 @Injectable()
 export class ContactService {
@@ -9,8 +8,8 @@ export class ContactService {
 
 	async submitContactForm(contactData: CreateContactDto): Promise<void> {
 		const { name, email, message } = contactData;
-		const messageInfo = await this.mailerService.sendMail({
-			to: 'info@ethernal.tech',
+		await this.mailerService.sendMail({
+			to: process.env.CONTACT_EMAIL || 'info@ethernal.tech',
 			subject: `Skyline from ${name}`,
 			template: 'contact',
 			context: {
@@ -19,7 +18,5 @@ export class ContactService {
 				message: message.replace(/\n/g, '<br>'),
 			},
 		});
-
-		console.log('Preview URL: ', getTestMessageUrl(messageInfo));
 	}
 }
