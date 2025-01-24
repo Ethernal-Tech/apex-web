@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -11,7 +12,6 @@ import (
 	commonRequest "github.com/Ethernal-Tech/cardano-api/api/model/common/request"
 	commonResponse "github.com/Ethernal-Tech/cardano-api/api/model/common/response"
 	"github.com/Ethernal-Tech/cardano-api/api/model/reactor/request"
-	"github.com/Ethernal-Tech/cardano-api/api/model/reactor/response"
 	"github.com/Ethernal-Tech/cardano-api/api/utils"
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
@@ -165,7 +165,7 @@ func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	utils.WriteResponse(w, r, http.StatusOK, response.NewBridgingTxFeeResponse(fee), c.logger)
+	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(fee), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
@@ -222,9 +222,9 @@ func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		response.NewFullBridgingTxResponse(
-			txRawBytes, txHash, requestBody.BridgingFee,
-			wallet.GetOutputsSum(outputs)[wallet.AdaTokenName]),
+		commonResponse.NewFullBridgingTxResponse(
+			hex.EncodeToString(txRawBytes), txHash, requestBody.BridgingFee,
+			wallet.GetOutputsSum(outputs)[wallet.AdaTokenName], 0),
 		c.logger)
 }
 
@@ -253,7 +253,7 @@ func (c *ReactorTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		response.NewBridgingTxResponse(signedTx, requestBody.TxHash), c.logger)
+		commonResponse.NewBridgingTxResponse(signedTx, requestBody.TxHash), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(

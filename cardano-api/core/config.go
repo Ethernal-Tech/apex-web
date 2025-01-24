@@ -142,7 +142,7 @@ func (appConfig AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]se
 	}
 
 	for chainID, config := range appConfig.EthChains {
-		result[chainID] = config.ToSendTxChainConfig()
+		result[chainID] = config.ToSendTxChainConfig(&appConfig)
 	}
 
 	return result, nil
@@ -186,6 +186,16 @@ func (config CardanoChainConfig) ToSendTxChainConfig(
 	}, nil
 }
 
-func (config EthChainConfig) ToSendTxChainConfig() sendtx.ChainConfig {
-	return sendtx.ChainConfig{}
+func (config EthChainConfig) ToSendTxChainConfig(
+	appConfig *AppConfig,
+) sendtx.ChainConfig {
+	feeValue := new(big.Int).SetUint64(appConfig.BridgingSettings.MinChainFeeForBridging[config.ChainID])
+
+	if len(feeValue.String()) == common.WeiDecimals {
+		feeValue = common.WeiToDfm(feeValue)
+	}
+
+	return sendtx.ChainConfig{
+		MinBridgingFeeAmount: feeValue.Uint64(),
+	}
 }
