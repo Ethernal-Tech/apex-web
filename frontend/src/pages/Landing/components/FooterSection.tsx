@@ -25,9 +25,15 @@ const FooterSection = () => (
       className="footer-logo"
     />
     <Box className="footer-icons">
-      <img src={EmailIcon} alt="Email Icon" />
-      <img src={LinkedInIcon} alt="LinkedIn Icon" />
-      <img src={XIcon} alt="X Icon" />
+      <a href="mailto:info@ethernal.tech">
+        <img src={EmailIcon} alt="Email Icon" />
+      </a>
+      <a href="https://www.linkedin.com/company/skylinebridge" target="_blank" rel="noreferrer">
+        <img src={LinkedInIcon} alt="LinkedIn Icon" />
+      </a>
+      <a href="https://x.com/skyline_bridge" target="_blank" rel="noreferrer">
+        <img src={XIcon} alt="X Icon" />
+      </a>
     </Box>
     <Typography className="footer-copyright">
       © Skyline Bridge 2024. All Rights Reserved.
