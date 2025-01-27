@@ -149,9 +149,15 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	// a TODO: get fee
+	fee, bridgingRequestMetadata, err := c.calculateTxFee(requestBody)
+	if err != nil {
+		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
-	var fee uint64
+		return
+	}
+
+	_ = fee
+	_ = bridgingRequestMetadata
 
 	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(fee), c.logger)
 }
@@ -339,6 +345,52 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 	}
 
 	return hex.EncodeToString(txRawBytes), txHash, metadata, nil
+}
+
+func (c *SkylineTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
+	uint64, *sendtx.BridgingRequestMetadata, error,
+) {
+	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to generate configuration")
+	}
+
+	var options []sendtx.TxSenderOption
+
+	if useUtxoCache(requestBody, c.appConfig) {
+		cacheUtxosTransformer := &utils.CacheUtxosTransformer{
+			UtxoCacher: c.usedUtxoCacher,
+			Addr:       requestBody.SenderAddr,
+		}
+		options = append(options, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
+	}
+
+	txSender := sendtx.NewTxSender(txSenderChainsConfig, options...)
+
+	receivers := make([]sendtx.BridgingTxReceiver, len(requestBody.Transactions))
+	for i, tx := range requestBody.Transactions {
+		receivers[i] = sendtx.BridgingTxReceiver{
+			Addr:   tx.Addr,
+			Amount: tx.Amount,
+		}
+		if tx.IsNativeToken {
+			receivers[i].BridgingType = sendtx.BridgingTypeNativeTokenOnSource
+		} else {
+			receivers[i].BridgingType = sendtx.BridgingTypeCurrencyOnSource
+		}
+	}
+
+	fee, metadata, err := txSender.CalculateBridgingTxFee(
+		context.Background(),
+		requestBody.SourceChainID, requestBody.DestinationChainID,
+		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
+		sendtx.NewExchangeRate(),
+	)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
+	}
+
+	return fee, metadata, nil
 }
 
 func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata) (
