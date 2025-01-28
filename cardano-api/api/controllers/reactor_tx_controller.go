@@ -142,7 +142,8 @@ func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(fee, requestBody.BridgingFee), c.logger)
+	utils.WriteResponse(w, r, http.StatusOK,
+		commonResponse.NewBridgingTxFeeResponse(fee, requestBody.BridgingFee), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
