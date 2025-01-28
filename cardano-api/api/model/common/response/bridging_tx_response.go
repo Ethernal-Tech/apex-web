@@ -32,11 +32,13 @@ func NewBridgingTxResponse(
 }
 
 type BridgingTxFeeResponse struct {
-	Fee uint64 `json:"fee"`
+	Fee         uint64 `json:"fee"`
+	BridgingFee uint64 `json:"bridgingFee"`
 }
 
-func NewBridgingTxFeeResponse(fee uint64) *BridgingTxFeeResponse {
+func NewBridgingTxFeeResponse(fee uint64, bridgingFee uint64) *BridgingTxFeeResponse {
 	return &BridgingTxFeeResponse{
-		Fee: fee,
+		Fee:         fee,
+		BridgingFee: bridgingFee,
 	}
 }

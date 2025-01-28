@@ -135,38 +135,14 @@ func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	bridgingTxSender, outputs, err := c.getBridgingTxSenderAndOutputs(requestBody)
-	if err != nil {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			fmt.Errorf("validation error. err: %w", err), c.logger)
-
-		return
-	}
-
-	skipUtxos, _ := getSkipUtxos(requestBody, c.appConfig, c.usedUtxoCacher)
-
-	minUtxoValue, found := c.appConfig.BridgingSettings.MinUtxoChainValue[requestBody.SourceChainID]
-	if !found {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			fmt.Errorf("no minimal UTXO value for chain: %s", requestBody.SourceChainID), c.logger)
-
-		return
-	}
-
-	fee, err := bridgingTxSender.GetTxFee(
-		context.Background(), requestBody.DestinationChainID,
-		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
-		skipUtxos, minUtxoValue,
-	)
+	fee, _, err := c.calculateTxFee(requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
 		return
 	}
 
-	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(fee), c.logger)
+	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(fee, requestBody.BridgingFee), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
@@ -325,43 +301,6 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	return nil
 }
 
-func (c *ReactorTxControllerImpl) getBridgingTxSenderAndOutputs(
-	requestBody commonRequest.CreateBridgingTxRequest,
-) (*cardanotx.BridgingTxSender, []wallet.TxOutput, error) {
-	sourceChainConfig, exists := c.appConfig.CardanoChains[requestBody.SourceChainID]
-	if !exists {
-		return nil, nil, fmt.Errorf("chain does not exists: %s", requestBody.SourceChainID)
-	}
-
-	txProvider, err := sourceChainConfig.ChainSpecific.CreateTxProvider()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create tx provider: %w", err)
-	}
-
-	bridgingAddress := sourceChainConfig.BridgingAddresses.BridgingAddress
-	if requestBody.UseFallback {
-		bridgingAddress = sourceChainConfig.BridgingAddresses.FallbackAddress
-	}
-
-	bridgingTxSender := cardanotx.NewBridgingTxSender(
-		wallet.ResolveCardanoCliBinary(sourceChainConfig.NetworkID),
-		txProvider, txProvider, uint(sourceChainConfig.NetworkMagic),
-		bridgingAddress,
-		sourceChainConfig.ChainSpecific.TTLSlotNumberInc,
-		sourceChainConfig.ChainSpecific.PotentialFee, c.logger,
-	)
-
-	receivers := make([]wallet.TxOutput, len(requestBody.Transactions))
-	for i, tx := range requestBody.Transactions {
-		receivers[i] = wallet.TxOutput{
-			Addr:   tx.Addr,
-			Amount: tx.Amount,
-		}
-	}
-
-	return bridgingTxSender, receivers, nil
-}
-
 func (c *ReactorTxControllerImpl) signTx(requestBody request.SignBridgingTxRequest) ([]byte, error) {
 	signingKeyBytes, err := common.DecodeHex(requestBody.SigningKeyHex)
 	if err != nil {
@@ -390,33 +329,6 @@ func (c *ReactorTxControllerImpl) signTx(requestBody request.SignBridgingTxReque
 	}
 
 	return signedTxBytes, nil
-}
-
-func getSkipUtxos(
-	requestBody commonRequest.CreateBridgingTxRequest, appConfig *core.AppConfig, usedUtxoCacher *utils.UsedUtxoCacher,
-) (skipUtxos []wallet.TxInput, useCaching bool) {
-	shouldUseUsedUtxoCacher := false
-
-	if desiredKey := requestBody.UTXOCacheKey; desiredKey != "" {
-		for _, key := range appConfig.APIConfig.UTXOCacheKeys {
-			if key == desiredKey {
-				shouldUseUsedUtxoCacher = true
-
-				break
-			}
-		}
-	}
-
-	if shouldUseUsedUtxoCacher {
-		return usedUtxoCacher.Get(requestBody.SenderAddr), true
-	}
-
-	return common.Map(requestBody.SkipUtxos, func(x commonRequest.UtxoRequest) wallet.TxInput {
-		return wallet.TxInput{
-			Hash:  x.Hash,
-			Index: x.Index,
-		}
-	}), false
 }
 
 func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
@@ -459,4 +371,46 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 	}
 
 	return hex.EncodeToString(txRawBytes), txHash, nil
+}
+
+func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
+	uint64, *sendtx.BridgingRequestMetadata, error,
+) {
+	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to generate configuration")
+	}
+
+	var options []sendtx.TxSenderOption
+
+	if useUtxoCache(requestBody, c.appConfig) {
+		cacheUtxosTransformer := &utils.CacheUtxosTransformer{
+			UtxoCacher: c.usedUtxoCacher,
+			Addr:       requestBody.SenderAddr,
+		}
+		options = append(options, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
+	}
+
+	txSender := sendtx.NewTxSender(txSenderChainsConfig, options...)
+
+	receivers := make([]sendtx.BridgingTxReceiver, len(requestBody.Transactions))
+	for i, tx := range requestBody.Transactions {
+		receivers[i] = sendtx.BridgingTxReceiver{
+			Addr:         tx.Addr,
+			Amount:       tx.Amount,
+			BridgingType: sendtx.BridgingTypeNormal,
+		}
+	}
+
+	fee, metadata, err := txSender.CalculateBridgingTxFee(
+		context.Background(),
+		requestBody.SourceChainID, requestBody.DestinationChainID,
+		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
+		sendtx.NewExchangeRate(),
+	)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
+	}
+
+	return fee, metadata, nil
 }

@@ -156,10 +156,9 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	_ = fee
-	_ = bridgingRequestMetadata
+	_, _, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
 
-	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(fee), c.logger)
+	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(fee, bridgingFee), c.logger)
 }
 
 func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
