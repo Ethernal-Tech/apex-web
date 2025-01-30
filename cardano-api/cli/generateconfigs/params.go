@@ -145,8 +145,8 @@ func validateAddress(isRequired bool, address string, flag string, networkID wal
 		return fmt.Errorf("specify: %s", flag)
 	}
 
-	addr, err := wallet.NewAddress(address)
-	if err != nil || addr.String() != address || addr.GetNetwork() != networkID {
+	addr, err := wallet.NewCardanoAddressFromString(address)
+	if err != nil || addr.String() != address || addr.GetInfo().Network != networkID {
 		return fmt.Errorf("invalid: %s", flag)
 	}
 

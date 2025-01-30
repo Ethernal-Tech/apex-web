@@ -11,10 +11,10 @@ type BridgingTxResponse struct {
 }
 
 func NewFullBridgingTxResponse(
-	txRawBytes []byte, txHash string, bridgingFee uint64, amount uint64, nativeTokenAmount uint64,
+	txRaw string, txHash string, bridgingFee uint64, amount uint64, nativeTokenAmount uint64,
 ) *BridgingTxResponse {
 	return &BridgingTxResponse{
-		TxRaw:             hex.EncodeToString(txRawBytes),
+		TxRaw:             txRaw,
 		TxHash:            txHash,
 		BridgingFee:       bridgingFee,
 		Amount:            amount,
@@ -22,12 +22,23 @@ func NewFullBridgingTxResponse(
 	}
 }
 
-type BridgingTxFeeResponse struct {
-	Fee uint64 `json:"fee"`
+func NewBridgingTxResponse(
+	txRawBytes []byte, txHash string,
+) *BridgingTxResponse {
+	return &BridgingTxResponse{
+		TxRaw:  hex.EncodeToString(txRawBytes),
+		TxHash: txHash,
+	}
 }
 
-func NewBridgingTxFeeResponse(fee uint64) *BridgingTxFeeResponse {
+type BridgingTxFeeResponse struct {
+	Fee         uint64 `json:"fee"`
+	BridgingFee uint64 `json:"bridgingFee"`
+}
+
+func NewBridgingTxFeeResponse(fee uint64, bridgingFee uint64) *BridgingTxFeeResponse {
 	return &BridgingTxFeeResponse{
-		Fee: fee,
+		Fee:         fee,
+		BridgingFee: bridgingFee,
 	}
 }

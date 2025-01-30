@@ -5,12 +5,12 @@ import (
 )
 
 func IsValidOutputAddress(addr string, networkID wallet.CardanoNetworkType) bool {
-	cardAddr, err := wallet.NewAddress(addr)
-	if err != nil {
+	cardAddr, err := wallet.NewCardanoAddressFromString(addr)
+	if err != nil ||
+		cardAddr.GetInfo().AddressType == wallet.RewardAddress ||
+		cardAddr.GetInfo().Network != networkID {
 		return false
 	}
 
-	_, ok := cardAddr.(*wallet.RewardAddress)
-
-	return !ok && cardAddr.GetNetwork() == networkID
+	return true
 }
