@@ -170,9 +170,14 @@ func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
+	var amount uint64
+	for _, transaction := range requestBody.Transactions {
+		amount += transaction.Amount
+	}
+
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		commonResponse.NewFullBridgingTxResponse(txRaw, txHash, requestBody.BridgingFee, 0, 0), c.logger)
+		commonResponse.NewFullBridgingTxResponse(txRaw, txHash, requestBody.BridgingFee, amount, 0), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.Request) {
@@ -335,30 +340,9 @@ func (c *ReactorTxControllerImpl) signTx(requestBody request.SignBridgingTxReque
 func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
 	string, string, error,
 ) {
-	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
+	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to create configuration")
-	}
-
-	var options []sendtx.TxSenderOption
-
-	if useUtxoCache(requestBody, c.appConfig) {
-		cacheUtxosTransformer := &utils.CacheUtxosTransformer{
-			UtxoCacher: c.usedUtxoCacher,
-			Addr:       requestBody.SenderAddr,
-		}
-		options = append(options, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
-	}
-
-	txSender := sendtx.NewTxSender(txSenderChainsConfig, options...)
-
-	receivers := make([]sendtx.BridgingTxReceiver, len(requestBody.Transactions))
-	for i, tx := range requestBody.Transactions {
-		receivers[i] = sendtx.BridgingTxReceiver{
-			Addr:         tx.Addr,
-			Amount:       tx.Amount,
-			BridgingType: sendtx.BridgingTypeNormal,
-		}
+		return "", "", err
 	}
 
 	txRawBytes, txHash, _, err := txSender.CreateBridgingTx(
@@ -377,9 +361,30 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
 	uint64, *sendtx.BridgingRequestMetadata, error,
 ) {
+	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	fee, metadata, err := txSender.CalculateBridgingTxFee(
+		context.Background(),
+		requestBody.SourceChainID, requestBody.DestinationChainID,
+		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
+		sendtx.NewExchangeRate(),
+	)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
+	}
+
+	return fee, metadata, nil
+}
+
+func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequest.CreateBridgingTxRequest) (
+	*sendtx.TxSender, []sendtx.BridgingTxReceiver, error,
+) {
 	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
 	if err != nil {
-		return 0, nil, fmt.Errorf("failed to generate configuration")
+		return nil, nil, fmt.Errorf("failed to generate configuration")
 	}
 
 	var options []sendtx.TxSenderOption
@@ -403,15 +408,5 @@ func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 		}
 	}
 
-	fee, metadata, err := txSender.CalculateBridgingTxFee(
-		context.Background(),
-		requestBody.SourceChainID, requestBody.DestinationChainID,
-		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
-		sendtx.NewExchangeRate(),
-	)
-	if err != nil {
-		return 0, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
-	}
-
-	return fee, metadata, nil
+	return txSender, receivers, nil
 }

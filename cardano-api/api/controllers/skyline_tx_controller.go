@@ -156,7 +156,14 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	_, _, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
+	currencyOutput, _, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
+
+	err = c.checkMaxBridgeAmount(requestBody, currencyOutput, bridgingFee)
+	if err != nil {
+		utils.WriteErrorResponse(w, r, http.StatusBadRequest, err, c.logger)
+
+		return
+	}
 
 	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(fee, bridgingFee), c.logger)
 }
@@ -187,6 +194,13 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	currencyOutput, tokenOutput, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
 
+	err = c.checkMaxBridgeAmount(requestBody, currencyOutput, bridgingFee)
+	if err != nil {
+		utils.WriteErrorResponse(w, r, http.StatusBadRequest, err, c.logger)
+
+		return
+	}
+
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		commonResponse.NewFullBridgingTxResponse(txRaw, txHash, bridgingFee, currencyOutput, tokenOutput), c.logger,
@@ -211,7 +225,6 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			len(requestBody.Transactions), c.appConfig.BridgingSettings.MaxReceiversPerBridgingRequest, requestBody)
 	}
 
-	receiverAmountSum := big.NewInt(0)
 	feeSum := uint64(0)
 	foundAUtxoValueBelowMinimumValue := false
 	foundAnInvalidReceiverAddr := false
@@ -256,10 +269,6 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			feeSum += receiver.Amount
 		} else {
 			transactions = append(transactions, receiver)
-
-			if !receiver.IsNativeToken {
-				receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(receiver.Amount))
-			}
 		}
 	}
 
@@ -288,49 +297,15 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
 	}
 
-	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))
-
-	if c.appConfig.BridgingSettings.MaxAmountAllowedToBridge != nil &&
-		c.appConfig.BridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 &&
-		receiverAmountSum.Cmp(c.appConfig.BridgingSettings.MaxAmountAllowedToBridge) == 1 {
-		return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
-			c.appConfig.BridgingSettings.MaxAmountAllowedToBridge, requestBody)
-	}
-
 	return nil
 }
 
 func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
 	string, string, *sendtx.BridgingRequestMetadata, error,
 ) {
-	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
+	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody)
 	if err != nil {
-		return "", "", nil, fmt.Errorf("failed to generate configuration")
-	}
-
-	var options []sendtx.TxSenderOption
-
-	if useUtxoCache(requestBody, c.appConfig) {
-		cacheUtxosTransformer := &utils.CacheUtxosTransformer{
-			UtxoCacher: c.usedUtxoCacher,
-			Addr:       requestBody.SenderAddr,
-		}
-		options = append(options, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
-	}
-
-	txSender := sendtx.NewTxSender(txSenderChainsConfig, options...)
-
-	receivers := make([]sendtx.BridgingTxReceiver, len(requestBody.Transactions))
-	for i, tx := range requestBody.Transactions {
-		receivers[i] = sendtx.BridgingTxReceiver{
-			Addr:   tx.Addr,
-			Amount: tx.Amount,
-		}
-		if tx.IsNativeToken {
-			receivers[i].BridgingType = sendtx.BridgingTypeNativeTokenOnSource
-		} else {
-			receivers[i].BridgingType = sendtx.BridgingTypeCurrencyOnSource
-		}
+		return "", "", nil, err
 	}
 
 	txRawBytes, txHash, metadata, err := txSender.CreateBridgingTx(
@@ -349,9 +324,30 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 func (c *SkylineTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
 	uint64, *sendtx.BridgingRequestMetadata, error,
 ) {
+	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	fee, metadata, err := txSender.CalculateBridgingTxFee(
+		context.Background(),
+		requestBody.SourceChainID, requestBody.DestinationChainID,
+		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
+		sendtx.NewExchangeRate(),
+	)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
+	}
+
+	return fee, metadata, nil
+}
+
+func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequest.CreateBridgingTxRequest) (
+	*sendtx.TxSender, []sendtx.BridgingTxReceiver, error,
+) {
 	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
 	if err != nil {
-		return 0, nil, fmt.Errorf("failed to generate configuration")
+		return nil, nil, fmt.Errorf("failed to generate configuration")
 	}
 
 	var options []sendtx.TxSenderOption
@@ -379,17 +375,20 @@ func (c *SkylineTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 		}
 	}
 
-	fee, metadata, err := txSender.CalculateBridgingTxFee(
-		context.Background(),
-		requestBody.SourceChainID, requestBody.DestinationChainID,
-		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
-		sendtx.NewExchangeRate(),
-	)
-	if err != nil {
-		return 0, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
-	}
+	return txSender, receivers, nil
+}
 
-	return fee, metadata, nil
+func (c *SkylineTxControllerImpl) checkMaxBridgeAmount(
+	requestBody commonRequest.CreateBridgingTxRequest, currencyOutput uint64, bridgingFee uint64,
+) error {
+	receiverAmountSum := new(big.Int).SetUint64(currencyOutput + bridgingFee)
+	if c.appConfig.BridgingSettings.MaxAmountAllowedToBridge != nil &&
+		c.appConfig.BridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 &&
+		receiverAmountSum.Cmp(c.appConfig.BridgingSettings.MaxAmountAllowedToBridge) == 1 {
+		return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
+			c.appConfig.BridgingSettings.MaxAmountAllowedToBridge, requestBody)
+	}
+	return nil
 }
 
 func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata) (

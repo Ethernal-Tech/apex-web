@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
@@ -89,18 +88,21 @@ func (c *UsedUtxoCacher) Get(addr string) []wallet.TxInput {
 }
 
 func (u *CacheUtxosTransformer) TransformUtxos(utxos []wallet.Utxo) []wallet.Utxo {
-	cachedUtxos := u.UtxoCacher.Get(u.Addr)
+	cachedInputs := u.UtxoCacher.Get(u.Addr)
 
 	cachedMap := make(map[string]struct{})
-	for _, cachedUtxo := range cachedUtxos {
-		cachedMap[cachedUtxo.String()] = struct{}{}
+	for _, cachedInput := range cachedInputs {
+		cachedMap[cachedInput.String()] = struct{}{}
 	}
 
 	var filteredUtxos []wallet.Utxo
 
 	for _, utxo := range utxos {
-		key := fmt.Sprintf("%s#%d", utxo.Hash, utxo.Index)
-		if _, exists := cachedMap[key]; !exists {
+		txInput := wallet.TxInput{
+			Index: utxo.Index,
+			Hash:  utxo.Hash,
+		}
+		if _, exists := cachedMap[txInput.String()]; !exists {
 			filteredUtxos = append(filteredUtxos, utxo)
 		}
 	}
