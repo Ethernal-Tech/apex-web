@@ -12,7 +12,7 @@ body {
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
-  min-height: calc(100vh - 64px); /*64px is the height of the navbar*/
+  min-height: calc(100vh - 56px); /*64px is the height of the navbar*/
   padding-bottom: 56px; /* to compensate for fixed footer*/
 }
 
@@ -25,4 +25,13 @@ code {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+}
+
+body.skyline {
+  background: 
+    radial-gradient(50% 50% at 50% 50%, rgba(5, 29, 38, 0.90) 0%, #051D26 100%),
+    url("./assets/skyline/linking-background.svg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
 }

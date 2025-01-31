@@ -72,3 +72,18 @@ export const theme2 = createTheme({
 
 
 export const theme = createTheme({})
+
+export const skylineTheme = createTheme({
+	typography: {
+		fontFamily: "Lato, serif",
+	},
+	components: {
+		MuiCssBaseline: {
+			styleOverrides: {
+				body: {
+					fontFamily: "Lato, serif",
+				},
+			},
+		},
+	},
+})

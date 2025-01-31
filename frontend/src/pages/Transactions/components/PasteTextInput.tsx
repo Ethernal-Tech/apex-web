@@ -1,5 +1,6 @@
 import React from 'react';
 import { TextField, Button, Box, styled, SxProps, Theme } from '@mui/material';
+import appSettings from '../../../settings/appSettings';
 
 const CustomTextField = styled(TextField)({
   '& .MuiOutlinedInput-root': {
@@ -18,18 +19,18 @@ const CustomTextField = styled(TextField)({
     color: 'white',
     padding: '0 8px',
     width: '100%',
-    caretColor:'#FF5E5E'
+    caretColor: appSettings.isSkyline ? '#1ea29d' : '#FF5E5E'
   },
   input: {
     color: 'white',
-    caretColor:'#FF5E5E'
+    caretColor: appSettings.isSkyline ? '#1ea29d' : '#FF5E5E'
   },
 });
 
 const CustomButton = styled(Button)({
   backgroundColor: 'transparent',
   boxShadow:'none',
-  color: '#FF5E5E',
+  color: appSettings.isSkyline ? '#1ea29d' : '#FF5E5E',
   borderRadius: 4,
   marginLeft: 8,
   textTransform: 'none',

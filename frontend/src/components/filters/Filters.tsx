@@ -65,11 +65,11 @@ const receiverAddressStyle = {
     color: 'white',
     padding: '0 8px 0 0',
     width: '100%',
-    caretColor: '#FF5E5E',
+    caretColor: appSettings.isSkyline ? '#1ea29d' : '#FF5E5E',
     },
     input: {
         color: 'white',
-        caretColor: '#FF5E5E',
+        caretColor: appSettings.isSkyline ? '#1ea29d' : '#FF5E5E',
         '&::placeholder': {
             color: '#a3a3a3',
             opacity: 1,
@@ -106,7 +106,7 @@ const amountStyle = {
 },
 input: {
     color: 'white',
-    caretColor: '#FF5E5E',
+    caretColor: appSettings.isSkyline ? '#1ea29d' : '#FF5E5E',
     '&::placeholder': {
         color: '#a3a3a3',
         opacity: 1,
@@ -287,7 +287,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                 variant="text"
                                 onClick={handlePasteReceiverAddress}
                                 sx={{
-                                    color: '#F27B50',
+                                    color: appSettings.isSkyline ? '#1ea29d' : '#F27B50',
                                     backgroundColor: 'transparent',
                                     position:'absolute',
                                     top:'50%',
@@ -295,7 +295,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
                                     right:0,
                                     '&:hover': {
                                         backgroundColor: 'transparent',
-                                        color:'#ed8a66'
+                                        color: appSettings.isSkyline ? '#30b5af' : '#ed8a66'
                                     },
                                 }}
                             >
@@ -381,9 +381,9 @@ export default function Filters({ filters, onFilterChange }: Props) {
                         <Button
                             variant="contained"
                             sx={{
-                                backgroundColor: '#F27B50',
+                                backgroundColor: appSettings.isSkyline ? '#0b5855' : '#F27B50',
                                 '&:hover': {
-                                    backgroundColor: '#ed8a66',
+                                    backgroundColor: appSettings.isSkyline ? '#1ea29d' : '#ed8a66',
                                 },
                             }}
                             onClick={applyFiltersCallback}
