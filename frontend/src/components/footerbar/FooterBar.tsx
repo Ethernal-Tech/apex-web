@@ -3,6 +3,8 @@ import {ReactComponent as ApexIcon} from "../../assets/external-links/Apex.svg";
 import {ReactComponent as LinkedinIcon} from "../../assets/external-links/LN.svg";
 import {ReactComponent as XIcon} from "../../assets/external-links/X.svg";
 import {ReactComponent as DiscordIcon} from "../../assets/external-links/Discord.svg";
+import {ReactComponent as EthernalIcon} from "../../assets/external-links/Ethernal.svg";
+import appSettings from "../../settings/appSettings";
 
 const containerStyles = {
   width:'100%',
@@ -40,9 +42,16 @@ const childStyles = {
 const FooterBar = () => {
   return (
     <Box sx={containerStyles}>
-      <Box sx={childStyles}>
-        &copy;{new Date().getFullYear()} Apex Fusion. All Rights Reserved.
-      </Box>
+      {
+        appSettings.isSkyline ?
+        <Box sx={childStyles}>
+          &copy;{new Date().getFullYear()} Ethernal. All Rights Reserved.
+        </Box>
+        :
+        <Box sx={childStyles}>
+          &copy;{new Date().getFullYear()} Apex Fusion. All Rights Reserved.
+        </Box>
+      }
 
       <Box sx={{
         ...childStyles,
@@ -50,9 +59,16 @@ const FooterBar = () => {
         justifyContent:'center',
         alignItems:'center',
       }}>
-        <Button component='a' href="https://apexfusion.org/" target="_blank">
-          <ApexIcon/>
-        </Button>
+        {
+          appSettings.isSkyline ?
+          <Button component='a' href="https://ethernal.tech/" target="_blank">
+            <EthernalIcon height={28} style={{ background: 'rgb(22, 22, 22)', borderRadius: '50%' }} />
+          </Button>
+          :
+          <Button component='a' href="https://apexfusion.org/" target="_blank">
+            <ApexIcon/>
+          </Button>
+        }
         <Button component='a' href="https://www.linkedin.com/company/apexfusioncore" target="_blank">
           <LinkedinIcon/>
         </Button>
@@ -67,7 +83,7 @@ const FooterBar = () => {
       <Box sx={childStyles}>
         <Box component='span' sx={{marginRight:'2px'}}>Network: </Box>
         <Box component='span' sx={{
-          backgroundColor:'#fa7b14',
+          backgroundColor: appSettings.isSkyline ? '#0b5855' : '#fa7b14',
           display:'inline-block',
           padding:'4px 12px',
           borderRadius:'100px'

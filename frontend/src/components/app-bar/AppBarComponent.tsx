@@ -6,11 +6,13 @@ import { TRANSACTIONS_ROUTE, NEW_TRANSACTION_ROUTE, HOME_ROUTE } from "../../pag
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ApexFusionLogo from "../../assets/apex-fusion-logo.svg";
+import SkylineLogo from "../../assets/skyline/skyline-logo.svg";
 import { menuDark, white } from "../../containers/theme";
 import ButtonCustom from "../Buttons/ButtonCustom";
 import { RootState } from "../../redux/store";
 import { formatAddress } from "../../utils/generalUtils";
 import { logout } from "../../actions/logout";
+import appSettings from "../../settings/appSettings";
 
 const CustomMenu = styled(Menu)({
     // backgroundColor: 'rgba(0,0,0, 0.4)',
@@ -69,7 +71,7 @@ const AppBarComponent = () => {
                         onClick={() => handleOptionClick(HOME_ROUTE)}
                     >
                         {/* Logo svg */}
-                        <img src={ApexFusionLogo} alt='apex fusion logo'/>
+                        <img src={appSettings.isSkyline ? SkylineLogo : ApexFusionLogo} alt='logo' height='40px' />
                     </Button>
 
                     <div>
@@ -78,12 +80,14 @@ const AppBarComponent = () => {
                             <>
                                 <ButtonCustom 
                                     variant={isActiveNavLink(NEW_TRANSACTION_ROUTE) ? "navigationActive" : "navigation"}
+                                    sx={appSettings.isSkyline ? isActiveNavLink(NEW_TRANSACTION_ROUTE) ? { color: "#1ea29d" } : {} : {}}
                                     onClick={() => handleOptionClick(NEW_TRANSACTION_ROUTE)}
                                 >
                                 Transfer
                                 </ButtonCustom>
                                 <ButtonCustom
                                     variant={isActiveNavLink(TRANSACTIONS_ROUTE) ? "navigationActive" : "navigation"}
+                                    sx={appSettings.isSkyline ? isActiveNavLink(TRANSACTIONS_ROUTE) ? { color: "#1ea29d" } : {} : {}}
                                     onClick={() => handleOptionClick(TRANSACTIONS_ROUTE)}
                                 >
                                     Bridging History

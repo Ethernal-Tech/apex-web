@@ -30,8 +30,14 @@ body.landing-page {
 .logo-container {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 20px 60px;
     padding-bottom: 50px;
+}
+
+.logo-skyline-container {
+    display: flex;
+    align-items: center;
 }
 
 .skyline-text {
@@ -80,7 +86,21 @@ body.landing-page {
 
 .contact-us-button:hover {
     box-shadow: none !important;
+    background-color: #188a85 !important;
+}
+
+.bridge-button {
     background-color: #0b5855 !important;
+    text-transform: none !important;
+    border-radius: 0px !important;
+    border: 1px solid #ffffff !important;
+    padding: 6px 16px !important;
+    font-size: 14px !important;
+}
+
+.bridge-button:hover {
+    box-shadow: none !important;
+    background-color: #188a85 !important;
 }
 
 .bridge-image-container {
@@ -326,7 +346,8 @@ body.landing-page {
 }
 
 .connect-button:hover {
-    background-color: #ffffff !important;
+    color: #FFFFFF !important;
+    background-color: #0b5855 !important;
     box-shadow: none !important;
 }
 
@@ -389,7 +410,8 @@ body.landing-page {
 
 @media (max-width: 768px) {
     .logo-container {
-        justify-content: center;
+        padding: 20px;
+        padding-bottom: 50px;
     }
 
     .skyline-logo {

@@ -6,8 +6,11 @@ import InnovatorsSection from "./components/InnovatorsSection";
 import ConnectSection from "./components/ConnectSection";
 import FooterSection from "./components/FooterSection";
 import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { HOME_ROUTE } from "../PageRouter";
 
 const LandingPage = () => {
+  const navigate = useNavigate();
   const sectionRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToSection = () => {
@@ -16,18 +19,21 @@ const LandingPage = () => {
     }
   };
 
+  const navigateToBridge = () => {
+    navigate(HOME_ROUTE);
+  }
+
   return (
     <Box
       sx={{
         display: "flex",
         flexDirection: "column",
         "& .MuiTypography-root": {
-          fontFamily: "Lato, serif",
           color: "#FFFFFF",
         },
       }}
     >
-      <SkylineSection onClick={scrollToSection} />
+      <SkylineSection scrollToSection={scrollToSection} navigateToBridge={navigateToBridge} />
       <SkylineBridgeSection />
       <UsersSection />
       <InnovatorsSection />

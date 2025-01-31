@@ -19,7 +19,7 @@ const TotalBalance = () => {
 
     if (appSettings.isSkyline) {
         return (
-            <Box px={'17px'} py='20px' sx={{border:'1px solid #077368',color:'#A1B3A0', background:'#075159',borderRadius:'4px', fontWeight:'500'}}>
+            <Box px={'17px'} py='20px' sx={{border:'1px solid #077368',color:'#A1B3A0', background:'transparent',borderRadius:'4px', fontWeight:'500'}}>
                 <Typography textTransform={'uppercase'} color={'white'} sx={{display:'flex',alignItems:'center'}}>
                     <WalletIcon/>
                     <Box component="span" ml={1}>Total Balance</Box>
@@ -29,7 +29,7 @@ const TotalBalance = () => {
                     totalBalanceInApex &&
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography>
-                            <Box component='span' sx={{color:'#F25041', fontWeight:'600', fontSize:'32px'}}>
+                            <Box component='span' sx={{color: appSettings.isSkyline ? '#1ea29d' : '#F25041', fontWeight:'600', fontSize:'32px'}}>
                                 {totalBalanceInApex.split('.')[0]}
                             </Box>
                             
@@ -48,7 +48,7 @@ const TotalBalance = () => {
                     totalBalanceInNativeToken &&
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography>
-                            <Box component='span' sx={{color:'#F25041', fontWeight:'600', fontSize:'32px'}}>
+                            <Box component='span' sx={{color: appSettings.isSkyline ? '#1ea29d' : '#F25041', fontWeight:'600', fontSize:'32px'}}>
                                 {totalBalanceInNativeToken.split('.')[0]}
                             </Box>
                             

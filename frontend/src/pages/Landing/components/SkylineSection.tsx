@@ -2,16 +2,28 @@ import { Typography, Box, Button } from "@mui/material";
 import SkylineLogo from "../../../assets/skyline/skyline-logo.svg";
 import SkylineBridge from "../../../assets/skyline/skyline-bg.svg";
 import SkylineBridgeMobile from "../../../assets/skyline/skyline-bg-mobile.svg";
+import { ArrowForward } from "@mui/icons-material";
 
 type Props = {
-  onClick(): void;
+  scrollToSection(): void;
+  navigateToBridge(): void
 };
 
-const SkylineSection = ({ onClick }: Props) => (
+const SkylineSection = ({ scrollToSection, navigateToBridge }: Props) => (
   <Box className="skyline-section-container">
     <Box className="logo-container">
-      <img src={SkylineLogo} alt="skylineLogo" className="skyline-logo" />
-      <Typography className="skyline-text">SKYLINE</Typography>
+      <Box className="logo-skyline-container">
+        <img src={SkylineLogo} alt="skylineLogo" className="skyline-logo" />
+        <Typography className="skyline-text">SKYLINE</Typography>
+      </Box>
+      <Button
+        variant="contained"
+        className="bridge-button"
+        onClick={navigateToBridge}
+        endIcon={<ArrowForward />}
+      >
+        Try Out Bridge
+      </Button>
     </Box>
     <Box className="content-box">
       <Box className="info-container">
@@ -25,7 +37,7 @@ const SkylineSection = ({ onClick }: Props) => (
         <Button
           variant="contained"
           className="contact-us-button"
-          onClick={onClick}
+          onClick={scrollToSection}
         >
           Contact Us
         </Button>

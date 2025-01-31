@@ -12,8 +12,9 @@ import { onLoad } from '../actions/login';
 import { fetchAndUpdateBalanceAction } from '../actions/balance';
 import { fetchAndUpdateSettingsAction } from '../actions/settings';
 import LandingPage from './Landing/LandingPage';
+import appSettings from '../settings/appSettings';
 
-export const HOME_ROUTE = '/';
+export const HOME_ROUTE = appSettings.isSkyline ? '/dashboard' : '/';
 export const TRANSACTIONS_ROUTE = '/transactions';
 export const NEW_TRANSACTION_ROUTE = '/new-transaction';
 export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
@@ -30,49 +31,55 @@ const PageRouter: React.FC = () => {
 	
 	const isLoggedInMemo = !!wallet;
 
-	// useEffect(() => {
-	// 	if (isLoggedInMemo) {
-	// 		onLoad(wallet, chain, dispatch);
-	// 	}
-	// // eslint-disable-next-line react-hooks/exhaustive-deps
-	// }, [])
+	useEffect(() => {
+		if (isLoggedInMemo) {
+			onLoad(wallet, chain, dispatch);
+		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
 
-	// useEffect(() => {
-	// 	fetchAndUpdateSettingsAction(dispatch)
-	// // eslint-disable-next-line react-hooks/exhaustive-deps
-	// }, [])
-
-  // useEffect(() => {
-  //   if (balanceIntervalHandle.current) {
-  //     clearInterval(balanceIntervalHandle.current)
-  //     balanceIntervalHandle.current = undefined
-  //   }
-
-  //   if (!isFullyLoggedIn) {
-  //     return
-  //   }
-
-  //   fetchAndUpdateBalanceAction(dispatch)
-
-  //   balanceIntervalHandle.current = setInterval(async () => {
-  //     await fetchAndUpdateBalanceAction(dispatch)
-  //   }, 30000)
-
-  //   return () => {
-  //     if (balanceIntervalHandle.current) {
-  //       clearInterval(balanceIntervalHandle.current)
-  //       balanceIntervalHandle.current = undefined
-  //     }
-  //   }
-  // }, [dispatch, isFullyLoggedIn])
+	useEffect(() => {
+		fetchAndUpdateSettingsAction(dispatch)
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
 
   useEffect(() => {
-    if (location.pathname === '/landing') {
-      document.body.classList.add('landing-page');
-    } else {
-      document.body.classList.remove('landing-page');
+    if (balanceIntervalHandle.current) {
+      clearInterval(balanceIntervalHandle.current)
+      balanceIntervalHandle.current = undefined
     }
-  }, [location]);
+
+    if (!isFullyLoggedIn) {
+      return
+    }
+
+    fetchAndUpdateBalanceAction(dispatch)
+
+    balanceIntervalHandle.current = setInterval(async () => {
+      await fetchAndUpdateBalanceAction(dispatch)
+    }, 30000)
+
+    return () => {
+      if (balanceIntervalHandle.current) {
+        clearInterval(balanceIntervalHandle.current)
+        balanceIntervalHandle.current = undefined
+      }
+    }
+  }, [dispatch, isFullyLoggedIn])
+
+  useEffect(() => {
+    if (appSettings.isSkyline) {
+      if (location.pathname === '/landing') {
+        document.body.classList.add('landing-page');
+        document.body.classList.remove('skyline');
+      } else {
+        document.body.classList.remove('landing-page');
+        document.body.classList.add('skyline');
+      }
+    } else {
+      document.body.classList.remove('skyline');
+    }
+  }, [location.pathname]);
 
   const renderHomePage = <HomePage />;
 
@@ -95,13 +102,12 @@ const PageRouter: React.FC = () => {
 
   return (
     <Routes>
-        {/* <Route path={HOME_ROUTE} element={withMiddleware(() => renderHomePage)({})} />
+        <Route path={HOME_ROUTE} element={withMiddleware(() => renderHomePage)({})} />
         <Route path={TRANSACTIONS_ROUTE} element={withMiddleware(() => renderTransactionsPage)({})} />
         <Route path={NEW_TRANSACTION_ROUTE} element={withMiddleware(() => renderNewTransactionPage)({})} />
-        <Route path={TRANSACTION_DETAILS_ROUTE} element={withMiddleware(() => renderTransactionDetailsPage)({})} /> */}
-        <Route path={LANDING_ROUTE} element={renderLandingPage} />
-        <Route path="*" element={<Navigate to={LANDING_ROUTE} />} />
-        {/* <Route path='*' element={withMiddleware(() => renderHomePage)({})} /> */}
+        <Route path={TRANSACTION_DETAILS_ROUTE} element={withMiddleware(() => renderTransactionDetailsPage)({})} />
+        {appSettings.isSkyline && <Route path={LANDING_ROUTE} element={renderLandingPage} />}
+        <Route path='*' element={appSettings.isSkyline ? <Navigate to={LANDING_ROUTE} /> : withMiddleware(() => renderHomePage)({})} />
     </Routes>
   );
 };
