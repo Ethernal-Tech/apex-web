@@ -1,10 +1,14 @@
 import React from "react";
 import BasePage from '../base/BasePage';
+import { Box } from "@mui/material";
+import { privacyPolicyHtml } from "./data/PrivacyPolicyPage.data";
 
 const PrivacyPolicyPage: React.FC = () => {
   return (
     <BasePage>
-      <h1>Privacy policy goes here</h1>
+      <Box sx={{color:'white'}} 
+        dangerouslySetInnerHTML={{ __html: privacyPolicyHtml }}
+      />
     </BasePage>
   );
 };
