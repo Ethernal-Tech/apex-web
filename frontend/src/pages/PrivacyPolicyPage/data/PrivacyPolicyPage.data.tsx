@@ -39,7 +39,6 @@ export const privacyPolicyHtml =
         <p class="has-line-data" data-line-start="60" data-line-end="61">Your personal data can also be obtained through your interaction with the website; such information can be obtained by using cookies and a cookie-like technology that allows us to customize and personalize our website to your needs.</p>
         <p class="has-line-data" data-line-start="62" data-line-end="63"><strong><em>5.1. What type of personal data do we collect?</em></strong></p>
         <p class="has-line-data" data-line-start="64" data-line-end="65">Your personal data can be obtained directly from you when you provide us with this information (for example, by logging into your member account, etc.). We can also obtain your personal data through the use of our services (e.g. webpage, newsletter).</p>
-        <p class="has-line-data" data-line-start="66" data-line-end="67">&lt;!-- TODO check this table --&gt;</p>
         <table class="table table-striped table-bordered">
         <thead>
         <tr>
