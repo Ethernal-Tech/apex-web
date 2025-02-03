@@ -3,6 +3,7 @@ import { TextField, Button, Box, styled, SxProps, Theme, Typography } from '@mui
 import { convertApexToDfm, convertDfmToApex, toFixedFloor } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
+import appSettings from '../../../settings/appSettings';
 // import './CustomStyles.css'; // Import the CSS file
 
 
@@ -25,13 +26,13 @@ const CustomTextField = styled(TextField)({
     color: 'white',
     padding: '0 8px 0 0',
     width: '100%',
-    caretColor: '#FF5E5E',
+    caretColor: appSettings.isSkyline ? '#1ea29d' : '#FF5E5E',
   },
   input: {
     fontSize: '1.5rem',
     color: 'white',
     paddingLeft:0,
-    caretColor: '#FF5E5E',
+    caretColor: appSettings.isSkyline ? '#1ea29d' : '#FF5E5E',
     '&::placeholder': {
       color: '#a3a3a3',
       opacity: 1,
@@ -51,7 +52,7 @@ const CustomTextField = styled(TextField)({
 const CustomButton = styled(Button)({
   backgroundColor: 'transparent',
   boxShadow: 'none',
-  color: '#FF5E5E',
+  color: appSettings.isSkyline ? '#1ea29d' : '#FF5E5E',
   borderRadius: 4,
   marginLeft: 8,
   textTransform: 'none',

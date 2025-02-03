@@ -6,7 +6,7 @@ interface ButtonCustomProps {
     disabled?: boolean;
     sx?: object;
     children?: React.ReactNode;  // Add children prop
-    variant?:'red'|'redNavigation'|'white'|'whiteNavigation'|'navigation'|'navigationActive'
+    variant?:'red'|'redNavigation'|'white'|'whiteNavigation'|'navigation'|'navigationActive'|'whiteSkyline'|'redSkyline'
   }
 
 const variantStyles  ={
@@ -20,6 +20,17 @@ const variantStyles  ={
           boxShadow: 'none',
           backgroundColor:'#F25041'
       }
+  },
+  redSkyline:{
+    border: '1px solid',
+    borderColor: '#0b5855',
+    color: 'white',
+    backgroundColor: 'transparent',
+    padding: '14px 24px',
+    '&:hover':{
+        boxShadow: 'none',
+        backgroundColor:'#188a85'
+    }
   },
   redNavigation:{
       border: '1px solid',
@@ -42,6 +53,17 @@ const variantStyles  ={
           boxShadow: 'none',
           backgroundColor:'#F27B50'
       }
+  },
+  whiteSkyline: {
+    border: 'none',
+    color: '#0b5855',
+    backgroundColor: 'white',
+    padding: '14px 24px',
+    '&:hover':{
+        boxShadow: 'none',
+        color: 'white',
+        backgroundColor:'#0b5855'
+    }
   },
   whiteNavigation:{
     border: '1px solid',

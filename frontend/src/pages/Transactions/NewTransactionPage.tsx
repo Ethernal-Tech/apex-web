@@ -196,7 +196,7 @@ function NewTransactionPage() {
 				{/* left side */}
 				<Box sx={{
 					gridColumn:'span 2', 
-					borderTop:`2px solid ${chain === ChainEnum.Prime ? '#077368' : '#F25041'}`,
+					borderTop:`2px solid ${chain === ChainEnum.Prime ? '#077368' : appSettings.isSkyline ? '#0538AF' : '#F25041'}`,
 					p:2,
 					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
 					[tabletMediaQuery]:{
@@ -213,7 +213,7 @@ function NewTransactionPage() {
 				{/* right side */}
 				<Box sx={{
 					gridColumn:'span 4', 
-					borderTop:`2px solid ${destinationChain === ChainEnum.Prime ? '#077368' : '#F25041'}`,
+					borderTop:`2px solid ${destinationChain === ChainEnum.Prime ? '#077368' : appSettings.isSkyline ? '#0538AF' : '#F25041'}`,
 					p:2,
 					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
 					[tabletMediaQuery]:{

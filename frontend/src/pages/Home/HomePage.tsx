@@ -5,6 +5,7 @@ import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
 import { ReactComponent as OneDirectionArrowIcon } from '../../assets/oneDirectionArrow.svg';
 import BasePage from '../base/BasePage';
 import BridgeGraph from "../../assets/Bridge-Graph.svg";
+import SkylineBridgeGraph from "../../assets//skyline/Skyline-Bridge-Graph.png";
 import { white } from "../../containers/theme";
 import ButtonCustom from "../../components/Buttons/ButtonCustom";
 import { useDispatch, useSelector } from "react-redux";
@@ -50,7 +51,7 @@ const skylineChainOptions = [
     value: ChainEnum.Cardano,
     label: capitalizeWord(ChainEnum.Cardano),
     icon: chainIcons[ChainEnum.Cardano],
-    borderColor: '#5856D6'
+    borderColor: '#0538AF'
   }
 ];
 
@@ -99,11 +100,19 @@ const HomePage: React.FC = () => {
 
   return (
     <BasePage>
-      <Typography variant="h1" sx={{ color: '#F25041', lineHeight: '', fontSize: '44px' }} fontFamily={'Major Mono Display, sans-serif'}>
-        {appSettings.isSkyline ? 'sKyline bRidge' : 'ReactoR bRidge'}
+      <Typography 
+        variant="h1" 
+        sx={{ 
+          color: appSettings.isSkyline ? '#FFFFFF' : '#F25041',
+          lineHeight: '',
+          fontSize: '44px',
+          fontFamily: appSettings.isSkyline ? 'Goldman, sans-serif' : 'Major Mono Display, sans-serif' 
+        }}
+      >
+        {appSettings.isSkyline ? 'SKYLINE BRIDGE' : 'ReactoR bRidge'}
       </Typography>
 
-      <img src={BridgeGraph} alt="apex bridge graph" style={{width:'280px',marginTop:'32px'}}/>
+      <img src={appSettings.isSkyline ? SkylineBridgeGraph : BridgeGraph} alt="apex bridge graph" style={{height:'280px',marginTop:'32px'}}/>
 
       <Box display="flex" alignItems="center" justifyContent="space-between" pt={2} pb={4}>
         <Box>
@@ -155,7 +164,7 @@ const HomePage: React.FC = () => {
       {
         loginConnecting ? (
             <ButtonCustom 
-              variant="white"
+              variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
               sx={{ textTransform:'uppercase'}}
             >
                 Connect Wallet
@@ -164,14 +173,14 @@ const HomePage: React.FC = () => {
         ) : (
        !isLoggedInMemo ? (
         <ButtonCustom 
-          variant="white"
+          variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
           sx={{ textTransform:'uppercase'}}
           onClick={handleConnectClick}>
             Connect Wallet
         </ButtonCustom>
       ): (
         <ButtonCustom 
-          variant="white"
+          variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
           sx={{ textTransform:'uppercase'}}
           onClick={()=> navigate(NEW_TRANSACTION_ROUTE)}>
             Move funds
