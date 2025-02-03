@@ -30,7 +30,7 @@ export const getChainLabelAndColor = (chain: string):{letter:string, color: stri
     case 'vector':
       return { letter: 'V', color: '#F25041' };
     case 'cardano':
-      return { letter: 'C', color: '#5856D6' };
+      return { letter: 'C', color: '#0538AF' };
     default:
       return { letter: '', color: 'transparent' };
   }

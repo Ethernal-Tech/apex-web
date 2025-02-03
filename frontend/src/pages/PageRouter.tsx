@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import HomePage from './Home/HomePage';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
@@ -11,14 +11,17 @@ import withMiddleware from '../middleware/withMiddleware';
 import { onLoad } from '../actions/login';
 import { fetchAndUpdateBalanceAction } from '../actions/balance';
 import { fetchAndUpdateSettingsAction } from '../actions/settings';
+import LandingPage from './Landing/LandingPage';
+import appSettings from '../settings/appSettings';
 
-export const HOME_ROUTE = '/';
+export const HOME_ROUTE = appSettings.isSkyline ? '/dashboard' : '/';
 export const TRANSACTIONS_ROUTE = '/transactions';
 export const NEW_TRANSACTION_ROUTE = '/new-transaction';
 export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
+export const LANDING_ROUTE = '/landing';
 
 const PageRouter: React.FC = () => {
-
+  const location = useLocation();
 	const wallet = useSelector((state: RootState) => state.wallet.wallet);
 	const chain = useSelector((state: RootState) => state.chain.chain);
 	const dispatch = useDispatch();
@@ -64,6 +67,19 @@ const PageRouter: React.FC = () => {
     }
   }, [dispatch, isFullyLoggedIn])
 
+  useEffect(() => {
+    if (appSettings.isSkyline) {
+      if (location.pathname === '/landing') {
+        document.body.classList.add('landing-page');
+        document.body.classList.remove('skyline');
+      } else {
+        document.body.classList.remove('landing-page');
+        document.body.classList.add('skyline');
+      }
+    } else {
+      document.body.classList.remove('skyline');
+    }
+  }, [location.pathname]);
 
   const renderHomePage = <HomePage />;
 
@@ -82,13 +98,16 @@ const PageRouter: React.FC = () => {
     [isLoggedInMemo]
   );
 
+  const renderLandingPage = <LandingPage />;
+
   return (
     <Routes>
         <Route path={HOME_ROUTE} element={withMiddleware(() => renderHomePage)({})} />
         <Route path={TRANSACTIONS_ROUTE} element={withMiddleware(() => renderTransactionsPage)({})} />
         <Route path={NEW_TRANSACTION_ROUTE} element={withMiddleware(() => renderNewTransactionPage)({})} />
         <Route path={TRANSACTION_DETAILS_ROUTE} element={withMiddleware(() => renderTransactionDetailsPage)({})} />
-        <Route path='*' element={withMiddleware(() => renderHomePage)({})} />
+        {appSettings.isSkyline && <Route path={LANDING_ROUTE} element={renderLandingPage} />}
+        <Route path='*' element={appSettings.isSkyline ? <Navigate to={LANDING_ROUTE} /> : withMiddleware(() => renderHomePage)({})} />
     </Routes>
   );
 };

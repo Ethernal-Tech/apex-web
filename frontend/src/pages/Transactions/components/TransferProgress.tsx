@@ -40,6 +40,7 @@ import {ReactComponent as BridgeErrorIcon} from "../../../assets/bridge-status-a
 import {ReactComponent as Step1} from "../../../assets/bridge-status-assets/steps/step-1.svg"
 import {ReactComponent as Step2} from "../../../assets/bridge-status-assets/steps/step-2.svg"
 import {ReactComponent as Step3} from "../../../assets/bridge-status-assets/steps/step-3.svg"
+import appSettings from "../../../settings/appSettings"
 /* 
 const NexusInProgressIcon = VectorInProgressIcon;
 const NexusSuccessIcon = VectorSuccessIcon;
@@ -325,7 +326,7 @@ const TransferProgress = ({
                 </ButtonCustom>
 
                 <ButtonCustom  
-                    variant="white" 
+                    variant={appSettings.isSkyline ? "whiteSkyline" : "white"} 
                     onClick={onOpenExplorer}
                     sx={{ gridColumn:'span 1', textTransform:'uppercase'}}>
                     View Explorer

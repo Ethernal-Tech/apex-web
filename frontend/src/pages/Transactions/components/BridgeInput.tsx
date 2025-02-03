@@ -44,13 +44,13 @@ const cardanoSourceTokenOptions = [
     value: TokenEnum.Ada,
     label: TokenEnum.Ada,
     icon: chainIcons[ChainEnum.Cardano],
-    borderColor: '#5856D6'
+    borderColor: '#0538AF'
   },
   { 
     value: TokenEnum.WAPEX,
     label: TokenEnum.WAPEX,
     icon: chainIcons[ChainEnum.Cardano],
-    borderColor: '#5856D6'
+    borderColor: '#0538AF'
   }
 ];
 
@@ -225,7 +225,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
             
             <ButtonCustom 
                 onClick={onSubmit}
-                variant="white"
+                variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
                 disabled={loading || BigInt(maxAmountDfm) <= 0}
                 sx={{
                     gridColumn:'span 1',
