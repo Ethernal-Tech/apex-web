@@ -428,6 +428,57 @@ export class WalletControllerClient extends BaseClient {
     }
 }
 
+export class ContactControllerClient extends BaseClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        super();
+        this.http = http ? http : <any>window;
+        this.baseUrl = this.getBaseUrl("", baseUrl);
+    }
+
+    /**
+     * @return Success
+     */
+    submitContactForm(body: CreateContactDto): Promise<void> {
+        let url_ = this.baseUrl + "/contact";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_ = <RequestInit>{
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processSubmitContactForm(_response);
+        });
+    }
+
+    protected processSubmitContactForm(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(<any>null);
+    }
+}
+
 export class SettingsResponseDto implements ISettingsResponseDto {
     minChainFeeForBridging!: { [key: string]: number; };
     minUtxoChainValue!: { [key: string]: number; };
@@ -1041,6 +1092,50 @@ export class BalanceResponseDto implements IBalanceResponseDto {
 
 export interface IBalanceResponseDto {
     balance: string;
+}
+
+export class CreateContactDto implements ICreateContactDto {
+    name!: string;
+    email!: string;
+    message!: string;
+
+    constructor(data?: ICreateContactDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.email = _data["email"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): CreateContactDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateContactDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["email"] = this.email;
+        data["message"] = this.message;
+        return data; 
+    }
+}
+
+export interface ICreateContactDto {
+    name: string;
+    email: string;
+    message: string;
 }
 
 export class ApiException extends Error {
