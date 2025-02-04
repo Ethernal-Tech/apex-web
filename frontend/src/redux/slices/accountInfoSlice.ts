@@ -1,16 +1,24 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
+import { UTxO } from '@meshsdk/core';
 
 export interface IAccountInfoState {
 	account: string,
 	networkId: number|bigint,
 	balance: string,
+	utxos?: UTxO[],
+}
+
+export interface IBalanceState {
+	balance: string,
+	utxos?: UTxO[],
 }
 
 const initialState: IAccountInfoState = {
 	account: '',
 	networkId: 0,
 	balance: '0',
+	utxos: undefined,
 }
 
 const accountInfoSlice = createSlice({
@@ -22,8 +30,9 @@ const accountInfoSlice = createSlice({
 			state.networkId = action.payload.networkId;
 			state.balance = action.payload.balance;
 		},
-		updateBalanceAction: (state, action: PayloadAction<string>) => {
-            state.balance = action.payload;
+		updateBalanceAction: (state, action: PayloadAction<IBalanceState>) => {
+            state.balance = action.payload.balance;
+            state.utxos = action.payload.utxos;
 		},
 		removeAccountInfoAction: (state) => {
 			state.account = '';
