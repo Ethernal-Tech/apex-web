@@ -266,7 +266,8 @@ func (bts *BridgingTxSender) getTipAndProtocolParameters(
 	return qtd, protocolParams, nil
 }
 
-func (bts *BridgingTxSender) filterOutSkippedUtxos(allUtxos []cardanowallet.Utxo, skipUtxos []cardanowallet.TxInput) []cardanowallet.Utxo {
+func (bts *BridgingTxSender) filterOutSkippedUtxos(
+	allUtxos []cardanowallet.Utxo, skipUtxos []cardanowallet.TxInput) []cardanowallet.Utxo {
 	if len(skipUtxos) == 0 {
 		return allUtxos
 	}
