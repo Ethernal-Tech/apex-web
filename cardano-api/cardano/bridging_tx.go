@@ -23,7 +23,6 @@ const (
 type BridgingTxSender struct {
 	cardanoCliBinary   string
 	TxProviderSrc      cardanowallet.ITxProvider
-	TxUtxoRetrieverDst cardanowallet.IUTxORetriever
 	MultiSigAddrSrc    string
 	TestNetMagicSrc    uint
 	PotentialFee       uint64
@@ -35,7 +34,6 @@ type BridgingTxSender struct {
 func NewBridgingTxSender(
 	cardanoCliBinary string,
 	txProvider cardanowallet.ITxProvider,
-	txUtxoRetriever cardanowallet.IUTxORetriever,
 	testNetMagic uint,
 	multiSigAddr string,
 	ttlSlotNumberInc uint64,
@@ -43,14 +41,13 @@ func NewBridgingTxSender(
 	logger hclog.Logger,
 ) *BridgingTxSender {
 	return &BridgingTxSender{
-		cardanoCliBinary:   cardanoCliBinary,
-		TxProviderSrc:      txProvider,
-		TxUtxoRetrieverDst: txUtxoRetriever,
-		TestNetMagicSrc:    testNetMagic,
-		MultiSigAddrSrc:    multiSigAddr,
-		PotentialFee:       potentialFee,
-		TTLSlotNumberInc:   ttlSlotNumberInc,
-		logger:             logger,
+		cardanoCliBinary: cardanoCliBinary,
+		TxProviderSrc:    txProvider,
+		TestNetMagicSrc:  testNetMagic,
+		MultiSigAddrSrc:  multiSigAddr,
+		PotentialFee:     potentialFee,
+		TTLSlotNumberInc: ttlSlotNumberInc,
+		logger:           logger,
 	}
 }
 

@@ -15,6 +15,7 @@ type CardanoChainConfig struct {
 	OgmiosURL        string                           `json:"ogmiosUrl,omitempty"`
 	BlockfrostURL    string                           `json:"blockfrostUrl,omitempty"`
 	BlockfrostAPIKey string                           `json:"blockfrostApiKey,omitempty"`
+	UseDemeter       bool                             `json:"useDemeter,omitempty"`
 	SocketPath       string                           `json:"socketPath,omitempty"`
 	PotentialFee     uint64                           `json:"potentialFee"`
 	TTLSlotNumberInc uint64                           `json:"ttlSlotNumberIncrement"`
@@ -51,6 +52,10 @@ func (config CardanoChainConfig) CreateTxProvider() (cardanowallet.ITxProvider, 
 	}
 
 	if config.BlockfrostURL != "" {
+		if config.UseDemeter {
+			return cardanowallet.NewTxProviderDemeter(config.BlockfrostURL, config.BlockfrostAPIKey, "", ""), nil
+		}
+
 		return cardanowallet.NewTxProviderBlockFrost(config.BlockfrostURL, config.BlockfrostAPIKey), nil
 	}
 
