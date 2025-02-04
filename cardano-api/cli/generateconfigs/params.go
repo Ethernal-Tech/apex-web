@@ -97,6 +97,8 @@ const (
 	defaultOutputFileName               = "config.json"
 	defaultPrimeTTLSlotNumberInc        = 1800 + defaultPrimeBlockConfirmationCount*10  // BlockTimeSeconds
 	defaultVectorTTLSlotNumberInc       = 1800 + defaultVectorBlockConfirmationCount*10 // BlockTimeSeconds
+
+	defaultUseDemeter = true
 )
 
 type generateConfigsParams struct {
@@ -145,8 +147,8 @@ func validateAddress(isRequired bool, address string, flag string, networkID wal
 		return fmt.Errorf("specify: %s", flag)
 	}
 
-	addr, err := wallet.NewAddress(address)
-	if err != nil || addr.String() != address || addr.GetNetwork() != networkID {
+	addr, err := wallet.NewCardanoAddressFromString(address)
+	if err != nil || addr.String() != address || addr.GetInfo().Network != networkID {
 		return fmt.Errorf("invalid: %s", flag)
 	}
 
@@ -438,6 +440,7 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 					OgmiosURL:        p.primeOgmiosURL,
 					BlockfrostURL:    p.primeBlockfrostURL,
 					BlockfrostAPIKey: p.primeBlockfrostAPIKey,
+					UseDemeter:       defaultUseDemeter,
 					SocketPath:       p.primeSocketPath,
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.primeTTLSlotInc,

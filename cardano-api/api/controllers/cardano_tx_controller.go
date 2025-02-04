@@ -343,7 +343,7 @@ func (c *CardanoTxControllerImpl) getBridgingTxSenderAndOutputs(
 
 	bridgingTxSender := cardanotx.NewBridgingTxSender(
 		wallet.ResolveCardanoCliBinary(sourceChainConfig.NetworkID),
-		txProvider, txProvider, uint(sourceChainConfig.NetworkMagic),
+		txProvider, uint(sourceChainConfig.NetworkMagic),
 		bridgingAddress,
 		sourceChainConfig.ChainSpecific.TTLSlotNumberInc,
 		sourceChainConfig.ChainSpecific.PotentialFee, c.logger,
