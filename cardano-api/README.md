@@ -74,12 +74,10 @@ $ go run main.go generate-configs\
 		--logs-path "./logs"\
 		--utxo-cache-timeout 1m30s\
                 --oracle-api-url "http://bridge-api-testnet.apexfusion.org:10003" \
-                --oracle-api-key "test-api-key-001" \
+                --oracle-api-key "oracle_api_key_1" \
 		--api-port 41000\
 		--api-keys "cardano_api_key_1"\
-		--api-keys "cardano_api_key_2" \
-                --utxo-cache-keys "utxo_cache_api_key_1" \
-                --utxo-cache-keys "utxo_cache_api_key_2"
+                --utxo-cache-keys "utxo_cache_api_key_1"
 ```
 
 # How to start cardano api
