@@ -246,7 +246,7 @@ export const retry = async <T>(
 };
 
 export const getAssetsSumMap = (utxos: UTxO[]) => {
-  const assetsSumMap: { [unit: string]: bigint } = {}
+  const assetsSumMap: { [unit: string]: bigint } = {};
   for (let j = 0; j < utxos.length; ++j) {
       const assets = utxos[j].output.amount;
       
@@ -262,16 +262,16 @@ export const getAssetsSumMap = (utxos: UTxO[]) => {
   }
 
   return assetsSumMap;
-}
+};
 
-const POTENTIAL_COST_PER_TOKEN = 50000
+const POTENTIAL_COST_PER_TOKEN = 50000;
 
 export const countUniqueTokens = (utxos: UTxO[] | undefined): number => {
   if (!utxos) {
     return 0;
   }
 
-  const assetsMap = getAssetsSumMap(utxos)
+  const assetsMap = getAssetsSumMap(utxos);
   return Object.keys(assetsMap).filter(x => x !== 'lovelace').length;
 };
 
