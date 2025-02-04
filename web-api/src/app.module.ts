@@ -6,6 +6,8 @@ import { dbdatasource } from './database/data.source';
 import { BridgeTransactionModule } from './bridgeTransaction/bridgeTransaction.module';
 import { WalletModule } from './wallet/wallet.module';
 import { SettingsModule } from './settings/settings.module';
+import { MailerConfigModule } from './mailer/mailer.module';
+import { ContactModule } from './contact/contact.module';
 
 @Module({
 	imports: [
@@ -13,10 +15,12 @@ import { SettingsModule } from './settings/settings.module';
 			isGlobal: true,
 		}),
 		TypeOrmModule.forRoot(dbdatasource),
+		MailerConfigModule,
 		SettingsModule,
 		TransactionModule,
 		BridgeTransactionModule,
 		WalletModule,
+		ContactModule,
 	],
 	controllers: [],
 	providers: [],
