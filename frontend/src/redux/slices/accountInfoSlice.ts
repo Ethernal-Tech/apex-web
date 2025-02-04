@@ -29,6 +29,7 @@ const accountInfoSlice = createSlice({
 			state.account = action.payload.account;
 			state.networkId = action.payload.networkId;
 			state.balance = action.payload.balance;
+			state.utxos = action.payload.utxos;
 		},
 		updateBalanceAction: (state, action: PayloadAction<IBalanceState>) => {
             state.balance = action.payload.balance;
@@ -38,6 +39,7 @@ const accountInfoSlice = createSlice({
 			state.account = '';
 			state.networkId = 0;
 			state.balance = '0';
+			state.utxos = undefined;
 		},
 	},
 })
