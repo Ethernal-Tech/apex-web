@@ -1,20 +1,21 @@
 import { Dispatch } from '@reduxjs/toolkit';
 import { store } from '../redux/store';
-import { BalanceResponseDto, ChainEnum } from '../swagger/apexBridgeApiService';
+import { ChainEnum } from '../swagger/apexBridgeApiService';
 import { fromNetworkIdToChain } from '../utils/chainUtils';
-import { updateBalanceAction } from '../redux/slices/accountInfoSlice';
-import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
+import { IBalanceState, updateBalanceAction } from '../redux/slices/accountInfoSlice';
 import evmWalletHandler from '../features/EvmWalletHandler';
 import walletHandler from '../features/WalletHandler';
 
-export const getWalletBalanceAction = async (chain: ChainEnum, address: string) => {
+export const getWalletBalanceAction = async (chain: ChainEnum, address: string): Promise<IBalanceState> => {
     if (chain === ChainEnum.Nexus) { 
-        const nexusBalance = await evmWalletHandler.getBalance()
-        return new BalanceResponseDto({ balance: nexusBalance})
+        const nexusBalance = await evmWalletHandler.getBalance();
+        return { balance: nexusBalance };
     }
     
-    const balance = await walletHandler.getBalance()
-    return new BalanceResponseDto({ balance })
+    const utxos = await walletHandler.getAllUtxos();
+    const balance = await walletHandler.getBalance(utxos);
+
+    return { balance, utxos };
 }
 
 export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
@@ -34,15 +35,13 @@ export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
         return;
     }
 
-    const balanceResp = await tryCatchJsonByAction(() => getWalletBalanceAction(chain, account)); 
-    if (balanceResp instanceof ErrorResponse) {
-        console.log(`Error while fetching wallet balance: ${balanceResp.err}`)
-        return;
-    }
+    try {
+        const balanceState = await getWalletBalanceAction(chain, account);
+        if (balanceState.balance) {
+            dispatch(updateBalanceAction(balanceState));
+        }
 
-    if (!balanceResp.balance) {
-        return;
+    } catch (e) {
+        console.log(`Error while fetching wallet balance: ${e}`);
     }
-
-    dispatch(updateBalanceAction(balanceResp.balance));
 }

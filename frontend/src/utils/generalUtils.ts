@@ -12,6 +12,7 @@ import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { FunctionComponent, SVGProps } from "react";
 import { isAddress } from "web3-validator";
 import { ISettingsState } from "../redux/slices/settingsSlice";
+import { UTxO } from "@meshsdk/core";
 
 export const capitalizeWord = (word: string): string => {
     if (!word || word.length === 0) {
@@ -242,4 +243,38 @@ export const retry = async <T>(
 	}
 
 	throw new Error(`failed to execute callback. tryCount: ${tryCount}`);
+};
+
+export const getAssetsSumMap = (utxos: UTxO[]) => {
+  const assetsSumMap: { [unit: string]: bigint } = {};
+  for (let j = 0; j < utxos.length; ++j) {
+      const assets = utxos[j].output.amount;
+      
+      for (let i = 0; i < assets.length; ++i) {
+          const asset = assets[i];
+
+          if (!assetsSumMap[asset.unit]) {
+              assetsSumMap[asset.unit] = BigInt(0);
+          }
+
+          assetsSumMap[asset.unit] += BigInt(asset?.quantity || "0");
+      }
+  }
+
+  return assetsSumMap;
+};
+
+const POTENTIAL_COST_PER_TOKEN = 50000;
+
+export const countUniqueTokens = (utxos: UTxO[] | undefined): number => {
+  if (!utxos) {
+    return 0;
+  }
+
+  const assetsMap = getAssetsSumMap(utxos);
+  return Object.keys(assetsMap).filter(x => x !== 'lovelace').length;
+};
+
+export const calculatePotentialTokensCost = (utxos: UTxO[] | undefined): number => {
+  return countUniqueTokens(utxos) * POTENTIAL_COST_PER_TOKEN;
 };

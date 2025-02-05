@@ -4,8 +4,8 @@ import PasteTextInput from "../components/PasteTextInput";
 import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { convertApexToDfm, convertDfmToWei } from '../../../utils/generalUtils';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { calculatePotentialTokensCost, convertApexToDfm, convertDfmToWei } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
@@ -26,6 +26,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
   const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
   const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
+  const walletUTxOs = useSelector((state: RootState) => state.accountInfo.utxos);
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
   const {chain} = useSelector((state: RootState)=> state.chain);
   const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge);
@@ -80,13 +81,16 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
     setAmount('')
   }
 
+  const potentialTokensCost = useMemo(() => calculatePotentialTokensCost(walletUTxOs), [walletUTxOs]);
+
     // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
   const minDfmValue = chain === ChainEnum.Nexus ? 
     convertDfmToWei(minValueToBridge) : minValueToBridge;
     
     const maxAmountDfm:string = totalDfmBalance
         ? ( chain === ChainEnum.Prime || chain === ChainEnum.Vector
-            ? (BigInt(totalDfmBalance) - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString()
+            ? (BigInt(totalDfmBalance) - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee)
+               - BigInt(potentialTokensCost) - BigInt(minDfmValue)).toString()
             : (BigInt(totalDfmBalance) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString() // for nexus, using minDfm value as substitute to user wallet fee / potential fee
         )
         : '0';
