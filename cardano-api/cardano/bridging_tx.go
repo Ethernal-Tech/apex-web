@@ -267,7 +267,8 @@ func (bts *BridgingTxSender) getTipAndProtocolParameters(
 }
 
 func (bts *BridgingTxSender) filterOutSkippedUtxos(
-	allUtxos []cardanowallet.Utxo, skipUtxos []cardanowallet.TxInput) []cardanowallet.Utxo {
+	allUtxos []cardanowallet.Utxo, skipUtxos []cardanowallet.TxInput,
+) []cardanowallet.Utxo {
 	if len(skipUtxos) == 0 {
 		return allUtxos
 	}
@@ -278,9 +279,6 @@ func (bts *BridgingTxSender) filterOutSkippedUtxos(
 	for _, utxo := range skipUtxos {
 		skipUtxosMap[fmt.Sprintf("%s_%d", utxo.Hash, utxo.Index)] = true
 	}
-
-	bts.logger.Debug("getUTXOsForAmount", "allUtxos", allUtxos)
-	bts.logger.Debug("getUTXOsForAmount", "skipUtxos", skipUtxos)
 
 	count := 0
 
@@ -294,7 +292,11 @@ func (bts *BridgingTxSender) filterOutSkippedUtxos(
 
 	utxos = allUtxos[:count] // new slice contains only unskipped utxos
 
-	bts.logger.Debug("getUTXOsForAmount", "utxos", utxos)
+	bts.logger.Debug("filterOutSkippedUtxos",
+		"allUtxos", allUtxos,
+		"skipUtxos", skipUtxos,
+		"utxos", utxos,
+	)
 
 	return utxos
 }
