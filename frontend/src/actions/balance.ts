@@ -42,6 +42,6 @@ export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
         }
 
     } catch (e) {
-        console.log(`Error while fetching wallet balance: ${e}`)
+        console.log(`Error while fetching wallet balance: ${e}`);
     }
 }
