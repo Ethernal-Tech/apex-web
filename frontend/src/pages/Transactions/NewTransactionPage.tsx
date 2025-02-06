@@ -18,7 +18,6 @@ import appSettings from "../../settings/appSettings";
 
 function NewTransactionPage() {
 	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
-
 	const [loading, setLoading] = useState(false);
 	
 	const chain = useSelector((state: RootState)=> state.chain.chain);
@@ -26,8 +25,7 @@ function NewTransactionPage() {
 	const account = useSelector((state: RootState) => state.accountInfo.account);
 	const settings = useSelector((state: RootState) => state.settings);
 
-	const bridgeTxFee = chain === ChainEnum.Nexus ?
-		convertDfmToWei(settings.minChainFeeForBridging[destinationChain]) : settings.minChainFeeForBridging[destinationChain];
+	const [bridgeTxFee, setBridgeTxFee] = useState(chain === ChainEnum.Nexus ? convertDfmToWei(settings.minChainFeeForBridging[destinationChain]) : '0');
 
 	const SourceIcon = chainIcons[chain];
 	const DestinationIcon = chainIcons[destinationChain];
@@ -60,6 +58,7 @@ function NewTransactionPage() {
 			throw new Error(feeResponse.err)
 		}
 
+		setBridgeTxFee((feeResponse.bridgingFee || 0).toString());
 		return feeResponse;
 	}, [prepareCreateCardanoTx])
 
@@ -224,6 +223,7 @@ function NewTransactionPage() {
 					{!txInProgress &&
 						<BridgeInput
 							bridgeTxFee={bridgeTxFee}
+							setBridgeTxFee={setBridgeTxFee}
 							getCardanoTxFee={getCardanoTxFee}
 							getEthTxFee={getEthTxFee}
 							submit={handleSubmitCallback}

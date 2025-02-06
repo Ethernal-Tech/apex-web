@@ -521,10 +521,6 @@ export class ContactControllerClient extends BaseClient {
             return response.text().then((_responseText) => {
             return;
             });
-        } else if (status === 404) {
-            return response.text().then((_responseText) => {
-            return throwException("Not Found", status, _responseText, _headers);
-            });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -743,6 +739,7 @@ export interface ICreateCardanoTransactionResponseDto {
 
 export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeResponseDto {
     fee!: number;
+    bridgingFee!: number;
 
     constructor(data?: ICardanoTransactionFeeResponseDto) {
         if (data) {
@@ -756,6 +753,7 @@ export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeR
     init(_data?: any) {
         if (_data) {
             this.fee = _data["fee"];
+            this.bridgingFee = _data["bridgingFee"];
         }
     }
 
@@ -769,12 +767,14 @@ export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeR
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["fee"] = this.fee;
+        data["bridgingFee"] = this.bridgingFee;
         return data; 
     }
 }
 
 export interface ICardanoTransactionFeeResponseDto {
     fee: number;
+    bridgingFee: number;
 }
 
 export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto {

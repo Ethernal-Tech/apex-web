@@ -87,7 +87,7 @@ const AppBarComponent = () => {
                                 </ButtonCustom>
                                 <ButtonCustom
                                     variant={isActiveNavLink(TRANSACTIONS_ROUTE) ? "navigationActive" : "navigation"}
-                                    sx={appSettings.isSkyline && isActiveNavLink(NEW_TRANSACTION_ROUTE) ? { color: "#1ea29d" } : {}}
+                                    sx={appSettings.isSkyline && isActiveNavLink(TRANSACTIONS_ROUTE) ? { color: "#1ea29d" } : {}}
                                     onClick={() => handleOptionClick(TRANSACTIONS_ROUTE)}
                                 >
                                     Bridging History
