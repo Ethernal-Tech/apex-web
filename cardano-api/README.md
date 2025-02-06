@@ -64,7 +64,8 @@ $ go run main.go generate-configs\
 		--prime-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv"\
 		--prime-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq"\
 		--prime-bridging-fallback-address "addr_test1vqfuetznnmngqzquslwcu0ygn2hq29vjlpytlpwss762vcgun5vvw"\
-		--prime-ogmios-url "http://ogmios.prime.testnet.apexfusion.org:1337"\
+		--prime-blockfrost-url "https://blockfrost-m1.demeter.run"\
+		--prime-blockfrost-api-key "test_demeter_api_key_1"\
 		--vector-network-id 2\
 		--vector-network-magic 1127\
 		--vector-bridging-address "vector_test1w2h482rf4gf44ek0rekamxksulazkr64yf2fhmm7f5gxjpsdm4zsg"\
@@ -150,7 +151,8 @@ $ go run main.go generate-configs skyline \
 		--prime-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv"\
 		--prime-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq"\
 		--prime-bridging-fallback-address "addr_test1vqfuetznnmngqzquslwcu0ygn2hq29vjlpytlpwss762vcgun5vvw"\
-		--prime-ogmios-url "http://ogmios.prime.testnet.apexfusion.org:1337"\
+		--prime-blockfrost-url "https://blockfrost-m1.demeter.run"\
+		--prime-blockfrost-api-key "test_demeter_api_key_1"\
 		--cardano-network-id 0\
 		--cardano-network-magic 3311\
 		--cardano-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv"\
