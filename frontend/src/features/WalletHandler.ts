@@ -1,6 +1,6 @@
 import { BrowserWallet, Asset, UTxO } from '@meshsdk/core';
 import { NewAddressFromBytes } from './Address/addreses';
-import { toBytes } from '../utils/generalUtils';
+import { getAssetsSumMap, toBytes } from '../utils/generalUtils';
 
 type Wallet = {
     name: string;
@@ -68,7 +68,7 @@ class WalletHandler {
         return await this._enabledWallet!.getChangeAddress()
     }
 
-    _getAllUtxos = async (): Promise<UTxO[]> => {
+    getAllUtxos = async (): Promise<UTxO[]> => {
         this._checkWalletAndThrow();
 
         const allUtxosMap: {[key: string]: UTxO} = {};
@@ -90,25 +90,12 @@ class WalletHandler {
         return Object.values(allUtxosMap);
     }
 
-    getBalance = async (): Promise<{[unit: string]: bigint}> => {
-        const allUtxos = await this._getAllUtxos();
-
-        const assetsSumMap: { [unit: string]: bigint } = {}
-        for (let j = 0; j < allUtxos.length; ++j) {
-            const assets = allUtxos[j].output.amount;
-            
-            for (let i = 0; i < assets.length; ++i) {
-                const asset = assets[i];
-    
-                if (!assetsSumMap[asset.unit]) {
-                    assetsSumMap[asset.unit] = BigInt(0);
-                }
-    
-                assetsSumMap[asset.unit] += BigInt(asset?.quantity || "0");
-            }
+    getBalance = async (allUtxos?: UTxO[]): Promise<{[unit: string]: bigint}> => {
+        if (allUtxos === undefined) {
+            allUtxos = await this.getAllUtxos();
         }
 
-        return assetsSumMap;
+        return getAssetsSumMap(allUtxos);
     }
 
     getNetworkId = async (): Promise<number> => {
