@@ -46,9 +46,9 @@ func (*SkylineTxControllerImpl) GetPathPrefix() string {
 
 func (c *SkylineTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	return []*core.APIEndpoint{
-		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance, APIKeyAuth: true},
-		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee, APIKeyAuth: true},
-		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx, APIKeyAuth: true},
+		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance},
+		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
+		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
 	}
 }
 

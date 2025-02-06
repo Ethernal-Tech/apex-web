@@ -2,8 +2,6 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import {
 	CreateCardanoTransactionResponseDto,
-	SubmitCardanoTransactionDto,
-	SubmitCardanoTransactionResponseDto,
 	TransactionSubmittedDto,
 	CreateTransactionDto,
 	CreateEthTransactionResponseDto,
@@ -49,23 +47,6 @@ export class TransactionController {
 		@Body() model: CreateTransactionDto,
 	): Promise<CardanoTransactionFeeResponseDto> {
 		return await this.transactionService.getCardanoTxFee(model);
-	}
-
-	@ApiResponse({
-		status: HttpStatus.OK,
-		type: SubmitCardanoTransactionResponseDto,
-		description: 'Success',
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Bad Request',
-	})
-	@HttpCode(HttpStatus.OK)
-	@Post('submitCardano')
-	async submitCardano(
-		@Body() model: SubmitCardanoTransactionDto,
-	): Promise<SubmitCardanoTransactionResponseDto> {
-		return this.transactionService.submitCardano(model);
 	}
 
 	@ApiResponse({

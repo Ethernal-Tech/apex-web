@@ -402,8 +402,9 @@ func (p *skylineGenerateConfigsParams) Execute(
 					OgmiosURL:        p.primeOgmiosURL,
 					BlockfrostURL:    p.primeBlockfrostURL,
 					BlockfrostAPIKey: p.primeBlockfrostAPIKey,
+					UseDemeter:       defaultUseDemeter,
 					SocketPath:       p.primeSocketPath,
-					PotentialFee:     300000,
+					PotentialFee:     500000,
 					TTLSlotNumberInc: p.primeTTLSlotInc,
 					Destinations: []cardanotx.CardanoConfigTokenExchange{
 						{
@@ -434,7 +435,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 					BlockfrostURL:    p.cardanoBlockfrostURL,
 					BlockfrostAPIKey: p.cardanoBlockfrostAPIKey,
 					SocketPath:       p.cardanoSocketPath,
-					PotentialFee:     300000,
+					PotentialFee:     500000,
 					TTLSlotNumberInc: p.cardanoTTLSlotInc,
 					Destinations: []cardanotx.CardanoConfigTokenExchange{
 						{

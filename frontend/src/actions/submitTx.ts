@@ -1,5 +1,5 @@
-import { bridgingTransactionSubmittedAction, submitCardanoTransactionAction } from "../pages/Transactions/action";
-import { CreateTransactionDto, CreateCardanoTransactionResponseDto, SubmitCardanoTransactionDto, CreateEthTransactionResponseDto, TransactionSubmittedDto } from "../swagger/apexBridgeApiService";
+import { bridgingTransactionSubmittedAction } from "../pages/Transactions/action";
+import { CreateTransactionDto, CreateCardanoTransactionResponseDto, CreateEthTransactionResponseDto, TransactionSubmittedDto } from "../swagger/apexBridgeApiService";
 import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
 import walletHandler from "../features/WalletHandler";
 import evmWalletHandler from "../features/EvmWalletHandler";
@@ -14,10 +14,11 @@ export const signAndSubmitCardanoTx = async (
     }
 
     const signedTxRaw = await walletHandler.signTx(createResponse.txRaw);
+    await walletHandler.submitTx(signedTxRaw);
 
     const amount = BigInt(createResponse.bridgingFee) + BigInt(createResponse.amount);
 
-    const bindedSubmitAction = submitCardanoTransactionAction.bind(null, new SubmitCardanoTransactionDto({
+    const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
         originChain: values.originChain,
         senderAddress: values.senderAddress,
         destinationChain: values.destinationChain,
@@ -25,17 +26,16 @@ export const signAndSubmitCardanoTx = async (
         amount: amount.toString(),
         originTxHash: createResponse.txHash,
         txRaw: createResponse.txRaw,
-        signedTxRaw,
         isFallback: createResponse.isFallback,
         nativeTokenAmount: (createResponse.nativeTokenAmount || 0).toString(),
     }));
 
-    const response = await tryCatchJsonByAction(bindedSubmitAction, false);
+    const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
     if (response instanceof ErrorResponse) {
         throw new Error(response.err)
     }
 
-    return response.bridgeTx;
+    return response;
 }
 
 const DEFAULT_GAS_PRICE = 1000000000 // TODO - adjust gas price

@@ -47,7 +47,7 @@ func NewAPI(
 			endpointPath := fmt.Sprintf("/%s/%s/%s", apiConfig.PathPrefix, controllerPathPrefix, endpoint.Path)
 
 			endpointHandler := endpoint.Handler
-			if endpoint.APIKeyAuth {
+			if !endpoint.NoAPIKeyAuth {
 				endpointHandler = withAPIKeyAuth(apiConfig, endpointHandler, logger)
 			}
 

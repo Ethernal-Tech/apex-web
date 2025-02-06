@@ -11,7 +11,6 @@ import (
 
 	commonRequest "github.com/Ethernal-Tech/cardano-api/api/model/common/request"
 	commonResponse "github.com/Ethernal-Tech/cardano-api/api/model/common/response"
-	"github.com/Ethernal-Tech/cardano-api/api/model/reactor/request"
 	"github.com/Ethernal-Tech/cardano-api/api/utils"
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
@@ -48,10 +47,9 @@ func (*ReactorTxControllerImpl) GetPathPrefix() string {
 
 func (c *ReactorTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	return []*core.APIEndpoint{
-		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx, APIKeyAuth: true},
-		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee, APIKeyAuth: true},
-		{Path: "SignBridgingTx", Method: http.MethodPost, Handler: c.signBridgingTx, APIKeyAuth: true},
-		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance, APIKeyAuth: true},
+		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
+		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
+		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance},
 	}
 }
 
@@ -180,34 +178,6 @@ func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		commonResponse.NewFullBridgingTxResponse(txRaw, txHash, requestBody.BridgingFee, amount, 0), c.logger)
 }
 
-func (c *ReactorTxControllerImpl) signBridgingTx(w http.ResponseWriter, r *http.Request) {
-	requestBody, ok := utils.DecodeModel[request.SignBridgingTxRequest](w, r, c.logger)
-	if !ok {
-		return
-	}
-
-	if requestBody.TxRaw == "" || requestBody.SigningKeyHex == "" || requestBody.TxHash == "" {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest, errors.New("invalid input data"), c.logger)
-
-		return
-	}
-
-	c.logger.Debug("signBridgingTx request", "body", requestBody, "url", r.URL)
-
-	signedTx, err := c.signTx(requestBody)
-	if err != nil {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest, errors.New("validation error"), c.logger)
-
-		return
-	}
-
-	utils.WriteResponse(
-		w, r, http.StatusOK,
-		commonResponse.NewBridgingTxResponse(signedTx, requestBody.TxHash), c.logger)
-}
-
 func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody *commonRequest.CreateBridgingTxRequest,
 ) error {
@@ -305,36 +275,6 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	}
 
 	return nil
-}
-
-func (c *ReactorTxControllerImpl) signTx(requestBody request.SignBridgingTxRequest) ([]byte, error) {
-	signingKeyBytes, err := common.DecodeHex(requestBody.SigningKeyHex)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode singing key hex: %w", err)
-	}
-
-	txRawBytes, err := common.DecodeHex(requestBody.TxRaw)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode raw tx: %w", err)
-	}
-
-	cardanoCliBinary := wallet.ResolveCardanoCliBinary(wallet.CardanoNetworkType(requestBody.NetworkID))
-	senderWallet := wallet.NewWallet(
-		wallet.GetVerificationKeyFromSigningKey(signingKeyBytes), signingKeyBytes)
-
-	txBuilder, err := wallet.NewTxBuilder(cardanoCliBinary)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create tx builder: %w", err)
-	}
-
-	defer txBuilder.Dispose()
-
-	signedTxBytes, err := txBuilder.SignTx(txRawBytes, []wallet.ITxSigner{senderWallet})
-	if err != nil {
-		return nil, fmt.Errorf("failed to sign tx: %w", err)
-	}
-
-	return signedTxBytes, nil
 }
 
 func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (

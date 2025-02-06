@@ -97,6 +97,8 @@ const (
 	defaultOutputFileName               = "config.json"
 	defaultPrimeTTLSlotNumberInc        = 1800 + defaultPrimeBlockConfirmationCount*10  // BlockTimeSeconds
 	defaultVectorTTLSlotNumberInc       = 1800 + defaultVectorBlockConfirmationCount*10 // BlockTimeSeconds
+
+	defaultUseDemeter = true
 )
 
 type generateConfigsParams struct {
@@ -441,8 +443,9 @@ func (p *generateConfigsParams) Execute(
 					OgmiosURL:        p.primeOgmiosURL,
 					BlockfrostURL:    p.primeBlockfrostURL,
 					BlockfrostAPIKey: p.primeBlockfrostAPIKey,
+					UseDemeter:       defaultUseDemeter,
 					SocketPath:       p.primeSocketPath,
-					PotentialFee:     300000,
+					PotentialFee:     500000,
 					TTLSlotNumberInc: p.primeTTLSlotInc,
 				},
 			},
@@ -459,7 +462,7 @@ func (p *generateConfigsParams) Execute(
 					BlockfrostURL:    p.vectorBlockfrostURL,
 					BlockfrostAPIKey: p.vectorBlockfrostAPIKey,
 					SocketPath:       p.vectorSocketPath,
-					PotentialFee:     300000,
+					PotentialFee:     500000,
 					TTLSlotNumberInc: p.vectorTTLSlotInc,
 				},
 			},

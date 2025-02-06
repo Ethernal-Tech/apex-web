@@ -7,7 +7,7 @@
     "@emotion/styled": "^11.11.0",
     "@emurgo/cardano-serialization-lib-nodejs": "^11.5.0",
     "@fontsource/roboto": "^5.0.8",
-    "@meshsdk/core": "^1.5.11-beta.6",
+    "@meshsdk/core": "1.7.20",
     "@mui/icons-material": "^5.15.15",
     "@mui/material": "^5.15.10",
     "@reduxjs/toolkit": "^2.2.2",
@@ -55,6 +55,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "assert": "^2.1.0",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.0",
@@ -64,6 +65,7 @@
     "react-app-rewired": "^2.2.1",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
-    "url": "^0.11.3"
+    "url": "^0.11.3",
+    "vm-browserify": "^1.1.2"
   }
 }

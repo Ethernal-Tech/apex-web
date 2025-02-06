@@ -13,12 +13,16 @@ import { fetchAndUpdateBalanceAction } from '../actions/balance';
 import { fetchAndUpdateSettingsAction } from '../actions/settings';
 import LandingPage from './Landing/LandingPage';
 import appSettings from '../settings/appSettings';
+import TermsOfServicePage from './TermsOfServicePage/TermsOfServicePage';
+import PrivacyPolicyPage from './PrivacyPolicyPage/PrivacyPolicyPage';
 
 export const HOME_ROUTE = appSettings.isSkyline ? '/dashboard' : '/';
 export const TRANSACTIONS_ROUTE = '/transactions';
 export const NEW_TRANSACTION_ROUTE = '/new-transaction';
 export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
 export const LANDING_ROUTE = '/landing';
+export const PRIVACY_POLICY_ROUTE = '/privacy-policy';
+export const TERMS_OF_SERVICE_ROUTE = '/terms-of-service';
 
 const PageRouter: React.FC = () => {
   const location = useLocation();
@@ -107,6 +111,8 @@ const PageRouter: React.FC = () => {
         <Route path={NEW_TRANSACTION_ROUTE} element={withMiddleware(() => renderNewTransactionPage)({})} />
         <Route path={TRANSACTION_DETAILS_ROUTE} element={withMiddleware(() => renderTransactionDetailsPage)({})} />
         {appSettings.isSkyline && <Route path={LANDING_ROUTE} element={renderLandingPage} />}
+        {!appSettings.isSkyline && <Route path={TERMS_OF_SERVICE_ROUTE} element={withMiddleware(() => <TermsOfServicePage/>)({})} />}
+        {!appSettings.isSkyline && <Route path={PRIVACY_POLICY_ROUTE} element={withMiddleware(() => <PrivacyPolicyPage/>)({})} />}
         <Route path='*' element={appSettings.isSkyline ? <Navigate to={LANDING_ROUTE} /> : withMiddleware(() => renderHomePage)({})} />
     </Routes>
   );

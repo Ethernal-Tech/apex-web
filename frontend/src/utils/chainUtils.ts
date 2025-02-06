@@ -111,6 +111,26 @@ export const fromChainToChainNativeToken = (chain: ChainEnum): TokenEnum => {
     }
 }
 
+export const fromChainToCurrencySymbol = (chain: ChainEnum): string => {
+    switch (chain) {
+        default:
+            return 'lovelace';
+    }
+}
+
+export const fromChainToNativeTokenSymbol = (chain: ChainEnum): string => {
+    switch (chain) {
+        case ChainEnum.Prime: {
+            return 'wada'; // pull from config, once we know the full token name
+        }
+        case ChainEnum.Cardano: {
+            return 'wapex'; // pull from config, once we know the full token name
+        }
+        default:
+            return 'wada';
+    }
+}
+
 export const getIsNativeToken = (chain: ChainEnum, sourceToken: TokenEnum) => {
     if (chain === ChainEnum.Prime) {
         return sourceToken === TokenEnum.WAda;
