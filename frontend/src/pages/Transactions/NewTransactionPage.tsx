@@ -7,7 +7,7 @@ import BridgeInput from "./components/BridgeInput";
 import { chainIcons, convertDfmToWei, validateSubmitTxInputs, validateSubmitTxInputsSkyline } from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
@@ -18,6 +18,7 @@ import appSettings from "../../settings/appSettings";
 
 function NewTransactionPage() {
 	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
+	const [bridgeTxFee, setBridgeTxFee] = useState<string>('0');
 
 	const [loading, setLoading] = useState(false);
 	
@@ -26,8 +27,11 @@ function NewTransactionPage() {
 	const account = useSelector((state: RootState) => state.accountInfo.account);
 	const settings = useSelector((state: RootState) => state.settings);
 
-	const bridgeTxFee = chain === ChainEnum.Nexus ?
-		convertDfmToWei(settings.minChainFeeForBridging[destinationChain]) : settings.minChainFeeForBridging[destinationChain];
+	useEffect(() => {
+		if (chain === ChainEnum.Nexus) {
+			setBridgeTxFee(convertDfmToWei(settings.minChainFeeForBridging[destinationChain]));
+		}
+	}, [chain, destinationChain, settings.minChainFeeForBridging])
 
 	const SourceIcon = chainIcons[chain];
 	const DestinationIcon = chainIcons[destinationChain];
@@ -60,6 +64,7 @@ function NewTransactionPage() {
 			throw new Error(feeResponse.err)
 		}
 
+		setBridgeTxFee((feeResponse.bridgingFee || 0).toString());
 		return feeResponse;
 	}, [prepareCreateCardanoTx])
 
