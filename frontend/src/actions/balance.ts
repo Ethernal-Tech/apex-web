@@ -1,11 +1,12 @@
 import { Dispatch } from '@reduxjs/toolkit';
 import { store } from '../redux/store';
-import { BalanceResponseDto, ChainEnum, WalletControllerClient } from '../swagger/apexBridgeApiService';
-import { fromNetworkIdToChain } from '../utils/chainUtils';
+import { BalanceResponseDto, ChainEnum } from '../swagger/apexBridgeApiService';
+import { fromChainToChainCurrency, fromChainToChainNativeToken, fromChainToNativeTokenSymbol, fromChainToCurrencySymbol, fromNetworkIdToChain } from '../utils/chainUtils';
 import { updateBalanceAction } from '../redux/slices/accountInfoSlice';
 import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
 import evmWalletHandler from '../features/EvmWalletHandler';
 import { TokenEnum } from '../features/enums';
+import walletHandler from '../features/WalletHandler';
 
 export const getWalletBalanceAction = async (srcChain: ChainEnum, address: string, dstChain: ChainEnum) => {
     if (srcChain === ChainEnum.Nexus) { 
@@ -13,8 +14,15 @@ export const getWalletBalanceAction = async (srcChain: ChainEnum, address: strin
         return new BalanceResponseDto({ balance: { [TokenEnum.APEX]: nexusBalance } })
     }
     
-    const client = new WalletControllerClient();
-    return client.getBalance(srcChain, address, dstChain);
+    const balance = await walletHandler.getBalance()
+    const currencyBalance = (balance[fromChainToCurrencySymbol(srcChain)] || BigInt(0)).toString(10)
+    const tokenBalance = (balance[fromChainToNativeTokenSymbol(srcChain)] || BigInt(0)).toString(10)
+    return new BalanceResponseDto({
+        balance: {
+            [fromChainToChainCurrency(srcChain)]: currencyBalance,
+            [fromChainToChainNativeToken(srcChain)]: tokenBalance,
+        },
+    })
 }
 
 export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
