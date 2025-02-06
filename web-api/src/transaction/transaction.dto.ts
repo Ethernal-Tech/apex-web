@@ -125,6 +125,7 @@ export class CardanoTransactionFeeResponseDto {
 	@ApiProperty()
 	fee: number;
 
+	@IsPositive()
 	@ApiProperty()
 	bridgingFee: number;
 }
