@@ -125,8 +125,8 @@ export class CardanoTransactionFeeResponseDto {
 	@ApiProperty()
 	fee: number;
 
-	@ApiProperty({ nullable: true, required: false })
-	bridgingFee?: number;
+	@ApiProperty()
+	bridgingFee: number;
 }
 
 export class CreateEthTransactionResponseDto {

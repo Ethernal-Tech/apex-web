@@ -739,7 +739,7 @@ export interface ICreateCardanoTransactionResponseDto {
 
 export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeResponseDto {
     fee!: number;
-    bridgingFee?: number | undefined;
+    bridgingFee!: number;
 
     constructor(data?: ICardanoTransactionFeeResponseDto) {
         if (data) {
@@ -774,7 +774,7 @@ export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeR
 
 export interface ICardanoTransactionFeeResponseDto {
     fee: number;
-    bridgingFee?: number | undefined;
+    bridgingFee: number;
 }
 
 export class SubmitCardanoTransactionDto implements ISubmitCardanoTransactionDto {
