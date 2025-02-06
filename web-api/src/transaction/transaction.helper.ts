@@ -1,5 +1,3 @@
-import { createTransactionSubmissionClient } from '@cardano-ogmios/client';
-import { createInteractionContext } from '@cardano-ogmios/client';
 import { ChainEnum } from 'src/common/enum';
 import {
 	CreateCardanoTransactionResponseDto,
@@ -239,44 +237,3 @@ const ethCentralizedBridgingTx = async (
 		isFallback: true,
 	};
 };
-
-export const createContext = (chain: ChainEnum) => {
-	let host, port;
-
-	// Set host and port based on chainId
-	if (chain === ChainEnum.Prime) {
-		host = process.env.OGMIOS_NODE_ADDRESS_PRIME;
-		port = parseInt(process.env.OGMIOS_NODE_PORT_PRIME!, 10) || undefined;
-	} else if (chain === ChainEnum.Vector) {
-		host = process.env.OGMIOS_NODE_ADDRESS_VECTOR;
-		port = parseInt(process.env.OGMIOS_NODE_PORT_VECTOR!, 10) || undefined;
-	} else {
-		// Default values if chain doesn't match any condition
-		host = 'localhost';
-		port = 1337;
-	}
-
-	return createInteractionContext(
-		(err) => Logger.error(err),
-		() => Logger.debug('Ogmios connection closed.'),
-		{ connection: { host, port } },
-	);
-};
-
-export async function submitCardanoTransaction(
-	chain: ChainEnum,
-	signedTx: string,
-) {
-	Logger.debug(`submitting cardano tx using ogmios`);
-
-	const context = await createContext(chain);
-	const client = await createTransactionSubmissionClient(context);
-
-	const txId = await client.submitTransaction(signedTx);
-
-	await client.shutdown();
-
-	Logger.debug(`done submitting cardano tx using ogmios. txId: ${txId}`);
-
-	return txId;
-}
