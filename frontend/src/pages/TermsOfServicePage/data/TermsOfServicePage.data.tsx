@@ -1,0 +1,201 @@
+// terms of service html string
+export const termsOfServiceHtml =  
+`<div class="writtenContent max-w-4xl w-[80%] mx-auto py-20 mb:p-20 bg-background text-white mb-12">
+        <h1 class="code-line" data-line-start=0 data-line-end=2 ><a id="Terms_of_Use_0"></a><strong>Terms of Use</strong></h1>
+        <p class="has-line-data" data-line-start="3" data-line-end="4">Last Updated: 18th Jan 2025</p>
+        <p class="has-line-data" data-line-start="5" data-line-end="6">These Terms of Use provide the terms and conditions under which you, whether personally or on behalf of an entity (&quot;<strong>you</strong>&quot; or &quot;<strong>your</strong>“), are permitted to use, interact with, or otherwise access the Websites or Features provided by Apex Fusion Foundation (together with its affiliates, &quot;<strong>Apex</strong>&quot; &quot;<strong>we</strong>,” &quot;<strong>us</strong>,&quot; or &quot;<strong>our</strong>&quot;). These Terms should be read together with other such documents and terms or policies that are appended hereto or that incorporated into these Terms by reference (collectively, the &quot;<strong>Terms</strong>&quot;).</p>
+        <p class="has-line-data" data-line-start="7" data-line-end="8">THE TERMS CONSTITUTE A BINDING AGREEMENT BETWEEN YOU AND US, PLEASE READ THEM CAREFULLY BEFORE ACCESSING OR USING THE WEBSITES. BY ACCESSING, INTERACTING WITH OR USING ANY OF THE WEBSITES OR FEATURES, YOU AGREE THAT YOU ARE ABLE TO ENTER INTO A BINDING AGREEMENT AND, AS SUCH, HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THE TERMS, INCLUDING THE BINDING ARBITRATION AGREEMENT AND CLASS ACTION WAIVER BELOW. IF YOU DO NOT AGREE TO ALL OF THE TERMS, YOU ARE NOT AUTHORIZED TO INTERACT WITH, ACCESS OR USE ANY FEATURES OR WEBSITES.</p>
+        <h2 class="code-line" data-line-start=9 data-line-end=11 ><a id="1_Scope_9"></a>1. Scope</h2>
+        <p class="has-line-data" data-line-start="12" data-line-end="13">1.1. These Terms of Use govern your access to and use of all websites operated by Apex, including all associated content, features, and functionalities (collectively &quot;<strong>Features</strong>&quot;) made available on or through these websites or interfaces (collectively &quot;<strong>Websites</strong>&quot;). By accessing or using any Apex website or its associated services, you agree to be bound by these Terms. If you do not agree to these Terms, you may not use our websites or services.</p>
+        <p class="has-line-data" data-line-start="14" data-line-end="15">1.2. You agree and acknowledge that some of the Websites and Features gather, process, or transmit the information generated on-chain (either transmitted by or on a blockchain network or through a blockchain-based application). Similarly, some of the Websites and Features may redirect you or utilize third-party providers to display, transmit, or otherwise provide you with certain information. You understand and agree that Apex does not maintain, provide, operate, improve, and holds no control over any blockchain network, application or feature unless it is otherwise expressly stated so herein. Nor do we control, manage, or maintain on-chain data, or applications, transmission of such information to you. We do not have authority over and do not provide a guarantee or take possession or custody of any form over your crypto assets, or digital wallets unless expressly stated herein. You are solely responsible for familiarizing yourself with such data, features, functionalities, applications, and other solutions and the terms that apply.</p>
+        <p class="has-line-data" data-line-start="16" data-line-end="17">1.3. These Terms inter alia apply to the following Websites and Features:</p>
+        <ul>
+        <li class="has-line-data" data-line-start="18" data-line-end="20">
+        <p class="has-line-data" data-line-start="18" data-line-end="19">Apex Prime Network blockchain</p>
+        </li>
+        <li class="has-line-data" data-line-start="20" data-line-end="22">
+        <p class="has-line-data" data-line-start="20" data-line-end="21">Apex Testnet(s) or test environments created for building and testing different types of blockchain tools, applications, transactions, and other use cases.</p>
+        </li>
+        <li class="has-line-data" data-line-start="22" data-line-end="24">
+        <p class="has-line-data" data-line-start="22" data-line-end="23">Apex Explorers which are: Prime, Nexus, Vector, and Reactor</p>
+        </li>
+        <li class="has-line-data" data-line-start="24" data-line-end="26">
+        <p class="has-line-data" data-line-start="24" data-line-end="25">Apex Reactor Bridge</p>
+        </li>
+        <li class="has-line-data" data-line-start="26" data-line-end="28">
+        <p class="has-line-data" data-line-start="26" data-line-end="27">Apex Developer Portal</p>
+        </li>
+        <li class="has-line-data" data-line-start="28" data-line-end="30">
+        <p class="has-line-data" data-line-start="28" data-line-end="29">Apex Reputation System platform</p>
+        </li>
+        <li class="has-line-data" data-line-start="30" data-line-end="32">
+        <p class="has-line-data" data-line-start="30" data-line-end="31">Apex Fusion project page</p>
+        </li>
+        <li class="has-line-data" data-line-start="32" data-line-end="34">
+        <p class="has-line-data" data-line-start="32" data-line-end="33">Apex Fusion Foundation</p>
+        </li>
+        <li class="has-line-data" data-line-start="34" data-line-end="36">
+        <p class="has-line-data" data-line-start="34" data-line-end="35">Apex Staking Technology</p>
+        </li>
+        </ul>
+        <p class="has-line-data" data-line-start="36" data-line-end="37">1.4. You acknowledge and agree that all information provided through the Websites and Features is for informational purposes only. While Apex strives to ensure accuracy, it does not guarantee that the information is current, complete, or reliable. You expressly disclaim reliance on any such information and agree that Apex will not be liable for its accuracy or completeness.</p>
+        <p class="has-line-data" data-line-start="38" data-line-end="39">1.5. You are responsible for independently verifying any information before relying on it or taking action. None of the information provided through the Websites or Features constitutes professional or investment advice, nor does it create any duties or obligations on our part. NO INFORMATION SHOULD BE INTERPRETED AS AN INVITATION OR INDUCEMENT TO BUY, SELL, UNDERWRITE, OR CONVERT ANY CRYPTO ASSETS OR DIGITAL ASSETS.</p>
+        <h2 class="code-line" data-line-start=40 data-line-end=42 ><a id="2_Use_Restrictions_40"></a>2. Use Restrictions</h2>
+        <p class="has-line-data" data-line-start="43" data-line-end="44">2.1. You must be at least 18 years old to use the Website. By using the Website or Features and agreeing to these Terms, you represent and warrant that you are at least 18 years old.</p>
+        <p class="has-line-data" data-line-start="45" data-line-end="46">2.2.If you are entering into the Terms on behalf of an entity, you represent and warrant that you have the legal authority to bind such an entity.</p>
+        <p class="has-line-data" data-line-start="47" data-line-end="48">2.3. You agree to access and use the Websites and Features only for lawful purposes and in accordance with these Terms. You may not use the Websites or Features:</p>
+        <ul>
+        <li class="has-line-data" data-line-start="49" data-line-end="51">
+        <p class="has-line-data" data-line-start="49" data-line-end="50">In any way that violates any applicable law, regulation or these Terms.</p>
+        </li>
+        <li class="has-line-data" data-line-start="51" data-line-end="53">
+        <p class="has-line-data" data-line-start="51" data-line-end="52">To engage in any conduct that restricts or inhibits anyone’s use or enjoyment of the Website.</p>
+        </li>
+        <li class="has-line-data" data-line-start="53" data-line-end="55">
+        <p class="has-line-data" data-line-start="53" data-line-end="54">To exploit the Websites or Features for any unauthorized purpose.</p>
+        </li>
+        <li class="has-line-data" data-line-start="55" data-line-end="57">
+        <p class="has-line-data" data-line-start="55" data-line-end="56">To impersonate or attempt to impersonate Apex Fusion Foundation, an Apex Fusion Foundation employee, another user, or any other person or entity.</p>
+        </li>
+        <li class="has-line-data" data-line-start="57" data-line-end="59">
+        <p class="has-line-data" data-line-start="57" data-line-end="58">To harvest or otherwise collect information from the Websites or Features for any unauthorized purpose.</p>
+        </li>
+        <li class="has-line-data" data-line-start="59" data-line-end="61">
+        <p class="has-line-data" data-line-start="59" data-line-end="60">To use the Websites or Features in any manner that could disable, overburden, damage, or impair the Websites or Features or interfere with any other party’s use or enjoyment of the Websites or Features.</p>
+        </li>
+        <li class="has-line-data" data-line-start="61" data-line-end="63">
+        <p class="has-line-data" data-line-start="61" data-line-end="62">To reverse engineer, disassemble, or decompile the Websites or Features or apply any other process or procedure to derive the source code of any software included in the Websites or Features except to the extent applicable law does not allow this restriction or such rights have been expressly granted to you under a separate license.</p>
+        </li>
+        <li class="has-line-data" data-line-start="63" data-line-end="65">
+        <p class="has-line-data" data-line-start="63" data-line-end="64">To sublicense, sell, or otherwise distribute the Websites or Features, or any portion thereof.</p>
+        </li>
+        <li class="has-line-data" data-line-start="65" data-line-end="67">
+        <p class="has-line-data" data-line-start="65" data-line-end="66">To use any data mining tools, robots, crawlers, or similar data gathering and extraction tools to scrape or otherwise remove data from the Websites or Features.</p>
+        </li>
+        <li class="has-line-data" data-line-start="67" data-line-end="69">
+        <p class="has-line-data" data-line-start="67" data-line-end="68">To use any manual process to monitor or copy any of the material on the Websites or Features or for any other unauthorized purpose without our prior written consent.</p>
+        </li>
+        <li class="has-line-data" data-line-start="69" data-line-end="71">
+        <p class="has-line-data" data-line-start="69" data-line-end="70">To introduce any viruses, trojan horses, worms, logic bombs, or other material that is malicious or technologically harmful to the Websites or Features.</p>
+        </li>
+        <li class="has-line-data" data-line-start="71" data-line-end="73">
+        <p class="has-line-data" data-line-start="71" data-line-end="72">attempt to gain unauthorized access to, interfere with, damage, or disrupt any parts of the Websites or Features, the server(s) on which the Websites or Features are stored, or any server, computer or database connected to the Websites or Features.</p>
+        </li>
+        <li class="has-line-data" data-line-start="73" data-line-end="75">
+        <p class="has-line-data" data-line-start="73" data-line-end="74">or attack the Websites or Features via a denial-of-service attack or a distributed denial-of-service attack or otherwise attempt to interfere with the proper working of the Websites or Features.</p>
+        </li>
+        </ul>
+        <p class="has-line-data" data-line-start="75" data-line-end="76">2.4. You represent and warrant that you are not, and for the duration of the time you use the Websites and Features, will not be (i) the subject of economic or trade sanctions administered or enforced by any governmental authority or otherwise designated on any list of prohibited or restricted parties; (ii) in contravention of any laws and regulations pertaining to anti-money laundering or terrorist financing; (iii) included on the List of Specially Designated Nationals and Blocked Persons maintained by the US Treasury Department’s Office of Foreign Assets Control (OFAC) or on any list pursuant to European Union (EU) and/or United Kingdom (UK) regulations (as the latter are extended to the Cayman Islands by statutory instrument); or (iv) operationally based or domiciled in a country or territory in which sanctions imposed by the United Nations (whether through the Security Council or otherwise), OFAC, the EU and/or the UK apply, or otherwise pursuant to sanctions imposed by the United Nations, OFAC, EU, or UK.</p>
+        <p class="has-line-data" data-line-start="77" data-line-end="78">2.5. You acknowledge that you are solely responsible for properly configuring, as applicable, and using the Features or incorporating the Features into your applications or Wallet and for taking appropriate action to secure your data, including without limitation, financial or token information and private keys.</p>
+        <p class="has-line-data" data-line-start="79" data-line-end="80">2.6. You acknowledge and agree that you have the financial and technical sophistication to properly use and interact with the Websites and Features and that you understand the inherent risks of blockchain technology.</p>
+        <p class="has-line-data" data-line-start="81" data-line-end="82">2.7. You understand that transacting in crypto-assets and applications utilizing crypto-assets is risky and may subject you to cyberattack, loss of crypto-assets, unknown exploits, smart contract risks, governance attacks, and other risks related to blockchain transactions.</p>
+        <p class="has-line-data" data-line-start="83" data-line-end="84">2.8. You also understand that transactions executed and settled via smart contracts are not reversible and you may not have recourse in the event of a malicious, fraudulent, or inadvertent transaction.</p>
+        <p class="has-line-data" data-line-start="85" data-line-end="86">2.9. If at any point the above is no longer true or you do not meet these requirements, you are prohibited from accessing, using, or otherwise interacting with the Websites and Features and must immediately cease using any and all of them.</p>
+        <p class="has-line-data" data-line-start="87" data-line-end="88">2.10. You further acknowledge and agree that in the event that you use any of our Websites or Features in a prohibited manner, we may investigate or take any other action we deem necessary, including cooperating with law enforcement or bringing claims against you if they result in harm or damage to Apex, to rectify the prohibited conduct or any consequences resulting therefrom.</p>
+        <h2 class="code-line" data-line-start=89 data-line-end=91 ><a id="3_Intellectual_Property_Rights_89"></a>3. Intellectual Property Rights</h2>
+        <ul>
+        <li class="has-line-data" data-line-start="92" data-line-end="94"><strong>a) Apex Property</strong></li>
+        </ul>
+        <p class="has-line-data" data-line-start="94" data-line-end="95">3.1. Apex and its licensors retain exclusive ownership of all rights, titles, and interests in and to the Websites and Features, including but not limited to visual designs, graphics, systems, methods, computer code, software, compilations of content, data, and other proprietary information or elements of the Websites and/or Features (collectively, the &quot;<strong>Apex Property</strong>&quot;). The Websites and Features contain proprietary and confidential information protected by applicable intellectual property laws. Except as expressly provided in these Terms or otherwise authorized by Apex, you agree not to copy, modify, rent, lease, loan, sell, distribute, perform, display, or create derivative works based on the Websites or Features, in whole or in part.</p>
+        <p class="has-line-data" data-line-start="96" data-line-end="97">3.2. All trademarks, service marks, trade names, logos, and branding (&quot;<strong>Apex Trademarks</strong>&quot;) used on or in connection with the Websites and Features are the exclusive property of Apex or its licensors. You are not granted any rights or licenses to use the Apex Trademarks without prior written consent from Apex. Any unauthorized use of Apex Trademarks is strictly prohibited. Apex reserves all rights over its Trademarks and will enforce its intellectual property rights to the fullest extent permitted by law.</p>
+        <p class="has-line-data" data-line-start="98" data-line-end="99">3.3. Trademarks, service marks, trade names, logos, or branding of third parties that may appear on the Websites or Features are the property of their respective owners. Apex does not claim ownership of these third-party trademarks and their inclusion does not imply any affiliation with or endorsement by Apex unless expressly stated. You may not use any third-party trademarks displayed on the Websites or Features without the permission of the respective trademark owner.</p>
+        <p class="has-line-data" data-line-start="100" data-line-end="101">3.4. Subject to these Terms, Apex grants you a personal, limited, revocable, non-exclusive, non-sublicensable, and non-transferable license to access and use the Websites and Features solely for personal, non-commercial purposes. This license does not confer ownership or any other rights to the Websites, Features, or their content, except as explicitly provided herein.</p>
+        <p class="has-line-data" data-line-start="102" data-line-end="103">3.5. All intellectual property rights, including copyrights, patents, trademarks, trade secrets, and other proprietary rights associated with the Apex Property, Websites and Features and their content, are owned by Apex, its affiliates, licensors, or, where applicable, Users. No rights, titles, interests, or intellectual property rights are transferred to you under these Terms, except for the limited license explicitly granted herein. No implied licenses are granted under these Terms. Apex reserves all rights not expressly granted.</p>
+        <p class="has-line-data" data-line-start="104" data-line-end="105">3.6. Certain Features, components, or Websites provided as part of our services may be offered under separate open-source licenses, such as the Apache License 2.0 or the MIT License, or may include software or materials licensed by third parties under their own terms (&quot;<strong>Third-Party Licenses</strong>&quot;). In such cases, the applicable open-source or third-party license will govern your use of those specific features, components, or materials and will take precedence over any conflicting provisions in these Terms. Where required, we will make the source code and license terms available to you. You acknowledge and agree that your rights with respect to such open-source or third-party features are limited to those expressly granted under the applicable licenses.</p>
+        <p class="has-line-data" data-line-start="106" data-line-end="107">3.7. You acknowledge and agree not to use the Apex Property in any manner not expressly permitted under these Terms. This includes but is not limited to the unauthorized reproduction, distribution, or creation of derivative works from any aspect of the Websites or Features.</p>
+        <ul>
+        <li class="has-line-data" data-line-start="108" data-line-end="110"><strong>b)  Use Content License</strong></li>
+        </ul>
+        <p class="has-line-data" data-line-start="110" data-line-end="111">3.8. By providing, submitting, or uploading any content, data, or information (&quot;<strong>User Content</strong>&quot;) to Apex through the Websites or Features, you grant Apex a worldwide, perpetual, irrevocable, royalty-free, non-exclusive, sublicensable, and transferable license to use, reproduce, modify, adapt, publish, translate, distribute, display, and create derivative works based on your User Content in connection with the operation, improvement, and promotion of the Websites and Features, and any other services provided by Apex.</p>
+        <p class="has-line-data" data-line-start="112" data-line-end="113">3.9. You represent and warrant that:</p>
+        <ul>
+        <li class="has-line-data" data-line-start="114" data-line-end="116">
+        <p class="has-line-data" data-line-start="114" data-line-end="115">a.  You own or have all necessary rights, licenses, consents, and permissions to grant the license set forth in this clause;</p>
+        </li>
+        <li class="has-line-data" data-line-start="116" data-line-end="118">
+        <p class="has-line-data" data-line-start="116" data-line-end="117">b.  Your User Content does not infringe or violate any third-party intellectual property rights, privacy rights, or applicable laws; and</p>
+        </li>
+        <li class="has-line-data" data-line-start="118" data-line-end="120">
+        <p class="has-line-data" data-line-start="118" data-line-end="119">c.  Your User Content is not confidential or proprietary and does not contain sensitive personal information unless specifically requested by Apex.</p>
+        </li>
+        </ul>
+        <p class="has-line-data" data-line-start="120" data-line-end="121">3.10. Apex will not claim ownership of your User Content, but you acknowledge and agree that Apex may retain copies of your User Content and may continue to use it in accordance with the license granted herein, even if you terminate your use of the Websites or Features.</p>
+        <h2 class="code-line" data-line-start=122 data-line-end=124 ><a id="4_Disclaimer_of_Warranties_122"></a>4. Disclaimer of Warranties</h2>
+        <p class="has-line-data" data-line-start="125" data-line-end="126">4.1. THE WEBSITE IS PROVIDED “AS IS” AND “AS AVAILABLE” WITH ALL FAULTS WITHOUT WARRANTY OF ANY KIND. APEX FUSION FOUNDATION DISCLAIMS ALL WARRANTIES AND CONDITIONS, WHETHER EXPRESS, IMPLIED, OR STATUTORY, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, QUIET ENJOYMENT, ACCURACY, OR NON-INFRINGEMENT.</p>
+        <h2 class="code-line" data-line-start=127 data-line-end=129 ><a id="5_Limitation_of_Liability_127"></a>5. Limitation of Liability</h2>
+        <p class="has-line-data" data-line-start="130" data-line-end="131">5.1. Apex is not responsible for the actions, activities, or claims of individuals or entities that develop or use applications, validate or verify transactions, or otherwise interact with blockchain networks. Apex does not control these networks, their operators, or their marketing materials. You acknowledge and agree that any assumptions of affiliation between Apex and blockchain networks based on such materials are unfounded.</p>
+        <p class="has-line-data" data-line-start="132" data-line-end="133">5.2. Apex does not control, maintain, or operate the underlying smart contract or blockchain protocols supporting tools and applications accessible through the Websites and Features unless explicitly stated otherwise. Apex does not effectuate, facilitate, or control transactions initiated via the Websites or Features and is not responsible for the outcome of any transactions, including but not limited to failed, unintended, or fraudulent transactions that may result in loss of funds, transaction fees, or any other harm.</p>
+        <p class="has-line-data" data-line-start="134" data-line-end="135">5.3. All transactions broadcast to blockchain networks via your connected wallet may require the payment of non-refundable network fees. You acknowledge and agree that these fees are solely your responsibility, and Apex is not liable for such costs or for any failed transactions due to insufficient funds for fees.</p>
+        <p class="has-line-data" data-line-start="136" data-line-end="137">5.4. You acknowledge that using the Websites and Features may have tax consequences. It is your sole responsibility to assess and address any tax obligations arising from your use of the Websites or Features and to comply with all applicable tax laws in your jurisdiction.</p>
+        <p class="has-line-data" data-line-start="138" data-line-end="139">5.5. To the fullest extent permitted by law, Apex will not be liable for any:</p>
+        <ul>
+        <li class="has-line-data" data-line-start="140" data-line-end="142">
+        <p class="has-line-data" data-line-start="140" data-line-end="141">Loss of profits, sales, business, or revenue;</p>
+        </li>
+        <li class="has-line-data" data-line-start="142" data-line-end="144">
+        <p class="has-line-data" data-line-start="142" data-line-end="143">Business interruption;</p>
+        </li>
+        <li class="has-line-data" data-line-start="144" data-line-end="146">
+        <p class="has-line-data" data-line-start="144" data-line-end="145">Loss of anticipated savings;</p>
+        </li>
+        <li class="has-line-data" data-line-start="146" data-line-end="148">
+        <p class="has-line-data" data-line-start="146" data-line-end="147">Loss of business opportunities, goodwill, or reputation; or</p>
+        </li>
+        <li class="has-line-data" data-line-start="148" data-line-end="150">
+        <p class="has-line-data" data-line-start="148" data-line-end="149">Indirect, incidental, consequential, special, exemplary, or punitive damages, even if advised of the possibility of such damages.</p>
+        </li>
+        </ul>
+        <p class="has-line-data" data-line-start="150" data-line-end="151">5.6. If Apex is found to be liable for any loss or damage arising from or in connection with these Terms, its total liability will be limited to the greater of €100 or the minimum amount permitted by applicable law.</p>
+        <p class="has-line-data" data-line-start="152" data-line-end="153">5.7. Some jurisdictions do not allow the exclusion of certain warranties or the limitation of liability for incidental or consequential damages. In such jurisdictions, Apex’s liability will be limited to the maximum extent permitted by law.</p>
+        <h2 class="code-line" data-line-start=154 data-line-end=156 ><a id="6_ThirdParty_Services_154"></a>6. Third-Party Services</h2>
+        <p class="has-line-data" data-line-start="157" data-line-end="158">6.1. The Websites and Features may include links to third-party websites, services, content, or information (collectively, &quot;<strong>Third-Party Services</strong>&quot;) for your convenience. We do not endorse, control, or assume responsibility for any Third-Party Services, including their accuracy, completeness, reliability, legality, performance, or availability. Your use of such Third-Party Services is at your own risk and subject to the terms and conditions of the respective third parties.</p>
+        <p class="has-line-data" data-line-start="159" data-line-end="160">6.2. Any interaction, agreement, or transaction between you and any third party, including providers of Third-Party Services, is solely between you and the third party. 6.3. Apex is not a party to, and will not be responsible for, any such interactions or transactions, including payment, delivery, warranties, or any other obligations associated with such Third-Party Services.</p>
+        <p class="has-line-data" data-line-start="161" data-line-end="162">6.4. Apex disclaims all liability for any loss, damage, or harm arising from or relating to your use of or reliance on Third-Party Services. This includes but is not limited to, errors, omissions, or delays in the content or operation of such Third-Party Services.</p>
+        <p class="has-line-data" data-line-start="163" data-line-end="164">6.5. Apex reserves the right to modify, restrict, or remove access to any Third-Party Services provided or linked through the Websites and Features at any time, without notice or liability to you.</p>
+        <p class="has-line-data" data-line-start="165" data-line-end="166">6.6. ANY AND ALL TRANSACTIONS INITIATED THROUGH OUR SERVICE ARE FACILITATED AND RUN BY THIRD-PARTY ELECTRONIC WALLET EXTENSIONS, AND BY USING OUR SERVICES, WEBSITES, AND FEATURES YOU AGREE THAT YOU ARE GOVERNED BY THE TERMS OF SERVICE AND PRIVACY POLICY FOR ALL SUCH APPLICABLE EXTENSIONS.</p>
+        <h2 class="code-line" data-line-start=167 data-line-end=169 ><a id="7_Indemnification_167"></a>7. Indemnification</h2>
+        <p class="has-line-data" data-line-start="170" data-line-end="171">7.1. You agree to defend, indemnify, and hold harmless Apex, its Affiliates, licensors, service providers, and each of their respective officers, directors, employees, contractors, agents, suppliers, successors, and assigns (collectively, the “Indemnified Parties”) from and against any and all claims, demands, lawsuits, proceedings, liabilities, damages, judgments, awards, losses, costs, expenses, or fees, including reasonable attorneys’ fees (“Damages”), arising out of or relating to:</p>
+        <ul>
+        <li class="has-line-data" data-line-start="172" data-line-end="174">
+        <p class="has-line-data" data-line-start="172" data-line-end="173">a)  your access to, use, misuse, or contribution to the Websites and Features;</p>
+        </li>
+        <li class="has-line-data" data-line-start="174" data-line-end="176">
+        <p class="has-line-data" data-line-start="174" data-line-end="175">b)  your breach of these Terms or violation of applicable law by you, your customers, users, employees, or other personnel;</p>
+        </li>
+        <li class="has-line-data" data-line-start="176" data-line-end="178">
+        <p class="has-line-data" data-line-start="176" data-line-end="177">c)  any dispute between you and a third party;</p>
+        </li>
+        <li class="has-line-data" data-line-start="178" data-line-end="180">
+        <p class="has-line-data" data-line-start="178" data-line-end="179">d)  your alleged or actual infringement or misappropriation of any third party’s intellectual property or other rights; or</p>
+        </li>
+        <li class="has-line-data" data-line-start="180" data-line-end="182">
+        <p class="has-line-data" data-line-start="180" data-line-end="181">e)  your Feedback or other contributions.</p>
+        </li>
+        </ul>
+        <p class="has-line-data" data-line-start="182" data-line-end="183">This indemnification applies regardless of the cause or alleged cause, including claims that are groundless, fraudulent, false, or lack merit, and regardless of the theory of recovery.</p>
+        <p class="has-line-data" data-line-start="184" data-line-end="185">7.2. Subpoenas and Legal <a href="http://Orders.In">Orders.In</a> the event the Indemnified Parties receive a subpoena, compulsory legal order, or other process associated with any claims described in clause 13.1, you agree to reimburse the Indemnified Parties for their employees’ and contractors’ time, materials, and expenses incurred in responding to such matters at their then-current hourly rates, in addition to covering their reasonable attorneys’ fees.</p>
+        <p class="has-line-data" data-line-start="186" data-line-end="187">7.3. Control of Proceedings.If you are obligated to indemnify the Indemnified Parties, Apex will have the sole right, at its discretion, to control the defense, settlement, or resolution of any claim, demand, or proceeding. Apex may choose to settle such claims on terms it deems appropriate, and you agree to fully cooperate with Apex in the defense or settlement of such claims, including providing any assistance or information reasonably requested.</p>
+        <p class="has-line-data" data-line-start="188" data-line-end="189">7.4. Additional Remedies.The indemnities set out in this clause are in addition to, and not in lieu of, any other remedies available to the Indemnified Parties under applicable law.</p>
+        <h2 class="code-line" data-line-start=190 data-line-end=192 ><a id="8_Restricted_Access_190"></a>8. Restricted Access</h2>
+        <p class="has-line-data" data-line-start="193" data-line-end="194">8.1. WITHOUT LIMITING ANY OTHER PROVISION OF THESE TERMS, WE RESERVE THE RIGHT TO, IN OUR SOLE DISCRETION AND WITHOUT NOTICE OR LIABILITY, DENY ACCESS TO AND USE OF THE WEBSITES AND FEATURES (INCLUDING BLOCKING CERTAIN IP ADDRESSES), TO ANY PERSON FOR ANY REASON OR FOR NO REASON, INCLUDING, WITHOUT LIMITATION FOR BREACH OF ANY WARRANTY, REPRESENTATION CONTAINED IN THESE TERMS OR ANY APPLICABLE LAW OR REGULATION. WE ARE NOT RESPONSIBLE FOR ANY LOSS OR HARM RELATED TO YOUR INABILITY TO ACCESS OR USE OUR WEBSITES AND FEATURES.</p>
+        <h2 class="code-line" data-line-start=195 data-line-end=197 ><a id="9_Governing_Law_and_Legal_Proceedings_195"></a>9. Governing Law and Legal Proceedings</h2>
+        <p class="has-line-data" data-line-start="198" data-line-end="199">9.1. These Terms shall be governed by and construed in accordance with the laws of Switzerland, without regard to its conflict of law principles.</p>
+        <p class="has-line-data" data-line-start="200" data-line-end="201">9.2. We reserve the right to take appropriate legal actions and proceedings against anyone who, in our sole discretion, violates the law or these Terms and/or discloses such information to law enforcement authorities as we reasonably feel is necessary or as required by law. The actions we may take are not limited to those described, and we may take any other action we reasonably deem appropriate.</p>
+        <h2 class="code-line" data-line-start=202 data-line-end=204 ><a id="10_Disputes_202"></a>10. Disputes</h2>
+        <p class="has-line-data" data-line-start="205" data-line-end="206">10.1. YOU AGREE AND UNDERSTAND THAT BY ENTERING INTO THIS AGREEMENT, YOU EXPRESSLY WAIVE ANY RIGHT, IF ANY, TO A TRIAL BY JURY AND THE RIGHT TO PARTICIPATE IN A CLASS ACTION LAWSUIT.</p>
+        <p class="has-line-data" data-line-start="207" data-line-end="208">10.2. If an alleged breach, controversy, claim, dispute or diﬀerence arises out of or in connection with these Terms (a “Dispute”), you agree to seek to resolve the matter with us amicably by referring the matter to <a href="mailto:compliance@foundation.apexfusion.org">compliance@foundation.apexfusion.org</a> with a detailed description, the date and time the issue arose, your contact information to contact you on and the outcome you are seeking.</p>
+        <p class="has-line-data" data-line-start="209" data-line-end="210">10.3. In the event a Dispute cannot be resolved amicably in accordance with clause 10.2. above, within a period of sixty (60) days, then any such Dispute, controversy, or claim arising out of or in connection with these Terms, including any question regarding its existence, validity, or termination, shall be referred to and finally resolved by arbitration under the rules of the London Court of International Arbitration (&quot;<strong>LCIA Rules</strong>&quot;). The seat of the arbitration shall be Switzerland. The arbitration will be conducted confidentially by a single arbitrator appointed in accordance with the LCIA Rules. The language to be used in the arbitral proceedings shall be English. The governing law of these Terms shall be the substantive law of Switzerland.</p>
+        <p class="has-line-data" data-line-start="211" data-line-end="212">10.4. You agree and acknowledge that your agreement to arbitrate any dispute with Apex and your waiver of any right to participate in a class action or representative claim, as provided in these Terms, shall remain in full force and effect regardless of any termination or expiration of these Terms, any discontinuation of your use of the Websites and Features for any reason (including changes to these Terms), or any claim that these Terms or any part thereof are invalid, void, or unenforceable. This agreement to arbitrate and class action waiver constitutes an independent and severable obligation that remains binding and enforceable regardless of the applicability or enforceability of any other provisions in these Terms.</p>
+        <h2 class="code-line" data-line-start=213 data-line-end=215 ><a id="11_Changes_to_these_Terms_213"></a><strong>11.</strong> <strong>Changes to these Terms</strong></h2>
+        <p class="has-line-data" data-line-start="216" data-line-end="217">11.1. Apex reserves the right to update, modify, eliminate, or change the Websites, content thereof, Features, and these Terms at any time, at its sole discretion. Such changes may be made without prior notice to you, however, we will publish the latest version on the Websites and provide the last updated date at the top of the Terms. We encourage you to periodically review the Websites to stay informed of the latest Terms and any updates that may have been implemented.</p>
+        <p class="has-line-data" data-line-start="218" data-line-end="219">11.2. By continuing to use the Websites and/or Features after we have updated these Terms, you agree to be bound by the revised Terms. If you do not agree to be bound by the revised Terms, you are prohibited from using and accessing the Websites and Features thereof.</p>
+        <h2 class="code-line" data-line-start=220 data-line-end=222 ><a id="12_Severability_220"></a><strong>12</strong><strong>. Severability</strong></h2>
+        <p class="has-line-data" data-line-start="223" data-line-end="224">12.1 If any provision of these Terms is found to be invalid, illegal, or unenforceable for any reason, the remaining provisions shall not be affected and shall continue in full force and effect. The invalid, illegal, or unenforceable provision shall be deemed modified to the minimum extent necessary to make it valid, legal, and enforceable, or, if modification is not possible, it shall be deemed severed from these Terms.</p>
+        <h2 class="code-line" data-line-start=225 data-line-end=227 ><a id="13_Miscellaneous_225"></a><strong>13. Miscellaneous</strong></h2>
+        <p class="has-line-data" data-line-start="228" data-line-end="229">13.1. No Relationship or Assignments. Nothing in these Terms shall be construed to create any agency, partnership, joint venture, employer-employee, or franchisor-franchisee relationship between you and Apex. You may not assign or transfer these Terms, by operation of law or otherwise, without prior written consent from Apex. Any attempt by you to assign or transfer these Terms without such consent shall be null and void. We may assign or transfer these Terms without restriction or notification.</p>
+        <p class="has-line-data" data-line-start="230" data-line-end="231">13.2. Personally Identifiable Information and Privacy Policy. Please refer to our Privacy Policy for information about how we collect, use, and share personal information about you.</p>
+        <p class="has-line-data" data-line-start="232" data-line-end="233">13.3. Entire Agreement. These Terms, including any policies or documents incorporated by reference, constitute the entire agreement between you and Apex regarding the use of the Websites and Features. They supersede and replace any prior or contemporaneous understandings, agreements, or communications, whether written or oral, regarding the subject matter hereof.</p>
+        <p class="has-line-data" data-line-start="234" data-line-end="235">13.4. No Waiver. The failure of Apex to enforce any provision of these Terms or respond to a breach by you or others shall not constitute a waiver of its rights to enforce any other terms or conditions or respond to any breaches in the future.</p>
+        <h2 class="code-line" data-line-start=236 data-line-end=238 ><a id="14_Contact_Information_236"></a><strong>14.</strong> <strong>Contact Information</strong></h2>
+        <p class="has-line-data" data-line-start="239" data-line-end="240">14.1. If you have any questions about these Terms, please contact us at Apex Fusion Foundation at <a href="mailto:compliance@foundation.apexfusion.org">compliance@foundation.apexfusion.org</a>.</p>
+    </div>`
