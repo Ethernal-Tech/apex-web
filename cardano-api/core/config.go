@@ -22,7 +22,7 @@ type APIConfig struct {
 	APIKeyHeader   string   `json:"apiKeyHeader"`
 	APIKeys        []string `json:"apiKeys"`
 	UTXOCacheKeys  []string `json:"utxoCacheKeys"`
-	MaxConcurrent  int      `json:"maxConcurrent"`
+	MaxConcurrent  int      `json:"maxConcurrentUsers"`
 }
 
 type BridgingAddresses struct {
