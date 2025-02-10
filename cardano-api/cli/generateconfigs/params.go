@@ -98,7 +98,8 @@ const (
 	defaultPrimeTTLSlotNumberInc        = 1800 + defaultPrimeBlockConfirmationCount*10  // BlockTimeSeconds
 	defaultVectorTTLSlotNumberInc       = 1800 + defaultVectorBlockConfirmationCount*10 // BlockTimeSeconds
 
-	defaultUseDemeter = true
+	defaultUseDemeter         = true
+	defaultMaxConcurrentUsers = 8
 )
 
 type generateConfigsParams struct {
@@ -500,6 +501,7 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 			APIKeyHeader:  "x-api-key",
 			APIKeys:       p.apiKeys,
 			UTXOCacheKeys: p.utxoCacheKeys,
+			MaxConcurrent: defaultMaxConcurrentUsers,
 		},
 	}
 
