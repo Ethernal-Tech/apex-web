@@ -18,13 +18,11 @@ import (
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	goEthCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/hashicorp/go-hclog"
-	"golang.org/x/sync/semaphore"
 )
 
 type CardanoTxControllerImpl struct {
 	appConfig      *core.AppConfig
 	usedUtxoCacher *utils.UsedUtxoCacher
-	sem            *semaphore.Weighted
 	logger         hclog.Logger
 }
 
@@ -37,7 +35,6 @@ func NewCardanoTxController(
 	return &CardanoTxControllerImpl{
 		appConfig:      appConfig,
 		usedUtxoCacher: utils.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
-		sem:            semaphore.NewWeighted(int64(appConfig.APIConfig.MaxConcurrent)),
 		logger:         logger,
 	}
 }
@@ -55,14 +52,6 @@ func (c *CardanoTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 }
 
 func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Request) {
-	if err := c.sem.Acquire(r.Context(), 1); err != nil {
-		c.logger.Debug("getBalance request failed to acquire lock", "err", err)
-
-		return
-	}
-
-	defer c.sem.Release(1)
-
 	queryValues := r.URL.Query()
 	c.logger.Debug("getBalance request", "query values", queryValues, "url", r.URL)
 
@@ -128,14 +117,6 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
-	if err := c.sem.Acquire(r.Context(), 1); err != nil {
-		c.logger.Debug("getBridgingTxFee request failed to acquire lock", "err", err)
-
-		return
-	}
-
-	defer c.sem.Release(1)
-
 	requestBody, ok := utils.DecodeModel[request.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
@@ -187,14 +168,6 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 }
 
 func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
-	if err := c.sem.Acquire(r.Context(), 1); err != nil {
-		c.logger.Debug("createBridgingTx request failed to acquire lock", "err", err)
-
-		return
-	}
-
-	defer c.sem.Release(1)
-
 	requestBody, ok := utils.DecodeModel[request.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return

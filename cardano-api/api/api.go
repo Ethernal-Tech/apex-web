@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/go-hclog"
+	"golang.org/x/sync/semaphore"
 )
 
 type APIImpl struct {
@@ -36,6 +37,7 @@ func NewAPI(
 	headersOk := handlers.AllowedHeaders(apiConfig.AllowedHeaders)
 	originsOk := handlers.AllowedOrigins(apiConfig.AllowedOrigins)
 	methodsOk := handlers.AllowedMethods(apiConfig.AllowedMethods)
+	concurrencySemaphore := semaphore.NewWeighted(int64(apiConfig.MaxConcurrent))
 
 	router := mux.NewRouter().StrictSlash(true)
 
@@ -51,7 +53,11 @@ func NewAPI(
 				endpointHandler = withAPIKeyAuth(apiConfig, endpointHandler, logger)
 			}
 
-			endpointHandler = endpointWrapper(endpoint.Path, endpointHandler, logger)
+			if !endpoint.NoConcurrencyLimiter {
+				endpointHandler = withConcurrencyLimiter(concurrencySemaphore, endpointPath, endpointHandler, logger)
+			}
+
+			endpointHandler = withRequestLogging(endpoint.Path, endpointHandler, logger)
 
 			router.HandleFunc(endpointPath, endpointHandler).Methods(endpoint.Method)
 
@@ -125,7 +131,7 @@ func (api *APIImpl) Dispose() error {
 	return errors.Join(apiErrors...)
 }
 
-func endpointWrapper(path string, handler core.APIEndpointHandler, logger hclog.Logger) core.APIEndpointHandler {
+func withRequestLogging(path string, handler core.APIEndpointHandler, logger hclog.Logger) core.APIEndpointHandler {
 	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Debug("endpoint called", "path", path, "url", r.URL)
 		handler(w, r)
@@ -159,6 +165,22 @@ func withAPIKeyAuth(
 
 			return
 		}
+
+		handler(w, r)
+	}
+}
+
+func withConcurrencyLimiter(
+	concurrencySemaphore *semaphore.Weighted, path string, handler core.APIEndpointHandler, logger hclog.Logger,
+) core.APIEndpointHandler {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := concurrencySemaphore.Acquire(r.Context(), 1); err != nil {
+			logger.Debug("Failed to acquire lock for thr request", "path", path, "err", err)
+
+			return
+		}
+
+		defer concurrencySemaphore.Release(1)
 
 		handler(w, r)
 	}

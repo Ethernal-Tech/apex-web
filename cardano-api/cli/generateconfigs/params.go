@@ -99,7 +99,7 @@ const (
 	defaultVectorTTLSlotNumberInc       = 1800 + defaultVectorBlockConfirmationCount*10 // BlockTimeSeconds
 
 	defaultUseDemeter         = true
-	defaultMaxConcurrentUsers = 8
+	defaultMaxConcurrentUsers = 80
 )
 
 type generateConfigsParams struct {

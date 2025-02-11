@@ -7,10 +7,11 @@ import (
 type APIEndpointHandler = func(w http.ResponseWriter, r *http.Request)
 
 type APIEndpoint struct {
-	Path         string
-	Method       string
-	Handler      APIEndpointHandler
-	NoAPIKeyAuth bool
+	Path                 string
+	Method               string
+	Handler              APIEndpointHandler
+	NoAPIKeyAuth         bool
+	NoConcurrencyLimiter bool
 }
 
 type SettingsResponse struct {
