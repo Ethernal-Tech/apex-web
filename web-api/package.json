@@ -19,7 +19,6 @@
     "migration:run": "npm run build && typeorm-ts-node-esm migration:run --d ./src/database/data.source.ts"
   },
   "dependencies": {
-    "@cardano-ogmios/client": "^6.2.0",
     "@emurgo/cardano-message-signing-nodejs": "^1.0.1",
     "@emurgo/cardano-serialization-lib-nodejs": "^11.5.0",
     "@nestjs-modules/mailer": "^2.0.2",
@@ -47,6 +46,7 @@
     "winston": "^3.15.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
+  "overrides": { "@nestjs-modules/mailer": { "mjml": "^5.0.0-alpha.4" } },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",

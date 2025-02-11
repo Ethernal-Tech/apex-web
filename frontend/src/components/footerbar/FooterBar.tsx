@@ -1,10 +1,11 @@
-import { Box, Button } from "@mui/material"
+import { Box, Button, Link } from "@mui/material"
 import {ReactComponent as ApexIcon} from "../../assets/external-links/Apex.svg";
 import {ReactComponent as LinkedinIcon} from "../../assets/external-links/LN.svg";
 import {ReactComponent as XIcon} from "../../assets/external-links/X.svg";
 import {ReactComponent as DiscordIcon} from "../../assets/external-links/Discord.svg";
 import {ReactComponent as EthernalIcon} from "../../assets/external-links/Ethernal.svg";
 import appSettings from "../../settings/appSettings";
+import { Link as RouterLink } from "react-router-dom";
 
 const containerStyles = {
   width:'100%',
@@ -17,7 +18,8 @@ const containerStyles = {
   borderImageSource: 'linear-gradient(90deg, rgba(67, 95, 105, 0) 0%, #435F69 50%, rgba(67, 95, 105, 0) 100%)',
   borderImageSlice: 1,
   minHeight:'56px',
-  display:'flex'
+  display:'flex',
+  padding:'10px 0'
 }
 
 const childStyles = {
@@ -49,7 +51,13 @@ const FooterBar = () => {
         </Box>
         :
         <Box sx={childStyles}>
-          &copy;{new Date().getFullYear()} Apex Fusion. All Rights Reserved.
+          <Box>
+            &copy;{new Date().getFullYear()} Apex Fusion. All Rights Reserved.
+          </Box>
+          <Box sx={{display:'flex',"gap":'10px',marginTop:'10px',fontSize:'14px'}}>
+            <Link component={RouterLink} to="/terms-of-service" sx={{ color: 'inherit', textDecoration: 'none'}}>Terms of Service</Link>
+            <Link component={RouterLink} to="/privacy-policy" sx={{ color: 'inherit', textDecoration: 'none'}}>Privacy Policy</Link>
+          </Box>
         </Box>
       }
 
@@ -59,25 +67,27 @@ const FooterBar = () => {
         justifyContent:'center',
         alignItems:'center',
       }}>
-        {
-          appSettings.isSkyline ?
-          <Button component='a' href="https://ethernal.tech/" target="_blank">
-            <EthernalIcon height={28} style={{ background: 'rgb(22, 22, 22)', borderRadius: '50%' }} />
+        <Box>
+          {
+            appSettings.isSkyline ?
+            <Button component='a' href="https://ethernal.tech/" target="_blank">
+              <EthernalIcon height={28} style={{ background: 'rgb(22, 22, 22)', borderRadius: '50%' }} />
+            </Button>
+            :
+            <Button component='a' href="https://apexfusion.org/" target="_blank">
+              <ApexIcon/>
+            </Button>
+          }
+          <Button component='a' href="https://www.linkedin.com/company/apexfusioncore" target="_blank">
+            <LinkedinIcon/>
           </Button>
-          :
-          <Button component='a' href="https://apexfusion.org/" target="_blank">
-            <ApexIcon/>
+          <Button component='a' href="https://x.com/apexfusion" target="_blank">
+            <XIcon/>
           </Button>
-        }
-        <Button component='a' href="https://www.linkedin.com/company/apexfusioncore" target="_blank">
-          <LinkedinIcon/>
-        </Button>
-        <Button component='a' href="https://x.com/apexfusion" target="_blank">
-          <XIcon/>
-        </Button>
-        <Button component='a' href="https://discord.com/invite/2nSBGyvjpZ" target="_blank">
-          <DiscordIcon/>
-        </Button>
+          <Button component='a' href="https://discord.com/invite/2nSBGyvjpZ" target="_blank">
+            <DiscordIcon/>
+          </Button>
+        </Box>
       </Box>
       
       <Box sx={childStyles}>

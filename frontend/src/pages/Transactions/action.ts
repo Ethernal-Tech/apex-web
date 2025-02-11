@@ -1,4 +1,4 @@
-import { BridgeTransactionControllerClient, BridgeTransactionFilterDto, CreateTransactionDto, SubmitCardanoTransactionDto, TransactionControllerClient, TransactionSubmittedDto } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionControllerClient, BridgeTransactionFilterDto, CreateTransactionDto, TransactionControllerClient, TransactionSubmittedDto } from '../../swagger/apexBridgeApiService';
 
 export const getAction = (id:number) => {
 	const client = new BridgeTransactionControllerClient();
@@ -18,11 +18,6 @@ export const createCardanoTransactionAction = (model: CreateTransactionDto) => {
 export const getCardanoTransactionFeeAction = (model: CreateTransactionDto) => {
 	const client = new TransactionControllerClient();
 	return client.getCardanoTxFee(model);
-}
-
-export const submitCardanoTransactionAction = (model: SubmitCardanoTransactionDto) => {
-	const client = new TransactionControllerClient();
-	return client.submitCardano(model);
 }
 
 export const createEthTransactionAction = (model: CreateTransactionDto) => {

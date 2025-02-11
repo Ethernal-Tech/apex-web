@@ -3,18 +3,14 @@ import {
 	Injectable,
 	InternalServerErrorException,
 } from '@nestjs/common';
-import dotenv from 'dotenv';
 import {
 	createCardanoBridgingTx,
 	createEthBridgingTx,
 	getCardanoBridgingTxFee,
-	submitCardanoTransaction,
 } from 'src/transaction/transaction.helper';
 import {
 	CreateTransactionDto,
 	CreateCardanoTransactionResponseDto,
-	SubmitCardanoTransactionDto,
-	SubmitCardanoTransactionResponseDto,
 	TransactionSubmittedDto,
 	CreateEthTransactionResponseDto,
 	CardanoTransactionFeeResponseDto,
@@ -26,22 +22,6 @@ import { Repository } from 'typeorm';
 import { mapBridgeTransactionToResponse } from 'src/bridgeTransaction/bridgeTransaction.helper';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 import { SettingsService } from 'src/settings/settings.service';
-import { Semaphore } from 'src/utils/semaphore';
-import { retry } from 'src/utils/generalUtils';
-
-// Load env file
-dotenv.config({ path: '.env' });
-
-const DEFAULT_SEMAPHORE_MAX = 6;
-const SUBMIT_CARDANO_TX_TRY_COUNT = 5;
-const SUBMIT_CARDANO_TX_RETRY_WAIT_TIME = 5000;
-
-const submitCardanoSemaphore = new Semaphore(
-	process.env.SUBMIT_CARDANO_SEMAPHORE_MAX
-		? +process.env.SUBMIT_CARDANO_SEMAPHORE_MAX
-		: DEFAULT_SEMAPHORE_MAX,
-	'<submitCardanoSemaphore> - ',
-);
 
 @Injectable()
 export class TransactionService {
@@ -82,6 +62,24 @@ export class TransactionService {
 		) {
 			throw new BadRequestException('Invalid destination chain');
 		}
+
+		const destMinFee =
+			this.settingsService.BridgingSettings.minChainFeeForBridging[
+				dto.destinationChain
+			];
+		if (!destMinFee) {
+			throw new InternalServerErrorException(
+				`No minFee for destination chain: ${dto.destinationChain}`,
+			);
+		}
+
+		const minBridgingFee = BigInt(destMinFee);
+		const bridgingFee = BigInt(dto.bridgingFee || '0');
+		if (bridgingFee !== BigInt(0) && bridgingFee < minBridgingFee) {
+			throw new BadRequestException(
+				'Bridging fee in request body is less than minimum',
+			);
+		}
 	}
 
 	async createCardano(
@@ -110,37 +108,6 @@ export class TransactionService {
 		}
 
 		return feeResp;
-	}
-
-	async submitCardano(
-		dto: SubmitCardanoTransactionDto,
-	): Promise<SubmitCardanoTransactionResponseDto> {
-		let txHash: string;
-		try {
-			txHash = await retry(
-				async () => {
-					await submitCardanoSemaphore.acquire();
-					try {
-						return await submitCardanoTransaction(
-							dto.originChain,
-							dto.signedTxRaw,
-						);
-					} catch (e) {
-						throw e;
-					} finally {
-						submitCardanoSemaphore.release();
-					}
-				},
-				SUBMIT_CARDANO_TX_TRY_COUNT,
-				SUBMIT_CARDANO_TX_RETRY_WAIT_TIME,
-			);
-		} catch (e) {
-			throw new InternalServerErrorException(e);
-		}
-
-		const bridgeTx = await this.transactionSubmitted(dto);
-
-		return { txHash, bridgeTx };
 	}
 
 	async createEth(
