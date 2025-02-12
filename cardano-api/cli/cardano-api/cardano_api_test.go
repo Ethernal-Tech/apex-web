@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -17,7 +19,9 @@ import (
 )
 
 func TestCardanoApiPerformance(t *testing.T) {
-	t.Skip()
+	if strings.ToLower(os.Getenv("Cardano-Api-Performance-Tests")) != "true" {
+		t.Skip()
+	}
 
 	const (
 		threadsCnt      = 1000
@@ -103,6 +107,8 @@ func TestCardanoApiPerformance(t *testing.T) {
 	cntGood := uint64(0)
 	cntBad := uint64(0)
 
+	start := time.Now()
+
 	for i := 0; i < threadsCnt; i++ {
 		wg.Add(1)
 
@@ -126,6 +132,9 @@ func TestCardanoApiPerformance(t *testing.T) {
 
 	wg.Wait()
 
+	elapsed := time.Since(start)
+
+	fmt.Printf("Elapsed time: %s", elapsed)
 	fmt.Printf("Threads: %d\n", threadsCnt)
 	fmt.Printf("Sequences: %d\n", sequenceCnt)
 	fmt.Printf("Good: %d\n", atomic.LoadUint64(&cntGood))
