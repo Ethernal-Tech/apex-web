@@ -17,6 +17,7 @@ type CreateBridgingTxRequest struct {
 	DestinationChainID string                               `json:"destinationChainId"`
 	Transactions       []CreateBridgingTxTransactionRequest `json:"transactions"`
 	BridgingFee        uint64                               `json:"bridgingFee"`
+	OperationFee       uint64                               `json:"operationFee"`
 	UseFallback        bool                                 `json:"useFallback"`
 	UTXOCacheKey       string                               `json:"utxoCacheKey"`
 	SkipUtxos          []UtxoRequest                        `json:"skipUtxos"`

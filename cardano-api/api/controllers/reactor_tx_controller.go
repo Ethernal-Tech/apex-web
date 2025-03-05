@@ -175,7 +175,7 @@ func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		commonResponse.NewFullBridgingTxResponse(txRaw, txHash, requestBody.BridgingFee, amount, 0), c.logger)
+		commonResponse.NewBridgingTxResponse(txRaw, txHash, requestBody.BridgingFee, amount, 0), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
@@ -251,17 +251,17 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody.BridgingFee += feeSum
 	requestBody.Transactions = transactions
 
+	minFee, found := c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.SourceChainID]
+	if !found {
+		return fmt.Errorf("no minimal fee for chain: %s", requestBody.SourceChainID)
+	}
+
 	// this is just convinient way to setup default min fee
 	if requestBody.BridgingFee == 0 {
-		requestBody.BridgingFee = c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.DestinationChainID]
+		requestBody.BridgingFee = minFee
 	}
 
 	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))
-
-	minFee, found := c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.DestinationChainID]
-	if !found {
-		return fmt.Errorf("no minimal fee for chain: %s", requestBody.DestinationChainID)
-	}
 
 	if requestBody.BridgingFee < minFee {
 		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
@@ -289,7 +289,7 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
-		sendtx.NewExchangeRate(),
+		0,
 	)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to build tx: %w", err)
@@ -310,7 +310,7 @@ func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
-		sendtx.NewExchangeRate(),
+		0,
 	)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to calculate tx fee: %w", err)

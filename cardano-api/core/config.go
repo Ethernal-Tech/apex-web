@@ -54,6 +54,7 @@ type AppSettings struct {
 
 type BridgingSettings struct {
 	MinChainFeeForBridging         map[string]uint64 `json:"minChainFeeForBridging"`
+	MinOperationFee                map[string]uint64 `json:"minOperationFee"`
 	MinUtxoChainValue              map[string]uint64 `json:"minUtxoChainValue"`
 	MinValueToBridge               uint64            `json:"minValueToBridge"`
 	MaxAmountAllowedToBridge       *big.Int          `json:"maxAmountAllowedToBridge"`
@@ -103,6 +104,7 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 
 		appConfig.BridgingSettings = BridgingSettings{
 			MinChainFeeForBridging:         settingsResponse.MinChainFeeForBridging,
+			MinOperationFee:                settingsResponse.MinOperationFee,
 			MinUtxoChainValue:              settingsResponse.MinUtxoChainValue,
 			MinValueToBridge:               settingsResponse.MinValueToBridge,
 			MaxAmountAllowedToBridge:       maxAmountAllowedToBridge,
@@ -173,16 +175,17 @@ func (config CardanoChainConfig) ToSendTxChainConfig(
 	}
 
 	return sendtx.ChainConfig{
-		CardanoCliBinary:     cardanowallet.ResolveCardanoCliBinary(config.NetworkID),
-		TxProvider:           txProvider,
-		MultiSigAddr:         bridgingAddress,
-		TestNetMagic:         uint(config.NetworkMagic),
-		TTLSlotNumberInc:     config.ChainSpecific.TTLSlotNumberInc,
-		MinUtxoValue:         appConfig.BridgingSettings.MinUtxoChainValue[config.ChainID],
-		NativeTokens:         nativeTokens,
-		MinBridgingFeeAmount: appConfig.BridgingSettings.MinChainFeeForBridging[config.ChainID],
-		PotentialFee:         config.ChainSpecific.PotentialFee,
-		ProtocolParameters:   nil,
+		CardanoCliBinary:      cardanowallet.ResolveCardanoCliBinary(config.NetworkID),
+		TxProvider:            txProvider,
+		MultiSigAddr:          bridgingAddress,
+		TestNetMagic:          uint(config.NetworkMagic),
+		TTLSlotNumberInc:      config.ChainSpecific.TTLSlotNumberInc,
+		MinUtxoValue:          appConfig.BridgingSettings.MinUtxoChainValue[config.ChainID],
+		NativeTokens:          nativeTokens,
+		MinBridgingFeeAmount:  appConfig.BridgingSettings.MinChainFeeForBridging[config.ChainID],
+		MinOperationFeeAmount: appConfig.BridgingSettings.MinOperationFee[config.ChainID],
+		PotentialFee:          config.ChainSpecific.PotentialFee,
+		ProtocolParameters:    nil,
 	}, nil
 }
 
