@@ -156,14 +156,7 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	currencyOutput, _, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
-
-	err = c.checkMaxBridgeAmount(requestBody, currencyOutput, bridgingFee)
-	if err != nil {
-		utils.WriteErrorResponse(w, r, http.StatusBadRequest, err, c.logger)
-
-		return
-	}
+	_, _, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
 
 	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(fee, bridgingFee), c.logger)
 }
@@ -194,16 +187,9 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	currencyOutput, tokenOutput, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
 
-	err = c.checkMaxBridgeAmount(requestBody, currencyOutput, bridgingFee)
-	if err != nil {
-		utils.WriteErrorResponse(w, r, http.StatusBadRequest, err, c.logger)
-
-		return
-	}
-
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		commonResponse.NewFullBridgingTxResponse(txRaw, txHash, bridgingFee, currencyOutput, tokenOutput), c.logger,
+		commonResponse.NewBridgingTxResponse(txRaw, txHash, bridgingFee, currencyOutput, tokenOutput), c.logger,
 	)
 }
 
@@ -225,6 +211,7 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			len(requestBody.Transactions), c.appConfig.BridgingSettings.MaxReceiversPerBridgingRequest, requestBody)
 	}
 
+	receiverAmountSum := big.NewInt(0)
 	feeSum := uint64(0)
 	foundAUtxoValueBelowMinimumValue := false
 	foundAnInvalidReceiverAddr := false
@@ -269,6 +256,10 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			feeSum += receiver.Amount
 		} else {
 			transactions = append(transactions, receiver)
+
+			if !receiver.IsNativeToken {
+				receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(receiver.Amount))
+			}
 		}
 	}
 
@@ -283,9 +274,9 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody.BridgingFee += feeSum
 	requestBody.Transactions = transactions
 
-	minFee, found := c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.DestinationChainID]
+	minFee, found := c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.SourceChainID]
 	if !found {
-		return fmt.Errorf("no minimal fee for chain: %s", requestBody.DestinationChainID)
+		return fmt.Errorf("no minimal fee for chain: %s", requestBody.SourceChainID)
 	}
 
 	// this is just convinient way to setup default min fee
@@ -293,8 +284,33 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		requestBody.BridgingFee = minFee
 	}
 
+	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))
+
 	if requestBody.BridgingFee < minFee {
 		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
+	}
+
+	operationFee, found := c.appConfig.BridgingSettings.MinOperationFee[requestBody.SourceChainID]
+	if !found {
+		return fmt.Errorf("no operation fee for chain: %s", requestBody.SourceChainID)
+	}
+
+	// this is just convinient way to setup default operation fee
+	if requestBody.OperationFee == 0 {
+		requestBody.OperationFee = operationFee
+	}
+
+	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.OperationFee))
+
+	if requestBody.OperationFee < operationFee {
+		return fmt.Errorf("operation fee in request body is less than minimum: %v", requestBody)
+	}
+
+	if c.appConfig.BridgingSettings.MaxAmountAllowedToBridge != nil &&
+		c.appConfig.BridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 &&
+		receiverAmountSum.Cmp(c.appConfig.BridgingSettings.MaxAmountAllowedToBridge) == 1 {
+		return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
+			c.appConfig.BridgingSettings.MaxAmountAllowedToBridge, requestBody)
 	}
 
 	return nil
@@ -312,7 +328,7 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
-		sendtx.NewExchangeRate(),
+		requestBody.OperationFee,
 	)
 	if err != nil {
 		return "", "", nil, fmt.Errorf("failed to build tx: %w", err)
@@ -333,7 +349,7 @@ func (c *SkylineTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
-		sendtx.NewExchangeRate(),
+		requestBody.OperationFee,
 	)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
@@ -378,23 +394,10 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequ
 	return txSender, receivers, nil
 }
 
-func (c *SkylineTxControllerImpl) checkMaxBridgeAmount(
-	requestBody commonRequest.CreateBridgingTxRequest, currencyOutput uint64, bridgingFee uint64,
-) error {
-	receiverAmountSum := new(big.Int).SetUint64(currencyOutput + bridgingFee)
-	if c.appConfig.BridgingSettings.MaxAmountAllowedToBridge != nil &&
-		c.appConfig.BridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 &&
-		receiverAmountSum.Cmp(c.appConfig.BridgingSettings.MaxAmountAllowedToBridge) == 1 {
-		return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
-			c.appConfig.BridgingSettings.MaxAmountAllowedToBridge, requestBody)
-	}
-	return nil
-}
-
 func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata) (
 	outputCurrencyLovelace uint64, outputNativeToken uint64, bridgingFee uint64,
 ) {
-	bridgingFee = metadata.FeeAmount.SrcAmount
+	bridgingFee = metadata.BridgingFee + metadata.OperationFee
 
 	for _, x := range metadata.Transactions {
 		if x.IsNativeTokenOnSource() {
@@ -403,10 +406,6 @@ func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata) (
 		} else {
 			// ADA/APEX to WADA/WAPEX or reactor
 			outputCurrencyLovelace += x.Amount
-		}
-
-		if x.Additional != nil {
-			bridgingFee += x.Additional.SrcAmount
 		}
 	}
 
