@@ -14,7 +14,7 @@ export const dbdatasource: DataSourceOptions = {
 	synchronize: process.env.NODE_ENV === 'development',
 	entities: ['dist/**/*.entity.js'],
 	ssl: process.env.DB_SSL === 'true',
-	migrations: ['dist/database/migrations/*.js'],
+	migrations: ['dist/src/database/migrations/*.js'],
 	migrationsTableName: '__apex_migrations',
 };
 
