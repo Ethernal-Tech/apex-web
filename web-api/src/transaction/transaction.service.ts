@@ -85,13 +85,8 @@ export class TransactionService {
 		this.settingsService.BridgingSettings.minOperationFee[
 			dto.originChain
 		];
-		if (!srcMinOperationFee) {
-			throw new InternalServerErrorException(
-				`No minOperationFee for source chain: ${dto.originChain}`,
-			);
-		}
 
-		const minOperationFee = BigInt(srcMinOperationFee);
+		const minOperationFee = BigInt(srcMinOperationFee || '0');
 		const operationFee = BigInt(dto.operationFee || '0');
 		if (operationFee !== BigInt(0) && operationFee < minOperationFee) {
 			throw new BadRequestException(
