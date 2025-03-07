@@ -31,6 +31,9 @@ export class CreateTransactionDto {
 	bridgingFee?: string;
 
 	@ApiProperty({ nullable: true })
+	operationFee?: string;
+
+	@ApiProperty({ nullable: true })
 	utxoCacheKey?: string;
 
 	@IsNotEmpty()

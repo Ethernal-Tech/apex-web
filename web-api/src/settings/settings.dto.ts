@@ -16,6 +16,14 @@ export class SettingsResponseDto {
 		type: Object,
 		additionalProperties: { type: 'number' },
 	})
+	minOperationFee: { [key: string]: number };
+
+	@IsNotEmpty()
+	@IsPositive()
+	@ApiProperty({
+		type: Object,
+		additionalProperties: { type: 'number' },
+	})
 	minUtxoChainValue: { [key: string]: number };
 
 	@IsNotEmpty()

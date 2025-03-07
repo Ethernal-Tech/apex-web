@@ -3,11 +3,9 @@ package controllers
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
-	"time"
 
 	commonRequest "github.com/Ethernal-Tech/cardano-api/api/model/common/request"
 	commonResponse "github.com/Ethernal-Tech/cardano-api/api/model/common/response"
@@ -15,9 +13,7 @@ import (
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
-	infracom "github.com/Ethernal-Tech/cardano-infrastructure/common"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
-	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	goEthCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/hashicorp/go-hclog"
 )
@@ -49,71 +45,7 @@ func (c *ReactorTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	return []*core.APIEndpoint{
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
-		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance},
 	}
-}
-
-func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Request) {
-	queryValues := r.URL.Query()
-	c.logger.Debug("getBalance request", "query values", queryValues, "url", r.URL)
-
-	srcChainIDArr, exists := queryValues["srcChainId"]
-	if !exists || len(srcChainIDArr) == 0 {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			errors.New("srcChainId missing from query"), c.logger)
-
-		return
-	}
-
-	addressArr, exists := queryValues["address"]
-	if !exists || len(addressArr) == 0 {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			errors.New("address missing from query"), c.logger)
-
-		return
-	}
-
-	srcChainID := srcChainIDArr[0]
-	address := addressArr[0]
-
-	chainConfig, exists := c.appConfig.CardanoChains[srcChainID]
-	if !exists {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			errors.New("srcChainID not registered"), c.logger)
-
-		return
-	}
-
-	txProvider, err := chainConfig.ChainSpecific.CreateTxProvider()
-	if err != nil {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			fmt.Errorf("failed to create tx provider. err: %w", err), c.logger)
-
-		return
-	}
-
-	utxos, err := infracom.ExecuteWithRetry(context.Background(),
-		func(ctx context.Context) ([]wallet.Utxo, error) {
-			return txProvider.GetUtxos(context.Background(), address)
-		}, infracom.WithRetryCount(10), infracom.WithRetryWaitTime(time.Second))
-
-	if err != nil {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			fmt.Errorf("failed to get utxos. err: %w", err), c.logger)
-
-		return
-	}
-
-	balances := map[common.TokenName]uint64{
-		common.APEXToken: wallet.GetUtxosSum(utxos)[wallet.AdaTokenName],
-	}
-
-	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBalanceResponse(balances), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
