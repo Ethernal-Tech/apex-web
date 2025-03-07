@@ -63,21 +63,39 @@ export class TransactionService {
 			throw new BadRequestException('Invalid destination chain');
 		}
 
-		const destMinFee =
+		const srcMinFee =
 			this.settingsService.BridgingSettings.minChainFeeForBridging[
-				dto.destinationChain
+				dto.originChain
 			];
-		if (!destMinFee) {
+		if (!srcMinFee) {
 			throw new InternalServerErrorException(
-				`No minFee for destination chain: ${dto.destinationChain}`,
+				`No minFee for source chain: ${dto.originChain}`,
 			);
 		}
 
-		const minBridgingFee = BigInt(destMinFee);
+		const minBridgingFee = BigInt(srcMinFee);
 		const bridgingFee = BigInt(dto.bridgingFee || '0');
 		if (bridgingFee !== BigInt(0) && bridgingFee < minBridgingFee) {
 			throw new BadRequestException(
 				'Bridging fee in request body is less than minimum',
+			);
+		}
+
+		const srcMinOperationFee =
+		this.settingsService.BridgingSettings.minOperationFee[
+			dto.originChain
+		];
+		if (!srcMinOperationFee) {
+			throw new InternalServerErrorException(
+				`No minOperationFee for source chain: ${dto.originChain}`,
+			);
+		}
+
+		const minOperationFee = BigInt(srcMinOperationFee);
+		const operationFee = BigInt(dto.operationFee || '0');
+		if (operationFee !== BigInt(0) && operationFee < minOperationFee) {
+			throw new BadRequestException(
+				'Operation fee in request body is less than minimum',
 			);
 		}
 	}
