@@ -1,8 +1,10 @@
 import { TokenEnum } from "../features/enums";
+import appSettings from "../settings/appSettings";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
 const PRIME_NETWORK_ID = 0
 const VECTOR_NETWORK_ID = 2
+const CARDANO_NETWORK_ID = 0
 const NEXUS_NETWORK_ID = BigInt(9070) // for Nexus
 
 export const fromNetworkIdToChain = (networkId: number|bigint): ChainEnum | undefined => {
@@ -15,6 +17,9 @@ export const fromNetworkIdToChain = (networkId: number|bigint): ChainEnum | unde
         }
         case NEXUS_NETWORK_ID: {
             return ChainEnum.Nexus;
+        }
+        case CARDANO_NETWORK_ID: {
+            return ChainEnum.Cardano;
         }
         default:
             return;
@@ -29,6 +34,9 @@ export const fromChainToNetworkId = (chain: ChainEnum): number | bigint | undefi
         case ChainEnum.Vector: {
             return VECTOR_NETWORK_ID;
         }
+        case ChainEnum.Cardano: {
+            return CARDANO_NETWORK_ID;
+        }
         case ChainEnum.Nexus: {
             return NEXUS_NETWORK_ID;
         }
@@ -37,7 +45,7 @@ export const fromChainToNetworkId = (chain: ChainEnum): number | bigint | undefi
     }
 }
 
-export const areChainsEqual = (chain: ChainEnum, networkId: number|bigint): boolean => {
+export const checkChainCompatibility = (chain: ChainEnum, networkId: number|bigint): boolean => {
     return chain === fromNetworkIdToChain(networkId);
 }
 
@@ -119,16 +127,7 @@ export const fromChainToCurrencySymbol = (chain: ChainEnum): string => {
 }
 
 export const fromChainToNativeTokenSymbol = (chain: ChainEnum): string => {
-    switch (chain) {
-        case ChainEnum.Prime: {
-            return 'wada'; // pull from config, once we know the full token name
-        }
-        case ChainEnum.Cardano: {
-            return 'wapex'; // pull from config, once we know the full token name
-        }
-        default:
-            return 'wada';
-    }
+    return appSettings.wrappedTokenName[chain];
 }
 
 export const getIsNativeToken = (chain: ChainEnum, sourceToken: TokenEnum) => {

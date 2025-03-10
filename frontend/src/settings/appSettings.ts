@@ -3,14 +3,28 @@ export class AppSettings {
 
     private _minUtxoChainValue: { [key: string]: string } = {
 		prime: "0",
-		vector: "0"
+		vector: "0",
+		cardano: "0",
 	};
 
 	private _minChainFeeForBridging: { [key: string]: string } = {
 		nexus: "0",
 		prime: "0",
-		vector: "0"
+		vector: "0",
+		cardano: "0",
 	};
+
+	private _minOperationFee: { [key: string]: string } = {
+		nexus: "0",
+		prime: "0",
+		vector: "0",
+		cardano: "0",
+	};
+
+	private _wrappedTokenName: { [key: string]: string } = {
+		prime: "",
+		cardano: "",
+	}
 
     private _maxAmountAllowedToBridge: string = "0";
     private _minValueToBridge: string = "0";
@@ -22,6 +36,8 @@ export class AppSettings {
 		this._apiUrl = settingsJson.apiUrl;
 		this._minUtxoChainValue = settingsJson.minUtxoChainValue;
 		this._minChainFeeForBridging = settingsJson.minChainFeeForBridging;
+		this._minOperationFee = settingsJson.minOperationFee;
+		this._wrappedTokenName = settingsJson.wrappedTokenName;
 		this._maxAmountAllowedToBridge = settingsJson.maxAmountAllowedToBridge;
 		this._minValueToBridge = settingsJson.minValueToBridge;
 		this._potentialWalletFee = settingsJson.potentialWalletFee;
@@ -38,6 +54,14 @@ export class AppSettings {
 
 	get minChainFeeForBridging(): { [key: string]: string } {
 		return this._minChainFeeForBridging;
+	}
+
+	get minOperationFee(): { [key: string]: string } {
+		return this._minOperationFee;
+	}
+
+	get wrappedTokenName(): { [key: string]: string } {
+		return this._wrappedTokenName;
 	}
 
 	get maxAmountAllowedToBridge(): string {

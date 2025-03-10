@@ -9,6 +9,7 @@ import (
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
 	"github.com/Ethernal-Tech/cardano-infrastructure/logger"
+	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	"github.com/hashicorp/go-hclog"
 	"github.com/spf13/cobra"
@@ -406,18 +407,10 @@ func (p *skylineGenerateConfigsParams) Execute(
 					SocketPath:       p.primeSocketPath,
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.primeTTLSlotInc,
-					Destinations: []cardanotx.CardanoConfigTokenExchange{
+					NativeTokens: []sendtx.TokenExchangeConfig{
 						{
-							Chain:            common.ChainIDStrCardano,
-							SrcTokenName:     wallet.AdaTokenName,
-							DstTokenName:     p.cardanoPrimeWrappedTokenName,
-							SrcTokenEnumName: common.APEXToken,
-						},
-						{
-							Chain:            common.ChainIDStrCardano,
-							SrcTokenName:     p.primeCardanoWrappedTokenName,
-							DstTokenName:     wallet.AdaTokenName,
-							SrcTokenEnumName: common.WAdaToken,
+							DstChainID: common.ChainIDStrCardano,
+							TokenName:  p.primeCardanoWrappedTokenName,
 						},
 					},
 				},
@@ -437,18 +430,10 @@ func (p *skylineGenerateConfigsParams) Execute(
 					SocketPath:       p.cardanoSocketPath,
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.cardanoTTLSlotInc,
-					Destinations: []cardanotx.CardanoConfigTokenExchange{
+					NativeTokens: []sendtx.TokenExchangeConfig{
 						{
-							Chain:            common.ChainIDStrPrime,
-							SrcTokenName:     wallet.AdaTokenName,
-							DstTokenName:     p.primeCardanoWrappedTokenName,
-							SrcTokenEnumName: common.AdaToken,
-						},
-						{
-							Chain:            common.ChainIDStrPrime,
-							SrcTokenName:     p.cardanoPrimeWrappedTokenName,
-							DstTokenName:     wallet.AdaTokenName,
-							SrcTokenEnumName: common.WAPEXToken,
+							DstChainID: common.ChainIDStrPrime,
+							TokenName:  p.cardanoPrimeWrappedTokenName,
 						},
 					},
 				},
