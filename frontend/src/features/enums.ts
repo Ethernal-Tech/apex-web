@@ -16,3 +16,14 @@ export enum TokenEnum {
 	APEX = 'APEX',
 	WAPEX = 'WAPEX',
 }
+
+export enum ApexBridgeNetwork {
+    MainnetPrime = 'MainnetPrime',
+    MainnetVector = 'MainnetVector',
+    MainnetNexus = 'MainnetNexus',
+    MainnetCardano = 'MainnetCardano',
+    TestnetPrime = 'TestnetPrime',
+    TestnetVector = 'TestnetVector',
+    TestnetNexus = 'TestnetNexus',
+    PreviewCardano = 'PreviewCardano',
+}

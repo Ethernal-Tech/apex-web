@@ -1,7 +1,7 @@
 import { Dispatch } from '@reduxjs/toolkit';
 import { store } from '../redux/store';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
-import { fromChainToChainCurrency, fromChainToChainNativeToken, fromChainToNativeTokenSymbol, fromChainToCurrencySymbol, fromNetworkIdToChain } from '../utils/chainUtils';
+import { fromChainToChainCurrency, fromChainToChainNativeToken, fromChainToNativeTokenSymbol, fromChainToCurrencySymbol, fromNetworkToChain } from '../utils/chainUtils';
 import { IBalanceState, updateBalanceAction } from '../redux/slices/accountInfoSlice';
 import evmWalletHandler from '../features/EvmWalletHandler';
 import walletHandler from '../features/WalletHandler';
@@ -34,10 +34,14 @@ export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
     
     const {
         account,
-        networkId,
+        network,
     } = accountInfo;
+
+    if (!network) {
+        return;
+    }
     
-    const srcChain = fromNetworkIdToChain(networkId);
+    const srcChain = fromNetworkToChain(network);
     if (!srcChain) {
         return;
     }

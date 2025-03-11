@@ -1,52 +1,90 @@
-import { TokenEnum } from "../features/enums";
+import { CardanoAddress } from "../features/Address/interfaces";
+import { ApexBridgeNetwork, TokenEnum } from "../features/enums";
 import appSettings from "../settings/appSettings";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
-const PRIME_NETWORK_ID = 0
-const VECTOR_NETWORK_ID = 2
-const CARDANO_NETWORK_ID = 0
-const NEXUS_NETWORK_ID = BigInt(9070) // for Nexus
+const TESTNET_PRIME_NETWORK_ID = 0
+const TESTNET_VECTOR_NETWORK_ID = 2
+const PREVIEW_CARDANO_NETWORK_ID = 0
+const TESTNET_NEXUS_NETWORK_ID = BigInt(9070) // for Nexus
 
-export const fromNetworkIdToChain = (networkId: number|bigint): ChainEnum | undefined => {
-    switch (networkId) {
-        case PRIME_NETWORK_ID: {
-            return ChainEnum.Prime;
-        }
-        case VECTOR_NETWORK_ID: {
-            return ChainEnum.Vector;
-        }
-        case NEXUS_NETWORK_ID: {
-            return ChainEnum.Nexus;
-        }
-        case CARDANO_NETWORK_ID: {
-            return ChainEnum.Cardano;
-        }
-        default:
-            return;
-    }
+const MAINNET_PRIME_NETWORK_ID = 1
+const MAINNET_VECTOR_NETWORK_ID = 3
+const MAINNET_CARDANO_NETWORK_ID = 1
+const MAINNET_NEXUS_NETWORK_ID = BigInt(9071) // TODO: fix when known
+
+const CHAIN_TO_TESTNET_NETWORK_ID = {
+    [ChainEnum.Prime]: TESTNET_PRIME_NETWORK_ID,
+    [ChainEnum.Vector]: TESTNET_VECTOR_NETWORK_ID,
+    [ChainEnum.Nexus]: TESTNET_NEXUS_NETWORK_ID,
+    [ChainEnum.Cardano]: PREVIEW_CARDANO_NETWORK_ID,
 }
+
+const CHAIN_TO_MAINNET_NETWORK_ID = {
+    [ChainEnum.Prime]: MAINNET_PRIME_NETWORK_ID,
+    [ChainEnum.Vector]: MAINNET_VECTOR_NETWORK_ID,
+    [ChainEnum.Nexus]: MAINNET_NEXUS_NETWORK_ID,
+    [ChainEnum.Cardano]: MAINNET_CARDANO_NETWORK_ID,
+}
+
+const CHAIN_TO_TESTNET_NETWORK = {
+    [ChainEnum.Prime]: ApexBridgeNetwork.TestnetPrime,
+    [ChainEnum.Vector]: ApexBridgeNetwork.TestnetVector,
+    [ChainEnum.Nexus]: ApexBridgeNetwork.TestnetNexus,
+    [ChainEnum.Cardano]: ApexBridgeNetwork.PreviewCardano,
+}
+
+const CHAIN_TO_MAINNET_NETWORK = {
+    [ChainEnum.Prime]: ApexBridgeNetwork.MainnetPrime,
+    [ChainEnum.Vector]: ApexBridgeNetwork.MainnetVector,
+    [ChainEnum.Nexus]: ApexBridgeNetwork.MainnetNexus,
+    [ChainEnum.Cardano]: ApexBridgeNetwork.MainnetCardano,
+}
+
+const TESTNET_NETWORK_TO_CHAIN: {[key: string]: ChainEnum} = {
+    [ApexBridgeNetwork.TestnetPrime]: ChainEnum.Prime,
+    [ApexBridgeNetwork.TestnetVector]: ChainEnum.Vector,
+    [ApexBridgeNetwork.TestnetNexus]: ChainEnum.Nexus,
+    [ApexBridgeNetwork.PreviewCardano]: ChainEnum.Cardano,
+}
+
+const MAINNET_NETWORK_TO_CHAIN: {[key: string]: ChainEnum} = {
+    [ApexBridgeNetwork.MainnetPrime]: ChainEnum.Prime,
+    [ApexBridgeNetwork.MainnetVector]: ChainEnum.Vector,
+    [ApexBridgeNetwork.MainnetNexus]: ChainEnum.Nexus,
+    [ApexBridgeNetwork.MainnetCardano]: ChainEnum.Cardano,
+}
+
+export const fromChainToNetwork = (chain: ChainEnum): ApexBridgeNetwork | undefined => {
+    return appSettings.isMainnet ? CHAIN_TO_MAINNET_NETWORK[chain] : CHAIN_TO_TESTNET_NETWORK[chain];
+} 
+
+export const fromNetworkToChain = (network: ApexBridgeNetwork): ChainEnum | undefined => {
+    return appSettings.isMainnet ? MAINNET_NETWORK_TO_CHAIN[network] : TESTNET_NETWORK_TO_CHAIN[network];
+} 
 
 export const fromChainToNetworkId = (chain: ChainEnum): number | bigint | undefined => {
-    switch (chain) {
-        case ChainEnum.Prime: {
-            return PRIME_NETWORK_ID;
-        }
-        case ChainEnum.Vector: {
-            return VECTOR_NETWORK_ID;
-        }
-        case ChainEnum.Cardano: {
-            return CARDANO_NETWORK_ID;
-        }
-        case ChainEnum.Nexus: {
-            return NEXUS_NETWORK_ID;
-        }
-        default:
-            return;
-    }
+    return appSettings.isMainnet ? CHAIN_TO_MAINNET_NETWORK_ID[chain] : CHAIN_TO_TESTNET_NETWORK_ID[chain];
 }
 
-export const checkChainCompatibility = (chain: ChainEnum, networkId: number|bigint): boolean => {
-    return chain === fromNetworkIdToChain(networkId);
+export const fromNexusNetworkIdToNetwork = (networkId: bigint): ApexBridgeNetwork | undefined => {
+    return appSettings.isMainnet
+        ? (networkId === MAINNET_NEXUS_NETWORK_ID ? ApexBridgeNetwork.MainnetNexus : undefined)
+        : (networkId === TESTNET_NEXUS_NETWORK_ID ? ApexBridgeNetwork.TestnetNexus : undefined);
+}
+
+export const checkChainCompatibility = (chain: ChainEnum, network: ApexBridgeNetwork, networkId: number|bigint): boolean => {
+    return fromChainToNetworkId(chain) === networkId && fromNetworkToChain(network) === chain;
+}
+
+export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: CardanoAddress): boolean => {
+    return fromChainToNetworkId(chain) === addr.GetNetwork();
+}
+
+export const chainSupported = (chain: ChainEnum): boolean => {
+    return appSettings.isSkyline
+        ? skylineChains.includes(chain)
+        : reactorChains.includes(chain);
 }
 
 const PRIME_EXPLORER_URL = 'https://prime-apex.ethernal.tech'

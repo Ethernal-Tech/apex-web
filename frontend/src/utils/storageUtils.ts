@@ -1,5 +1,6 @@
 import appSettings from "../settings/appSettings";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
+import { reactorChains, skylineChains } from "./chainUtils";
 
 export type PKLoginDto = {
     address: string,
@@ -79,9 +80,9 @@ export const removeDestinationChain = () => {
 }
 
 export const initChainsState = () => {
-	const chain = getSelectedChain()
-	const destinationChain = getDestinationChain()
-	const chainValues = Object.values(ChainEnum)
+	const chain = getSelectedChain();
+	const destinationChain = getDestinationChain();
+	const chainValues = appSettings.isSkyline ? skylineChains : reactorChains;
 
 	// reset chains if anything is wrong or missing from localStorage values
 	if(!chain || 
@@ -90,16 +91,16 @@ export const initChainsState = () => {
 		!chainValues.includes(chain) ||
 		!chainValues.includes(destinationChain)
 	){
-		setSelectedChain(ChainEnum.Prime)
-		setDestinationChain(appSettings.isSkyline ? ChainEnum.Cardano : ChainEnum.Vector)
+		setSelectedChain(ChainEnum.Prime);
+		setDestinationChain(appSettings.isSkyline ? ChainEnum.Cardano : ChainEnum.Vector);
 		return {
 			chain: ChainEnum.Prime,
-			destinationChain: appSettings.isSkyline ? ChainEnum.Cardano : ChainEnum.Vector
-		}
+			destinationChain: appSettings.isSkyline ? ChainEnum.Cardano : ChainEnum.Vector,
+		};
 	}
 
 	return {
 		chain,
-		destinationChain
-	}
+		destinationChain,
+	};
 }

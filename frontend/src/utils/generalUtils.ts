@@ -1,6 +1,6 @@
 import { NewAddress, RewardAddress } from "../features/Address/addreses";
 import { BridgeTransactionDto, ChainEnum } from "../swagger/apexBridgeApiService";
-import { checkChainCompatibility, fromChainToChainCurrency, fromChainToChainNativeToken } from "./chainUtils";
+import { checkCardanoAddressCompatibility, fromChainToChainCurrency, fromChainToChainNativeToken } from "./chainUtils";
 import Web3 from "web3";
 import {Numbers} from "web3-types";
 import {EtherUnits} from "web3-utils";
@@ -126,7 +126,7 @@ export const validateSubmitTxInputs = (
       return `Invalid destination address: ${destinationAddr}`;
     }
   
-    if (!checkChainCompatibility(destinationChain, addr.GetNetwork())) {
+    if (!checkCardanoAddressCompatibility(destinationChain, addr)) {
       return `Destination address not compatible with destination chain: ${destinationChain}`;
     }
   } else if (destinationChain === ChainEnum.Nexus) {
@@ -158,7 +158,7 @@ export const validateSubmitTxInputsSkyline = (
     return `Invalid destination address: ${destinationAddr}`;
   }
 
-  if (!checkChainCompatibility(destinationChain, addr.GetNetwork())) {
+  if (!checkCardanoAddressCompatibility(destinationChain, addr)) {
     return `Destination address not compatible with destination chain: ${destinationChain}`;
   }
 }
