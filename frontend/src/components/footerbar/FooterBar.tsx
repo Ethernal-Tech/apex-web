@@ -97,7 +97,7 @@ const FooterBar = () => {
           display:'inline-block',
           padding:'4px 12px',
           borderRadius:'100px'
-        }}>Testnet</Box>
+        }}>{appSettings.isMainnet ? 'Mainnet' : 'Testnet'}</Box>
       </Box>
     </Box>
   )
