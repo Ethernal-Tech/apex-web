@@ -27,14 +27,14 @@ function NewTransactionPage() {
 
 	const bridgeTxFee = useMemo(
 		() => chain === ChainEnum.Nexus
-			? convertDfmToWei(settings.minChainFeeForBridging[chain])
+			? convertDfmToWei(settings.minChainFeeForBridging[chain] || '0')
 			: settings.minChainFeeForBridging[chain] || '0',
 		[chain, settings.minChainFeeForBridging],
 	)
 
 	const operationFee = useMemo(
 		() => chain === ChainEnum.Nexus
-			? convertDfmToWei(settings.minOperationFee[chain])
+			? convertDfmToWei(settings.minOperationFee[chain] || '0')
 			: settings.minOperationFee[chain] || '0',
 		[chain, settings.minOperationFee],
 	)
