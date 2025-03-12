@@ -7,7 +7,7 @@ import BridgeInput from "./components/BridgeInput";
 import { chainIcons, convertDfmToWei, validateSubmitTxInputs, validateSubmitTxInputsSkyline } from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
@@ -25,7 +25,19 @@ function NewTransactionPage() {
 	const account = useSelector((state: RootState) => state.accountInfo.account);
 	const settings = useSelector((state: RootState) => state.settings);
 
-	const [bridgeTxFee, setBridgeTxFee] = useState(chain === ChainEnum.Nexus ? convertDfmToWei(settings.minChainFeeForBridging[destinationChain]) : '0');
+	const bridgeTxFee = useMemo(
+		() => chain === ChainEnum.Nexus
+			? convertDfmToWei(settings.minChainFeeForBridging[chain] || '0')
+			: settings.minChainFeeForBridging[chain] || '0',
+		[chain, settings.minChainFeeForBridging],
+	)
+
+	const operationFee = useMemo(
+		() => chain === ChainEnum.Nexus
+			? convertDfmToWei(settings.minOperationFee[chain] || '0')
+			: settings.minOperationFee[chain] || '0',
+		[chain, settings.minOperationFee],
+	)
 
 	const SourceIcon = chainIcons[chain];
 	const DestinationIcon = chainIcons[destinationChain];
@@ -40,6 +52,7 @@ function NewTransactionPage() {
 
 		return new CreateTransactionDto({
 			bridgingFee: `${bridgeTxFee}`,
+			operationFee: `${operationFee}`,
 			destinationChain,
 			originChain: chain,
 			senderAddress: account,
@@ -48,7 +61,7 @@ function NewTransactionPage() {
 			utxoCacheKey: undefined,
 			isNativeToken,
 		})
-	}, [account, bridgeTxFee, chain, destinationChain, settings])
+	}, [account, bridgeTxFee, chain, destinationChain, operationFee, settings])
 
 	const getCardanoTxFee = useCallback(async (address: string, amount: string): Promise<CardanoTransactionFeeResponseDto> => {
 		const createTxDto = prepareCreateCardanoTx(address, amount);
@@ -58,7 +71,6 @@ function NewTransactionPage() {
 			throw new Error(feeResponse.err)
 		}
 
-		setBridgeTxFee((feeResponse.bridgingFee || 0).toString());
 		return feeResponse;
 	}, [prepareCreateCardanoTx])
 
@@ -81,6 +93,7 @@ function NewTransactionPage() {
 
 		return new CreateTransactionDto({
 			bridgingFee: `${bridgeTxFee}`,
+			operationFee: `${operationFee}`,
 			destinationChain,
 			originChain: chain,
 			senderAddress: account,
@@ -89,7 +102,7 @@ function NewTransactionPage() {
 			utxoCacheKey: undefined,
 			isNativeToken: false,
 		})
-	}, [account, bridgeTxFee, chain, destinationChain, settings])
+	}, [account, bridgeTxFee, chain, destinationChain, operationFee, settings])
 
 	const getEthTxFee = useCallback(async (address: string, amount: string): Promise<CreateEthTransactionResponseDto> => {
 		const createTxDto = prepareCreateEthTx(address, amount);
@@ -223,7 +236,7 @@ function NewTransactionPage() {
 					{!txInProgress &&
 						<BridgeInput
 							bridgeTxFee={bridgeTxFee}
-							setBridgeTxFee={setBridgeTxFee}
+							operationFee={operationFee}
 							getCardanoTxFee={getCardanoTxFee}
 							getEthTxFee={getEthTxFee}
 							submit={handleSubmitCallback}

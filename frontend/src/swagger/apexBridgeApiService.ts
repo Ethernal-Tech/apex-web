@@ -365,73 +365,6 @@ export class BridgeTransactionControllerClient extends BaseClient {
     }
 }
 
-export class WalletControllerClient extends BaseClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        super();
-        this.http = http ? http : <any>window;
-        this.baseUrl = this.getBaseUrl("", baseUrl);
-    }
-
-    /**
-     * @return Success
-     */
-    getBalance(srcChain: string, address: string, dstChain: string): Promise<BalanceResponseDto> {
-        let url_ = this.baseUrl + "/wallet/getBalance?";
-        if (srcChain === undefined || srcChain === null)
-            throw new Error("The parameter 'srcChain' must be defined and cannot be null.");
-        else
-            url_ += "srcChain=" + encodeURIComponent("" + srcChain) + "&";
-        if (address === undefined || address === null)
-            throw new Error("The parameter 'address' must be defined and cannot be null.");
-        else
-            url_ += "address=" + encodeURIComponent("" + address) + "&";
-        if (dstChain === undefined || dstChain === null)
-            throw new Error("The parameter 'dstChain' must be defined and cannot be null.");
-        else
-            url_ += "dstChain=" + encodeURIComponent("" + dstChain) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_ = <RequestInit>{
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.transformOptions(options_).then(transformedOptions_ => {
-            return this.http.fetch(url_, transformedOptions_);
-        }).then((_response: Response) => {
-            return this.processGetBalance(_response);
-        });
-    }
-
-    protected processGetBalance(response: Response): Promise<BalanceResponseDto> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = BalanceResponseDto.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status === 404) {
-            return response.text().then((_responseText) => {
-            return throwException("Not Found", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<BalanceResponseDto>(<any>null);
-    }
-}
-
 export class ContactControllerClient extends BaseClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -485,6 +418,7 @@ export class ContactControllerClient extends BaseClient {
 
 export class SettingsResponseDto implements ISettingsResponseDto {
     minChainFeeForBridging!: { [key: string]: number; };
+    minOperationFee!: { [key: string]: number; };
     minUtxoChainValue!: { [key: string]: number; };
     minValueToBridge!: number;
     maxAmountAllowedToBridge!: string;
@@ -499,6 +433,7 @@ export class SettingsResponseDto implements ISettingsResponseDto {
         }
         if (!data) {
             this.minChainFeeForBridging = {};
+            this.minOperationFee = {};
             this.minUtxoChainValue = {};
         }
     }
@@ -510,6 +445,13 @@ export class SettingsResponseDto implements ISettingsResponseDto {
                 for (let key in _data["minChainFeeForBridging"]) {
                     if (_data["minChainFeeForBridging"].hasOwnProperty(key))
                         this.minChainFeeForBridging![key] = _data["minChainFeeForBridging"][key];
+                }
+            }
+            if (_data["minOperationFee"]) {
+                this.minOperationFee = {} as any;
+                for (let key in _data["minOperationFee"]) {
+                    if (_data["minOperationFee"].hasOwnProperty(key))
+                        this.minOperationFee![key] = _data["minOperationFee"][key];
                 }
             }
             if (_data["minUtxoChainValue"]) {
@@ -541,6 +483,13 @@ export class SettingsResponseDto implements ISettingsResponseDto {
                     data["minChainFeeForBridging"][key] = this.minChainFeeForBridging[key];
             }
         }
+        if (this.minOperationFee) {
+            data["minOperationFee"] = {};
+            for (let key in this.minOperationFee) {
+                if (this.minOperationFee.hasOwnProperty(key))
+                    data["minOperationFee"][key] = this.minOperationFee[key];
+            }
+        }
         if (this.minUtxoChainValue) {
             data["minUtxoChainValue"] = {};
             for (let key in this.minUtxoChainValue) {
@@ -557,6 +506,7 @@ export class SettingsResponseDto implements ISettingsResponseDto {
 
 export interface ISettingsResponseDto {
     minChainFeeForBridging: { [key: string]: number; };
+    minOperationFee: { [key: string]: number; };
     minUtxoChainValue: { [key: string]: number; };
     minValueToBridge: number;
     maxAmountAllowedToBridge: string;
@@ -577,6 +527,7 @@ export class CreateTransactionDto implements ICreateTransactionDto {
     destinationAddress!: string;
     amount!: string;
     bridgingFee!: string | undefined;
+    operationFee!: string | undefined;
     utxoCacheKey!: string | undefined;
     isNativeToken!: boolean;
 
@@ -597,6 +548,7 @@ export class CreateTransactionDto implements ICreateTransactionDto {
             this.destinationAddress = _data["destinationAddress"];
             this.amount = _data["amount"];
             this.bridgingFee = _data["bridgingFee"];
+            this.operationFee = _data["operationFee"];
             this.utxoCacheKey = _data["utxoCacheKey"];
             this.isNativeToken = _data["isNativeToken"];
         }
@@ -617,6 +569,7 @@ export class CreateTransactionDto implements ICreateTransactionDto {
         data["destinationAddress"] = this.destinationAddress;
         data["amount"] = this.amount;
         data["bridgingFee"] = this.bridgingFee;
+        data["operationFee"] = this.operationFee;
         data["utxoCacheKey"] = this.utxoCacheKey;
         data["isNativeToken"] = this.isNativeToken;
         return data; 
@@ -630,6 +583,7 @@ export interface ICreateTransactionDto {
     destinationAddress: string;
     amount: string;
     bridgingFee: string | undefined;
+    operationFee: string | undefined;
     utxoCacheKey: string | undefined;
     isNativeToken: boolean;
 }
@@ -1093,57 +1047,6 @@ export interface IBridgeTransactionResponseDto {
     page: number;
     perPage: number;
     total: number;
-}
-
-export class BalanceResponseDto implements IBalanceResponseDto {
-    balance!: { [key: string]: string; };
-
-    constructor(data?: IBalanceResponseDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (<any>this)[property] = (<any>data)[property];
-            }
-        }
-        if (!data) {
-            this.balance = {};
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (_data["balance"]) {
-                this.balance = {} as any;
-                for (let key in _data["balance"]) {
-                    if (_data["balance"].hasOwnProperty(key))
-                        this.balance![key] = _data["balance"][key];
-                }
-            }
-        }
-    }
-
-    static fromJS(data: any): BalanceResponseDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new BalanceResponseDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (this.balance) {
-            data["balance"] = {};
-            for (let key in this.balance) {
-                if (this.balance.hasOwnProperty(key))
-                    data["balance"][key] = this.balance[key];
-            }
-        }
-        return data; 
-    }
-}
-
-export interface IBalanceResponseDto {
-    balance: { [key: string]: string; };
 }
 
 export class CreateContactDto implements ICreateContactDto {

@@ -158,17 +158,6 @@ func (config CardanoChainConfig) ToSendTxChainConfig(
 		return res, err
 	}
 
-	var nativeTokens []sendtx.TokenExchangeConfig
-
-	for _, tdst := range config.ChainSpecific.Destinations {
-		if tdst.SrcTokenName != cardanowallet.AdaTokenName {
-			nativeTokens = append(nativeTokens, sendtx.TokenExchangeConfig{
-				DstChainID: tdst.Chain,
-				TokenName:  tdst.SrcTokenName,
-			})
-		}
-	}
-
 	bridgingAddress := config.BridgingAddresses.BridgingAddress
 	if useFallback {
 		bridgingAddress = config.BridgingAddresses.FallbackAddress
@@ -181,7 +170,7 @@ func (config CardanoChainConfig) ToSendTxChainConfig(
 		TestNetMagic:          uint(config.NetworkMagic),
 		TTLSlotNumberInc:      config.ChainSpecific.TTLSlotNumberInc,
 		MinUtxoValue:          appConfig.BridgingSettings.MinUtxoChainValue[config.ChainID],
-		NativeTokens:          nativeTokens,
+		NativeTokens:          config.ChainSpecific.NativeTokens,
 		MinBridgingFeeAmount:  appConfig.BridgingSettings.MinChainFeeForBridging[config.ChainID],
 		MinOperationFeeAmount: appConfig.BridgingSettings.MinOperationFee[config.ChainID],
 		PotentialFee:          config.ChainSpecific.PotentialFee,

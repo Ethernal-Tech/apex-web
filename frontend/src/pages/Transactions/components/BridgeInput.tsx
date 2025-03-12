@@ -18,7 +18,7 @@ import { TokenEnum } from '../../../features/enums';
 
 type BridgeInputType = {
     bridgeTxFee: string
-    setBridgeTxFee: (bridgeTxFee: string) => void
+    operationFee: string
     getCardanoTxFee: (address: string, amount: string) => Promise<CardanoTransactionFeeResponseDto>
     getEthTxFee: (address: string, amount: string) => Promise<CreateEthTransactionResponseDto>
     submit:(address: string, amount: string, isNativeToken: boolean) => Promise<void>
@@ -55,7 +55,25 @@ const cardanoSourceTokenOptions = [
   }
 ];
 
-const BridgeInput = ({bridgeTxFee, setBridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading}:BridgeInputType) => {
+const calculateMaxAmount = (
+  totalDfmBalance: {[key: string]: string}, chain: ChainEnum,
+  sourceToken: TokenEnum, potentialTokensCost: number, minDfmValue: string,
+  bridgeTxFee: string, operationFee: string,
+): string => {
+  if (!totalDfmBalance) {
+    return '0'
+  }
+
+  if (chain === ChainEnum.Nexus) {
+    return (BigInt(totalDfmBalance[sourceToken] || '0') - BigInt(bridgeTxFee) -
+      BigInt(minDfmValue) - BigInt(operationFee)).toString()
+  }
+
+  return (BigInt(totalDfmBalance[sourceToken] || '0') - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee)
+    - BigInt(potentialTokensCost) - BigInt(minDfmValue) - BigInt(operationFee)).toString()
+}
+
+const BridgeInput = ({bridgeTxFee, operationFee, getCardanoTxFee, getEthTxFee, submit, loading}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
   const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
@@ -72,9 +90,6 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, getCardanoTxFee, getEthTxFee,
   const fetchWalletFee = useCallback(async () => {
     if (!destinationAddr || !amount) {
         setUserWalletFee(undefined);
-        if (chain !== ChainEnum.Nexus) {
-          setBridgeTxFee('0')
-        }
 
         return;
     }
@@ -100,7 +115,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, getCardanoTxFee, getEthTxFee,
 
     setUserWalletFee(undefined);
     
-  }, [amount, chain, getEthTxFee, destinationAddr, getCardanoTxFee, setBridgeTxFee])
+  }, [amount, chain, getEthTxFee, destinationAddr, getCardanoTxFee])
 
   useEffect(() => {
     setSourceToken(!appSettings.isSkyline || chain === ChainEnum.Prime ? TokenEnum.APEX : TokenEnum.Ada);
@@ -135,26 +150,9 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, getCardanoTxFee, getEthTxFee,
     : appSettings.isSkyline 
       ? appSettings.minUtxoChainValue[chain] 
       : minValueToBridge;
-    
-  // TODO: too complicated to calculate now
-  let maxAmountDfm = '0';
-  if (appSettings.isSkyline) {
-    maxAmountDfm = Number.MAX_SAFE_INTEGER.toString();
-  } else {
-    maxAmountDfm = totalDfmBalance
-    ? (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano
-      ? (BigInt(totalDfmBalance[sourceToken]) - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee)
-          - BigInt(potentialTokensCost) - BigInt(minDfmValue)).toString()
-      : (BigInt(totalDfmBalance[sourceToken]) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString() // for nexus, using minDfm value as substitute to user wallet fee / potential fee
-    )
-    : '0';
-  }
-  // const maxAmountDfm:string = totalDfmBalance
-  //   ? (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano
-  //     ? (BigInt(totalDfmBalance[sourceToken]) - BigInt(appSettings.potentialWalletFee) - BigInt('1000010') - BigInt(minDfmValue)).toString()
-  //     : (BigInt(totalDfmBalance[sourceToken]) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString() // for nexus, using minDfm value as substitute to user wallet fee / potential fee
-  //   )
-  //   : '0';
+  
+  const maxAmountDfm = calculateMaxAmount(
+    totalDfmBalance, chain, sourceToken, potentialTokensCost, minDfmValue, bridgeTxFee, operationFee)
 
   const maxWrappedAmount: string = totalDfmBalance
     ? totalDfmBalance[sourceToken]
@@ -209,8 +207,8 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, getCardanoTxFee, getEthTxFee,
             
             <FeeInformation
                 userWalletFee={userWalletFee || '0'}
-                // TODO: remove || '0' later when minChainFeeForBridging['cardano'] is returned properly
                 bridgeTxFee={bridgeTxFee || '0'}
+                operationFee={operationFee || '0'}
                 chain={chain}
                 sx={{
                     gridColumn:'span 1',
