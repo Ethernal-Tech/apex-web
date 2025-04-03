@@ -1,8 +1,6 @@
 module github.com/Ethernal-Tech/cardano-api
 
-go 1.22
-
-toolchain go1.22.7
+go 1.23.1
 
 require (
 	github.com/blinklabs-io/gouroboros v0.103.1 // indirect
