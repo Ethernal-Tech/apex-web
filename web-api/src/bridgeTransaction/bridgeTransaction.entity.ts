@@ -41,4 +41,7 @@ export class BridgeTransaction {
 
 	@Column({ default: false })
 	isCentralized: boolean;
+
+	@Column({ default: false })
+	isRefund: boolean;
 }
