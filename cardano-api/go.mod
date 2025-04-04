@@ -15,7 +15,7 @@ require (
 )
 
 require (
-	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20250204120842-b150d63eea98
+	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20250403162143-d36aa4a37d89
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
@@ -58,4 +58,7 @@ require (
 	golang.org/x/tools v0.23.0
 )
 
-require filippo.io/edwards25519 v1.1.0 // indirect
+require (
+	filippo.io/edwards25519 v1.1.0 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
+)
