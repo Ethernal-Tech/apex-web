@@ -55,6 +55,10 @@ export class BridgeTransactionDto {
 	@IsDate()
 	@ApiProperty({ nullable: true, required: false })
 	finishedAt?: Date;
+
+	@IsNotEmpty()
+	@ApiProperty({ type: Boolean })
+	isRefund: boolean;
 }
 
 export class BridgeTransactionFilterDto extends PaginatedDto {
