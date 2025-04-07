@@ -246,7 +246,9 @@ export const updateBridgeTransactionStates = (
 			txFailedState &&
 			entity.status === TransactionStatusEnum.Pending;
 
-		if (statusChanged) {
+		const isRefundChanged = state && entity.isRefund !== state.isRefund
+
+		if (statusChanged || isRefundChanged) {
 			updateBridgeTransactionState(entity, state);
 			statusUpdatedBridgeTransactions.push(entity);
 		}
