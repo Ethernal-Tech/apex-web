@@ -49,8 +49,8 @@ linters-settings:
         rules: "./gorules/rules.go"
 
 issues:
-  exclude-dirs-use-default: true
   new-from-rev: origin/main # report only new issues with reference to main branch
+  exclude-dirs-use-default: true
   exclude-dirs:
     - tests
   exclude-rules:
