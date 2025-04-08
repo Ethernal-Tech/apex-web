@@ -477,10 +477,17 @@ func (p *generateConfigsParams) Execute(
 		},
 		Settings: core.AppSettings{
 			Logger: logger.LoggerConfig{
-				LogFilePath:   path.Join(p.logsPath, "cardano-api.log"),
-				LogLevel:      hclog.Debug,
-				JSONLogFormat: false,
-				AppendFile:    true,
+				LogFilePath:         path.Join(p.logsPath, "cardano-api.log"),
+				LogLevel:            hclog.Debug,
+				JSONLogFormat:       false,
+				AppendFile:          true,
+				RotatingLogsEnabled: false,
+				RotatingLogerConfig: logger.RotatingLoggerConfig{
+					MaxSizeInMB:  100,
+					MaxBackups:   30,
+					MaxAgeInDays: 30,
+					Compress:     false,
+				},
 			},
 		},
 		APIConfig: core.APIConfig{

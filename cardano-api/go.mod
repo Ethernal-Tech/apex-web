@@ -1,8 +1,6 @@
 module github.com/Ethernal-Tech/cardano-api
 
-go 1.22
-
-toolchain go1.22.7
+go 1.23.1
 
 require (
 	github.com/blinklabs-io/gouroboros v0.103.1 // indirect
@@ -17,7 +15,7 @@ require (
 )
 
 require (
-	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20250220093604-4bcd833f64a5
+	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20250407093318-94b8a68e4a51
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
@@ -60,4 +58,7 @@ require (
 	golang.org/x/tools v0.23.0
 )
 
-require filippo.io/edwards25519 v1.1.0 // indirect
+require (
+	filippo.io/edwards25519 v1.1.0 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
+)
