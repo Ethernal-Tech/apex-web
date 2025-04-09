@@ -31,6 +31,11 @@ import {ReactComponent as NexusInProgressIcon} from "../../../assets/bridge-stat
 import {ReactComponent as NexusSuccessIcon} from "../../../assets/bridge-status-assets/nexus-success.svg"
 import {ReactComponent as NexusErrorIcon} from "../../../assets/bridge-status-assets/nexus-error.svg"
 
+// cardano icons
+import {ReactComponent as CardanoInProgressIcon} from "../../../assets/bridge-status-assets/cardano.svg"
+import {ReactComponent as CardanoSuccessIcon} from "../../../assets/bridge-status-assets/cardano-success.svg"
+import {ReactComponent as CardanoErrorIcon} from "../../../assets/bridge-status-assets/cardano-error.svg"
+
 // bridge icons
 import {ReactComponent as BridgeInProgressIcon} from "../../../assets/bridge-status-assets/Bridge-Wallet.svg"
 import {ReactComponent as BridgeSuccessIcon} from "../../../assets/bridge-status-assets/bridge-success.svg"
@@ -79,9 +84,9 @@ interface TransferStepProps {
 // returns in progress, done, and error icons for required chain (prime, vector, nexus)
 const getChainIcons = (chain:ChainEnum) => {
     return {
-        inProgress: chain === ChainEnum.Prime ? PrimeInProgressIcon : chain === ChainEnum.Vector ? VectorInProgressIcon : NexusInProgressIcon,
-        done: chain === ChainEnum.Prime ? PrimeSuccessIcon : chain === ChainEnum.Vector ? VectorSuccessIcon : NexusSuccessIcon,
-        error: chain === ChainEnum.Prime ? PrimeErrorIcon : chain === ChainEnum.Vector ? VectorErrorIcon : NexusErrorIcon,
+        inProgress: chain === ChainEnum.Prime ? PrimeInProgressIcon : chain === ChainEnum.Vector ? VectorInProgressIcon : chain === ChainEnum.Nexus ? NexusInProgressIcon : CardanoInProgressIcon,
+        done: chain === ChainEnum.Prime ? PrimeSuccessIcon : chain === ChainEnum.Vector ? VectorSuccessIcon : chain === ChainEnum.Nexus ? NexusSuccessIcon : CardanoSuccessIcon,
+        error: chain === ChainEnum.Prime ? PrimeErrorIcon : chain === ChainEnum.Vector ? VectorErrorIcon : chain === ChainEnum.Nexus ? NexusErrorIcon : CardanoErrorIcon,
     }   
 }
 
