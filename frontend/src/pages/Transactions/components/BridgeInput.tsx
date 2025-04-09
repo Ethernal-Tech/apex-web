@@ -5,7 +5,7 @@ import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { calculatePotentialTokensCost, chainIcons, convertApexToDfm, convertDfmToWei } from '../../../utils/generalUtils';
+import { calculatePotentialTokensCost, convertApexToDfm, convertDfmToWei, tokenIcons } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
@@ -29,13 +29,13 @@ const primeSourceTokenOptions = [
   { 
     value: TokenEnum.APEX,
     label: TokenEnum.APEX,
-    icon: chainIcons[ChainEnum.Prime],
+    icon: tokenIcons[TokenEnum.APEX],
     borderColor:'#077368' 
   },
   { 
     value: TokenEnum.WAda,
     label: TokenEnum.WAda,
-    icon: chainIcons[ChainEnum.Prime],
+    icon: tokenIcons[TokenEnum.WAda],
     borderColor:'#077368' 
   },
 ];
@@ -44,13 +44,13 @@ const cardanoSourceTokenOptions = [
   { 
     value: TokenEnum.Ada,
     label: TokenEnum.Ada,
-    icon: chainIcons[ChainEnum.Cardano],
+    icon: tokenIcons[TokenEnum.Ada],
     borderColor: '#0538AF'
   },
   { 
     value: TokenEnum.WAPEX,
     label: TokenEnum.WAPEX,
-    icon: chainIcons[ChainEnum.Cardano],
+    icon: tokenIcons[TokenEnum.WAPEX],
     borderColor: '#0538AF'
   }
 ];
@@ -175,7 +175,7 @@ const BridgeInput = ({bridgeTxFee, operationFee, getCardanoTxFee, getEthTxFee, s
               <Typography mb={'7px'} sx={{ color: white }}>Source Token</Typography>
               <CustomSelect
                   label="SourceToken"
-                  icon={chainIcons[ChainEnum.Prime]}
+                  icon={tokenIcons[sourceToken]}
                   value={sourceToken}
                   onChange={(e) => setSourceToken(e.target.value as TokenEnum)}
                   options={supportedSourceTokenOptions}
