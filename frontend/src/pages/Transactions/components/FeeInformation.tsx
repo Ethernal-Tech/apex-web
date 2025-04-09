@@ -38,7 +38,9 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               User Wallet Fee:
           </Box>
           {/* TODO AF - check this conversion is correct */}
-          <Box component="span">{BigInt(userWalletFee) > 0 ? toFixed(convertDfmToApex(userWalletFee, chain), 6) : '0'} APEX</Box>
+          <Box component="span">{BigInt(userWalletFee) > 0 ? toFixed(convertDfmToApex(userWalletFee, chain), 6) : '0'}{' '}
+            {chain === ChainEnum.Cardano ? 'ADA' : 'APEX'}  
+          </Box>
         </Typography>
         
         
@@ -54,7 +56,9 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               Bridge Transaction Fee:
           </Box>
           {/* TODO AF - check this conversion is correct */}
-          <Box component="span">{BigInt(bridgeTxFee) > 0 ? toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'} APEX</Box>
+          <Box component="span">{BigInt(bridgeTxFee) > 0 ? toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'}{' '}
+            {chain === ChainEnum.Cardano ? 'ADA' : 'APEX'}
+          </Box>
         </Typography>
         
         {
@@ -71,7 +75,9 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
                 Bridge Operation Fee:
             </Box>
             {/* TODO AF - check this conversion is correct */}
-            <Box component="span">{BigInt(operationFee) > 0 ? toFixed(convertDfmToApex(operationFee, chain), 6): '0'} APEX</Box>
+            <Box component="span">{BigInt(operationFee) > 0 ? toFixed(convertDfmToApex(operationFee, chain), 6): '0'}{' '}
+              {chain === ChainEnum.Cardano ? 'ADA' : 'APEX'}
+            </Box>
           </Typography>
         }
 
