@@ -15,6 +15,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import appSettings from '../../settings/appSettings';
 import { fromChainToChainNativeToken } from '../../utils/chainUtils';
+import { fromChainToChainCurrency } from '../../utils/chainUtils';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
@@ -234,7 +235,7 @@ const TransactionsTablePage = () => {
                 {capitalizeWord(transaction.destinationChain)}
               </TableCell>
               <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
-                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} APEX
+                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {fromChainToChainCurrency(chain)}
               </TableCell>
               {
                 appSettings.isSkyline &&

@@ -9,10 +9,14 @@ import {EtherUnits} from "web3-utils";
 import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
 import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
 import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
+import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
+import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg'
+import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg'
 import { FunctionComponent, SVGProps } from "react";
 import { isAddress } from "web3-validator";
 import { ISettingsState } from "../redux/slices/settingsSlice";
 import { UTxO } from "@meshsdk/core";
+import { TokenEnum } from "../features/enums";
 
 export const capitalizeWord = (word: string): string => {
     if (!word || word.length === 0) {
@@ -172,7 +176,19 @@ export const chainIcons:{
   [ChainEnum.Prime]:PrimeIcon,
   [ChainEnum.Vector]:VectorIcon,
   [ChainEnum.Nexus]:NexusIcon,
-  [ChainEnum.Cardano]:NexusIcon // TODO: change Icon
+  [ChainEnum.Cardano]:CardanoIcon
+}
+
+export const tokenIcons:{
+  [TokenEnum.APEX]:FunctionComponent<SVGProps<SVGSVGElement>>
+  [TokenEnum.WAPEX]:FunctionComponent<SVGProps<SVGSVGElement>>
+  [TokenEnum.Ada]:FunctionComponent<SVGProps<SVGSVGElement>>
+  [TokenEnum.WAda]:FunctionComponent<SVGProps<SVGSVGElement>>
+} = {
+  [TokenEnum.APEX]:ApexIcon,
+  [TokenEnum.WAPEX]:ApexIcon,
+  [TokenEnum.Ada]:AdaIcon,
+  [TokenEnum.WAda]:AdaIcon
 }
 
 // format it differently depending on network (nexus is 18 decimals, prime and vector are 6)

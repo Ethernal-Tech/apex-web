@@ -70,23 +70,33 @@ const FooterBar = () => {
         <Box>
           {
             appSettings.isSkyline ?
-            <Button component='a' href="https://ethernal.tech/" target="_blank">
-              <EthernalIcon height={28} style={{ background: 'rgb(22, 22, 22)', borderRadius: '50%' }} />
-            </Button>
+            <>
+              <Button component='a' href="https://ethernal.tech/" target="_blank">
+                <EthernalIcon height={28} style={{ background: 'rgb(22, 22, 22)', borderRadius: '50%' }} />
+              </Button>
+              <Button component='a' href="https://www.linkedin.com/company/ethernal-tech" target="_blank">
+                <LinkedinIcon/>
+              </Button>
+              <Button component='a' href="https://x.com/ethernal_tech" target="_blank">
+                <XIcon/>
+              </Button>
+            </>
             :
-            <Button component='a' href="https://apexfusion.org/" target="_blank">
-              <ApexIcon/>
-            </Button>
+            <>
+              <Button component='a' href="https://apexfusion.org/" target="_blank">
+                <ApexIcon/>
+              </Button>
+              <Button component='a' href="https://www.linkedin.com/company/apexfusioncore" target="_blank">
+                <LinkedinIcon/>
+              </Button>
+              <Button component='a' href="https://x.com/apexfusion" target="_blank">
+                <XIcon/>
+              </Button>
+              <Button component='a' href="https://discord.com/invite/2nSBGyvjpZ" target="_blank">
+                <DiscordIcon/>
+              </Button>
+            </>
           }
-          <Button component='a' href="https://www.linkedin.com/company/apexfusioncore" target="_blank">
-            <LinkedinIcon/>
-          </Button>
-          <Button component='a' href="https://x.com/apexfusion" target="_blank">
-            <XIcon/>
-          </Button>
-          <Button component='a' href="https://discord.com/invite/2nSBGyvjpZ" target="_blank">
-            <DiscordIcon/>
-          </Button>
         </Box>
       </Box>
       
