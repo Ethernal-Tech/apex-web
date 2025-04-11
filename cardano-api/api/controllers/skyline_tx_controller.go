@@ -63,14 +63,14 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	fee, bridgingRequestMetadata, err := c.calculateTxFee(requestBody)
+	fee, bridgingRequestMetadata, err := c.calculateTxFee(&requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
 		return
 	}
 
-	_, _, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
+	_, _, bridgingFee := getOutputAmounts(bridgingRequestMetadata, requestBody)
 
 	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(fee, bridgingFee), c.logger)
 }
@@ -92,14 +92,14 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txRaw, txHash, bridgingRequestMetadata, err := c.createTx(requestBody)
+	txRaw, txHash, bridgingRequestMetadata, err := c.createTx(&requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
 		return
 	}
 
-	currencyOutput, tokenOutput, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
+	currencyOutput, tokenOutput, bridgingFee := getOutputAmounts(bridgingRequestMetadata, requestBody)
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
@@ -230,15 +230,15 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	return nil
 }
 
-func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
+func (c *SkylineTxControllerImpl) createTx(requestBody *commonRequest.CreateBridgingTxRequest) (
 	string, string, *sendtx.BridgingRequestMetadata, error,
 ) {
-	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody)
+	txSender, receivers, err := c.getTxSenderAndReceivers(*requestBody)
 	if err != nil {
 		return "", "", nil, err
 	}
 
-	txRawBytes, txHash, metadata, err := txSender.CreateBridgingTx(
+	txRawBytes, txHash, metadata, minUtxoAmount, err := txSender.CreateBridgingTx(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
@@ -248,18 +248,22 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		return "", "", nil, fmt.Errorf("failed to build tx: %w", err)
 	}
 
+	if minUtxoAmount > requestBody.BridgingFee {
+		requestBody.BridgingFee = minUtxoAmount
+	}
+
 	return hex.EncodeToString(txRawBytes), txHash, metadata, nil
 }
 
-func (c *SkylineTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
+func (c *SkylineTxControllerImpl) calculateTxFee(requestBody *commonRequest.CreateBridgingTxRequest) (
 	uint64, *sendtx.BridgingRequestMetadata, error,
 ) {
-	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody)
+	txSender, receivers, err := c.getTxSenderAndReceivers(*requestBody)
 	if err != nil {
 		return 0, nil, err
 	}
 
-	fee, metadata, err := txSender.CalculateBridgingTxFee(
+	fee, minUtxoAmount, metadata, err := txSender.CalculateBridgingTxFee(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
@@ -267,6 +271,10 @@ func (c *SkylineTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 	)
 	if err != nil {
 		return 0, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
+	}
+
+	if minUtxoAmount > requestBody.BridgingFee {
+		requestBody.BridgingFee = minUtxoAmount
 	}
 
 	return fee, metadata, nil
@@ -308,10 +316,10 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequ
 	return txSender, receivers, nil
 }
 
-func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata) (
+func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata, requestBody commonRequest.CreateBridgingTxRequest) (
 	outputCurrencyLovelace uint64, outputNativeToken uint64, bridgingFee uint64,
 ) {
-	bridgingFee = metadata.BridgingFee + metadata.OperationFee
+	bridgingFee = requestBody.BridgingFee + metadata.OperationFee
 
 	for _, x := range metadata.Transactions {
 		if x.IsNativeTokenOnSource() {

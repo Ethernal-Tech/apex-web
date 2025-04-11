@@ -217,7 +217,7 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		return "", "", err
 	}
 
-	txRawBytes, txHash, _, err := txSender.CreateBridgingTx(
+	txRawBytes, txHash, _, _, err := txSender.CreateBridgingTx(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
@@ -238,7 +238,7 @@ func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 		return 0, nil, err
 	}
 
-	fee, metadata, err := txSender.CalculateBridgingTxFee(
+	fee, _, metadata, err := txSender.CalculateBridgingTxFee(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,

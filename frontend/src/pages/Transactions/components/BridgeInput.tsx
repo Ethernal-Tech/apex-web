@@ -18,8 +18,10 @@ import { TokenEnum } from '../../../features/enums';
 
 type BridgeInputType = {
     bridgeTxFee: string
+    setBridgeTxFee: (val: string) => void
+    resetBridgeTxFee: () => void
     operationFee: string
-    getCardanoTxFee: (address: string, amount: string) => Promise<CardanoTransactionFeeResponseDto>
+    getCardanoTxFee: (address: string, amount: string, isNativeToken: boolean) => Promise<CardanoTransactionFeeResponseDto>
     getEthTxFee: (address: string, amount: string) => Promise<CreateEthTransactionResponseDto>
     submit:(address: string, amount: string, isNativeToken: boolean) => Promise<void>
     loading?: boolean;
@@ -70,10 +72,10 @@ const calculateMaxAmount = (
   }
 
   return (BigInt(totalDfmBalance[sourceToken] || '0') - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee)
-    - BigInt(potentialTokensCost) - BigInt(minDfmValue) - BigInt(operationFee)).toString()
+    - BigInt(2)*BigInt(minDfmValue) - BigInt(potentialTokensCost) - BigInt(operationFee)).toString()
 }
 
-const BridgeInput = ({bridgeTxFee, operationFee, getCardanoTxFee, getEthTxFee, submit, loading}:BridgeInputType) => {
+const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFee, getCardanoTxFee, getEthTxFee, submit, loading}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
   const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
@@ -96,8 +98,9 @@ const BridgeInput = ({bridgeTxFee, operationFee, getCardanoTxFee, getEthTxFee, s
 
     try {
         if (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano) {
-            const feeResp = await getCardanoTxFee(destinationAddr, convertApexToDfm(amount || '0', chain));
+            const feeResp = await getCardanoTxFee(destinationAddr, convertApexToDfm(amount || '0', chain), getIsNativeToken(chain, sourceToken));
             setUserWalletFee((feeResp?.fee || 0).toString());
+            setBridgeTxFee((feeResp?.bridgingFee || 0).toString());
 
             return;
         } else if (chain === ChainEnum.Nexus) {
@@ -115,7 +118,13 @@ const BridgeInput = ({bridgeTxFee, operationFee, getCardanoTxFee, getEthTxFee, s
 
     setUserWalletFee(undefined);
     
-  }, [amount, chain, getEthTxFee, destinationAddr, getCardanoTxFee])
+  }, [destinationAddr, amount, chain, getCardanoTxFee, sourceToken, setBridgeTxFee, getEthTxFee])
+
+  const setSourceTokenCallback = useCallback((token: TokenEnum) => {
+    setSourceToken(token);
+    setAmount('');
+    resetBridgeTxFee();
+  }, [resetBridgeTxFee])
 
   useEffect(() => {
     setSourceToken(!appSettings.isSkyline || chain === ChainEnum.Prime ? TokenEnum.APEX : TokenEnum.Ada);
@@ -177,7 +186,7 @@ const BridgeInput = ({bridgeTxFee, operationFee, getCardanoTxFee, getEthTxFee, s
                   label="SourceToken"
                   icon={tokenIcons[sourceToken]}
                   value={sourceToken}
-                  onChange={(e) => setSourceToken(e.target.value as TokenEnum)}
+                  onChange={(e) => setSourceTokenCallback(e.target.value as TokenEnum)}
                   options={supportedSourceTokenOptions}
                   width='50%'
               />
