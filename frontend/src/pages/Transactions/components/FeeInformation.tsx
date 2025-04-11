@@ -61,7 +61,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
         </Typography>
         
         {
-          appSettings.isSkyline &&
+          appSettings.isSkyline && BigInt(operationFee) > 0 &&
           <Typography sx={{
             display:'flex',
             justifyContent:'space-between'
@@ -90,7 +90,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
             }}>
               Estimated time
             </Box>
-          <Box component="span">4-7 minutes</Box>
+          <Box component="span">10-15 minutes</Box>
         </Typography>
     </CustomBox>
   );

@@ -148,26 +148,26 @@ $ go run main.go generate-configs skyline \
 		--output-file-name "config.json"\
 		--prime-network-id 0\
 		--prime-network-magic 3311\
-		--prime-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv"\
-		--prime-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq"\
-		--prime-bridging-fallback-address "addr_test1vqfuetznnmngqzquslwcu0ygn2hq29vjlpytlpwss762vcgun5vvw"\
+		--prime-bridging-address "addr_test1wr943cc3l8hxhjcnh8mjrh67yshksw2ugydx0r9a4k7xrfqsp4p7y"\
+		--prime-bridging-fee-address "addr_test1wpp9wrzm5249ksfucal6f9rdth9y0rlwecu0r608gysjmcsf764mj"\
+		--prime-bridging-fallback-address "addr_test1wr943cc3l8hxhjcnh8mjrh67yshksw2ugydx0r9a4k7xrfqsp4p7y"\
 		--prime-blockfrost-url "https://blockfrost-m1.demeter.run"\
 		--prime-blockfrost-api-key "test_demeter_api_key_1"\
 		--cardano-network-id 0\
-		--cardano-network-magic 3311\
-		--cardano-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv"\
-		--cardano-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq"\
-		--cardano-bridging-fallback-address "addr_test1vqfuetznnmngqzquslwcu0ygn2hq29vjlpytlpwss762vcgun5vvw"\
-		--cardano-ogmios-url "http://ogmios.prime.testnet.apexfusion.org:1337"\
+		--cardano-network-magic 2\
+		--cardano-bridging-address "addr_test1wrntyxdelrw98ps0vrpuf4rr2mmknem83y9ywxfn0a3jeasxtsjz5"\
+		--cardano-bridging-fee-address "addr_test1wz3q8gnjsuyf7etplmcuw8rfusckmn5dmjwnhwdsap6savqcx8xg3"\
+		--cardano-bridging-fallback-address "addr_test1wrntyxdelrw98ps0vrpuf4rr2mmknem83y9ywxfn0a3jeasxtsjz5"\
+		--cardano-ogmios-url "http://preview-services-skyline.testnet.ethernal.work:1733"\
 		--logs-path "./logs"\
 		--utxo-cache-timeout 1m30s\
-		--oracle-api-url "http://bridge-api-testnet.apexfusion.org:10003" \
+		--oracle-api-url "http://validators-oracle-api-skyline.testnet.ethernal.work" \
 		--oracle-api-key "oracle_api_key_1" \
-		--api-port 41000\
+		--api-port 41002\
 		--api-keys "cardano_api_key_1"\
 		--utxo-cache-keys "utxo_cache_api_key_1" \
-		--prime-cardano-token-name 29f8873beb52e126f207a2dfd50f7cff556806b5b4cba9834a7b26a8.4b6173685f546f6b656e \
-		--cardano-prime-token-name 29f8873beb52e126f207a2dfd50f7cff556806b5b4cba9834a7b26a8.Route3
+		--prime-cardano-token-name a59a8df821056ddcaeae4eb16f272565a0b3581c61e04a9bd18d4b32.WADA \
+		--cardano-prime-token-name 64c6ea243c3133d44f2022299e74b027f02b1c13397324819e8465c7.WAPEX
 ```
 
 # How to start cardano api

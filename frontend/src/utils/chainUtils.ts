@@ -90,7 +90,7 @@ export const chainSupported = (chain: ChainEnum): boolean => {
 const PRIME_EXPLORER_URL = 'https://prime-apex.ethernal.tech'
 const VECTOR_EXPLORER_URL = 'https://vector-apex.ethernal.tech'
 const NEXUS_EXPLORER_URL = 'https://explorer.nexus.testnet.apexfusion.org'
-const CARDANO_EXPLORER_URL = 'https://cardanoscan.io'
+const CARDANO_EXPLORER_URL = 'https://preview.cardanoscan.io'
 
 const getExplorerTxUrl = (chain: ChainEnum) => {
     let url

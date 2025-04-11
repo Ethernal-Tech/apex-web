@@ -25,12 +25,15 @@ function NewTransactionPage() {
 	const account = useSelector((state: RootState) => state.accountInfo.account);
 	const settings = useSelector((state: RootState) => state.settings);
 
-	const bridgeTxFee = useMemo(
-		() => chain === ChainEnum.Nexus
-			? convertDfmToWei(settings.minChainFeeForBridging[chain] || '0')
-			: settings.minChainFeeForBridging[chain] || '0',
-		[chain, settings.minChainFeeForBridging],
-	)
+	const defaultBridgeTxFee = chain === ChainEnum.Nexus
+		? convertDfmToWei(settings.minChainFeeForBridging[chain] || '0')
+		: settings.minChainFeeForBridging[chain] || '0'
+		
+	const [bridgeTxFee, setBridgeTxFee] = useState<string>(defaultBridgeTxFee)
+
+	const resetBridgeTxFee = useCallback(() => {
+		setBridgeTxFee(defaultBridgeTxFee)
+	}, [defaultBridgeTxFee])
 
 	const operationFee = useMemo(
 		() => chain === ChainEnum.Nexus
@@ -63,8 +66,8 @@ function NewTransactionPage() {
 		})
 	}, [account, bridgeTxFee, chain, destinationChain, operationFee, settings])
 
-	const getCardanoTxFee = useCallback(async (address: string, amount: string): Promise<CardanoTransactionFeeResponseDto> => {
-		const createTxDto = prepareCreateCardanoTx(address, amount);
+	const getCardanoTxFee = useCallback(async (address: string, amount: string, isNativeToken: boolean): Promise<CardanoTransactionFeeResponseDto> => {
+		const createTxDto = prepareCreateCardanoTx(address, amount, isNativeToken);
 		const bindedCreateAction = getCardanoTransactionFeeAction.bind(null, createTxDto);
 		const feeResponse = await tryCatchJsonByAction(bindedCreateAction);
 		if (feeResponse instanceof ErrorResponse) {
@@ -236,6 +239,8 @@ function NewTransactionPage() {
 					{!txInProgress &&
 						<BridgeInput
 							bridgeTxFee={bridgeTxFee}
+							setBridgeTxFee={setBridgeTxFee}
+							resetBridgeTxFee={resetBridgeTxFee}
 							operationFee={operationFee}
 							getCardanoTxFee={getCardanoTxFee}
 							getEthTxFee={getEthTxFee}
