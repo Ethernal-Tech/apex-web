@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -65,7 +64,7 @@ func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	fee, _, err := c.calculateTxFee(requestBody)
+	txFeeInfo, _, err := c.calculateTxFee(requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
@@ -73,7 +72,7 @@ func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 	}
 
 	utils.WriteResponse(w, r, http.StatusOK,
-		commonResponse.NewBridgingTxFeeResponse(fee, requestBody.BridgingFee), c.logger)
+		commonResponse.NewBridgingTxFeeResponse(txFeeInfo.Fee, requestBody.BridgingFee), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
@@ -93,7 +92,7 @@ func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txRaw, txHash, err := c.createTx(requestBody)
+	txInfo, err := c.createTx(requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
@@ -107,7 +106,7 @@ func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		commonResponse.NewBridgingTxResponse(txRaw, txHash, requestBody.BridgingFee, amount, 0), c.logger)
+		commonResponse.NewBridgingTxResponse(txInfo.TxRaw, txInfo.TxHash, requestBody.BridgingFee, amount, 0), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
@@ -210,45 +209,45 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 }
 
 func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
-	string, string, error,
+	*sendtx.TxInfo, error,
 ) {
 	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
-	txRawBytes, txHash, _, _, err := txSender.CreateBridgingTx(
+	txInfo, _, err := txSender.CreateBridgingTx(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
 		0,
 	)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to build tx: %w", err)
+		return nil, fmt.Errorf("failed to build tx: %w", err)
 	}
 
-	return hex.EncodeToString(txRawBytes), txHash, nil
+	return txInfo, nil
 }
 
 func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
-	uint64, *sendtx.BridgingRequestMetadata, error,
+	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
 	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody)
 	if err != nil {
-		return 0, nil, err
+		return nil, nil, err
 	}
 
-	fee, _, metadata, err := txSender.CalculateBridgingTxFee(
+	txFeeInfo, metadata, err := txSender.CalculateBridgingTxFee(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
 		0,
 	)
 	if err != nil {
-		return 0, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
+		return nil, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
 	}
 
-	return fee, metadata, nil
+	return txFeeInfo, metadata, nil
 }
 
 func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequest.CreateBridgingTxRequest) (

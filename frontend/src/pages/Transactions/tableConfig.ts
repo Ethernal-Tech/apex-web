@@ -53,7 +53,7 @@ export const skylineHeadCells: readonly HeadCell[] = [
     },
     {
         id: 'nativeTokenAmount',
-        label: 'Native Token Amount',
+        label: 'Token Amount',
     },
     {
         id: 'receiverAddresses',

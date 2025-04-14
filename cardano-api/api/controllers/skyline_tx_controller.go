@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -63,16 +62,21 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	fee, bridgingRequestMetadata, err := c.calculateTxFee(&requestBody)
+	txFeeInfo, bridgingRequestMetadata, err := c.calculateTxFee(&requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
 		return
 	}
 
-	_, _, bridgingFee := getOutputAmounts(bridgingRequestMetadata, requestBody)
+	currencyOutput, _, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
 
-	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(fee, bridgingFee), c.logger)
+	if txFeeInfo.ReceiverMinUtxoAmount > currencyOutput+bridgingFee {
+		bridgingFee = txFeeInfo.ReceiverMinUtxoAmount - currencyOutput
+	}
+
+	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(
+		txFeeInfo.Fee, bridgingFee), c.logger)
 }
 
 func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
@@ -92,18 +96,23 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txRaw, txHash, bridgingRequestMetadata, err := c.createTx(&requestBody)
+	txInfo, bridgingRequestMetadata, err := c.createTx(&requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
 		return
 	}
 
-	currencyOutput, tokenOutput, bridgingFee := getOutputAmounts(bridgingRequestMetadata, requestBody)
+	currencyOutput, tokenOutput, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
+
+	if txInfo.ReceiverMinUtxoAmount > currencyOutput+bridgingFee {
+		bridgingFee = txInfo.ReceiverMinUtxoAmount - currencyOutput
+	}
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		commonResponse.NewBridgingTxResponse(txRaw, txHash, bridgingFee, currencyOutput, tokenOutput), c.logger,
+		commonResponse.NewBridgingTxResponse(
+			txInfo.TxRaw, txInfo.TxHash, bridgingFee, currencyOutput, tokenOutput), c.logger,
 	)
 }
 
@@ -231,53 +240,45 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 }
 
 func (c *SkylineTxControllerImpl) createTx(requestBody *commonRequest.CreateBridgingTxRequest) (
-	string, string, *sendtx.BridgingRequestMetadata, error,
+	*sendtx.TxInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
 	txSender, receivers, err := c.getTxSenderAndReceivers(*requestBody)
 	if err != nil {
-		return "", "", nil, err
+		return nil, nil, err
 	}
 
-	txRawBytes, txHash, metadata, minUtxoAmount, err := txSender.CreateBridgingTx(
+	txInfo, metadata, err := txSender.CreateBridgingTx(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
 		requestBody.OperationFee,
 	)
 	if err != nil {
-		return "", "", nil, fmt.Errorf("failed to build tx: %w", err)
+		return nil, nil, fmt.Errorf("failed to build tx: %w", err)
 	}
 
-	if minUtxoAmount > requestBody.BridgingFee {
-		requestBody.BridgingFee = minUtxoAmount
-	}
-
-	return hex.EncodeToString(txRawBytes), txHash, metadata, nil
+	return txInfo, metadata, nil
 }
 
 func (c *SkylineTxControllerImpl) calculateTxFee(requestBody *commonRequest.CreateBridgingTxRequest) (
-	uint64, *sendtx.BridgingRequestMetadata, error,
+	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
 	txSender, receivers, err := c.getTxSenderAndReceivers(*requestBody)
 	if err != nil {
-		return 0, nil, err
+		return nil, nil, err
 	}
 
-	fee, minUtxoAmount, metadata, err := txSender.CalculateBridgingTxFee(
+	txFeeInfo, metadata, err := txSender.CalculateBridgingTxFee(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
 		requestBody.OperationFee,
 	)
 	if err != nil {
-		return 0, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
+		return nil, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
 	}
 
-	if minUtxoAmount > requestBody.BridgingFee {
-		requestBody.BridgingFee = minUtxoAmount
-	}
-
-	return fee, metadata, nil
+	return txFeeInfo, metadata, nil
 }
 
 func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequest.CreateBridgingTxRequest) (
@@ -316,10 +317,10 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequ
 	return txSender, receivers, nil
 }
 
-func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata, requestBody commonRequest.CreateBridgingTxRequest) (
+func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata) (
 	outputCurrencyLovelace uint64, outputNativeToken uint64, bridgingFee uint64,
 ) {
-	bridgingFee = requestBody.BridgingFee + metadata.OperationFee
+	bridgingFee = metadata.BridgingFee + metadata.OperationFee
 
 	for _, x := range metadata.Transactions {
 		if x.IsNativeTokenOnSource() {
