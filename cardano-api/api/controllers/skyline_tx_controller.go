@@ -69,14 +69,8 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	currencyOutput, _, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
-
-	if txFeeInfo.ReceiverMinUtxoAmount > currencyOutput+bridgingFee {
-		bridgingFee = txFeeInfo.ReceiverMinUtxoAmount - currencyOutput
-	}
-
 	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(
-		txFeeInfo.Fee, bridgingFee), c.logger)
+		txFeeInfo.Fee, bridgingRequestMetadata.BridgingFee), c.logger)
 }
 
 func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
@@ -103,16 +97,12 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	currencyOutput, tokenOutput, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
-
-	if txInfo.ReceiverMinUtxoAmount > currencyOutput+bridgingFee {
-		bridgingFee = txInfo.ReceiverMinUtxoAmount - currencyOutput
-	}
+	currencyOutput, tokenOutput := getOutputAmounts(bridgingRequestMetadata)
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		commonResponse.NewBridgingTxResponse(
-			txInfo.TxRaw, txInfo.TxHash, bridgingFee, currencyOutput, tokenOutput), c.logger,
+			txInfo.TxRaw, txInfo.TxHash, bridgingRequestMetadata.BridgingFee, currencyOutput, tokenOutput), c.logger,
 	)
 }
 
@@ -318,10 +308,8 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequ
 }
 
 func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata) (
-	outputCurrencyLovelace uint64, outputNativeToken uint64, bridgingFee uint64,
+	outputCurrencyLovelace uint64, outputNativeToken uint64,
 ) {
-	bridgingFee = metadata.BridgingFee + metadata.OperationFee
-
 	for _, x := range metadata.Transactions {
 		if x.IsNativeTokenOnSource() {
 			// WADA/WAPEX to ADA/APEX
@@ -332,7 +320,7 @@ func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata) (
 		}
 	}
 
-	return outputCurrencyLovelace, outputNativeToken, bridgingFee
+	return outputCurrencyLovelace, outputNativeToken
 }
 
 func useUtxoCache(
