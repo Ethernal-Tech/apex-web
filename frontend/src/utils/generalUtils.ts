@@ -17,6 +17,16 @@ import { isAddress } from "web3-validator";
 import { ISettingsState } from "../redux/slices/settingsSlice";
 import { UTxO } from "@meshsdk/core";
 import { TokenEnum } from "../features/enums";
+import {
+  BigNum,
+  Value,
+  MultiAsset,
+  Assets,
+  AssetName,
+  ScriptHash,
+  TransactionOutput,
+  Address,
+} from '@emurgo/cardano-serialization-lib-browser';
 
 export const capitalizeWord = (word: string): string => {
     if (!word || word.length === 0) {
@@ -313,17 +323,62 @@ export const getAssetsSumMap = (utxos: UTxO[]) => {
   return assetsSumMap;
 };
 
-const POTENTIAL_COST_PER_TOKEN = 50000;
+const COINS_PER_UTXO_BYTE = 4310;
+const TX_OUT_SIZE_ADDITIONAL = 160;
 
-export const countUniqueTokens = (utxos: UTxO[] | undefined): number => {
-  if (!utxos) {
-    return 0;
+const calculateMinUtxo = (utxos: UTxO[]) => {
+  if (utxos.length === 0) {
+    throw new Error('UTxO array is empty');
   }
 
-  const assetsMap = getAssetsSumMap(utxos);
-  return Object.keys(assetsMap).filter(x => x !== 'lovelace').length;
-};
+  const value = Value.new(BigNum.from_str('0'));
+  const multiAsset = MultiAsset.new();
 
-export const calculatePotentialTokensCost = (utxos: UTxO[] | undefined): number => {
-  return countUniqueTokens(utxos) * POTENTIAL_COST_PER_TOKEN;
+  for (const utxo of utxos) {
+    for (const asset of utxo.output.amount) {
+      if (asset.unit === 'lovelace') {
+        const existing = value.coin();
+        value.set_coin(existing.checked_add(BigNum.from_str(asset.quantity)));
+
+        continue;
+      }
+
+      const policyId = asset.unit.slice(0, 56);
+      const assetNameHex = asset.unit.slice(56);
+      const quantity = BigNum.from_str(asset.quantity);
+
+      const policyScriptHash = ScriptHash.from_bytes(Buffer.from(policyId, "hex") as unknown as Uint8Array);
+      const assetName = AssetName.new(Buffer.from(assetNameHex, "hex") as unknown as Uint8Array);
+
+      let assets = multiAsset.get(policyScriptHash) || Assets.new();
+      const current = assets.get(assetName) || BigNum.from_str("0");
+
+      assets.insert(assetName, current.checked_add(quantity));
+      multiAsset.insert(policyScriptHash, assets);
+    }
+  }
+
+  if (multiAsset.len() > 0) {
+    value.set_multiasset(multiAsset);
+  }
+
+  const address = Address.from_bech32(utxos[0].output.address);
+  const txOutSize = TransactionOutput.new(address, value).to_bytes().length;
+
+  return COINS_PER_UTXO_BYTE * (txOutSize + TX_OUT_SIZE_ADDITIONAL);
+}
+
+export const calculateChangeMinUtxo = (utxos: UTxO[] | undefined, defaultMinUtxo: number): number => {
+  if (!utxos) {
+    return defaultMinUtxo;
+  }
+
+  try {
+    return Math.max(calculateMinUtxo(utxos), defaultMinUtxo);
+  } catch (e) {
+    console.log('error while calculating change minUtxo', e);
+  }
+
+  // if the calculation failed and we have native tokens, take changeMinUtxo to be 2*defaultMinUtxo
+  return Object.keys(getAssetsSumMap(utxos)).length > 1 ? 2 * defaultMinUtxo : defaultMinUtxo;
 };

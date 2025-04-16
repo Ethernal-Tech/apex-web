@@ -5,7 +5,7 @@ import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { calculatePotentialTokensCost, convertApexToDfm, convertDfmToWei, tokenIcons } from '../../../utils/generalUtils';
+import { calculateChangeMinUtxo, convertApexToDfm, convertDfmToWei, tokenIcons } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
@@ -59,7 +59,7 @@ const cardanoSourceTokenOptions = [
 
 const calculateMaxAmount = (
   totalDfmBalance: {[key: string]: string}, chain: ChainEnum,
-  sourceToken: TokenEnum, potentialTokensCost: number, minDfmValue: string,
+  sourceToken: TokenEnum, changeMinUtxo: number, minDfmValue: string,
   bridgeTxFee: string, operationFee: string,
 ): string => {
   if (!totalDfmBalance) {
@@ -71,8 +71,9 @@ const calculateMaxAmount = (
       BigInt(minDfmValue) - BigInt(operationFee)).toString()
   }
 
-  return (BigInt(totalDfmBalance[sourceToken] || '0') - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee)
-    - BigInt(2)*BigInt(minDfmValue) - BigInt(potentialTokensCost) - BigInt(operationFee)).toString()
+  return (BigInt(totalDfmBalance[sourceToken] || '0')
+    - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee)
+    - BigInt(changeMinUtxo) - BigInt(operationFee)).toString()
 }
 
 const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFee, getCardanoTxFee, getEthTxFee, submit, loading}:BridgeInputType) => {
@@ -151,17 +152,20 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
     setAmount('')
   }
 
-  const potentialTokensCost = useMemo(() => calculatePotentialTokensCost(walletUTxOs), [walletUTxOs]);
+  const changeMinUtxo = useMemo(
+    () => calculateChangeMinUtxo(walletUTxOs, +appSettings.minUtxoChainValue[chain]),
+    [walletUTxOs, chain],
+  );
 
   // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
   const minDfmValue = chain === ChainEnum.Nexus 
     ? convertDfmToWei(minValueToBridge) 
     : appSettings.isSkyline 
-      ? appSettings.minUtxoChainValue[chain] 
+      ? appSettings.minUtxoChainValue[chain]
       : minValueToBridge;
   
   const maxAmountDfm = calculateMaxAmount(
-    totalDfmBalance, chain, sourceToken, potentialTokensCost, minDfmValue, bridgeTxFee, operationFee)
+    totalDfmBalance, chain, sourceToken, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee)
 
   const maxWrappedAmount: string = totalDfmBalance
     ? totalDfmBalance[sourceToken]
