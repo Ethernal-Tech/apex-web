@@ -302,13 +302,7 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
 		return nil, nil, fmt.Errorf("failed to generate configuration")
 	}
 
-	var options []sendtx.TxSenderOption
-
-	if cacheUtxosTransformer != nil {
-		options = append(options, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
-	}
-
-	txSender := sendtx.NewTxSender(txSenderChainsConfig, options...)
+	txSender := sendtx.NewTxSender(txSenderChainsConfig, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
 
 	receivers := make([]sendtx.BridgingTxReceiver, len(requestBody.Transactions))
 	for i, tx := range requestBody.Transactions {
