@@ -18,10 +18,15 @@ import {
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { mapBridgeTransactionToResponse } from 'src/bridgeTransaction/bridgeTransaction.helper';
+import { MoreThan, Repository } from 'typeorm';
+import {
+	getInputUtxos,
+	mapBridgeTransactionToResponse,
+} from 'src/bridgeTransaction/bridgeTransaction.helper';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 import { SettingsService } from 'src/settings/settings.service';
+import { Utxo } from 'src/blockchain/dto';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class TransactionService {
@@ -73,12 +78,47 @@ export class TransactionService {
 		}
 	}
 
+	async getRecentInputs(dto: CreateTransactionDto): Promise<Utxo[]> {
+		const recentInputsThresholdMinutes =
+			process.env.RECENT_INPUTS_THRESHOLD_MINUTES || '5';
+		const threshold = new Date(
+			Date.now() - parseInt(recentInputsThresholdMinutes) * 60 * 1000,
+		);
+		const previousTxs = await this.bridgeTransactionRepository.find({
+			where: {
+				senderAddress: dto.senderAddress,
+				createdAt: MoreThan(threshold),
+			},
+		});
+
+		const skipUtxos: Utxo[] = [];
+		for (let i = 0; i < previousTxs.length; ++i) {
+			if (previousTxs[i].txRaw) {
+				try {
+					const inputs = getInputUtxos(previousTxs[i].txRaw);
+					skipUtxos.push(...inputs);
+				} catch (e) {
+					Logger.error(`Error while getInputUtxos: ${e}`, e.stack);
+				}
+			}
+		}
+
+		Logger.debug(`recentInputs: ${JSON.stringify(skipUtxos)}`);
+
+		return skipUtxos;
+	}
+
 	async createCardano(
 		dto: CreateTransactionDto,
 	): Promise<CreateCardanoTransactionResponseDto> {
 		this.validateCreateCardanoTx(dto);
 
-		const tx = await createCardanoBridgingTx(dto);
+		let recentInputs: Utxo[] | undefined;
+		if (!dto.utxoCacheKey) {
+			recentInputs = await this.getRecentInputs(dto);
+		}
+
+		const tx = await createCardanoBridgingTx(dto, recentInputs);
 
 		if (!tx) {
 			throw new BadRequestException('error while creating bridging tx');
@@ -92,7 +132,12 @@ export class TransactionService {
 	): Promise<CardanoTransactionFeeResponseDto> {
 		this.validateCreateCardanoTx(dto);
 
-		const feeResp = await getCardanoBridgingTxFee(dto);
+		let recentInputs: Utxo[] | undefined;
+		if (!dto.utxoCacheKey) {
+			recentInputs = await this.getRecentInputs(dto);
+		}
+
+		const feeResp = await getCardanoBridgingTxFee(dto, recentInputs);
 
 		if (!feeResp) {
 			throw new BadRequestException('error while getting bridging tx fee');
