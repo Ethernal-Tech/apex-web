@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
+	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	goEthCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/hashicorp/go-hclog"
 )
@@ -211,7 +213,15 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxInfo, error,
 ) {
-	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody)
+	cacheUtxosTransformer := (*utils.CacheUtxosTransformer)(nil)
+	if useUtxoCache(requestBody, c.appConfig) {
+		cacheUtxosTransformer = &utils.CacheUtxosTransformer{
+			UtxoCacher: c.usedUtxoCacher,
+			Addr:       requestBody.SenderAddr,
+		}
+	}
+
+	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, cacheUtxosTransformer)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +233,15 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		0,
 	)
 	if err != nil {
+		if errors.Is(err, wallet.ErrUTXOsCouldNotSelect) {
+			err = errors.New("not enough funds for the transaction")
+		}
+
 		return nil, fmt.Errorf("failed to build tx: %w", err)
+	}
+
+	if cacheUtxosTransformer != nil {
+		cacheUtxosTransformer.UpdateUtxos(txInfo.ChosenInputs.Inputs)
 	}
 
 	return txInfo, nil
@@ -232,7 +250,7 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
-	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody)
+	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -250,7 +268,10 @@ func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 	return txFeeInfo, metadata, nil
 }
 
-func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequest.CreateBridgingTxRequest) (
+func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(
+	requestBody commonRequest.CreateBridgingTxRequest,
+	cacheUtxosTransformer *utils.CacheUtxosTransformer,
+) (
 	*sendtx.TxSender, []sendtx.BridgingTxReceiver, error,
 ) {
 	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
@@ -260,11 +281,7 @@ func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequ
 
 	var options []sendtx.TxSenderOption
 
-	if useUtxoCache(requestBody, c.appConfig) {
-		cacheUtxosTransformer := &utils.CacheUtxosTransformer{
-			UtxoCacher: c.usedUtxoCacher,
-			Addr:       requestBody.SenderAddr,
-		}
+	if cacheUtxosTransformer != nil {
 		options = append(options, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
 	}
 

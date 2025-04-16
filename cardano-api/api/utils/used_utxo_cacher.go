@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 )
 
@@ -11,6 +12,8 @@ type CacheUtxosTransformer struct {
 	UtxoCacher *UsedUtxoCacher
 	Addr       string
 }
+
+var _ sendtx.IUtxosTransformer = (*CacheUtxosTransformer)(nil)
 
 type txInputWithTime struct {
 	wallet.TxInput

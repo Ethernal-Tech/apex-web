@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/core"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
+	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	"github.com/hashicorp/go-hclog"
 )
 
@@ -62,7 +64,7 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txFeeInfo, bridgingRequestMetadata, err := c.calculateTxFee(&requestBody)
+	txFeeInfo, bridgingRequestMetadata, err := c.calculateTxFee(requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
@@ -90,7 +92,7 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txInfo, bridgingRequestMetadata, err := c.createTx(&requestBody)
+	txInfo, bridgingRequestMetadata, err := c.createTx(requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
@@ -229,10 +231,18 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	return nil
 }
 
-func (c *SkylineTxControllerImpl) createTx(requestBody *commonRequest.CreateBridgingTxRequest) (
+func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
-	txSender, receivers, err := c.getTxSenderAndReceivers(*requestBody)
+	cacheUtxosTransformer := (*utils.CacheUtxosTransformer)(nil)
+	if useUtxoCache(requestBody, c.appConfig) {
+		cacheUtxosTransformer = &utils.CacheUtxosTransformer{
+			UtxoCacher: c.usedUtxoCacher,
+			Addr:       requestBody.SenderAddr,
+		}
+	}
+
+	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, cacheUtxosTransformer)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -244,16 +254,24 @@ func (c *SkylineTxControllerImpl) createTx(requestBody *commonRequest.CreateBrid
 		requestBody.OperationFee,
 	)
 	if err != nil {
+		if errors.Is(err, wallet.ErrUTXOsCouldNotSelect) {
+			err = errors.New("not enough funds for the transaction")
+		}
+
 		return nil, nil, fmt.Errorf("failed to build tx: %w", err)
+	}
+
+	if cacheUtxosTransformer != nil {
+		cacheUtxosTransformer.UpdateUtxos(txInfo.ChosenInputs.Inputs)
 	}
 
 	return txInfo, metadata, nil
 }
 
-func (c *SkylineTxControllerImpl) calculateTxFee(requestBody *commonRequest.CreateBridgingTxRequest) (
+func (c *SkylineTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
-	txSender, receivers, err := c.getTxSenderAndReceivers(*requestBody)
+	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -271,7 +289,10 @@ func (c *SkylineTxControllerImpl) calculateTxFee(requestBody *commonRequest.Crea
 	return txFeeInfo, metadata, nil
 }
 
-func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequest.CreateBridgingTxRequest) (
+func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
+	requestBody commonRequest.CreateBridgingTxRequest,
+	cacheUtxosTransformer *utils.CacheUtxosTransformer,
+) (
 	*sendtx.TxSender, []sendtx.BridgingTxReceiver, error,
 ) {
 	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
@@ -281,11 +302,7 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequ
 
 	var options []sendtx.TxSenderOption
 
-	if useUtxoCache(requestBody, c.appConfig) {
-		cacheUtxosTransformer := &utils.CacheUtxosTransformer{
-			UtxoCacher: c.usedUtxoCacher,
-			Addr:       requestBody.SenderAddr,
-		}
+	if cacheUtxosTransformer != nil {
 		options = append(options, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
 	}
 
