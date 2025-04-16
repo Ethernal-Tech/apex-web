@@ -100,7 +100,7 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 	}
 
 	currencyOutput, tokenOutput := bridgingRequestMetadata.GetOutputAmounts()
-	currencyOutput -= bridgingRequestMetadata.BridgingFee - bridgingRequestMetadata.OperationFee
+	currencyOutput -= bridgingRequestMetadata.BridgingFee + bridgingRequestMetadata.OperationFee
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
