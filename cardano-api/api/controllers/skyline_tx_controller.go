@@ -99,7 +99,8 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	currencyOutput, tokenOutput := getOutputAmounts(bridgingRequestMetadata)
+	currencyOutput, tokenOutput := bridgingRequestMetadata.GetOutputAmounts()
+	currencyOutput -= bridgingRequestMetadata.BridgingFee - bridgingRequestMetadata.OperationFee
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
@@ -318,22 +319,6 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
 	}
 
 	return txSender, receivers, nil
-}
-
-func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata) (
-	outputCurrencyLovelace uint64, outputNativeToken uint64,
-) {
-	for _, x := range metadata.Transactions {
-		if x.IsNativeTokenOnSource() {
-			// WADA/WAPEX to ADA/APEX
-			outputNativeToken += x.Amount
-		} else {
-			// ADA/APEX to WADA/WAPEX or reactor
-			outputCurrencyLovelace += x.Amount
-		}
-	}
-
-	return outputCurrencyLovelace, outputNativeToken
 }
 
 func useUtxoCache(
