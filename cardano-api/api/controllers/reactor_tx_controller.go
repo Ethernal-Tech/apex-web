@@ -233,6 +233,8 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		0,
 	)
 	if err != nil {
+		c.logger.Error("failed to build tx", "err", err)
+
 		if errors.Is(err, wallet.ErrUTXOsCouldNotSelect) {
 			err = errors.New("not enough funds for the transaction")
 		}

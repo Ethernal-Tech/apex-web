@@ -254,6 +254,8 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		requestBody.OperationFee,
 	)
 	if err != nil {
+		c.logger.Error("failed to build tx", "err", err)
+
 		if errors.Is(err, wallet.ErrUTXOsCouldNotSelect) {
 			err = errors.New("not enough funds for the transaction")
 		}
