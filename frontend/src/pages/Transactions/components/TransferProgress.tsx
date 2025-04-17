@@ -32,8 +32,8 @@ import {ReactComponent as NexusSuccessIcon} from "../../../assets/bridge-status-
 import {ReactComponent as NexusErrorIcon} from "../../../assets/bridge-status-assets/nexus-error.svg"
 
 // cardano icons
-import {ReactComponent as CardanoInProgressIcon} from "../../../assets/bridge-status-assets/cardano.svg"
-import {ReactComponent as CardanoSuccessIcon} from "../../../assets/bridge-status-assets/cardano-success.svg"
+import {ReactComponent as CardanoInProgressIcon} from "../../../assets/bridge-status-assets/cardano-progress.svg"
+import {ReactComponent as CardanoSuccessIcon} from "../../../assets/bridge-status-assets/Cardano.svg"
 import {ReactComponent as CardanoErrorIcon} from "../../../assets/bridge-status-assets/cardano-error.svg"
 
 // bridge icons

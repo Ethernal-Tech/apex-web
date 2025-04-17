@@ -159,7 +159,7 @@ const TransactionsTablePage = () => {
             key={headCell.id}
             padding='normal'
             sortDirection={filters.orderBy === headCell.id ? filters.order as SortDirection : false}
-            sx={{ cursor: 'default',color:'white', borderBottom:'1px solid #435F694D' }}
+            sx={{ ...tableCellStyle, cursor: 'default' }}
           >
               {
                 headCell.id === 'actions' ?
@@ -202,7 +202,7 @@ const TransactionsTablePage = () => {
         <TableBody>
           {transactions?.items.map((transaction) => (
             <TableRow key={`tx-${transaction.id}`}>
-              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
+              <TableCell sx={tableCellStyle}>
                 <Box component="span" sx={{
                   display: 'inline-block',
                   color: 'white',
@@ -218,7 +218,8 @@ const TransactionsTablePage = () => {
                 </Box>
                 {capitalizeWord(transaction.originChain)}
               </TableCell>
-              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
+
+              <TableCell sx={tableCellStyle}>
                 <Box component="span" sx={{
                   display: 'inline-block',
                   color: 'white',
@@ -234,24 +235,30 @@ const TransactionsTablePage = () => {
                 </Box>
                 {capitalizeWord(transaction.destinationChain)}
               </TableCell>
-              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
+
+              <TableCell sx={tableCellStyle}>
                 {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {fromChainToChainCurrency(chain)}
               </TableCell>
               {
                 appSettings.isSkyline &&
-                <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
+                <TableCell sx={tableCellStyle}>
                   {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {fromChainToChainNativeToken(chain)}
                 </TableCell>
               }
               
-              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
-                
+              <TableCell sx={tableCellStyle}>
                 {formatAddress(transaction.receiverAddresses)}
               </TableCell>
 
-              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>{transaction.createdAt.toLocaleString()}</TableCell>
-              <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center', color:'white', borderBottom:'1px solid #435F694D'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
-              <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
+              <TableCell sx={tableCellStyle}>
+                {transaction.createdAt.toLocaleString()}
+              </TableCell>
+
+              <TableCell sx={{ ...tableCellStyle, textAlign: transaction.finishedAt ? 'left' : 'center'}}>
+                {transaction.finishedAt?.toLocaleString() || "/"}
+              </TableCell>
+
+              <TableCell sx={tableCellStyle}>
                 <Box sx={{display:'flex'}}>
                   <Box sx={{marginRight:1}} component='img' src={getStatusIconAndLabel(transaction.status).icon || ''} alt=''/>
                   <Typography sx={{textTransform:'capitalize', display:'inline-block'}}>
@@ -259,8 +266,8 @@ const TransactionsTablePage = () => {
                   </Typography>
                 </Box>
               </TableCell>
-              <TableCell sx={{ borderBottom:'1px solid #435F694D'}}>
-                
+
+              <TableCell sx={tableCellStyle}>
                 <Link style={{color:'red', background:'none',textDecoration:'none'}} to={formatTxDetailUrl(transaction)}>
                   View Details
                 </Link>
@@ -296,5 +303,11 @@ const TransactionsTablePage = () => {
     </BasePage>
   );
 };
+
+const tableCellStyle = {
+  color:'white',
+  borderBottom:'1px solid #435F694D',
+  padding: '16px 12px',
+}
 
 export default TransactionsTablePage;

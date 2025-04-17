@@ -14,6 +14,7 @@ import { menuDark } from '../../containers/theme';
 import Button from "../../components/Buttons/ButtonCustom";
 import { fromChainToChainNativeToken, openExplorer } from '../../utils/chainUtils';
 import { fromChainToChainCurrency } from '../../utils/chainUtils';
+import appSettings from '../../settings/appSettings';
 
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -87,7 +88,7 @@ const TransactionDetailPage = () => {
                     width: 24,
                     height: 24,
                     textAlign: 'center',
-                    lineHeight: '26px',
+                    lineHeight: '24px',
                     marginRight: 1,
                   }}>
                     {transaction && getChainLabelAndColor(transaction.originChain).letter}
@@ -108,7 +109,7 @@ const TransactionDetailPage = () => {
                     width: 24,
                     height: 24,
                     textAlign: 'center',
-                    lineHeight: '26px',
+                    lineHeight: '24px',
                     marginRight: 1,
                   }}>
                     {transaction && getChainLabelAndColor(transaction.destinationChain).letter}
@@ -121,10 +122,13 @@ const TransactionDetailPage = () => {
               <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && toFixed(convertDfmToApex(transaction?.amount, transaction?.originChain), 6)} {transaction && fromChainToChainCurrency(transaction?.originChain)}
               </Typography>
             </Box>
-            <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
-              <Typography variant="subtitle2">Native Token Amount:</Typography>
-              <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && toFixed(convertDfmToApex(transaction?.nativeTokenAmount, transaction?.originChain), 6)} {transaction && fromChainToChainNativeToken(transaction?.originChain)}</Typography>
-            </Box>
+            {
+              appSettings.isSkyline &&
+              <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
+                <Typography variant="subtitle2">Token Amount:</Typography>
+                <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && toFixed(convertDfmToApex(transaction?.nativeTokenAmount, transaction?.originChain), 6)} {transaction && fromChainToChainNativeToken(transaction?.originChain)}</Typography>
+              </Box>
+            }
             <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
               <Typography variant="subtitle2">Sender address:</Typography>
               <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{formatAddress(transaction?.senderAddress)}</Typography>

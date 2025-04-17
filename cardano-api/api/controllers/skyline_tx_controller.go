@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"context"
-	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
@@ -13,6 +13,7 @@ import (
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/core"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
+	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	"github.com/hashicorp/go-hclog"
 )
 
@@ -63,16 +64,15 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	fee, bridgingRequestMetadata, err := c.calculateTxFee(requestBody)
+	txFeeInfo, bridgingRequestMetadata, err := c.calculateTxFee(requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
 		return
 	}
 
-	_, _, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
-
-	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(fee, bridgingFee), c.logger)
+	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(
+		txFeeInfo.Fee, bridgingRequestMetadata.BridgingFee), c.logger)
 }
 
 func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
@@ -92,18 +92,20 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txRaw, txHash, bridgingRequestMetadata, err := c.createTx(requestBody)
+	txInfo, bridgingRequestMetadata, err := c.createTx(requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
 		return
 	}
 
-	currencyOutput, tokenOutput, bridgingFee := getOutputAmounts(bridgingRequestMetadata)
+	currencyOutput, tokenOutput := bridgingRequestMetadata.GetOutputAmounts()
+	currencyOutput -= bridgingRequestMetadata.BridgingFee + bridgingRequestMetadata.OperationFee
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		commonResponse.NewBridgingTxResponse(txRaw, txHash, bridgingFee, currencyOutput, tokenOutput), c.logger,
+		commonResponse.NewBridgingTxResponse(
+			txInfo.TxRaw, txInfo.TxHash, bridgingRequestMetadata.BridgingFee, currencyOutput, tokenOutput), c.logger,
 	)
 }
 
@@ -231,48 +233,69 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 }
 
 func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
-	string, string, *sendtx.BridgingRequestMetadata, error,
+	*sendtx.TxInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
-	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody)
-	if err != nil {
-		return "", "", nil, err
+	cacheUtxosTransformer := (*utils.CacheUtxosTransformer)(nil)
+	if useUtxoCache(requestBody, c.appConfig) {
+		cacheUtxosTransformer = &utils.CacheUtxosTransformer{
+			UtxoCacher: c.usedUtxoCacher,
+			Addr:       requestBody.SenderAddr,
+		}
 	}
 
-	txRawBytes, txHash, metadata, err := txSender.CreateBridgingTx(
+	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, cacheUtxosTransformer)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	txInfo, metadata, err := txSender.CreateBridgingTx(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
 		requestBody.OperationFee,
 	)
 	if err != nil {
-		return "", "", nil, fmt.Errorf("failed to build tx: %w", err)
+		c.logger.Error("failed to build tx", "err", err)
+
+		if errors.Is(err, wallet.ErrUTXOsCouldNotSelect) {
+			err = errors.New("not enough funds for the transaction")
+		}
+
+		return nil, nil, fmt.Errorf("failed to build tx: %w", err)
 	}
 
-	return hex.EncodeToString(txRawBytes), txHash, metadata, nil
+	if cacheUtxosTransformer != nil {
+		cacheUtxosTransformer.UpdateUtxos(txInfo.ChosenInputs.Inputs)
+	}
+
+	return txInfo, metadata, nil
 }
 
 func (c *SkylineTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
-	uint64, *sendtx.BridgingRequestMetadata, error,
+	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
-	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody)
+	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, nil)
 	if err != nil {
-		return 0, nil, err
+		return nil, nil, err
 	}
 
-	fee, metadata, err := txSender.CalculateBridgingTxFee(
+	txFeeInfo, metadata, err := txSender.CalculateBridgingTxFee(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
 		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
 		requestBody.OperationFee,
 	)
 	if err != nil {
-		return 0, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
+		return nil, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
 	}
 
-	return fee, metadata, nil
+	return txFeeInfo, metadata, nil
 }
 
-func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequest.CreateBridgingTxRequest) (
+func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
+	requestBody commonRequest.CreateBridgingTxRequest,
+	cacheUtxosTransformer *utils.CacheUtxosTransformer,
+) (
 	*sendtx.TxSender, []sendtx.BridgingTxReceiver, error,
 ) {
 	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
@@ -280,17 +303,7 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequ
 		return nil, nil, fmt.Errorf("failed to generate configuration")
 	}
 
-	var options []sendtx.TxSenderOption
-
-	if useUtxoCache(requestBody, c.appConfig) {
-		cacheUtxosTransformer := &utils.CacheUtxosTransformer{
-			UtxoCacher: c.usedUtxoCacher,
-			Addr:       requestBody.SenderAddr,
-		}
-		options = append(options, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
-	}
-
-	txSender := sendtx.NewTxSender(txSenderChainsConfig, options...)
+	txSender := sendtx.NewTxSender(txSenderChainsConfig, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
 
 	receivers := make([]sendtx.BridgingTxReceiver, len(requestBody.Transactions))
 	for i, tx := range requestBody.Transactions {
@@ -306,24 +319,6 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(requestBody commonRequ
 	}
 
 	return txSender, receivers, nil
-}
-
-func getOutputAmounts(metadata *sendtx.BridgingRequestMetadata) (
-	outputCurrencyLovelace uint64, outputNativeToken uint64, bridgingFee uint64,
-) {
-	bridgingFee = metadata.BridgingFee + metadata.OperationFee
-
-	for _, x := range metadata.Transactions {
-		if x.IsNativeTokenOnSource() {
-			// WADA/WAPEX to ADA/APEX
-			outputNativeToken += x.Amount
-		} else {
-			// ADA/APEX to WADA/WAPEX or reactor
-			outputCurrencyLovelace += x.Amount
-		}
-	}
-
-	return outputCurrencyLovelace, outputNativeToken, bridgingFee
 }
 
 func useUtxoCache(
