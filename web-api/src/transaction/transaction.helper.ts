@@ -19,8 +19,12 @@ import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
 import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
 import { SettingsResponseDto } from 'src/settings/settings.dto';
 import { convertDfmToWei } from 'src/utils/generalUtils';
+import { Utxo } from 'src/blockchain/dto';
 
-const prepareCreateCardanoBridgingTx = (dto: CreateTransactionDto) => {
+const prepareCreateCardanoBridgingTx = (
+	dto: CreateTransactionDto,
+	skipUtxos: Utxo[] | undefined,
+) => {
 	// centralized bridge currently doesn't support prime->vector, vector->prime
 	const nexusInvolved =
 		dto.originChain === ChainEnum.Nexus ||
@@ -41,6 +45,7 @@ const prepareCreateCardanoBridgingTx = (dto: CreateTransactionDto) => {
 		],
 		bridgingFee: dto.bridgingFee ? +dto.bridgingFee : undefined,
 		useFallback: isCentralized,
+		skipUtxos,
 		utxoCacheKey: dto.utxoCacheKey,
 	};
 
@@ -49,12 +54,13 @@ const prepareCreateCardanoBridgingTx = (dto: CreateTransactionDto) => {
 
 export const createCardanoBridgingTx = async (
 	dto: CreateTransactionDto,
+	skipUtxos: Utxo[] | undefined,
 ): Promise<CreateCardanoTransactionResponseDto> => {
 	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
 	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 	const endpointUrl = apiUrl + `/api/CardanoTx/CreateBridgingTx`;
 
-	const body = prepareCreateCardanoBridgingTx(dto);
+	const body = prepareCreateCardanoBridgingTx(dto, skipUtxos);
 
 	try {
 		Logger.debug(`axios.post: ${endpointUrl}, body: ${JSON.stringify(body)}`);
@@ -84,12 +90,13 @@ export const createCardanoBridgingTx = async (
 
 export const getCardanoBridgingTxFee = async (
 	dto: CreateTransactionDto,
+	skipUtxos: Utxo[] | undefined,
 ): Promise<CardanoTransactionFeeResponseDto> => {
 	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
 	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 	const endpointUrl = apiUrl + `/api/CardanoTx/GetBridgingTxFee`;
 
-	const body = prepareCreateCardanoBridgingTx(dto);
+	const body = prepareCreateCardanoBridgingTx(dto, skipUtxos);
 
 	try {
 		Logger.debug(`axios.post: ${endpointUrl}, body: ${JSON.stringify(body)}`);
