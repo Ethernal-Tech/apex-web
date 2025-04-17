@@ -10,6 +10,7 @@ import (
 	commonRequest "github.com/Ethernal-Tech/cardano-api/api/model/common/request"
 	commonResponse "github.com/Ethernal-Tech/cardano-api/api/model/common/response"
 	"github.com/Ethernal-Tech/cardano-api/api/utils"
+	utxotransformer "github.com/Ethernal-Tech/cardano-api/api/utxo_transformer"
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
@@ -21,7 +22,7 @@ import (
 
 type ReactorTxControllerImpl struct {
 	appConfig      *core.AppConfig
-	usedUtxoCacher *utils.UsedUtxoCacher
+	usedUtxoCacher *utxotransformer.UsedUtxoCacher
 	logger         hclog.Logger
 }
 
@@ -33,7 +34,7 @@ func NewReactorTxController(
 ) *ReactorTxControllerImpl {
 	return &ReactorTxControllerImpl{
 		appConfig:      appConfig,
-		usedUtxoCacher: utils.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
+		usedUtxoCacher: utxotransformer.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
 		logger:         logger,
 	}
 }
@@ -213,13 +214,7 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxInfo, error,
 ) {
-	cacheUtxosTransformer := (*utils.CacheUtxosTransformer)(nil)
-	if useUtxoCache(requestBody, c.appConfig) {
-		cacheUtxosTransformer = &utils.CacheUtxosTransformer{
-			UtxoCacher: c.usedUtxoCacher,
-			Addr:       requestBody.SenderAddr,
-		}
-	}
+	cacheUtxosTransformer := utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher)
 
 	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, cacheUtxosTransformer)
 	if err != nil {
@@ -252,7 +247,8 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
-	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, nil)
+	txSender, receivers, err := c.getTxSenderAndReceivers(
+		requestBody, utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -272,7 +268,7 @@ func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 
 func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(
 	requestBody commonRequest.CreateBridgingTxRequest,
-	cacheUtxosTransformer *utils.CacheUtxosTransformer,
+	utxosTransformer sendtx.IUtxosTransformer,
 ) (
 	*sendtx.TxSender, []sendtx.BridgingTxReceiver, error,
 ) {
@@ -281,7 +277,7 @@ func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(
 		return nil, nil, fmt.Errorf("failed to generate configuration")
 	}
 
-	txSender := sendtx.NewTxSender(txSenderChainsConfig, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
+	txSender := sendtx.NewTxSender(txSenderChainsConfig, sendtx.WithUtxosTransformer(utxosTransformer))
 
 	receivers := make([]sendtx.BridgingTxReceiver, len(requestBody.Transactions))
 	for i, tx := range requestBody.Transactions {
