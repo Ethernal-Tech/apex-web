@@ -103,8 +103,6 @@ export class TransactionService {
 			}
 		}
 
-		Logger.debug(`recentInputs: ${JSON.stringify(skipUtxos)}`);
-
 		return skipUtxos;
 	}
 
@@ -113,11 +111,7 @@ export class TransactionService {
 	): Promise<CreateCardanoTransactionResponseDto> {
 		this.validateCreateCardanoTx(dto);
 
-		let recentInputs: Utxo[] | undefined;
-		if (!dto.utxoCacheKey) {
-			recentInputs = await this.getRecentInputs(dto);
-		}
-
+		const recentInputs = await this.getRecentInputs(dto);
 		const tx = await createCardanoBridgingTx(dto, recentInputs);
 
 		if (!tx) {
@@ -132,11 +126,7 @@ export class TransactionService {
 	): Promise<CardanoTransactionFeeResponseDto> {
 		this.validateCreateCardanoTx(dto);
 
-		let recentInputs: Utxo[] | undefined;
-		if (!dto.utxoCacheKey) {
-			recentInputs = await this.getRecentInputs(dto);
-		}
-
+		const recentInputs = await this.getRecentInputs(dto);
 		const feeResp = await getCardanoBridgingTxFee(dto, recentInputs);
 
 		if (!feeResp) {
