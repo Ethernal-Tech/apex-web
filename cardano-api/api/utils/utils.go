@@ -7,6 +7,12 @@ import (
 	"net/http"
 
 	"github.com/Ethernal-Tech/cardano-api/api/model/common/response"
+
+	commonRequest "github.com/Ethernal-Tech/cardano-api/api/model/common/request"
+	utxotransformer "github.com/Ethernal-Tech/cardano-api/api/utxo_transformer"
+	"github.com/Ethernal-Tech/cardano-api/common"
+	"github.com/Ethernal-Tech/cardano-api/core"
+	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	"github.com/hashicorp/go-hclog"
 )
 
@@ -39,4 +45,45 @@ func DecodeModel[T any](w http.ResponseWriter, r *http.Request, logger hclog.Log
 	}
 
 	return requestBody, true
+}
+
+func GetUtxosTransformer(
+	requestBody commonRequest.CreateBridgingTxRequest,
+	appConfig *core.AppConfig,
+	usedUtxoCacher *utxotransformer.UsedUtxoCacher,
+) utxotransformer.IUtxosTransformer {
+	if useUtxoCache(requestBody, appConfig) {
+		return &utxotransformer.CacheUtxosTransformer{
+			UtxoCacher: usedUtxoCacher,
+			Addr:       requestBody.SenderAddr,
+		}
+
+	}
+
+	if len(requestBody.SkipUtxos) > 0 {
+		return &utxotransformer.SkipUtxosTransformer{
+			SkipUtxos: common.Map(requestBody.SkipUtxos, func(a commonRequest.UtxoRequest) wallet.TxInput {
+				return wallet.TxInput{
+					Hash:  a.Hash,
+					Index: a.Index,
+				}
+			}),
+		}
+	}
+
+	return nil
+}
+
+func useUtxoCache(
+	requestBody commonRequest.CreateBridgingTxRequest, appConfig *core.AppConfig,
+) (useCaching bool) {
+	if desiredKey := requestBody.UTXOCacheKey; desiredKey != "" {
+		for _, key := range appConfig.APIConfig.UTXOCacheKeys {
+			if key == desiredKey {
+				return true
+			}
+		}
+	}
+
+	return false
 }

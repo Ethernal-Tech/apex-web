@@ -10,6 +10,7 @@ import (
 	commonRequest "github.com/Ethernal-Tech/cardano-api/api/model/common/request"
 	commonResponse "github.com/Ethernal-Tech/cardano-api/api/model/common/response"
 	"github.com/Ethernal-Tech/cardano-api/api/utils"
+	utxotransformer "github.com/Ethernal-Tech/cardano-api/api/utxo_transformer"
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/core"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
@@ -19,7 +20,7 @@ import (
 
 type SkylineTxControllerImpl struct {
 	appConfig      *core.AppConfig
-	usedUtxoCacher *utils.UsedUtxoCacher
+	usedUtxoCacher *utxotransformer.UsedUtxoCacher
 	logger         hclog.Logger
 }
 
@@ -31,7 +32,7 @@ func NewSkylineTxController(
 ) *SkylineTxControllerImpl {
 	return &SkylineTxControllerImpl{
 		appConfig:      appConfig,
-		usedUtxoCacher: utils.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
+		usedUtxoCacher: utxotransformer.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
 		logger:         logger,
 	}
 }
@@ -235,13 +236,7 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
-	cacheUtxosTransformer := (*utils.CacheUtxosTransformer)(nil)
-	if useUtxoCache(requestBody, c.appConfig) {
-		cacheUtxosTransformer = &utils.CacheUtxosTransformer{
-			UtxoCacher: c.usedUtxoCacher,
-			Addr:       requestBody.SenderAddr,
-		}
-	}
+	cacheUtxosTransformer := utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher)
 
 	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, cacheUtxosTransformer)
 	if err != nil {
@@ -274,7 +269,8 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 func (c *SkylineTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
-	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, nil)
+	txSender, receivers, err := c.getTxSenderAndReceivers(
+		requestBody, utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -294,7 +290,7 @@ func (c *SkylineTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 
 func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
 	requestBody commonRequest.CreateBridgingTxRequest,
-	cacheUtxosTransformer *utils.CacheUtxosTransformer,
+	utxosTransformer sendtx.IUtxosTransformer,
 ) (
 	*sendtx.TxSender, []sendtx.BridgingTxReceiver, error,
 ) {
@@ -303,7 +299,7 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
 		return nil, nil, fmt.Errorf("failed to generate configuration")
 	}
 
-	txSender := sendtx.NewTxSender(txSenderChainsConfig, sendtx.WithUtxosTransformer(cacheUtxosTransformer))
+	txSender := sendtx.NewTxSender(txSenderChainsConfig, sendtx.WithUtxosTransformer(utxosTransformer))
 
 	receivers := make([]sendtx.BridgingTxReceiver, len(requestBody.Transactions))
 	for i, tx := range requestBody.Transactions {
@@ -319,22 +315,4 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
 	}
 
 	return txSender, receivers, nil
-}
-
-func useUtxoCache(
-	requestBody commonRequest.CreateBridgingTxRequest, appConfig *core.AppConfig,
-) (useCaching bool) {
-	shouldUseUsedUtxoCacher := false
-
-	if desiredKey := requestBody.UTXOCacheKey; desiredKey != "" {
-		for _, key := range appConfig.APIConfig.UTXOCacheKeys {
-			if key == desiredKey {
-				shouldUseUsedUtxoCacher = true
-
-				break
-			}
-		}
-	}
-
-	return shouldUseUsedUtxoCacher
 }
