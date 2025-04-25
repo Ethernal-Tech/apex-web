@@ -1,6 +1,7 @@
 import SuccessIcon from '../assets/bridge-status-icons/success.svg';
 import FailedIcon from '../assets/bridge-status-icons/failed.svg';
 import PendingIcon from '../assets/bridge-status-icons/pending.svg';
+import RefundIcon from '../assets/bridge-status-icons/refund.svg';
 
 import { TransactionStatusEnum } from '../swagger/apexBridgeApiService';
 
@@ -37,7 +38,21 @@ export function getStatusColor(status: TransactionStatusEnum) {
 
 // todo af - will show "success", "pending", or "failed". 
 // returns src for image to be used, as well as the message to show
-export const getStatusIconAndLabel = (status: TransactionStatusEnum) => {
+export const getStatusIconAndLabel = (status: TransactionStatusEnum, isRefund: boolean) => {
+	const finalStatuses = [
+		TransactionStatusEnum.ExecutedOnDestination,
+		TransactionStatusEnum.InvalidRequest,
+	  ];
+
+	if (isRefund) {
+		if (status === TransactionStatusEnum.ExecutedOnDestination) {
+		  return { icon: RefundIcon, label: 'refunded' };
+		}
+		if (!finalStatuses.includes(status)) {
+		  return { icon: RefundIcon, label: 'refunding' };
+		}
+	}
+
 	switch (status) {
 	  case TransactionStatusEnum.ExecutedOnDestination:
 		return { icon: SuccessIcon, label: 'success' };

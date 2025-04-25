@@ -234,9 +234,9 @@ const TransactionsTablePage = () => {
               <TableCell sx={{ textAlign: transaction.finishedAt ? 'left' : 'center', color:'white', borderBottom:'1px solid #435F694D'}}>{transaction.finishedAt?.toLocaleString() || "/"}</TableCell>
               <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
                 <Box sx={{display:'flex'}}>
-                  <Box sx={{marginRight:1}} component='img' src={getStatusIconAndLabel(transaction.status).icon || ''} alt=''/>
+                  <Box sx={{marginRight:1}} component='img' src={getStatusIconAndLabel(transaction.status, transaction.isRefund).icon || ''} alt=''/>
                   <Typography sx={{textTransform:'capitalize', display:'inline-block'}}>
-                    {getStatusIconAndLabel(transaction.status).label}
+                    {getStatusIconAndLabel(transaction.status, transaction.isRefund).label}
                   </Typography>
                 </Box>
               </TableCell>
