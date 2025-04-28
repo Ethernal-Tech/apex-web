@@ -134,10 +134,9 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum, isRe
             text:'',
             status:STEP_STATUS.WAITING,
             doneIcon: isRefund ? <RefundIcon/> : <Done3icon/>,
-            asset: isRefund ? getChainIcons(sourceChain) : getChainIcons(destinationChain)
+            asset: getChainIcons(isRefund ? sourceChain : destinationChain)
         }
     ]
-
 }
 
 const getStepText = (stepNumber: number, originChain: ChainEnum, destinationChain: ChainEnum, isRefund: boolean) => {
