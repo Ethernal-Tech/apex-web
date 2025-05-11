@@ -6,6 +6,7 @@ import (
 
 	clicardanoapi "github.com/Ethernal-Tech/cardano-api/cli/cardano-api"
 	cligenerateconfigs "github.com/Ethernal-Tech/cardano-api/cli/generateconfigs"
+	cliversion "github.com/Ethernal-Tech/cardano-api/cli/version"
 
 	"github.com/spf13/cobra"
 )
@@ -30,6 +31,7 @@ func (rc *RootCommand) registerSubCommands() {
 	rc.baseCmd.AddCommand(
 		cligenerateconfigs.GetGenerateConfigsCommand(),
 		clicardanoapi.GetCardanoAPICommand(),
+		cliversion.GetVersionCommand(),
 	)
 }
 
