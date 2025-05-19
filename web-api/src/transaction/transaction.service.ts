@@ -128,6 +128,34 @@ export class TransactionService {
 		return skipUtxos;
 	}
 
+	async getRecentInputs(dto: CreateTransactionDto): Promise<Utxo[]> {
+		const recentInputsThresholdMinutes =
+			process.env.RECENT_INPUTS_THRESHOLD_MINUTES || '5';
+		const threshold = new Date(
+			Date.now() - parseInt(recentInputsThresholdMinutes) * 60 * 1000,
+		);
+		const previousTxs = await this.bridgeTransactionRepository.find({
+			where: {
+				senderAddress: dto.senderAddress,
+				createdAt: MoreThan(threshold),
+			},
+		});
+
+		const skipUtxos: Utxo[] = [];
+		for (let i = 0; i < previousTxs.length; ++i) {
+			if (previousTxs[i].txRaw) {
+				try {
+					const inputs = getInputUtxos(previousTxs[i].txRaw);
+					skipUtxos.push(...inputs);
+				} catch (e) {
+					Logger.error(`Error while getInputUtxos: ${e}`, e.stack);
+				}
+			}
+		}
+
+		return skipUtxos;
+	}
+
 	async createCardano(
 		dto: CreateTransactionDto,
 	): Promise<CreateCardanoTransactionResponseDto> {
