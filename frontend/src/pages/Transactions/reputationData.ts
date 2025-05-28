@@ -10,7 +10,7 @@ const repSystemMessages: readonly RepSystemMessage[] = [
     },
     {
         title: "Your next Daily Quest might surprise you.",
-        subtitle: "Earn points and reputation by completing quick blockchain tasks."
+        subtitle: "Enchance your reputation by completing quick blockchain tasks."
     },
     {
         title: "Reputation grows with action. Ready?",
@@ -26,14 +26,14 @@ const repSystemMessages: readonly RepSystemMessage[] = [
     },
     {
         title: "Small actions, big reputation.",
-        subtitle: "Complete simple tasks and grow your trust score today."
+        subtitle: "Complete simple tasks and grow your reputation today."
     },
     {
-        title: "It's a good day to earn some points.",
+        title: "It's a good day to work your reputation.",
         subtitle: "Get rewarded for what you already do on-chain."
     },
     {
-        title: "New Rep challenges await.",
+        title: "New Reputation challenges await.",
         subtitle: "Log in daily to complete quests and build your profile."
     },
     {
