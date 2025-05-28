@@ -40,6 +40,7 @@ import {ReactComponent as BridgeErrorIcon} from "../../../assets/bridge-status-a
 import {ReactComponent as Step1} from "../../../assets/bridge-status-assets/steps/step-1.svg"
 import {ReactComponent as Step2} from "../../../assets/bridge-status-assets/steps/step-2.svg"
 import {ReactComponent as Step3} from "../../../assets/bridge-status-assets/steps/step-3.svg"
+import { getRandomRepSystemMessage, RepSystemMessage } from "../reputationData"
 /* 
 const NexusInProgressIcon = VectorInProgressIcon;
 const NexusSuccessIcon = VectorSuccessIcon;
@@ -232,8 +233,11 @@ const TransferProgress = ({
     tx,
     setTx,
 }: TransferProgressProps) => {
+    console.log('RERENDER');
+    
     const navigate = useNavigate();
     const [txStatusToShow, setTxStatusToShow] = useState<TransactionStatusEnum>(tx.status);
+    const [repSystemMessage, setRepSystemMessage] = useState<RepSystemMessage | undefined>(undefined);
     
     const fetchTx = useCallback(async () => {
         const bindedAction = getAction.bind(null, tx.id);
@@ -268,6 +272,10 @@ const TransferProgress = ({
     })(txStatusToShow)
 
 	useEffect(() => {
+        // Set the title and subtitle to be used for reputation system promotion
+        const repSystemMessage: RepSystemMessage = getRandomRepSystemMessage();
+        setRepSystemMessage(repSystemMessage);
+
 		fetchTx();
 
         const handle = setInterval(async () => {

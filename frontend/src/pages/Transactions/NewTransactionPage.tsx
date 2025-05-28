@@ -11,12 +11,28 @@ import { useCallback, useState } from "react";
 import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
-import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto, TransactionStatusEnum } from "../../swagger/apexBridgeApiService";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 
 function NewTransactionPage() {
-	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
+	// @todo make sure to return this line here
+	// const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
+	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>(
+		new BridgeTransactionDto({
+			amount: '2000010',
+			createdAt: new Date("2024-08-01T11:40:23.809Z"),
+			destinationChain: ChainEnum.Vector,
+			destinationTxHash: "3d83f61e5eba36812e8327366c19caea40b2d5bad1938e9c768fe0103f7c3324",
+			finishedAt: new Date("2024-08-01T11:44:20.092Z"),
+			id: 15,
+			originChain: ChainEnum.Prime,
+			receiverAddresses: "vector_test1vgrgxh4s35a5pdv0dc4zgq33crn34emnk2e7vnensf4tezq3tkm9m",
+			senderAddress: "addr_test1qpcjca78u9rtjkjknuhhahcamqwly4z7mm93xfcp79lcf4rffsvqf8w2lst46f3vqm4vnaftsmeqtcuw3072de49g4ssz3477z",
+			sourceTxHash: "36e47d005081d088aeec7c88d7c5491f7dda150131249d34d6d453dfceb320ab",
+			status: TransactionStatusEnum.IncludedInBatch,
+		})
+	);
 
 	const [loading, setLoading] = useState(false);
 	
