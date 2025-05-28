@@ -20,6 +20,7 @@ export const NEW_TRANSACTION_ROUTE = '/new-transaction';
 export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
 export const PRIVACY_POLICY_ROUTE = '/privacy-policy';
 export const TERMS_OF_SERVICE_ROUTE = '/terms-of-service';
+export const REPUTATION_SYSTEM_ROUTE = 'https://reputation.apexfusion.org';
 
 const PageRouter: React.FC = () => {
 

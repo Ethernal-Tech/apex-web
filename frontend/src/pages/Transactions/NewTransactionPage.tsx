@@ -7,34 +7,30 @@ import BridgeInput from "./components/BridgeInput";
 import { chainIcons, convertDfmToWei, validateSubmitTxInputs } from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
-import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto, TransactionStatusEnum } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
+import { getRandomRepSystemMessage, RepSystemMessage } from "./reputationData";
+import ReputationSystemWidget from "./components/ReputationSystemWidget";
 
-function NewTransactionPage() {
-	// @todo make sure to return this line here
-	// const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
-	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>(
-		new BridgeTransactionDto({
-			amount: '2000010',
-			createdAt: new Date("2024-08-01T11:40:23.809Z"),
-			destinationChain: ChainEnum.Vector,
-			destinationTxHash: "3d83f61e5eba36812e8327366c19caea40b2d5bad1938e9c768fe0103f7c3324",
-			finishedAt: new Date("2024-08-01T11:44:20.092Z"),
-			id: 15,
-			originChain: ChainEnum.Prime,
-			receiverAddresses: "vector_test1vgrgxh4s35a5pdv0dc4zgq33crn34emnk2e7vnensf4tezq3tkm9m",
-			senderAddress: "addr_test1qpcjca78u9rtjkjknuhhahcamqwly4z7mm93xfcp79lcf4rffsvqf8w2lst46f3vqm4vnaftsmeqtcuw3072de49g4ssz3477z",
-			sourceTxHash: "36e47d005081d088aeec7c88d7c5491f7dda150131249d34d6d453dfceb320ab",
-			status: TransactionStatusEnum.IncludedInBatch,
-		})
-	);
-
+function NewTransactionPage() {	
+	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
 	const [loading, setLoading] = useState(false);
+
+	const [repSystemMessage, setRepSystemMessage] = useState<RepSystemMessage | undefined>(undefined);
+
+	useEffect(()=>{
+		if(!repSystemMessage){
+			// Set the title and subtitle to be used for reputation system promotion
+			const repSystemMessage: RepSystemMessage = getRandomRepSystemMessage();
+			setRepSystemMessage(repSystemMessage);
+		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	},[txInProgress]);
 	
 	const chain = useSelector((state: RootState)=> state.chain.chain);
 	const destinationChain = useSelector((state: RootState)=> state.chain.destinationChain);
@@ -170,6 +166,7 @@ function NewTransactionPage() {
 				display:'grid',
 				gridTemplateColumns:'repeat(6,1fr)', 
 				gap:'24px',
+				marginBottom:'30px'
 			}}>
 				<Box sx={{ 
 					gridColumn:'span 2', 
@@ -207,19 +204,25 @@ function NewTransactionPage() {
 
 				{/* left side */}
 				<Box sx={{
-					gridColumn:'span 2', 
-					borderTop:`2px solid ${chain === ChainEnum.Prime ? '#077368' : '#F25041'}`,
-					p:2,
-					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
+					gridColumn:'span 2',
 					[tabletMediaQuery]:{
 						gridColumn:'span 6'
-					}
+					},
 				}}>
-					<TotalBalance/>
-					
-					<Typography sx={{color:'white',mt:4, mb:2}}>Address</Typography>
-					<AddressBalance/>
-					
+					{/* TotalBanace and AddressBalance widgets */}
+					<Box sx={{
+						borderTop:`2px solid ${chain === ChainEnum.Prime ? '#077368' : '#F25041'}`,
+						p:2,
+						background:'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
+					}}>
+						<TotalBalance/>
+						
+						<Typography sx={{color:'white',mt:4, mb:2}}>Address</Typography>
+						<AddressBalance/>
+					</Box>
+
+					{/* Conditional display of Reputation System Widget */}
+					{txInProgress && repSystemMessage && <ReputationSystemWidget repSystemMessage={repSystemMessage} />}
 				</Box>
 				
 				{/* right side */}

@@ -40,7 +40,6 @@ import {ReactComponent as BridgeErrorIcon} from "../../../assets/bridge-status-a
 import {ReactComponent as Step1} from "../../../assets/bridge-status-assets/steps/step-1.svg"
 import {ReactComponent as Step2} from "../../../assets/bridge-status-assets/steps/step-2.svg"
 import {ReactComponent as Step3} from "../../../assets/bridge-status-assets/steps/step-3.svg"
-import { getRandomRepSystemMessage, RepSystemMessage } from "../reputationData"
 /* 
 const NexusInProgressIcon = VectorInProgressIcon;
 const NexusSuccessIcon = VectorSuccessIcon;
@@ -233,11 +232,8 @@ const TransferProgress = ({
     tx,
     setTx,
 }: TransferProgressProps) => {
-    console.log('RERENDER');
-    
     const navigate = useNavigate();
     const [txStatusToShow, setTxStatusToShow] = useState<TransactionStatusEnum>(tx.status);
-    const [repSystemMessage, setRepSystemMessage] = useState<RepSystemMessage | undefined>(undefined);
     
     const fetchTx = useCallback(async () => {
         const bindedAction = getAction.bind(null, tx.id);
@@ -272,10 +268,6 @@ const TransferProgress = ({
     })(txStatusToShow)
 
 	useEffect(() => {
-        // Set the title and subtitle to be used for reputation system promotion
-        const repSystemMessage: RepSystemMessage = getRandomRepSystemMessage();
-        setRepSystemMessage(repSystemMessage);
-
 		fetchTx();
 
         const handle = setInterval(async () => {
@@ -306,8 +298,13 @@ const TransferProgress = ({
 
     const onOpenExplorer = () => openExplorer(tx);
     return (
-        <Box>
-            <Typography variant='h3' fontSize="14px" fontWeight={600} sx={{color:'white',mt:4, mb:2, textAlign:'center', textTransform:'uppercase'}}>
+        <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '100%',
+        }}>
+            <Typography variant='h3' fontSize="14px" fontWeight={600} sx={{color:'white', mt:'32px',mb:2, textAlign:'center', textTransform:'uppercase'}}>
                 {transferProgress}
 
                 {transferProgress !== TRANSFER_PROGRESS_TEXT.DONE && transferProgress !== TRANSFER_PROGRESS_TEXT.ERROR &&
@@ -324,7 +321,7 @@ const TransferProgress = ({
                 {steps.map(step=> <TransferStep key={step.number} step={step}/>)}
             </Box>
 
-            <Box sx={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'20px',mt:4}}>
+            <Box sx={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'20px',mt:4, mb:'32px'}}>
                 <ButtonCustom  
                     variant="red" 
                     onClick={()=> navigate(TRANSACTIONS_ROUTE)}
