@@ -1,10 +1,13 @@
 import { Box, Typography } from "@mui/material";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
-import { RepSystemMessage } from "../reputationData";
-import { REPUTATION_SYSTEM_ROUTE } from "../../PageRouter";
+import { IRepSystemMessage } from "./reputationData";
 import repSystemMacbookImage from "../../../assets/reputation-system-macbook.webp";
+import useRepSystemMessage from "./useRepSystemMessage";
 
-const ReputationSystemWidget = ({repSystemMessage}:{repSystemMessage: RepSystemMessage}) => {
+const REPUTATION_SYSTEM_ROUTE = 'https://reputation.apexfusion.org'; // Reputation System route to open on click
+
+const ReputationSystemWidget = () => {
+    const repSystemMessage: IRepSystemMessage | undefined = useRepSystemMessage()
     return ( 
         <Box sx={{
             p:2,
@@ -14,11 +17,11 @@ const ReputationSystemWidget = ({repSystemMessage}:{repSystemMessage: RepSystemM
             background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
         }}>
             <Typography variant="h3" sx={{color:'white', mb:2, fontSize: '20px', fontWeight:'bold'}}>
-                {repSystemMessage.title}
+                {repSystemMessage?.title}
             </Typography>
 
             <Typography sx={{color:'white', mb:2}}>
-                {repSystemMessage.subtitle}
+                {repSystemMessage?.subtitle}
             </Typography>
 
             <ButtonCustom  

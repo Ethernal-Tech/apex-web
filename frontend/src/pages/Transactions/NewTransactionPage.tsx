@@ -7,30 +7,18 @@ import BridgeInput from "./components/BridgeInput";
 import { chainIcons, convertDfmToWei, validateSubmitTxInputs } from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
 import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
-import { getRandomRepSystemMessage, RepSystemMessage } from "./reputationData";
-import ReputationSystemWidget from "./components/ReputationSystemWidget";
+import ReputationSystemWidget from "./RepSystem/ReputationSystemWidget";
 
 function NewTransactionPage() {	
 	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
 	const [loading, setLoading] = useState(false);
-
-	const [repSystemMessage, setRepSystemMessage] = useState<RepSystemMessage | undefined>(undefined);
-
-	useEffect(()=>{
-		if(!repSystemMessage){
-			// Set the title and subtitle to be used for reputation system promotion
-			const repSystemMessage: RepSystemMessage = getRandomRepSystemMessage();
-			setRepSystemMessage(repSystemMessage);
-		}
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	},[txInProgress]);
 	
 	const chain = useSelector((state: RootState)=> state.chain.chain);
 	const destinationChain = useSelector((state: RootState)=> state.chain.destinationChain);
@@ -222,7 +210,7 @@ function NewTransactionPage() {
 					</Box>
 
 					{/* Conditional display of Reputation System Widget */}
-					{txInProgress && repSystemMessage && <ReputationSystemWidget repSystemMessage={repSystemMessage} />}
+					{txInProgress && <ReputationSystemWidget/>}
 				</Box>
 				
 				{/* right side */}

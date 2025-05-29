@@ -1,9 +1,9 @@
-export interface RepSystemMessage {
+export interface IRepSystemMessage {
     title: String;
     subtitle: String;
 }
 
-const repSystemMessages: readonly RepSystemMessage[] = [
+export const repSystemMessages: readonly IRepSystemMessage[] = [
     {
         title: "Have you checked your Reputation today?",
         subtitle: "Enhance your blockchain identity through daily, on-chain activity."
@@ -45,9 +45,3 @@ const repSystemMessages: readonly RepSystemMessage[] = [
         subtitle: "Fast, fun tasks that help boost your blockchain credibility."
     }
 ];
-
-// Returns a title and subtitle to be shown on the transfer progress page
-export const getRandomRepSystemMessage = (): RepSystemMessage => {
-    const randomIndex = Math.floor(Math.random() * repSystemMessages.length);
-    return repSystemMessages[randomIndex];
-};
