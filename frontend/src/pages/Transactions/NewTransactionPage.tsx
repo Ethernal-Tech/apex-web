@@ -233,7 +233,7 @@ function NewTransactionPage() {
 					</Box>
 
 					{/* Conditional display of Reputation System Widget */}
-					{txInProgress && <ReputationSystemWidget/>}
+					{!appSettings.isSkyline && txInProgress && <ReputationSystemWidget/>}
 				</Box>
 				
 				{/* right side */}
