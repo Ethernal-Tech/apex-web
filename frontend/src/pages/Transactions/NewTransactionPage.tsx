@@ -15,8 +15,9 @@ import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, Crea
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import appSettings from "../../settings/appSettings";
+import ReputationSystemWidget from "./RepSystem/ReputationSystemWidget";
 
-function NewTransactionPage() {
+function NewTransactionPage() {	
 	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
 	const [loading, setLoading] = useState(false);
 	
@@ -173,6 +174,7 @@ function NewTransactionPage() {
 				display:'grid',
 				gridTemplateColumns:'repeat(6,1fr)', 
 				gap:'24px',
+				marginBottom:'30px'
 			}}>
 				<Box sx={{ 
 					gridColumn:'span 2', 
@@ -210,19 +212,25 @@ function NewTransactionPage() {
 
 				{/* left side */}
 				<Box sx={{
-					gridColumn:'span 2', 
-					borderTop:`2px solid ${chain === ChainEnum.Prime ? '#077368' : appSettings.isSkyline ? '#0538AF' : '#F25041'}`,
-					p:2,
-					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
+					gridColumn:'span 2',
 					[tabletMediaQuery]:{
 						gridColumn:'span 6'
-					}
+					},
 				}}>
-					<TotalBalance/>
-					
-					<Typography sx={{color:'white',mt:4, mb:2}}>Address</Typography>
-					<AddressBalance/>
-					
+					{/* TotalBanace and AddressBalance widgets */}
+					<Box sx={{
+						borderTop:`2px solid ${chain === ChainEnum.Prime ? '#077368' : appSettings.isSkyline ? '#0538AF' : '#F25041'}`,
+						p:2,
+						background:'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
+					}}>
+						<TotalBalance/>
+						
+						<Typography sx={{color:'white',mt:4, mb:2}}>Address</Typography>
+						<AddressBalance/>
+					</Box>
+
+					{/* Conditional display of Reputation System Widget */}
+					{!appSettings.isSkyline && txInProgress && <ReputationSystemWidget/>}
 				</Box>
 				
 				{/* right side */}

@@ -57,7 +57,6 @@ func GetUtxosTransformer(
 			UtxoCacher: usedUtxoCacher,
 			Addr:       requestBody.SenderAddr,
 		}
-
 	}
 
 	if len(requestBody.SkipUtxos) > 0 {
