@@ -13,14 +13,14 @@ export class SettingsService {
 	constructor() {}
 
 	async init() {
-		const apiUrl = process.env.ORACLE_URL;
-		const apiKey = process.env.ORACLE_API_KEY;
+		const apiUrl = process.env.CARDANO_API_URL;
+		const apiKey = process.env.CARDANO_API_API_KEY;
 
 		if (!apiUrl || !apiKey) {
-			throw new Error('oracle api url or api key not defined');
+			throw new Error('cardano api url or api key not defined');
 		}
 
-		const endpointUrl = apiUrl + `/api/Settings/Get`;
+		const endpointUrl = apiUrl + `/api/CardanoTx/GetSettings`;
 
 		this.BridgingSettings = await retryForever(
 			() => this.fetchOnce(endpointUrl, apiKey),
