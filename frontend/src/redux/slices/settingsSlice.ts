@@ -24,20 +24,20 @@ const settingsSlice = createSlice({
 	initialState,
 	reducers: {
 		setSettingsAction: (state, action: PayloadAction<SettingsResponseDto>) => {
-			state.minUtxoChainValue = Object.entries(action.payload.minUtxoChainValue).reduce((acc, [key, value]) => {
+			state.minUtxoChainValue = Object.entries(action.payload.bridgingSettings.minUtxoChainValue).reduce((acc, [key, value]) => {
 				acc[key] = value.toString();
 				return acc;
 			}, {} as { [key: string]: string });
-			state.minChainFeeForBridging = Object.entries(action.payload.minChainFeeForBridging).reduce((acc, [key, value]) => {
+			state.minChainFeeForBridging = Object.entries(action.payload.bridgingSettings.minChainFeeForBridging).reduce((acc, [key, value]) => {
 				acc[key] = value.toString();
 				return acc;
 			}, {} as { [key: string]: string });
-			state.minOperationFee = Object.entries(action.payload.minOperationFee).reduce((acc, [key, value]) => {
+			state.minOperationFee = Object.entries(action.payload.bridgingSettings.minOperationFee).reduce((acc, [key, value]) => {
 				acc[key] = value.toString();
 				return acc;
 			}, {} as { [key: string]: string });
-			state.minValueToBridge = action.payload.minValueToBridge.toString();
-			state.maxAmountAllowedToBridge = action.payload.maxAmountAllowedToBridge;
+			state.minValueToBridge = action.payload.bridgingSettings.minValueToBridge.toString();
+			state.maxAmountAllowedToBridge = action.payload.bridgingSettings.maxAmountAllowedToBridge;
 		},
 	},
 })

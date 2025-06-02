@@ -416,7 +416,47 @@ export class ContactControllerClient extends BaseClient {
     }
 }
 
-export class SettingsResponseDto implements ISettingsResponseDto {
+export class NativeTokenDto implements INativeTokenDto {
+    dstChainID!: string;
+    tokenName!: string;
+
+    constructor(data?: INativeTokenDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.dstChainID = _data["dstChainID"];
+            this.tokenName = _data["tokenName"];
+        }
+    }
+
+    static fromJS(data: any): NativeTokenDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new NativeTokenDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["dstChainID"] = this.dstChainID;
+        data["tokenName"] = this.tokenName;
+        return data; 
+    }
+}
+
+export interface INativeTokenDto {
+    dstChainID: string;
+    tokenName: string;
+}
+
+export class OracleSettingsResponseDto implements IOracleSettingsResponseDto {
     minChainFeeForBridging!: { [key: string]: number; };
     minOperationFee!: { [key: string]: number; };
     minUtxoChainValue!: { [key: string]: number; };
@@ -424,7 +464,7 @@ export class SettingsResponseDto implements ISettingsResponseDto {
     maxAmountAllowedToBridge!: string;
     maxReceiversPerBridgingRequest!: number;
 
-    constructor(data?: ISettingsResponseDto) {
+    constructor(data?: IOracleSettingsResponseDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -467,9 +507,9 @@ export class SettingsResponseDto implements ISettingsResponseDto {
         }
     }
 
-    static fromJS(data: any): SettingsResponseDto {
+    static fromJS(data: any): OracleSettingsResponseDto {
         data = typeof data === 'object' ? data : {};
-        let result = new SettingsResponseDto();
+        let result = new OracleSettingsResponseDto();
         result.init(data);
         return result;
     }
@@ -504,13 +544,73 @@ export class SettingsResponseDto implements ISettingsResponseDto {
     }
 }
 
-export interface ISettingsResponseDto {
+export interface IOracleSettingsResponseDto {
     minChainFeeForBridging: { [key: string]: number; };
     minOperationFee: { [key: string]: number; };
     minUtxoChainValue: { [key: string]: number; };
     minValueToBridge: number;
     maxAmountAllowedToBridge: string;
     maxReceiversPerBridgingRequest: number;
+}
+
+export class SettingsResponseDto implements ISettingsResponseDto {
+    runMode!: string;
+    cardanoChainsNativeTokens!: { [key: string]: NativeTokenDto[]; };
+    bridgingSettings!: OracleSettingsResponseDto;
+
+    constructor(data?: ISettingsResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+        if (!data) {
+            this.cardanoChainsNativeTokens = {};
+            this.bridgingSettings = new OracleSettingsResponseDto();
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.runMode = _data["runMode"];
+            if (_data["cardanoChainsNativeTokens"]) {
+                this.cardanoChainsNativeTokens = {} as any;
+                for (let key in _data["cardanoChainsNativeTokens"]) {
+                    if (_data["cardanoChainsNativeTokens"].hasOwnProperty(key))
+                        this.cardanoChainsNativeTokens![key] = _data["cardanoChainsNativeTokens"][key] ? _data["cardanoChainsNativeTokens"][key].map((i: any) => NativeTokenDto.fromJS(i)) : [];
+                }
+            }
+            this.bridgingSettings = _data["bridgingSettings"] ? OracleSettingsResponseDto.fromJS(_data["bridgingSettings"]) : new OracleSettingsResponseDto();
+        }
+    }
+
+    static fromJS(data: any): SettingsResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SettingsResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["runMode"] = this.runMode;
+        if (this.cardanoChainsNativeTokens) {
+            data["cardanoChainsNativeTokens"] = {};
+            for (let key in this.cardanoChainsNativeTokens) {
+                if (this.cardanoChainsNativeTokens.hasOwnProperty(key))
+                    data["cardanoChainsNativeTokens"][key] = this.cardanoChainsNativeTokens[key];
+            }
+        }
+        data["bridgingSettings"] = this.bridgingSettings ? this.bridgingSettings.toJSON() : <any>undefined;
+        return data; 
+    }
+}
+
+export interface ISettingsResponseDto {
+    runMode: string;
+    cardanoChainsNativeTokens: { [key: string]: NativeTokenDto[]; };
+    bridgingSettings: OracleSettingsResponseDto;
 }
 
 export enum ChainEnum {
