@@ -69,7 +69,7 @@ export class TransactionService {
 		}
 
 		const srcMinFee =
-			this.settingsService.BridgingSettings.bridgingSettings.minChainFeeForBridging[
+			this.settingsService.Settings.bridgingSettings.minChainFeeForBridging[
 				dto.originChain
 			];
 		if (!srcMinFee) {
@@ -87,7 +87,7 @@ export class TransactionService {
 		}
 
 		const srcMinOperationFee =
-		this.settingsService.BridgingSettings.bridgingSettings.minOperationFee[
+		this.settingsService.Settings.bridgingSettings.minOperationFee[
 			dto.originChain
 		];
 
@@ -171,7 +171,7 @@ export class TransactionService {
 
 		const tx = await createEthBridgingTx(
 			dto,
-			this.settingsService.BridgingSettings,
+			this.settingsService.Settings,
 		);
 
 		if (!tx) {
