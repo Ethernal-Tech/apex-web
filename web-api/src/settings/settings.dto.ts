@@ -2,7 +2,7 @@ import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsNotEmpty, IsObject, IsPositive, ValidateNested } from 'class-validator';
 
-export class OracleSettingsResponseDto {
+export class BridgingSettingsDto {
 	@IsNotEmpty()
 	@IsPositive()
 	@ApiProperty({
@@ -73,7 +73,7 @@ export class SettingsResponseDto {
 
 	@IsNotEmpty()
 	@ValidateNested()
-	@Type(() => OracleSettingsResponseDto)
-	@ApiProperty({ type: OracleSettingsResponseDto })
-	bridgingSettings: OracleSettingsResponseDto;
+	@Type(() => BridgingSettingsDto)
+	@ApiProperty({ type: BridgingSettingsDto })
+	bridgingSettings: BridgingSettingsDto;
 }
