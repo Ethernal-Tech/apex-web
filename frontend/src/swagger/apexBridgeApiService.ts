@@ -456,7 +456,7 @@ export interface INativeTokenDto {
     tokenName: string;
 }
 
-export class OracleSettingsResponseDto implements IOracleSettingsResponseDto {
+export class BridgingSettingsDto implements IBridgingSettingsDto {
     minChainFeeForBridging!: { [key: string]: number; };
     minOperationFee!: { [key: string]: number; };
     minUtxoChainValue!: { [key: string]: number; };
@@ -464,7 +464,7 @@ export class OracleSettingsResponseDto implements IOracleSettingsResponseDto {
     maxAmountAllowedToBridge!: string;
     maxReceiversPerBridgingRequest!: number;
 
-    constructor(data?: IOracleSettingsResponseDto) {
+    constructor(data?: IBridgingSettingsDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -507,9 +507,9 @@ export class OracleSettingsResponseDto implements IOracleSettingsResponseDto {
         }
     }
 
-    static fromJS(data: any): OracleSettingsResponseDto {
+    static fromJS(data: any): BridgingSettingsDto {
         data = typeof data === 'object' ? data : {};
-        let result = new OracleSettingsResponseDto();
+        let result = new BridgingSettingsDto();
         result.init(data);
         return result;
     }
@@ -544,7 +544,7 @@ export class OracleSettingsResponseDto implements IOracleSettingsResponseDto {
     }
 }
 
-export interface IOracleSettingsResponseDto {
+export interface IBridgingSettingsDto {
     minChainFeeForBridging: { [key: string]: number; };
     minOperationFee: { [key: string]: number; };
     minUtxoChainValue: { [key: string]: number; };
@@ -556,7 +556,7 @@ export interface IOracleSettingsResponseDto {
 export class SettingsResponseDto implements ISettingsResponseDto {
     runMode!: string;
     cardanoChainsNativeTokens!: { [key: string]: NativeTokenDto[]; };
-    bridgingSettings!: OracleSettingsResponseDto;
+    bridgingSettings!: BridgingSettingsDto;
 
     constructor(data?: ISettingsResponseDto) {
         if (data) {
@@ -567,7 +567,7 @@ export class SettingsResponseDto implements ISettingsResponseDto {
         }
         if (!data) {
             this.cardanoChainsNativeTokens = {};
-            this.bridgingSettings = new OracleSettingsResponseDto();
+            this.bridgingSettings = new BridgingSettingsDto();
         }
     }
 
@@ -581,7 +581,7 @@ export class SettingsResponseDto implements ISettingsResponseDto {
                         this.cardanoChainsNativeTokens![key] = _data["cardanoChainsNativeTokens"][key] ? _data["cardanoChainsNativeTokens"][key].map((i: any) => NativeTokenDto.fromJS(i)) : [];
                 }
             }
-            this.bridgingSettings = _data["bridgingSettings"] ? OracleSettingsResponseDto.fromJS(_data["bridgingSettings"]) : new OracleSettingsResponseDto();
+            this.bridgingSettings = _data["bridgingSettings"] ? BridgingSettingsDto.fromJS(_data["bridgingSettings"]) : new BridgingSettingsDto();
         }
     }
 
@@ -610,7 +610,7 @@ export class SettingsResponseDto implements ISettingsResponseDto {
 export interface ISettingsResponseDto {
     runMode: string;
     cardanoChainsNativeTokens: { [key: string]: NativeTokenDto[]; };
-    bridgingSettings: OracleSettingsResponseDto;
+    bridgingSettings: BridgingSettingsDto;
 }
 
 export enum ChainEnum {
