@@ -12,7 +12,7 @@ interface Option {
 
 interface CustomSelectProps {
   label: string;
-  icon: React.FC;
+  icon?: React.FC;
   value: string;
   disabled?: boolean,
   onChange: (event: SelectChangeEvent<string>) => void;
@@ -25,7 +25,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
   const StyledFormControl = styled(FormControl)<{ width?: string }>(({ width }) => ({
     borderRadius: '4px',
     border: '1px solid',
-    borderColor: options.find(option => option.value === value)?.borderColor,
+    borderColor: value !== '' ? options.find(option => option.value === value)?.borderColor : '#435F69',
     '& .MuiSelect-select':{
       padding:'12px 15px',
     },
@@ -83,9 +83,11 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
         disabled={disabled}
         renderValue={(selected) => (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <ListItemIcon style={{ minWidth: 0, marginRight: 8, color: 'white' }}>
-              <IconComponent />
-            </ListItemIcon>
+            {IconComponent && (
+              <ListItemIcon style={{ minWidth: 0, marginRight: 8, color: 'white' }}>
+                <IconComponent />
+              </ListItemIcon>
+            )}
             <Typography>{options.find(option => option.value === selected)?.label}</Typography>
           </Box>
         )}

@@ -87,10 +87,10 @@ const cardanoSourceTokenOptions = [
 
 const calculateMaxAmount = (
   totalDfmBalance: {[key: string]: string}, chain: ChainEnum,
-  sourceToken: TokenEnum, changeMinUtxo: number, minDfmValue: string,
-  bridgeTxFee: string, operationFee: string,
+  changeMinUtxo: number, minDfmValue: string,
+  bridgeTxFee: string, operationFee: string, sourceToken?: TokenEnum,
 ): string => {
-  if (!totalDfmBalance) {
+  if (!totalDfmBalance || !sourceToken) {
     return '0'
   }
 
@@ -108,7 +108,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
   const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
-  const [sourceToken, setSourceToken] = useState<TokenEnum>(TokenEnum.APEX);
+  const [sourceToken, setSourceToken] = useState<TokenEnum | undefined>();
   const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
   const walletUTxOs = useSelector((state: RootState) => state.accountInfo.utxos);
@@ -121,7 +121,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
         .filter(x => sourceTokenOptionEnabled(cardanoChainsNativeTokens, x.tokenEnabledConfig.directionFrom, x.tokenEnabledConfig.directionTo));
 
   const fetchWalletFee = useCallback(async () => {
-    if (!destinationAddr || !amount) {
+    if (!destinationAddr || !amount || !sourceToken) {
         setUserWalletFee(undefined);
 
         return;
@@ -158,8 +158,18 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   }, [resetBridgeTxFee])
 
   useEffect(() => {
-    setSourceToken(!appSettings.isSkyline || chain === ChainEnum.Prime ? TokenEnum.APEX : TokenEnum.Ada);
-  }, [chain])
+    if(!sourceToken) {
+      if (!appSettings.isSkyline) {
+        setSourceToken(TokenEnum.APEX)
+      }
+      else {
+        const preferredToken = chain === ChainEnum.Prime ? TokenEnum.APEX : TokenEnum.Ada;
+        const found = supportedSourceTokenOptions.find(opt => opt.value === preferredToken);
+        setSourceToken(found ? found.value : undefined);
+      }
+    }
+    
+  }, [chain, supportedSourceTokenOptions, sourceToken])
 
   useEffect(() => {
     if (fetchCreateTxTimeoutRef.current) {
@@ -195,13 +205,14 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
       : minValueToBridge;
   
   const maxAmountDfm = calculateMaxAmount(
-    totalDfmBalance, chain, sourceToken, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee)
+    totalDfmBalance, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee, sourceToken)
 
-  const maxWrappedAmount: string = totalDfmBalance
+  const maxWrappedAmount: string = sourceToken && totalDfmBalance
     ? totalDfmBalance[sourceToken]
     : '0';
 
   const onSubmit = useCallback(async () => {
+    if (!sourceToken) return;
     await submit(destinationAddr, convertApexToDfm(amount || '0', chain), getIsNativeToken(chain, sourceToken))
   }, [amount, destinationAddr, submit, chain, sourceToken]) 
 
@@ -218,8 +229,8 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
               <Typography mb={'7px'} sx={{ color: white }}>Source Token</Typography>
               <CustomSelect
                   label="SourceToken"
-                  icon={tokenIcons[sourceToken]}
-                  value={sourceToken}
+                  icon={sourceToken ? tokenIcons[sourceToken] : undefined}
+                  value={sourceToken || ''}
                   onChange={(e) => setSourceTokenCallback(e.target.value as TokenEnum)}
                   options={supportedSourceTokenOptions}
                   width='50%'
@@ -235,7 +246,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
         }}>
             {/* validate inputs */}
             <PasteApexAmountInput
-                maxSendable={getIsNativeToken(chain, sourceToken) ? maxWrappedAmount : maxAmountDfm}
+                maxSendable={sourceToken ? getIsNativeToken(chain, sourceToken) ? maxWrappedAmount : maxAmountDfm : '0'}
                 text={amount}
                 setAmount={setAmount}
                 disabled={loading}
@@ -247,7 +258,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
                     paddingBottom:2,
                     paddingTop:2
                 }}/>
-            
+
             <FeeInformation
                 userWalletFee={userWalletFee || '0'}
                 bridgeTxFee={bridgeTxFee || '0'}
@@ -276,7 +287,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
             <ButtonCustom 
                 onClick={onSubmit}
                 variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
-                disabled={loading || BigInt(maxAmountDfm) <= 0}
+                disabled={loading || !sourceToken || BigInt(maxAmountDfm) <= 0}
                 sx={{
                     gridColumn:'span 1',
                     textTransform:'uppercase'
