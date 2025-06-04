@@ -3,15 +3,17 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 import appSettings from '../../settings/appSettings'
 import { SettingsResponseDto } from '../../swagger/apexBridgeApiService'
 
+export type CardanoChainsNativeTokens = {
+	[key: string]: { dstChainID: string; tokenName: string; }[];
+}
+
 export interface ISettingsState {
 	minUtxoChainValue: { [key: string]: string }
 	minChainFeeForBridging: { [key: string]: string }
 	minOperationFee: { [key: string]: string }
 	maxAmountAllowedToBridge: string
 	minValueToBridge: string
-	cardanoChainsNativeTokens: {
-		[key: string]: { dstChainID: string; tokenName: string; }[];
-	};
+	cardanoChainsNativeTokens: CardanoChainsNativeTokens
 }
 
 const initialState: ISettingsState = {

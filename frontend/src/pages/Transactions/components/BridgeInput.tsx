@@ -15,6 +15,7 @@ import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { white } from '../../../containers/theme';
 import { getIsNativeToken } from '../../../utils/chainUtils';
 import { TokenEnum } from '../../../features/enums';
+import { CardanoChainsNativeTokens } from '../../../redux/slices/settingsSlice';
 
 type BridgeInputType = {
     bridgeTxFee: string
@@ -27,18 +28,37 @@ type BridgeInputType = {
     loading?: boolean;
 }
 
+const sourceTokenOptionEnabled = (
+  cardanoChainsNativeToken: CardanoChainsNativeTokens,
+  directionFrom: ChainEnum, directionTo: ChainEnum,
+) => {
+  if (!cardanoChainsNativeToken[directionTo]) {
+    return false
+  }
+
+  return !!cardanoChainsNativeToken[directionTo].find(x => x.dstChainID === directionFrom)
+}
+
 const primeSourceTokenOptions = [
   { 
     value: TokenEnum.APEX,
     label: TokenEnum.APEX,
     icon: tokenIcons[TokenEnum.APEX],
-    borderColor:'#077368' 
+    borderColor:'#077368',
+    tokenEnabledConfig: {
+      directionFrom: ChainEnum.Prime,
+      directionTo: ChainEnum.Cardano, 
+    },
   },
   { 
     value: TokenEnum.WAda,
     label: TokenEnum.WAda,
     icon: tokenIcons[TokenEnum.WAda],
-    borderColor:'#077368' 
+    borderColor:'#077368',
+    tokenEnabledConfig: {
+      directionFrom: ChainEnum.Cardano,
+      directionTo: ChainEnum.Prime,
+    },    
   },
 ];
 
@@ -47,13 +67,21 @@ const cardanoSourceTokenOptions = [
     value: TokenEnum.Ada,
     label: TokenEnum.Ada,
     icon: tokenIcons[TokenEnum.Ada],
-    borderColor: '#0538AF'
+    borderColor: '#0538AF',
+    tokenEnabledConfig: {
+      directionFrom: ChainEnum.Cardano,
+      directionTo: ChainEnum.Prime,
+    },
   },
   { 
     value: TokenEnum.WAPEX,
     label: TokenEnum.WAPEX,
     icon: tokenIcons[TokenEnum.WAPEX],
-    borderColor: '#0538AF'
+    borderColor: '#0538AF',
+    tokenEnabledConfig: {
+      directionFrom: ChainEnum.Prime,
+      directionTo: ChainEnum.Cardano,
+    },
   }
 ];
 
@@ -87,8 +115,10 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
   const {chain} = useSelector((state: RootState)=> state.chain);
   const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge);
+  const cardanoChainsNativeTokens = useSelector((state: RootState) => state.settings.cardanoChainsNativeTokens);
 
-  const supportedSourceTokenOptions = chain === ChainEnum.Prime ? primeSourceTokenOptions : cardanoSourceTokenOptions;
+  const supportedSourceTokenOptions = (chain === ChainEnum.Prime ? primeSourceTokenOptions : cardanoSourceTokenOptions)
+        .filter(x => sourceTokenOptionEnabled(cardanoChainsNativeTokens, x.tokenEnabledConfig.directionFrom, x.tokenEnabledConfig.directionTo));
 
   const fetchWalletFee = useCallback(async () => {
     if (!destinationAddr || !amount) {
