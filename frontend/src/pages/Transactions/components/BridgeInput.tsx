@@ -158,18 +158,13 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   }, [resetBridgeTxFee])
 
   useEffect(() => {
-    if(!sourceToken) {
       if (!appSettings.isSkyline) {
         setSourceToken(TokenEnum.APEX)
       }
-      else {
-        const preferredToken = chain === ChainEnum.Prime ? TokenEnum.APEX : TokenEnum.Ada;
-        const found = supportedSourceTokenOptions.find(opt => opt.value === preferredToken);
-        setSourceToken(found ? found.value : undefined);
-      }
-    }
-    
-  }, [chain, supportedSourceTokenOptions, sourceToken])
+      else if (supportedSourceTokenOptions.length > 0) {
+        setSourceToken(supportedSourceTokenOptions[0].value);
+      }    
+  }, [chain, supportedSourceTokenOptions])
 
   useEffect(() => {
     if (fetchCreateTxTimeoutRef.current) {
@@ -287,7 +282,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
             <ButtonCustom 
                 onClick={onSubmit}
                 variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
-                disabled={loading || !sourceToken || BigInt(maxAmountDfm) <= 0}
+                disabled={loading || BigInt(maxAmountDfm) <= 0}
                 sx={{
                     gridColumn:'span 1',
                     textTransform:'uppercase'
