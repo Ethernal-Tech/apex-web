@@ -45,6 +45,7 @@ func (c *SkylineTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	return []*core.APIEndpoint{
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
+		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
 	}
 }
 
@@ -108,6 +109,14 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		commonResponse.NewBridgingTxResponse(
 			txInfo.TxRaw, txInfo.TxHash, bridgingRequestMetadata.BridgingFee, currencyOutput, tokenOutput), c.logger,
 	)
+}
+
+func (c *SkylineTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Request) {
+	c.logger.Debug("getSettings request", "url", r.URL)
+
+	utils.WriteResponse(
+		w, r, http.StatusOK,
+		commonResponse.NewSettingsReponse(c.appConfig), c.logger)
 }
 
 func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(

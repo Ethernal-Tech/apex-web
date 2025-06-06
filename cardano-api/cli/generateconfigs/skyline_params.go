@@ -168,16 +168,16 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 		return fmt.Errorf("specify at least one %s", apiKeysFlag)
 	}
 
-	if p.primeCardanoWrappedTokenName == "" {
-		return fmt.Errorf("missing %s", primeCardanoWrappedTokenNameFlag)
-	} else if _, err := wallet.NewTokenWithFullNameTry(p.primeCardanoWrappedTokenName); err != nil {
-		return fmt.Errorf("invalid token name %s", primeCardanoWrappedTokenNameFlag)
+	if p.primeCardanoWrappedTokenName != "" {
+		if _, err := wallet.NewTokenWithFullNameTry(p.primeCardanoWrappedTokenName); err != nil {
+			return fmt.Errorf("invalid token name %s", primeCardanoWrappedTokenNameFlag)
+		}
 	}
 
-	if p.cardanoPrimeWrappedTokenName == "" {
-		return fmt.Errorf("missing %s", cardanoPrimeWrappedTokenNameFlag)
-	} else if _, err := wallet.NewTokenWithFullNameTry(p.cardanoPrimeWrappedTokenName); err != nil {
-		return fmt.Errorf("invalid token name %s", cardanoPrimeWrappedTokenNameFlag)
+	if p.cardanoPrimeWrappedTokenName != "" {
+		if _, err := wallet.NewTokenWithFullNameTry(p.cardanoPrimeWrappedTokenName); err != nil {
+			return fmt.Errorf("invalid token name %s", cardanoPrimeWrappedTokenNameFlag)
+		}
 	}
 
 	return nil
@@ -384,6 +384,26 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 func (p *skylineGenerateConfigsParams) Execute(
 	_ common.OutputFormatter,
 ) (common.ICommandResult, error) {
+	var nativeTokensPrime, nativeTokensCardano []sendtx.TokenExchangeConfig
+
+	if p.primeCardanoWrappedTokenName != "" {
+		nativeTokensPrime = []sendtx.TokenExchangeConfig{
+			{
+				DstChainID: common.ChainIDStrCardano,
+				TokenName:  p.primeCardanoWrappedTokenName,
+			},
+		}
+	}
+
+	if p.cardanoPrimeWrappedTokenName != "" {
+		nativeTokensCardano = []sendtx.TokenExchangeConfig{
+			{
+				DstChainID: common.ChainIDStrPrime,
+				TokenName:  p.cardanoPrimeWrappedTokenName,
+			},
+		}
+	}
+
 	config := &core.AppConfig{
 		RunMode: common.SkylineMode,
 		CardanoChains: map[string]*core.CardanoChainConfig{
@@ -403,12 +423,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 					SocketPath:       p.primeSocketPath,
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.primeTTLSlotInc,
-					NativeTokens: []sendtx.TokenExchangeConfig{
-						{
-							DstChainID: common.ChainIDStrCardano,
-							TokenName:  p.primeCardanoWrappedTokenName,
-						},
-					},
+					NativeTokens:     nativeTokensPrime,
 				},
 			},
 			common.ChainIDStrCardano: {
@@ -426,12 +441,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 					SocketPath:       p.cardanoSocketPath,
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.cardanoTTLSlotInc,
-					NativeTokens: []sendtx.TokenExchangeConfig{
-						{
-							DstChainID: common.ChainIDStrPrime,
-							TokenName:  p.cardanoPrimeWrappedTokenName,
-						},
-					},
+					NativeTokens:     nativeTokensCardano,
 				},
 			},
 		},

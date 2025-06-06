@@ -3,12 +3,17 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 import appSettings from '../../settings/appSettings'
 import { SettingsResponseDto } from '../../swagger/apexBridgeApiService'
 
+export type CardanoChainsNativeTokens = {
+	[key: string]: { dstChainID: string; tokenName: string; }[];
+}
+
 export interface ISettingsState {
 	minUtxoChainValue: { [key: string]: string }
 	minChainFeeForBridging: { [key: string]: string }
 	minOperationFee: { [key: string]: string }
 	maxAmountAllowedToBridge: string
 	minValueToBridge: string
+	cardanoChainsNativeTokens: CardanoChainsNativeTokens
 }
 
 const initialState: ISettingsState = {
@@ -17,6 +22,7 @@ const initialState: ISettingsState = {
 	minOperationFee: appSettings.minOperationFee,
 	maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,
 	minValueToBridge: appSettings.minValueToBridge,
+	cardanoChainsNativeTokens: {}
 }
 
 const settingsSlice = createSlice({
@@ -24,20 +30,21 @@ const settingsSlice = createSlice({
 	initialState,
 	reducers: {
 		setSettingsAction: (state, action: PayloadAction<SettingsResponseDto>) => {
-			state.minUtxoChainValue = Object.entries(action.payload.minUtxoChainValue).reduce((acc, [key, value]) => {
+			state.minUtxoChainValue = Object.entries(action.payload.bridgingSettings.minUtxoChainValue).reduce((acc, [key, value]) => {
 				acc[key] = value.toString();
 				return acc;
 			}, {} as { [key: string]: string });
-			state.minChainFeeForBridging = Object.entries(action.payload.minChainFeeForBridging).reduce((acc, [key, value]) => {
+			state.minChainFeeForBridging = Object.entries(action.payload.bridgingSettings.minChainFeeForBridging).reduce((acc, [key, value]) => {
 				acc[key] = value.toString();
 				return acc;
 			}, {} as { [key: string]: string });
-			state.minOperationFee = Object.entries(action.payload.minOperationFee).reduce((acc, [key, value]) => {
+			state.minOperationFee = Object.entries(action.payload.bridgingSettings.minOperationFee).reduce((acc, [key, value]) => {
 				acc[key] = value.toString();
 				return acc;
 			}, {} as { [key: string]: string });
-			state.minValueToBridge = action.payload.minValueToBridge.toString();
-			state.maxAmountAllowedToBridge = action.payload.maxAmountAllowedToBridge;
+			state.minValueToBridge = action.payload.bridgingSettings.minValueToBridge.toString();
+			state.maxAmountAllowedToBridge = action.payload.bridgingSettings.maxAmountAllowedToBridge;
+			state.cardanoChainsNativeTokens = action.payload.cardanoChainsNativeTokens;
 		},
 	},
 })

@@ -124,14 +124,14 @@ export const getCardanoBridgingTxFee = async (
 
 export const createEthBridgingTx = async (
 	dto: CreateTransactionDto,
-	bridgingSettings: SettingsResponseDto,
+	settings: SettingsResponseDto,
 ): Promise<CreateEthTransactionResponseDto> => {
 	if (!isAddress(dto.senderAddress)) {
 		throw new BadRequestException('Invalid sender address');
 	}
 
 	const minValue = BigInt(
-		convertDfmToWei(bridgingSettings.minValueToBridge || '1000000'),
+		convertDfmToWei(settings.bridgingSettings.minValueToBridge || '1000000'),
 	);
 	const amount = BigInt(dto.amount);
 
@@ -159,7 +159,7 @@ export const createEthBridgingTx = async (
 	}
 
 	const destMinFee =
-		bridgingSettings.minChainFeeForBridging[dto.destinationChain];
+		settings.bridgingSettings.minChainFeeForBridging[dto.destinationChain];
 	if (!destMinFee) {
 		throw new InternalServerErrorException(
 			`No minFee for destination chain: ${dto.destinationChain}`,
@@ -173,7 +173,7 @@ export const createEthBridgingTx = async (
 	const value = BigInt(dto.amount) + bridgingFee;
 
 	const maxAllowedToBridge = BigInt(
-		convertDfmToWei(bridgingSettings.maxAmountAllowedToBridge) || '0',
+		convertDfmToWei(settings.bridgingSettings.maxAmountAllowedToBridge) || '0',
 	);
 
 	if (maxAllowedToBridge !== BigInt(0) && maxAllowedToBridge < value) {
