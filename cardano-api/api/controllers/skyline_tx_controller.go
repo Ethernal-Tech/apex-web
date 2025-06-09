@@ -141,6 +141,8 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	feeSum := uint64(0)
 	foundAUtxoValueBelowMinimumValue := false
 	foundAnInvalidReceiverAddr := false
+	hasNativeTokenOnSource := false
+	hasCurrencyOnSource := false
 	transactions := make([]commonRequest.CreateBridgingTxTransactionRequest, 0, len(requestBody.Transactions))
 
 	srcMinUtxoChainValue, srcFound := c.appConfig.BridgingSettings.MinUtxoChainValue[requestBody.SourceChainID]
@@ -154,16 +156,24 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	}
 
 	for _, receiver := range requestBody.Transactions {
-		if receiver.IsNativeToken && receiver.Amount < dstMinUtxoChainValue {
-			foundAUtxoValueBelowMinimumValue = true
+		if receiver.IsNativeToken {
+			hasNativeTokenOnSource = true
 
-			break
+			if receiver.Amount < dstMinUtxoChainValue {
+				foundAUtxoValueBelowMinimumValue = true
+
+				break
+			}
 		}
 
-		if !receiver.IsNativeToken && receiver.Amount < srcMinUtxoChainValue {
-			foundAUtxoValueBelowMinimumValue = true
+		if !receiver.IsNativeToken {
+			hasCurrencyOnSource = true
 
-			break
+			if receiver.Amount < srcMinUtxoChainValue {
+				foundAUtxoValueBelowMinimumValue = true
+
+				break
+			}
 		}
 
 		if !cardanotx.IsValidOutputAddress(receiver.Addr, cardanoDestConfig.NetworkID) {
@@ -195,6 +205,19 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 	if foundAnInvalidReceiverAddr {
 		return fmt.Errorf("found an invalid receiver addr in request body: %v", requestBody)
+	}
+
+	if hasNativeTokenOnSource {
+		_, err := cardanoSrcConfig.ChainSpecific.GetNativeToken(requestBody.DestinationChainID)
+		if err != nil {
+			return err
+		}
+	}
+
+	if hasCurrencyOnSource {
+		if _, err := cardanoDestConfig.ChainSpecific.GetNativeToken(requestBody.SourceChainID); err != nil {
+			return err
+		}
 	}
 
 	requestBody.BridgingFee += feeSum
