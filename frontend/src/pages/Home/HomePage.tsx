@@ -22,34 +22,49 @@ const HomePage: React.FC = () => {
   const loginConnecting = useSelector((state: RootState) => state.login.connecting);
   const account = useSelector((state: RootState) => state.accountInfo.account);
 	const isLoggedInMemo = !!wallet && !!account;
+  const enabledChains = useSelector((state: RootState) => state.settings.enabledChains);
+  const validEnumValues = Object.values(ChainEnum);
+
+  const enumArray: ChainEnum[] = enabledChains
+    .filter((val): val is ChainEnum => validEnumValues.includes(val as ChainEnum));
 
   const navigate = useNavigate()
   const dispatch = useDispatch()
   
-  const chain = useSelector((state: RootState) => state.chain.chain);
-  const destinationChain = useSelector((state: RootState) => state.chain.destinationChain);
+  let chain = useSelector((state: RootState) => state.chain.chain);
+  let destinationChain = useSelector((state: RootState) => state.chain.destinationChain);
 
-  const supportedChainOptions = [
-    { 
-      value: ChainEnum.Prime,
-      label: capitalizeWord(ChainEnum.Prime),
-      icon: chainIcons[ChainEnum.Prime],
-      borderColor:'#077368' 
-    },
-    { 
-      value: ChainEnum.Vector,
-      label: capitalizeWord(ChainEnum.Vector),
-      icon: chainIcons[ChainEnum.Vector],
-      borderColor:'#F25041'
-    },
-    { 
-      value: ChainEnum.Nexus,
-      label: capitalizeWord(ChainEnum.Nexus),
-      icon: chainIcons[ChainEnum.Nexus],
-      borderColor: '#F27B50'
-    }
-  ];
+const defaultChainOptions = [
+  { 
+    value: ChainEnum.Prime,
+    label: capitalizeWord(ChainEnum.Prime),
+    icon: chainIcons[ChainEnum.Prime],
+    borderColor:'#077368' 
+  },
+  { 
+    value: ChainEnum.Vector,
+    label: capitalizeWord(ChainEnum.Vector),
+    icon: chainIcons[ChainEnum.Vector],
+    borderColor:'#F25041'
+  },
+  { 
+    value: ChainEnum.Nexus,
+    label: capitalizeWord(ChainEnum.Nexus),
+    icon: chainIcons[ChainEnum.Nexus],
+    borderColor: '#F27B50'
+  }
+];
 
+const getEnabledChainOptions = (defaultChainOptions:  {
+    value: ChainEnum;
+    label: string;
+    icon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
+    borderColor: string;
+}[], enabledChains: string[]) => {
+  return defaultChainOptions.filter(option => enabledChains.includes(option.value));
+}
+
+const supportedChainOptions = getEnabledChainOptions(defaultChainOptions, enabledChains);
 
   // if new source is the same as destination, switch the chains
   const updateSource = (value: ChainEnum)=>{
@@ -72,6 +87,11 @@ const HomePage: React.FC = () => {
   };
 
   const handleConnectClick = async () => {
+    if(!enabledChains.includes(chain)) {
+      console.error("chain not supported", chain)
+      return
+    }
+
     await login(chain, navigate, dispatch);
   }
 
@@ -79,6 +99,18 @@ const HomePage: React.FC = () => {
     const option = supportedChainOptions.find(opt => opt.value === value);
     return option ? option.icon : chainIcons[ChainEnum.Prime]; // Default to PrimeIcon if not found
   };
+
+  if (!enabledChains.includes(chain)) {
+    chain = enumArray[0]
+    updateSource(chain)
+  }
+
+  if (!enabledChains.includes(destinationChain)) {
+    if (enumArray.length >= 2) {
+      destinationChain = enumArray[1]
+      updateDestination(destinationChain)
+    }
+  }
 
   return (
     <BasePage>

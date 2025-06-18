@@ -1,7 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsPositive } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+	IsNotEmpty,
+	IsObject,
+	IsPositive,
+	ValidateNested,
+} from 'class-validator';
 
-export class SettingsResponseDto {
+export class BridgingSettingsDto {
 	@IsNotEmpty()
 	@IsPositive()
 	@ApiProperty({
@@ -31,4 +37,16 @@ export class SettingsResponseDto {
 	@IsPositive()
 	@ApiProperty()
 	maxReceiversPerBridgingRequest: number;
+}
+
+export class SettingsResponseDto {
+	@IsNotEmpty()
+	@ValidateNested()
+	@Type(() => BridgingSettingsDto)
+	@ApiProperty({ type: BridgingSettingsDto })
+	bridgingSettings: BridgingSettingsDto;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	enabledChains: string[];
 }

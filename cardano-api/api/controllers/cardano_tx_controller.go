@@ -48,6 +48,7 @@ func (c *CardanoTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
 		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance},
+		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
 	}
 }
 
@@ -222,6 +223,12 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		response.NewFullBridgingTxResponse(txRawBytes, txHash, requestBody.BridgingFee), c.logger)
+}
+
+func (c *CardanoTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Request) {
+	utils.WriteResponse(
+		w, r, http.StatusOK,
+		response.NewSettingsResponse(c.appConfig), c.logger)
 }
 
 func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(

@@ -40,6 +40,7 @@ type CardanoChainConfig struct {
 	NetworkID         cardanowallet.CardanoNetworkType `json:"networkID"`
 	BridgingAddresses BridgingAddresses                `json:"bridgingAddresses"`
 	ChainSpecific     *cardanotx.CardanoChainConfig    `json:"chainSpecific"`
+	IsEnabled         bool                             `json:"isEnabled"`
 }
 
 type OracleAPISettings struct {

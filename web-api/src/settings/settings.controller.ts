@@ -1,7 +1,7 @@
 import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SettingsService } from './settings.service';
-import { SettingsResponseDto } from './settings.dto';
+import { BridgingSettingsDto } from './settings.dto';
 
 @ApiTags('Settings')
 @Controller('settings')
@@ -10,7 +10,7 @@ export class SettingsController {
 
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: SettingsResponseDto,
+		type: BridgingSettingsDto,
 		description: 'Success',
 	})
 	@ApiResponse({
@@ -19,7 +19,7 @@ export class SettingsController {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	async get(): Promise<SettingsResponseDto> {
+	async get(): Promise<BridgingSettingsDto> {
 		return this.settingsService.BridgingSettings;
 	}
 }
