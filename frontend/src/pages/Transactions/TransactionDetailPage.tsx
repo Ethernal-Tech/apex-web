@@ -12,7 +12,7 @@ import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
 import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor, toFixed } from '../../utils/generalUtils';
 import { menuDark } from '../../containers/theme';
 import Button from "../../components/Buttons/ButtonCustom";
-import { fromChainToChainNativeToken, openExplorer } from '../../utils/chainUtils';
+import { fromChainToChainNativeToken, openExplorer, TokenEnumToLabel } from '../../utils/chainUtils';
 import { fromChainToChainCurrency } from '../../utils/chainUtils';
 import appSettings from '../../settings/appSettings';
 
@@ -126,7 +126,7 @@ const TransactionDetailPage = () => {
               appSettings.isSkyline &&
               <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
                 <Typography variant="subtitle2">Token Amount:</Typography>
-                <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && toFixed(convertDfmToApex(transaction?.nativeTokenAmount, transaction?.originChain), 6)} {transaction && fromChainToChainNativeToken(transaction?.originChain)}</Typography>
+                <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && toFixed(convertDfmToApex(transaction?.nativeTokenAmount, transaction?.originChain), 6)} {transaction && TokenEnumToLabel[fromChainToChainNativeToken(transaction?.originChain)]}</Typography>
               </Box>
             }
             <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>

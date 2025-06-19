@@ -13,7 +13,7 @@ import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { white } from '../../../containers/theme';
-import { getIsNativeToken } from '../../../utils/chainUtils';
+import { getIsNativeToken, TokenEnumToLabel } from '../../../utils/chainUtils';
 import { TokenEnum } from '../../../features/enums';
 import { CardanoChainsNativeTokens } from '../../../redux/slices/settingsSlice';
 
@@ -52,7 +52,7 @@ const primeSourceTokenOptions = [
   },
   { 
     value: TokenEnum.WAda,
-    label: TokenEnum.WAda,
+    label: TokenEnumToLabel[TokenEnum.WAda],
     icon: tokenIcons[TokenEnum.WAda],
     borderColor:'#077368',
     tokenEnabledConfig: {
@@ -75,7 +75,7 @@ const cardanoSourceTokenOptions = [
   },
   { 
     value: TokenEnum.WAPEX,
-    label: TokenEnum.WAPEX,
+    label: TokenEnumToLabel[TokenEnum.WAPEX],
     icon: tokenIcons[TokenEnum.WAPEX],
     borderColor: '#0538AF',
     tokenEnabledConfig: {
@@ -117,8 +117,9 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge);
   const cardanoChainsNativeTokens = useSelector((state: RootState) => state.settings.cardanoChainsNativeTokens);
 
-  const supportedSourceTokenOptions = (chain === ChainEnum.Prime ? primeSourceTokenOptions : cardanoSourceTokenOptions)
-        .filter(x => sourceTokenOptionEnabled(cardanoChainsNativeTokens, x.tokenEnabledConfig.directionFrom, x.tokenEnabledConfig.directionTo));
+  const supportedSourceTokenOptions = useMemo(() => (chain === ChainEnum.Prime ? primeSourceTokenOptions : cardanoSourceTokenOptions)
+        .filter(x => sourceTokenOptionEnabled(cardanoChainsNativeTokens, x.tokenEnabledConfig.directionFrom, x.tokenEnabledConfig.directionTo)),
+        [cardanoChainsNativeTokens, chain])
 
   const fetchWalletFee = useCallback(async () => {
     if (!destinationAddr || !amount || !sourceToken) {

@@ -6,7 +6,7 @@ import { convertDfmToApex, toFixed } from "../../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 import appSettings from "../../../settings/appSettings";
-import { fromChainToChainCurrency, fromChainToChainNativeToken } from "../../../utils/chainUtils";
+import { fromChainToChainCurrency, fromChainToChainNativeToken, TokenEnumToLabel } from "../../../utils/chainUtils";
 
 const TotalBalance = () => {
 	const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
@@ -59,7 +59,7 @@ const TotalBalance = () => {
                             </Box>
                             }
                         </Typography>
-                        <Typography>{chainNativeToken}</Typography>
+                        <Typography>{TokenEnumToLabel[chainNativeToken]}</Typography>
                     </Box>
                 }
             </Box>

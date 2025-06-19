@@ -191,3 +191,10 @@ export const reactorChains: ChainEnum[] = [
     ChainEnum.Vector,
     ChainEnum.Nexus,
 ]
+
+export const TokenEnumToLabel: Record<TokenEnum, string> = {
+  [TokenEnum.Ada]: 'Ada',
+  [TokenEnum.WAda]: 'WAda',
+  [TokenEnum.APEX]: 'APEX',
+  [TokenEnum.WAPEX]: 'cAP3X', 
+};

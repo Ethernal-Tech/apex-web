@@ -14,7 +14,7 @@ import { capitalizeWord, convertApexToDfm, convertDfmToApex, formatAddress, form
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import appSettings from '../../settings/appSettings';
-import { fromChainToChainNativeToken } from '../../utils/chainUtils';
+import { fromChainToChainNativeToken, TokenEnumToLabel } from '../../utils/chainUtils';
 import { fromChainToChainCurrency } from '../../utils/chainUtils';
 
 const TransactionsTablePage = () => {
@@ -242,7 +242,7 @@ const TransactionsTablePage = () => {
               {
                 appSettings.isSkyline &&
                 <TableCell sx={tableCellStyle}>
-                  {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {fromChainToChainNativeToken(chain)}
+                  {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {TokenEnumToLabel[fromChainToChainNativeToken(chain)]}
                 </TableCell>
               }
               
