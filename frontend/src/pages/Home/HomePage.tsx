@@ -96,15 +96,10 @@ const defaultChainOptions = [
     if (!enabledChains.includes(chain)) {
       updateSource(enumArray[0])
     }
-  });
-
-  useEffect(() => {
-    if (!enabledChains.includes(destinationChain)) {
-      if (enumArray.length >= 2) {
+    if (!enabledChains.includes(destinationChain) && enumArray.length >= 2) {
         updateDestination(enumArray[1])
-      }
     }
-  });
+ }, [enabledChains, chain, destinationChain])
 
 
   return (
