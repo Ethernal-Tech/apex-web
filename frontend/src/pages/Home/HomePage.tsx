@@ -18,23 +18,6 @@ import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { capitalizeWord, chainIcons } from "../../utils/generalUtils";
 import { login } from "../../actions/login";
 
-const HomePage: React.FC = () => {
-  const wallet = useSelector((state: RootState) => state.wallet.wallet);
-  const loginConnecting = useSelector((state: RootState) => state.login.connecting);
-  const account = useSelector((state: RootState) => state.accountInfo.account);
-	const isLoggedInMemo = !!wallet && !!account;
-  const enabledChains = useSelector((state: RootState) => state.settings.enabledChains);
-  const validEnumValues = Object.values(ChainEnum);
-
-  const enumArray: ChainEnum[] = enabledChains
-    .filter((val): val is ChainEnum => validEnumValues.includes(val as ChainEnum));
-
-  const navigate = useNavigate()
-  const dispatch = useDispatch()
-  
-  let chain = useSelector((state: RootState) => state.chain.chain);
-  let destinationChain = useSelector((state: RootState) => state.chain.destinationChain);
-
 const defaultChainOptions = [
   { 
     value: ChainEnum.Prime,
@@ -55,6 +38,23 @@ const defaultChainOptions = [
     borderColor: '#F27B50'
   }
 ];
+
+const HomePage: React.FC = () => {
+  const wallet = useSelector((state: RootState) => state.wallet.wallet);
+  const loginConnecting = useSelector((state: RootState) => state.login.connecting);
+  const account = useSelector((state: RootState) => state.accountInfo.account);
+	const isLoggedInMemo = !!wallet && !!account;
+  const enabledChains = useSelector((state: RootState) => state.settings.enabledChains);
+  const validEnumValues = Object.values(ChainEnum);
+
+  const enumArray: ChainEnum[] = enabledChains
+    .filter((val): val is ChainEnum => validEnumValues.includes(val as ChainEnum));
+
+  const navigate = useNavigate()
+  const dispatch = useDispatch()
+  
+  let chain = useSelector((state: RootState) => state.chain.chain);
+  let destinationChain = useSelector((state: RootState) => state.chain.destinationChain);
 
   const supportedChainOptions = defaultChainOptions.filter(option => enabledChains.includes(option.value));
 
