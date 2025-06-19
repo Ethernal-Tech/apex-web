@@ -20,8 +20,10 @@ func NewSettingsResponse(
 		}
 	}
 
-	for chainID, _ := range config.EthChains {
-		enabledChains = append(enabledChains, chainID)
+	for chainID, cfg := range config.EthChains {
+		if cfg.IsEnabled {
+			enabledChains = append(enabledChains, chainID)
+		}
 	}
 
 	return &SettingsResponse{

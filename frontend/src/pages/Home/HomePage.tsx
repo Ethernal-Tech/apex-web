@@ -1,4 +1,5 @@
 import React from "react";
+import { useEffect } from 'react';
 import { Typography, Box, Button, CircularProgress } from '@mui/material';
 import CustomSelect from '../../components/customSelect/CustomSelect';
 import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
@@ -55,16 +56,7 @@ const defaultChainOptions = [
   }
 ];
 
-const getEnabledChainOptions = (defaultChainOptions:  {
-    value: ChainEnum;
-    label: string;
-    icon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
-    borderColor: string;
-}[], enabledChains: string[]) => {
-  return defaultChainOptions.filter(option => enabledChains.includes(option.value));
-}
-
-const supportedChainOptions = getEnabledChainOptions(defaultChainOptions, enabledChains);
+  const supportedChainOptions = defaultChainOptions.filter(option => enabledChains.includes(option.value));
 
   // if new source is the same as destination, switch the chains
   const updateSource = (value: ChainEnum)=>{
@@ -100,17 +92,20 @@ const supportedChainOptions = getEnabledChainOptions(defaultChainOptions, enable
     return option ? option.icon : chainIcons[ChainEnum.Prime]; // Default to PrimeIcon if not found
   };
 
-  if (!enabledChains.includes(chain)) {
-    chain = enumArray[0]
-    updateSource(chain)
-  }
-
-  if (!enabledChains.includes(destinationChain)) {
-    if (enumArray.length >= 2) {
-      destinationChain = enumArray[1]
-      updateDestination(destinationChain)
+  useEffect(() => {
+    if (!enabledChains.includes(chain)) {
+      updateSource(enumArray[0])
     }
-  }
+  });
+
+  useEffect(() => {
+    if (!enabledChains.includes(destinationChain)) {
+      if (enumArray.length >= 2) {
+        updateDestination(enumArray[1])
+      }
+    }
+  });
+
 
   return (
     <BasePage>
@@ -150,7 +145,7 @@ const supportedChainOptions = getEnabledChainOptions(defaultChainOptions, enable
             label="Destination"
             icon={getIconComponent(destinationChain)}
             value={destinationChain}
-            disabled={chain !== ChainEnum.Prime}
+            disabled={chain !== ChainEnum.Prime || enabledChains.length <=2 }
             onChange={(e) => updateDestination(e.target.value as ChainEnum)}
             // todo - makeshift fix, check out details later
             options={supportedChainOptions.filter(x => {

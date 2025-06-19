@@ -23,6 +23,7 @@ import (
 type CardanoTxControllerImpl struct {
 	appConfig      *core.AppConfig
 	usedUtxoCacher *utils.UsedUtxoCacher
+	enabledChains  []string
 	logger         hclog.Logger
 }
 
@@ -77,6 +78,13 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 	chainID := chainIDArr[0]
 	address := addressArr[0]
 
+	if !c.appConfig.IsChainEnabled(chainID) {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			errors.New("invalid chainID"), c.logger)
+		return
+	}
+
 	chainConfig, exists := c.appConfig.CardanoChains[chainID]
 	if !exists {
 		utils.WriteErrorResponse(
@@ -124,6 +132,14 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 	}
 
 	c.logger.Debug("getBridgingTxFee request", "body", requestBody, "url", r.URL)
+
+	if !c.appConfig.IsChainEnabled(requestBody.SourceChainID) ||
+		!c.appConfig.IsChainEnabled(requestBody.DestinationChainID) {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			errors.New("invalid chainID"), c.logger)
+		return
+	}
 
 	err := c.validateAndFillOutCreateBridgingTxRequest(&requestBody)
 	if err != nil {
@@ -175,6 +191,14 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 	}
 
 	c.logger.Debug("createBridgingTx request", "body", requestBody, "url", r.URL)
+
+	if !c.appConfig.IsChainEnabled(requestBody.SourceChainID) ||
+		!c.appConfig.IsChainEnabled(requestBody.DestinationChainID) {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			errors.New("invalid chainID"), c.logger)
+		return
+	}
 
 	err := c.validateAndFillOutCreateBridgingTxRequest(&requestBody)
 	if err != nil {
@@ -392,4 +416,14 @@ func getSkipUtxos(
 			Index: x.Index,
 		}
 	}), false
+}
+
+func isChainEnabled(controller *CardanoTxControllerImpl, chainID string) bool {
+	for _, chain := range controller.enabledChains {
+		if chain == chainID {
+			return true
+		}
+	}
+
+	return false
 }

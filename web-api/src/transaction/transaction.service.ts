@@ -37,6 +37,11 @@ export class TransactionService {
 	) {}
 
 	private async validateCreateCardanoTx(dto: CreateTransactionDto) {
+		if (!this.settingsService.SettingsResponse.enabledChains.includes(dto.originChain) || 
+			!this.settingsService.SettingsResponse.enabledChains.includes(dto.destinationChain)) {
+				throw new BadRequestException("Chain not supported")
+		}
+
 		if (
 			dto.originChain !== ChainEnum.Prime &&
 			dto.originChain !== ChainEnum.Vector
@@ -60,7 +65,7 @@ export class TransactionService {
 		}
 
 		const destMinFee =
-			this.settingsService.BridgingSettings.minChainFeeForBridging[
+			this.settingsService.SettingsResponse.bridgingSettings.minChainFeeForBridging[
 				dto.destinationChain
 			];
 		if (!destMinFee) {
@@ -139,6 +144,11 @@ export class TransactionService {
 	async createEth(
 		dto: CreateTransactionDto,
 	): Promise<CreateEthTransactionResponseDto> {
+		if (!this.settingsService.SettingsResponse.enabledChains.includes(dto.originChain) || 
+			!this.settingsService.SettingsResponse.enabledChains.includes(dto.destinationChain)) {
+				throw new BadRequestException("Chain not supported")
+		}
+
 		if (dto.originChain !== ChainEnum.Nexus) {
 			throw new BadRequestException('Invalid origin chain');
 		}
@@ -149,7 +159,7 @@ export class TransactionService {
 
 		const tx = await createEthBridgingTx(
 			dto,
-			this.settingsService.BridgingSettings,
+			this.settingsService.SettingsResponse.bridgingSettings,
 		);
 
 		if (!tx) {

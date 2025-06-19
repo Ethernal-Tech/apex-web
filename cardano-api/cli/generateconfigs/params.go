@@ -25,6 +25,7 @@ const (
 	primeBlockfrostAPIKeyFlag        = "prime-blockfrost-api-key"
 	primeSocketPathFlag              = "prime-socket-path"
 	primeTTLSlotIncFlag              = "prime-ttl-slot-inc"
+	primeIsEnabledFlag               = "prime-is-enabled"
 
 	vectorNetworkIDFlag               = "vector-network-id"
 	vectorNetworkMagicFlag            = "vector-network-magic"
@@ -36,6 +37,9 @@ const (
 	vectorBlockfrostAPIKeyFlag        = "vector-blockfrost-api-key"
 	vectorSocketPathFlag              = "vector-socket-path"
 	vectorTTLSlotIncFlag              = "vector-ttl-slot-inc"
+	vectorIsEnabledFlag               = "vector-is-enabled"
+
+	nexusIsEnabledFlag = "nexus-is-enabled"
 
 	logsPathFlag = "logs-path"
 
@@ -61,6 +65,7 @@ const (
 	primeBlockfrostAPIKeyFlagDesc        = "blockfrost API key for prime network" //nolint:gosec
 	primeSocketPathFlagDesc              = "socket path for prime network"
 	primeTTLSlotIncFlagDesc              = "TTL slot increment for prime"
+	primeIsEnabledFlagDesc               = "chain enable flag for prime"
 
 	vectorNetworkIDFlagDesc               = "vector network id"
 	vectorNetworkMagicFlagDesc            = "vector network magic (default 0)"
@@ -72,6 +77,9 @@ const (
 	vectorBlockfrostAPIKeyFlagDesc        = "blockfrost API key for vector network" //nolint:gosec
 	vectorSocketPathFlagDesc              = "socket path for vector network"
 	vectorTTLSlotIncFlagDesc              = "TTL slot increment for vector"
+	vectorIsEnabledFlagDesc               = "chain enable flag for vector"
+
+	nexusIsEnabledFlagDesc = "chain enable flag for nexus"
 
 	logsPathFlagDesc = "path to where logs will be stored"
 
@@ -97,6 +105,7 @@ const (
 	defaultOutputFileName               = "config.json"
 	defaultPrimeTTLSlotNumberInc        = 1800 + defaultPrimeBlockConfirmationCount*10  // BlockTimeSeconds
 	defaultVectorTTLSlotNumberInc       = 1800 + defaultVectorBlockConfirmationCount*10 // BlockTimeSeconds
+	defaultIsEnabled                    = true
 
 	defaultUseDemeter = true
 )
@@ -112,6 +121,7 @@ type generateConfigsParams struct {
 	primeBlockfrostAPIKey        string
 	primeSocketPath              string
 	primeTTLSlotInc              uint64
+	primeIsEnabled               bool
 
 	vectorNetworkID               uint32
 	vectorNetworkMagic            uint32
@@ -123,6 +133,9 @@ type generateConfigsParams struct {
 	vectorBlockfrostAPIKey        string
 	vectorSocketPath              string
 	vectorTTLSlotInc              uint64
+	vectorIsEnabled               bool
+
+	nexusIsEnabled bool
 
 	logsPath         string
 	utxoCacheTimeout time.Duration
@@ -301,6 +314,13 @@ func (p *generateConfigsParams) setFlags(cmd *cobra.Command) {
 		primeTTLSlotIncFlagDesc,
 	)
 
+	cmd.Flags().BoolVar(
+		&p.primeIsEnabled,
+		primeIsEnabledFlag,
+		defaultIsEnabled,
+		primeIsEnabledFlagDesc,
+	)
+
 	cmd.Flags().Uint32Var(
 		&p.vectorNetworkID,
 		vectorNetworkIDFlag,
@@ -360,6 +380,20 @@ func (p *generateConfigsParams) setFlags(cmd *cobra.Command) {
 		vectorTTLSlotIncFlag,
 		defaultVectorTTLSlotNumberInc,
 		vectorTTLSlotIncFlagDesc,
+	)
+
+	cmd.Flags().BoolVar(
+		&p.vectorIsEnabled,
+		vectorIsEnabledFlag,
+		defaultIsEnabled,
+		vectorIsEnabledFlagDesc,
+	)
+
+	cmd.Flags().BoolVar(
+		&p.nexusIsEnabled,
+		nexusIsEnabledFlag,
+		defaultIsEnabled,
+		nexusIsEnabledFlagDesc,
 	)
 
 	cmd.Flags().StringVar(
@@ -445,6 +479,7 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.primeTTLSlotInc,
 				},
+				IsEnabled: p.primeIsEnabled,
 			},
 			common.ChainIDStrVector: {
 				NetworkID:    wallet.CardanoNetworkType(p.vectorNetworkID),
@@ -462,10 +497,13 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.vectorTTLSlotInc,
 				},
+				IsEnabled: p.vectorIsEnabled,
 			},
 		},
 		EthChains: map[string]*core.EthChainConfig{
-			common.ChainIDStrNexus: {},
+			common.ChainIDStrNexus: {
+				IsEnabled: p.nexusIsEnabled,
+			},
 		},
 		UtxoCacheTimeout: p.utxoCacheTimeout,
 		OracleAPI: core.OracleAPISettings{

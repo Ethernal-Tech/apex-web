@@ -1,14 +1,14 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import { retryForever } from 'src/utils/generalUtils';
-import { BridgingSettingsDto } from './settings.dto';
+import { SettingsResponseDto, BridgingSettingsDto } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 
 const RETRY_DELAY_MS = 5000;
 
 @Injectable()
 export class SettingsService {
-	BridgingSettings: BridgingSettingsDto;
+	SettingsResponse: SettingsResponseDto;
 
 	constructor() {}
 
@@ -22,7 +22,7 @@ export class SettingsService {
 
 		const endpointUrl = apiUrl + `/api/CardanoTx/GetSettings`;
 
-		this.BridgingSettings = await retryForever(
+		this.SettingsResponse = await retryForever(
 			() => this.fetchOnce(endpointUrl, apiKey),
 			RETRY_DELAY_MS,
 		);
@@ -31,7 +31,7 @@ export class SettingsService {
 	private async fetchOnce(
 		endpointUrl: string,
 		apiKey: string,
-	): Promise<BridgingSettingsDto> {
+	): Promise<SettingsResponseDto> {
 		Logger.debug(`axios.get: ${endpointUrl}`);
 
 		try {
@@ -44,7 +44,7 @@ export class SettingsService {
 
 			Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
-			return response.data as BridgingSettingsDto;
+			return response.data as SettingsResponseDto;
 		} catch (error) {
 			if (error instanceof AxiosError) {
 				if (error.response) {

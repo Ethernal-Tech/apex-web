@@ -31,7 +31,8 @@ type BridgingAddresses struct {
 }
 
 type EthChainConfig struct {
-	ChainID string `json:"-"`
+	ChainID   string `json:"-"`
+	IsEnabled bool   `json:"isEnabled"`
 }
 
 type CardanoChainConfig struct {
@@ -114,6 +115,18 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 	})
 
 	return err
+}
+
+func (appConfig *AppConfig) IsChainEnabled(chainID string) bool {
+	if cfg := appConfig.CardanoChains[chainID]; cfg != nil {
+		return cfg.IsEnabled
+	}
+
+	if cfg := appConfig.EthChains[chainID]; cfg != nil {
+		return cfg.IsEnabled
+	}
+
+	return false
 }
 
 func GetChainConfig(appConfig *AppConfig, chainID string) (*CardanoChainConfig, *EthChainConfig) {

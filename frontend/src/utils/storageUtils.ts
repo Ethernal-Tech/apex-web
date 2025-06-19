@@ -82,7 +82,6 @@ export const initChainsState = () => {
 	const chain = getSelectedChain()
 	const destinationChain = getDestinationChain()
 	const chainValues = Object.values(ChainEnum)
-	const enabledChains = appSettings.enabledChains
 
 	// reset chains if anything is wrong or missing from localStorage values
 	if(!chain || 
