@@ -82,6 +82,7 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
 			errors.New("invalid chainID"), c.logger)
+
 		return
 	}
 
@@ -138,6 +139,7 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
 			errors.New("invalid chainID"), c.logger)
+
 		return
 	}
 
@@ -197,6 +199,7 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
 			errors.New("invalid chainID"), c.logger)
+
 		return
 	}
 
@@ -416,14 +419,4 @@ func getSkipUtxos(
 			Index: x.Index,
 		}
 	}), false
-}
-
-func isChainEnabled(controller *CardanoTxControllerImpl, chainID string) bool {
-	for _, chain := range controller.enabledChains {
-		if chain == chainID {
-			return true
-		}
-	}
-
-	return false
 }
