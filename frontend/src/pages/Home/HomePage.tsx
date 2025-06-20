@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import { useEffect } from 'react';
 import { Typography, Box, Button, CircularProgress } from '@mui/material';
 import CustomSelect from '../../components/customSelect/CustomSelect';
@@ -45,10 +45,6 @@ const HomePage: React.FC = () => {
   const account = useSelector((state: RootState) => state.accountInfo.account);
 	const isLoggedInMemo = !!wallet && !!account;
   const enabledChains = useSelector((state: RootState) => state.settings.enabledChains);
-  const validEnumValues = Object.values(ChainEnum);
-
-  const enumArray: ChainEnum[] = enabledChains
-    .filter((val): val is ChainEnum => validEnumValues.includes(val as ChainEnum));
 
   const navigate = useNavigate()
   const dispatch = useDispatch()
@@ -56,27 +52,41 @@ const HomePage: React.FC = () => {
   let chain = useSelector((state: RootState) => state.chain.chain);
   let destinationChain = useSelector((state: RootState) => state.chain.destinationChain);
 
-  const supportedChainOptions = defaultChainOptions.filter(option => enabledChains.includes(option.value));
+  const supportedChainOptions = useMemo(
+    () => defaultChainOptions.filter(option => enabledChains.includes(option.value)),
+    [enabledChains],
+  );
 
-  // if new source is the same as destination, switch the chains
-  const updateSource = (value: ChainEnum)=>{
-    const destination = getDestinationChain()
-    if(value === destination) return switchValues()
-    dispatch(setChainAction(value))
-  }
-  
-  // if new destination is the same as source, switch the chains
-  const updateDestination = (value: ChainEnum)=>{
-    const source = getSelectedChain()
-    if(value === source) return switchValues()
-    dispatch(setDestinationChainAction(value))
-  }
+  const destinationSupportedOptions = useMemo(
+    () => supportedChainOptions.filter(x => {
+            // if source chain not prime, destination can only be prime
+            if(chain !== ChainEnum.Prime){
+              return x.value === ChainEnum.Prime;
+            }
+            return x.value !== chain;
+          }),
+    [chain, supportedChainOptions],
+  );
 
-  const switchValues = () => {
+  const switchValues =  useCallback(() => {
     const temp = chain;
     dispatch(setChainAction(destinationChain));
     dispatch(setDestinationChainAction(temp));
-  };
+  }, [chain, destinationChain, dispatch]);
+
+  // if new source is the same as destination, switch the chains
+  const updateSource = useCallback((value: ChainEnum)=>{
+    const destination = getDestinationChain()
+    if(value === destination) return switchValues()
+    dispatch(setChainAction(value))
+  }, [dispatch, switchValues])
+  
+  // if new destination is the same as source, switch the chains
+  const updateDestination = useCallback((value: ChainEnum)=>{
+    const source = getSelectedChain()
+    if(value === source) return switchValues()
+    dispatch(setDestinationChainAction(value))
+  }, [dispatch, switchValues])
 
   const handleConnectClick = async () => {
     if(!enabledChains.includes(chain)) {
@@ -93,14 +103,19 @@ const HomePage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!enabledChains.includes(chain)) {
-      updateSource(enumArray[0])
+    if (!enabledChains.includes(chain) && supportedChainOptions.length > 0) {
+      updateSource(supportedChainOptions[0].value)
     }
-    if (!enabledChains.includes(destinationChain) && enumArray.length >= 2) {
-        updateDestination(enumArray[1])
+    if (!enabledChains.includes(destinationChain) && supportedChainOptions.length >= 2) {
+        updateDestination(supportedChainOptions[1].value)
     }
- }, [enabledChains, chain, destinationChain])
+ }, [enabledChains, chain, destinationChain, supportedChainOptions, updateSource, updateDestination])
 
+ useEffect(() => {
+    if (chain !== ChainEnum.Prime && destinationChain !== ChainEnum.Prime) {
+      dispatch(setDestinationChainAction(ChainEnum.Prime))
+    }
+ }, [chain, destinationChain, dispatch])
 
   return (
     <BasePage>
@@ -143,16 +158,7 @@ const HomePage: React.FC = () => {
             disabled={chain !== ChainEnum.Prime || enabledChains.length <=2 }
             onChange={(e) => updateDestination(e.target.value as ChainEnum)}
             // todo - makeshift fix, check out details later
-            options={supportedChainOptions.filter(x => {
-              // if source chain not prime, destination can only be prime
-              if(chain !== ChainEnum.Prime){
-                // set destination chain to prime if not already
-                if(destinationChain !== ChainEnum.Prime) dispatch(setDestinationChainAction(ChainEnum.Prime));
-                return x.value === ChainEnum.Prime
-              }
-              return x.value !== chain
-              
-            })}
+            options={destinationSupportedOptions}
             sx={{ width: '240px'}} // Setting minWidth via sx prop
           />
         </Box>
