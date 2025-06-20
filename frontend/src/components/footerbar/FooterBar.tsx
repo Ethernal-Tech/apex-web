@@ -4,6 +4,7 @@ import {ReactComponent as LinkedinIcon} from "../../assets/external-links/LN.svg
 import {ReactComponent as XIcon} from "../../assets/external-links/X.svg";
 import {ReactComponent as DiscordIcon} from "../../assets/external-links/Discord.svg";
 import { Link as RouterLink } from "react-router-dom";
+import appSettings from "../../settings/appSettings";
 
 const containerStyles = {
   width:'100%',
@@ -81,7 +82,7 @@ const FooterBar = () => {
           display:'inline-block',
           padding:'4px 12px',
           borderRadius:'100px'
-        }}>Testnet</Box>
+        }}>{appSettings.isMainnet ? 'Mainnet' : 'Testnet'}</Box>
       </Box>
     </Box>
   )

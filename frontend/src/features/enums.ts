@@ -9,3 +9,12 @@ export enum WalletErrors {
     NoWalletsAvailable = 1,
     WalletNotEnabled = 2,
 }
+
+export enum ApexBridgeNetwork {
+    MainnetPrime = 'MainnetPrime',
+    MainnetVector = 'MainnetVector',
+    MainnetNexus = 'MainnetNexus',
+    TestnetPrime = 'TestnetPrime',
+    TestnetVector = 'TestnetVector',
+    TestnetNexus = 'TestnetNexus',
+}

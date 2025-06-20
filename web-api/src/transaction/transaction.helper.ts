@@ -151,7 +151,9 @@ export const createEthBridgingTx = async (
 		);
 	}
 
-	if (!areChainsEqual(dto.destinationChain, addr.GetNetwork())) {
+	const isMainnet = process.env.IS_MAINNET == 'true';
+
+	if (!areChainsEqual(dto.destinationChain, addr.GetNetwork(), isMainnet)) {
 		throw new BadRequestException(
 			`Destination address: ${dto.destinationAddress} not compatible with destination chain: ${dto.destinationChain}`,
 		);

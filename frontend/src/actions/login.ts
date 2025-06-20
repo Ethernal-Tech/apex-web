@@ -4,7 +4,7 @@ import { Dispatch } from 'redux';
 import { logout } from "./logout";
 import { toast } from "react-toastify";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
-import { areChainsEqual, fromChainToNetworkId } from "../utils/chainUtils";
+import { checkChainCompatibility, fromChainToNetwork, fromChainToNetworkId, fromEvmNetworkIdToNetwork } from "../utils/chainUtils";
 import evmWalletHandler, { EVM_SUPPORTED_WALLETS } from "../features/EvmWalletHandler";
 import { setConnectingAction } from "../redux/slices/loginSlice";
 import { setChainAction } from "../redux/slices/chainSlice";
@@ -16,9 +16,13 @@ let onLoadCalled = false
 
 const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
     const networkId = await evmWalletHandler.getNetworkId();
+    const network = fromEvmNetworkIdToNetwork(networkId);
+    if (!network) {
+        throw new Error(`Invalid networkId: ${networkId}. Expected networkId: ${fromChainToNetworkId(chain)}. Please select network with networkId: ${fromChainToNetworkId(chain)} in your wallet.`);
+    }
 
-    if (!areChainsEqual(chain, networkId)) {
-        throw new Error(`Chain: ${chain} not compatible with networkId: ${networkId}. Expected networkId: ${fromChainToNetworkId(chain)}. Please select ${chain} network in your wallet.`);
+    if (!checkChainCompatibility(chain, network, networkId)) {
+        throw new Error(`Chain: ${chain} not compatible with network: ${network}. Expected network: ${fromChainToNetwork(chain)}. Please select ${fromChainToNetwork(chain)} network in your wallet.`);
     }
     const account = await evmWalletHandler.getAddress();
     if (!account) {
@@ -27,7 +31,7 @@ const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainEnum, 
 
     dispatch(setWalletAction(selectedWalletName));
     dispatch(setAccountInfoAction({
-        account, networkId: networkId, balance: '0',
+        account, networkId, network, balance: '0',
     }))
 }
 
@@ -66,15 +70,20 @@ const enableCardanoWallet = async (selectedWalletName: string, chain: ChainEnum,
     }
 
     const networkId = await walletHandler.getNetworkId();
-    if (!areChainsEqual(chain, networkId)) {
-        throw new Error(`Chain: ${chain} not compatible with networkId: ${networkId}. Expected networkId: ${fromChainToNetworkId(chain)}. Please select ${chain} network in your wallet.`);
+    const network = await walletHandler.getNetwork();
+    if (!network) {
+        throw new Error(`Invalid network: ${network}. Expected network: ${fromChainToNetwork(chain)}. Please select ${fromChainToNetwork(chain)} network in your wallet.`);
+    }
+
+    if (!checkChainCompatibility(chain, network, networkId)) {
+        throw new Error(`Chain: ${chain} not compatible with network: ${network}. Expected network: ${fromChainToNetwork(chain)}. Please select ${fromChainToNetwork(chain)} network in your wallet.`);
     }
 
     const account = await walletHandler.getChangeAddress();
 
     dispatch(setWalletAction(selectedWalletName));
     dispatch(setAccountInfoAction({
-        account, networkId, balance: '0',
+        account, networkId, network, balance: '0',
     }))
 
     return true;
