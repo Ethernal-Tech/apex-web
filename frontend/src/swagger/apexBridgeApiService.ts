@@ -572,13 +572,18 @@ export class SettingsResponseDto implements ISettingsResponseDto {
         }
         if (!data) {
             this.bridgingSettings = new BridgingSettingsDto();
+            this.enabledChains = [];
         }
     }
 
     init(_data?: any) {
         if (_data) {
             this.bridgingSettings = _data["bridgingSettings"] ? BridgingSettingsDto.fromJS(_data["bridgingSettings"]) : new BridgingSettingsDto();
-            this.enabledChains = _data["enabledChains"] ? _data["enabledChains"].map((x: any) => String(x)) : [];
+            if (Array.isArray(_data["enabledChains"])) {
+                this.enabledChains = [] as any;
+                for (let item of _data["enabledChains"])
+                    this.enabledChains!.push(item);
+            }
         }
     }
 
@@ -592,6 +597,11 @@ export class SettingsResponseDto implements ISettingsResponseDto {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["bridgingSettings"] = this.bridgingSettings ? this.bridgingSettings.toJSON() : <any>undefined;
+        if (Array.isArray(this.enabledChains)) {
+            data["enabledChains"] = [];
+            for (let item of this.enabledChains)
+                data["enabledChains"].push(item);
+        }
         return data; 
     }
 }
