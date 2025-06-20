@@ -1,5 +1,4 @@
 import { ChainEnum } from "../swagger/apexBridgeApiService";
-import appSettings from "../settings/appSettings";
 
 export type PKLoginDto = {
     address: string,

@@ -117,24 +117,12 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 	return err
 }
 
-func (appConfig *AppConfig) IsChainEnabled(chainID string) bool {
-	if cfg := appConfig.CardanoChains[chainID]; cfg != nil {
-		return cfg.IsEnabled
-	}
-
-	if cfg := appConfig.EthChains[chainID]; cfg != nil {
-		return cfg.IsEnabled
-	}
-
-	return false
-}
-
 func GetChainConfig(appConfig *AppConfig, chainID string) (*CardanoChainConfig, *EthChainConfig) {
-	if cardanoChainConfig, exists := appConfig.CardanoChains[chainID]; exists {
+	if cardanoChainConfig, exists := appConfig.CardanoChains[chainID]; exists && cardanoChainConfig.IsEnabled {
 		return cardanoChainConfig, nil
 	}
 
-	if ethChainConfig, exists := appConfig.EthChains[chainID]; exists {
+	if ethChainConfig, exists := appConfig.EthChains[chainID]; exists && ethChainConfig.IsEnabled {
 		return nil, ethChainConfig
 	}
 

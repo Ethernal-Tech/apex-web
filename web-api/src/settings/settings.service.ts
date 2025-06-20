@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import { retryForever } from 'src/utils/generalUtils';
-import { SettingsResponseDto, BridgingSettingsDto } from './settings.dto';
+import { SettingsResponseDto } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 
 const RETRY_DELAY_MS = 5000;

@@ -25,7 +25,6 @@ const (
 	primeBlockfrostAPIKeyFlag        = "prime-blockfrost-api-key"
 	primeSocketPathFlag              = "prime-socket-path"
 	primeTTLSlotIncFlag              = "prime-ttl-slot-inc"
-	primeIsEnabledFlag               = "prime-is-enabled"
 
 	vectorNetworkIDFlag               = "vector-network-id"
 	vectorNetworkMagicFlag            = "vector-network-magic"
@@ -65,7 +64,6 @@ const (
 	primeBlockfrostAPIKeyFlagDesc        = "blockfrost API key for prime network" //nolint:gosec
 	primeSocketPathFlagDesc              = "socket path for prime network"
 	primeTTLSlotIncFlagDesc              = "TTL slot increment for prime"
-	primeIsEnabledFlagDesc               = "chain enable flag for prime"
 
 	vectorNetworkIDFlagDesc               = "vector network id"
 	vectorNetworkMagicFlagDesc            = "vector network magic (default 0)"
@@ -105,7 +103,6 @@ const (
 	defaultOutputFileName               = "config.json"
 	defaultPrimeTTLSlotNumberInc        = 1800 + defaultPrimeBlockConfirmationCount*10  // BlockTimeSeconds
 	defaultVectorTTLSlotNumberInc       = 1800 + defaultVectorBlockConfirmationCount*10 // BlockTimeSeconds
-	defaultIsEnabled                    = true
 
 	defaultUseDemeter = true
 )
@@ -121,7 +118,6 @@ type generateConfigsParams struct {
 	primeBlockfrostAPIKey        string
 	primeSocketPath              string
 	primeTTLSlotInc              uint64
-	primeIsEnabled               bool
 
 	vectorNetworkID               uint32
 	vectorNetworkMagic            uint32
@@ -314,13 +310,6 @@ func (p *generateConfigsParams) setFlags(cmd *cobra.Command) {
 		primeTTLSlotIncFlagDesc,
 	)
 
-	cmd.Flags().BoolVar(
-		&p.primeIsEnabled,
-		primeIsEnabledFlag,
-		defaultIsEnabled,
-		primeIsEnabledFlagDesc,
-	)
-
 	cmd.Flags().Uint32Var(
 		&p.vectorNetworkID,
 		vectorNetworkIDFlag,
@@ -385,14 +374,14 @@ func (p *generateConfigsParams) setFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(
 		&p.vectorIsEnabled,
 		vectorIsEnabledFlag,
-		defaultIsEnabled,
+		false,
 		vectorIsEnabledFlagDesc,
 	)
 
 	cmd.Flags().BoolVar(
 		&p.nexusIsEnabled,
 		nexusIsEnabledFlag,
-		defaultIsEnabled,
+		false,
 		nexusIsEnabledFlagDesc,
 	)
 
@@ -479,7 +468,7 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.primeTTLSlotInc,
 				},
-				IsEnabled: p.primeIsEnabled,
+				IsEnabled: true,
 			},
 			common.ChainIDStrVector: {
 				NetworkID:    wallet.CardanoNetworkType(p.vectorNetworkID),

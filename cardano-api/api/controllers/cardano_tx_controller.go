@@ -23,7 +23,6 @@ import (
 type CardanoTxControllerImpl struct {
 	appConfig      *core.AppConfig
 	usedUtxoCacher *utils.UsedUtxoCacher
-	enabledChains  []string
 	logger         hclog.Logger
 }
 
@@ -78,16 +77,8 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 	chainID := chainIDArr[0]
 	address := addressArr[0]
 
-	if !c.appConfig.IsChainEnabled(chainID) {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			errors.New("invalid chainID"), c.logger)
-
-		return
-	}
-
-	chainConfig, exists := c.appConfig.CardanoChains[chainID]
-	if !exists {
+	chainConfig, _ := core.GetChainConfig(c.appConfig, chainID)
+	if chainConfig == nil {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
 			errors.New("chainID not registered"), c.logger)
@@ -133,15 +124,6 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 	}
 
 	c.logger.Debug("getBridgingTxFee request", "body", requestBody, "url", r.URL)
-
-	if !c.appConfig.IsChainEnabled(requestBody.SourceChainID) ||
-		!c.appConfig.IsChainEnabled(requestBody.DestinationChainID) {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			errors.New("invalid chainID"), c.logger)
-
-		return
-	}
 
 	err := c.validateAndFillOutCreateBridgingTxRequest(&requestBody)
 	if err != nil {
@@ -193,15 +175,6 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 	}
 
 	c.logger.Debug("createBridgingTx request", "body", requestBody, "url", r.URL)
-
-	if !c.appConfig.IsChainEnabled(requestBody.SourceChainID) ||
-		!c.appConfig.IsChainEnabled(requestBody.DestinationChainID) {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			errors.New("invalid chainID"), c.logger)
-
-		return
-	}
 
 	err := c.validateAndFillOutCreateBridgingTxRequest(&requestBody)
 	if err != nil {
@@ -360,8 +333,8 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 func (c *CardanoTxControllerImpl) getBridgingTxSenderAndOutputs(
 	requestBody request.CreateBridgingTxRequest,
 ) (*cardanotx.BridgingTxSender, []wallet.TxOutput, error) {
-	sourceChainConfig, exists := c.appConfig.CardanoChains[requestBody.SourceChainID]
-	if !exists {
+	sourceChainConfig, _ := core.GetChainConfig(c.appConfig, requestBody.SourceChainID)
+	if sourceChainConfig == nil {
 		return nil, nil, fmt.Errorf("chain does not exists: %s", requestBody.SourceChainID)
 	}
 
