@@ -15,6 +15,9 @@ export class AppSettings {
     private _maxAmountAllowedToBridge: string = "0";
     private _minValueToBridge: string = "0";
 	private _potentialWalletFee: number = 0;
+	private _isMainnet: boolean = false;
+
+	private _enabledChains: string[] = [];
 
     public constructor() {
 		const settingsJson = require(process.env.NODE_ENV === 'development' ? './appSettings_development.json' : './appSettings_production.json');
@@ -24,6 +27,7 @@ export class AppSettings {
 		this._maxAmountAllowedToBridge = settingsJson.maxAmountAllowedToBridge;
 		this._minValueToBridge = settingsJson.minValueToBridge;
 		this._potentialWalletFee = settingsJson.potentialWalletFee;
+		this._isMainnet = settingsJson.isMainnet;
 	}
 
 	get apiUrl(): string {
@@ -48,6 +52,14 @@ export class AppSettings {
 
 	get potentialWalletFee(): number {
 		return this._potentialWalletFee;
+	}
+
+	get isMainnet(): boolean {
+		return this._isMainnet;
+	}
+
+	get enabledChains(): string[] {
+		return this._enabledChains;
 	}
 }
 

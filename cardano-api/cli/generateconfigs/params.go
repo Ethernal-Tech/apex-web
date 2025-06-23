@@ -36,6 +36,9 @@ const (
 	vectorBlockfrostAPIKeyFlag        = "vector-blockfrost-api-key"
 	vectorSocketPathFlag              = "vector-socket-path"
 	vectorTTLSlotIncFlag              = "vector-ttl-slot-inc"
+	vectorIsEnabledFlag               = "vector-is-enabled"
+
+	nexusIsEnabledFlag = "nexus-is-enabled"
 
 	logsPathFlag = "logs-path"
 
@@ -72,6 +75,9 @@ const (
 	vectorBlockfrostAPIKeyFlagDesc        = "blockfrost API key for vector network" //nolint:gosec
 	vectorSocketPathFlagDesc              = "socket path for vector network"
 	vectorTTLSlotIncFlagDesc              = "TTL slot increment for vector"
+	vectorIsEnabledFlagDesc               = "chain enable flag for vector"
+
+	nexusIsEnabledFlagDesc = "chain enable flag for nexus"
 
 	logsPathFlagDesc = "path to where logs will be stored"
 
@@ -123,6 +129,9 @@ type generateConfigsParams struct {
 	vectorBlockfrostAPIKey        string
 	vectorSocketPath              string
 	vectorTTLSlotInc              uint64
+	vectorIsEnabled               bool
+
+	nexusIsEnabled bool
 
 	logsPath         string
 	utxoCacheTimeout time.Duration
@@ -362,6 +371,20 @@ func (p *generateConfigsParams) setFlags(cmd *cobra.Command) {
 		vectorTTLSlotIncFlagDesc,
 	)
 
+	cmd.Flags().BoolVar(
+		&p.vectorIsEnabled,
+		vectorIsEnabledFlag,
+		false,
+		vectorIsEnabledFlagDesc,
+	)
+
+	cmd.Flags().BoolVar(
+		&p.nexusIsEnabled,
+		nexusIsEnabledFlag,
+		false,
+		nexusIsEnabledFlagDesc,
+	)
+
 	cmd.Flags().StringVar(
 		&p.logsPath,
 		logsPathFlag,
@@ -445,6 +468,7 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.primeTTLSlotInc,
 				},
+				IsEnabled: true,
 			},
 			common.ChainIDStrVector: {
 				NetworkID:    wallet.CardanoNetworkType(p.vectorNetworkID),
@@ -462,10 +486,13 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.vectorTTLSlotInc,
 				},
+				IsEnabled: p.vectorIsEnabled,
 			},
 		},
 		EthChains: map[string]*core.EthChainConfig{
-			common.ChainIDStrNexus: {},
+			common.ChainIDStrNexus: {
+				IsEnabled: p.nexusIsEnabled,
+			},
 		},
 		UtxoCacheTimeout: p.utxoCacheTimeout,
 		OracleAPI: core.OracleAPISettings{

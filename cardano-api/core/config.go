@@ -31,7 +31,8 @@ type BridgingAddresses struct {
 }
 
 type EthChainConfig struct {
-	ChainID string `json:"-"`
+	ChainID   string `json:"-"`
+	IsEnabled bool   `json:"isEnabled"`
 }
 
 type CardanoChainConfig struct {
@@ -40,6 +41,7 @@ type CardanoChainConfig struct {
 	NetworkID         cardanowallet.CardanoNetworkType `json:"networkID"`
 	BridgingAddresses BridgingAddresses                `json:"bridgingAddresses"`
 	ChainSpecific     *cardanotx.CardanoChainConfig    `json:"chainSpecific"`
+	IsEnabled         bool                             `json:"isEnabled"`
 }
 
 type OracleAPISettings struct {
@@ -116,11 +118,11 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 }
 
 func GetChainConfig(appConfig *AppConfig, chainID string) (*CardanoChainConfig, *EthChainConfig) {
-	if cardanoChainConfig, exists := appConfig.CardanoChains[chainID]; exists {
+	if cardanoChainConfig, exists := appConfig.CardanoChains[chainID]; exists && cardanoChainConfig.IsEnabled {
 		return cardanoChainConfig, nil
 	}
 
-	if ethChainConfig, exists := appConfig.EthChains[chainID]; exists {
+	if ethChainConfig, exists := appConfig.EthChains[chainID]; exists && ethChainConfig.IsEnabled {
 		return nil, ethChainConfig
 	}
 

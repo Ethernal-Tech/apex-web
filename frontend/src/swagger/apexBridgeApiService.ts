@@ -479,14 +479,14 @@ export class ContactControllerClient extends BaseClient {
     }
 }
 
-export class SettingsResponseDto implements ISettingsResponseDto {
+export class BridgingSettingsDto implements IBridgingSettingsDto {
     minChainFeeForBridging!: { [key: string]: number; };
     minUtxoChainValue!: { [key: string]: number; };
     minValueToBridge!: number;
     maxAmountAllowedToBridge!: string;
     maxReceiversPerBridgingRequest!: number;
 
-    constructor(data?: ISettingsResponseDto) {
+    constructor(data?: IBridgingSettingsDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -521,9 +521,9 @@ export class SettingsResponseDto implements ISettingsResponseDto {
         }
     }
 
-    static fromJS(data: any): SettingsResponseDto {
+    static fromJS(data: any): BridgingSettingsDto {
         data = typeof data === 'object' ? data : {};
-        let result = new SettingsResponseDto();
+        let result = new BridgingSettingsDto();
         result.init(data);
         return result;
     }
@@ -551,12 +551,64 @@ export class SettingsResponseDto implements ISettingsResponseDto {
     }
 }
 
-export interface ISettingsResponseDto {
+export interface IBridgingSettingsDto {
     minChainFeeForBridging: { [key: string]: number; };
     minUtxoChainValue: { [key: string]: number; };
     minValueToBridge: number;
     maxAmountAllowedToBridge: string;
     maxReceiversPerBridgingRequest: number;
+}
+
+export class SettingsResponseDto implements ISettingsResponseDto {
+    bridgingSettings!: BridgingSettingsDto;
+    enabledChains!: string[];
+
+    constructor(data?: ISettingsResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+        if (!data) {
+            this.bridgingSettings = new BridgingSettingsDto();
+            this.enabledChains = [];
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.bridgingSettings = _data["bridgingSettings"] ? BridgingSettingsDto.fromJS(_data["bridgingSettings"]) : new BridgingSettingsDto();
+            if (Array.isArray(_data["enabledChains"])) {
+                this.enabledChains = [] as any;
+                for (let item of _data["enabledChains"])
+                    this.enabledChains!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): SettingsResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SettingsResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["bridgingSettings"] = this.bridgingSettings ? this.bridgingSettings.toJSON() : <any>undefined;
+        if (Array.isArray(this.enabledChains)) {
+            data["enabledChains"] = [];
+            for (let item of this.enabledChains)
+                data["enabledChains"].push(item);
+        }
+        return data; 
+    }
+}
+
+export interface ISettingsResponseDto {
+    bridgingSettings: BridgingSettingsDto;
+    enabledChains: string[];
 }
 
 export enum ChainEnum {

@@ -17,7 +17,7 @@ import { isAddress } from 'web3-validator';
 import { NewAddress, RewardAddress } from 'src/utils/Address/addreses';
 import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
 import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
-import { SettingsResponseDto } from 'src/settings/settings.dto';
+import { BridgingSettingsDto } from 'src/settings/settings.dto';
 import { convertDfmToWei } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
 
@@ -123,7 +123,7 @@ export const getCardanoBridgingTxFee = async (
 
 export const createEthBridgingTx = async (
 	dto: CreateTransactionDto,
-	bridgingSettings: SettingsResponseDto,
+	bridgingSettings: BridgingSettingsDto,
 ): Promise<CreateEthTransactionResponseDto> => {
 	if (!isAddress(dto.senderAddress)) {
 		throw new BadRequestException('Invalid sender address');
@@ -151,7 +151,9 @@ export const createEthBridgingTx = async (
 		);
 	}
 
-	if (!areChainsEqual(dto.destinationChain, addr.GetNetwork())) {
+	const isMainnet = process.env.IS_MAINNET == 'true';
+
+	if (!areChainsEqual(dto.destinationChain, addr.GetNetwork(), isMainnet)) {
 		throw new BadRequestException(
 			`Destination address: ${dto.destinationAddress} not compatible with destination chain: ${dto.destinationChain}`,
 		);

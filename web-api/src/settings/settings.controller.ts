@@ -20,6 +20,6 @@ export class SettingsController {
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	async get(): Promise<SettingsResponseDto> {
-		return this.settingsService.BridgingSettings;
+		return this.settingsService.SettingsResponse;
 	}
 }

@@ -1,6 +1,7 @@
 import { BrowserWallet, Asset, UTxO } from '@meshsdk/core';
 import { NewAddressFromBytes } from './Address/addreses';
 import { getAssetsSumMap, toBytes } from '../utils/generalUtils';
+import { ApexBridgeNetwork } from './enums';
 
 type Wallet = {
     name: string;
@@ -42,6 +43,29 @@ class WalletHandler {
     private _checkWalletAndThrow = () => {
         if (!this.checkWallet()) {
             throw new Error('Wallet not enabled')
+        }
+    }
+
+
+    getNetwork = async (): Promise<ApexBridgeNetwork | undefined> => {
+        this._checkWalletAndThrow();
+
+        try {
+            const nativeAPI = this.getNativeAPI();
+            const experimentalAPI = nativeAPI['experimental'];
+            if (!experimentalAPI) {
+                throw new Error('experimental not defined');
+            }
+
+            const getConnectedNetworkId = experimentalAPI['getConnectedNetworkId'];
+            if (!getConnectedNetworkId) {
+                throw new Error('getConnectedNetworkId not defined');
+            }
+
+            const eternlNetworkId = await getConnectedNetworkId();
+            return ETERNL_NETWORK_ID_TO_APEX_BRIDGE_NETWORK[eternlNetworkId];
+        } catch (e) {
+            console.log(e)
         }
     }
 
@@ -118,3 +142,10 @@ class WalletHandler {
 const walletHandler = new WalletHandler();
 export default walletHandler;
 export type { BrowserWallet, Wallet, Asset };
+
+const ETERNL_NETWORK_ID_TO_APEX_BRIDGE_NETWORK: {[key: string]: ApexBridgeNetwork} = {
+    'afvt': ApexBridgeNetwork.TestnetVector,
+    'afvm': ApexBridgeNetwork.MainnetVector,
+    'afpt': ApexBridgeNetwork.TestnetPrime,
+    'afpm': ApexBridgeNetwork.MainnetPrime,
+}

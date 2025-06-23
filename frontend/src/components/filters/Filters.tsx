@@ -133,7 +133,11 @@ export default function Filters({ filters, onFilterChange }: Props) {
     const chain = useSelector((state: RootState) => state.chain.chain)
     const account = useSelector((state: RootState) => state.accountInfo.account);
 
-    const destinationChains = useMemo(() => Object.values(ChainEnum).filter(x => x !== chain), [chain])
+    const enabledChains = useSelector((state: RootState) => state.settings.enabledChains);
+    const destinationChains = useMemo(
+        () => Object.values(ChainEnum).filter(x => x !== chain && enabledChains.includes(x)),
+        [chain, enabledChains],
+    )
 
     const removeFilterCallback = useCallback(
         (propName: string) => {

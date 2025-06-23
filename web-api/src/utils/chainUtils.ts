@@ -1,8 +1,8 @@
 import { ChainEnum } from 'src/common/enum';
+import { CardanoNetworkType } from './Address/types';
 
-const PRIME_NETWORK_ID = 0;
-const VECTOR_NETWORK_ID = 2;
-const NEXUS_NETWORK_ID = BigInt(9070); // for Nexus
+const NEXUS_TESTNET_CHAIN_ID = BigInt(9070);
+const NEXUS_MAINNET_CHAIN_ID = BigInt(9070); // TODO: CHANGE WHEN WE FIND OUT
 
 const CHAIN_TO_CHAIN_ID = {
 	[ChainEnum.Prime]: 1,
@@ -10,36 +10,23 @@ const CHAIN_TO_CHAIN_ID = {
 	[ChainEnum.Nexus]: 3,
 };
 
-export const fromNetworkIdToChain = (
-	networkId: number | bigint,
-): ChainEnum | undefined => {
-	switch (networkId) {
-		case PRIME_NETWORK_ID: {
-			return ChainEnum.Prime;
-		}
-		case VECTOR_NETWORK_ID: {
-			return ChainEnum.Vector;
-		}
-		case NEXUS_NETWORK_ID: {
-			return ChainEnum.Nexus;
-		}
-		default:
-			return;
-	}
-};
-
-export const fromChainToNetworkId = (
+const fromChainToNetworkId = (
 	chain: ChainEnum,
+	isMainnet: boolean,
 ): number | bigint | undefined => {
 	switch (chain) {
 		case ChainEnum.Prime: {
-			return PRIME_NETWORK_ID;
+			return isMainnet
+				? CardanoNetworkType.MainNetNetwork
+				: CardanoNetworkType.TestNetNetwork;
 		}
 		case ChainEnum.Vector: {
-			return VECTOR_NETWORK_ID;
+			return isMainnet
+				? CardanoNetworkType.VectorMainNetNetwork
+				: CardanoNetworkType.VectorTestNetNetwork;
 		}
 		case ChainEnum.Nexus: {
-			return NEXUS_NETWORK_ID;
+			return isMainnet ? NEXUS_MAINNET_CHAIN_ID : NEXUS_TESTNET_CHAIN_ID;
 		}
 		default:
 			return;
@@ -49,8 +36,9 @@ export const fromChainToNetworkId = (
 export const areChainsEqual = (
 	chain: ChainEnum,
 	networkId: number | bigint,
+	isMainnet: boolean,
 ): boolean => {
-	return chain === fromNetworkIdToChain(networkId);
+	return networkId === fromChainToNetworkId(chain, isMainnet);
 };
 
 export const toNumChainID = (chain: ChainEnum) => CHAIN_TO_CHAIN_ID[chain];

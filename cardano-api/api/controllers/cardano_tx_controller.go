@@ -48,6 +48,7 @@ func (c *CardanoTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
 		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance},
+		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
 	}
 }
 
@@ -76,8 +77,8 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 	chainID := chainIDArr[0]
 	address := addressArr[0]
 
-	chainConfig, exists := c.appConfig.CardanoChains[chainID]
-	if !exists {
+	chainConfig, _ := core.GetChainConfig(c.appConfig, chainID)
+	if chainConfig == nil {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
 			errors.New("chainID not registered"), c.logger)
@@ -224,6 +225,12 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		response.NewFullBridgingTxResponse(txRawBytes, txHash, requestBody.BridgingFee), c.logger)
 }
 
+func (c *CardanoTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Request) {
+	utils.WriteResponse(
+		w, r, http.StatusOK,
+		response.NewSettingsResponse(c.appConfig), c.logger)
+}
+
 func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody *request.CreateBridgingTxRequest,
 ) error {
@@ -326,8 +333,8 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 func (c *CardanoTxControllerImpl) getBridgingTxSenderAndOutputs(
 	requestBody request.CreateBridgingTxRequest,
 ) (*cardanotx.BridgingTxSender, []wallet.TxOutput, error) {
-	sourceChainConfig, exists := c.appConfig.CardanoChains[requestBody.SourceChainID]
-	if !exists {
+	sourceChainConfig, _ := core.GetChainConfig(c.appConfig, requestBody.SourceChainID)
+	if sourceChainConfig == nil {
 		return nil, nil, fmt.Errorf("chain does not exists: %s", requestBody.SourceChainID)
 	}
 
