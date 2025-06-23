@@ -40,7 +40,7 @@ const TotalBalance = () => {
                             </Box>
                             }
                         </Typography>
-                        <Typography>{chainCurrency}</Typography>
+                        <Typography>{TokenEnumToLabel[chainCurrency]}</Typography>
                     </Box>
                 }
 

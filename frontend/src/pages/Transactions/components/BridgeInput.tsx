@@ -42,7 +42,7 @@ const sourceTokenOptionEnabled = (
 const primeSourceTokenOptions = [
   { 
     value: TokenEnum.APEX,
-    label: TokenEnum.APEX,
+    label: TokenEnumToLabel[TokenEnum.APEX],
     icon: tokenIcons[TokenEnum.APEX],
     borderColor:'#077368',
     tokenEnabledConfig: {
@@ -65,7 +65,7 @@ const primeSourceTokenOptions = [
 const cardanoSourceTokenOptions = [
   { 
     value: TokenEnum.Ada,
-    label: TokenEnum.Ada,
+    label: TokenEnumToLabel[TokenEnum.Ada],
     icon: tokenIcons[TokenEnum.Ada],
     borderColor: '#0538AF',
     tokenEnabledConfig: {

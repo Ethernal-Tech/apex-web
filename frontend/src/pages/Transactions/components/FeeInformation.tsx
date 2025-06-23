@@ -3,7 +3,7 @@ import { Box, styled, SxProps, Theme, Typography } from '@mui/material';
 import { convertDfmToApex, toFixed } from '../../../utils/generalUtils';
 import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
-import { fromChainToChainCurrency } from '../../../utils/chainUtils';
+import { fromChainToChainCurrency, TokenEnumToLabel } from '../../../utils/chainUtils';
 
 const CustomBox = styled(Box)({
   background:'#075159'
@@ -39,7 +39,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               User Wallet Fee:
           </Box>
           {/* TODO AF - check this conversion is correct */}
-          <Box component="span">{BigInt(userWalletFee) > 0 ? toFixed(convertDfmToApex(userWalletFee, chain), 6) : '0'} {fromChainToChainCurrency(chain)}
+          <Box component="span">{BigInt(userWalletFee) > 0 ? toFixed(convertDfmToApex(userWalletFee, chain), 6) : '0'} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
           </Box>
         </Typography>
         
@@ -56,7 +56,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               Bridge Transaction Fee:
           </Box>
           {/* TODO AF - check this conversion is correct */}
-          <Box component="span">{BigInt(bridgeTxFee) > 0 ? toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'} {fromChainToChainCurrency(chain)}
+          <Box component="span">{BigInt(bridgeTxFee) > 0 ? toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
           </Box>
         </Typography>
         
@@ -74,7 +74,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
                 Bridge Operation Fee:
             </Box>
             {/* TODO AF - check this conversion is correct */}
-            <Box component="span">{BigInt(operationFee) > 0 ? toFixed(convertDfmToApex(operationFee, chain), 6): '0'} {fromChainToChainCurrency(chain)}
+            <Box component="span">{BigInt(operationFee) > 0 ? toFixed(convertDfmToApex(operationFee, chain), 6): '0'} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
             </Box>
           </Typography>
         }

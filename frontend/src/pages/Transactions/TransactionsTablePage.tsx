@@ -237,7 +237,7 @@ const TransactionsTablePage = () => {
               </TableCell>
 
               <TableCell sx={tableCellStyle}>
-                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {fromChainToChainCurrency(chain)}
+                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
               </TableCell>
               {
                 appSettings.isSkyline &&
