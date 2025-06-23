@@ -557,6 +557,7 @@ export class SettingsResponseDto implements ISettingsResponseDto {
     runMode!: string;
     cardanoChainsNativeTokens!: { [key: string]: NativeTokenDto[]; };
     bridgingSettings!: BridgingSettingsDto;
+    enabledChains!: string[];
 
     constructor(data?: ISettingsResponseDto) {
         if (data) {
@@ -568,6 +569,7 @@ export class SettingsResponseDto implements ISettingsResponseDto {
         if (!data) {
             this.cardanoChainsNativeTokens = {};
             this.bridgingSettings = new BridgingSettingsDto();
+            this.enabledChains = [];
         }
     }
 
@@ -582,6 +584,11 @@ export class SettingsResponseDto implements ISettingsResponseDto {
                 }
             }
             this.bridgingSettings = _data["bridgingSettings"] ? BridgingSettingsDto.fromJS(_data["bridgingSettings"]) : new BridgingSettingsDto();
+            if (Array.isArray(_data["enabledChains"])) {
+                this.enabledChains = [] as any;
+                for (let item of _data["enabledChains"])
+                    this.enabledChains!.push(item);
+            }
         }
     }
 
@@ -603,6 +610,11 @@ export class SettingsResponseDto implements ISettingsResponseDto {
             }
         }
         data["bridgingSettings"] = this.bridgingSettings ? this.bridgingSettings.toJSON() : <any>undefined;
+        if (Array.isArray(this.enabledChains)) {
+            data["enabledChains"] = [];
+            for (let item of this.enabledChains)
+                data["enabledChains"].push(item);
+        }
         return data; 
     }
 }
@@ -611,6 +623,7 @@ export interface ISettingsResponseDto {
     runMode: string;
     cardanoChainsNativeTokens: { [key: string]: NativeTokenDto[]; };
     bridgingSettings: BridgingSettingsDto;
+    enabledChains: string[];
 }
 
 export enum ChainEnum {

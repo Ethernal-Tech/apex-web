@@ -1,6 +1,11 @@
 import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsObject, IsPositive, ValidateNested } from 'class-validator';
+import {
+	IsNotEmpty,
+	IsObject,
+	IsPositive,
+	ValidateNested,
+} from 'class-validator';
 
 export class BridgingSettingsDto {
 	@IsNotEmpty()
@@ -46,7 +51,7 @@ export class NativeTokenDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	dstChainID: string;
-  
+
 	@IsNotEmpty()
 	@ApiProperty()
 	tokenName: string;
@@ -61,14 +66,14 @@ export class SettingsResponseDto {
 	@IsNotEmpty()
 	@IsObject()
 	@ApiProperty({
-	  type: Object,
-	  additionalProperties: {
-		type: 'array',
-		items: { $ref: getSchemaPath(NativeTokenDto) }
-	  },
+		type: Object,
+		additionalProperties: {
+			type: 'array',
+			items: { $ref: getSchemaPath(NativeTokenDto) },
+		},
 	})
 	cardanoChainsNativeTokens: {
-	  [key: string]: NativeTokenDto[];
+		[key: string]: NativeTokenDto[];
 	};
 
 	@IsNotEmpty()
@@ -76,4 +81,8 @@ export class SettingsResponseDto {
 	@Type(() => BridgingSettingsDto)
 	@ApiProperty({ type: BridgingSettingsDto })
 	bridgingSettings: BridgingSettingsDto;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	enabledChains: string[];
 }

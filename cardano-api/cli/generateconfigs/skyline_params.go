@@ -425,6 +425,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 					TTLSlotNumberInc: p.primeTTLSlotInc,
 					NativeTokens:     nativeTokensPrime,
 				},
+				IsEnabled: true,
 			},
 			common.ChainIDStrCardano: {
 				NetworkID:    wallet.CardanoNetworkType(p.cardanoNetworkID),
@@ -443,6 +444,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 					TTLSlotNumberInc: p.cardanoTTLSlotInc,
 					NativeTokens:     nativeTokensCardano,
 				},
+				IsEnabled: true,
 			},
 		},
 		EthChains: map[string]*core.EthChainConfig{

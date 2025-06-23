@@ -1,73 +1,89 @@
 import { CardanoAddress } from "../features/Address/interfaces";
+import { CardanoNetworkType } from "../features/Address/types";
 import { ApexBridgeNetwork, TokenEnum } from "../features/enums";
 import appSettings from "../settings/appSettings";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
-const TESTNET_PRIME_NETWORK_ID = 0
-const TESTNET_VECTOR_NETWORK_ID = 2
-const PREVIEW_CARDANO_NETWORK_ID = 0
 const TESTNET_NEXUS_NETWORK_ID = BigInt(9070) // for Nexus
-
-const MAINNET_PRIME_NETWORK_ID = 1
-const MAINNET_VECTOR_NETWORK_ID = 3
-const MAINNET_CARDANO_NETWORK_ID = 1
 const MAINNET_NEXUS_NETWORK_ID = BigInt(9071) // TODO: fix when known
 
-const CHAIN_TO_TESTNET_NETWORK_ID = {
-    [ChainEnum.Prime]: TESTNET_PRIME_NETWORK_ID,
-    [ChainEnum.Vector]: TESTNET_VECTOR_NETWORK_ID,
-    [ChainEnum.Nexus]: TESTNET_NEXUS_NETWORK_ID,
-    [ChainEnum.Cardano]: PREVIEW_CARDANO_NETWORK_ID,
+type ChainData = {
+    mainnet: { networkID: number|bigint, network: ApexBridgeNetwork },
+    testnet: { networkID: number|bigint, network: ApexBridgeNetwork },
 }
 
-const CHAIN_TO_MAINNET_NETWORK_ID = {
-    [ChainEnum.Prime]: MAINNET_PRIME_NETWORK_ID,
-    [ChainEnum.Vector]: MAINNET_VECTOR_NETWORK_ID,
-    [ChainEnum.Nexus]: MAINNET_NEXUS_NETWORK_ID,
-    [ChainEnum.Cardano]: MAINNET_CARDANO_NETWORK_ID,
+const CHAIN_DATA: {[key: string]: ChainData} = {
+    [ChainEnum.Prime]: {
+        mainnet: {
+            networkID: CardanoNetworkType.MainNetNetwork,
+            network: ApexBridgeNetwork.MainnetPrime,
+        },
+        testnet: {
+            networkID: CardanoNetworkType.TestNetNetwork,
+            network: ApexBridgeNetwork.TestnetPrime,
+        },
+    },
+    [ChainEnum.Vector]:  {
+        mainnet: {
+            networkID: CardanoNetworkType.VectorMainNetNetwork,
+            network: ApexBridgeNetwork.MainnetVector,
+        },
+        testnet: {
+            networkID: CardanoNetworkType.VectorTestNetNetwork,
+            network: ApexBridgeNetwork.TestnetVector,
+        },
+    },
+    [ChainEnum.Nexus]:  {
+        mainnet: {
+            networkID: MAINNET_NEXUS_NETWORK_ID,
+            network: ApexBridgeNetwork.MainnetNexus,
+        },
+        testnet: {
+            networkID: TESTNET_NEXUS_NETWORK_ID,
+            network: ApexBridgeNetwork.TestnetNexus,
+        },
+    },
+    [ChainEnum.Cardano]:  {
+        mainnet: {
+            networkID: CardanoNetworkType.MainNetNetwork,
+            network: ApexBridgeNetwork.MainnetCardano,
+        },
+        testnet: {
+            networkID: CardanoNetworkType.TestNetNetwork,
+            network: ApexBridgeNetwork.PreviewCardano,
+        },
+    },
 }
 
-const CHAIN_TO_TESTNET_NETWORK = {
-    [ChainEnum.Prime]: ApexBridgeNetwork.TestnetPrime,
-    [ChainEnum.Vector]: ApexBridgeNetwork.TestnetVector,
-    [ChainEnum.Nexus]: ApexBridgeNetwork.TestnetNexus,
-    [ChainEnum.Cardano]: ApexBridgeNetwork.PreviewCardano,
-}
+const NETWORK_TO_CHAIN: {mainnet: {[key: string]: ChainEnum}, testnet: {[key: string]: ChainEnum}} = {
+    mainnet: {
+        [ApexBridgeNetwork.MainnetPrime]: ChainEnum.Prime,
+        [ApexBridgeNetwork.MainnetVector]: ChainEnum.Vector,
+        [ApexBridgeNetwork.MainnetNexus]: ChainEnum.Nexus,
+        [ApexBridgeNetwork.MainnetCardano]: ChainEnum.Cardano,
 
-const CHAIN_TO_MAINNET_NETWORK = {
-    [ChainEnum.Prime]: ApexBridgeNetwork.MainnetPrime,
-    [ChainEnum.Vector]: ApexBridgeNetwork.MainnetVector,
-    [ChainEnum.Nexus]: ApexBridgeNetwork.MainnetNexus,
-    [ChainEnum.Cardano]: ApexBridgeNetwork.MainnetCardano,
-}
-
-const TESTNET_NETWORK_TO_CHAIN: {[key: string]: ChainEnum} = {
-    [ApexBridgeNetwork.TestnetPrime]: ChainEnum.Prime,
-    [ApexBridgeNetwork.TestnetVector]: ChainEnum.Vector,
-    [ApexBridgeNetwork.TestnetNexus]: ChainEnum.Nexus,
-    [ApexBridgeNetwork.PreviewCardano]: ChainEnum.Cardano,
-}
-
-const MAINNET_NETWORK_TO_CHAIN: {[key: string]: ChainEnum} = {
-    [ApexBridgeNetwork.MainnetPrime]: ChainEnum.Prime,
-    [ApexBridgeNetwork.MainnetVector]: ChainEnum.Vector,
-    [ApexBridgeNetwork.MainnetNexus]: ChainEnum.Nexus,
-    [ApexBridgeNetwork.MainnetCardano]: ChainEnum.Cardano,
+    },
+    testnet: {
+        [ApexBridgeNetwork.TestnetPrime]: ChainEnum.Prime,
+        [ApexBridgeNetwork.TestnetVector]: ChainEnum.Vector,
+        [ApexBridgeNetwork.TestnetNexus]: ChainEnum.Nexus,
+        [ApexBridgeNetwork.PreviewCardano]: ChainEnum.Cardano,
+    }
 }
 
 export const fromChainToNetwork = (chain: ChainEnum): ApexBridgeNetwork | undefined => {
-    return appSettings.isMainnet ? CHAIN_TO_MAINNET_NETWORK[chain] : CHAIN_TO_TESTNET_NETWORK[chain];
+    return appSettings.isMainnet ? CHAIN_DATA[chain]?.mainnet?.network : CHAIN_DATA[chain]?.testnet?.network;
 } 
 
 export const fromNetworkToChain = (network: ApexBridgeNetwork): ChainEnum | undefined => {
-    return appSettings.isMainnet ? MAINNET_NETWORK_TO_CHAIN[network] : TESTNET_NETWORK_TO_CHAIN[network];
+    return appSettings.isMainnet ? NETWORK_TO_CHAIN.mainnet[network] : NETWORK_TO_CHAIN.testnet[network];
 } 
 
 export const fromChainToNetworkId = (chain: ChainEnum): number | bigint | undefined => {
-    return appSettings.isMainnet ? CHAIN_TO_MAINNET_NETWORK_ID[chain] : CHAIN_TO_TESTNET_NETWORK_ID[chain];
+    return appSettings.isMainnet ? CHAIN_DATA[chain]?.mainnet?.networkID : CHAIN_DATA[chain]?.testnet?.networkID;
 }
 
-export const fromNexusNetworkIdToNetwork = (networkId: bigint): ApexBridgeNetwork | undefined => {
+export const fromEvmNetworkIdToNetwork = (networkId: bigint): ApexBridgeNetwork | undefined => {
     return appSettings.isMainnet
         ? (networkId === MAINNET_NEXUS_NETWORK_ID ? ApexBridgeNetwork.MainnetNexus : undefined)
         : (networkId === TESTNET_NEXUS_NETWORK_ID ? ApexBridgeNetwork.TestnetNexus : undefined);
@@ -81,40 +97,49 @@ export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: Cardano
     return fromChainToNetworkId(chain) === addr.GetNetwork();
 }
 
+// TODO: will need to add explorer urls for mainnet
+const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]: string}} = {
+    mainnet: {
+        [ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
+        [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
+        [ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
+        [ChainEnum.Cardano]: 'https://preview.cardanoscan.io',
+    },
+    testnet: {
+        [ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
+        [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
+        [ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
+        [ChainEnum.Cardano]: 'https://preview.cardanoscan.io',
+    },
+}
+
 export const chainSupported = (chain: ChainEnum): boolean => {
     return appSettings.isSkyline
         ? skylineChains.includes(chain)
         : reactorChains.includes(chain);
 }
 
-const PRIME_EXPLORER_URL = 'https://prime-apex.ethernal.tech'
-const VECTOR_EXPLORER_URL = 'https://vector-apex.ethernal.tech'
-const NEXUS_EXPLORER_URL = 'https://explorer.nexus.testnet.apexfusion.org'
-const CARDANO_EXPLORER_URL = 'https://preview.cardanoscan.io'
-
 const getExplorerTxUrl = (chain: ChainEnum) => {
+    const base = appSettings.isMainnet ? EXPLORER_URLS.mainnet[chain] : EXPLORER_URLS.testnet[chain];
+
     let url
     switch (chain) {
+        case ChainEnum.Vector:
         case ChainEnum.Prime: {
-            url = `${PRIME_EXPLORER_URL}/transaction/hash`;
-            break;
-        }
-        case ChainEnum.Vector: {
-            url = `${VECTOR_EXPLORER_URL}/transaction/hash`;
+            url = `${base}/transaction/hash`;
             break;
         }
         case ChainEnum.Nexus: {
-            url = `${NEXUS_EXPLORER_URL}/tx`;
+            url = `${base}/tx`;
             break;
         }
         case ChainEnum.Cardano: {
-            url = `${CARDANO_EXPLORER_URL}/transaction`;
+            url = `${base}/transaction`;
             break;
         }
         default:
             return;
     }
-
     return url;
 }
 

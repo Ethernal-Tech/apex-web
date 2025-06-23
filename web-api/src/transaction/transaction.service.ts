@@ -38,6 +38,17 @@ export class TransactionService {
 
 	private async validateCreateCardanoTx(dto: CreateTransactionDto) {
 		if (
+			!this.settingsService.SettingsResponse.enabledChains.includes(
+				dto.originChain,
+			) ||
+			!this.settingsService.SettingsResponse.enabledChains.includes(
+				dto.destinationChain,
+			)
+		) {
+			throw new BadRequestException('Chain not supported');
+		}
+
+		if (
 			dto.originChain !== ChainEnum.Prime &&
 			dto.originChain !== ChainEnum.Vector &&
 			dto.originChain !== ChainEnum.Cardano
@@ -69,9 +80,8 @@ export class TransactionService {
 		}
 
 		const srcMinFee =
-			this.settingsService.Settings.bridgingSettings.minChainFeeForBridging[
-				dto.originChain
-			];
+			this.settingsService.SettingsResponse.bridgingSettings
+				.minChainFeeForBridging[dto.originChain];
 		if (!srcMinFee) {
 			throw new InternalServerErrorException(
 				`No minFee for source chain: ${dto.originChain}`,
@@ -87,9 +97,9 @@ export class TransactionService {
 		}
 
 		const srcMinOperationFee =
-		this.settingsService.Settings.bridgingSettings.minOperationFee[
-			dto.originChain
-		];
+			this.settingsService.SettingsResponse.bridgingSettings.minOperationFee[
+				dto.originChain
+			];
 
 		const minOperationFee = BigInt(srcMinOperationFee || '0');
 		const operationFee = BigInt(dto.operationFee || '0');
@@ -161,6 +171,17 @@ export class TransactionService {
 	async createEth(
 		dto: CreateTransactionDto,
 	): Promise<CreateEthTransactionResponseDto> {
+		if (
+			!this.settingsService.SettingsResponse.enabledChains.includes(
+				dto.originChain,
+			) ||
+			!this.settingsService.SettingsResponse.enabledChains.includes(
+				dto.destinationChain,
+			)
+		) {
+			throw new BadRequestException('Chain not supported');
+		}
+
 		if (dto.originChain !== ChainEnum.Nexus) {
 			throw new BadRequestException('Invalid origin chain');
 		}
@@ -171,7 +192,7 @@ export class TransactionService {
 
 		const tx = await createEthBridgingTx(
 			dto,
-			this.settingsService.Settings,
+			this.settingsService.SettingsResponse.bridgingSettings,
 		);
 
 		if (!tx) {

@@ -32,6 +32,8 @@ export class AppSettings {
     private _isMainnet: boolean = false;
     private _isSkyline: boolean = false;
 
+	private _enabledChains: string[] = [];
+
     public constructor() {
 		const settingsJson = require(process.env.NODE_ENV === 'development' ? './appSettings_development.json' : './appSettings_production.json');
 		this._apiUrl = settingsJson.apiUrl;
@@ -84,6 +86,10 @@ export class AppSettings {
 
 	get isSkyline(): boolean {
 		return this._isSkyline;
+	}
+
+	get enabledChains(): string[] {
+		return this._enabledChains;
 	}
 }
 
