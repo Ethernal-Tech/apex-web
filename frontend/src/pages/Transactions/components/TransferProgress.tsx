@@ -6,10 +6,7 @@ import ButtonCustom from "../../../components/Buttons/ButtonCustom"
 import { TRANSACTIONS_ROUTE } from "../../PageRouter"
 import { useNavigate } from "react-router-dom"
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../../../swagger/apexBridgeApiService"
-import { FunctionComponent, SVGProps, useCallback, useEffect, useMemo, useState } from "react"
-import { ErrorResponse, tryCatchJsonByAction } from "../../../utils/fetchUtils"
-import { isStatusFinal } from "../../../utils/statusUtils"
-import { getAction } from "../action"
+import { FunctionComponent, SVGProps, useEffect, useMemo, useState } from "react"
 import { capitalizeWord } from "../../../utils/generalUtils"
 import { openExplorer } from "../../../utils/chainUtils"
 // import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
@@ -254,39 +251,28 @@ const TransferStep = ({step}:TransferStepProps) => {
 
 interface TransferProgressProps {
     tx: BridgeTransactionDto
-    setTx: React.Dispatch<React.SetStateAction<BridgeTransactionDto | undefined>>
 }
 
 const TransferProgress = ({
     tx,
-    setTx,
 }: TransferProgressProps) => {
     const navigate = useNavigate();
     const [txStatusToShow, setTxStatusToShow] = useState<TransactionStatusEnum>(tx.status);
     
-    const fetchTx = useCallback(async () => {
-        const bindedAction = getAction.bind(null, tx.id);
-
-        const response = await tryCatchJsonByAction(bindedAction)
-
-        if (!(response instanceof ErrorResponse)) {
-            setTx(response);
-            setTxStatusToShow(
-                (prev) => {
-                    if (prev === TransactionStatusEnum.SubmittedToDestination &&
-                        (response.status === TransactionStatusEnum.IncludedInBatch ||
-                        response.status === TransactionStatusEnum.FailedToExecuteOnDestination)) {
-                        // this happens on bridge sometimes, so to prevent user confusion, we ignore it
-                        return prev;
-                    }
-    
-                    return response.status
+    useEffect(() => {
+        setTxStatusToShow(
+            (prev) => {
+                if (prev === TransactionStatusEnum.SubmittedToDestination &&
+                    (tx.status === TransactionStatusEnum.IncludedInBatch ||
+                    tx.status === TransactionStatusEnum.FailedToExecuteOnDestination)) {
+                    // this happens on bridge sometimes, so to prevent user confusion, we ignore it
+                    return prev;
                 }
-            );
-
-            return response;
-        }
-    }, [tx.id, setTx])
+            
+                return tx.status
+            }
+        );
+    }, [tx])
 
     const transferProgress = (function(txStatus: TransactionStatusEnum){
         switch (txStatus) {
@@ -294,23 +280,7 @@ const TransferProgress = ({
             case TransactionStatusEnum.InvalidRequest: return TRANSFER_PROGRESS_TEXT.ERROR;
             default: return TRANSFER_PROGRESS_TEXT.IN_PROGRESS;
         }
-    })(txStatusToShow)
-
-	useEffect(() => {
-		fetchTx();
-
-        const handle = setInterval(async () => {
-            const tx = await fetchTx();
-            if (tx && isStatusFinal(tx.status)) {
-                clearInterval(handle);
-            }
-        }, 5000);
-
-        return () => {
-            clearInterval(handle);
-        }
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+    })(txStatusToShow)	
 
     const steps = useMemo(() => {
         const defaultSteps = getDefaultSteps(tx.originChain, tx.destinationChain)
