@@ -7,6 +7,7 @@ import { RootState } from "../../../redux/store";
 import React from "react";
 import { ChainEnum } from "../../../swagger/apexBridgeApiService";
 import ReputationSystemWidget from "../RepSystem/ReputationSystemWidget";
+import appSettings from "../../../settings/appSettings";
 
 const tabletMediaQuery = '@media (max-width:800px)'
 
@@ -70,9 +71,9 @@ function NewTransaction({txInProgress, children}: NewTransactionProps) {
 			}}>
 				{/* TotalBanace and AddressBalance widgets */}
 				<Box sx={{
-					borderTop:`2px solid ${chain === ChainEnum.Prime ? '#077368' : '#F25041'}`,
-					p:2,
-					background:'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
+						borderTop:`2px solid ${chain === ChainEnum.Prime ? '#077368' : appSettings.isSkyline ? '#0538AF' : '#F25041'}`,
+						p:2,
+						background:'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
 				}}>
 					<TotalBalance/>
 					
@@ -81,18 +82,18 @@ function NewTransaction({txInProgress, children}: NewTransactionProps) {
 				</Box>
 
 				{/* Conditional display of Reputation System Widget */}
-				{txInProgress && <ReputationSystemWidget/>}
+				{!appSettings.isSkyline && txInProgress && <ReputationSystemWidget/>}
 			</Box>
 			
 			{/* right side */}
 			<Box sx={{
-				gridColumn:'span 4', 
-				borderTop:`2px solid ${destinationChain === ChainEnum.Prime ? '#077368' : '#F25041'}`,
-				p:2,
-				background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
-				[tabletMediaQuery]:{
-					gridColumn:'span 6'
-				}
+					gridColumn:'span 4', 
+					borderTop:`2px solid ${destinationChain === ChainEnum.Prime ? '#077368' : appSettings.isSkyline ? '#0538AF' : '#F25041'}`,
+					p:2,
+					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
+					[tabletMediaQuery]:{
+						gridColumn:'span 6'
+					}
 			}}>
 				{children}
 			</Box>
