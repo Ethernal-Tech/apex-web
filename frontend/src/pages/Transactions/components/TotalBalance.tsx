@@ -7,12 +7,22 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 import appSettings from "../../../settings/appSettings";
 import { fromChainToChainCurrency, fromChainToChainNativeToken, TokenEnumToLabel } from "../../../utils/chainUtils";
+import { useSupportedSourceTokenOptions } from "../utils";
 
 const TotalBalance = () => {
 	const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
     const chain = useSelector((state: RootState)=> state.chain.chain);
     const chainCurrency = fromChainToChainCurrency(chain);
     const chainNativeToken = fromChainToChainNativeToken(chain);
+
+    const supportedSourceTokenOptions = useSupportedSourceTokenOptions(chain);
+
+    const showChainCurrency = supportedSourceTokenOptions.find(
+        (token) => token.value === chainCurrency
+    );
+    const showChainNativeToken = supportedSourceTokenOptions.find(
+        (token) => token.value === chainNativeToken
+    );
 
     const totalBalanceInApex = totalDfmBalance[chainCurrency] ? toFixed(convertDfmToApex(totalDfmBalance[chainCurrency], chain), 6) : null;
     const totalBalanceInNativeToken = appSettings.isSkyline && totalDfmBalance[chainNativeToken] ? toFixed(convertDfmToApex(totalDfmBalance[chainNativeToken], chain), 6) : null;
@@ -26,7 +36,7 @@ const TotalBalance = () => {
                 </Typography>
 
                 {
-                    totalBalanceInApex &&
+                    totalBalanceInApex && showChainCurrency &&
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography>
                             <Box component='span' sx={{color: appSettings.isSkyline ? '#1ea29d' : '#F25041', fontWeight:'600', fontSize:'32px'}}>
@@ -45,7 +55,7 @@ const TotalBalance = () => {
                 }
 
                 {
-                    totalBalanceInNativeToken &&
+                    totalBalanceInNativeToken && showChainNativeToken &&
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography>
                             <Box component='span' sx={{color: appSettings.isSkyline ? '#1ea29d' : '#F25041', fontWeight:'600', fontSize:'32px'}}>

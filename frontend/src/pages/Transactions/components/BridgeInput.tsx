@@ -13,9 +13,9 @@ import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { white } from '../../../containers/theme';
-import { getIsNativeToken, TokenEnumToLabel } from '../../../utils/chainUtils';
+import { getIsNativeToken } from '../../../utils/chainUtils';
 import { TokenEnum } from '../../../features/enums';
-import { CardanoChainsNativeTokens } from '../../../redux/slices/settingsSlice';
+import { useSupportedSourceTokenOptions } from '../utils';
 
 type BridgeInputType = {
     bridgeTxFee: string
@@ -27,63 +27,6 @@ type BridgeInputType = {
     submit:(address: string, amount: string, isNativeToken: boolean) => Promise<void>
     loading?: boolean;
 }
-
-const sourceTokenOptionEnabled = (
-  cardanoChainsNativeToken: CardanoChainsNativeTokens,
-  directionFrom: ChainEnum, directionTo: ChainEnum,
-) => {
-  if (!cardanoChainsNativeToken[directionTo]) {
-    return false
-  }
-
-  return !!cardanoChainsNativeToken[directionTo].find(x => x.dstChainID === directionFrom)
-}
-
-const primeSourceTokenOptions = [
-  { 
-    value: TokenEnum.APEX,
-    label: TokenEnumToLabel[TokenEnum.APEX],
-    icon: tokenIcons[TokenEnum.APEX],
-    borderColor:'#077368',
-    tokenEnabledConfig: {
-      directionFrom: ChainEnum.Prime,
-      directionTo: ChainEnum.Cardano, 
-    },
-  },
-  { 
-    value: TokenEnum.WAda,
-    label: TokenEnumToLabel[TokenEnum.WAda],
-    icon: tokenIcons[TokenEnum.WAda],
-    borderColor:'#077368',
-    tokenEnabledConfig: {
-      directionFrom: ChainEnum.Cardano,
-      directionTo: ChainEnum.Prime,
-    },    
-  },
-];
-
-const cardanoSourceTokenOptions = [
-  { 
-    value: TokenEnum.Ada,
-    label: TokenEnumToLabel[TokenEnum.Ada],
-    icon: tokenIcons[TokenEnum.Ada],
-    borderColor: '#0538AF',
-    tokenEnabledConfig: {
-      directionFrom: ChainEnum.Cardano,
-      directionTo: ChainEnum.Prime,
-    },
-  },
-  { 
-    value: TokenEnum.WAPEX,
-    label: TokenEnumToLabel[TokenEnum.WAPEX],
-    icon: tokenIcons[TokenEnum.WAPEX],
-    borderColor: '#0538AF',
-    tokenEnabledConfig: {
-      directionFrom: ChainEnum.Prime,
-      directionTo: ChainEnum.Cardano,
-    },
-  }
-];
 
 const calculateMaxAmount = (
   totalDfmBalance: {[key: string]: string}, chain: ChainEnum,
@@ -114,12 +57,8 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   const walletUTxOs = useSelector((state: RootState) => state.accountInfo.utxos);
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
   const {chain} = useSelector((state: RootState)=> state.chain);
-  const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge);
-  const cardanoChainsNativeTokens = useSelector((state: RootState) => state.settings.cardanoChainsNativeTokens);
-
-  const supportedSourceTokenOptions = useMemo(() => (chain === ChainEnum.Prime ? primeSourceTokenOptions : cardanoSourceTokenOptions)
-        .filter(x => sourceTokenOptionEnabled(cardanoChainsNativeTokens, x.tokenEnabledConfig.directionFrom, x.tokenEnabledConfig.directionTo)),
-        [cardanoChainsNativeTokens, chain])
+  const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge)
+  const supportedSourceTokenOptions = useSupportedSourceTokenOptions(chain);
 
   const fetchWalletFee = useCallback(async () => {
     if (!destinationAddr || !amount || !sourceToken) {
