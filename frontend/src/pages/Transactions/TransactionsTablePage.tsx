@@ -242,7 +242,7 @@ const TransactionsTablePage = () => {
               {
                 appSettings.isSkyline &&
                 <TableCell sx={tableCellStyle}>
-                  {Number(transaction.nativeTokenAmount) === 0 ? (
+                  {!transaction.nativeTokenAmount || BigInt(transaction.nativeTokenAmount) === BigInt(0) ? (
                     <Box sx={{ ml: 3 }}>-</Box>
                   ) : (
                       <>
