@@ -237,12 +237,19 @@ const TransactionsTablePage = () => {
               </TableCell>
 
               <TableCell sx={tableCellStyle}>
-                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {fromChainToChainCurrency(chain)}
+                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
               </TableCell>
               {
                 appSettings.isSkyline &&
                 <TableCell sx={tableCellStyle}>
-                  {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {TokenEnumToLabel[fromChainToChainNativeToken(chain)]}
+                  {!transaction.nativeTokenAmount || BigInt(transaction.nativeTokenAmount) === BigInt(0) ? (
+                    <Box sx={{ ml: 3 }}>-</Box>
+                  ) : (
+                      <>
+                      {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {TokenEnumToLabel[fromChainToChainNativeToken(chain)]}
+                      </>
+                    )}
+                  
                 </TableCell>
               }
               
