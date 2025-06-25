@@ -1,10 +1,6 @@
-import { Box, Typography } from "@mui/material";
 import BasePage from "../base/BasePage";
-import AddressBalance from "./components/AddressBalance";
-import TotalBalance from "./components/TotalBalance";
-import TransferProgress from "./components/TransferProgress";
 import BridgeInput from "./components/BridgeInput";
-import { chainIcons, convertDfmToWei, validateSubmitTxInputs, validateSubmitTxInputsSkyline } from "../../utils/generalUtils";
+import { convertDfmToWei, formatTxDetailUrl, validateSubmitTxInputs, validateSubmitTxInputsSkyline } from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useCallback, useMemo, useState } from "react";
@@ -15,12 +11,13 @@ import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, Crea
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import appSettings from "../../settings/appSettings";
-import ReputationSystemWidget from "./RepSystem/ReputationSystemWidget";
+import NewTransaction from "./components/NewTransaction";
+import { useNavigate } from "react-router-dom";
 
 function NewTransactionPage() {	
-	const [txInProgress, setTxInProgress] = useState<BridgeTransactionDto | undefined>();
 	const [loading, setLoading] = useState(false);
 	
+	const navigate = useNavigate();
 	const chain = useSelector((state: RootState)=> state.chain.chain);
 	const destinationChain = useSelector((state: RootState)=> state.chain.destinationChain);
 	const account = useSelector((state: RootState) => state.accountInfo.account);
@@ -43,8 +40,9 @@ function NewTransactionPage() {
 		[chain, settings.minOperationFee],
 	)
 
-	const SourceIcon = chainIcons[chain];
-	const DestinationIcon = chainIcons[destinationChain];
+	const goToDetails = useCallback((tx: BridgeTransactionDto) => {
+		navigate(formatTxDetailUrl(tx));
+	}, [navigate]);
 
 	const prepareCreateCardanoTx = useCallback((address: string, amount: string, isNativeToken: boolean = false): CreateTransactionDto => {
 		const validationErr = appSettings.isSkyline
@@ -142,7 +140,7 @@ function NewTransactionPage() {
 						createTxResp.createResponse,
 					);
 					
-					response && setTxInProgress(response);
+					response && goToDetails(response);
 				} else if (chain === ChainEnum.Nexus) {
 					const createTxResp = await createEthTx(address, amount);
 					
@@ -151,7 +149,7 @@ function NewTransactionPage() {
 						createTxResp.createResponse,
 					);
 					
-					response && setTxInProgress(response);
+					response && goToDetails(response);
 				} else {
 					throw new Error(`Unsupported source chain: ${chain}`);
 				}
@@ -162,104 +160,23 @@ function NewTransactionPage() {
 				setLoading(false);
 			}
 		},
-		[chain, createCardanoTx, createEthTx],
+		[chain, createCardanoTx, createEthTx, goToDetails],
 	);
-
-	const tabletMediaQuery = '@media (max-width:800px)'
 
 	return (
 		<BasePage>
-			
-			<Box width={'100%'} sx={{
-				display:'grid',
-				gridTemplateColumns:'repeat(6,1fr)', 
-				gap:'24px',
-				marginBottom:'30px'
-			}}>
-				<Box sx={{ 
-					gridColumn:'span 2', 
-					color:'white', 
-					textTransform:'capitalize',
-					[tabletMediaQuery]:{
-						gridColumn:'span 3'
-						}
-					}}>
-					<Typography>Source</Typography>
-					<Box sx={{display:'flex', alignItems:'center'}}>
-						<SourceIcon width={'40px'} height={'40px'}/>
-						<Typography fontSize={'27px'} sx={{marginLeft:'10px', marginTop:'15px'}} fontWeight={500}>
-							{chain}
-						</Typography>
-					</Box>
-				</Box>
-
-				<Box sx={{ 
-					gridColumn:'span 4', 
-					color:'white', 
-					textTransform:'capitalize',
-					[tabletMediaQuery]:{
-						gridColumn:'span 3'
-					}
-				}}>
-					<Typography>Destination</Typography>
-					<Box sx={{display:'flex', alignItems:'center'}}>
-						<DestinationIcon width={'40px'} height={'40px'}/>
-						<Typography fontSize={'27px'} sx={{marginLeft:'10px', marginTop:'15px'}} fontWeight={500}>
-							{destinationChain}
-						</Typography>
-					</Box>
-				</Box>
-
-				{/* left side */}
-				<Box sx={{
-					gridColumn:'span 2',
-					[tabletMediaQuery]:{
-						gridColumn:'span 6'
-					},
-				}}>
-					{/* TotalBanace and AddressBalance widgets */}
-					<Box sx={{
-						borderTop:`2px solid ${chain === ChainEnum.Prime ? '#077368' : appSettings.isSkyline ? '#0538AF' : '#F25041'}`,
-						p:2,
-						background:'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
-					}}>
-						<TotalBalance/>
-						
-						<Typography sx={{color:'white',mt:4, mb:2}}>Address</Typography>
-						<AddressBalance/>
-					</Box>
-
-					{/* Conditional display of Reputation System Widget */}
-					{!appSettings.isSkyline && txInProgress && <ReputationSystemWidget/>}
-				</Box>
-				
-				{/* right side */}
-				<Box sx={{
-					gridColumn:'span 4', 
-					borderTop:`2px solid ${destinationChain === ChainEnum.Prime ? '#077368' : appSettings.isSkyline ? '#0538AF' : '#F25041'}`,
-					p:2,
-					background: 'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
-					[tabletMediaQuery]:{
-						gridColumn:'span 6'
-					}
-				}}>
-					{/* conditional display of right side element */}
-					{!txInProgress &&
-						<BridgeInput
-							bridgeTxFee={bridgeTxFee}
-							setBridgeTxFee={setBridgeTxFee}
-							resetBridgeTxFee={resetBridgeTxFee}
-							operationFee={operationFee}
-							getCardanoTxFee={getCardanoTxFee}
-							getEthTxFee={getEthTxFee}
-							submit={handleSubmitCallback}
-							loading={loading}
-						/>
-					}
-
-					{txInProgress && <TransferProgress tx={txInProgress} setTx={setTxInProgress}/>}
-				</Box>
-			</Box>
+			<NewTransaction txInProgress={false}>
+				<BridgeInput
+					bridgeTxFee={bridgeTxFee}
+					setBridgeTxFee={setBridgeTxFee}
+					resetBridgeTxFee={resetBridgeTxFee}
+					operationFee={operationFee}
+					getCardanoTxFee={getCardanoTxFee}
+					getEthTxFee={getEthTxFee}
+					submit={handleSubmitCallback}
+					loading={loading}
+				/>
+			</NewTransaction>
 		</BasePage>
 	)
 }
