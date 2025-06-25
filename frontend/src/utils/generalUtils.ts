@@ -1,6 +1,6 @@
 import { NewAddress, RewardAddress } from "../features/Address/addreses";
 import { BridgeTransactionDto, ChainEnum } from "../swagger/apexBridgeApiService";
-import { checkCardanoAddressCompatibility, fromChainToChainCurrency, fromChainToChainNativeToken } from "./chainUtils";
+import { checkCardanoAddressCompatibility, fromChainToChainCurrency, fromChainToChainNativeToken, TokenEnumToLabel } from "./chainUtils";
 import Web3 from "web3";
 import {Numbers} from "web3-types";
 import {EtherUnits} from "web3-utils";
@@ -110,7 +110,7 @@ export const validateSubmitTxInputs = (
 ): string | undefined => {
   if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector || sourceChain === ChainEnum.Cardano)) {
     if (BigInt(amount) < BigInt(settings.minValueToBridge)) {
-      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} APEX`;
+      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} ${TokenEnumToLabel[TokenEnum.APEX]}`;
     }
 
     const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
@@ -118,11 +118,11 @@ export const validateSubmitTxInputs = (
     if (maxAllowedToBridgeDfm > 0 &&
         BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeDfm) {
       const maxAllowed = maxAllowedToBridgeDfm - BigInt(bridgeTxFee);
-      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} APEX`;
+      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} ${TokenEnumToLabel[TokenEnum.APEX]}`;
     } 
   } else if(sourceChain === ChainEnum.Nexus){
     if (BigInt(amount) < BigInt(convertDfmToWei(settings.minValueToBridge))) {
-      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} APEX`;
+      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} ${TokenEnumToLabel[TokenEnum.APEX]}`;
     }
 
     const maxAllowedToBridgeWei = BigInt(convertDfmToWei(settings.maxAmountAllowedToBridge));
@@ -130,7 +130,7 @@ export const validateSubmitTxInputs = (
     if (maxAllowedToBridgeWei > 0 &&
         BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeWei) {
       const maxAllowed = maxAllowedToBridgeWei - BigInt(bridgeTxFee);
-      return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowed.toString(10))} APEX`;
+      return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowed.toString(10))} ${TokenEnumToLabel[TokenEnum.APEX]}`;
     } 
   }
 
@@ -156,14 +156,14 @@ export const validateSubmitTxInputsSkyline = (
 ): string | undefined => {
   const chain = isNativeToken ? destinationChain : sourceChain;
   if (BigInt(amount) < BigInt(settings.minUtxoChainValue[chain])) {
-    return `Amount less than minimum: ${convertUtxoDfmToApex(BigInt(settings.minUtxoChainValue[chain]).toString(10))} ${isNativeToken ? fromChainToChainNativeToken(sourceChain) : fromChainToChainCurrency(sourceChain)}`;
+    return `Amount less than minimum: ${convertUtxoDfmToApex(BigInt(settings.minUtxoChainValue[chain]).toString(10))} ${TokenEnumToLabel[isNativeToken ? fromChainToChainNativeToken(sourceChain) : fromChainToChainCurrency(sourceChain)]}`;
   }
 
   if (!isNativeToken) {
     const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
     if (maxAllowedToBridgeDfm > 0 && BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeDfm) {
       const maxAllowed = maxAllowedToBridgeDfm - BigInt(bridgeTxFee);
-      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} ${fromChainToChainCurrency(sourceChain)}`;
+      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} ${TokenEnumToLabel[fromChainToChainCurrency(sourceChain)]}`;
     }
   }
 

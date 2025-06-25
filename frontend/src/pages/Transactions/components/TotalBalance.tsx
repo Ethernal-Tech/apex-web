@@ -17,9 +17,6 @@ const TotalBalance = () => {
 
     const supportedSourceTokenOptions = useSupportedSourceTokenOptions(chain);
 
-    const showChainCurrency = supportedSourceTokenOptions.find(
-        (token) => token.value === chainCurrency
-    );
     const showChainNativeToken = supportedSourceTokenOptions.find(
         (token) => token.value === chainNativeToken
     );
@@ -36,7 +33,7 @@ const TotalBalance = () => {
                 </Typography>
 
                 {
-                    totalBalanceInApex && showChainCurrency &&
+                    totalBalanceInApex &&
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography>
                             <Box component='span' sx={{color: appSettings.isSkyline ? '#1ea29d' : '#F25041', fontWeight:'600', fontSize:'32px'}}>
