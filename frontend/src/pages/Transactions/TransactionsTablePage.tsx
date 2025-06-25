@@ -242,8 +242,9 @@ const TransactionsTablePage = () => {
               {
                 appSettings.isSkyline &&
                 <TableCell sx={tableCellStyle}>
-                  {Number(transaction.nativeTokenAmount) === 0 ? '-' :
-                    (
+                  {Number(transaction.nativeTokenAmount) === 0 ? (
+                    <Box sx={{ ml: 3 }}>-</Box>
+                  ) : (
                       <>
                       {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {TokenEnumToLabel[fromChainToChainNativeToken(chain)]}
                       </>
