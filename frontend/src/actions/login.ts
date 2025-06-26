@@ -4,7 +4,7 @@ import { Dispatch } from 'redux';
 import { logout } from "./logout";
 import { toast } from "react-toastify";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
-import { chainSupported, checkChainCompatibility, fromChainToNetwork, fromChainToNetworkId, fromNexusNetworkIdToNetwork } from "../utils/chainUtils";
+import { chainSupported, checkChainCompatibility, fromChainToNetwork, fromChainToNetworkId, fromEvmNetworkIdToNetwork } from "../utils/chainUtils";
 import evmWalletHandler, { EVM_SUPPORTED_WALLETS } from "../features/EvmWalletHandler";
 import { setConnectingAction } from "../redux/slices/loginSlice";
 import { setChainAction } from "../redux/slices/chainSlice";
@@ -16,7 +16,7 @@ let onLoadCalled = false
 
 const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
     const networkId = await evmWalletHandler.getNetworkId();
-    const network = fromNexusNetworkIdToNetwork(networkId);
+    const network = fromEvmNetworkIdToNetwork(networkId);
     if (!network) {
         throw new Error(`Invalid networkId: ${networkId}. Expected networkId: ${fromChainToNetworkId(chain)}. Please select network with networkId: ${fromChainToNetworkId(chain)} in your wallet.`);
     }

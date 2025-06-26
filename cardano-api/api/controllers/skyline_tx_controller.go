@@ -116,7 +116,7 @@ func (c *SkylineTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Req
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		commonResponse.NewSettingsReponse(c.appConfig), c.logger)
+		commonResponse.NewSettingsResponse(c.appConfig), c.logger)
 }
 
 func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(

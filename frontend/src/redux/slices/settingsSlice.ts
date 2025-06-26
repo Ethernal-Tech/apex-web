@@ -14,6 +14,7 @@ export interface ISettingsState {
 	maxAmountAllowedToBridge: string
 	minValueToBridge: string
 	cardanoChainsNativeTokens: CardanoChainsNativeTokens
+	enabledChains: string[]
 }
 
 const initialState: ISettingsState = {
@@ -22,7 +23,8 @@ const initialState: ISettingsState = {
 	minOperationFee: appSettings.minOperationFee,
 	maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,
 	minValueToBridge: appSettings.minValueToBridge,
-	cardanoChainsNativeTokens: {}
+	cardanoChainsNativeTokens: {},
+	enabledChains: appSettings.enabledChains,
 }
 
 const settingsSlice = createSlice({
@@ -45,6 +47,7 @@ const settingsSlice = createSlice({
 			state.minValueToBridge = action.payload.bridgingSettings.minValueToBridge.toString();
 			state.maxAmountAllowedToBridge = action.payload.bridgingSettings.maxAmountAllowedToBridge;
 			state.cardanoChainsNativeTokens = action.payload.cardanoChainsNativeTokens;
+			state.enabledChains = action.payload.enabledChains;
 		},
 	},
 })

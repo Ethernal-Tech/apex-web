@@ -26,6 +26,8 @@ $ go run ./main.go generate-configs \
 		--vector-blockfrost-api-key "<blockfrost API key for vector network>" \
 		--vector-socket-path "<socket path for vector network>" \
 		--vector-ttl-slot-inc <ttl slot increment for vector> \
+		--vector-is-enabled <chain enable flag for vector> \
+		--nexus-is-enabled <chain enable flag for nexus> \
 		--logs-path "<path to where logs will be stored>" \
 		--utxo-cache-timeout <how long should utxos be locked> \
 		--oracle-api-url <URL of Oracle API> \
@@ -72,6 +74,8 @@ $ go run main.go generate-configs\
 		--vector-bridging-fee-address "vector_test1wtyslvqxffyppmzhs7ecwunsnpq6g2p6kf9r4aa8ntfzc4qj925fr"\
 		--vector-bridging-fallback-address "vector_test1w2h482rf4gf44ek0rekamxksulazkr64yf2fhmm7f5gxjpsdm4zsg"\
 		--vector-ogmios-url "http://ogmios.vector.testnet.apexfusion.org:1337"\
+		--vector-is-enabled \
+		--nexus-is-enabled \
 		--logs-path "./logs"\
 		--utxo-cache-timeout 1m30s\
 		--oracle-api-url "http://bridge-api-testnet.apexfusion.org:10003" \

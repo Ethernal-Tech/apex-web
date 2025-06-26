@@ -17,7 +17,7 @@ import { isAddress } from 'web3-validator';
 import { NewAddress, RewardAddress } from 'src/utils/Address/addreses';
 import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
 import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
-import { SettingsResponseDto } from 'src/settings/settings.dto';
+import { BridgingSettingsDto } from 'src/settings/settings.dto';
 import { convertDfmToWei } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
 
@@ -124,14 +124,14 @@ export const getCardanoBridgingTxFee = async (
 
 export const createEthBridgingTx = async (
 	dto: CreateTransactionDto,
-	settings: SettingsResponseDto,
+	bridgingSettings: BridgingSettingsDto,
 ): Promise<CreateEthTransactionResponseDto> => {
 	if (!isAddress(dto.senderAddress)) {
 		throw new BadRequestException('Invalid sender address');
 	}
 
 	const minValue = BigInt(
-		convertDfmToWei(settings.bridgingSettings.minValueToBridge || '1000000'),
+		convertDfmToWei(bridgingSettings.minValueToBridge || '1000000'),
 	);
 	const amount = BigInt(dto.amount);
 
@@ -152,14 +152,16 @@ export const createEthBridgingTx = async (
 		);
 	}
 
-	if (!areChainsEqual(dto.destinationChain, addr.GetNetwork())) {
+	const isMainnet = process.env.IS_MAINNET == 'true';
+
+	if (!areChainsEqual(dto.destinationChain, addr.GetNetwork(), isMainnet)) {
 		throw new BadRequestException(
 			`Destination address: ${dto.destinationAddress} not compatible with destination chain: ${dto.destinationChain}`,
 		);
 	}
 
 	const destMinFee =
-		settings.bridgingSettings.minChainFeeForBridging[dto.destinationChain];
+		bridgingSettings.minChainFeeForBridging[dto.destinationChain];
 	if (!destMinFee) {
 		throw new InternalServerErrorException(
 			`No minFee for destination chain: ${dto.destinationChain}`,
@@ -173,7 +175,7 @@ export const createEthBridgingTx = async (
 	const value = BigInt(dto.amount) + bridgingFee;
 
 	const maxAllowedToBridge = BigInt(
-		convertDfmToWei(settings.bridgingSettings.maxAmountAllowedToBridge) || '0',
+		convertDfmToWei(bridgingSettings.maxAmountAllowedToBridge) || '0',
 	);
 
 	if (maxAllowedToBridge !== BigInt(0) && maxAllowedToBridge < value) {

@@ -8,7 +8,7 @@ const RETRY_DELAY_MS = 5000;
 
 @Injectable()
 export class SettingsService {
-	Settings: SettingsResponseDto;
+	SettingsResponse: SettingsResponseDto;
 
 	constructor() {}
 
@@ -22,7 +22,7 @@ export class SettingsService {
 
 		const endpointUrl = apiUrl + `/api/CardanoTx/GetSettings`;
 
-		this.Settings = await retryForever(
+		this.SettingsResponse = await retryForever(
 			() => this.fetchOnce(endpointUrl, apiKey),
 			RETRY_DELAY_MS,
 		);

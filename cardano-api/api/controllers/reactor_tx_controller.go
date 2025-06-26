@@ -47,6 +47,7 @@ func (c *ReactorTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	return []*core.APIEndpoint{
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
+		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
 	}
 }
 
@@ -110,6 +111,12 @@ func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		commonResponse.NewBridgingTxResponse(txInfo.TxRaw, txInfo.TxHash, requestBody.BridgingFee, amount, 0), c.logger)
+}
+
+func (c *ReactorTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Request) {
+	utils.WriteResponse(
+		w, r, http.StatusOK,
+		commonResponse.NewSettingsResponse(c.appConfig), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
