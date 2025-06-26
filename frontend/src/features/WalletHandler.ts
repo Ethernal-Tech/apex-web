@@ -95,20 +95,26 @@ class WalletHandler {
     getAllUtxos = async (): Promise<UTxO[]> => {
         this._checkWalletAndThrow();
 
+        const address = await this.getChangeAddress();
+        
         const allUtxosMap: {[key: string]: UTxO} = {};
 
         const utxos = await this._enabledWallet!.getUtxos()
         for (let i = 0; i < utxos.length; ++i) {
             const utxo = utxos[i];
 
-            allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] = utxo;
+            if (utxo.output.address === address) {
+                allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] = utxo;
+            }
         }
 
         const collateralUtxos = await this._enabledWallet!.getCollateral();
         for (let i = 0; i < collateralUtxos.length; ++i) {
             const utxo = collateralUtxos[i];
 
-            allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] = utxo;
+            if (utxo.output.address === address) {
+                allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] = utxo;
+            }
         }
 
         return Object.values(allUtxosMap);
