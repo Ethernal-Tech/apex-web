@@ -15,7 +15,7 @@ import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg'
 import { FunctionComponent, SVGProps } from "react";
 import { isAddress } from "web3-validator";
 import { ISettingsState } from "../redux/slices/settingsSlice";
-import { UTxO } from "@meshsdk/core";
+import { UTxO } from "../features/WalletHandler";
 import { TokenEnum } from "../features/enums";
 import {
   BigNum,

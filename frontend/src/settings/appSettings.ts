@@ -26,6 +26,8 @@ export class AppSettings {
 		cardano: "",
 	}
 
+	private _blockfrost: {[key: string]: {baseUrl: string, dmtrApiKey: string | undefined }} = {};
+
     private _maxAmountAllowedToBridge: string = "0";
     private _minValueToBridge: string = "0";
 	private _potentialWalletFee: number = 0;
@@ -41,6 +43,7 @@ export class AppSettings {
 		this._minChainFeeForBridging = settingsJson.minChainFeeForBridging;
 		this._minOperationFee = settingsJson.minOperationFee;
 		this._wrappedTokenName = settingsJson.wrappedTokenName;
+		this._blockfrost = settingsJson.blockfrost;
 		this._maxAmountAllowedToBridge = settingsJson.maxAmountAllowedToBridge;
 		this._minValueToBridge = settingsJson.minValueToBridge;
 		this._potentialWalletFee = settingsJson.potentialWalletFee;
@@ -66,6 +69,10 @@ export class AppSettings {
 
 	get wrappedTokenName(): { [key: string]: string } {
 		return this._wrappedTokenName;
+	}
+
+	get blockfrost(): {[key: string]: {baseUrl: string, dmtrApiKey: string | undefined }} {
+		return this._blockfrost;
 	}
 
 	get maxAmountAllowedToBridge(): string {
