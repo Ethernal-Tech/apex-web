@@ -16,7 +16,7 @@ const getWalletBalanceAction = async (chain: ChainEnum): Promise<IBalanceState> 
     }
 
     let utxoRetriever: UtxoRetriever = walletHandler;
-    if (appSettings.blockfrost[chain]?.baseUrl) {
+    if (appSettings.blockfrost && appSettings.blockfrost[chain]?.baseUrl) {
         const addr = await walletHandler.getChangeAddress();
         utxoRetriever = new BlockfrostRetriever(
             addr, appSettings.blockfrost[chain].baseUrl, appSettings.blockfrost[chain]?.dmtrApiKey);
