@@ -5,15 +5,25 @@ import { fromChainToChainCurrency, fromChainToChainNativeToken, fromChainToNativ
 import { IBalanceState, updateBalanceAction } from '../redux/slices/accountInfoSlice';
 import evmWalletHandler from '../features/EvmWalletHandler';
 import walletHandler from '../features/WalletHandler';
+import appSettings from '../settings/appSettings';
+import { UtxoRetriever } from '../features/types';
+import BlockfrostRetriever from '../features/BlockfrostRetriever';
 
-export const getWalletBalanceAction = async (chain: ChainEnum): Promise<IBalanceState> => {
+const getWalletBalanceAction = async (chain: ChainEnum): Promise<IBalanceState> => {
     if (chain === ChainEnum.Nexus) { 
         const nexusBalance = await evmWalletHandler.getBalance();
         return { balance: { [fromChainToChainCurrency(chain)]: nexusBalance } };
     }
+
+    let utxoRetriever: UtxoRetriever = walletHandler;
+    if (appSettings.blockfrost[chain]?.baseUrl) {
+        const addr = await walletHandler.getChangeAddress();
+        utxoRetriever = new BlockfrostRetriever(
+            addr, appSettings.blockfrost[chain].baseUrl, appSettings.blockfrost[chain]?.dmtrApiKey);
+    }
     
-    const utxos = await walletHandler.getAllUtxos();
-    const balance = await walletHandler.getBalance(utxos);
+    const utxos = await utxoRetriever.getAllUtxos();
+    const balance = await utxoRetriever.getBalance(utxos);
     const currencyBalance = (balance[fromChainToCurrencySymbol(chain)] || BigInt(0)).toString(10);
     const tokenBalance = (balance[fromChainToNativeTokenSymbol(chain)] || BigInt(0)).toString(10);
     return {
