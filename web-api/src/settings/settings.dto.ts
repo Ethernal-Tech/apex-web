@@ -42,6 +42,10 @@ export class BridgingSettingsDto {
 	maxAmountAllowedToBridge: string;
 
 	@IsNotEmpty()
+	@ApiProperty()
+	maxTokenAmountAllowedToBridge: string;
+
+	@IsNotEmpty()
 	@IsPositive()
 	@ApiProperty()
 	maxReceiversPerBridgingRequest: number;

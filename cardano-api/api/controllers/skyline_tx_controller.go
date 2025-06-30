@@ -138,6 +138,7 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	}
 
 	receiverAmountSum := big.NewInt(0)
+	receiverWrappedTokenAmountSum := big.NewInt(0)
 	feeSum := uint64(0)
 	foundAUtxoValueBelowMinimumValue := false
 	foundAnInvalidReceiverAddr := false
@@ -195,6 +196,8 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 			if !receiver.IsNativeToken {
 				receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(receiver.Amount))
+			} else {
+				receiverWrappedTokenAmountSum.Add(receiverWrappedTokenAmountSum, new(big.Int).SetUint64(receiver.Amount))
 			}
 		}
 	}
@@ -260,6 +263,13 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		receiverAmountSum.Cmp(c.appConfig.BridgingSettings.MaxAmountAllowedToBridge) == 1 {
 		return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
 			c.appConfig.BridgingSettings.MaxAmountAllowedToBridge, requestBody)
+	}
+
+	if c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge != nil &&
+		c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge.Sign() == 1 &&
+		receiverWrappedTokenAmountSum.Cmp(c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge) == 1 {
+		return fmt.Errorf("sum of receiver token amounts + fee greater than maximum allowed: %v, for request: %v",
+			c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge, requestBody)
 	}
 
 	return nil
