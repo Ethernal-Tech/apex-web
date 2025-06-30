@@ -553,7 +553,7 @@ export interface IBridgingSettingsDto {
     minUtxoChainValue: { [key: string]: number; };
     minValueToBridge: number;
     maxAmountAllowedToBridge: string;
-    maxTokenAmountAllowedToBridge?: string;
+    maxTokenAmountAllowedToBridge: string;
     maxReceiversPerBridgingRequest: number;
 }
 
