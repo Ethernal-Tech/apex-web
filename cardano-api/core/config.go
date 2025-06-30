@@ -103,12 +103,16 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 		if !ok {
 			logger.Error("failed to convert MaxAmountAllowedToBridge to big.Int",
 				"MaxAmountAllowedToBridge", settingsResponse.MaxAmountAllowedToBridge)
+
+			maxAmountAllowedToBridge = big.NewInt(0)
 		}
 
 		maxTokenAmountAllowedToBridge, ok := new(big.Int).SetString(settingsResponse.MaxTokenAmountAllowedToBridge, 10)
 		if !ok {
 			logger.Error("failed to convert MaxTokenAmountAllowedToBridge to big.Int",
 				"MaxTokenAmountAllowedToBridge", settingsResponse.MaxTokenAmountAllowedToBridge)
+
+			maxTokenAmountAllowedToBridge = big.NewInt(0)
 		}
 
 		appConfig.BridgingSettings = BridgingSettings{
