@@ -19,5 +19,6 @@ type SettingsResponse struct {
 	MinUtxoChainValue              map[string]uint64 `json:"minUtxoChainValue"`
 	MinValueToBridge               uint64            `json:"minValueToBridge"`
 	MaxAmountAllowedToBridge       string            `json:"maxAmountAllowedToBridge"`
+	MaxTokenAmountAllowedToBridge  string            `json:"maxTokenAmountAllowedToBridge"`
 	MaxReceiversPerBridgingRequest int               `json:"maxReceiversPerBridgingRequest"`
 }

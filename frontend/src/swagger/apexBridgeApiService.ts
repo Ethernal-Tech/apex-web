@@ -462,6 +462,7 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
     minUtxoChainValue!: { [key: string]: number; };
     minValueToBridge!: number;
     maxAmountAllowedToBridge!: string;
+    maxTokenAmountAllowedToBridge!: string;
     maxReceiversPerBridgingRequest!: number;
 
     constructor(data?: IBridgingSettingsDto) {
@@ -503,6 +504,7 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
             }
             this.minValueToBridge = _data["minValueToBridge"];
             this.maxAmountAllowedToBridge = _data["maxAmountAllowedToBridge"];
+            this.maxTokenAmountAllowedToBridge = _data["maxTokenAmountAllowedToBridge"];
             this.maxReceiversPerBridgingRequest = _data["maxReceiversPerBridgingRequest"];
         }
     }
@@ -539,6 +541,7 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
         }
         data["minValueToBridge"] = this.minValueToBridge;
         data["maxAmountAllowedToBridge"] = this.maxAmountAllowedToBridge;
+        data["maxTokenAmountAllowedToBridge"] = this.maxTokenAmountAllowedToBridge;
         data["maxReceiversPerBridgingRequest"] = this.maxReceiversPerBridgingRequest;
         return data; 
     }
@@ -550,6 +553,7 @@ export interface IBridgingSettingsDto {
     minUtxoChainValue: { [key: string]: number; };
     minValueToBridge: number;
     maxAmountAllowedToBridge: string;
+    maxTokenAmountAllowedToBridge: string;
     maxReceiversPerBridgingRequest: number;
 }
 

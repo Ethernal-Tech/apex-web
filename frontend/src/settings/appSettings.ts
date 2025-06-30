@@ -29,6 +29,7 @@ export class AppSettings {
 	private _blockfrost: {[key: string]: {baseUrl: string, dmtrApiKey: string | undefined }} = {};
 
     private _maxAmountAllowedToBridge: string = "0";
+	private _maxTokenAmountAllowedToBridge: string = "0";
     private _minValueToBridge: string = "0";
 	private _potentialWalletFee: number = 0;
     private _isMainnet: boolean = false;
@@ -45,6 +46,7 @@ export class AppSettings {
 		this._wrappedTokenName = settingsJson.wrappedTokenName;
 		this._blockfrost = settingsJson.blockfrost;
 		this._maxAmountAllowedToBridge = settingsJson.maxAmountAllowedToBridge;
+		this._maxTokenAmountAllowedToBridge = settingsJson.maxTokenAmountAllowedToBridge;
 		this._minValueToBridge = settingsJson.minValueToBridge;
 		this._potentialWalletFee = settingsJson.potentialWalletFee;
 		this._isMainnet = settingsJson.isMainnet;
@@ -77,6 +79,10 @@ export class AppSettings {
 
 	get maxAmountAllowedToBridge(): string {
 		return this._maxAmountAllowedToBridge;
+	}
+
+	get maxTokenAmountAllowedToBridge(): string {
+		return this._maxTokenAmountAllowedToBridge;
 	}
 
 	get minValueToBridge(): string {

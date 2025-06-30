@@ -165,6 +165,11 @@ export const validateSubmitTxInputsSkyline = (
       const maxAllowed = maxAllowedToBridgeDfm - BigInt(bridgeTxFee);
       return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} ${TokenEnumToLabel[fromChainToChainCurrency(sourceChain)]}`;
     }
+  } else {
+    const maxTokenAllowedToBridgeDfm = BigInt(settings.maxTokenAmountAllowedToBridge)
+    if (maxTokenAllowedToBridgeDfm > 0 && BigInt(amount)> maxTokenAllowedToBridgeDfm) {
+      return `Token amount more than maximum allowed: ${convertUtxoDfmToApex(maxTokenAllowedToBridgeDfm.toString(10))} ${TokenEnumToLabel[fromChainToChainNativeToken(sourceChain)]}`;
+    } 
   }
 
   const addr = NewAddress(destinationAddr);

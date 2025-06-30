@@ -60,6 +60,7 @@ type BridgingSettings struct {
 	MinUtxoChainValue              map[string]uint64 `json:"minUtxoChainValue"`
 	MinValueToBridge               uint64            `json:"minValueToBridge"`
 	MaxAmountAllowedToBridge       *big.Int          `json:"maxAmountAllowedToBridge"`
+	MaxTokenAmountAllowedToBridge  *big.Int          `json:"maxTokenAmountAllowedToBridge"`
 	MaxReceiversPerBridgingRequest int               `json:"maxReceiversPerBridgingRequest"`
 }
 
@@ -102,6 +103,16 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 		if !ok {
 			logger.Error("failed to convert MaxAmountAllowedToBridge to big.Int",
 				"MaxAmountAllowedToBridge", settingsResponse.MaxAmountAllowedToBridge)
+
+			maxAmountAllowedToBridge = big.NewInt(0)
+		}
+
+		maxTokenAmountAllowedToBridge, ok := new(big.Int).SetString(settingsResponse.MaxTokenAmountAllowedToBridge, 10)
+		if !ok {
+			logger.Error("failed to convert MaxTokenAmountAllowedToBridge to big.Int",
+				"MaxTokenAmountAllowedToBridge", settingsResponse.MaxTokenAmountAllowedToBridge)
+
+			maxTokenAmountAllowedToBridge = big.NewInt(0)
 		}
 
 		appConfig.BridgingSettings = BridgingSettings{
@@ -110,6 +121,7 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 			MinUtxoChainValue:              settingsResponse.MinUtxoChainValue,
 			MinValueToBridge:               settingsResponse.MinValueToBridge,
 			MaxAmountAllowedToBridge:       maxAmountAllowedToBridge,
+			MaxTokenAmountAllowedToBridge:  maxTokenAmountAllowedToBridge,
 			MaxReceiversPerBridgingRequest: settingsResponse.MaxReceiversPerBridgingRequest,
 		}
 

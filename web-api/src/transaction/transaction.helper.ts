@@ -184,6 +184,19 @@ export const createEthBridgingTx = async (
 		);
 	}
 
+	const maxTokenAmountAllowedToBridge = BigInt(
+		convertDfmToWei(bridgingSettings.maxTokenAmountAllowedToBridge) || '0',
+	);
+
+	if (
+		maxTokenAmountAllowedToBridge !== BigInt(0) &&
+		maxTokenAmountAllowedToBridge < value
+	) {
+		throw new BadRequestException(
+			`Amount: ${value} more than max allowed: ${maxTokenAmountAllowedToBridge}`,
+		);
+	}
+
 	const isCentralized = process.env.USE_CENTRALIZED_BRIDGE === 'true';
 
 	const createFunc = isCentralized ? ethCentralizedBridgingTx : ethBridgingTx;
