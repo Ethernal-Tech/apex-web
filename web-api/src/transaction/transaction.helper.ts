@@ -193,7 +193,7 @@ export const createEthBridgingTx = async (
 		maxTokenAmountAllowedToBridge < value
 	) {
 		throw new BadRequestException(
-			`Amount+Fee: ${value} more than max allowed: ${maxTokenAmountAllowedToBridge}`,
+			`Amount: ${value} more than max allowed: ${maxTokenAmountAllowedToBridge}`,
 		);
 	}
 

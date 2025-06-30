@@ -168,7 +168,7 @@ export const validateSubmitTxInputsSkyline = (
   } else {
     const maxTokenAllowedToBridgeDfm = BigInt(settings.maxTokenAmountAllowedToBridge)
     if (maxTokenAllowedToBridgeDfm > 0 && BigInt(amount)> maxTokenAllowedToBridgeDfm) {
-      return `Token amount more than maximum allowed: ${convertUtxoDfmToApex(maxTokenAllowedToBridgeDfm.toString(10))} ${TokenEnumToLabel[fromChainToChainCurrency(sourceChain)]}`;
+      return `Token amount more than maximum allowed: ${convertUtxoDfmToApex(maxTokenAllowedToBridgeDfm.toString(10))} ${TokenEnumToLabel[fromChainToChainNativeToken(sourceChain)]}`;
     } 
   }
 

@@ -268,7 +268,7 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	if c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge != nil &&
 		c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge.Sign() == 1 &&
 		receiverWrappedTokenAmountSum.Cmp(c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge) == 1 {
-		return fmt.Errorf("sum of receiver token amounts + fee greater than maximum allowed: %v, for request: %v",
+		return fmt.Errorf("sum of receiver token amounts greater than maximum allowed: %v, for request: %v",
 			c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge, requestBody)
 	}
 

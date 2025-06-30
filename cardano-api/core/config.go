@@ -108,7 +108,7 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 		maxTokenAmountAllowedToBridge, ok := new(big.Int).SetString(settingsResponse.MaxTokenAmountAllowedToBridge, 10)
 		if !ok {
 			logger.Error("failed to convert MaxTokenAmountAllowedToBridge to big.Int",
-				"MaxAmountAllowedToBridge", settingsResponse.MaxTokenAmountAllowedToBridge)
+				"MaxTokenAmountAllowedToBridge", settingsResponse.MaxTokenAmountAllowedToBridge)
 		}
 
 		appConfig.BridgingSettings = BridgingSettings{
@@ -120,8 +120,6 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 			MaxTokenAmountAllowedToBridge:  maxTokenAmountAllowedToBridge,
 			MaxReceiversPerBridgingRequest: settingsResponse.MaxReceiversPerBridgingRequest,
 		}
-
-		logger.Debug("applied settings from oracle API", "settingsResponse.MaxTokenAmountAllowedToBridge", settingsResponse.MaxTokenAmountAllowedToBridge)
 
 		logger.Debug("applied settings from oracle API", "settings", settingsResponse)
 
