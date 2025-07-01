@@ -94,7 +94,7 @@ export const validateSubmitTxInputs = (
 ): string | undefined => {
   if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector)) {
     if (BigInt(amount) < BigInt(settings.minValueToBridge)) {
-      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} APEX`;
+      return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} APEX`;
     }
 
     const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
@@ -106,7 +106,7 @@ export const validateSubmitTxInputs = (
     } 
   } else if(sourceChain === ChainEnum.Nexus){
     if (BigInt(amount) < BigInt(convertDfmToWei(settings.minValueToBridge))) {
-      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} APEX`;
+      return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} APEX`;
     }
 
     const maxAllowedToBridgeWei = BigInt(convertDfmToWei(settings.maxAmountAllowedToBridge));
