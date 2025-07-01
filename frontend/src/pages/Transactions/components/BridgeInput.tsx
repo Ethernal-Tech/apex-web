@@ -13,7 +13,7 @@ import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { white } from '../../../containers/theme';
-import { getIsNativeToken } from '../../../utils/chainUtils';
+import { fromChainToChainCurrency, getIsNativeToken } from '../../../utils/chainUtils';
 import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
 
@@ -28,21 +28,16 @@ type BridgeInputType = {
     loading?: boolean;
 }
 
-const calculateMaxAmount = (
+const calculateMaxAmountCurrency = (
   totalDfmBalance: {[key: string]: string}, chain: ChainEnum,
   changeMinUtxo: number, minDfmValue: string,
-  bridgeTxFee: string, operationFee: string, sourceToken?: TokenEnum,
+  bridgeTxFee: string, operationFee: string,
 ): string => {
-  console.log('totalDfmBalance', totalDfmBalance)
-  console.log('chain', chain)
-  console.log('changeMinUtxo', changeMinUtxo)
-  console.log('minDfmValue', minDfmValue)
-  console.log('bridgeTxFee', bridgeTxFee)
-  console.log('operationFee', operationFee)
-  console.log('sourceToken', sourceToken)
-  if (!totalDfmBalance || !sourceToken) {
+  if (!totalDfmBalance || !chain) {
     return '0'
   }
+
+  const sourceToken = fromChainToChainCurrency(chain);
 
   if (chain === ChainEnum.Nexus) {
     return (BigInt(totalDfmBalance[sourceToken] || '0') - BigInt(bridgeTxFee) -
@@ -146,10 +141,9 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
       ? appSettings.minUtxoChainValue[chain]
       : minValueToBridge;
   
-  const maxAmountDfm = calculateMaxAmount(
-    totalDfmBalance, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee, sourceToken)
+  const maxAmountDfm = calculateMaxAmountCurrency(
+    totalDfmBalance, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee)
 
-  console.log('maxAmountDfm', maxAmountDfm)
   const maxWrappedAmount: string = sourceToken && totalDfmBalance
     ? totalDfmBalance[sourceToken]
     : '0';

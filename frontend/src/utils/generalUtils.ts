@@ -374,8 +374,6 @@ const calculateMinUtxo = (utxos: UTxO[]) => {
 }
 
 export const calculateChangeMinUtxo = (utxos: UTxO[] | undefined, defaultMinUtxo: number): number => {
-  console.log('calculateChangeMinUtxo - utxos', utxos)
-  console.log('calculateChangeMinUtxo - defaultMinUtxo', defaultMinUtxo)
   if (!utxos) {
     return defaultMinUtxo;
   }
