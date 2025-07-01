@@ -33,6 +33,13 @@ const calculateMaxAmount = (
   changeMinUtxo: number, minDfmValue: string,
   bridgeTxFee: string, operationFee: string, sourceToken?: TokenEnum,
 ): string => {
+  console.log('totalDfmBalance', totalDfmBalance)
+  console.log('chain', chain)
+  console.log('changeMinUtxo', changeMinUtxo)
+  console.log('minDfmValue', minDfmValue)
+  console.log('bridgeTxFee', bridgeTxFee)
+  console.log('operationFee', operationFee)
+  console.log('sourceToken', sourceToken)
   if (!totalDfmBalance || !sourceToken) {
     return '0'
   }
@@ -142,6 +149,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   const maxAmountDfm = calculateMaxAmount(
     totalDfmBalance, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee, sourceToken)
 
+  console.log('maxAmountDfm', maxAmountDfm)
   const maxWrappedAmount: string = sourceToken && totalDfmBalance
     ? totalDfmBalance[sourceToken]
     : '0';
