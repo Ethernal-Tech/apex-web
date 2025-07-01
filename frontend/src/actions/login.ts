@@ -22,7 +22,7 @@ const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainEnum, 
     }
 
     if (!checkChainCompatibility(chain, network, networkId)) {
-        throw new Error(`Chain: ${chain} not compatible with network: ${network}. Expected network: ${fromChainToNetwork(chain)}. Please select ${fromChainToNetwork(chain)} network in your wallet.`);
+        throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`);
     }
     const account = await evmWalletHandler.getAddress();
     if (!account) {
@@ -76,7 +76,7 @@ const enableCardanoWallet = async (selectedWalletName: string, chain: ChainEnum,
     }
 
     if (!checkChainCompatibility(chain, network, networkId)) {
-        throw new Error(`Chain: ${chain} not compatible with network: ${network}. Expected network: ${fromChainToNetwork(chain)}. Please select ${fromChainToNetwork(chain)} network in your wallet.`);
+        throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`);
     }
 
     const account = await walletHandler.getChangeAddress();
