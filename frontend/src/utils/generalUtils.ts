@@ -110,7 +110,7 @@ export const validateSubmitTxInputs = (
 ): string | undefined => {
   if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector || sourceChain === ChainEnum.Cardano)) {
     if (BigInt(amount) < BigInt(settings.minValueToBridge)) {
-      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} ${TokenEnumToLabel[TokenEnum.APEX]}`;
+      return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} ${TokenEnumToLabel[TokenEnum.APEX]}`;
     }
 
     const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
@@ -122,7 +122,7 @@ export const validateSubmitTxInputs = (
     } 
   } else if(sourceChain === ChainEnum.Nexus){
     if (BigInt(amount) < BigInt(convertDfmToWei(settings.minValueToBridge))) {
-      return `Amount less than minimum: ${convertUtxoDfmToApex(settings.minValueToBridge)} ${TokenEnumToLabel[TokenEnum.APEX]}`;
+      return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} ${TokenEnumToLabel[TokenEnum.APEX]}`;
     }
 
     const maxAllowedToBridgeWei = BigInt(convertDfmToWei(settings.maxAmountAllowedToBridge));
@@ -156,7 +156,7 @@ export const validateSubmitTxInputsSkyline = (
 ): string | undefined => {
   const chain = isNativeToken ? destinationChain : sourceChain;
   if (BigInt(amount) < BigInt(settings.minUtxoChainValue[chain])) {
-    return `Amount less than minimum: ${convertUtxoDfmToApex(BigInt(settings.minUtxoChainValue[chain]).toString(10))} ${TokenEnumToLabel[isNativeToken ? fromChainToChainNativeToken(sourceChain) : fromChainToChainCurrency(sourceChain)]}`;
+    return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(BigInt(settings.minUtxoChainValue[chain]).toString(10))} ${TokenEnumToLabel[isNativeToken ? fromChainToChainNativeToken(sourceChain) : fromChainToChainCurrency(sourceChain)]}`;
   }
 
   if (!isNativeToken) {

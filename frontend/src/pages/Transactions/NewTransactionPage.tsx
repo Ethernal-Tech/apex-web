@@ -155,7 +155,11 @@ function NewTransactionPage() {
 				}
 			}catch(err) {
 				console.log(err);
-				toast.error(`${err}`)
+				if (err instanceof Error && err.message.includes('account changed')) {
+					toast.error(`Wallet account changed. It looks like you switched accounts in your wallet.`)
+				} else {
+					toast.error(`${err}`)
+				}
 			} finally {
 				setLoading(false);
 			}
