@@ -4,24 +4,24 @@ import { getAssetsSumMap } from "../utils/generalUtils";
 import { UTxO } from "./WalletHandler";
 
 type JsonRpcRequest = {
-  jsonrpc: '2.0';
-  method: string;
-  params: {
-	addresses?: string[];
-  };
-  id: number | string;
+	jsonrpc: '2.0';
+	method: string;
+	params: {
+		addresses?: string[];
+	};
+	id: number | string;
 };
 
 type OgmiosUtxo = {
-	transaction:  {
+	transaction: {
 		id: string;
 	},
-	index : number;
+	index: number;
 	address: string;
 	value: {
-		 [key: string]: {
-			[key: string] : number
-		 },
+		[key: string]: {
+			[key: string]: number
+		},
 	};
 	datumHash?: string;
 	datum?: string;
@@ -29,10 +29,10 @@ type OgmiosUtxo = {
 };
 
 type UtxoResponse = {
-  jsonrpc: '2.0';
-  method: string;
-  result: OgmiosUtxo[];
-  id: number | string;
+	jsonrpc: '2.0';
+	method: string;
+	result: OgmiosUtxo[];
+	id: number | string;
 };
 
 class OgmiosRetriever implements UtxoRetriever {
@@ -54,7 +54,7 @@ class OgmiosRetriever implements UtxoRetriever {
 				addresses: [this.address]
 			},
 			id: 1,
-  		};
+		};
 
 		try {
 			const response = await fetch(this.baseUrl, {
@@ -72,7 +72,7 @@ class OgmiosRetriever implements UtxoRetriever {
 			if ('error' in data) {
 				throw new Error(`Ogmios returned error: ${JSON.stringify(data.error)}`);
 			}
-			
+
 			return data.result.map(toMeshSdkUtxo);
 		}
 		catch (e) {
@@ -96,21 +96,21 @@ const toMeshSdkUtxo = (utxo: OgmiosUtxo): UTxO => ({
 	input: { outputIndex: utxo.index, txHash: utxo.transaction.id || '' },
 	output: {
 		address: utxo.address,
-	amount: Object.entries(utxo.value).map(([key, value]) => {
-		const innerKey = Object.keys(value)[0];
-		const innerValue = Object.values(value)[0];
+		amount: Object.entries(utxo.value).map(([key, value]) => {
+			const innerKey = Object.keys(value)[0];
+			const innerValue = Object.values(value)[0];
 
-		if (key === 'ada') {
+			if (key === 'ada') {
+				return {
+					unit: 'lovelace',
+					quantity: innerValue.toString(),
+				};
+			}
+
 			return {
-			unit: 'lovelace',
-			quantity: innerValue.toString(),
+				unit: key + innerKey,
+				quantity: innerValue.toString(),
 			};
-		}
-
-		return {
-			unit: key + innerKey,
-			quantity: innerValue.toString(),
-		};
-		}),	
+		}),
 	},
 })

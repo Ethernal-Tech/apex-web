@@ -20,19 +20,23 @@ const getWalletBalanceAction = async (chain: ChainEnum): Promise<IBalanceState> 
 
     const walletVersion = walletHandler.version();
 
-    if (appSettings.utxoRetriever && 
-        (appSettings.utxoRetriever[chain]?.force || walletSupported(walletVersion))
-    ) {
-        if (appSettings.utxoRetriever[chain]?.type === "blockfrost" && appSettings.utxoRetriever[chain]?.url) {
-            const addr = await walletHandler.getChangeAddress();
+    let chainUtxoRetriever;
+
+    if (appSettings.utxoRetriever) {
+        chainUtxoRetriever = appSettings.utxoRetriever[chain];
+    }
+
+    const addr = await walletHandler.getChangeAddress();
+
+    if (chainUtxoRetriever && (chainUtxoRetriever.force || walletSupported(walletVersion))) {
+        if (chainUtxoRetriever.type === "blockfrost" && chainUtxoRetriever.url) {
             utxoRetriever = new BlockfrostRetriever(
-                addr, appSettings.utxoRetriever[chain]?.url, appSettings.utxoRetriever[chain]?.dmtrApiKey);
-        } else if (appSettings.utxoRetriever[chain]?.type === "ogmios") {
-            const addr = await walletHandler.getChangeAddress();
+                addr, chainUtxoRetriever.url, chainUtxoRetriever.dmtrApiKey);
+        } else if (chainUtxoRetriever.type === "ogmios") {
             utxoRetriever = new OgmiosRetriever(
-                addr, appSettings.utxoRetriever[chain]?.url, appSettings.utxoRetriever[chain]?.dmtrApiKey);
+                addr, chainUtxoRetriever.url, chainUtxoRetriever.dmtrApiKey);
         } else {
-            console.log(`Unknown utxo retriever type: ${appSettings.utxoRetriever[chain]?.type}`);
+            console.log(`Unknown utxo retriever type: ${chainUtxoRetriever.type}`);
         }
     }
 
@@ -90,13 +94,9 @@ const walletSupported = (walletVersion: any): boolean => {
         return false;
     }
 
-    if (walletVersion.major > 2 ||
+    return (walletVersion.major > 2 ||
         (walletVersion.major === 2 && walletVersion.minor > 0) || 
         (walletVersion.major === 2 && walletVersion.minor === 0 && walletVersion.patch > 9) ||
         (walletVersion.major === 2 && walletVersion.minor === 0 && walletVersion.patch === 9 && walletVersion.build >= 14)
-    ) {
-        return true;
-    }
-
-    return false;
+    )
 }
