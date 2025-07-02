@@ -100,10 +100,10 @@ export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: Cardano
 // TODO: will need to add explorer urls for mainnet
 const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]: string}} = {
     mainnet: {
-        [ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
+        [ChainEnum.Prime]: 'https://apexscan.org/en',
         [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
         [ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
-        [ChainEnum.Cardano]: 'https://preview.cardanoscan.io',
+        [ChainEnum.Cardano]: 'https://cardanoscan.io',
     },
     testnet: {
         [ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
@@ -119,22 +119,24 @@ export const chainSupported = (chain: ChainEnum): boolean => {
         : reactorChains.includes(chain);
 }
 
-const getExplorerTxUrl = (chain: ChainEnum) => {
+const getExplorerTxUrl = (chain: ChainEnum, txHash: string) => {
     const base = appSettings.isMainnet ? EXPLORER_URLS.mainnet[chain] : EXPLORER_URLS.testnet[chain];
 
     let url
     switch (chain) {
         case ChainEnum.Vector:
         case ChainEnum.Prime: {
-            url = `${base}/transaction/hash`;
+            url = appSettings.isMainnet
+                ? `${base}/transaction/${txHash}/summary/`
+                : `${base}/transaction/hash/${txHash}`;
             break;
         }
         case ChainEnum.Nexus: {
-            url = `${base}/tx`;
+            url = `${base}/tx/${txHash}`;
             break;
         }
         case ChainEnum.Cardano: {
-            url = `${base}/transaction`;
+            url = `${base}/transaction/${txHash}`;
             break;
         }
         default:
@@ -149,15 +151,15 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
     }
 
     if (tx.status === TransactionStatusEnum.ExecutedOnDestination && tx.destinationTxHash) {
-        const baseUrl = getExplorerTxUrl(tx.destinationChain)
         const txHash = tx.destinationChain === ChainEnum.Nexus && !tx.destinationTxHash.startsWith('0x')
-            ? `0x${tx.destinationTxHash}` : tx.destinationTxHash;
-        window.open(`${baseUrl}/${txHash}`, '_blank')
+        ? `0x${tx.destinationTxHash}` : tx.destinationTxHash;
+        const url = getExplorerTxUrl(tx.destinationChain, txHash)
+        window.open(url, '_blank')
     } else if (tx.sourceTxHash) {
         const txHash = tx.originChain === ChainEnum.Nexus && !tx.sourceTxHash.startsWith('0x')
             ? `0x${tx.sourceTxHash}` : tx.sourceTxHash;
-        const baseUrl = getExplorerTxUrl(tx.originChain)
-        window.open(`${baseUrl}/${txHash}`, '_blank')
+        const url = getExplorerTxUrl(tx.originChain, txHash)
+        window.open(url, '_blank')
     }
 }
 

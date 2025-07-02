@@ -3,7 +3,7 @@ import BridgeInput from "./components/BridgeInput";
 import { convertDfmToWei, formatTxDetailUrl, validateSubmitTxInputs, validateSubmitTxInputsSkyline } from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
@@ -22,12 +22,17 @@ function NewTransactionPage() {
 	const destinationChain = useSelector((state: RootState)=> state.chain.destinationChain);
 	const account = useSelector((state: RootState) => state.accountInfo.account);
 	const settings = useSelector((state: RootState) => state.settings);
+	const { minOperationFee, minChainFeeForBridging }  = useSelector((state: RootState) => state.settings);
 
-	const defaultBridgeTxFee = chain === ChainEnum.Nexus
-		? convertDfmToWei(settings.minChainFeeForBridging[chain] || '0')
-		: settings.minChainFeeForBridging[chain] || '0'
+	const defaultBridgeTxFee = useMemo(() => chain === ChainEnum.Nexus
+		? convertDfmToWei(minChainFeeForBridging[chain] || '0')
+		: minChainFeeForBridging[chain] || '0', [chain, minChainFeeForBridging])
 		
 	const [bridgeTxFee, setBridgeTxFee] = useState<string>(defaultBridgeTxFee)
+
+	useEffect(() => {
+		setBridgeTxFee(defaultBridgeTxFee)
+	}, [defaultBridgeTxFee])
 
 	const resetBridgeTxFee = useCallback(() => {
 		setBridgeTxFee(defaultBridgeTxFee)
@@ -35,9 +40,9 @@ function NewTransactionPage() {
 
 	const operationFee = useMemo(
 		() => chain === ChainEnum.Nexus
-			? convertDfmToWei(settings.minOperationFee[chain] || '0')
-			: settings.minOperationFee[chain] || '0',
-		[chain, settings.minOperationFee],
+			? convertDfmToWei(minOperationFee[chain] || '0')
+			: minOperationFee[chain] || '0',
+		[chain, minOperationFee],
 	)
 
 	const goToDetails = useCallback((tx: BridgeTransactionDto) => {
