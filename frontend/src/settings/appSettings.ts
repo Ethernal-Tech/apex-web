@@ -26,7 +26,7 @@ export class AppSettings {
 		cardano: "",
 	}
 
-	private _blockfrost: {[key: string]: {baseUrl: string, dmtrApiKey: string | undefined }} = {};
+	private _utxoRetriever: { [key: string]: { type: string, url: string, dmtrApiKey: string | undefined, force: boolean } } = {};
 
     private _maxAmountAllowedToBridge: string = "0";
 	private _maxTokenAmountAllowedToBridge: string = "0";
@@ -44,7 +44,7 @@ export class AppSettings {
 		this._minChainFeeForBridging = settingsJson.minChainFeeForBridging;
 		this._minOperationFee = settingsJson.minOperationFee;
 		this._wrappedTokenName = settingsJson.wrappedTokenName;
-		this._blockfrost = settingsJson.blockfrost;
+		this._utxoRetriever = settingsJson.utxoRetriever;
 		this._maxAmountAllowedToBridge = settingsJson.maxAmountAllowedToBridge;
 		this._maxTokenAmountAllowedToBridge = settingsJson.maxTokenAmountAllowedToBridge;
 		this._minValueToBridge = settingsJson.minValueToBridge;
@@ -73,8 +73,8 @@ export class AppSettings {
 		return this._wrappedTokenName;
 	}
 
-	get blockfrost(): {[key: string]: {baseUrl: string, dmtrApiKey: string | undefined }} {
-		return this._blockfrost;
+	get utxoRetriever(): { [key: string]: { type: string, url: string, dmtrApiKey: string | undefined, force: boolean } } {
+		return this._utxoRetriever;
 	}
 
 	get maxAmountAllowedToBridge(): string {
