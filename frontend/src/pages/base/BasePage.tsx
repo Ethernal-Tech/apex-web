@@ -9,7 +9,7 @@ const BasePage = ({ children }: any) => {
         <div className="App">
             <AppBarComponent />
             <Box component='div' className="container">
-                <Box sx={{ margin: '20px', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center' }}>
+                <Box sx={{ margin: '15px 20px 0px 20px', display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center' }}>
                     {children}
                 </Box>
             </Box>

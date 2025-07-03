@@ -303,7 +303,7 @@ const TransferProgress = ({
             justifyContent: 'space-between',
             height: '100%',
         }}>
-            <Typography variant='h3' fontSize="14px" fontWeight={600} sx={{color:'white', mt:'32px',mb:2, textAlign:'center', textTransform:'uppercase'}}>
+            <Typography variant='h3' fontSize="14px" fontWeight={600} sx={{color:'white', mt:'16px',mb:2, textAlign:'center', textTransform:'uppercase'}}>
                 {transferProgress}
 
                 {transferProgress !== TRANSFER_PROGRESS_TEXT.DONE && transferProgress !== TRANSFER_PROGRESS_TEXT.ERROR &&
@@ -320,7 +320,7 @@ const TransferProgress = ({
                 {steps.map(step=> <TransferStep key={step.number} step={step}/>)}
             </Box>
 
-            <Box sx={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'20px',mt:4, mb:'32px'}}>
+            <Box sx={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'20px',mt:4, mb:'16px'}}>
                 <ButtonCustom  
                     variant="red" 
                     onClick={()=> navigate(TRANSACTIONS_ROUTE)}
