@@ -10,6 +10,8 @@ import { UtxoRetriever } from '../features/types';
 import BlockfrostRetriever from '../features/BlockfrostRetriever';
 import OgmiosRetriever from '../features/OgmiosRetriever';
 
+const supportedWalletVersion = { major: 2, minor: 0, patch: 9, build: 14 };
+
 const getWalletBalanceAction = async (chain: ChainEnum): Promise<IBalanceState> => {
     if (chain === ChainEnum.Nexus) { 
         const nexusBalance = await evmWalletHandler.getBalance();
@@ -19,13 +21,7 @@ const getWalletBalanceAction = async (chain: ChainEnum): Promise<IBalanceState> 
     let utxoRetriever: UtxoRetriever = walletHandler;
 
     const walletVersion = walletHandler.version();
-
-    let utxoRetrieverConfig;
-
-    if (appSettings.utxoRetriever) {
-        utxoRetrieverConfig = appSettings.utxoRetriever[chain];
-    }
-
+    const utxoRetrieverConfig = !!appSettings.utxoRetriever && appSettings.utxoRetriever[chain];
     const addr = await walletHandler.getChangeAddress();
 
     if (utxoRetrieverConfig && (utxoRetrieverConfig.force || walletSupported(walletVersion))) {
@@ -98,9 +94,10 @@ const walletSupported = (walletVersion: any): boolean => {
         return false;
     }
 
-    return (walletVersion.major > 2 ||
-        (walletVersion.major === 2 && walletVersion.minor > 0) || 
-        (walletVersion.major === 2 && walletVersion.minor === 0 && walletVersion.patch > 9) ||
-        (walletVersion.major === 2 && walletVersion.minor === 0 && walletVersion.patch === 9 && walletVersion.build >= 14)
+    const { major, minor, patch, build } = supportedWalletVersion;
+    return (walletVersion.major > major ||
+        (walletVersion.major === major && walletVersion.minor > minor) ||
+        (walletVersion.major === major && walletVersion.minor === minor && walletVersion.patch > patch) ||
+        (walletVersion.major === major && walletVersion.minor === minor && walletVersion.patch === patch && walletVersion.build >= build)
     )
 }

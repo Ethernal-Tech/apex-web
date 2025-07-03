@@ -26,8 +26,7 @@ export class AppSettings {
 		cardano: "",
 	}
 
-	private _utxoRetriever: { [key: string]: { type: string, url: string, dmtrApiKey: string | undefined, force: boolean } } = {};
-
+	private _utxoRetriever: UtxoRetrieverConfig = {}
     private _maxAmountAllowedToBridge: string = "0";
 	private _maxTokenAmountAllowedToBridge: string = "0";
     private _minValueToBridge: string = "0";
@@ -73,7 +72,7 @@ export class AppSettings {
 		return this._wrappedTokenName;
 	}
 
-	get utxoRetriever(): { [key: string]: { type: string, url: string, dmtrApiKey: string | undefined, force: boolean } } {
+	get utxoRetriever(): UtxoRetrieverConfig {
 		return this._utxoRetriever;
 	}
 
@@ -108,3 +107,5 @@ export class AppSettings {
 
 const appSettings = new AppSettings();
 export default appSettings;
+
+type UtxoRetrieverConfig = { [key: string]: { type: string, url: string, dmtrApiKey: string | undefined, force: boolean }};
