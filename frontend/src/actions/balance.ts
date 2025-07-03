@@ -20,23 +20,27 @@ const getWalletBalanceAction = async (chain: ChainEnum): Promise<IBalanceState> 
 
     const walletVersion = walletHandler.version();
 
-    let chainUtxoRetriever;
+    let utxoRetrieverConfig;
 
     if (appSettings.utxoRetriever) {
-        chainUtxoRetriever = appSettings.utxoRetriever[chain];
+        utxoRetrieverConfig = appSettings.utxoRetriever[chain];
     }
 
     const addr = await walletHandler.getChangeAddress();
 
-    if (chainUtxoRetriever && (chainUtxoRetriever.force || walletSupported(walletVersion))) {
-        if (chainUtxoRetriever.type === "blockfrost" && chainUtxoRetriever.url) {
-            utxoRetriever = new BlockfrostRetriever(
-                addr, chainUtxoRetriever.url, chainUtxoRetriever.dmtrApiKey);
-        } else if (chainUtxoRetriever.type === "ogmios") {
-            utxoRetriever = new OgmiosRetriever(
-                addr, chainUtxoRetriever.url, chainUtxoRetriever.dmtrApiKey);
+    if (utxoRetrieverConfig && (utxoRetrieverConfig.force || walletSupported(walletVersion))) {
+        if (utxoRetrieverConfig.url) {
+            if (utxoRetrieverConfig.type === "blockfrost") {
+                utxoRetriever = new BlockfrostRetriever(
+                    addr, utxoRetrieverConfig.url, utxoRetrieverConfig.dmtrApiKey);
+            } else if (utxoRetrieverConfig.type === "ogmios") {
+                utxoRetriever = new OgmiosRetriever(
+                    addr, utxoRetrieverConfig.url);
+            } else {
+                console.log(`Unknown utxo retriever type: ${utxoRetrieverConfig.type}`);
+            }
         } else {
-            console.log(`Unknown utxo retriever type: ${chainUtxoRetriever.type}`);
+            console.log(`utxo retriever url not provided for: ${utxoRetrieverConfig.type}`);
         }
     }
 

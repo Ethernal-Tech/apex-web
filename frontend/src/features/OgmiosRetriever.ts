@@ -38,12 +38,10 @@ type UtxoResponse = {
 class OgmiosRetriever implements UtxoRetriever {
 	private address: string;
 	private baseUrl: string;
-	private dmtrApiKey: string | undefined;
 
-	constructor(address: string, baseUrl: string, dmtrApiKey: string | undefined) {
+	constructor(address: string, baseUrl: string) {
 		this.address = address;
 		this.baseUrl = baseUrl;
-		this.dmtrApiKey = dmtrApiKey;
 	}
 
 	getAllUtxos = async (): Promise<UTxO[]> => {
