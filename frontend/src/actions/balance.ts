@@ -24,7 +24,7 @@ const getWalletBalanceAction = async (chain: ChainEnum): Promise<IBalanceState> 
     const utxoRetrieverConfig = !!appSettings.utxoRetriever && appSettings.utxoRetriever[chain];
     const addr = await walletHandler.getChangeAddress();
 
-    if (utxoRetrieverConfig && (utxoRetrieverConfig.force || walletSupported(walletVersion))) {
+    if (utxoRetrieverConfig && (utxoRetrieverConfig.force || !walletSupported(walletVersion))) {
         if (utxoRetrieverConfig.url) {
             if (utxoRetrieverConfig.type === "blockfrost") {
                 utxoRetriever = new BlockfrostRetriever(
