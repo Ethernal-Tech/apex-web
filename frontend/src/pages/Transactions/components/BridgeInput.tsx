@@ -67,11 +67,11 @@ const calculateMaxAmountCurrency = (
   if (chain === ChainEnum.Nexus) {
     maxByBalance = BigInt(totalDfmBalance[sourceToken] || '0') - BigInt(bridgeTxFee) -
       BigInt(minDfmValue) - BigInt(operationFee)
+  } else {
+    maxByBalance = BigInt(totalDfmBalance[sourceToken] || '0')
+      - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee)
+      - BigInt(changeMinUtxo) - BigInt(operationFee)
   }
-
-  maxByBalance = BigInt(totalDfmBalance[sourceToken] || '0')
-    - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee)
-    - BigInt(changeMinUtxo) - BigInt(operationFee)
 
   return {maxByAllowed, maxByBalance}
 }
