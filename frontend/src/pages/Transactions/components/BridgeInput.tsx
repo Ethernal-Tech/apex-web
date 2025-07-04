@@ -5,7 +5,7 @@ import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { calculateChangeMinUtxo, convertApexToDfm, convertDfmToWei, tokenIcons } from '../../../utils/generalUtils';
+import { calculateChangeMinUtxo, convertApexToDfm, convertDfmToWei, minBigInt, tokenIcons } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
@@ -28,8 +28,28 @@ type BridgeInputType = {
     loading?: boolean;
 }
 
+
+const calculateMaxAmountToken = (
+  totalDfmBalance: {[key: string]: string},
+  maxTokenAmountAllowedToBridge: string, chain: ChainEnum,
+  sourceToken: TokenEnum | undefined,
+): string => {
+    if (!sourceToken || !getIsNativeToken(chain, sourceToken)) {
+      return '0';
+    }
+
+    const tokenBalance: bigint = BigInt((sourceToken && totalDfmBalance ? totalDfmBalance[sourceToken] : '0') || '0');
+
+    const tokenBalanceAllowedToUse = BigInt(maxTokenAmountAllowedToBridge || '0') !== BigInt(0) &&
+      tokenBalance > BigInt(maxTokenAmountAllowedToBridge || '0')
+        ? BigInt(maxTokenAmountAllowedToBridge || '0') : tokenBalance
+    
+    return minBigInt(tokenBalance, tokenBalanceAllowedToUse).toString()
+}
+
 const calculateMaxAmountCurrency = (
-  totalDfmBalance: {[key: string]: string}, chain: ChainEnum,
+  totalDfmBalance: {[key: string]: string},
+  maxAmountAllowedToBridge: string, chain: ChainEnum,
   changeMinUtxo: number, minDfmValue: string,
   bridgeTxFee: string, operationFee: string,
 ): string => {
@@ -38,15 +58,22 @@ const calculateMaxAmountCurrency = (
   }
 
   const sourceToken = fromChainToChainCurrency(chain);
+  const balanceAllowedToUse = BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0) &&
+    BigInt(totalDfmBalance[sourceToken] || '0') > BigInt(maxAmountAllowedToBridge || '0')
+      ? BigInt(maxAmountAllowedToBridge || '0') : BigInt(totalDfmBalance[sourceToken] || '0')
+  const maxByAllowed = balanceAllowedToUse - BigInt(bridgeTxFee) - BigInt(operationFee)
 
+  let maxByBalance
   if (chain === ChainEnum.Nexus) {
-    return (BigInt(totalDfmBalance[sourceToken] || '0') - BigInt(bridgeTxFee) -
-      BigInt(minDfmValue) - BigInt(operationFee)).toString()
+    maxByBalance = BigInt(totalDfmBalance[sourceToken] || '0') - BigInt(bridgeTxFee) -
+      BigInt(minDfmValue) - BigInt(operationFee)
   }
 
-  return (BigInt(totalDfmBalance[sourceToken] || '0')
+  maxByBalance = BigInt(totalDfmBalance[sourceToken] || '0')
     - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee)
-    - BigInt(changeMinUtxo) - BigInt(operationFee)).toString()
+    - BigInt(changeMinUtxo) - BigInt(operationFee)
+
+  return minBigInt(maxByBalance, maxByAllowed).toString()
 }
 
 const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFee, getCardanoTxFee, getEthTxFee, submit, loading}:BridgeInputType) => {
@@ -60,6 +87,8 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
   const {chain} = useSelector((state: RootState)=> state.chain);
   const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge)
+  const maxAmountAllowedToBridge = useSelector((state: RootState) => state.settings.maxAmountAllowedToBridge)
+  const maxTokenAmountAllowedToBridge = useSelector((state: RootState) => state.settings.maxTokenAmountAllowedToBridge)
   const supportedSourceTokenOptions = useSupportedSourceTokenOptions(chain);
 
   const fetchWalletFee = useCallback(async () => {
@@ -142,11 +171,8 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
       : minValueToBridge;
   
   const maxAmountDfm = calculateMaxAmountCurrency(
-    totalDfmBalance, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee)
-
-  const maxWrappedAmount: string = sourceToken && totalDfmBalance
-    ? totalDfmBalance[sourceToken]
-    : '0';
+    totalDfmBalance, maxAmountAllowedToBridge, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee);
+  const maxWrappedAmount = calculateMaxAmountToken(totalDfmBalance, maxTokenAmountAllowedToBridge, chain, sourceToken);
 
   const onSubmit = useCallback(async () => {
     if (!sourceToken) return;

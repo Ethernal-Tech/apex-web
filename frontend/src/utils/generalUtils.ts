@@ -271,6 +271,10 @@ export const toFixedFloor = (n: number | string, decimals: number) => {
   return (Math.floor(+n * exp) / exp).toFixed(decimals);
 }
 
+export const minBigInt = (...args: bigint[]): bigint => {
+  return args.reduce((min, val) => val < min ? val : min);
+}
+
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
 export const wait = async (durationMs: number) =>
