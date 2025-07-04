@@ -76,7 +76,7 @@ function NewTransactionPage() {
 
 	const createCardanoTx = useCallback(async (address: string, amount: string, isNativeToken: boolean): Promise<CreateCardanoTxResponse> => {
 		const validationErr = appSettings.isSkyline
-			? validateSubmitTxInputsSkyline(settings, chain, destinationChain, address, amount, bridgeTxFee, isNativeToken) 
+			? validateSubmitTxInputsSkyline(settings, chain, destinationChain, address, amount, bridgeTxFee, operationFee, isNativeToken) 
 			: validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
 		if (validationErr) {
 			throw new Error(validationErr);
@@ -90,7 +90,7 @@ function NewTransactionPage() {
 		}
 
 		return { createTxDto, createResponse };
-	}, [bridgeTxFee, chain, destinationChain, prepareCreateCardanoTx, settings])
+	}, [bridgeTxFee, chain, destinationChain, operationFee, prepareCreateCardanoTx, settings])
 
 	const prepareCreateEthTx = useCallback((address: string, amount: string): CreateTransactionDto => {
 		return new CreateTransactionDto({

@@ -152,7 +152,7 @@ export const validateSubmitTxInputs = (
 
 export const validateSubmitTxInputsSkyline = (
   settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
-  destinationAddr: string, amount: string, bridgeTxFee: string, isNativeToken: boolean
+  destinationAddr: string, amount: string, bridgeTxFee: string, operationFee: string, isNativeToken: boolean
 ): string | undefined => {
   const chain = isNativeToken ? destinationChain : sourceChain;
   if (BigInt(amount) < BigInt(settings.minUtxoChainValue[chain])) {
@@ -161,8 +161,8 @@ export const validateSubmitTxInputsSkyline = (
 
   if (!isNativeToken) {
     const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
-    if (maxAllowedToBridgeDfm > 0 && BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeDfm) {
-      const maxAllowed = maxAllowedToBridgeDfm - BigInt(bridgeTxFee);
+    if (maxAllowedToBridgeDfm > 0 && BigInt(amount) + BigInt(bridgeTxFee) + BigInt(operationFee) > maxAllowedToBridgeDfm) {
+      const maxAllowed = maxAllowedToBridgeDfm - BigInt(bridgeTxFee) - BigInt(operationFee);
       return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} ${TokenEnumToLabel[fromChainToChainCurrency(sourceChain)]}`;
     }
   } else {
