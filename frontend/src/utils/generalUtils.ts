@@ -116,9 +116,8 @@ export const validateSubmitTxInputs = (
     const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
 
     if (maxAllowedToBridgeDfm > 0 &&
-        BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeDfm) {
-      const maxAllowed = maxAllowedToBridgeDfm - BigInt(bridgeTxFee);
-      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} ${TokenEnumToLabel[TokenEnum.APEX]}`;
+        BigInt(amount) > maxAllowedToBridgeDfm) {
+      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${TokenEnumToLabel[TokenEnum.APEX]}`;
     } 
   } else if(sourceChain === ChainEnum.Nexus){
     if (BigInt(amount) < BigInt(convertDfmToWei(settings.minValueToBridge))) {
@@ -128,9 +127,8 @@ export const validateSubmitTxInputs = (
     const maxAllowedToBridgeWei = BigInt(convertDfmToWei(settings.maxAmountAllowedToBridge));
 
     if (maxAllowedToBridgeWei > 0 &&
-        BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeWei) {
-      const maxAllowed = maxAllowedToBridgeWei - BigInt(bridgeTxFee);
-      return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowed.toString(10))} ${TokenEnumToLabel[TokenEnum.APEX]}`;
+        BigInt(amount) > maxAllowedToBridgeWei) {
+      return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedToBridgeWei.toString(10))} ${TokenEnumToLabel[TokenEnum.APEX]}`;
     } 
   }
 
@@ -152,7 +150,7 @@ export const validateSubmitTxInputs = (
 
 export const validateSubmitTxInputsSkyline = (
   settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
-  destinationAddr: string, amount: string, bridgeTxFee: string, isNativeToken: boolean
+  destinationAddr: string, amount: string, bridgeTxFee: string, operationFee: string, isNativeToken: boolean
 ): string | undefined => {
   const chain = isNativeToken ? destinationChain : sourceChain;
   if (BigInt(amount) < BigInt(settings.minUtxoChainValue[chain])) {
@@ -161,9 +159,8 @@ export const validateSubmitTxInputsSkyline = (
 
   if (!isNativeToken) {
     const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
-    if (maxAllowedToBridgeDfm > 0 && BigInt(amount) + BigInt(bridgeTxFee) > maxAllowedToBridgeDfm) {
-      const maxAllowed = maxAllowedToBridgeDfm - BigInt(bridgeTxFee);
-      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowed.toString(10))} ${TokenEnumToLabel[fromChainToChainCurrency(sourceChain)]}`;
+    if (maxAllowedToBridgeDfm > 0 && BigInt(amount) > maxAllowedToBridgeDfm) {
+      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${TokenEnumToLabel[fromChainToChainCurrency(sourceChain)]}`;
     }
   } else {
     const maxTokenAllowedToBridgeDfm = BigInt(settings.maxTokenAmountAllowedToBridge)
@@ -269,6 +266,10 @@ export const toFixed = (n: number | string, decimals: number) => {
 export const toFixedFloor = (n: number | string, decimals: number) => {
   const exp = Math.pow(10, decimals)
   return (Math.floor(+n * exp) / exp).toFixed(decimals);
+}
+
+export const minBigInt = (...args: bigint[]): bigint => {
+  return args.reduce((min, val) => val < min ? val : min);
 }
 
 const DEFAULT_RETRY_DELAY_MS = 1000;

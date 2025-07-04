@@ -9,7 +9,7 @@ import NewTransactionPage from './Transactions/NewTransactionPage';
 
 import withMiddleware from '../middleware/withMiddleware';
 import { onLoad } from '../actions/login';
-import { fetchAndUpdateBalanceAction } from '../actions/balance';
+import { fetchAndUpdateBalanceAction, getUpdateBalanceInterval } from '../actions/balance';
 import { fetchAndUpdateSettingsAction } from '../actions/settings';
 import LandingPage from './Landing/LandingPage';
 import appSettings from '../settings/appSettings';
@@ -61,7 +61,7 @@ const PageRouter: React.FC = () => {
 
     balanceIntervalHandle.current = setInterval(async () => {
       await fetchAndUpdateBalanceAction(dispatch)
-    }, 30000)
+    }, getUpdateBalanceInterval())
 
     return () => {
       if (balanceIntervalHandle.current) {

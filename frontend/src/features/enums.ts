@@ -27,3 +27,9 @@ export enum ApexBridgeNetwork {
     TestnetNexus = 'TestnetNexus',
     PreviewCardano = 'PreviewCardano',
 }
+
+export enum UtxoRetrieverEnum {
+    Wallet = 'wallet',
+    Blockfrost = 'blockfrost',
+    Ogmios = 'ogmios',
+}
