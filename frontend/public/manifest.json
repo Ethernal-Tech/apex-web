@@ -1,6 +1,6 @@
 {
-  "short_name": "Reactor Bridge",
-  "name": "Reactor Bridge | Apex Fusion",
+  "short_name": "Skyline Bridge",
+  "name": "Skyline Bridge | Ethernal",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,7 +8,7 @@
       "type": "image/x-icon"
     },
     {
-      "src": "logo100.png",
+      "src": "skyline-logo.png",
       "type": "image/png",
       "sizes": "100x100"
     }
