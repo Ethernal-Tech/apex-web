@@ -50,16 +50,9 @@ function NewTransactionPage() {
 	}, [navigate]);
 
 	const prepareCreateCardanoTx = useCallback((address: string, amount: string, isNativeToken: boolean = false): CreateTransactionDto => {
-		const validationErr = appSettings.isSkyline
-			? validateSubmitTxInputsSkyline(settings, chain, destinationChain, address, amount, bridgeTxFee, isNativeToken) 
-			: validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
-		if (validationErr) {
-			throw new Error(validationErr);
-		}
-
 		return new CreateTransactionDto({
-			bridgingFee: `${bridgeTxFee}`,
-			operationFee: `${operationFee}`,
+			bridgingFee: '0', // will be set on backend
+			operationFee: '0', // will be set on backend
 			destinationChain,
 			originChain: chain,
 			senderAddress: account,
@@ -68,12 +61,12 @@ function NewTransactionPage() {
 			utxoCacheKey: undefined,
 			isNativeToken,
 		})
-	}, [account, bridgeTxFee, chain, destinationChain, operationFee, settings])
+	}, [account, chain, destinationChain])
 
 	const getCardanoTxFee = useCallback(async (address: string, amount: string, isNativeToken: boolean): Promise<CardanoTransactionFeeResponseDto> => {
 		const createTxDto = prepareCreateCardanoTx(address, amount, isNativeToken);
 		const bindedCreateAction = getCardanoTransactionFeeAction.bind(null, createTxDto);
-		const feeResponse = await tryCatchJsonByAction(bindedCreateAction);
+		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
 			throw new Error(feeResponse.err)
 		}
@@ -82,6 +75,13 @@ function NewTransactionPage() {
 	}, [prepareCreateCardanoTx])
 
 	const createCardanoTx = useCallback(async (address: string, amount: string, isNativeToken: boolean): Promise<CreateCardanoTxResponse> => {
+		const validationErr = appSettings.isSkyline
+			? validateSubmitTxInputsSkyline(settings, chain, destinationChain, address, amount, bridgeTxFee, operationFee, isNativeToken) 
+			: validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
+		if (validationErr) {
+			throw new Error(validationErr);
+		}
+
 		const createTxDto = prepareCreateCardanoTx(address, amount, isNativeToken);
 		const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
@@ -90,17 +90,12 @@ function NewTransactionPage() {
 		}
 
 		return { createTxDto, createResponse };
-	}, [prepareCreateCardanoTx])
+	}, [bridgeTxFee, chain, destinationChain, operationFee, prepareCreateCardanoTx, settings])
 
 	const prepareCreateEthTx = useCallback((address: string, amount: string): CreateTransactionDto => {
-		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
-		if (validationErr) {
-			throw new Error(validationErr);
-		}
-
 		return new CreateTransactionDto({
-			bridgingFee: `${bridgeTxFee}`,
-			operationFee: `${operationFee}`,
+			bridgingFee: '0', // will be set on backend
+			operationFee: '0', // will be set on backend
 			destinationChain,
 			originChain: chain,
 			senderAddress: account,
@@ -109,12 +104,12 @@ function NewTransactionPage() {
 			utxoCacheKey: undefined,
 			isNativeToken: false,
 		})
-	}, [account, bridgeTxFee, chain, destinationChain, operationFee, settings])
+	}, [account, chain, destinationChain])
 
 	const getEthTxFee = useCallback(async (address: string, amount: string): Promise<CreateEthTransactionResponseDto> => {
 		const createTxDto = prepareCreateEthTx(address, amount);
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
-		const feeResponse = await tryCatchJsonByAction(bindedCreateAction);
+		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
 			throw new Error(feeResponse.err)
 		}
@@ -123,6 +118,11 @@ function NewTransactionPage() {
 	}, [prepareCreateEthTx])
 
 	const createEthTx = useCallback(async (address: string, amount: string): Promise<CreateEthTxResponse> => {
+		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
+		if (validationErr) {
+			throw new Error(validationErr);
+		}
+
 		const createTxDto = prepareCreateEthTx(address, amount);
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
@@ -131,7 +131,7 @@ function NewTransactionPage() {
 		}
 
 		return { createTxDto, createResponse };
-	}, [prepareCreateEthTx])
+	}, [bridgeTxFee, chain, destinationChain, prepareCreateEthTx, settings])
 
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: string, isNativeToken: boolean) => {
