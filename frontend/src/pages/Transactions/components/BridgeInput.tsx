@@ -33,9 +33,9 @@ const calculateMaxAmountToken = (
   totalDfmBalance: {[key: string]: string},
   maxTokenAmountAllowedToBridge: string, chain: ChainEnum,
   sourceToken: TokenEnum | undefined,
-): string => {
+): { maxByBalance:bigint, maxByAllowed:bigint } => {
     if (!sourceToken || !getIsNativeToken(chain, sourceToken)) {
-      return '0';
+      return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
     }
 
     const tokenBalance: bigint = BigInt((sourceToken && totalDfmBalance ? totalDfmBalance[sourceToken] : '0') || '0');
@@ -44,7 +44,7 @@ const calculateMaxAmountToken = (
       tokenBalance > BigInt(maxTokenAmountAllowedToBridge || '0')
         ? BigInt(maxTokenAmountAllowedToBridge || '0') : tokenBalance
     
-    return minBigInt(tokenBalance, tokenBalanceAllowedToUse).toString()
+    return {maxByAllowed: tokenBalanceAllowedToUse, maxByBalance: tokenBalance}
 }
 
 const calculateMaxAmountCurrency = (
@@ -52,9 +52,9 @@ const calculateMaxAmountCurrency = (
   maxAmountAllowedToBridge: string, chain: ChainEnum,
   changeMinUtxo: number, minDfmValue: string,
   bridgeTxFee: string, operationFee: string,
-): string => {
+): { maxByBalance:bigint, maxByAllowed:bigint } => {
   if (!totalDfmBalance || !chain) {
-    return '0'
+    return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
   }
 
   const sourceToken = fromChainToChainCurrency(chain);
@@ -73,7 +73,7 @@ const calculateMaxAmountCurrency = (
     - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee)
     - BigInt(changeMinUtxo) - BigInt(operationFee)
 
-  return minBigInt(maxByBalance, maxByAllowed).toString()
+  return {maxByAllowed, maxByBalance}
 }
 
 const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFee, getCardanoTxFee, getEthTxFee, submit, loading}:BridgeInputType) => {
@@ -170,9 +170,12 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
       ? appSettings.minUtxoChainValue[chain]
       : minValueToBridge;
   
-  const maxAmountDfm = calculateMaxAmountCurrency(
+  const currencyMaxAmounts = calculateMaxAmountCurrency(
     totalDfmBalance, maxAmountAllowedToBridge, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee);
-  const maxWrappedAmount = calculateMaxAmountToken(totalDfmBalance, maxTokenAmountAllowedToBridge, chain, sourceToken);
+  const tokenMaxAmounts = calculateMaxAmountToken(totalDfmBalance, maxTokenAmountAllowedToBridge, chain, sourceToken);
+  const maxAmounts = sourceToken && getIsNativeToken(chain, sourceToken)
+    ? tokenMaxAmounts : currencyMaxAmounts;
+  const currencyMaxAmount = minBigInt(currencyMaxAmounts.maxByAllowed, currencyMaxAmounts.maxByBalance);
 
   const onSubmit = useCallback(async () => {
     if (!sourceToken) return;
@@ -209,7 +212,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
         }}>
             {/* validate inputs */}
             <PasteApexAmountInput
-                maxSendable={sourceToken ? getIsNativeToken(chain, sourceToken) ? maxWrappedAmount : maxAmountDfm : '0'}
+                maxAmounts={maxAmounts}
                 text={amount}
                 setAmount={setAmount}
                 disabled={loading}
@@ -250,7 +253,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
             <ButtonCustom 
                 onClick={onSubmit}
                 variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
-                disabled={loading || BigInt(maxAmountDfm) <= 0}
+                disabled={loading || currencyMaxAmount <= 0}
                 sx={{
                     gridColumn:'span 1',
                     textTransform:'uppercase'
