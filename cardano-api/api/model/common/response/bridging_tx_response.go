@@ -3,10 +3,15 @@ package response
 import "encoding/hex"
 
 type BridgingTxResponse struct {
-	TxRaw             string `json:"txRaw"`
-	TxHash            string `json:"txHash"`
-	BridgingFee       uint64 `json:"bridgingFee"`
-	Amount            uint64 `json:"amount"`
+	// Raw transaction data, encoded as a hexadecimal string
+	TxRaw string `json:"txRaw"`
+	// Transaction hash
+	TxHash string `json:"txHash"`
+	// Bridging fee for covering submission on the destination chain, expressed in Lovelace
+	BridgingFee uint64 `json:"bridgingFee"`
+	// Amount of currency to be bridged, expressed in Lovelace
+	Amount uint64 `json:"amount"`
+	// Amount of native token to be bridged
 	NativeTokenAmount uint64 `json:"nativeTokenAmount"`
 }
 
@@ -23,7 +28,9 @@ func NewBridgingTxResponse(
 }
 
 type BridgingTxFeeResponse struct {
-	Fee         uint64 `json:"fee"`
+	// Transaction fee on the source chain, expressed in Lovelace
+	Fee uint64 `json:"fee"`
+	// Bridging fee for covering submission on the destination chain, expressed in Lovelace
 	BridgingFee uint64 `json:"bridgingFee"`
 }
 

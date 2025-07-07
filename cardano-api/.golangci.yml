@@ -65,6 +65,10 @@ issues:
         - wsl
         - lll
         - stylecheck
+    - path: api/controllers/.*_controller\.go
+      linters:
+        - lll
+      source: "@(Summary|Description|Tags|Accept|Produce|Param|Success|Failure|Security|Router)"
   include:
     - EXC0012 # Exported (.+) should have comment( \(or a comment on this block\))? or be unexported
     - EXC0013 # Package comment should be of the form "(.+)...

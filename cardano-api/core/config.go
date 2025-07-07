@@ -55,13 +55,20 @@ type AppSettings struct {
 }
 
 type BridgingSettings struct {
-	MinChainFeeForBridging         map[string]uint64 `json:"minChainFeeForBridging"`
-	MinOperationFee                map[string]uint64 `json:"minOperationFee"`
-	MinUtxoChainValue              map[string]uint64 `json:"minUtxoChainValue"`
-	MinValueToBridge               uint64            `json:"minValueToBridge"`
-	MaxAmountAllowedToBridge       *big.Int          `json:"maxAmountAllowedToBridge"`
-	MaxTokenAmountAllowedToBridge  *big.Int          `json:"maxTokenAmountAllowedToBridge"`
-	MaxReceiversPerBridgingRequest int               `json:"maxReceiversPerBridgingRequest"`
+	// For each chain, the minimum fee required to cover the submission of the transaction on the destination chain
+	MinChainFeeForBridging map[string]uint64 `json:"minChainFeeForBridging"`
+	// For each chain, the minimum fee required to cover operational costs
+	MinOperationFee map[string]uint64 `json:"minOperationFee"`
+	// For each chain, the minimum allowed UTXO value
+	MinUtxoChainValue map[string]uint64 `json:"minUtxoChainValue"`
+	// Minimum value allowed to be bridged
+	MinValueToBridge uint64 `json:"minValueToBridge"`
+	// Maximum amount of currency allowed to be bridged
+	MaxAmountAllowedToBridge *big.Int `json:"maxAmountAllowedToBridge" swaggertype:"string"`
+	// Maximum amount of native tokens allowed to be bridged
+	MaxTokenAmountAllowedToBridge *big.Int `json:"maxTokenAmountAllowedToBridge" swaggertype:"string"`
+	// Maximum number of receivers allowed in a bridging request
+	MaxReceiversPerBridgingRequest int `json:"maxReceiversPerBridgingRequest"`
 }
 
 type AppConfig struct {
