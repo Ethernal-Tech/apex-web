@@ -16,7 +16,7 @@ import appSettings from '../settings/appSettings';
 import TermsOfServicePage from './TermsOfServicePage/TermsOfServicePage';
 import PrivacyPolicyPage from './PrivacyPolicyPage/PrivacyPolicyPage';
 
-export const HOME_ROUTE = appSettings.isSkyline ? '/dashboard' : '/';
+export const HOME_ROUTE = appSettings.isSkyline ? '/app' : '/';
 export const TRANSACTIONS_ROUTE = '/transactions';
 export const NEW_TRANSACTION_ROUTE = '/new-transaction';
 export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
