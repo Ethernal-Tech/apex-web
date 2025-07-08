@@ -2,10 +2,10 @@ package request
 
 type CreateBridgingTxTransactionRequest struct {
 	// Receiver address
-	Addr string `json:"addr"`
+	Addr string `json:"addr" validate:"required"`
 	// Amount to be bridged
-	Amount uint64 `json:"amount"`
-	// True if the amount is specified in a native token; false if in a regular currency on source chain
+	Amount uint64 `json:"amount" validate:"required"`
+	// True if the amount is specified in a native token; false if in a currency on source chain
 	IsNativeToken bool `json:"isNativeToken"`
 }
 
@@ -18,13 +18,13 @@ type UtxoRequest struct {
 
 type CreateBridgingTxRequest struct {
 	// Address that initiates the bridging request on the source chain
-	SenderAddr string `json:"senderAddr"`
+	SenderAddr string `json:"senderAddr" validate:"required"`
 	// Source chain ID
-	SourceChainID string `json:"sourceChainId"`
+	SourceChainID string `json:"sourceChainId" validate:"required"`
 	// Destination chain ID
-	DestinationChainID string `json:"destinationChainId"`
+	DestinationChainID string `json:"destinationChainId" validate:"required"`
 	// Array of transactions requested by the sender
-	Transactions []CreateBridgingTxTransactionRequest `json:"transactions"`
+	Transactions []CreateBridgingTxTransactionRequest `json:"transactions" validate:"required"`
 	// Fee covering the submission of the transaction on the destination chain, expressed in Lovelace
 	BridgingFee uint64 `json:"bridgingFee"`
 	// Fee covering the operational cost of processing the bridging request, expressed in Lovelace

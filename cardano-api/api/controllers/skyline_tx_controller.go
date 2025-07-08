@@ -101,7 +101,7 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 // @Accept json
 // @Produce json
 // @Param data body commonRequest.CreateBridgingTxRequest true "Bridging transaction data"
-// @Success 200 {object} commonResponse.BridgingTxResponse "OK - Returns the raw transaction data, transaction hash, and calculated bridging fees and amounts."
+// @Success 200 {object} commonResponse.BridgingTxResponse "OK - Returns the raw transaction data, transaction hash, and calculated bridging fee and amounts."
 // @Failure 400 {object} commonResponse.ErrorResponse "Bad Request – Validation error due to input data not meeting required conditions."
 // @Failure 401 {object} commonResponse.ErrorResponse "Unauthorized – API key missing or invalid."
 // @Failure 500 {object} commonResponse.ErrorResponse "Internal server error"
