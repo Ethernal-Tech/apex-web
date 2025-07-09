@@ -22,7 +22,7 @@ const SkylineSection = ({ scrollToSection, navigateToBridge }: Props) => (
         onClick={navigateToBridge}
         endIcon={<ArrowForward />}
       >
-        Try Out Bridge
+        Go To Bridge
       </Button>
     </Box>
     <Box className="content-box">
