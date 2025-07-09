@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Box, styled, SxProps, Theme, Tooltip, Typography } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import { convertDfmToApex, toFixed } from '../../../utils/generalUtils';
+import { capitalizeWord, convertDfmToApex, toFixed } from '../../../utils/generalUtils';
 import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import { fromChainToChainCurrency, TokenEnumToLabel } from '../../../utils/chainUtils';
@@ -50,7 +50,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               <Tooltip
                   title={
                       <Typography color={'white'} sx={{ fontSize: '14px' }}>
-                          This is the fee paid to process your transaction on the blockchain. Larger transactions — with more inputs, outputs, or metadata — have higher fees.
+                          This is the fee paid to process your transaction on the {capitalizeWord(chain)} blockchain. Larger transactions — with more inputs, outputs, or metadata — have higher fees.
                       </Typography>
                   }
                   placement="right-start"
@@ -79,7 +79,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               <Tooltip
                   title={
                       <Typography color={'white'} sx={{ fontSize: '14px' }}>
-                          This fee covers blockchain transaction costs. This fee is either the set minimum ({defaultBridgeTxFeeOutput} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}) or, if native tokens are being bridged, the minimum {TokenEnumToLabel[fromChainToChainCurrency(chain)]} needed to store them — whichever is higher.
+                          This fee covers the bridge blockchain transaction costs. This fee is either the set minimum ({defaultBridgeTxFeeOutput} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}) or, if native tokens are being bridged, the minimum {TokenEnumToLabel[fromChainToChainCurrency(chain)]} needed to store them — whichever is higher.
                       </Typography>
                   }
                   placement="right-start"
