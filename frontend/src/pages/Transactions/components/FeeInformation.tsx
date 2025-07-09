@@ -50,7 +50,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               <Tooltip
                   title={
                       <Typography color={'white'} sx={{ fontSize: '14px' }}>
-                          This is the fee paid to process your transaction on the {capitalizeWord(chain)} blockchain. Larger transactions — with more inputs, outputs, or metadata — have higher fees.
+                          This is the fee paid to process your transaction on the {capitalizeWord(chain)} blockchain. Larger transactions have higher fees.
                       </Typography>
                   }
                   placement="right-start"
