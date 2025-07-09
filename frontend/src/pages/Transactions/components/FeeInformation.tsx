@@ -1,9 +1,12 @@
-import React from 'react';
-import { Box, styled, SxProps, Theme, Typography } from '@mui/material';
+import React, { useMemo } from 'react';
+import { Box, styled, SxProps, Theme, Tooltip, Typography } from '@mui/material';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { convertDfmToApex, toFixed } from '../../../utils/generalUtils';
 import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import { fromChainToChainCurrency, TokenEnumToLabel } from '../../../utils/chainUtils';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../redux/store';
 
 const CustomBox = styled(Box)({
   background:'#075159'
@@ -18,6 +21,11 @@ interface FeeInformationProps {
 }
 
 const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, bridgeTxFee, operationFee, chain }) => {
+
+	const { minChainFeeForBridging }  = useSelector((state: RootState) => state.settings);
+
+	const defaultBridgeTxFee = useMemo(() => minChainFeeForBridging[chain] || '0', [chain, minChainFeeForBridging])
+  const defaultBridgeTxFeeOutput = useMemo(() => BigInt(defaultBridgeTxFee) > 0 ? toFixed(convertDfmToApex(defaultBridgeTxFee, chain), 6): '0', [chain, defaultBridgeTxFee])
 
   return (
     <CustomBox sx={{
@@ -34,9 +42,21 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
           <Box 
             component="span" 
             sx={{
+              display:'flex',
+              alignItems: 'center',
               color:'rgba(255,255,255,0.6)'
             }}>
               User Wallet Fee:
+              <Tooltip
+                  title={
+                      <Typography color={'white'} sx={{ fontSize: '14px' }}>
+                          This is the fee paid to process your transaction on the blockchain. Larger transactions — with more inputs, outputs, or metadata — have higher fees.
+                      </Typography>
+                  }
+                  placement="right-start"
+              >
+                  <HelpOutlineIcon sx={{ marginLeft: '6px', fontSize: '16px' }}/>
+              </Tooltip>
           </Box>
           {/* TODO AF - check this conversion is correct */}
           <Box component="span">{BigInt(userWalletFee) > 0 ? toFixed(convertDfmToApex(userWalletFee, chain), 6) : '0'} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
@@ -51,9 +71,21 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
           <Box 
             component="span" 
             sx={{
+              display:'flex',
+              alignItems: 'center',
               color:'rgba(255,255,255,0.6)'
             }}>
               Bridge Transaction Fee:
+              <Tooltip
+                  title={
+                      <Typography color={'white'} sx={{ fontSize: '14px' }}>
+                          This fee covers blockchain transaction costs. This fee is either the set minimum ({defaultBridgeTxFeeOutput} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}) or, if native tokens are being bridged, the minimum {TokenEnumToLabel[fromChainToChainCurrency(chain)]} needed to store them — whichever is higher.
+                      </Typography>
+                  }
+                  placement="right-start"
+              >
+                  <HelpOutlineIcon sx={{ marginLeft: '6px', fontSize: '16px' }}/>
+              </Tooltip>
           </Box>
           {/* TODO AF - check this conversion is correct */}
           <Box component="span">{BigInt(bridgeTxFee) > 0 ? toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
@@ -61,7 +93,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
         </Typography>
         
         {
-          appSettings.isSkyline && BigInt(operationFee) > 0 &&
+          appSettings.isSkyline && BigInt(operationFee) > BigInt(0) &&
           <Typography sx={{
             display:'flex',
             justifyContent:'space-between'
@@ -69,9 +101,21 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
             <Box 
               component="span" 
               sx={{
+              display:'flex',
+              alignItems: 'center',
                 color:'rgba(255,255,255,0.6)'
               }}>
                 Bridge Operation Fee:
+              <Tooltip
+                  title={
+                      <Typography color={'white'} sx={{ fontSize: '14px' }}>
+                          This fee covers the cost of operating the bridge, including maintaining balance between ADA and APEX during bridging.
+                      </Typography>
+                  }
+                  placement="right-start"
+              >
+                  <HelpOutlineIcon sx={{ marginLeft: '6px', fontSize: '16px' }}/>
+              </Tooltip>
             </Box>
             {/* TODO AF - check this conversion is correct */}
             <Box component="span">{BigInt(operationFee) > 0 ? toFixed(convertDfmToApex(operationFee, chain), 6): '0'} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
