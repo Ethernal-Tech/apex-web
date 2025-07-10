@@ -110,7 +110,7 @@ const PageRouter: React.FC = () => {
         <Route path={TRANSACTIONS_ROUTE} element={withMiddleware(() => renderTransactionsPage)({})} />
         <Route path={NEW_TRANSACTION_ROUTE} element={withMiddleware(() => renderNewTransactionPage)({})} />
         <Route path={TRANSACTION_DETAILS_ROUTE} element={withMiddleware(() => renderTransactionDetailsPage)({})} />
-        {appSettings.isSkyline && <Route path={LANDING_ROUTE} element={renderLandingPage} />}
+        {appSettings.isSkyline && <Route path={LANDING_ROUTE} element={withMiddleware(() => renderLandingPage)({})} />}
         {!appSettings.isSkyline && <Route path={TERMS_OF_SERVICE_ROUTE} element={withMiddleware(() => <TermsOfServicePage/>)({})} />}
         {!appSettings.isSkyline && <Route path={PRIVACY_POLICY_ROUTE} element={withMiddleware(() => <PrivacyPolicyPage/>)({})} />}
         <Route path='*' element={appSettings.isSkyline ? <Navigate to={LANDING_ROUTE} /> : withMiddleware(() => renderHomePage)({})} />
