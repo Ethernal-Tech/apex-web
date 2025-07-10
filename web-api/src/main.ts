@@ -25,14 +25,18 @@ async function bootstrap() {
 		app.enableCors(); // Use default CORS settings
 	}
 
-	const config = new DocumentBuilder()
-		.setTitle('Apex Web API')
-		.setDescription('Apex Web  API description')
-		.setVersion('1.0')
-		.build();
+	// Swagger configuration
+	if (process.env.NODE_ENV !== 'production') {
+		const config = new DocumentBuilder()
+			.setTitle('Apex Web API')
+			.setDescription('Apex Web  API description')
+			.setVersion('1.0')
+			.build();
 
-	const document = SwaggerModule.createDocument(app, config);
-	SwaggerModule.setup('swagger', app, document);
+		const document = SwaggerModule.createDocument(app, config);
+		SwaggerModule.setup('swagger', app, document);
+	}
+
 	app.useGlobalPipes(new ValidationPipe());
 	app.useGlobalFilters(new HttpExceptionFilter());
 	app.useGlobalInterceptors(new LoggingInterceptor());
