@@ -69,7 +69,7 @@ type BridgingSettings struct {
 	MaxTokenAmountAllowedToBridge *big.Int `json:"maxTokenAmountAllowedToBridge" swaggertype:"string"`
 	// Maximum number of receivers allowed in a bridging request
 	MaxReceiversPerBridgingRequest int `json:"maxReceiversPerBridgingRequest"`
-}
+} //@name BridgingSettings
 
 type AppConfig struct {
 	RunMode          common.VCRunMode               `json:"runMode"`

@@ -7,14 +7,14 @@ type CreateBridgingTxTransactionRequest struct {
 	Amount uint64 `json:"amount" validate:"required"`
 	// True if the amount is specified in a native token; false if in a currency on source chain
 	IsNativeToken bool `json:"isNativeToken"`
-}
+} //@name CreateBridgingTxTransactionRequest
 
 type UtxoRequest struct {
 	// Transaction hash
 	Hash string `json:"hash"`
 	// Output index of UTXO
 	Index uint32 `json:"index"`
-}
+} //@name UtxoRequest
 
 type CreateBridgingTxRequest struct {
 	// Address that initiates the bridging request on the source chain
@@ -35,4 +35,4 @@ type CreateBridgingTxRequest struct {
 	UTXOCacheKey string `json:"utxoCacheKey"`
 	// Specifies the UTXO to skip during transaction creation on the source chain
 	SkipUtxos []UtxoRequest `json:"skipUtxos"`
-}
+} //@name CreateBridgingTxRequest
