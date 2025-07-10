@@ -6,111 +6,184 @@ import { NotSame } from 'src/decorators/notSame.decorator';
 
 export class BridgeTransactionDto {
 	@IsNotEmpty()
-	@ApiProperty()
+	@ApiProperty({
+		description: 'Bridging transaction ID',
+	})
 	id: number;
 
 	@IsNotEmpty()
-	@ApiProperty()
+	@ApiProperty({
+		description:
+			'Address that initiated the bridging transaction on the source chain',
+	})
 	senderAddress: string;
 
 	@IsNotEmpty()
-	@ApiProperty()
+	@ApiProperty({
+		description: 'Recipient addresses on the destination chain',
+	})
 	receiverAddresses: string;
 
 	@IsNotEmpty()
-	@ApiProperty()
+	@ApiProperty({
+		description: 'Bridged amount',
+	})
 	amount: string;
 
 	@IsNotEmpty()
-	@ApiProperty()
+	@ApiProperty({
+		description: 'Bridged native token amount',
+	})
 	nativeTokenAmount: string;
 
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
-	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
+	@ApiProperty({
+		description: 'Source chain ID',
+		enum: [ChainEnum.Cardano, ChainEnum.Prime],
+	})
 	originChain: ChainEnum;
 
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
 	@NotSame('originChain')
-	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
+	@ApiProperty({
+		description: 'Destination chain ID',
+		enum: [ChainEnum.Cardano, ChainEnum.Prime],
+	})
 	destinationChain: ChainEnum;
 
 	@IsNotEmpty()
-	@ApiProperty()
+	@ApiProperty({
+		description: 'Transaction hash on source chain',
+	})
 	sourceTxHash: string;
 
-	@ApiProperty({ nullable: true, required: false })
+	@ApiProperty({
+		description: 'Transaction hash on destination chain',
+		nullable: true,
+		required: false,
+	})
 	destinationTxHash?: string;
 
 	@IsNotEmpty()
 	@IsEnum(TransactionStatusEnum)
 	@ApiProperty({
+		description: 'Status of bridging request',
 		enum: TransactionStatusEnum,
-		enumName: 'TransactionStatusEnum',
 	})
 	status: TransactionStatusEnum;
 
 	@IsNotEmpty()
 	@IsDate()
-	@ApiProperty()
+	@ApiProperty({
+		description: 'Transaction creation date',
+	})
 	createdAt: Date;
 
 	@IsDate()
-	@ApiProperty({ nullable: true, required: false })
+	@ApiProperty({
+		description: 'Transaction finalization date',
+		nullable: true,
+		required: false,
+	})
 	finishedAt?: Date;
 }
 
 export class BridgeTransactionFilterDto extends PaginatedDto {
 	@IsNotEmpty()
-	@ApiProperty()
+	@ApiProperty({
+		description:
+			'Address that initiated the bridging transaction on the source chain',
+	})
 	senderAddress: string;
 
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
-	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
+	@ApiProperty({
+		description: 'Source chain ID',
+		enum: [ChainEnum.Cardano, ChainEnum.Prime],
+	})
 	originChain: ChainEnum;
 
 	@ApiProperty({
+		description: 'Destination chain ID',
 		nullable: true,
 		required: false,
-		enum: ChainEnum,
-		enumName: 'ChainEnum',
+		enum: [ChainEnum.Cardano, ChainEnum.Prime],
 	})
 	destinationChain?: ChainEnum;
 
-	@ApiProperty({ nullable: true, required: false })
+	@ApiProperty({
+		description: 'Minimum amount of currency',
+		nullable: true,
+		required: false,
+	})
 	amountFrom?: string;
 
-	@ApiProperty({ nullable: true, required: false })
+	@ApiProperty({
+		description: 'Maximum amount of currency',
+		nullable: true,
+		required: false,
+	})
 	amountTo?: string;
 
-	@ApiProperty({ nullable: true, required: false })
+	@ApiProperty({
+		description: 'Minimum amount of native token',
+		nullable: true,
+		required: false,
+	})
 	nativeTokenAmountFrom?: string;
 
-	@ApiProperty({ nullable: true, required: false })
+	@ApiProperty({
+		description: 'Maximum amount of native token',
+		nullable: true,
+		required: false,
+	})
 	nativeTokenAmountTo?: string;
 
-	@ApiProperty({ nullable: true, required: false })
+	@ApiProperty({
+		description: 'Field by which the results should be sorted',
+		nullable: true,
+		required: false,
+	})
 	orderBy?: string;
 
-	@ApiProperty({ nullable: true, required: false })
+	@ApiProperty({
+		description: 'Sort direction',
+		nullable: true,
+		required: false,
+	})
 	order?: string;
 
-	@ApiProperty({ nullable: true, required: false })
+	@ApiProperty({
+		description: 'Receiver address on destination chain',
+		nullable: true,
+		required: false,
+	})
 	receiverAddress?: string;
 }
 
 export class BridgeTransactionResponseDto {
-	@ApiProperty({ type: BridgeTransactionDto, isArray: true })
+	@ApiProperty({
+		description: 'Array of bridging transactions',
+		type: BridgeTransactionDto,
+		isArray: true,
+	})
 	items: BridgeTransactionDto[];
 
-	@ApiProperty()
+	@ApiProperty({
+		description: 'Current page number',
+	})
 	page: number;
 
-	@ApiProperty()
+	@ApiProperty({
+		description: 'Number of items returned per page',
+	})
 	perPage: number;
 
-	@ApiProperty()
+	@ApiProperty({
+		description: 'Total number of items',
+	})
 	total: number;
 }

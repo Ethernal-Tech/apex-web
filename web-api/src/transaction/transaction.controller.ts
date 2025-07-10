@@ -7,7 +7,12 @@ import {
 	CreateEthTransactionResponseDto,
 	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+	ApiResponse,
+	ApiTags,
+	ApiOperation,
+	ApiExcludeEndpoint,
+} from '@nestjs/swagger';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 
 @ApiTags('Transaction')
@@ -15,14 +20,24 @@ import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dt
 export class TransactionController {
 	constructor(private readonly transactionService: TransactionService) {}
 
+	@ApiOperation({
+		summary: 'Create a bridging transaction',
+		description:
+			'Builds a bridging transaction with all required fees and metadata. The transaction must be signed and submitted separately.',
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: CreateCardanoTransactionResponseDto,
-		description: 'Success',
+		description:
+			'OK - Returns the raw transaction data, transaction hash, and calculated bridging fee and amounts.',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Bad Request',
+		description: 'Bad Request - Error while creating bridging transaction.',
+	})
+	@ApiResponse({
+		status: HttpStatus.INTERNAL_SERVER_ERROR,
+		description: 'Internal server Error',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post('createCardano')
@@ -32,14 +47,23 @@ export class TransactionController {
 		return await this.transactionService.createCardano(model);
 	}
 
+	@ApiOperation({
+		summary: 'Get fees required for a bridging transaction',
+		description:
+			'Returns the transaction and bridging fees that the sender must pay on the source chain. The bridging fee covers the cost for the fee payer to submit the transaction on the destination chain.',
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: CardanoTransactionFeeResponseDto,
-		description: 'Success',
+		description: 'OK - Returns calculated fees.',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Bad Request',
+		description: 'Bad Request - Error while getting bridging transaction fees.',
+	})
+	@ApiResponse({
+		status: HttpStatus.INTERNAL_SERVER_ERROR,
+		description: 'Internal server Error',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post('getCardanoTxFee')
@@ -49,6 +73,7 @@ export class TransactionController {
 		return await this.transactionService.getCardanoTxFee(model);
 	}
 
+	@ApiExcludeEndpoint()
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: CreateEthTransactionResponseDto,
@@ -66,14 +91,19 @@ export class TransactionController {
 		return await this.transactionService.createEth(model);
 	}
 
+	@ApiOperation({
+		summary: 'Confirm the bridging transaction submission on the source chain',
+		description:
+			'Returns a confirmed bridging transaction along with its associated data.',
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: BridgeTransactionDto,
-		description: 'Success',
+		description: 'OK - Returns confirmed bridging transaction.',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Bad Request',
+		description: 'Bad Request - Error while confirming transaction submittion.',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post('bridgingTransactionSubmitted')
