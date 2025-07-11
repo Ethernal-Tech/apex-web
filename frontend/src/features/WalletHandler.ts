@@ -29,6 +29,21 @@ class WalletHandler implements UtxoRetriever {
         }));
     };
 
+    version = (): any => {
+        const nativeAPI = this.getNativeAPI();
+        const experimentalAPI = nativeAPI['experimental'];
+        if (!experimentalAPI) {
+            throw new Error('experimental not defined');
+        }
+
+        const appVersion = experimentalAPI['appVersion'];
+        if (!appVersion ) {
+            throw new Error('appVersion not defined');
+        }
+
+        return appVersion;
+    }
+
     enable = async (walletName: string) => {
         this._enabledWallet = await BrowserWallet.enable(walletName);
     }
