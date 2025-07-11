@@ -1,21 +1,11 @@
 import { Box, Link, List, ListItem, Typography } from '@mui/material';
-import React, { ComponentType, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import appSettings from '../settings/appSettings';
+import React, { ComponentType } from 'react';
 
 // Middleware to display error text if users is using a mobile device
 const withMiddleware = <P extends object>(WrappedComponent: ComponentType<P>) => {
   const WithMiddlewareComponent: React.FC<P> = (props) => {
     const mobileOrTabletRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
     const isMobileDevice = mobileOrTabletRegex.test(navigator.userAgent);
-    const location = useLocation();
-
-    useEffect(() => {
-      if (appSettings.isSkyline && isMobileDevice && document.body.classList.contains('landing-page')) {
-          document.body.classList.remove('landing-page');
-          document.body.classList.add('skyline');
-      }
-    }, [isMobileDevice, location.pathname]);
 
     if (isMobileDevice) {
       return (

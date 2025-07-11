@@ -25,7 +25,7 @@ const FooterSection = () => (
       className="footer-logo"
     />
     <Box className="footer-icons">
-      <a href="mailto:info@ethernal.tech">
+      <a href="mailto:contact@skylinebridge.tech">
         <img src={EmailIcon} alt="Email Icon" />
       </a>
       <a href="https://www.linkedin.com/company/skylinebridge" target="_blank" rel="noreferrer">
@@ -36,7 +36,7 @@ const FooterSection = () => (
       </a>
     </Box>
     <Typography className="footer-copyright">
-      © Skyline Bridge 2024. All Rights Reserved.
+      © Skyline Bridge 2025. All Rights Reserved.
     </Typography>
   </Box>
 );
