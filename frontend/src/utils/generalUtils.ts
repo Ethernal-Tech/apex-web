@@ -12,7 +12,7 @@ import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { FunctionComponent, SVGProps } from "react";
 import { isAddress } from "web3-validator";
 import { ISettingsState } from "../redux/slices/settingsSlice";
-import { UTxO } from "@meshsdk/core";
+import { UTxO } from "../features/WalletHandler";
 
 export const capitalizeWord = (word: string): string => {
     if (!word || word.length === 0) {

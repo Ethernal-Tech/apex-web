@@ -11,6 +11,7 @@ export class AppSettings {
 		prime: "0",
 		vector: "0"
 	};
+	private _blockfrost: {[key: string]: {baseUrl: string, dmtrApiKey: string | undefined }} = {};
 
     private _maxAmountAllowedToBridge: string = "0";
     private _minValueToBridge: string = "0";
@@ -24,6 +25,7 @@ export class AppSettings {
 		this._apiUrl = settingsJson.apiUrl;
 		this._minUtxoChainValue = settingsJson.minUtxoChainValue;
 		this._minChainFeeForBridging = settingsJson.minChainFeeForBridging;
+		this._blockfrost = settingsJson.blockfrost;
 		this._maxAmountAllowedToBridge = settingsJson.maxAmountAllowedToBridge;
 		this._minValueToBridge = settingsJson.minValueToBridge;
 		this._potentialWalletFee = settingsJson.potentialWalletFee;
@@ -40,6 +42,10 @@ export class AppSettings {
 
 	get minChainFeeForBridging(): { [key: string]: string } {
 		return this._minChainFeeForBridging;
+	}
+
+	get blockfrost(): {[key: string]: {baseUrl: string, dmtrApiKey: string | undefined }} {
+		return this._blockfrost;
 	}
 
 	get maxAmountAllowedToBridge(): string {
