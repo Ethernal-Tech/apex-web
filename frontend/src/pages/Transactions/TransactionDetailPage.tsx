@@ -143,7 +143,7 @@ const TransactionDetailPage = () => {
                     </Box>
                     <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
                       <Typography variant="subtitle2">Amount:</Typography>
-                      <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && toFixed(convertDfmToApex(transaction?.amount, transaction?.originChain), 6)} APEX</Typography>
+                      <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && toFixed(convertDfmToApex(transaction?.amount, transaction?.originChain), 6)} AP3X</Typography>
                     </Box>
                     <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
                       <Typography variant="subtitle2">Sender address:</Typography>

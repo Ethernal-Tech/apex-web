@@ -18,3 +18,9 @@ export enum ApexBridgeNetwork {
     TestnetVector = 'TestnetVector',
     TestnetNexus = 'TestnetNexus',
 }
+
+export enum UtxoRetrieverEnum {
+    Wallet = 'wallet',
+    Blockfrost = 'blockfrost',
+    Ogmios = 'ogmios',
+}

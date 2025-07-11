@@ -49,7 +49,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               </Tooltip>
           </Box>
           {/* TODO AF - check this conversion is correct */}
-          <Box component="span">{BigInt(userWalletFee) > 0 ? toFixed(convertDfmToApex(userWalletFee, chain), 6) : '0'} APEX</Box>
+          <Box component="span">{BigInt(userWalletFee) > 0 ? toFixed(convertDfmToApex(userWalletFee, chain), 6) : '0'} AP3X</Box>
         </Typography>
         
         
@@ -77,7 +77,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               </Tooltip>
           </Box>
           {/* TODO AF - check this conversion is correct */}
-          <Box component="span">{BigInt(bridgeTxFee) > 0 ? toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'} APEX</Box>
+          <Box component="span">{BigInt(bridgeTxFee) > 0 ? toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'} AP3X</Box>
         </Typography>
         
 
