@@ -15,7 +15,7 @@ type SettingsResponse struct {
 	BridgingSettings core.BridgingSettings `json:"bridgingSettings"`
 	// Participating chains in the bridge
 	EnabledChains []string `json:"enabledChains"`
-} //@name SettingsResponse
+} // @name SettingsResponse
 
 func NewSettingsResponse(
 	config *core.AppConfig,

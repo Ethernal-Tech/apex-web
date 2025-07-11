@@ -20,7 +20,7 @@ import (
 	"github.com/sethvargo/go-retry"
 )
 
-type VCRunMode string //@name VCRunMode
+type VCRunMode string // @name VCRunMode
 type TokenName string
 
 const (
