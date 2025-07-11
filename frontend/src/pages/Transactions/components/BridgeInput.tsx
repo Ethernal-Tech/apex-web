@@ -58,9 +58,18 @@ const calculateMaxAmountCurrency = (
   }
 
   const sourceToken = fromChainToChainCurrency(chain);
-  const balanceAllowedToUse = BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0) &&
-    BigInt(totalDfmBalance[sourceToken] || '0') > BigInt(maxAmountAllowedToBridge || '0')
-      ? BigInt(maxAmountAllowedToBridge || '0') : BigInt(totalDfmBalance[sourceToken] || '0')
+
+  const maxAmountAllowedToBridgeDfm = BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
+    ? (
+        chain === ChainEnum.Nexus
+          ? BigInt(convertDfmToWei(maxAmountAllowedToBridge))
+          : BigInt(maxAmountAllowedToBridge)
+    )
+    : BigInt(0);
+
+  const balanceAllowedToUse = maxAmountAllowedToBridgeDfm !== BigInt(0) &&
+    BigInt(totalDfmBalance[sourceToken] || '0') > maxAmountAllowedToBridgeDfm
+      ? maxAmountAllowedToBridgeDfm : BigInt(totalDfmBalance[sourceToken] || '0')
 
   let maxByBalance
   if (chain === ChainEnum.Nexus) {
