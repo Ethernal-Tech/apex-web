@@ -6,6 +6,10 @@ import walletHandler from "./WalletHandler";
 const supportedWalletVersion = { major: 2, minor: 0, patch: 9, build: 14 };
 
 export const getUtxoRetrieverType = (chain: ChainEnum): UtxoRetrieverEnum => {
+    if (chain === ChainEnum.Nexus) {
+	    return UtxoRetrieverEnum.Wallet;
+    }
+
     const walletVersion = walletHandler.version();
     const utxoRetrieverConfig = !!appSettings.utxoRetriever && appSettings.utxoRetriever[chain];
 

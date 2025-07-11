@@ -30,9 +30,17 @@ const calculateMaxAmount = (
     return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
   }
 
-  const balanceAllowedToUse = BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0) &&
-    BigInt(totalDfmBalance || '0') > BigInt(maxAmountAllowedToBridge || '0')
-      ? BigInt(maxAmountAllowedToBridge || '0') : BigInt(totalDfmBalance || '0')
+  const maxAmountAllowedToBridgeDfm = BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
+    ? (
+        chain === ChainEnum.Nexus
+          ? BigInt(convertDfmToWei(maxAmountAllowedToBridge))
+          : BigInt(maxAmountAllowedToBridge)
+    )
+    : BigInt(0);
+
+  const balanceAllowedToUse = maxAmountAllowedToBridgeDfm !== BigInt(0) &&
+    BigInt(totalDfmBalance || '0') > maxAmountAllowedToBridgeDfm
+      ? maxAmountAllowedToBridgeDfm : BigInt(totalDfmBalance || '0')
 
   let maxByBalance
   if (chain === ChainEnum.Nexus) {
