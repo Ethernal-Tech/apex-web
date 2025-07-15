@@ -16,7 +16,8 @@
     "test:watch": "jest --watch",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "migration:generate": "npm run build && typeorm-ts-node-esm migration:generate ./src/database/migrations/%npm_config_name% --d ./src/database/data.source.ts",
-    "migration:run": "npm run build && typeorm-ts-node-esm migration:run --d ./src/database/data.source.ts"
+    "migration:run": "npm run build && typeorm-ts-node-esm migration:run --d ./src/database/data.source.ts",
+    "swagger:generate": "ts-node -r tsconfig-paths/register generate-swagger.ts"
   },
   "dependencies": {
     "@emurgo/cardano-message-signing-nodejs": "^1.0.1",
@@ -35,6 +36,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "handlebars": "^4.7.8",
+    "js-yaml": "^4.1.0",
     "nest-winston": "^1.9.7",
     "nodemailer": "^6.9.16",
     "pg": "^8.11.5",
@@ -46,7 +48,11 @@
     "winston": "^3.15.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
-  "overrides": { "@nestjs-modules/mailer": { "mjml": "^5.0.0-alpha.4" } },
+  "overrides": {
+    "@nestjs-modules/mailer": {
+      "mjml": "^5.0.0-alpha.4"
+    }
+  },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
@@ -54,6 +60,7 @@
     "@types/express": "^4.17.17",
     "@types/handlebars": "^4.1.0",
     "@types/jest": "^29.5.2",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.3.1",
     "@types/nodemailer": "^6.4.17",
     "@types/supertest": "^6.0.0",

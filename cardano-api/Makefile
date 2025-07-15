@@ -28,3 +28,10 @@ check-go:
 .PHONY: check-git
 check-git:
 	@which git > /dev/null || (echo "git is not installed. Please install and try again."; exit 1)
+
+.PHONY: swag-install
+swag-install:
+	go install github.com/swaggo/swag/cmd/swag@latest
+.PHONY: swag-generate
+swag-generate:
+	swag init --parseDependency -g api/controllers/skyline_tx_controller.go -o ../../apex-bridge/docs/cardano-api -ot yaml

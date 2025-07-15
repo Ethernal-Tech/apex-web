@@ -4,16 +4,23 @@ import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 export class CreateContactDto {
 	@IsNotEmpty()
 	@IsString()
-	@ApiProperty()
+	@ApiProperty({
+		description: 'Full name of the user submitting the message',
+	})
 	name: string;
 
 	@IsNotEmpty()
 	@IsEmail()
-	@ApiProperty()
+	@ApiProperty({
+		description: 'Email address of the user submitting the message',
+		format: 'email',
+	})
 	email: string;
 
 	@IsNotEmpty()
 	@IsString()
-	@ApiProperty()
+	@ApiProperty({
+		description: 'Message to be submitted',
+	})
 	message: string;
 }

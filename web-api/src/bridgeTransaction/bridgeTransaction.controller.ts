@@ -8,7 +8,7 @@ import {
 	Post,
 } from '@nestjs/common';
 import { BridgeTransactionService } from './bridgeTransaction.service';
-import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import {
 	BridgeTransactionDto,
 	BridgeTransactionFilterDto,
@@ -22,14 +22,19 @@ export class BridgeTransactionController {
 		private readonly bridgeTransactionService: BridgeTransactionService,
 	) {}
 
+	@ApiOperation({
+		summary: 'Get the bridging transaction details',
+		description:
+			'Returns information about bridging transaction based on the given ID.',
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: BridgeTransactionDto,
-		description: 'Success',
+		description: 'OK - Returns bridging transaction.',
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Not Found',
+		description: 'Not Found - Bridging transaction not found.',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get(':id')
@@ -37,11 +42,16 @@ export class BridgeTransactionController {
 		return this.bridgeTransactionService.get(id);
 	}
 
+	@ApiOperation({
+		summary: 'Get multiple bridging transactions with filtering and pagination',
+		description:
+			'Returns a paginated list of bridging transactions based on specified filters. Results are sorted by transaction creation date in descending order by default.',
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: BridgeTransactionResponseDto,
 		isArray: false,
-		description: 'Success',
+		description: 'OK - Returns bridging transactions.',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post('filter')
