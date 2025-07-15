@@ -36,7 +36,7 @@ const FooterSection = () => (
       </a>
     </Box>
     <Typography className="footer-copyright">
-      © Skyline Bridge 2025. All Rights Reserved.
+      © Skyline Bridge {(new Date()).getFullYear()}. All Rights Reserved.
     </Typography>
   </Box>
 );
