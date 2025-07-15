@@ -9,14 +9,14 @@ import NewTransactionPage from './Transactions/NewTransactionPage';
 
 import withMiddleware from '../middleware/withMiddleware';
 import { onLoad } from '../actions/login';
-import { fetchAndUpdateBalanceAction } from '../actions/balance';
+import { fetchAndUpdateBalanceAction, getUpdateBalanceInterval } from '../actions/balance';
 import { fetchAndUpdateSettingsAction } from '../actions/settings';
 import LandingPage from './Landing/LandingPage';
 import appSettings from '../settings/appSettings';
 import TermsOfServicePage from './TermsOfServicePage/TermsOfServicePage';
 import PrivacyPolicyPage from './PrivacyPolicyPage/PrivacyPolicyPage';
 
-export const HOME_ROUTE = appSettings.isSkyline ? '/dashboard' : '/';
+export const HOME_ROUTE = appSettings.isSkyline ? '/app' : '/';
 export const TRANSACTIONS_ROUTE = '/transactions';
 export const NEW_TRANSACTION_ROUTE = '/new-transaction';
 export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
@@ -61,7 +61,7 @@ const PageRouter: React.FC = () => {
 
     balanceIntervalHandle.current = setInterval(async () => {
       await fetchAndUpdateBalanceAction(dispatch)
-    }, 30000)
+    }, getUpdateBalanceInterval())
 
     return () => {
       if (balanceIntervalHandle.current) {

@@ -94,8 +94,8 @@ body.landing-page {
     text-transform: none !important;
     border-radius: 0px !important;
     border: 1px solid #ffffff !important;
-    padding: 6px 16px !important;
-    font-size: 14px !important;
+    padding: 20px 30px !important;
+    font-size: 22px !important;
 }
 
 .bridge-button:hover {
@@ -410,8 +410,30 @@ body.landing-page {
 
 @media (max-width: 768px) {
     .logo-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         padding: 20px;
+        padding-bottom: 30px;
+    }
+
+    .logo-skyline-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        display: flex;
+        align-items: center;
+        width: 100%;
         padding-bottom: 50px;
+    }
+
+    .bridge-button {
+        background-color: #0b5855 !important;
+        text-transform: none !important;
+        border-radius: 0px !important;
+        border: 1px solid #ffffff !important;
+        padding: 10px 27px !important;
+        font-size: 16px !important;
     }
 
     .skyline-logo {

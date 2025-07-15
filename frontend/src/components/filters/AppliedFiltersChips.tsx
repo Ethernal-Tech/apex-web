@@ -64,7 +64,7 @@ function AppliedFiltersChips({ filters, removeFilter, resetFilters }: Props) {
 
 
     return (
-        <Box sx={{ flexGrow: 1, display: 'flex', gap: 0.5, alignItems: 'center' }}>
+        <Box sx={{ flexGrow: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
             {chips.length > 0 && (
 				<>
 					{chips}

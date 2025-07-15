@@ -9,8 +9,11 @@ import appSettings from '../settings/appSettings';
 import { UtxoRetriever } from '../features/types';
 import BlockfrostRetriever from '../features/BlockfrostRetriever';
 import OgmiosRetriever from '../features/OgmiosRetriever';
+import { getUtxoRetrieverType } from '../features/utils';
+import { UtxoRetrieverEnum } from '../features/enums';
 
-const supportedWalletVersion = { major: 2, minor: 0, patch: 9, build: 14 };
+const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
+const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
 
 const getWalletBalanceAction = async (chain: ChainEnum): Promise<IBalanceState> => {
     if (chain === ChainEnum.Nexus) { 
@@ -19,25 +22,17 @@ const getWalletBalanceAction = async (chain: ChainEnum): Promise<IBalanceState> 
     }
 
     let utxoRetriever: UtxoRetriever = walletHandler;
-
-    const walletVersion = walletHandler.version();
-    const utxoRetrieverConfig = !!appSettings.utxoRetriever && appSettings.utxoRetriever[chain];
     const addr = await walletHandler.getChangeAddress();
+    const utxoRetrieverConfig = !!appSettings.utxoRetriever && appSettings.utxoRetriever[chain];
+    
+    const utxoRetrieverType = getUtxoRetrieverType(chain);
 
-    if (utxoRetrieverConfig && (utxoRetrieverConfig.force || !walletSupported(walletVersion))) {
-        if (utxoRetrieverConfig.url) {
-            if (utxoRetrieverConfig.type === "blockfrost") {
-                utxoRetriever = new BlockfrostRetriever(
-                    addr, utxoRetrieverConfig.url, utxoRetrieverConfig.dmtrApiKey);
-            } else if (utxoRetrieverConfig.type === "ogmios") {
-                utxoRetriever = new OgmiosRetriever(
-                    addr, utxoRetrieverConfig.url);
-            } else {
-                console.log(`Unknown utxo retriever type: ${utxoRetrieverConfig.type}`);
-            }
-        } else {
-            console.log(`utxo retriever url not provided for: ${utxoRetrieverConfig.type}`);
-        }
+    if (utxoRetrieverType === UtxoRetrieverEnum.Blockfrost) {
+        utxoRetriever = new BlockfrostRetriever(
+            addr, utxoRetrieverConfig.url, utxoRetrieverConfig.dmtrApiKey);
+    } else if (utxoRetrieverType === UtxoRetrieverEnum.Ogmios) {
+        utxoRetriever = new OgmiosRetriever(
+            addr, utxoRetrieverConfig.url);
     }
 
     const utxos = await utxoRetriever.getAllUtxos();
@@ -54,21 +49,7 @@ const getWalletBalanceAction = async (chain: ChainEnum): Promise<IBalanceState> 
 }
 
 export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
-    const accountInfo = store.getState().accountInfo;
-    const chainInfo = store.getState().chain;
-    if (!accountInfo.account || !chainInfo.destinationChain) {
-        return;
-    }
-    
-    const {
-        network,
-    } = accountInfo;
-
-    if (!network) {
-        return;
-    }
-    
-    const srcChain = fromNetworkToChain(network);
+    const srcChain = getCurrentSrcChain();
     if (!srcChain) {
         return;
     }
@@ -84,20 +65,31 @@ export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
     }
 }
 
-const walletSupported = (walletVersion: any): boolean => {
-    if (!walletVersion ||
-        typeof walletVersion.major !== 'number' ||
-        typeof walletVersion.minor !== 'number' ||
-        typeof walletVersion.patch !== 'number' ||
-        typeof walletVersion.build !== 'number' ) {
-            // invalid wallet version format
-        return false;
+export const getUpdateBalanceInterval = (): number => {
+    const srcChain = getCurrentSrcChain();
+    if (!srcChain) {
+        return DEFAULT_UPDATE_BALANCE_INTERVAL;
     }
 
-    const { major, minor, patch, build } = supportedWalletVersion;
-    return (walletVersion.major > major ||
-        (walletVersion.major === major && walletVersion.minor > minor) ||
-        (walletVersion.major === major && walletVersion.minor === minor && walletVersion.patch > patch) ||
-        (walletVersion.major === major && walletVersion.minor === minor && walletVersion.patch === patch && walletVersion.build >= build)
-    )
+    return getUtxoRetrieverType(srcChain) === UtxoRetrieverEnum.Wallet
+        ? WALLET_UPDATE_BALANCE_INTERVAL
+        : DEFAULT_UPDATE_BALANCE_INTERVAL;
+}
+
+const getCurrentSrcChain = (): ChainEnum | undefined => {
+    const accountInfo = store.getState().accountInfo;
+    const chainInfo = store.getState().chain;
+    if (!accountInfo.account || !chainInfo.destinationChain) {
+        return;
+    }
+    
+    const {
+        network,
+    } = accountInfo;
+
+    if (!network) {
+        return;
+    }
+    
+    return fromNetworkToChain(network);
 }

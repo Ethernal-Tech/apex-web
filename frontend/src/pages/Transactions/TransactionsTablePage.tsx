@@ -140,7 +140,7 @@ const TransactionsTablePage = () => {
   return (
     <BasePage>
     {isLoading && <FullPageSpinner />}
-      <Box sx={{ width: '100%' }}>
+      <Box sx={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
         <Filters
           filters={filters}
           onFilterChange={setFilters}
