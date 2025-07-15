@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextField, Button, Box, styled, SxProps, Theme, Typography } from '@mui/material';
-import { convertApexToDfm, convertDfmToApex, toFixedFloor } from '../../../utils/generalUtils';
+import { convertApexToDfm, convertDfmToApex, minBigInt, toFixedFloor } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import appSettings from '../../../settings/appSettings';
@@ -68,13 +68,15 @@ const CustomButton = styled(Button)({
 
 interface PasteApexAmountInputProps {
   sx?: SxProps<Theme>;
-  maxSendable: string | null
+  maxAmounts: { maxByBalance:bigint, maxByAllowed:bigint }
   text: string
   setAmount: (text: string) => void
   disabled?: boolean;
 }
 
-const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSendable, text, setAmount, disabled }) => {
+const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmounts, text, setAmount, disabled }) => {
+  const maxSendable = minBigInt(maxAmounts.maxByAllowed, maxAmounts.maxByBalance).toString();
+
   const chain = useSelector((state: RootState)=> state.chain.chain);
 
   // TODO: depending on selected token, update logic for maxSendable because we use same input.
@@ -120,10 +122,11 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSend
   };
 
   // returns true if value of input equals max amount a user can send
-  const isMaxAmountEntered = () => maxSendable && BigInt(maxSendable) > 0 && convertApexToDfm(text, chain) !== maxSendable.toString();
+  const isMaxAmountEntered = maxSendable && BigInt(maxSendable) > 0 && convertApexToDfm(text, chain) !== maxSendable.toString();
   
   // Returns true if entered value to send exceedes the maximum amount a user can send (balance - fees)
-  const hasInsufficientBalance = () => maxSendable && BigInt(convertApexToDfm(text, chain)) > BigInt(maxSendable);
+  const hasInsufficientBalance = BigInt(convertApexToDfm(text, chain)) > maxAmounts.maxByBalance;
+  const overMaxAllowed = BigInt(convertApexToDfm(text, chain)) > maxAmounts.maxByAllowed;
 
   return (
     <Box sx={sx}>
@@ -141,13 +144,17 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxSend
                 sx={{paddingRight:'50px'}}
             />
             {/* show max button only if enough funds present, and entered value varies from actual max amount */}
-            {isMaxAmountEntered() && (
+            {isMaxAmountEntered && (
                 <CustomButton variant="contained" onClick={handleMaxClick}>
                   MAX
                 </CustomButton>
             )}
-            { hasInsufficientBalance() &&
+            { hasInsufficientBalance &&
               <Typography sx={{color:'#ff5e5e',position:'absolute',bottom:0,left:0}}>Insufficient funds</Typography>
+            }
+            {
+              !hasInsufficientBalance && overMaxAllowed &&
+              <Typography sx={{color:'#ff5e5e',position:'absolute',bottom:0,left:0}}>Over maximum allowed</Typography>
             }
         </Box>
         {/* TODO - removed, as APEX doesn't have a price in fiat equivalent */}

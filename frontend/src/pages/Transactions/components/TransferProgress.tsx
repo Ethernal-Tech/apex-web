@@ -1,7 +1,4 @@
 import { Box, CircularProgress, Typography } from "@mui/material"
-import {ReactComponent as Done1icon} from "../../../assets/bridge-status-icons/step-done1.svg"
-import {ReactComponent as Done2icon} from "../../../assets/bridge-status-icons/step-done2.svg"
-import {ReactComponent as Done3icon} from "../../../assets/bridge-status-icons/step-done3.svg"
 import ButtonCustom from "../../../components/Buttons/ButtonCustom"
 import { TRANSACTIONS_ROUTE } from "../../PageRouter"
 import { useNavigate } from "react-router-dom"
@@ -11,7 +8,7 @@ import { capitalizeWord } from "../../../utils/generalUtils"
 import { openExplorer } from "../../../utils/chainUtils"
 // import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
 
-// asset svgs
+import {ReactComponent as DoneIcon} from "../../../assets/bridge-status-icons/step-done1.svg"
 
 // prime icons
 import {ReactComponent as PrimeInProgressIcon} from "../../../assets/bridge-status-assets/prime-progress.svg"
@@ -117,7 +114,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step1,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<Done1icon/>,
+            doneIcon:<DoneIcon/>,
             asset:getChainIcons(sourceChain)
         },
         {
@@ -125,7 +122,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step2,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<Done2icon/>,
+            doneIcon:<DoneIcon/>,
             asset:{
                 inProgress: BridgeInProgressIcon,
                 done: BridgeSuccessIcon,
@@ -137,7 +134,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step3,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<Done3icon/>,
+            doneIcon:<DoneIcon/>,
             asset: getChainIcons(destinationChain)
         }
     ]
