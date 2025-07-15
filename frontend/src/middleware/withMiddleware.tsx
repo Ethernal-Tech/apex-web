@@ -1,6 +1,5 @@
 import { Box, Link, List, ListItem, Typography } from '@mui/material';
-import React, { ComponentType, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { ComponentType } from 'react';
 import appSettings from '../settings/appSettings';
 
 const bridgeVersion = appSettings.isSkyline ? 'Skyline' : 'Reactor';
@@ -10,14 +9,6 @@ const withMiddleware = <P extends object>(WrappedComponent: ComponentType<P>) =>
   const WithMiddlewareComponent: React.FC<P> = (props) => {
     const mobileOrTabletRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
     const isMobileDevice = mobileOrTabletRegex.test(navigator.userAgent);
-    const location = useLocation();
-
-    useEffect(() => {
-      if (appSettings.isSkyline && isMobileDevice && document.body.classList.contains('landing-page')) {
-          document.body.classList.remove('landing-page');
-          document.body.classList.add('skyline');
-      }
-    }, [isMobileDevice, location.pathname]);
 
     if (isMobileDevice) {
       return (
