@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"time"
 
 	commonRequest "github.com/Ethernal-Tech/cardano-api/api/model/common/request"
 	commonResponse "github.com/Ethernal-Tech/cardano-api/api/model/common/response"
@@ -21,13 +22,20 @@ import (
 	"github.com/Ethernal-Tech/cardano-api/core"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
+	cache "github.com/dgraph-io/ristretto"
 	"github.com/hashicorp/go-hclog"
 )
 
+const (
+	getLockedTokensCacheKeyName  = "default"
+	getLockedTokensCacheDuration = time.Second * 30
+)
+
 type SkylineTxControllerImpl struct {
-	appConfig      *core.AppConfig
-	usedUtxoCacher *utxotransformer.UsedUtxoCacher
-	logger         hclog.Logger
+	appConfig            *core.AppConfig
+	usedUtxoCacher       *utxotransformer.UsedUtxoCacher
+	getLockedTokensCache *cache.Cache
+	logger               hclog.Logger
 }
 
 var _ core.APIController = (*SkylineTxControllerImpl)(nil)
@@ -36,10 +44,20 @@ func NewSkylineTxController(
 	appConfig *core.AppConfig,
 	logger hclog.Logger,
 ) *SkylineTxControllerImpl {
+	getLockedTokensCache, err := cache.NewCache(&cache.Config{
+		NumCounters: 1,       // recommended: 10x the number of items you expect to store
+		MaxCost:     1 << 20, // max cost in bytes (1MB here)
+		BufferItems: 64,
+	})
+	if err != nil {
+		logger.Warn("TODO", "err", err)
+	}
+
 	return &SkylineTxControllerImpl{
-		appConfig:      appConfig,
-		usedUtxoCacher: utxotransformer.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
-		logger:         logger,
+		appConfig:            appConfig,
+		usedUtxoCacher:       utxotransformer.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
+		getLockedTokensCache: getLockedTokensCache,
+		logger:               logger,
 	}
 }
 
@@ -52,6 +70,7 @@ func (c *SkylineTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
 		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
+		{Path: "GetLockedTokens", Method: http.MethodGet, Handler: c.getLockedAmountOfTokens},
 	}
 }
 
@@ -395,4 +414,69 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
 	}
 
 	return txSender, receivers, nil
+}
+
+func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(w http.ResponseWriter, r *http.Request) {
+	queryValues := r.URL.Query()
+	c.logger.Debug("getBalance request", "query values", queryValues, "url", r.URL)
+
+	cachedResponse, found := c.getLockedTokensCache.Get(getLockedTokensCacheKeyName)
+	if found {
+		c.logger.Debug("getBalance request returned cached response")
+
+		utils.WriteResponse(w, r, http.StatusOK, cachedResponse, c.logger)
+
+		return
+	}
+
+	calculateLockedTokens := func(cfg *core.CardanoChainConfig) (map[string]uint64, error) {
+		tokensSum := map[string]uint64{}
+
+		txProviderCardano, err := cfg.ChainSpecific.CreateTxProvider()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create tx provider. err: %w", err)
+		}
+
+		utxos, err := txProviderCardano.GetUtxos(context.Background(), cfg.BridgingAddresses.BridgingAddress)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get utxos from chain. err: %w", err)
+		}
+
+		tokenNames := map[string]bool{}
+		for _, nt := range cfg.ChainSpecific.NativeTokens {
+			tokenNames[nt.TokenName] = true
+		}
+
+		for _, utxo := range utxos {
+			tokensSum[wallet.AdaTokenName] += utxo.Amount
+			for _, nativeToken := range utxo.Tokens {
+				name := nativeToken.TokenName()
+
+				if _, exists := tokenNames[name]; exists {
+					tokensSum[name] += nativeToken.Amount
+				}
+			}
+		}
+
+		return tokensSum, nil
+	}
+
+	response := commonResponse.NewLockedTokensResponse(map[string]map[string]uint64{})
+
+	for chainID, chainCfg := range c.appConfig.CardanoChains {
+		subResponse, err := calculateLockedTokens(chainCfg)
+		if err != nil {
+			utils.WriteErrorResponse(
+				w, r, http.StatusBadRequest, err, c.logger)
+
+			return
+		}
+
+		response.Chains[chainID] = subResponse
+	}
+
+	// cache item
+	c.getLockedTokensCache.SetWithTTL(getLockedTokensCacheKeyName, response, 1, getLockedTokensCacheDuration)
+
+	utils.WriteResponse(w, r, http.StatusOK, response, c.logger)
 }
