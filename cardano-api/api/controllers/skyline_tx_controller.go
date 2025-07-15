@@ -50,7 +50,7 @@ func NewSkylineTxController(
 		BufferItems: 64,
 	})
 	if err != nil {
-		logger.Warn("TODO", "err", err)
+		logger.Warn("can't initialise a new cache", "err", err)
 	}
 
 	return &SkylineTxControllerImpl{
@@ -417,16 +417,17 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
 }
 
 func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(w http.ResponseWriter, r *http.Request) {
-	queryValues := r.URL.Query()
-	c.logger.Debug("getBalance request", "query values", queryValues, "url", r.URL)
+	c.logger.Debug("get amount of locked tokens", "url", r.URL)
 
-	cachedResponse, found := c.getLockedTokensCache.Get(getLockedTokensCacheKeyName)
-	if found {
-		c.logger.Debug("getBalance request returned cached response")
+	if c.getLockedTokensCache != nil {
+		cachedResponse, found := c.getLockedTokensCache.Get(getLockedTokensCacheKeyName)
+		if found {
+			c.logger.Debug("getBalance request returned cached response")
 
-		utils.WriteResponse(w, r, http.StatusOK, cachedResponse, c.logger)
+			utils.WriteResponse(w, r, http.StatusOK, cachedResponse, c.logger)
 
-		return
+			return
+		}
 	}
 
 	calculateLockedTokens := func(cfg *core.CardanoChainConfig) (map[string]uint64, error) {
@@ -475,8 +476,10 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(w http.ResponseWriter,
 		response.Chains[chainID] = subResponse
 	}
 
-	// cache item
-	c.getLockedTokensCache.SetWithTTL(getLockedTokensCacheKeyName, response, 1, getLockedTokensCacheDuration)
+	if c.getLockedTokensCache != nil {
+		// cache item
+		c.getLockedTokensCache.SetWithTTL(getLockedTokensCacheKeyName, response, 1, getLockedTokensCacheDuration)
+	}
 
 	utils.WriteResponse(w, r, http.StatusOK, response, c.logger)
 }
