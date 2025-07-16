@@ -2,10 +2,31 @@ import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { LockedTokensDto } from "./lockedTokens.dto";
 import axios, { AxiosError } from "axios";
 import { ErrorResponseDto } from "src/transaction/transaction.dto";
+import { retryForever } from "src/utils/generalUtils";
+
+const RETRY_DELAY_MS = 30000;
 
 @Injectable()
 export class LockedTokensService{
-    	async getLockedTokens(
+	LockedTokensResponse: LockedTokensDto;
+	
+	async init() {
+			const apiUrl = process.env.CARDANO_API_URL;
+			const apiKey = process.env.CARDANO_API_API_KEY;
+	
+			if (!apiUrl || !apiKey) {
+				throw new Error('cardano api url or api key not defined');
+			}
+	
+			const endpointUrl = apiUrl + `/api/CardanoTx/GetLockedTokens`;
+	
+			this.LockedTokensResponse = await retryForever(
+				() => this.getLockedTokens(endpointUrl, apiKey),
+				RETRY_DELAY_MS,
+			);
+	}
+
+    async getLockedTokens(
 		endpointUrl: string,
 		apiKey: string,
 	): Promise<LockedTokensDto> {
