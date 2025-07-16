@@ -1,4 +1,5 @@
-import { Box, Typography } from "@mui/material"
+import { Box, Tooltip, Typography } from "@mui/material"
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 import {ReactComponent as WalletIcon} from "../../../assets/icons/moneyWallet.svg";
 import {ReactComponent as ApexIcon} from "../../../assets/icons/apexTransferIcon.svg";
@@ -17,7 +18,17 @@ const TotalBalance = () => {
             
             <Typography textTransform={'uppercase'} color={'white'} sx={{display:'flex',alignItems:'center'}}>
                 <WalletIcon/>
-                <Box component="span" ml={1}>Total Balance</Box>
+                <Box component="span" ml={1}>Available Balance</Box>
+                <Tooltip
+                    title={
+                        <Typography color={'white'} sx={{ fontSize: '14px' }}>
+                            This balance reflects the total value of all UTXOs associated with your address. It does not include any additional funds, such as rewards held in your staking (reward) account.
+                        </Typography>
+                    }
+                    placement="right-start"
+                >
+                    <HelpOutlineIcon sx={{ marginLeft: '6px', fontSize: '16px' }}/>
+                </Tooltip>
             </Typography>
 
             <Typography textTransform={'uppercase'} sx={{display:'flex',alignItems:'center'}}>

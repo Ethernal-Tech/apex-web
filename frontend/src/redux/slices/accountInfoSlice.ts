@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
-import { UTxO } from '@meshsdk/core';
+import { UTxO } from '../../features/WalletHandler';
 import { ApexBridgeNetwork } from '../../features/enums';
 
 export interface IAccountInfoState {

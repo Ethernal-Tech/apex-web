@@ -5,7 +5,7 @@ import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { calculatePotentialTokensCost, convertApexToDfm, convertDfmToWei } from '../../../utils/generalUtils';
+import { calculateChangeMinUtxo, convertApexToDfm, convertDfmToWei, minBigInt } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
@@ -20,6 +20,39 @@ type BridgeInputType = {
     loading?: boolean;
 }
 
+const calculateMaxAmount = (
+  totalDfmBalance: string,
+  maxAmountAllowedToBridge: string, chain: ChainEnum,
+  changeMinUtxo: number, minDfmValue: string,
+  bridgeTxFee: string,
+): { maxByBalance:bigint, maxByAllowed:bigint } => {
+  if (!totalDfmBalance || !chain) {
+    return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
+  }
+
+  const maxAmountAllowedToBridgeDfm = BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
+    ? (
+        chain === ChainEnum.Nexus
+          ? BigInt(convertDfmToWei(maxAmountAllowedToBridge))
+          : BigInt(maxAmountAllowedToBridge)
+    )
+    : BigInt(0);
+
+  const balanceAllowedToUse = maxAmountAllowedToBridgeDfm !== BigInt(0) &&
+    BigInt(totalDfmBalance || '0') > maxAmountAllowedToBridgeDfm
+      ? maxAmountAllowedToBridgeDfm : BigInt(totalDfmBalance || '0')
+
+  let maxByBalance
+  if (chain === ChainEnum.Nexus) {
+    maxByBalance = BigInt(totalDfmBalance || '0') - BigInt(bridgeTxFee) - BigInt(minDfmValue)
+  } else {
+    maxByBalance = BigInt(totalDfmBalance || '0')
+      - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee) - BigInt(changeMinUtxo)
+  }
+
+  return {maxByAllowed: balanceAllowedToUse, maxByBalance}
+}
+
 const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
@@ -30,6 +63,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
   const {chain} = useSelector((state: RootState)=> state.chain);
   const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge);
+  const maxAmountAllowedToBridge = useSelector((state: RootState) => state.settings.maxAmountAllowedToBridge)
 
   const fetchWalletFee = useCallback(async () => {
     if (!destinationAddr || !amount) {
@@ -81,20 +115,18 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
     setAmount('')
   }
 
-  const potentialTokensCost = useMemo(() => calculatePotentialTokensCost(walletUTxOs), [walletUTxOs]);
+  const changeMinUtxo = useMemo(
+    () => calculateChangeMinUtxo(walletUTxOs, +appSettings.minUtxoChainValue[chain]),
+    [walletUTxOs, chain],
+  );
 
     // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
   const minDfmValue = chain === ChainEnum.Nexus ? 
     convertDfmToWei(minValueToBridge) : minValueToBridge;
     
-    const maxAmountDfm:string = totalDfmBalance
-        ? ( chain === ChainEnum.Prime || chain === ChainEnum.Vector
-            ? (BigInt(totalDfmBalance) - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee)
-               - BigInt(potentialTokensCost) - BigInt(minDfmValue)).toString()
-            : (BigInt(totalDfmBalance) - BigInt(bridgeTxFee) - BigInt(minDfmValue)).toString() // for nexus, using minDfm value as substitute to user wallet fee / potential fee
-        )
-        : '0';
-    // Math.max(+totalDfmBalance - appSettings.potentialWalletFee - bridgeTxFee - minDfmValue, 0) : null; // this causes 0 on nexus, seems to be a bug
+    const maxAmounts = calculateMaxAmount(
+        totalDfmBalance, maxAmountAllowedToBridge, chain, changeMinUtxo, minDfmValue, bridgeTxFee);
+    const maxAmount = minBigInt(maxAmounts.maxByAllowed, maxAmounts.maxByBalance);
 
   const onSubmit = useCallback(async () => {
     await submit(destinationAddr, convertApexToDfm(amount || '0', chain))
@@ -116,7 +148,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
         }}>
             {/* validate inputs */}
             <PasteApexAmountInput
-                maxSendableDfm={maxAmountDfm}
+                maxAmounts={maxAmounts}
                 text={amount}
                 setAmount={setAmount}
                 disabled={loading}
@@ -156,7 +188,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
             <ButtonCustom 
                 onClick={onSubmit}
                 variant="white"
-                disabled={loading || BigInt(maxAmountDfm) <= 0}
+                disabled={loading || BigInt(maxAmount) <= 0}
                 sx={{
                     gridColumn:'span 1',
                     textTransform:'uppercase'

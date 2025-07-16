@@ -2,6 +2,7 @@ import { BrowserWallet, Asset, UTxO } from '@meshsdk/core';
 import { NewAddressFromBytes } from './Address/addreses';
 import { getAssetsSumMap, toBytes } from '../utils/generalUtils';
 import { ApexBridgeNetwork } from './enums';
+import { UtxoRetriever } from './types';
 
 type Wallet = {
     name: string;
@@ -11,7 +12,7 @@ type Wallet = {
 
 export const SUPPORTED_WALLETS = ['eternl']
 
-class WalletHandler {
+class WalletHandler implements UtxoRetriever {
     private _enabledWallet: BrowserWallet | undefined;
 
     getNativeAPI = () => (this._enabledWallet as any)?._walletInstance;
@@ -27,6 +28,21 @@ class WalletHandler {
             version: window.cardano[sw].apiVersion,
         }));
     };
+
+    version = (): any => {
+        const nativeAPI = this.getNativeAPI();
+        const experimentalAPI = nativeAPI['experimental'];
+        if (!experimentalAPI) {
+            throw new Error('experimental not defined');
+        }
+
+        const appVersion = experimentalAPI['appVersion'];
+        if (!appVersion ) {
+            throw new Error('appVersion not defined');
+        }
+
+        return appVersion;
+    }
 
     enable = async (walletName: string) => {
         this._enabledWallet = await BrowserWallet.enable(walletName);
@@ -147,7 +163,7 @@ class WalletHandler {
 
 const walletHandler = new WalletHandler();
 export default walletHandler;
-export type { BrowserWallet, Wallet, Asset };
+export type { BrowserWallet, Wallet, Asset, UTxO };
 
 const ETERNL_NETWORK_ID_TO_APEX_BRIDGE_NETWORK: {[key: string]: ApexBridgeNetwork} = {
     'afvt': ApexBridgeNetwork.TestnetVector,

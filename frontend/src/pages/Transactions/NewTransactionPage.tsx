@@ -50,7 +50,7 @@ function NewTransactionPage() {
 	const getCardanoTxFee = useCallback(async (address: string, amount: string): Promise<CardanoTransactionFeeResponseDto> => {
 		const createTxDto = prepareCreateCardanoTx(address, amount);
 		const bindedCreateAction = getCardanoTransactionFeeAction.bind(null, createTxDto);
-		const feeResponse = await tryCatchJsonByAction(bindedCreateAction);
+		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
 			throw new Error(feeResponse.err)
 		}
@@ -89,7 +89,7 @@ function NewTransactionPage() {
 	const getEthTxFee = useCallback(async (address: string, amount: string): Promise<CreateEthTransactionResponseDto> => {
 		const createTxDto = prepareCreateEthTx(address, amount);
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
-		const feeResponse = await tryCatchJsonByAction(bindedCreateAction);
+		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
 			throw new Error(feeResponse.err)
 		}

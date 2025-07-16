@@ -127,7 +127,7 @@ const TransactionsTablePage = () => {
   return (
     <BasePage>
     {isLoading && <FullPageSpinner />}
-      <Box sx={{ width: '100%' }}>
+      <Box sx={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
         <Filters
           filters={filters}
           onFilterChange={setFilters}
@@ -222,7 +222,7 @@ const TransactionsTablePage = () => {
                 {capitalizeWord(transaction.destinationChain)}
               </TableCell>
               <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>
-                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} APEX
+                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} AP3X
               </TableCell>
               
               <TableCell sx={{color:'white', borderBottom:'1px solid #435F694D'}}>

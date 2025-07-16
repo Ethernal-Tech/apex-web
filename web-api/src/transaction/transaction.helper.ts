@@ -171,22 +171,23 @@ export const createEthBridgingTx = async (
 	let bridgingFee = BigInt(dto.bridgingFee || '0');
 	bridgingFee = bridgingFee < minBridgingFee ? minBridgingFee : bridgingFee;
 
-	const value = BigInt(dto.amount) + bridgingFee;
-
 	const maxAllowedToBridge = BigInt(
 		convertDfmToWei(bridgingSettings.maxAmountAllowedToBridge) || '0',
 	);
 
-	if (maxAllowedToBridge !== BigInt(0) && maxAllowedToBridge < value) {
+	if (
+		maxAllowedToBridge !== BigInt(0) &&
+		maxAllowedToBridge < BigInt(dto.amount)
+	) {
 		throw new BadRequestException(
-			`Amount+Fee: ${value} more than max allowed: ${maxAllowedToBridge}`,
+			`Amount: ${dto.amount} more than max allowed: ${maxAllowedToBridge}`,
 		);
 	}
 
 	const isCentralized = process.env.USE_CENTRALIZED_BRIDGE === 'true';
 
 	const createFunc = isCentralized ? ethCentralizedBridgingTx : ethBridgingTx;
-	return await createFunc(dto, value, bridgingFee);
+	return await createFunc(dto, BigInt(dto.amount) + bridgingFee, bridgingFee);
 };
 
 const ethBridgingTx = async (
