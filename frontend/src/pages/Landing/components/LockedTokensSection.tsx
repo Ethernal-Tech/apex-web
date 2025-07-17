@@ -24,32 +24,42 @@ const LockedTokensSection = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const formatChainsData = () => {
-    let sum = 0;
+  const decodeHex = (hex: string): string => {
+    try {
+      return decodeURIComponent(hex.replace(/(..)/g, "%$1"));
+    } catch (e) {
+      return "[InvalidHex]";
+    }
+  };
 
+  const formatChainsData = () => {
     const data = Object.entries(lockedTokens.chains)
       .map(([key, innerObj]) => {
         const innerText = Object.entries(innerObj)
           .map(([innerKey, num]) => {
-            sum += num;
             const formattedNum = (num / 1e6).toLocaleString("de-DE", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             });
-            return `${formattedNum}`;
+
+            if (innerKey === "lovelace") {
+              if (key.toLowerCase() === "cardano") {
+                return `${formattedNum} ADA`;
+              }
+              return `${formattedNum} AP3X`;
+            } else {
+              const parts = innerKey.split(".");
+              const decoded = parts[1] ? decodeHex(parts[1]) : innerKey;
+              return `${formattedNum} ${decoded}`;
+            }
           })
-          .join(", "); // comma separates entries in the same key group
+          .join(", ");
 
         return `${key.toUpperCase()}: ${innerText}`;
       })
-      .join(" | "); // pipe separates different keys
+      .join(" | ");
 
-    const formattedSum = (sum / 1e6).toLocaleString("de-DE", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-
-    return `${data} | Transfered tokens: ${formattedSum}`;
+    return `${data}`;
   };
 
   // lovelace => Prime/Vector Apex / 10^6, Cardano => ADA / 10^6 dfm
