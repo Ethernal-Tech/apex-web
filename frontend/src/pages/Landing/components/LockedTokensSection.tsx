@@ -25,16 +25,31 @@ const LockedTokensSection = () => {
   }, []);
 
   const formatChainsData = () => {
-    var sum = 0;
-    var data = Object.entries(lockedTokens.chains)
-      .flatMap(([key, innerObj]) =>
-        Object.entries(innerObj).map(([innerKey, num]) => {
-          sum += num;
-          return `${key}: ${num} ${innerKey}`;
-        })
-      )
-      .join(" ");
-    return data + "Transfered tokens: " + sum;
+    let sum = 0;
+
+    const data = Object.entries(lockedTokens.chains)
+      .map(([key, innerObj]) => {
+        const innerText = Object.entries(innerObj)
+          .map(([innerKey, num]) => {
+            sum += num;
+            const formattedNum = (num / 1e6).toLocaleString("de-DE", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
+            return `${formattedNum}`;
+          })
+          .join(", "); // comma separates entries in the same key group
+
+        return `${key.toUpperCase()}: ${innerText}`;
+      })
+      .join(" | "); // pipe separates different keys
+
+    const formattedSum = (sum / 1e6).toLocaleString("de-DE", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    return `${data} | Transfered tokens: ${formattedSum}`;
   };
 
   // lovelace => Prime/Vector Apex / 10^6, Cardano => ADA / 10^6 dfm

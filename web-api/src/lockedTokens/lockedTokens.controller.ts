@@ -20,6 +20,6 @@ export class LockedTokensController{
         @HttpCode(HttpStatus.OK)
         @Get()
         async get(): Promise<LockedTokensDto> {
-            return this.lockedTokensService.LockedTokensResponse
+            return this.lockedTokensService.getLockedTokens()
         }
 }

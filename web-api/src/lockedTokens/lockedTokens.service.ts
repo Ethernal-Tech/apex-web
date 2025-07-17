@@ -1,46 +1,32 @@
-import { BadRequestException, Injectable, Logger } from "@nestjs/common";
-import { LockedTokensDto } from "./lockedTokens.dto";
-import axios, { AxiosError } from "axios";
-import { ErrorResponseDto } from "src/transaction/transaction.dto";
-import { retryForever } from "src/utils/generalUtils";
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { LockedTokensDto } from './lockedTokens.dto';
+import axios, { AxiosError } from 'axios';
+import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 
 const RETRY_DELAY_MS = 5000;
 
 @Injectable()
-export class LockedTokensService{
-	LockedTokensResponse: LockedTokensDto;
-	
+export class LockedTokensService {
+	endpointUrl: string;
+	apiKey = process.env.CARDANO_API_API_KEY;
+
 	async init() {
-			const apiUrl = process.env.CARDANO_API_URL;
-			const apiKey = process.env.CARDANO_API_API_KEY;
-	
-			if (!apiUrl || !apiKey) {
-				throw new Error('cardano api url or api key not defined');
-			}
-	
-			const endpointUrl = apiUrl + `/api/CardanoTx/GetLockedTokens`;
-	
-			this.LockedTokensResponse = await retryForever(
-				() => this.getLockedTokens(endpointUrl, apiKey),
-				RETRY_DELAY_MS,
-			);
+		this.endpointUrl =
+			process.env.CARDANO_API_URL + `/api/CardanoTx/GetLockedTokens`;
 	}
 
-    private async getLockedTokens(
-		endpointUrl: string,
-		apiKey: string,
-	): Promise<LockedTokensDto> {
-		Logger.debug(`axios.get: ${endpointUrl}`);
+	public async getLockedTokens(): Promise<LockedTokensDto> {
+		Logger.debug(`axios.get: ${this.endpointUrl}`);
 
 		try {
-			const response = await axios.get(endpointUrl, {
+			const response = await axios.get(this.endpointUrl, {
 				headers: {
-					'X-API-KEY': apiKey,
+					'X-API-KEY': this.apiKey,
 					'Content-Type': 'application/json',
 				},
 			});
 
-			Logger.debug(`axios.response locked: ${JSON.stringify(response.data)}`);
+			Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
 			return response.data as LockedTokensDto;
 		} catch (error) {
