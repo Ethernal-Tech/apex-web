@@ -32,31 +32,42 @@ const LockedTokensSection = () => {
     }
   };
 
+  const capitalizeFirst = (str: string) =>
+    str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+
   const formatChainsData = () => {
     const data = Object.entries(lockedTokens.chains)
       .map(([key, innerObj]) => {
         const innerText = Object.entries(innerObj)
           .map(([innerKey, num]) => {
+            // ❌ Skip: cardano + lovelace
+            if (key.toLowerCase() === "cardano" && innerKey === "lovelace") {
+              return null;
+            }
+
             const formattedNum = (num / 1e6).toLocaleString("de-DE", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             });
 
             if (innerKey === "lovelace") {
-              if (key.toLowerCase() === "cardano") {
-                return `${formattedNum} ADA`;
+              if (key.toLowerCase() === "prime") {
+                return `${formattedNum} AP3X`;
               }
-              return `${formattedNum} AP3X`;
+              return `${formattedNum} AP3X`; // fallback for other chains (optional)
             } else {
               const parts = innerKey.split(".");
               const decoded = parts[1] ? decodeHex(parts[1]) : innerKey;
               return `${formattedNum} ${decoded}`;
             }
           })
+          .filter(Boolean) // removes `null` from skipped items
           .join(", ");
 
-        return `${key.toUpperCase()}: ${innerText}`;
+        if (!innerText) return null; // skip empty chain blocks
+        return `${capitalizeFirst(key)}: ${innerText}`;
       })
+      .filter(Boolean)
       .join(" | ");
 
     return `${data}`;
@@ -72,7 +83,7 @@ const LockedTokensSection = () => {
         }}
         className="banner-text"
       >
-        Locked tokens: {formatChainsData()}
+        TVL: {formatChainsData()}
       </Typography>
     </Box>
   );

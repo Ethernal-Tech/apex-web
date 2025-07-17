@@ -647,5 +647,7 @@ body.landing-page {
 .banner-text {
   white-space: nowrap;
   display: inline-block;
+  color: 	#FF6F61!important;
+  font-weight: bold !important;
 }
 
