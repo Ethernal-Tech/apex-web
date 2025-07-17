@@ -40,8 +40,8 @@ const LockedTokensSection = () => {
       .map(([key, innerObj]) => {
         const innerText = Object.entries(innerObj)
           .map(([innerKey, num]) => {
-            // ❌ Skip: cardano + lovelace
-            if (key.toLowerCase() === "cardano" && innerKey === "lovelace") {
+            // ❌ Skip: cardano
+            if (key.toLowerCase() === "cardano") {
               return null;
             }
 
@@ -65,7 +65,7 @@ const LockedTokensSection = () => {
           .join(", ");
 
         if (!innerText) return null; // skip empty chain blocks
-        return `${capitalizeFirst(key)}: ${innerText}`;
+        return `${innerText}`;
       })
       .filter(Boolean)
       .join(" | ");

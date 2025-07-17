@@ -4,6 +4,7 @@ go 1.23.1
 
 require (
 	github.com/blinklabs-io/gouroboros v0.103.1 // indirect
+	github.com/dgraph-io/ristretto v0.2.0
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0
 	github.com/hashicorp/go-hclog v1.6.3
@@ -57,8 +58,6 @@ require (
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/tools v0.23.0
 )
-
-require github.com/dgraph-io/ristretto v0.2.0
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
