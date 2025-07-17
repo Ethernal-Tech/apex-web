@@ -13,10 +13,10 @@ const LockedTokensSection = () => {
     // Call once immediately on mount
     fetchAndUpdateLockedTokensAction(dispatch);
 
-    // Then call periodically every 30 seconds
+    // Then call periodically every 5 seconds
     const interval = setInterval(() => {
       fetchAndUpdateLockedTokensAction(dispatch);
-    }, 30_000); // 30,000 ms = 30 seconds
+    }, 5_000); // 5,000 ms = 5 seconds
 
     // Cleanup on component unmount
     return () => clearInterval(interval);

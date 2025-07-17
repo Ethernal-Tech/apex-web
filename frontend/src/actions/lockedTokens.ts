@@ -1,25 +1,28 @@
-import { Dispatch } from '@reduxjs/toolkit';
+import { Dispatch } from "@reduxjs/toolkit";
 import { LockedTokensControllerClient } from "../swagger/apexBridgeApiService";
 import { retryForever } from "../utils/generalUtils";
 import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
-import { setLockedTokensAction } from '../redux/slices/lockedTokensSlice';
+import { setLockedTokensAction } from "../redux/slices/lockedTokensSlice";
 
-const RETRY_DELAY_MS = 30000;
+const RETRY_DELAY_MS = 5000;
 
-export const getLockedTokensAction = async () => {    
-    const client = new LockedTokensControllerClient();
-    return client.get();
-}
+export const getLockedTokensAction = async () => {
+  const client = new LockedTokensControllerClient();
+  return client.get();
+};
 
 export const fetchAndUpdateLockedTokensAction = async (dispatch: Dispatch) => {
-	const lockedTokens = await retryForever(async () => {
-		const lockedTokensResp = await tryCatchJsonByAction(() => getLockedTokensAction(), false); 
-		if (lockedTokensResp instanceof ErrorResponse) {
-			throw new Error(`Error while fetching settings: ${lockedTokensResp.err}`)
-		}
+  const lockedTokens = await retryForever(async () => {
+    const lockedTokensResp = await tryCatchJsonByAction(
+      () => getLockedTokensAction(),
+      false
+    );
+    if (lockedTokensResp instanceof ErrorResponse) {
+      throw new Error(`Error while fetching settings: ${lockedTokensResp.err}`);
+    }
 
-		return lockedTokensResp
-	}, RETRY_DELAY_MS)
-	
-	dispatch(setLockedTokensAction(lockedTokens));
-}
+    return lockedTokensResp;
+  }, RETRY_DELAY_MS);
+
+  dispatch(setLockedTokensAction(lockedTokens));
+};
