@@ -4,7 +4,7 @@ import axios, { AxiosError } from "axios";
 import { ErrorResponseDto } from "src/transaction/transaction.dto";
 import { retryForever } from "src/utils/generalUtils";
 
-const RETRY_DELAY_MS = 30000;
+const RETRY_DELAY_MS = 5000;
 
 @Injectable()
 export class LockedTokensService{
@@ -26,7 +26,7 @@ export class LockedTokensService{
 			);
 	}
 
-    async getLockedTokens(
+    private async getLockedTokens(
 		endpointUrl: string,
 		apiKey: string,
 	): Promise<LockedTokensDto> {
@@ -40,7 +40,7 @@ export class LockedTokensService{
 				},
 			});
 
-			Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
+			Logger.debug(`axios.response locked: ${JSON.stringify(response.data)}`);
 
 			return response.data as LockedTokensDto;
 		} catch (error) {

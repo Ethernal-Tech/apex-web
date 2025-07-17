@@ -7,6 +7,7 @@ import { BridgeTransactionModule } from './bridgeTransaction/bridgeTransaction.m
 import { SettingsModule } from './settings/settings.module';
 import { ContactModule } from './contact/contact.module';
 import { MailerConfigModule } from './mailer/mailer.module';
+import { LockedTokensModule } from './lockedTokens/lockedTokens.module';
 
 @Module({
 	imports: [
@@ -19,6 +20,7 @@ import { MailerConfigModule } from './mailer/mailer.module';
 		TransactionModule,
 		BridgeTransactionModule,
 		ContactModule,
+		LockedTokensModule
 	],
 	controllers: [],
 	providers: [],

@@ -5,6 +5,7 @@ import UsersSection from "./components/UsersSection";
 import InnovatorsSection from "./components/InnovatorsSection";
 import ConnectSection from "./components/ConnectSection";
 import FooterSection from "./components/FooterSection";
+import LockedTokensSection from "./components/LockedTokensSection"
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { HOME_ROUTE } from "../PageRouter";
@@ -33,6 +34,7 @@ const LandingPage = () => {
         },
       }}
     >
+      <LockedTokensSection />
       <SkylineSection scrollToSection={scrollToSection} navigateToBridge={navigateToBridge} />
       <SkylineBridgeSection />
       <UsersSection />

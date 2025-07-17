@@ -629,3 +629,33 @@ body.landing-page {
         font-size: 12px !important;
     }
 }
+
+.banner-container {
+  width: 100vw;
+  overflow: hidden;
+  background-color: #0b5855;
+  color: white;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+.banner-text {
+  white-space: nowrap;
+  display: inline-block;
+  padding-left: 100%;
+  animation: scroll-left 40s linear infinite; /* Slower scroll */
+}
+
+/* Animation keyframes */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
