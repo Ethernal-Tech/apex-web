@@ -32,9 +32,6 @@ const LockedTokensSection = () => {
     }
   };
 
-  const capitalizeFirst = (str: string) =>
-    str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-
   const formatChainsData = () => {
     const data = Object.entries(lockedTokens.chains)
       .map(([key, innerObj]) => {
@@ -72,7 +69,42 @@ const LockedTokensSection = () => {
 
     return `${data}`;
   };
+  const formatTransferredData = () => {
+    const data = Object.entries(lockedTokens.totalTransferred)
+      .map(([key, innerObj]) => {
+        const keyLabel = key.charAt(0).toUpperCase() + key.slice(1); // Capitalize
 
+        const filteredEntries = Object.entries(innerObj).filter(
+          ([, num]) => num > 0
+        );
+
+        if (filteredEntries.length === 0) return null;
+
+        const innerText = filteredEntries
+          .map(([innerKey, num]) => {
+            const formattedNum = (num / 1e6).toLocaleString("de-DE", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
+
+            // 🧠 Same logic as formatChainsData
+            if (innerKey === "amount") {
+              return formattedNum;
+            } else {
+              const parts = innerKey.split(".");
+              const tokenLabel = parts[1] || innerKey;
+              return `${tokenLabel} ${formattedNum}`;
+            }
+          })
+          .join(", ");
+
+        return `${keyLabel}: ${innerText}`;
+      })
+      .filter(Boolean)
+      .join(" | ");
+
+    return data;
+  };
   // lovelace => Prime/Vector Apex / 10^6, Cardano => ADA / 10^6 dfm
   // privacyID.hex(name) => name
   return (
@@ -80,10 +112,12 @@ const LockedTokensSection = () => {
       <Typography
         sx={{
           fontSize: "20px",
+          whiteSpace: "pre-wrap",
         }}
         className="banner-text"
       >
-        TVL: {formatChainsData()}
+        TVL | {formatChainsData() + "\t"} Transferred |{" "}
+        {formatTransferredData()}
       </Typography>
     </Box>
   );

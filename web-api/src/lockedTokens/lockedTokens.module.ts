@@ -1,22 +1,18 @@
-import { Module } from "@nestjs/common";
-import { LockedTokensService } from "./lockedTokens.service";
-import { LockedTokensController } from "./lockedTokens.controller";
-
-
-const providers = [
-    {
-        provide: LockedTokensService,
-        useFactory: async (): Promise<LockedTokensService> => {
-            const s = new LockedTokensService();
-            await s.init();
-            return s;
-        },
-    },
-];
+import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
+import { LockedTokensService } from './lockedTokens.service';
+import { LockedTokensController } from './lockedTokens.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
+import { SettingsModule } from 'src/settings/settings.module';
 
 @Module({
-    imports: [],
-    providers: providers,
-    controllers: [LockedTokensController],
+	imports: [
+		TypeOrmModule.forFeature([BridgeTransaction]),
+		CacheModule.register({ ttl: 30, max: 100 }),
+		SettingsModule,
+	],
+	providers: [LockedTokensService],
+	controllers: [LockedTokensController],
 })
 export class LockedTokensModule {}
