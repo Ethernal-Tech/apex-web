@@ -6,16 +6,20 @@ import (
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 )
 
-type SettingsReponse struct {
-	RunMode                   common.VCRunMode                        `json:"runMode"`
+type SettingsResponse struct {
+	// Specifies the current operating mode of the application
+	RunMode common.VCRunMode `json:"runMode"`
+	// For each source chain, defines the native token that will be received on the destination chain
 	CardanoChainsNativeTokens map[string][]sendtx.TokenExchangeConfig `json:"cardanoChainsNativeTokens"`
-	BridgingSettings          core.BridgingSettings                   `json:"bridgingSettings"`
-	EnabledChains             []string                                `json:"enabledChains"`
-}
+	// Settings for bridge
+	BridgingSettings core.BridgingSettings `json:"bridgingSettings"`
+	// Participating chains in the bridge
+	EnabledChains []string `json:"enabledChains"`
+} // @name SettingsResponse
 
 func NewSettingsResponse(
 	config *core.AppConfig,
-) *SettingsReponse {
+) *SettingsResponse {
 	var enabledChains []string
 
 	nativeTokens := map[string][]sendtx.TokenExchangeConfig{}
@@ -33,7 +37,7 @@ func NewSettingsResponse(
 		}
 	}
 
-	return &SettingsReponse{
+	return &SettingsResponse{
 		RunMode:                   config.RunMode,
 		CardanoChainsNativeTokens: nativeTokens,
 		BridgingSettings:          config.BridgingSettings,

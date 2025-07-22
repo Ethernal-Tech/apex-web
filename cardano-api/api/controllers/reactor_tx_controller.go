@@ -202,17 +202,17 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		requestBody.BridgingFee = minFee
 	}
 
-	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))
-
-	if requestBody.BridgingFee < minFee {
-		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
-	}
-
 	if c.appConfig.BridgingSettings.MaxAmountAllowedToBridge != nil &&
 		c.appConfig.BridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 &&
 		receiverAmountSum.Cmp(c.appConfig.BridgingSettings.MaxAmountAllowedToBridge) == 1 {
 		return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
 			c.appConfig.BridgingSettings.MaxAmountAllowedToBridge, requestBody)
+	}
+
+	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))
+
+	if requestBody.BridgingFee < minFee {
+		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
 	}
 
 	return nil

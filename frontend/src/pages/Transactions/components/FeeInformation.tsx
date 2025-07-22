@@ -71,7 +71,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               <Tooltip
                   title={
                       <Typography color={'white'} sx={{ fontSize: '14px' }}>
-                          This fee covers the bridge blockchain transaction costs. This fee is either set to the predefined minimum or, if native tokens are being bridged, the minimum {TokenEnumToLabel[fromChainToChainCurrency(chain)]} needed to store them — whichever is higher.
+                          This fee covers the bridge blockchain transaction costs. This fee is set to the predefined minimum. When bridging native tokens, the minimum {TokenEnumToLabel[fromChainToChainCurrency(chain)]} required to hold those tokens on {capitalizeWord(chain)} is added.
                       </Typography>
                   }
                   placement="right-start"

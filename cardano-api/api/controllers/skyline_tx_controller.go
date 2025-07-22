@@ -1,3 +1,9 @@
+// @title Cardano API
+// @version 1.0
+// @BasePath /api
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name X-API-Key
 package controllers
 
 import (
@@ -49,6 +55,18 @@ func (c *SkylineTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	}
 }
 
+// @Summary Get fees required for a bridging transaction
+// @Description Returns the transaction and bridging fees that the sender must pay on the source chain. The bridging fee covers the cost for the fee payer to submit the transaction on the destination chain.
+// @Tags CardanoTx
+// @Accept json
+// @Produce json
+// @Param data body commonRequest.CreateBridgingTxRequest true "Bridging transaction data"
+// @Success 200 {object} commonResponse.BridgingTxFeeResponse "OK - Returns calculated fees."
+// @Failure 400 {object} commonResponse.ErrorResponse "Bad Request – Validation error due to input data not meeting required conditions."
+// @Failure 401 {object} commonResponse.ErrorResponse "Unauthorized – API key missing or invalid."
+// @Failure 500 {object} commonResponse.ErrorResponse "Internal server error"
+// @Security ApiKeyAuth
+// @Router /CardanoTx/GetBridgingTx [POST]
 func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
 	requestBody, ok := utils.DecodeModel[commonRequest.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
@@ -77,6 +95,18 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		txFeeInfo.Fee, bridgingRequestMetadata.BridgingFee), c.logger)
 }
 
+// @Summary Create a bridging transaction
+// @Description Builds a bridging transaction with all required fees and metadata. The transaction must be signed and submitted separately.
+// @Tags CardanoTx
+// @Accept json
+// @Produce json
+// @Param data body commonRequest.CreateBridgingTxRequest true "Bridging transaction data"
+// @Success 200 {object} commonResponse.BridgingTxResponse "OK - Returns the raw transaction data, transaction hash, and calculated bridging fee and amounts."
+// @Failure 400 {object} commonResponse.ErrorResponse "Bad Request – Validation error due to input data not meeting required conditions."
+// @Failure 401 {object} commonResponse.ErrorResponse "Unauthorized – API key missing or invalid."
+// @Failure 500 {object} commonResponse.ErrorResponse "Internal server error"
+// @Security ApiKeyAuth
+// @Router /CardanoTx/CreateBridgingTx [POST]
 func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
 	requestBody, ok := utils.DecodeModel[commonRequest.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
@@ -111,6 +141,14 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 	)
 }
 
+// @Summary Get bridge settings
+// @Description Returns the participating chains with their specific settings, global bridge configuration (such as minimum and maximum allowed bridging amounts), and, for each source chain, the native token that will be received on the destination chain.
+// @Tags CardanoTx
+// @Produce json
+// @Success 200 {object} commonResponse.SettingsResponse "OK - Returns the configuration settings."
+// @Failure 401 {object} commonResponse.ErrorResponse "Unauthorized – API key missing or invalid."
+// @Security ApiKeyAuth
+// @Router /CardanoTx/GetSettings [get]
 func (c *SkylineTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Request) {
 	c.logger.Debug("getSettings request", "url", r.URL)
 
@@ -236,6 +274,13 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		requestBody.BridgingFee = minFee
 	}
 
+	if c.appConfig.BridgingSettings.MaxAmountAllowedToBridge != nil &&
+		c.appConfig.BridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 &&
+		receiverAmountSum.Cmp(c.appConfig.BridgingSettings.MaxAmountAllowedToBridge) == 1 {
+		return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
+			c.appConfig.BridgingSettings.MaxAmountAllowedToBridge, requestBody)
+	}
+
 	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))
 
 	if requestBody.BridgingFee < minFee {
@@ -256,13 +301,6 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 	if requestBody.OperationFee < operationFee {
 		return fmt.Errorf("operation fee in request body is less than minimum: %v", requestBody)
-	}
-
-	if c.appConfig.BridgingSettings.MaxAmountAllowedToBridge != nil &&
-		c.appConfig.BridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 &&
-		receiverAmountSum.Cmp(c.appConfig.BridgingSettings.MaxAmountAllowedToBridge) == 1 {
-		return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
-			c.appConfig.BridgingSettings.MaxAmountAllowedToBridge, requestBody)
 	}
 
 	if c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge != nil &&

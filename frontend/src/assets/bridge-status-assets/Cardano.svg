@@ -37,6 +37,6 @@
 </clipPath>
 </defs>
 
-<text style="white-space: pre; fill: white; font-family: &quot;Arial&quot;, sans-serif; font-size: 28px;" x="17.214" y="38.253" transform="matrix(1.403228, 0, 0, 1.340177, -6.759965, -7.988666)">C</text>
+<text style="white-space: pre; fill: white; font-family: &quot;Arial&quot;, sans-serif; font-size: 28px; user-select: none;" x="17.214" y="38.253" transform="matrix(1.403228, 0, 0, 1.340177, -6.759965, -7.988666)">C</text>
 
 </svg>

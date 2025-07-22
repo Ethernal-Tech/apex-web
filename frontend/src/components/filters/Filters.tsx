@@ -205,7 +205,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
     }
 
     return (
-        <div>
+        <>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1 }}>
                 <AppliedFiltersChips filters={filters} removeFilter={removeFilterCallback} resetFilters={resetFiltersCallback} />
                 <Button
@@ -396,6 +396,6 @@ export default function Filters({ filters, onFilterChange }: Props) {
                     </Box>
                 </Box>
             </Modal>
-        </div>
+        </>
     );
 }
