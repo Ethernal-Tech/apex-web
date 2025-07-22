@@ -72,7 +72,7 @@ const FooterBar = () => {
             appSettings.isSkyline ?
             <>
               <Button component='a' href="mailto:contact@skylinebridge.tech">
-                <EmailIcon height={28} width={28} style={{ color: 'blue' }}/>
+                <EmailIcon height={28} width={28}/>
               </Button>
               <Button component='a' href="https://www.linkedin.com/company/skylinebridge" target="_blank">
                 <LinkedinIcon/>
