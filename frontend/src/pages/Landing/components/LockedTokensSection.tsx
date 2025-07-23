@@ -1,7 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { fetchAndUpdateLockedTokensAction } from "../../../actions/lockedTokens";
 import { ChainEnum } from "../../../swagger/apexBridgeApiService";
 import {
@@ -64,60 +64,48 @@ const LockedTokensSection = () => {
     return `${formattedWhole},${paddedFraction}`;
   };
 
-  const formatChainsData = () => {
-    const data = Object.entries(lockedTokens.chains)
+  const formatChainsData = useCallback(() => {
+    return Object.entries(lockedTokens.chains)
       .map(([key, innerObj]) => {
         const innerText = Object.entries(innerObj)
           .map(([innerKey, num]) => {
             // ❌ Skip: cardano
-            if (key.toLowerCase() === ChainEnum.Cardano) {
-              return null;
-            }
+            if (key.toLowerCase() === ChainEnum.Cardano) return null;
 
             const formattedNum = formatBigIntDecimalString(num, 6);
 
             if (innerKey === "lovelace") {
-              if (key.toLowerCase() === ChainEnum.Prime) {
-                return `${formattedNum} ${
-                  TokenEnumToLabel[fromChainToChainCurrency(ChainEnum.Prime)]
-                }`;
-              }
-              return `${formattedNum} ${
-                TokenEnumToLabel[fromChainToChainCurrency(ChainEnum.Prime)]
-              }`; // fallback for other chains (optional)
+              const tokenLabel =
+                TokenEnumToLabel[fromChainToChainCurrency(ChainEnum.Prime)];
+              return `${formattedNum} ${tokenLabel}`;
             } else {
               const parts = innerKey.split(".");
               const decoded = parts[1] ? decodeHex(parts[1]) : innerKey;
               return `${formattedNum} ${decoded}`;
             }
           })
-          .filter(Boolean) // removes `null` from skipped items
+          .filter(Boolean)
           .join(", ");
 
-        if (!innerText) return null; // skip empty chain blocks
-        return `${innerText}`;
+        return innerText || null;
       })
       .filter(Boolean)
       .join(" | ");
+  }, [lockedTokens]);
 
-    return `${data}`;
-  };
-  const formatTransferredData = () => {
-    const data = Object.entries(lockedTokens.totalTransferred)
+  const formatTransferredData = useCallback(() => {
+    return Object.entries(lockedTokens.totalTransferred)
       .map(([key, innerObj]) => {
-        const keyLabel = capitalizeWord(key); // Capitalize
+        const keyLabel = capitalizeWord(key);
 
         const filteredEntries = Object.entries(innerObj).filter(
           ([, num]) => num > 0
         );
-
         if (filteredEntries.length === 0) return null;
 
         const innerText = filteredEntries
           .map(([innerKey, num]) => {
             const formattedNum = formatBigIntDecimalString(num, 6);
-
-            // 🧠 Same logic as formatChainsData
             if (innerKey === "amount") {
               return formattedNum;
             } else {
@@ -132,36 +120,27 @@ const LockedTokensSection = () => {
       })
       .filter(Boolean)
       .join(" | ");
+  }, [lockedTokens]);
 
-    return data;
-  };
-  // lovelace => Prime/Vector Apex / 10^6, Cardano => ADA / 10^6 dfm
-  // privacyID.hex(name) => name
+  const bannerText = useMemo(() => {
+    const chainsData = formatChainsData();
+    const transferredData = formatTransferredData();
+
+    const sections = [];
+    if (chainsData.trim()) sections.push(`TVL | ${chainsData}`);
+    if (transferredData.trim())
+      sections.push(`Transferred | ${transferredData}`);
+
+    return sections.join("\t");
+  }, [formatChainsData, formatTransferredData]);
+
   return (
     <Box className="banner-container">
       <Typography
-        sx={{
-          fontSize: "20px",
-          whiteSpace: "pre-wrap",
-        }}
+        sx={{ fontSize: "20px", whiteSpace: "pre-wrap" }}
         className="banner-text"
       >
-        {(() => {
-          const chainsData = formatChainsData();
-          const transferredData = formatTransferredData();
-
-          const sections = [];
-
-          if (chainsData.trim()) {
-            sections.push(`TVL | ${chainsData}`);
-          }
-
-          if (transferredData.trim()) {
-            sections.push(`Transferred | ${transferredData}`);
-          }
-
-          return sections.join("\t");
-        })()}
+        {bannerText}
       </Typography>
     </Box>
   );
