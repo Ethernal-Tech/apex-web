@@ -35,3 +35,7 @@ swag-install:
 .PHONY: swag-generate
 swag-generate:
 	swag init --parseDependency -g api/controllers/skyline_tx_controller.go -o ../../apex-bridge/docs/cardano-api -ot yaml
+
+start:
+	go run main.go run-cardano-api --config "./config.json"
+.PHONY: start

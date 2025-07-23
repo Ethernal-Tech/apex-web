@@ -18,8 +18,7 @@ const lockedTokensSlice = createSlice({
     setLockedTokensAction: (state, action: PayloadAction<LockedTokensDto>) => {
       const safeParseBigInt = (val: string | undefined): bigint => {
         try {
-          if (!val || isNaN(Number(val))) return BigInt(0);
-          return BigInt(val);
+          return BigInt(val || 0);
         } catch {
           return BigInt(0);
         }

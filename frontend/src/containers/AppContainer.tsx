@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 const AppContainer = () => {
 	
 	useEffect(() => {
-		document.title = appSettings.isSkyline ? "Skyline Bridge | Ethernal" : "Reactor Bridge | Apex Fusion";
+		document.title = appSettings.isSkyline ? "Skyline Bridge" : "Reactor Bridge | Apex Fusion";
 		const favicon = document.querySelector<HTMLLinkElement>("link[rel='icon']");
 		if (favicon) {
 			favicon.href = appSettings.isSkyline ? "/favicon.ico" : "/favicon-reactor.ico";

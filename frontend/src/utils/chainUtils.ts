@@ -106,7 +106,7 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
         [ChainEnum.Cardano]: 'https://cardanoscan.io',
     },
     testnet: {
-        [ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
+        [ChainEnum.Prime]: 'https://explorer.prime.testnet.apexfusion.org',
         [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
         [ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
         [ChainEnum.Cardano]: 'https://preview.cardanoscan.io',

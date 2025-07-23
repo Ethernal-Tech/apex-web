@@ -3,7 +3,7 @@ import {ReactComponent as ApexIcon} from "../../assets/external-links/Apex.svg";
 import {ReactComponent as LinkedinIcon} from "../../assets/external-links/LN.svg";
 import {ReactComponent as XIcon} from "../../assets/external-links/X.svg";
 import {ReactComponent as DiscordIcon} from "../../assets/external-links/Discord.svg";
-import {ReactComponent as EthernalIcon} from "../../assets/external-links/Ethernal.svg";
+import { ReactComponent as EmailIcon } from "../../assets/external-links/Email.svg";
 import appSettings from "../../settings/appSettings";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -47,7 +47,7 @@ const FooterBar = () => {
       {
         appSettings.isSkyline ?
         <Box sx={childStyles}>
-          &copy;{new Date().getFullYear()} Ethernal. All Rights Reserved.
+          &copy; Skyline Bridge {(new Date()).getFullYear()}. All Rights Reserved.
         </Box>
         :
         <Box sx={childStyles}>
@@ -71,13 +71,13 @@ const FooterBar = () => {
           {
             appSettings.isSkyline ?
             <>
-              <Button component='a' href="https://ethernal.tech/" target="_blank">
-                <EthernalIcon height={28} style={{ background: 'rgb(22, 22, 22)', borderRadius: '50%' }} />
+              <Button component='a' href="mailto:contact@skylinebridge.tech">
+                <EmailIcon height={28} width={28}/>
               </Button>
-              <Button component='a' href="https://www.linkedin.com/company/ethernal-tech" target="_blank">
+              <Button component='a' href="https://www.linkedin.com/company/skylinebridge" target="_blank">
                 <LinkedinIcon/>
               </Button>
-              <Button component='a' href="https://x.com/ethernal_tech" target="_blank">
+              <Button component='a' href="https://x.com/skyline_bridge" target="_blank">
                 <XIcon/>
               </Button>
             </>
