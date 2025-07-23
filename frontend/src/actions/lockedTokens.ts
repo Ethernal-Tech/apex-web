@@ -12,17 +12,14 @@ export const getLockedTokensAction = async () => {
 };
 
 export const fetchAndUpdateLockedTokensAction = async (dispatch: Dispatch) => {
-  const lockedTokens = await retryForever(async () => {
-    const lockedTokensResp = await tryCatchJsonByAction(
-      () => getLockedTokensAction(),
-      false
-    );
-    if (lockedTokensResp instanceof ErrorResponse) {
-      throw new Error(`Error while fetching settings: ${lockedTokensResp.err}`);
-    }
+  const lockedTokensResp = await tryCatchJsonByAction(
+    () => getLockedTokensAction(),
+    false
+  );
 
-    return lockedTokensResp;
-  }, RETRY_DELAY_MS);
+  if (lockedTokensResp instanceof ErrorResponse) {
+    throw new Error(`Error while fetching settings: ${lockedTokensResp.err}`);
+  }
 
-  dispatch(setLockedTokensAction(lockedTokens));
+  dispatch(setLockedTokensAction(lockedTokensResp));
 };

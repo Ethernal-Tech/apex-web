@@ -7,20 +7,20 @@ export class LockedTokensDto {
 		type: 'object',
 		additionalProperties: {
 			type: 'object',
-			additionalProperties: { type: 'number' },
+			additionalProperties: { type: 'string' },
 		},
 	})
-	chains: { [key: string]: { [innerKey: string]: number } };
+	chains: { [key: string]: { [innerKey: string]: string } };
 
 	@ApiProperty({
 		description: 'Mapping of total transfered tokens per chain',
 		type: 'object',
 		additionalProperties: {
 			type: 'object',
-			additionalProperties: { type: 'number' },
+			additionalProperties: { type: 'string' },
 		},
 	})
-	totalTransfered: { [key: string]: { [innerKey: string]: number } };
+	totalTransfered: { [key: string]: { [innerKey: string]: string } };
 }
 
 export class LockedTokensResponse {
@@ -29,7 +29,7 @@ export class LockedTokensResponse {
 	@ApiProperty({
 		description: 'For each chain, the number of locked tokens',
 		type: Object,
-		additionalProperties: { type: 'number' },
+		additionalProperties: { type: 'string' },
 	})
-	chains: { [key: string]: { [innerKey: string]: number } };
+	chains: { [key: string]: { [innerKey: string]: string } };
 }

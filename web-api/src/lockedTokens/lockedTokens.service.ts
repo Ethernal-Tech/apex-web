@@ -94,8 +94,8 @@ export class LockedTokensService {
 
 			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
 
-			const chainResult: Record<string, number> = {
-				amount: parseInt(amountSum ?? '0', 10),
+			const chainResult: Record<string, string> = {
+				amount: amountSum,
 			};
 
 			// ✅ Only query nativeSum if tokenName exists and is non-empty
@@ -109,7 +109,7 @@ export class LockedTokensService {
 					.andWhere('tx.originChain = :chain', { chain })
 					.getRawOne();
 
-				chainResult[tokenName] = parseInt(nativeSum ?? '0', 10);
+				chainResult[tokenName] = nativeSum;
 			}
 
 			result.chains[chain] = chainResult;

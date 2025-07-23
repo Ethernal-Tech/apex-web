@@ -4,6 +4,12 @@ import { RootState } from "../../../redux/store";
 import { useEffect } from "react";
 import { fetchAndUpdateSettingsAction } from "../../../actions/settings";
 import { fetchAndUpdateLockedTokensAction } from "../../../actions/lockedTokens";
+import { ChainEnum } from "../../../swagger/apexBridgeApiService";
+import {
+  TokenEnumToLabel,
+  fromChainToChainCurrency,
+} from "../../../utils/chainUtils";
+import { capitalizeWord } from "../../../utils/generalUtils";
 
 const LockedTokensSection = () => {
   const lockedTokens = useSelector((state: RootState) => state.lockedTokens);
@@ -32,26 +38,54 @@ const LockedTokensSection = () => {
     }
   };
 
+  const powBigInt = (base: bigint, exp: number): bigint => {
+    let result = BigInt(1);
+    for (let i = 0; i < exp; i++) {
+      result = result * base;
+    }
+    return result;
+  };
+
+  const formatBigIntDecimalString = (value: bigint, decimals: number = 6) => {
+    const divisor = powBigInt(BigInt(10), decimals);
+    const whole = value / divisor;
+    const fraction = value % divisor;
+
+    // Format whole part (e.g., "1.000.000")
+    const formattedWhole = whole
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    // Pad fractional part to correct length (e.g., "01")
+    const paddedFraction = fraction
+      .toString()
+      .padStart(decimals, "0")
+      .slice(0, 2); // show only 2 decimals
+
+    return `${formattedWhole},${paddedFraction}`;
+  };
+
   const formatChainsData = () => {
     const data = Object.entries(lockedTokens.chains)
       .map(([key, innerObj]) => {
         const innerText = Object.entries(innerObj)
           .map(([innerKey, num]) => {
             // ❌ Skip: cardano
-            if (key.toLowerCase() === "cardano") {
+            if (key.toLowerCase() === ChainEnum.Cardano) {
               return null;
             }
 
-            const formattedNum = (num / 1e6).toLocaleString("de-DE", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
+            const formattedNum = formatBigIntDecimalString(num, 6);
 
             if (innerKey === "lovelace") {
-              if (key.toLowerCase() === "prime") {
-                return `${formattedNum} AP3X`;
+              if (key.toLowerCase() === ChainEnum.Prime) {
+                return `${formattedNum} ${
+                  TokenEnumToLabel[fromChainToChainCurrency(ChainEnum.Prime)]
+                }`;
               }
-              return `${formattedNum} AP3X`; // fallback for other chains (optional)
+              return `${formattedNum} ${
+                TokenEnumToLabel[fromChainToChainCurrency(ChainEnum.Prime)]
+              }`; // fallback for other chains (optional)
             } else {
               const parts = innerKey.split(".");
               const decoded = parts[1] ? decodeHex(parts[1]) : innerKey;
@@ -72,7 +106,7 @@ const LockedTokensSection = () => {
   const formatTransferredData = () => {
     const data = Object.entries(lockedTokens.totalTransferred)
       .map(([key, innerObj]) => {
-        const keyLabel = key.charAt(0).toUpperCase() + key.slice(1); // Capitalize
+        const keyLabel = capitalizeWord(key); // Capitalize
 
         const filteredEntries = Object.entries(innerObj).filter(
           ([, num]) => num > 0
@@ -82,10 +116,7 @@ const LockedTokensSection = () => {
 
         const innerText = filteredEntries
           .map(([innerKey, num]) => {
-            const formattedNum = (num / 1e6).toLocaleString("de-DE", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
+            const formattedNum = formatBigIntDecimalString(num, 6);
 
             // 🧠 Same logic as formatChainsData
             if (innerKey === "amount") {

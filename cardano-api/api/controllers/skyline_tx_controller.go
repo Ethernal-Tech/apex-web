@@ -430,8 +430,8 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(w http.ResponseWriter,
 		}
 	}
 
-	calculateLockedTokens := func(cfg *core.CardanoChainConfig) (map[string]uint64, error) {
-		tokensSum := map[string]uint64{}
+	calculateLockedTokens := func(cfg *core.CardanoChainConfig) (map[string]string, error) {
+		tokensSum := map[string]*big.Int{}
 
 		txProviderCardano, err := cfg.ChainSpecific.CreateTxProvider()
 		if err != nil {
@@ -449,20 +449,35 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(w http.ResponseWriter,
 		}
 
 		for _, utxo := range utxos {
-			tokensSum[wallet.AdaTokenName] += utxo.Amount
+
+			if _, exists := tokensSum[wallet.AdaTokenName]; !exists {
+				tokensSum[wallet.AdaTokenName] = big.NewInt(0)
+			}
+
+			tokensSum[wallet.AdaTokenName].Add(tokensSum[wallet.AdaTokenName], new(big.Int).SetUint64(utxo.Amount))
+
 			for _, nativeToken := range utxo.Tokens {
 				name := nativeToken.TokenName()
 
 				if _, exists := tokenNames[name]; exists {
-					tokensSum[name] += nativeToken.Amount
+					if _, exists := tokensSum[name]; !exists {
+						tokensSum[name] = big.NewInt(0)
+					}
+					tokensSum[name].Add(tokensSum[name], new(big.Int).SetUint64(nativeToken.Amount))
 				}
 			}
 		}
 
-		return tokensSum, nil
+		// Convert to map[string]string
+		result := map[string]string{}
+		for k, v := range tokensSum {
+			result[k] = v.String()
+		}
+
+		return result, nil
 	}
 
-	response := commonResponse.NewLockedTokensResponse(map[string]map[string]uint64{})
+	response := commonResponse.NewLockedTokensResponse(map[string]map[string]string{})
 
 	for chainID, chainCfg := range c.appConfig.CardanoChains {
 		subResponse, err := calculateLockedTokens(chainCfg)
