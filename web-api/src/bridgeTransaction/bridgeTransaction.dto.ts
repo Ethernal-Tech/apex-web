@@ -40,7 +40,8 @@ export class BridgeTransactionDto {
 	@IsEnum(ChainEnum)
 	@ApiProperty({
 		description: 'Source chain ID',
-		enum: [ChainEnum.Cardano, ChainEnum.Prime],
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
 	})
 	originChain: ChainEnum;
 
@@ -49,7 +50,8 @@ export class BridgeTransactionDto {
 	@NotSame('originChain')
 	@ApiProperty({
 		description: 'Destination chain ID',
-		enum: [ChainEnum.Cardano, ChainEnum.Prime],
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
 	})
 	destinationChain: ChainEnum;
 
@@ -71,6 +73,7 @@ export class BridgeTransactionDto {
 	@ApiProperty({
 		description: 'Status of bridging request',
 		enum: TransactionStatusEnum,
+		enumName: 'TransactionStatusEnum',
 	})
 	status: TransactionStatusEnum;
 
@@ -102,7 +105,8 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 	@IsEnum(ChainEnum)
 	@ApiProperty({
 		description: 'Source chain ID',
-		enum: [ChainEnum.Cardano, ChainEnum.Prime],
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
 	})
 	originChain: ChainEnum;
 
@@ -110,7 +114,8 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 		description: 'Destination chain ID',
 		nullable: true,
 		required: false,
-		enum: [ChainEnum.Cardano, ChainEnum.Prime],
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
 	})
 	destinationChain?: ChainEnum;
 

@@ -7,7 +7,7 @@
 //----------------------
 // ReSharper disable InconsistentNaming
 
-import { BaseClient } from './BaseClient';
+import { BaseClient } from "./BaseClient";
 
 export class SettingsControllerClient extends BaseClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
@@ -21,7 +21,8 @@ export class SettingsControllerClient extends BaseClient {
     }
 
     /**
-     * @return Success
+     * Get bridge settings
+     * @return OK - Returns the configuration settings.
      */
     get(): Promise<SettingsResponseDto> {
         let url_ = this.baseUrl + "/settings";
@@ -51,10 +52,6 @@ export class SettingsControllerClient extends BaseClient {
             result200 = SettingsResponseDto.fromJS(resultData200);
             return result200;
             });
-        } else if (status === 404) {
-            return response.text().then((_responseText) => {
-            return throwException("Not Found", status, _responseText, _headers);
-            });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
@@ -76,7 +73,8 @@ export class TransactionControllerClient extends BaseClient {
     }
 
     /**
-     * @return Success
+     * Create a bridging transaction
+     * @return OK - Returns the raw transaction data, transaction hash, and calculated bridging fee and amounts.
      */
     createCardano(body: CreateTransactionDto): Promise<CreateCardanoTransactionResponseDto> {
         let url_ = this.baseUrl + "/transaction/createCardano";
@@ -112,7 +110,11 @@ export class TransactionControllerClient extends BaseClient {
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
-            return throwException("Bad Request", status, _responseText, _headers);
+            return throwException("Bad Request - Error while creating bridging transaction.", status, _responseText, _headers);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("Internal server Error", status, _responseText, _headers);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -123,7 +125,8 @@ export class TransactionControllerClient extends BaseClient {
     }
 
     /**
-     * @return Success
+     * Get fees required for a bridging transaction
+     * @return OK - Returns calculated fees.
      */
     getCardanoTxFee(body: CreateTransactionDto): Promise<CardanoTransactionFeeResponseDto> {
         let url_ = this.baseUrl + "/transaction/getCardanoTxFee";
@@ -159,7 +162,11 @@ export class TransactionControllerClient extends BaseClient {
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
-            return throwException("Bad Request", status, _responseText, _headers);
+            return throwException("Bad Request - Error while getting bridging transaction fees.", status, _responseText, _headers);
+            });
+        } else if (status === 500) {
+            return response.text().then((_responseText) => {
+            return throwException("Internal server Error", status, _responseText, _headers);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -217,7 +224,8 @@ export class TransactionControllerClient extends BaseClient {
     }
 
     /**
-     * @return Success
+     * Confirm the bridging transaction submission on the source chain
+     * @return OK - Returns confirmed bridging transaction.
      */
     bridgingTransactionSubmitted(body: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
         let url_ = this.baseUrl + "/transaction/bridgingTransactionSubmitted";
@@ -253,7 +261,7 @@ export class TransactionControllerClient extends BaseClient {
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
-            return throwException("Bad Request", status, _responseText, _headers);
+            return throwException("Bad Request - Error while confirming transaction submittion.", status, _responseText, _headers);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -276,7 +284,8 @@ export class BridgeTransactionControllerClient extends BaseClient {
     }
 
     /**
-     * @return Success
+     * Get the bridging transaction details
+     * @return OK - Returns bridging transaction.
      */
     get(id: number): Promise<BridgeTransactionDto> {
         let url_ = this.baseUrl + "/bridgeTransaction/{id}";
@@ -311,7 +320,7 @@ export class BridgeTransactionControllerClient extends BaseClient {
             });
         } else if (status === 404) {
             return response.text().then((_responseText) => {
-            return throwException("Not Found", status, _responseText, _headers);
+            return throwException("Not Found - Bridging transaction not found.", status, _responseText, _headers);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -322,7 +331,8 @@ export class BridgeTransactionControllerClient extends BaseClient {
     }
 
     /**
-     * @return Success
+     * Get multiple bridging transactions with filtering and pagination
+     * @return OK - Returns bridging transactions.
      */
     getAllFiltered(body: BridgeTransactionFilterDto): Promise<BridgeTransactionResponseDto> {
         let url_ = this.baseUrl + "/bridgeTransaction/filter";
@@ -377,7 +387,8 @@ export class ContactControllerClient extends BaseClient {
     }
 
     /**
-     * @return Success
+     * Submit a contact message
+     * @return OK - Message submitted.
      */
     submitContactForm(body: CreateContactDto): Promise<void> {
         let url_ = this.baseUrl + "/contact";
@@ -416,8 +427,62 @@ export class ContactControllerClient extends BaseClient {
     }
 }
 
+export class LockedTokensControllerClient extends BaseClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        super();
+        this.http = http ? http : <any>window;
+        this.baseUrl = this.getBaseUrl("", baseUrl);
+    }
+
+    /**
+     * Get locked tokens amount
+     * @return OK - Get locked tokens amount.
+     */
+    get(): Promise<LockedTokensDto> {
+        let url_ = this.baseUrl + "/lockedTokens";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGet(_response);
+        });
+    }
+
+    protected processGet(response: Response): Promise<LockedTokensDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = LockedTokensDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<LockedTokensDto>(<any>null);
+    }
+}
+
 export class NativeTokenDto implements INativeTokenDto {
+    /** Destination chain ID */
     dstChainID!: string;
+    /** Native token name */
     tokenName!: string;
 
     constructor(data?: INativeTokenDto) {
@@ -452,17 +517,26 @@ export class NativeTokenDto implements INativeTokenDto {
 }
 
 export interface INativeTokenDto {
+    /** Destination chain ID */
     dstChainID: string;
+    /** Native token name */
     tokenName: string;
 }
 
 export class BridgingSettingsDto implements IBridgingSettingsDto {
+    /** For each chain, the minimum fee required to cover the submission of the transaction on the destination chain */
     minChainFeeForBridging!: { [key: string]: number; };
+    /** For each chain, the minimum fee required to cover operational costs */
     minOperationFee!: { [key: string]: number; };
+    /** For each chain, the minimum allowed UTXO value */
     minUtxoChainValue!: { [key: string]: number; };
+    /** Minimum value allowed to be bridged */
     minValueToBridge!: number;
+    /** Maximum amount of currency allowed to be bridged */
     maxAmountAllowedToBridge!: string;
+    /** Maximum amount of native tokens allowed to be bridged */
     maxTokenAmountAllowedToBridge!: string;
+    /** Maximum number of receivers allowed in a bridging request */
     maxReceiversPerBridgingRequest!: number;
 
     constructor(data?: IBridgingSettingsDto) {
@@ -548,19 +622,30 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
 }
 
 export interface IBridgingSettingsDto {
+    /** For each chain, the minimum fee required to cover the submission of the transaction on the destination chain */
     minChainFeeForBridging: { [key: string]: number; };
+    /** For each chain, the minimum fee required to cover operational costs */
     minOperationFee: { [key: string]: number; };
+    /** For each chain, the minimum allowed UTXO value */
     minUtxoChainValue: { [key: string]: number; };
+    /** Minimum value allowed to be bridged */
     minValueToBridge: number;
+    /** Maximum amount of currency allowed to be bridged */
     maxAmountAllowedToBridge: string;
+    /** Maximum amount of native tokens allowed to be bridged */
     maxTokenAmountAllowedToBridge: string;
+    /** Maximum number of receivers allowed in a bridging request */
     maxReceiversPerBridgingRequest: number;
 }
 
 export class SettingsResponseDto implements ISettingsResponseDto {
+    /** Specifies the current operating mode of the application */
     runMode!: string;
+    /** For each source chain, defines the native token that will be received on the destination chain */
     cardanoChainsNativeTokens!: { [key: string]: NativeTokenDto[]; };
+    /** Settings for bridge */
     bridgingSettings!: BridgingSettingsDto;
+    /** Participating chains in the bridge */
     enabledChains!: string[];
 
     constructor(data?: ISettingsResponseDto) {
@@ -624,12 +709,17 @@ export class SettingsResponseDto implements ISettingsResponseDto {
 }
 
 export interface ISettingsResponseDto {
+    /** Specifies the current operating mode of the application */
     runMode: string;
+    /** For each source chain, defines the native token that will be received on the destination chain */
     cardanoChainsNativeTokens: { [key: string]: NativeTokenDto[]; };
+    /** Settings for bridge */
     bridgingSettings: BridgingSettingsDto;
+    /** Participating chains in the bridge */
     enabledChains: string[];
 }
 
+/** Destination chain ID */
 export enum ChainEnum {
     Prime = "prime",
     Vector = "vector",
@@ -638,14 +728,21 @@ export enum ChainEnum {
 }
 
 export class CreateTransactionDto implements ICreateTransactionDto {
+    /** Address that initiates the bridging request on the source chain */
     senderAddress!: string;
     originChain!: ChainEnum;
     destinationChain!: ChainEnum;
+    /** Receiver address on destination chain */
     destinationAddress!: string;
+    /** Amount to be bridged */
     amount!: string;
-    bridgingFee!: string | undefined;
-    operationFee!: string | undefined;
-    utxoCacheKey!: string | undefined;
+    /** Fee covering the submission of the transaction on the destination chain, expressed in Lovelace */
+    bridgingFee?: string | undefined;
+    /** Fee covering the operational cost of processing the bridging request, expressed in Lovelace */
+    operationFee?: string | undefined;
+    /** Key used to enable caching of spent UTXOs */
+    utxoCacheKey?: string | undefined;
+    /** True if the amount is specified in a native token; false if in a currency on source chain */
     isNativeToken!: boolean;
 
     constructor(data?: ICreateTransactionDto) {
@@ -694,24 +791,37 @@ export class CreateTransactionDto implements ICreateTransactionDto {
 }
 
 export interface ICreateTransactionDto {
+    /** Address that initiates the bridging request on the source chain */
     senderAddress: string;
     originChain: ChainEnum;
     destinationChain: ChainEnum;
+    /** Receiver address on destination chain */
     destinationAddress: string;
+    /** Amount to be bridged */
     amount: string;
-    bridgingFee: string | undefined;
-    operationFee: string | undefined;
-    utxoCacheKey: string | undefined;
+    /** Fee covering the submission of the transaction on the destination chain, expressed in Lovelace */
+    bridgingFee?: string | undefined;
+    /** Fee covering the operational cost of processing the bridging request, expressed in Lovelace */
+    operationFee?: string | undefined;
+    /** Key used to enable caching of spent UTXOs */
+    utxoCacheKey?: string | undefined;
+    /** True if the amount is specified in a native token; false if in a currency on source chain */
     isNativeToken: boolean;
 }
 
 export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransactionResponseDto {
+    /** Raw transaction data, encoded as a hexadecimal string */
     txRaw!: string;
+    /** Transaction hash */
     txHash!: string;
+    /** Bridging fee for covering submission on the destination chain, expressed in Lovelace */
     bridgingFee!: number;
+    /** Indicates is fallback mechanism used */
     isFallback!: boolean;
+    /** Amount of currency to be bridged, expressed in Lovelace */
     amount!: number;
-    nativeTokenAmount!: number | undefined;
+    /** Amount of native token to be bridged */
+    nativeTokenAmount?: number | undefined;
 
     constructor(data?: ICreateCardanoTransactionResponseDto) {
         if (data) {
@@ -753,16 +863,24 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
 }
 
 export interface ICreateCardanoTransactionResponseDto {
+    /** Raw transaction data, encoded as a hexadecimal string */
     txRaw: string;
+    /** Transaction hash */
     txHash: string;
+    /** Bridging fee for covering submission on the destination chain, expressed in Lovelace */
     bridgingFee: number;
+    /** Indicates is fallback mechanism used */
     isFallback: boolean;
+    /** Amount of currency to be bridged, expressed in Lovelace */
     amount: number;
-    nativeTokenAmount: number | undefined;
+    /** Amount of native token to be bridged */
+    nativeTokenAmount?: number | undefined;
 }
 
 export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeResponseDto {
+    /** Transaction fee on the source chain, expressed in Lovelace */
     fee!: number;
+    /** Bridging fee for covering submission on the destination chain, expressed in Lovelace */
     bridgingFee!: number;
 
     constructor(data?: ICardanoTransactionFeeResponseDto) {
@@ -797,7 +915,9 @@ export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeR
 }
 
 export interface ICardanoTransactionFeeResponseDto {
+    /** Transaction fee on the source chain, expressed in Lovelace */
     fee: number;
+    /** Bridging fee for covering submission on the destination chain, expressed in Lovelace */
     bridgingFee: number;
 }
 
@@ -860,12 +980,19 @@ export interface ICreateEthTransactionResponseDto {
 export class TransactionSubmittedDto implements ITransactionSubmittedDto {
     originChain!: ChainEnum;
     destinationChain!: ChainEnum;
+    /** Transaction hash on source chain */
     originTxHash!: string;
+    /** Address that initiated the bridging request on the source chain */
     senderAddress!: string;
+    /** Recipient addresses on the destination chain */
     receiverAddrs!: string[];
+    /** Amount of currency to be bridged, including bridging fee */
     amount!: string;
+    /** Amount of native token to be bridged */
     nativeTokenAmount!: string;
+    /** Transaction raw data on source chain */
     txRaw!: string;
+    /** Indicates is fallback mechanism used */
     isFallback!: boolean;
 
     constructor(data?: ITransactionSubmittedDto) {
@@ -927,15 +1054,23 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
 export interface ITransactionSubmittedDto {
     originChain: ChainEnum;
     destinationChain: ChainEnum;
+    /** Transaction hash on source chain */
     originTxHash: string;
+    /** Address that initiated the bridging request on the source chain */
     senderAddress: string;
+    /** Recipient addresses on the destination chain */
     receiverAddrs: string[];
+    /** Amount of currency to be bridged, including bridging fee */
     amount: string;
+    /** Amount of native token to be bridged */
     nativeTokenAmount: string;
+    /** Transaction raw data on source chain */
     txRaw: string;
+    /** Indicates is fallback mechanism used */
     isFallback: boolean;
 }
 
+/** Status of bridging request */
 export enum TransactionStatusEnum {
     Pending = "Pending",
     DiscoveredOnSource = "DiscoveredOnSource",
@@ -948,17 +1083,26 @@ export enum TransactionStatusEnum {
 }
 
 export class BridgeTransactionDto implements IBridgeTransactionDto {
+    /** Bridging transaction ID */
     id!: number;
+    /** Address that initiated the bridging transaction on the source chain */
     senderAddress!: string;
+    /** Recipient addresses on the destination chain */
     receiverAddresses!: string;
+    /** Bridged amount */
     amount!: string;
+    /** Bridged native token amount */
     nativeTokenAmount!: string;
     originChain!: ChainEnum;
     destinationChain!: ChainEnum;
+    /** Transaction hash on source chain */
     sourceTxHash!: string;
+    /** Transaction hash on destination chain */
     destinationTxHash?: string | undefined;
     status!: TransactionStatusEnum;
+    /** Transaction creation date */
     createdAt!: Date;
+    /** Transaction finalization date */
     finishedAt?: Date | undefined;
 
     constructor(data?: IBridgeTransactionDto) {
@@ -1013,32 +1157,51 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
 }
 
 export interface IBridgeTransactionDto {
+    /** Bridging transaction ID */
     id: number;
+    /** Address that initiated the bridging transaction on the source chain */
     senderAddress: string;
+    /** Recipient addresses on the destination chain */
     receiverAddresses: string;
+    /** Bridged amount */
     amount: string;
+    /** Bridged native token amount */
     nativeTokenAmount: string;
     originChain: ChainEnum;
     destinationChain: ChainEnum;
+    /** Transaction hash on source chain */
     sourceTxHash: string;
+    /** Transaction hash on destination chain */
     destinationTxHash?: string | undefined;
     status: TransactionStatusEnum;
+    /** Transaction creation date */
     createdAt: Date;
+    /** Transaction finalization date */
     finishedAt?: Date | undefined;
 }
 
 export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
+    /** Page number to retrieve */
     page?: number | undefined;
+    /** Number of items per page */
     perPage?: number | undefined;
+    /** Address that initiated the bridging transaction on the source chain */
     senderAddress!: string;
     originChain!: ChainEnum;
     destinationChain?: ChainEnum | undefined;
+    /** Minimum amount of currency */
     amountFrom?: string | undefined;
+    /** Maximum amount of currency */
     amountTo?: string | undefined;
+    /** Minimum amount of native token */
     nativeTokenAmountFrom?: string | undefined;
+    /** Maximum amount of native token */
     nativeTokenAmountTo?: string | undefined;
+    /** Field by which the results should be sorted */
     orderBy?: string | undefined;
+    /** Sort direction */
     order?: string | undefined;
+    /** Receiver address on destination chain */
     receiverAddress?: string | undefined;
 
     constructor(data?: IBridgeTransactionFilterDto) {
@@ -1093,24 +1256,38 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
 }
 
 export interface IBridgeTransactionFilterDto {
+    /** Page number to retrieve */
     page?: number | undefined;
+    /** Number of items per page */
     perPage?: number | undefined;
+    /** Address that initiated the bridging transaction on the source chain */
     senderAddress: string;
     originChain: ChainEnum;
     destinationChain?: ChainEnum | undefined;
+    /** Minimum amount of currency */
     amountFrom?: string | undefined;
+    /** Maximum amount of currency */
     amountTo?: string | undefined;
+    /** Minimum amount of native token */
     nativeTokenAmountFrom?: string | undefined;
+    /** Maximum amount of native token */
     nativeTokenAmountTo?: string | undefined;
+    /** Field by which the results should be sorted */
     orderBy?: string | undefined;
+    /** Sort direction */
     order?: string | undefined;
+    /** Receiver address on destination chain */
     receiverAddress?: string | undefined;
 }
 
 export class BridgeTransactionResponseDto implements IBridgeTransactionResponseDto {
+    /** Array of bridging transactions */
     items!: BridgeTransactionDto[];
+    /** Current page number */
     page!: number;
+    /** Number of items returned per page */
     perPage!: number;
+    /** Total number of items */
     total!: number;
 
     constructor(data?: IBridgeTransactionResponseDto) {
@@ -1160,15 +1337,22 @@ export class BridgeTransactionResponseDto implements IBridgeTransactionResponseD
 }
 
 export interface IBridgeTransactionResponseDto {
+    /** Array of bridging transactions */
     items: BridgeTransactionDto[];
+    /** Current page number */
     page: number;
+    /** Number of items returned per page */
     perPage: number;
+    /** Total number of items */
     total: number;
 }
 
 export class CreateContactDto implements ICreateContactDto {
+    /** Full name of the user submitting the message */
     name!: string;
+    /** Email address of the user submitting the message */
     email!: string;
+    /** Message to be submitted */
     message!: string;
 
     constructor(data?: ICreateContactDto) {
@@ -1205,9 +1389,84 @@ export class CreateContactDto implements ICreateContactDto {
 }
 
 export interface ICreateContactDto {
+    /** Full name of the user submitting the message */
     name: string;
+    /** Email address of the user submitting the message */
     email: string;
+    /** Message to be submitted */
     message: string;
+}
+
+export class LockedTokensDto implements ILockedTokensDto {
+    /** Mapping of chains to their locked tokens by token type */
+    chains!: { [key: string]: { [key: string]: string; }; };
+    /** Mapping of total transfered tokens per chain */
+    totalTransfered!: { [key: string]: { [key: string]: string; }; };
+
+    constructor(data?: ILockedTokensDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+        if (!data) {
+            this.chains = {};
+            this.totalTransfered = {};
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (_data["chains"]) {
+                this.chains = {} as any;
+                for (let key in _data["chains"]) {
+                    if (_data["chains"].hasOwnProperty(key))
+                        this.chains![key] = _data["chains"][key] !== undefined ? _data["chains"][key] : {};
+                }
+            }
+            if (_data["totalTransfered"]) {
+                this.totalTransfered = {} as any;
+                for (let key in _data["totalTransfered"]) {
+                    if (_data["totalTransfered"].hasOwnProperty(key))
+                        this.totalTransfered![key] = _data["totalTransfered"][key] !== undefined ? _data["totalTransfered"][key] : {};
+                }
+            }
+        }
+    }
+
+    static fromJS(data: any): LockedTokensDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new LockedTokensDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (this.chains) {
+            data["chains"] = {};
+            for (let key in this.chains) {
+                if (this.chains.hasOwnProperty(key))
+                    data["chains"][key] = this.chains[key];
+            }
+        }
+        if (this.totalTransfered) {
+            data["totalTransfered"] = {};
+            for (let key in this.totalTransfered) {
+                if (this.totalTransfered.hasOwnProperty(key))
+                    data["totalTransfered"][key] = this.totalTransfered[key];
+            }
+        }
+        return data; 
+    }
+}
+
+export interface ILockedTokensDto {
+    /** Mapping of chains to their locked tokens by token type */
+    chains: { [key: string]: { [key: string]: string; }; };
+    /** Mapping of total transfered tokens per chain */
+    totalTransfered: { [key: string]: { [key: string]: string; }; };
 }
 
 export class ApiException extends Error {

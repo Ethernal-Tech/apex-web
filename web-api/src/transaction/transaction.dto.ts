@@ -15,7 +15,8 @@ export class CreateTransactionDto {
 	@IsEnum(ChainEnum)
 	@ApiProperty({
 		description: 'Source chain ID',
-		enum: [ChainEnum.Cardano, ChainEnum.Prime],
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
 	})
 	originChain: ChainEnum;
 
@@ -24,7 +25,8 @@ export class CreateTransactionDto {
 	@NotSame('originChain')
 	@ApiProperty({
 		description: 'Destination chain ID',
-		enum: [ChainEnum.Cardano, ChainEnum.Prime],
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
 	})
 	destinationChain: ChainEnum;
 
@@ -76,7 +78,8 @@ export class TransactionSubmittedDto {
 	@IsEnum(ChainEnum)
 	@ApiProperty({
 		description: 'Source chain ID',
-		enum: [ChainEnum.Cardano, ChainEnum.Prime],
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
 	})
 	originChain: ChainEnum;
 
@@ -85,7 +88,8 @@ export class TransactionSubmittedDto {
 	@NotSame('originChain')
 	@ApiProperty({
 		description: 'Destination chain ID',
-		enum: [ChainEnum.Cardano, ChainEnum.Prime],
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
 	})
 	destinationChain: ChainEnum;
 
@@ -167,6 +171,8 @@ export class CreateCardanoTransactionResponseDto {
 
 	@ApiProperty({
 		description: 'Amount of native token to be bridged',
+		nullable: true,
+		required: false,
 	})
 	nativeTokenAmount?: number;
 }
