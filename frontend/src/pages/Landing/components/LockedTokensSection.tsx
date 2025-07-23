@@ -9,7 +9,6 @@ import {
   fromChainToChainCurrency,
   fromChainToChainNativeToken,
 } from "../../../utils/chainUtils";
-import { capitalizeWord } from "../../../utils/generalUtils";
 
 
 const decodeHex = (hex: string): string => {
@@ -97,31 +96,26 @@ const LockedTokensSection = () => {
   }, [lockedTokens]);
 
   const transferredData = useMemo(() => {
-    return Object.entries(lockedTokens.totalTransferred)
-      .map(([key, innerObj]) => {
-        const keyLabel = capitalizeWord(key);
+    let sum: {[key:string]:bigint} = {}
+    Object.entries(lockedTokens.totalTransferred).forEach(([key, innerObj]) => {
 
         const filteredEntries = Object.entries(innerObj).filter(
           ([, num]) => num > 0
         );
         if (filteredEntries.length === 0) return null;
 
-        const innerText = filteredEntries
-          .map(([innerKey, num]) => {
-            const formattedNum = formatBigIntDecimalString(num, 6);
-            if (innerKey === "amount") {
-              return formattedNum;
-            } else {
-              return `${TokenEnumToLabel[fromChainToChainNativeToken(key.toLowerCase() as ChainEnum)]} ${formattedNum}`;
-            }
-          })
-          .join(", ");
+        filteredEntries.forEach(([innerKey, num]) => {
+            const toTokFunc = innerKey === "amount" ? fromChainToChainCurrency : fromChainToChainNativeToken;
+            const tokenKey = toTokFunc(key.toLowerCase() as ChainEnum);
+            sum[tokenKey] = BigInt(sum[tokenKey] || 0) + num;
+        });
+    });
 
-        return `${keyLabel}: ${innerText}`;
-      })
-      .filter(Boolean)
-      .join(" | ")
-      .trim();
+    
+    const outputValue = BigInt(sum[fromChainToChainCurrency(ChainEnum.Prime)] || 0)
+                      + BigInt(sum[fromChainToChainNativeToken(ChainEnum.Cardano)] || 0);
+
+    return `${formatBigIntDecimalString(outputValue, 6)} ${TokenEnumToLabel[fromChainToChainCurrency(ChainEnum.Prime)]}`;
   }, [lockedTokens]);
 
   return (
