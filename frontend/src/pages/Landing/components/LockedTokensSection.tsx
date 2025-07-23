@@ -2,7 +2,6 @@ import { Box, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 import { useEffect } from "react";
-import { fetchAndUpdateSettingsAction } from "../../../actions/settings";
 import { fetchAndUpdateLockedTokensAction } from "../../../actions/lockedTokens";
 import { ChainEnum } from "../../../swagger/apexBridgeApiService";
 import {
