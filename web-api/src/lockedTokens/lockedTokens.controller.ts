@@ -1,7 +1,7 @@
-import { Body, Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LockedTokensService } from './lockedTokens.service';
-import { LockedTokensDto, LockedTokensResponse } from './lockedTokens.dto';
+import { LockedTokensDto } from './lockedTokens.dto';
 
 @ApiTags('LockedTokens')
 @Controller('lockedTokens')

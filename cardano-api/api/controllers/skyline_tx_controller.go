@@ -449,7 +449,6 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(w http.ResponseWriter,
 		}
 
 		for _, utxo := range utxos {
-
 			if _, exists := tokensSum[wallet.AdaTokenName]; !exists {
 				tokensSum[wallet.AdaTokenName] = big.NewInt(0)
 			}
@@ -463,6 +462,7 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(w http.ResponseWriter,
 					if _, exists := tokensSum[name]; !exists {
 						tokensSum[name] = big.NewInt(0)
 					}
+
 					tokensSum[name].Add(tokensSum[name], new(big.Int).SetUint64(nativeToken.Amount))
 				}
 			}

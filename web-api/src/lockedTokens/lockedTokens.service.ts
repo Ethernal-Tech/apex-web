@@ -4,7 +4,7 @@ import {
 	Injectable,
 	Logger,
 } from '@nestjs/common';
-import { LockedTokensDto, LockedTokensResponse } from './lockedTokens.dto';
+import { LockedTokensResponse } from './lockedTokens.dto';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,9 +14,6 @@ import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SettingsService } from 'src/settings/settings.service';
-import { CardanoNetworkType } from 'src/utils/Address/types';
-
-const RETRY_DELAY_MS = 5000;
 
 @Injectable()
 export class LockedTokensService {

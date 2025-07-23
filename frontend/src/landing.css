@@ -631,12 +631,15 @@ body.landing-page {
 }
 
 .banner-container {
-  width: 100vw;
+  padding: 8px 12px;
+  width: 100%;
   overflow: hidden;
   background-color: #0b5855;
   color: white;
-  height: 50px;
+  min-height: 50px;
   display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
   top: 0;
   left: 0;
@@ -649,5 +652,10 @@ body.landing-page {
   display: inline-block;
   color: 	#FF6F61!important;
   font-weight: bold !important;
+  font-size: 20px !important;
+  white-space: pre-wrap !important;
+  text-align: center !important;
+  margin-left: 26px !important;
+  margin-right: 26px !important;
 }
 

@@ -20,7 +20,7 @@ import { LockedTokensModule } from './lockedTokens/lockedTokens.module';
 		TransactionModule,
 		BridgeTransactionModule,
 		ContactModule,
-		LockedTokensModule
+		LockedTokensModule,
 	],
 	controllers: [],
 	providers: [],
