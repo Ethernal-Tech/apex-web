@@ -146,8 +146,22 @@ const LockedTokensSection = () => {
         }}
         className="banner-text"
       >
-        TVL | {formatChainsData() + "\t"} Transferred |{" "}
-        {formatTransferredData()}
+        {(() => {
+          const chainsData = formatChainsData();
+          const transferredData = formatTransferredData();
+
+          const sections = [];
+
+          if (chainsData.trim()) {
+            sections.push(`TVL | ${chainsData}`);
+          }
+
+          if (transferredData.trim()) {
+            sections.push(`Transferred | ${transferredData}`);
+          }
+
+          return sections.join("\t");
+        })()}
       </Typography>
     </Box>
   );
