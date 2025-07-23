@@ -1,14 +1,15 @@
 import { Box, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../../redux/store";
+import { RootState } from "../../redux/store";
 import { useEffect, useMemo } from "react";
-import { fetchAndUpdateLockedTokensAction } from "../../../actions/lockedTokens";
-import { ChainEnum } from "../../../swagger/apexBridgeApiService";
+import { fetchAndUpdateLockedTokensAction } from "../../actions/lockedTokens";
+import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import {
   TokenEnumToLabel,
   fromChainToChainCurrency,
   fromChainToChainNativeToken,
-} from "../../../utils/chainUtils";
+} from "../../utils/chainUtils";
+import './lockedTokens.css';
 
 
 const decodeHex = (hex: string): string => {
@@ -46,7 +47,7 @@ const formatBigIntDecimalString = (value: bigint, decimals: number = 6) => {
   return `${formattedWhole}.${paddedFraction}`;
 };
 
-const LockedTokensSection = () => {
+const LockedTokensComponent = () => {
   const lockedTokens = useSelector((state: RootState) => state.lockedTokens);
   const dispatch = useDispatch();
 
@@ -140,4 +141,4 @@ const LockedTokensSection = () => {
   );
 };
 
-export default LockedTokensSection;
+export default LockedTokensComponent;
