@@ -221,6 +221,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
             {/* validate inputs */}
             <PasteApexAmountInput
                 maxAmounts={maxAmounts}
+                currencyMaxAmount={currencyMaxAmount}
                 text={amount}
                 setAmount={setAmount}
                 disabled={loading}
@@ -261,7 +262,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
             <ButtonCustom 
                 onClick={onSubmit}
                 variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
-                disabled={loading || currencyMaxAmount <= 0}
+                disabled={loading || currencyMaxAmount < 0}
                 sx={{
                     gridColumn:'span 1',
                     textTransform:'uppercase'

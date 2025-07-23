@@ -4,6 +4,7 @@ import { convertApexToDfm, convertDfmToApex, minBigInt, toFixedFloor } from '../
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import appSettings from '../../../settings/appSettings';
+import { fromChainToChainCurrency, TokenEnumToLabel } from '../../../utils/chainUtils';
 // import './CustomStyles.css'; // Import the CSS file
 
 
@@ -69,12 +70,13 @@ const CustomButton = styled(Button)({
 interface PasteApexAmountInputProps {
   sx?: SxProps<Theme>;
   maxAmounts: { maxByBalance:bigint, maxByAllowed:bigint }
+  currencyMaxAmount: bigint
   text: string
   setAmount: (text: string) => void
   disabled?: boolean;
 }
 
-const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmounts, text, setAmount, disabled }) => {
+const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmounts, currencyMaxAmount, text, setAmount, disabled }) => {
   const maxSendable = minBigInt(maxAmounts.maxByAllowed, maxAmounts.maxByBalance).toString();
 
   const chain = useSelector((state: RootState)=> state.chain.chain);
@@ -155,6 +157,10 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
             {
               !hasInsufficientBalance && overMaxAllowed &&
               <Typography sx={{color:'#ff5e5e',position:'absolute',bottom:0,left:0}}>Over maximum allowed</Typography>
+            }
+            {
+              !hasInsufficientBalance && !overMaxAllowed && currencyMaxAmount < 0 &&
+              <Typography sx={{color:'#ff5e5e',position:'absolute',bottom:0,left:0}}>Insufficient {TokenEnumToLabel[fromChainToChainCurrency(chain)]}</Typography>
             }
         </Box>
         {/* TODO - removed, as APEX doesn't have a price in fiat equivalent */}
