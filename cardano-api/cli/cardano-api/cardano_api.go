@@ -99,6 +99,8 @@ func runCommand(cmd *cobra.Command, _ []string) {
 
 	go apiObj.Start()
 
+	_, _ = outputter.Write([]byte("Server has been started..."))
+
 	defer func() {
 		err := apiObj.Dispose()
 		if err != nil {

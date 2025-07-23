@@ -7,12 +7,7 @@ import {
 	CreateEthTransactionResponseDto,
 	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
-import {
-	ApiResponse,
-	ApiTags,
-	ApiOperation,
-	ApiExcludeEndpoint,
-} from '@nestjs/swagger';
+import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 
 @ApiTags('Transaction')
@@ -73,7 +68,6 @@ export class TransactionController {
 		return await this.transactionService.getCardanoTxFee(model);
 	}
 
-	@ApiExcludeEndpoint()
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: CreateEthTransactionResponseDto,

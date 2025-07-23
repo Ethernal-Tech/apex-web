@@ -5,6 +5,7 @@ import chainSlice from './slices/chainSlice'
 import loginSlice from './slices/loginSlice'
 import accountInfoSlice from './slices/accountInfoSlice'
 import settingsSlice from './slices/settingsSlice'
+import lockedTokensSlice from './slices/lockedTokensSlice'
 
 export const store = configureStore({
 	reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
 		chain: chainSlice,
 		login: loginSlice,
 		settings: settingsSlice,
+		lockedTokens: lockedTokensSlice,
 	},
 	middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
 })
