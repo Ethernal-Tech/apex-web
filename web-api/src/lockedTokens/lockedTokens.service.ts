@@ -4,7 +4,10 @@ import {
 	Injectable,
 	Logger,
 } from '@nestjs/common';
-import { LockedTokensResponse } from './lockedTokens.dto';
+import {
+	LockedTokensResponse,
+	TransferredTokensByDay,
+} from './lockedTokens.dto';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -115,5 +118,94 @@ export class LockedTokensService {
 		await this.cacheManager.set(cacheKey, result, 30);
 
 		return result;
+	}
+
+	public async sumOfTransferredTokenByDate(
+		startDate: Date,
+		endDate: Date,
+	): Promise<TransferredTokensByDay[]> {
+		const chains = Object.values(ChainEnum);
+		const results: TransferredTokensByDay[] = [];
+
+		// Normalize to start of day
+		let current = new Date(startDate);
+		current.setUTCHours(0, 0, 0, 0);
+
+		const end = new Date(endDate);
+		end.setUTCHours(0, 0, 0, 0);
+
+		while (current <= end) {
+			const nextDay = new Date(current);
+			nextDay.setUTCDate(current.getUTCDate() + 1);
+
+			const totalTransferredPerChain: TransferredTokensByDay['totalTransferred'] =
+				{};
+
+			let hasAnyValue = false;
+
+			for (const chain of chains) {
+				const { amountSum } = await this.bridgeTransactionRepository
+					.createQueryBuilder('tx')
+					.select('SUM(tx.amount)', 'amountSum')
+					.where('tx.status = :status', {
+						status: TransactionStatusEnum.ExecutedOnDestination,
+					})
+					.andWhere('tx.originChain = :chain', { chain })
+					.andWhere('tx.finishedAt >= :start AND tx.finishedAt < :end', {
+						start: current,
+						end: nextDay,
+					})
+					.getRawOne();
+
+				const tokens =
+					this.settingsService.SettingsResponse.cardanoChainsNativeTokens[
+						chain
+					];
+
+				const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
+
+				const chainResult: Record<string, string> = {};
+
+				if (amountSum !== null) {
+					chainResult.amount = amountSum;
+					hasAnyValue = true;
+				}
+
+				if (tokenName) {
+					const { nativeSum } = await this.bridgeTransactionRepository
+						.createQueryBuilder('tx')
+						.select('SUM(tx.nativeTokenAmount)', 'nativeSum')
+						.where('tx.status = :status', {
+							status: TransactionStatusEnum.ExecutedOnDestination,
+						})
+						.andWhere('tx.originChain = :chain', { chain })
+						.andWhere('tx.finishedAt >= :start AND tx.finishedAt < :end', {
+							start: current,
+							end: nextDay,
+						})
+						.getRawOne();
+
+					if (nativeSum !== null) {
+						chainResult[tokenName] = nativeSum;
+						hasAnyValue = true;
+					}
+				}
+
+				if (Object.keys(chainResult).length > 0) {
+					totalTransferredPerChain[chain] = chainResult;
+				}
+			}
+
+			if (hasAnyValue) {
+				results.push({
+					date: new Date(current),
+					totalTransferred: totalTransferredPerChain,
+				});
+			}
+
+			current = nextDay;
+		}
+
+		return results;
 	}
 }
