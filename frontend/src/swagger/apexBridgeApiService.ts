@@ -1154,6 +1154,8 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
     createdAt!: Date;
     /** Transaction finalization date */
     finishedAt?: Date | undefined;
+    /** Is in refund phase */
+    isRefund!: boolean;
 
     constructor(data?: IBridgeTransactionDto) {
         if (data) {
@@ -1178,6 +1180,7 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
             this.status = _data["status"];
             this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : <any>undefined;
             this.finishedAt = _data["finishedAt"] ? new Date(_data["finishedAt"].toString()) : <any>undefined;
+            this.isRefund = _data["isRefund"];
         }
     }
 
@@ -1202,6 +1205,7 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
         data["status"] = this.status;
         data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : <any>undefined;
         data["finishedAt"] = this.finishedAt ? this.finishedAt.toISOString() : <any>undefined;
+        data["isRefund"] = this.isRefund;
         return data; 
     }
 }
@@ -1228,6 +1232,8 @@ export interface IBridgeTransactionDto {
     createdAt: Date;
     /** Transaction finalization date */
     finishedAt?: Date | undefined;
+    /** Is in refund phase */
+    isRefund: boolean;
 }
 
 export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {

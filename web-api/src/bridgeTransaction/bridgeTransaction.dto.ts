@@ -91,6 +91,13 @@ export class BridgeTransactionDto {
 		required: false,
 	})
 	finishedAt?: Date;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		type: Boolean,
+		description: 'Is in refund phase',
+	})
+	isRefund: boolean;
 }
 
 export class BridgeTransactionFilterDto extends PaginatedDto {

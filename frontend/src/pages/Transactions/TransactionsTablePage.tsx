@@ -267,9 +267,9 @@ const TransactionsTablePage = () => {
 
               <TableCell sx={tableCellStyle}>
                 <Box sx={{display:'flex'}}>
-                  <Box sx={{marginRight:1}} component='img' src={getStatusIconAndLabel(transaction.status).icon || ''} alt=''/>
+                  <Box sx={{marginRight:1}} component='img' src={getStatusIconAndLabel(transaction.status, transaction.isRefund).icon || ''} alt=''/>
                   <Typography sx={{textTransform:'capitalize', display:'inline-block'}}>
-                    {getStatusIconAndLabel(transaction.status).label}
+                    {getStatusIconAndLabel(transaction.status, transaction.isRefund).label}
                   </Typography>
                 </Box>
               </TableCell>
