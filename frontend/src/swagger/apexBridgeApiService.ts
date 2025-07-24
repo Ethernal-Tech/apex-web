@@ -883,7 +883,6 @@ export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
                     this[property] = _data[property];
             }
             this.chain = _data["chain"];
-            this.rpcUrl = _data["rpcUrl"];
             this.oftAddress = _data["oftAddress"];
             this.chainID = _data["chainID"];
         }
@@ -903,7 +902,6 @@ export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
                 data[property] = this[property];
         }
         data["chain"] = this.chain;
-        data["rpcUrl"] = this.rpcUrl;
         data["oftAddress"] = this.oftAddress;
         data["chainID"] = this.chainID;
         return data;
@@ -1492,6 +1490,8 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
     finishedAt?: Date | undefined;
     /** Transaction is Layer Zero bridging */
     isLayerZero!: boolean;
+    /** Is in refund phase */
+    isRefund!: boolean;
 
     [key: string]: any;
 
@@ -1523,6 +1523,7 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
             this.createdAt = _data["createdAt"] ? new Date(_data["createdAt"].toString()) : undefined as any;
             this.finishedAt = _data["finishedAt"] ? new Date(_data["finishedAt"].toString()) : undefined as any;
             this.isLayerZero = _data["isLayerZero"];
+            this.isRefund = _data["isRefund"];
         }
     }
 
@@ -1552,6 +1553,7 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
         data["createdAt"] = this.createdAt ? this.createdAt.toISOString() : undefined as any;
         data["finishedAt"] = this.finishedAt ? this.finishedAt.toISOString() : undefined as any;
         data["isLayerZero"] = this.isLayerZero;
+        data["isRefund"] = this.isRefund;
         return data;
     }
 }
@@ -1580,6 +1582,8 @@ export interface IBridgeTransactionDto {
     finishedAt?: Date | undefined;
     /** Transaction is Layer Zero bridging */
     isLayerZero: boolean;
+    /** Is in refund phase */
+    isRefund: boolean;
 
     [key: string]: any;
 }
