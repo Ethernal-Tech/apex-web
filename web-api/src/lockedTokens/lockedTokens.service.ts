@@ -120,92 +120,163 @@ export class LockedTokensService {
 		return result;
 	}
 
+	// public async sumOfTransferredTokenByDate(
+	// 	startDate: Date,
+	// 	endDate: Date,
+	// ): Promise<TransferredTokensByDay[]> {
+	// 	const chains = Object.values(ChainEnum);
+	// 	const results: TransferredTokensByDay[] = [];
+
+	// 	// Normalize to start of day
+	// 	let current = new Date(startDate);
+	// 	current.setUTCHours(0, 0, 0, 0);
+
+	// 	const end = new Date(endDate);
+	// 	end.setUTCHours(0, 0, 0, 0);
+
+	// 	while (current <= end) {
+	// 		const nextDay = new Date(current);
+	// 		nextDay.setUTCDate(current.getUTCDate() + 1);
+
+	// 		const totalTransferredPerChain: TransferredTokensByDay['totalTransferred'] =
+	// 			{};
+
+	// 		let hasAnyValue = false;
+
+	// 		for (const chain of chains) {
+	// 			const { amountSum } = await this.bridgeTransactionRepository
+	// 				.createQueryBuilder('tx')
+	// 				.select('SUM(tx.amount)', 'amountSum')
+	// 				.where('tx.status = :status', {
+	// 					status: TransactionStatusEnum.ExecutedOnDestination,
+	// 				})
+	// 				.andWhere('tx.originChain = :chain', { chain })
+	// 				.andWhere('tx.finishedAt >= :start AND tx.finishedAt < :end', {
+	// 					start: current,
+	// 					end: nextDay,
+	// 				})
+	// 				.getRawOne();
+
+	// 			const tokens =
+	// 				this.settingsService.SettingsResponse.cardanoChainsNativeTokens[
+	// 					chain
+	// 				];
+
+	// 			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
+
+	// 			const chainResult: Record<string, string> = {};
+
+	// 			if (amountSum !== null) {
+	// 				chainResult.amount = amountSum;
+	// 				hasAnyValue = true;
+	// 			}
+
+	// 			if (tokenName) {
+	// 				const { nativeSum } = await this.bridgeTransactionRepository
+	// 					.createQueryBuilder('tx')
+	// 					.select('SUM(tx.nativeTokenAmount)', 'nativeSum')
+	// 					.where('tx.status = :status', {
+	// 						status: TransactionStatusEnum.ExecutedOnDestination,
+	// 					})
+	// 					.andWhere('tx.originChain = :chain', { chain })
+	// 					.andWhere('tx.finishedAt >= :start AND tx.finishedAt < :end', {
+	// 						start: current,
+	// 						end: nextDay,
+	// 					})
+	// 					.getRawOne();
+
+	// 				if (nativeSum !== null) {
+	// 					chainResult[tokenName] = nativeSum;
+	// 					hasAnyValue = true;
+	// 				}
+	// 			}
+
+	// 			if (Object.keys(chainResult).length > 0) {
+	// 				totalTransferredPerChain[chain] = chainResult;
+	// 			}
+	// 		}
+
+	// 		if (hasAnyValue) {
+	// 			results.push({
+	// 				date: new Date(current),
+	// 				totalTransferred: totalTransferredPerChain,
+	// 			});
+	// 		}
+
+	// 		current = nextDay;
+	// 	}
+
+	// 	return results;
+	// }
+
 	public async sumOfTransferredTokenByDate(
 		startDate: Date,
 		endDate: Date,
 	): Promise<TransferredTokensByDay[]> {
-		const chains = Object.values(ChainEnum);
-		const results: TransferredTokensByDay[] = [];
+		const rawResults = await this.bridgeTransactionRepository
+			.createQueryBuilder('tx')
+			.select("TIMEZONE('UTC', DATE_TRUNC('day', tx.finishedAt))", 'day')
+			.addSelect('tx.originChain', 'chain')
+			.addSelect('SUM(tx.amount)', 'amountSum')
+			.addSelect('SUM(tx.nativeTokenAmount)', 'nativeSum')
+			.where('tx.status = :status', {
+				status: TransactionStatusEnum.ExecutedOnDestination,
+			})
+			.andWhere('tx.finishedAt >= :start AND tx.finishedAt < :end', {
+				start: startDate,
+				end: endDate,
+			})
+			.groupBy('day, chain')
+			.orderBy('day', 'ASC')
+			.getRawMany();
 
-		// Normalize to start of day
-		let current = new Date(startDate);
-		current.setUTCHours(0, 0, 0, 0);
+		const groupedByDate: Record<string, TransferredTokensByDay> = {};
 
-		const end = new Date(endDate);
-		end.setUTCHours(0, 0, 0, 0);
+		for (const row of rawResults) {
+			const rawDate = new Date(row.day);
+			const utcDate = new Date(
+				Date.UTC(
+					rawDate.getUTCFullYear(),
+					rawDate.getUTCMonth(),
+					rawDate.getUTCDate(),
+				),
+			);
+			const dateKey = utcDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
 
-		while (current <= end) {
-			const nextDay = new Date(current);
-			nextDay.setUTCDate(current.getUTCDate() + 1);
+			const chain: string = row.chain;
+			const amountSum: string = row.amountSum;
+			const nativeSum: string = row.nativeSum;
 
-			const totalTransferredPerChain: TransferredTokensByDay['totalTransferred'] =
-				{};
+			const tokens =
+				this.settingsService.SettingsResponse.cardanoChainsNativeTokens?.[
+					chain
+				];
+			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
 
-			let hasAnyValue = false;
-
-			for (const chain of chains) {
-				const { amountSum } = await this.bridgeTransactionRepository
-					.createQueryBuilder('tx')
-					.select('SUM(tx.amount)', 'amountSum')
-					.where('tx.status = :status', {
-						status: TransactionStatusEnum.ExecutedOnDestination,
-					})
-					.andWhere('tx.originChain = :chain', { chain })
-					.andWhere('tx.finishedAt >= :start AND tx.finishedAt < :end', {
-						start: current,
-						end: nextDay,
-					})
-					.getRawOne();
-
-				const tokens =
-					this.settingsService.SettingsResponse.cardanoChainsNativeTokens[
-						chain
-					];
-
-				const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
-
-				const chainResult: Record<string, string> = {};
-
-				if (amountSum !== null) {
-					chainResult.amount = amountSum;
-					hasAnyValue = true;
-				}
-
-				if (tokenName) {
-					const { nativeSum } = await this.bridgeTransactionRepository
-						.createQueryBuilder('tx')
-						.select('SUM(tx.nativeTokenAmount)', 'nativeSum')
-						.where('tx.status = :status', {
-							status: TransactionStatusEnum.ExecutedOnDestination,
-						})
-						.andWhere('tx.originChain = :chain', { chain })
-						.andWhere('tx.finishedAt >= :start AND tx.finishedAt < :end', {
-							start: current,
-							end: nextDay,
-						})
-						.getRawOne();
-
-					if (nativeSum !== null) {
-						chainResult[tokenName] = nativeSum;
-						hasAnyValue = true;
-					}
-				}
-
-				if (Object.keys(chainResult).length > 0) {
-					totalTransferredPerChain[chain] = chainResult;
-				}
+			if (!groupedByDate[dateKey]) {
+				groupedByDate[dateKey] = {
+					date: utcDate,
+					totalTransferred: {},
+				};
 			}
 
-			if (hasAnyValue) {
-				results.push({
-					date: new Date(current),
-					totalTransferred: totalTransferredPerChain,
-				});
+			const chainResult: Record<string, string> = {};
+
+			if (amountSum !== null) {
+				chainResult.amount = amountSum;
 			}
 
-			current = nextDay;
+			if (tokenName && nativeSum !== null) {
+				chainResult[tokenName] = nativeSum;
+			}
+
+			if (Object.keys(chainResult).length > 0) {
+				groupedByDate[dateKey].totalTransferred[chain] = chainResult;
+			}
 		}
 
-		return results;
+		return Object.values(groupedByDate).sort(
+			(a, b) => a.date.getTime() - b.date.getTime(),
+		);
 	}
 }
