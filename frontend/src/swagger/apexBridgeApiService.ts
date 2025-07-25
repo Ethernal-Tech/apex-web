@@ -477,6 +477,56 @@ export class LockedTokensControllerClient extends BaseClient {
         }
         return Promise.resolve<LockedTokensDto>(<any>null);
     }
+
+    /**
+     * Get sum of transferred tokens per chain
+     * @param startDate Start date in ISO format (e.g., 2024-01-01)
+     * @param endDate End date in ISO format (e.g., 2024-12-31)
+     * @return OK - Returns the sum of transferred tokens per chain.
+     */
+    getTransferredSum(startDate: string, endDate: string): Promise<LockedTokensResponse> {
+        let url_ = this.baseUrl + "/lockedTokens/transferred-per-day?";
+        if (startDate === undefined || startDate === null)
+            throw new Error("The parameter 'startDate' must be defined and cannot be null.");
+        else
+            url_ += "startDate=" + encodeURIComponent("" + startDate) + "&";
+        if (endDate === undefined || endDate === null)
+            throw new Error("The parameter 'endDate' must be defined and cannot be null.");
+        else
+            url_ += "endDate=" + encodeURIComponent("" + endDate) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGetTransferredSum(_response);
+        });
+    }
+
+    protected processGetTransferredSum(response: Response): Promise<LockedTokensResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = LockedTokensResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<LockedTokensResponse>(<any>null);
+    }
 }
 
 export class NativeTokenDto implements INativeTokenDto {
@@ -1467,6 +1517,59 @@ export interface ILockedTokensDto {
     chains: { [key: string]: { [key: string]: string; }; };
     /** Mapping of total transfered tokens per chain */
     totalTransfered: { [key: string]: { [key: string]: string; }; };
+}
+
+export class LockedTokensResponse implements ILockedTokensResponse {
+    /** For each chain, the number of locked tokens */
+    chains!: { [key: string]: string; };
+
+    constructor(data?: ILockedTokensResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+        if (!data) {
+            this.chains = {};
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (_data["chains"]) {
+                this.chains = {} as any;
+                for (let key in _data["chains"]) {
+                    if (_data["chains"].hasOwnProperty(key))
+                        this.chains![key] = _data["chains"][key];
+                }
+            }
+        }
+    }
+
+    static fromJS(data: any): LockedTokensResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new LockedTokensResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (this.chains) {
+            data["chains"] = {};
+            for (let key in this.chains) {
+                if (this.chains.hasOwnProperty(key))
+                    data["chains"][key] = this.chains[key];
+            }
+        }
+        return data; 
+    }
+}
+
+export interface ILockedTokensResponse {
+    /** For each chain, the number of locked tokens */
+    chains: { [key: string]: string; };
 }
 
 export class ApiException extends Error {
