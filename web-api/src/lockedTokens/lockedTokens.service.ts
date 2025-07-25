@@ -4,7 +4,10 @@ import {
 	Injectable,
 	Logger,
 } from '@nestjs/common';
-import { LockedTokensResponse } from './lockedTokens.dto';
+import {
+	LockedTokensResponse,
+	TransferredTokensByDay,
+} from './lockedTokens.dto';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -115,5 +118,74 @@ export class LockedTokensService {
 		await this.cacheManager.set(cacheKey, result, 30);
 
 		return result;
+	}
+
+	public async sumOfTransferredTokenByDate(
+		startDate: Date,
+		endDate: Date,
+	): Promise<TransferredTokensByDay[]> {
+		const rawResults = await this.bridgeTransactionRepository
+			.createQueryBuilder('tx')
+			.select("TIMEZONE('UTC', DATE_TRUNC('day', tx.finishedAt))", 'day')
+			.addSelect('tx.originChain', 'chain')
+			.addSelect('SUM(tx.amount)', 'amountSum')
+			.addSelect('SUM(tx.nativeTokenAmount)', 'nativeSum')
+			.where('tx.status = :status', {
+				status: TransactionStatusEnum.ExecutedOnDestination,
+			})
+			.andWhere('tx.finishedAt >= :start AND tx.finishedAt < :end', {
+				start: startDate,
+				end: endDate,
+			})
+			.groupBy('day, chain')
+			.orderBy('day', 'ASC')
+			.getRawMany();
+
+		const groupedByDate: Record<string, TransferredTokensByDay> = {};
+
+		for (const row of rawResults) {
+			const rawDate = new Date(row.day);
+			const utcDate = new Date(
+				Date.UTC(
+					rawDate.getUTCFullYear(),
+					rawDate.getUTCMonth(),
+					rawDate.getUTCDate(),
+				),
+			);
+			const dateKey = utcDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
+
+			const chain: string = row.chain;
+			const amountSum: string = row.amountSum;
+			const nativeSum: string = row.nativeSum;
+
+			const tokens =
+				this.settingsService.SettingsResponse.cardanoChainsNativeTokens?.[
+					chain
+				];
+			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
+
+			if (!groupedByDate[dateKey]) {
+				groupedByDate[dateKey] = {
+					date: utcDate,
+					totalTransferred: {},
+				};
+			}
+
+			const chainResult: Record<string, string> = {};
+
+			if (amountSum !== null) {
+				chainResult.amount = amountSum;
+			}
+
+			if (tokenName && nativeSum !== null) {
+				chainResult[tokenName] = nativeSum;
+			}
+
+			groupedByDate[dateKey].totalTransferred[chain] = chainResult;
+		}
+
+		return Object.values(groupedByDate).sort(
+			(a, b) => a.date.getTime() - b.date.getTime(),
+		);
 	}
 }

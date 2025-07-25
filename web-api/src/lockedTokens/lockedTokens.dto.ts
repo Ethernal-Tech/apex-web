@@ -33,3 +33,23 @@ export class LockedTokensResponse {
 	})
 	chains: { [key: string]: { [innerKey: string]: string } };
 }
+
+export class TransferredTokensByDay {
+	@ApiProperty({
+		description: 'The date of the transaction or event (YYYY-MM-DD).',
+		type: String,
+		example: '2025-07-24',
+		format: 'date',
+	})
+	date: Date;
+
+	@ApiProperty({
+		description: 'Mapping of total transfered tokens per chain for day',
+		type: 'object',
+		additionalProperties: {
+			type: 'object',
+			additionalProperties: { type: 'string' },
+		},
+	})
+	totalTransferred: { [key: string]: { [innerKey: string]: string } };
+}
