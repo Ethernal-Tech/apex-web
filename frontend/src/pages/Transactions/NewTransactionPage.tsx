@@ -53,18 +53,16 @@ function NewTransactionPage() {
 
 	const prepareCreateCardanoTx = useCallback(async(address: string, amount: string, isNativeToken: boolean = false): Promise<CreateTransactionDto> => {
     const currentAccount = await walletHandler.getChangeAddress(); // get fresh account
-
-    if (account != currentAccount) {
-        throw new Error("Your wallet account has changed. Please reconnect.");
-    }
-
     const currentNetwork = await walletHandler.getNetwork();
     const currentNetworkId = await walletHandler.getNetworkId();
 
-    if (!checkChainCompatibility(chain, currentNetwork!, currentNetworkId)) {
-      throw new Error(`Oops! You're connected to the wrong network. You're currently on ${currentNetwork}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`);
+    if (account != currentAccount) {
+		if (!checkChainCompatibility(chain, currentNetwork!, currentNetworkId)) {
+      		throw new Error(`Oops! You're connected to the wrong network. You're currently on ${currentNetwork}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`);
+    	}
+		
+        throw new Error(`Your wallet account has changed. You originally connected with ${account}, but your wallet is now set to ${currentAccount}. Please reconnect.`);
     }
-    
 
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
