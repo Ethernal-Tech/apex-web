@@ -6,6 +6,7 @@ import { RootState } from "../../redux/store";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
+import walletHandler from '../../features/WalletHandler';
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
 import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
@@ -92,7 +93,13 @@ function NewTransactionPage() {
 		return { createTxDto, createResponse };
 	}, [bridgeTxFee, chain, destinationChain, operationFee, prepareCreateCardanoTx, settings])
 
-	const prepareCreateEthTx = useCallback((address: string, amount: string): CreateTransactionDto => {
+	const prepareCreateEthTx = useCallback(async (address: string, amount: string): Promise<CreateTransactionDto> => {
+    const currentAccount = await walletHandler.getChangeAddress(); // get fresh account
+
+    if (account != currentAccount) {
+        throw new Error("Your wallet account has changed. Please reconnect.");
+      }
+
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
 			operationFee: '0', // will be set on backend
@@ -107,7 +114,7 @@ function NewTransactionPage() {
 	}, [account, chain, destinationChain])
 
 	const getEthTxFee = useCallback(async (address: string, amount: string): Promise<CreateEthTransactionResponseDto> => {
-		const createTxDto = prepareCreateEthTx(address, amount);
+		const createTxDto = await prepareCreateEthTx(address, amount);
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
 		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
@@ -123,7 +130,7 @@ function NewTransactionPage() {
 			throw new Error(validationErr);
 		}
 
-		const createTxDto = prepareCreateEthTx(address, amount);
+		const createTxDto = await prepareCreateEthTx(address, amount);
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (createResponse instanceof ErrorResponse) {
