@@ -14,6 +14,7 @@ import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
+import {checkChainCompatibility, fromChainToNetwork} from "../../utils/chainUtils";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -50,7 +51,21 @@ function NewTransactionPage() {
 		navigate(formatTxDetailUrl(tx));
 	}, [navigate]);
 
-	const prepareCreateCardanoTx = useCallback((address: string, amount: string, isNativeToken: boolean = false): CreateTransactionDto => {
+	const prepareCreateCardanoTx = useCallback(async(address: string, amount: string, isNativeToken: boolean = false): Promise<CreateTransactionDto> => {
+    const currentAccount = await walletHandler.getChangeAddress(); // get fresh account
+
+    if (account != currentAccount) {
+        throw new Error("Your wallet account has changed. Please reconnect.");
+    }
+
+    const currentNetwork = await walletHandler.getNetwork();
+    const currentNetworkId = await walletHandler.getNetworkId();
+
+    if (!checkChainCompatibility(chain, currentNetwork!, currentNetworkId)) {
+      throw new Error(`Oops! You're connected to the wrong network. You're currently on ${currentNetwork}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`);
+    }
+    
+
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
 			operationFee: '0', // will be set on backend
@@ -65,7 +80,7 @@ function NewTransactionPage() {
 	}, [account, chain, destinationChain])
 
 	const getCardanoTxFee = useCallback(async (address: string, amount: string, isNativeToken: boolean): Promise<CardanoTransactionFeeResponseDto> => {
-		const createTxDto = prepareCreateCardanoTx(address, amount, isNativeToken);
+		const createTxDto = await prepareCreateCardanoTx(address, amount, isNativeToken);
 		const bindedCreateAction = getCardanoTransactionFeeAction.bind(null, createTxDto);
 		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
@@ -83,7 +98,7 @@ function NewTransactionPage() {
 			throw new Error(validationErr);
 		}
 
-		const createTxDto = prepareCreateCardanoTx(address, amount, isNativeToken);
+		const createTxDto =  await prepareCreateCardanoTx(address, amount, isNativeToken);
 		const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (createResponse instanceof ErrorResponse) {
@@ -93,13 +108,7 @@ function NewTransactionPage() {
 		return { createTxDto, createResponse };
 	}, [bridgeTxFee, chain, destinationChain, operationFee, prepareCreateCardanoTx, settings])
 
-	const prepareCreateEthTx = useCallback(async (address: string, amount: string): Promise<CreateTransactionDto> => {
-    const currentAccount = await walletHandler.getChangeAddress(); // get fresh account
-
-    if (account != currentAccount) {
-        throw new Error("Your wallet account has changed. Please reconnect.");
-      }
-
+	const prepareCreateEthTx = useCallback((address: string, amount: string): CreateTransactionDto => {
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
 			operationFee: '0', // will be set on backend
@@ -114,7 +123,7 @@ function NewTransactionPage() {
 	}, [account, chain, destinationChain])
 
 	const getEthTxFee = useCallback(async (address: string, amount: string): Promise<CreateEthTransactionResponseDto> => {
-		const createTxDto = await prepareCreateEthTx(address, amount);
+		const createTxDto = prepareCreateEthTx(address, amount);
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
 		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
@@ -130,7 +139,7 @@ function NewTransactionPage() {
 			throw new Error(validationErr);
 		}
 
-		const createTxDto = await prepareCreateEthTx(address, amount);
+		const createTxDto = prepareCreateEthTx(address, amount);
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (createResponse instanceof ErrorResponse) {
