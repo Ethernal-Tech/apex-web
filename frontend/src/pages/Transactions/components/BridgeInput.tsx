@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material'
+import { Box, SelectChangeEvent, Typography } from '@mui/material'
 import TotalBalance from "../components/TotalBalance";
 import PasteTextInput from "../components/PasteTextInput";
 import PasteApexAmountInput from "./PasteApexAmountInput";
@@ -16,6 +16,7 @@ import { white } from '../../../containers/theme';
 import { fromChainToChainCurrency, getIsNativeToken } from '../../../utils/chainUtils';
 import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
+import { onChange } from 'react-toastify/dist/core/store';
 
 type BridgeInputType = {
     bridgeTxFee: string
@@ -171,6 +172,19 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
     [walletUTxOs, chain],
   );
 
+  const handleSourceTokenChange = useCallback(
+  (e: SelectChangeEvent<string>) => {
+      setSourceTokenCallback(e.target.value as TokenEnum);
+  },[setSourceTokenCallback]);
+
+  const memoizedSourceTokenOptions = useMemo(
+  () => supportedSourceTokenOptions,
+  [supportedSourceTokenOptions]);
+
+  const memoizedTokenIcon = useMemo(() => {
+    return sourceToken ? tokenIcons[sourceToken] : undefined;
+  }, [sourceToken]);
+
   // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
   const minDfmValue = chain === ChainEnum.Nexus 
     ? convertDfmToWei(minValueToBridge) 
@@ -203,10 +217,10 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
               <Typography mb={'7px'} sx={{ color: white }}>Source Token</Typography>
               <CustomSelect
                   label="SourceToken"
-                  icon={sourceToken ? tokenIcons[sourceToken] : undefined}
+                  icon={memoizedTokenIcon}
                   value={sourceToken || ''}
-                  onChange={(e) => setSourceTokenCallback(e.target.value as TokenEnum)}
-                  options={supportedSourceTokenOptions}
+                  onChange={handleSourceTokenChange}
+                  options={memoizedSourceTokenOptions}
                   width='50%'
               />
           </Box>
