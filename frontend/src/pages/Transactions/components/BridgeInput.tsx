@@ -171,18 +171,19 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
     [walletUTxOs, chain],
   );
 
-  const handleSourceTokenChange = useCallback(
-  (e: SelectChangeEvent<string>) => {
-      setSourceTokenCallback(e.target.value as TokenEnum);
-  },[setSourceTokenCallback]);
+  const handleSourceTokenChange = useCallback((e: SelectChangeEvent<string>) => 
+    {setSourceTokenCallback(e.target.value as TokenEnum);
+  }, [setSourceTokenCallback]);
 
   const memoizedSourceTokenOptions = useMemo(
-  () => supportedSourceTokenOptions,
-  [supportedSourceTokenOptions]);
+    () => supportedSourceTokenOptions,
+    [supportedSourceTokenOptions]
+  );
 
-  const memoizedTokenIcon = useMemo(() => {
-    return sourceToken ? tokenIcons[sourceToken] : undefined;
-  }, [sourceToken]);
+  const memoizedTokenIcon = useMemo(() => 
+    {return sourceToken ? tokenIcons[sourceToken] : undefined;},  
+    [sourceToken]
+  );
 
   // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
   const minDfmValue = chain === ChainEnum.Nexus 
