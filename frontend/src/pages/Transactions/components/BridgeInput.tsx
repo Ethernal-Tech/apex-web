@@ -16,7 +16,6 @@ import { white } from '../../../containers/theme';
 import { fromChainToChainCurrency, getIsNativeToken } from '../../../utils/chainUtils';
 import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
-import { onChange } from 'react-toastify/dist/core/store';
 
 type BridgeInputType = {
     bridgeTxFee: string
