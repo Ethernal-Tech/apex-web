@@ -129,9 +129,22 @@ export class LockedTokensService {
 		endDate: Date,
 		groupBy: GroupByTimePeriod,
 	): Promise<TransferredTokensByDay[]> {
-		const dateTruncUnit = groupBy.toLowerCase(); // 'hour', 'day', etc.
+		const rawResults = await this.fetchGroupedTransactionSums(
+			startDate,
+			endDate,
+			groupBy,
+		);
+		return this.transformRawResultsToDto(rawResults, groupBy);
+	}
 
-		const rawResults = await this.bridgeTransactionRepository
+	private async fetchGroupedTransactionSums(
+		startDate: Date,
+		endDate: Date,
+		groupBy: GroupByTimePeriod,
+	) {
+		const dateTruncUnit = groupBy.toLowerCase();
+
+		return this.bridgeTransactionRepository
 			.createQueryBuilder('tx')
 			.select(
 				`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`,
@@ -152,41 +165,19 @@ export class LockedTokensService {
 			.addGroupBy('tx.originChain')
 			.orderBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`, 'ASC')
 			.getRawMany();
+	}
 
+	private transformRawResultsToDto(
+		rawResults: any[],
+		groupBy: GroupByTimePeriod,
+	): TransferredTokensByDay[] {
 		const groupedByDate: Record<string, TransferredTokensByDay> = {};
 
 		for (const row of rawResults) {
-			const rawDate = new Date(row.groupedDate);
-			let normalizedDate: Date;
-
-			if (groupBy === GroupByTimePeriod.Week) {
-				// Normalize to start of ISO week (Monday)
-				const day = rawDate.getUTCDay(); // 0 (Sun) to 6 (Sat)
-				const diffToMonday = (day + 6) % 7; // days since last Monday
-				normalizedDate = new Date(
-					Date.UTC(
-						rawDate.getUTCFullYear(),
-						rawDate.getUTCMonth(),
-						rawDate.getUTCDate() - diffToMonday,
-					),
-				);
-			} else {
-				// Set time to start of hour/day/month
-				normalizedDate = new Date(
-					Date.UTC(
-						rawDate.getUTCFullYear(),
-						groupBy === GroupByTimePeriod.Month
-							? rawDate.getUTCMonth()
-							: rawDate.getUTCMonth(),
-						groupBy === GroupByTimePeriod.Month ? 1 : rawDate.getUTCDate(),
-						groupBy === GroupByTimePeriod.Hour ? rawDate.getUTCHours() : 0,
-						0,
-						0,
-						0,
-					),
-				);
-			}
-
+			const normalizedDate = this.normalizeGroupedDate(
+				new Date(row.groupedDate),
+				groupBy,
+			);
 			const dateKey = normalizedDate.toISOString();
 
 			const chain: string = row.chain;
@@ -221,6 +212,34 @@ export class LockedTokensService {
 
 		return Object.values(groupedByDate).sort(
 			(a, b) => a.date.getTime() - b.date.getTime(),
+		);
+	}
+
+	private normalizeGroupedDate(date: Date, groupBy: GroupByTimePeriod): Date {
+		if (groupBy === GroupByTimePeriod.Week) {
+			const day = date.getUTCDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+			const diffToMonday = (day + 6) % 7; // days since last Monday
+			return new Date(
+				Date.UTC(
+					date.getUTCFullYear(),
+					date.getUTCMonth(),
+					date.getUTCDate() - diffToMonday,
+				),
+			);
+		}
+
+		return new Date(
+			Date.UTC(
+				date.getUTCFullYear(),
+				groupBy === GroupByTimePeriod.Month
+					? date.getUTCMonth()
+					: date.getUTCMonth(),
+				groupBy === GroupByTimePeriod.Month ? 1 : date.getUTCDate(),
+				groupBy === GroupByTimePeriod.Hour ? date.getUTCHours() : 0,
+				0,
+				0,
+				0,
+			),
 		);
 	}
 }
