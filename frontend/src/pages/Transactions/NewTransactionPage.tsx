@@ -12,6 +12,7 @@ import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submit
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
+import walletHandler from "../../features/WalletHandler";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -30,7 +31,9 @@ function NewTransactionPage() {
 		navigate(formatTxDetailUrl(tx));
 	}, [navigate]);
 
-	const prepareCreateCardanoTx = useCallback((address: string, amount: string): CreateTransactionDto => {
+	const prepareCreateCardanoTx = useCallback(async(address: string, amount: string): Promise<CreateTransactionDto> => {
+		await walletHandler.getChangeAddress(); // this line triggers an error if the wallet account has been changed by the user in the meantime
+
 		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
 		if (validationErr) {
 			throw new Error(validationErr);
@@ -48,7 +51,7 @@ function NewTransactionPage() {
 	}, [account, bridgeTxFee, chain, destinationChain, settings])
 
 	const getCardanoTxFee = useCallback(async (address: string, amount: string): Promise<CardanoTransactionFeeResponseDto> => {
-		const createTxDto = prepareCreateCardanoTx(address, amount);
+		const createTxDto = await prepareCreateCardanoTx(address, amount);
 		const bindedCreateAction = getCardanoTransactionFeeAction.bind(null, createTxDto);
 		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
@@ -59,7 +62,7 @@ function NewTransactionPage() {
 	}, [prepareCreateCardanoTx])
 
 	const createCardanoTx = useCallback(async (address: string, amount: string): Promise<CreateCardanoTxResponse> => {
-		const createTxDto = prepareCreateCardanoTx(address, amount);
+		const createTxDto = await prepareCreateCardanoTx(address, amount);
 		const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (createResponse instanceof ErrorResponse) {
