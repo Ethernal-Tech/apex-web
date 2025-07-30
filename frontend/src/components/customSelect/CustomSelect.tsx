@@ -121,4 +121,4 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
   );
 };
 
-export default CustomSelect;
+export default React.memo(CustomSelect);
