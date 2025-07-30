@@ -51,7 +51,7 @@ function NewTransactionPage() {
 	}, [navigate]);
 
 	const prepareCreateCardanoTx = useCallback(async(address: string, amount: string, isNativeToken: boolean = false): Promise<CreateTransactionDto> => {
-    await walletHandler.getChangeAddress(); // check if the account has changed
+    	await walletHandler.getChangeAddress(); // this line triggers an error if the wallet account has been changed by the user in the meantime
 
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
