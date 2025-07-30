@@ -14,7 +14,6 @@ import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
-import {checkChainCompatibility, fromChainToNetwork} from "../../utils/chainUtils";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -52,17 +51,7 @@ function NewTransactionPage() {
 	}, [navigate]);
 
 	const prepareCreateCardanoTx = useCallback(async(address: string, amount: string, isNativeToken: boolean = false): Promise<CreateTransactionDto> => {
-    const currentAccount = await walletHandler.getChangeAddress(); // get fresh account
-    const currentNetwork = await walletHandler.getNetwork();
-    const currentNetworkId = await walletHandler.getNetworkId();
-
-    if (account != currentAccount) {
-		if (!checkChainCompatibility(chain, currentNetwork!, currentNetworkId)) {
-      		throw new Error(`Oops! You're connected to the wrong network. You're currently on ${currentNetwork}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`);
-    	}
-		
-        throw new Error(`Your wallet account has changed. You originally connected with ${account}, but your wallet is now set to ${currentAccount}. Please reconnect.`);
-    }
+    walletHandler.getChangeAddress(); // check if the account has changed
 
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
