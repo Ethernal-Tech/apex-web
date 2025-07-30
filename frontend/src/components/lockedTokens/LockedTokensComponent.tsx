@@ -134,7 +134,7 @@ const LockedTokensComponent = () => {
         <Typography
           className="banner-text"
         >
-          Transferred | {transferredData}
+          TVB | {transferredData}
         </Typography>
       }
     </Box>
