@@ -6,6 +6,7 @@ import { RootState } from "../../redux/store";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
+import walletHandler from '../../features/WalletHandler';
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
 import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
@@ -49,7 +50,9 @@ function NewTransactionPage() {
 		navigate(formatTxDetailUrl(tx));
 	}, [navigate]);
 
-	const prepareCreateCardanoTx = useCallback((address: string, amount: string, isNativeToken: boolean = false): CreateTransactionDto => {
+	const prepareCreateCardanoTx = useCallback(async(address: string, amount: string, isNativeToken: boolean = false): Promise<CreateTransactionDto> => {
+    	await walletHandler.getChangeAddress(); // this line triggers an error if the wallet account has been changed by the user in the meantime
+
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
 			operationFee: '0', // will be set on backend
@@ -64,7 +67,7 @@ function NewTransactionPage() {
 	}, [account, chain, destinationChain])
 
 	const getCardanoTxFee = useCallback(async (address: string, amount: string, isNativeToken: boolean): Promise<CardanoTransactionFeeResponseDto> => {
-		const createTxDto = prepareCreateCardanoTx(address, amount, isNativeToken);
+		const createTxDto = await prepareCreateCardanoTx(address, amount, isNativeToken);
 		const bindedCreateAction = getCardanoTransactionFeeAction.bind(null, createTxDto);
 		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
@@ -82,7 +85,7 @@ function NewTransactionPage() {
 			throw new Error(validationErr);
 		}
 
-		const createTxDto = prepareCreateCardanoTx(address, amount, isNativeToken);
+		const createTxDto =  await prepareCreateCardanoTx(address, amount, isNativeToken);
 		const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (createResponse instanceof ErrorResponse) {
