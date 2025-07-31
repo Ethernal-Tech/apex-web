@@ -231,9 +231,7 @@ export class LockedTokensService {
 		return new Date(
 			Date.UTC(
 				date.getUTCFullYear(),
-				groupBy === GroupByTimePeriod.Month
-					? date.getUTCMonth()
-					: date.getUTCMonth(),
+				date.getUTCMonth(),
 				groupBy === GroupByTimePeriod.Month ? 1 : date.getUTCDate(),
 				groupBy === GroupByTimePeriod.Hour ? date.getUTCHours() : 0,
 				0,
