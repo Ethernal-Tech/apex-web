@@ -5,7 +5,7 @@ import appSettings from "../settings/appSettings";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
 const NEXUS_TESTNET_CHAIN_ID = BigInt(9070);
-const NEXUS_MAINNET_CHAIN_ID = BigInt(9070); // TODO: CHANGE WHEN WE FIND OUT
+const NEXUS_MAINNET_CHAIN_ID = BigInt(9069);
 
 type ChainData = {
     mainnet: { networkID: number|bigint, network: ApexBridgeNetwork },

@@ -12,6 +12,9 @@ import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submit
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
+import walletHandler from "../../features/WalletHandler";
+import evmWalletHandler from "../../features/EvmWalletHandler";
+import { fromEvmNetworkIdToNetwork, fromChainToNetworkId, checkChainCompatibility, fromChainToNetwork } from "../../utils/chainUtils";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -30,7 +33,9 @@ function NewTransactionPage() {
 		navigate(formatTxDetailUrl(tx));
 	}, [navigate]);
 
-	const prepareCreateCardanoTx = useCallback((address: string, amount: string): CreateTransactionDto => {
+	const prepareCreateCardanoTx = useCallback(async(address: string, amount: string): Promise<CreateTransactionDto> => {
+		await walletHandler.getChangeAddress(); // this line triggers an error if the wallet account has been changed by the user in the meantime
+
 		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
 		if (validationErr) {
 			throw new Error(validationErr);
@@ -48,7 +53,7 @@ function NewTransactionPage() {
 	}, [account, bridgeTxFee, chain, destinationChain, settings])
 
 	const getCardanoTxFee = useCallback(async (address: string, amount: string): Promise<CardanoTransactionFeeResponseDto> => {
-		const createTxDto = prepareCreateCardanoTx(address, amount);
+		const createTxDto = await prepareCreateCardanoTx(address, amount);
 		const bindedCreateAction = getCardanoTransactionFeeAction.bind(null, createTxDto);
 		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
@@ -59,7 +64,7 @@ function NewTransactionPage() {
 	}, [prepareCreateCardanoTx])
 
 	const createCardanoTx = useCallback(async (address: string, amount: string): Promise<CreateCardanoTxResponse> => {
-		const createTxDto = prepareCreateCardanoTx(address, amount);
+		const createTxDto = await prepareCreateCardanoTx(address, amount);
 		const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (createResponse instanceof ErrorResponse) {
@@ -69,7 +74,18 @@ function NewTransactionPage() {
 		return { createTxDto, createResponse };
 	}, [prepareCreateCardanoTx])
 
-	const prepareCreateEthTx = useCallback((address: string, amount: string): CreateTransactionDto => {
+	const prepareCreateEthTx = useCallback(async (address: string, amount: string): Promise<CreateTransactionDto> => {
+		const networkId = await evmWalletHandler.getNetworkId();
+		const network = fromEvmNetworkIdToNetwork(networkId);
+
+		if (!network) {
+			throw new Error(`Invalid networkId: ${networkId}. Expected networkId: ${fromChainToNetworkId(chain)}. Please select network with networkId: ${fromChainToNetworkId(chain)} in your wallet.`);
+		}
+
+		if (!checkChainCompatibility(chain, network, networkId)) {
+			throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`);
+		}
+
 		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
 		if (validationErr) {
 			throw new Error(validationErr);
@@ -87,7 +103,7 @@ function NewTransactionPage() {
 	}, [account, bridgeTxFee, chain, destinationChain, settings])
 
 	const getEthTxFee = useCallback(async (address: string, amount: string): Promise<CreateEthTransactionResponseDto> => {
-		const createTxDto = prepareCreateEthTx(address, amount);
+		const createTxDto = await prepareCreateEthTx(address, amount);
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
 		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
@@ -98,7 +114,7 @@ function NewTransactionPage() {
 	}, [prepareCreateEthTx])
 
 	const createEthTx = useCallback(async (address: string, amount: string): Promise<CreateEthTxResponse> => {
-		const createTxDto = prepareCreateEthTx(address, amount);
+		const createTxDto = await prepareCreateEthTx(address, amount);
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (createResponse instanceof ErrorResponse) {
