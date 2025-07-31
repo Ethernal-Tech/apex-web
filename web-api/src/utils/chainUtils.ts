@@ -2,7 +2,7 @@ import { ChainEnum } from 'src/common/enum';
 import { CardanoNetworkType } from './Address/types';
 
 const NEXUS_TESTNET_CHAIN_ID = BigInt(9070);
-const NEXUS_MAINNET_CHAIN_ID = BigInt(9069); 
+const NEXUS_MAINNET_CHAIN_ID = BigInt(9069);
 
 const CHAIN_TO_CHAIN_ID = {
 	[ChainEnum.Prime]: 1,

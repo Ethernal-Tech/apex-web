@@ -28,3 +28,7 @@ check-go:
 .PHONY: check-git
 check-git:
 	@which git > /dev/null || (echo "git is not installed. Please install and try again."; exit 1)
+
+start:
+	go run main.go run-cardano-api --config "./config.json"
+.PHONY: start
