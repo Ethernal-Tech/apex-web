@@ -64,7 +64,7 @@ export class LockedTokensController {
 			'Time period to group by: hour, day, week, or month (default is day)',
 	})
 	@HttpCode(HttpStatus.OK)
-	@Get('transferred-per-day')
+	@Get('transferred')
 	async getTransferredSum(
 		@Query('startDate') startDateStr: string,
 		@Query('endDate') endDateStr: string,
