@@ -6,6 +6,7 @@ import {ReactComponent as ApexIcon} from "../../../assets/icons/apexTransferIcon
 import { convertDfmToApex, toFixed } from "../../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
+import { fromChainToChainCurrency, TokenEnumToLabel } from "../../../utils/chainUtils";
 
 const TotalBalance = () => {
 	const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
@@ -33,7 +34,7 @@ const TotalBalance = () => {
 
             <Typography textTransform={'uppercase'} sx={{display:'flex',alignItems:'center'}}>
                 <ApexIcon/>
-                <Box component="span" ml={1}>Apex</Box>
+                <Box component="span" ml={1}>{TokenEnumToLabel[fromChainToChainCurrency(chain)]}</Box>
             </Typography>
         </Box>
 

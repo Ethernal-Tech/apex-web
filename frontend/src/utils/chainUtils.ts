@@ -140,3 +140,27 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
         window.open(url, '_blank')
     }
 }
+
+export const fromChainToChainCurrency = (chain: ChainEnum): TokenEnum => {
+    switch (chain) {
+        case ChainEnum.Prime: {
+            return TokenEnum.APEX;
+        }
+        default:
+            return TokenEnum.APEX;
+    }
+}
+
+export enum TokenEnum {
+	Ada = 'Ada',
+	WAda = 'WAda',
+	APEX = 'APEX',
+	WAPEX = 'WAPEX',
+}
+
+export const TokenEnumToLabel: Record<TokenEnum, string> = {
+  [TokenEnum.Ada]: 'ADA',
+  [TokenEnum.WAda]: 'wADA',
+  [TokenEnum.APEX]: 'AP3X',
+  [TokenEnum.WAPEX]: 'cAP3X', 
+};
