@@ -217,6 +217,12 @@ export class LockedTokensService {
 
 	private normalizeGroupedDate(date: Date, groupBy: GroupByTimePeriod): Date {
 		switch (groupBy) {
+			case GroupByTimePeriod.Year:
+				return new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+
+			case GroupByTimePeriod.Month:
+				return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+
 			case GroupByTimePeriod.Week: {
 				const day = date.getUTCDay(); // 0 = Sunday, ..., 6 = Saturday
 				const diffToMonday = (day + 6) % 7;
@@ -229,33 +235,27 @@ export class LockedTokensService {
 				);
 			}
 
-			case GroupByTimePeriod.Month:
-				return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
-
-			case GroupByTimePeriod.Year:
-				return new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-
-			case GroupByTimePeriod.Hour:
+			case GroupByTimePeriod.Day:
 				return new Date(
 					Date.UTC(
 						date.getUTCFullYear(),
 						date.getUTCMonth(),
 						date.getUTCDate(),
-						date.getUTCHours(),
+						0,
 						0,
 						0,
 						0,
 					),
 				);
 
-			case GroupByTimePeriod.Day:
+			case GroupByTimePeriod.Hour:
 			default:
 				return new Date(
 					Date.UTC(
 						date.getUTCFullYear(),
 						date.getUTCMonth(),
 						date.getUTCDate(),
-						0,
+						date.getUTCHours(),
 						0,
 						0,
 						0,

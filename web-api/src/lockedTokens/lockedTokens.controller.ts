@@ -90,7 +90,7 @@ export class LockedTokensController {
 		return this.lockedTokensService.sumOfTransferredTokenByDate(
 			startDate,
 			endDate,
-			groupByStr,
+			groupBy,
 		);
 	}
 }
