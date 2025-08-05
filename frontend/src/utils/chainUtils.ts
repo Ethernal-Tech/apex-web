@@ -100,6 +100,8 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
 
 const getExplorerTxUrl = (chain: ChainEnum, txHash: string) => {
     const base = appSettings.isMainnet ? EXPLORER_URLS.mainnet[chain] : EXPLORER_URLS.testnet[chain];
+
+    if (!base || base.trim() === '') return
     
     let url
     switch (chain) {
@@ -123,7 +125,7 @@ const getExplorerTxUrl = (chain: ChainEnum, txHash: string) => {
     return url;
 }
 
-export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
+export const getExplorerUrl = (tx: BridgeTransactionDto | undefined) => {
     if (!tx) {
         return;
     }
@@ -131,27 +133,22 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
     if (tx.status === TransactionStatusEnum.ExecutedOnDestination && tx.destinationTxHash) {
         const txHash = tx.destinationChain === ChainEnum.Nexus && !tx.destinationTxHash.startsWith('0x')
             ? `0x${tx.destinationTxHash}` : tx.destinationTxHash;
-        const url = getExplorerTxUrl(tx.destinationChain, txHash)
-        window.open(url, '_blank')
+
+        return getExplorerTxUrl(tx.destinationChain, txHash)
     } else if (tx.sourceTxHash) {
         const txHash = tx.originChain === ChainEnum.Nexus && !tx.sourceTxHash.startsWith('0x')
             ? `0x${tx.sourceTxHash}` : tx.sourceTxHash;
-        const url = getExplorerTxUrl(tx.originChain, txHash)
-        window.open(url, '_blank')
+
+        return getExplorerTxUrl(tx.originChain, txHash)
     }
 }
 
-export const isExplorerExist = (tx: BridgeTransactionDto): boolean => {
-    if (tx.status === TransactionStatusEnum.ExecutedOnDestination && tx.destinationTxHash) {
-        const base = appSettings.isMainnet ? EXPLORER_URLS.mainnet[tx.destinationChain] : EXPLORER_URLS.testnet[tx.destinationChain];
-        return !!base && base.trim() !== '';
-    }else if (tx.sourceTxHash){
-        const base = appSettings.isMainnet ? EXPLORER_URLS.mainnet[tx.destinationChain] : EXPLORER_URLS.testnet[tx.destinationChain];
-        return !!base && base.trim() !== '';
+export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
+    const url = getExplorerUrl(tx);
+    if (url) {
+          window.open(url, '_blank')
     }
-    
-    return false;
-};
+}
 
 export enum TokenEnum {
 	Ada = 'Ada',
