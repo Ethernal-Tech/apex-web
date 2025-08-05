@@ -89,7 +89,7 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
     mainnet: {
         [ChainEnum.Prime]: 'https://apexscan.org/en',
         [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
-        [ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
+        [ChainEnum.Nexus]: '',
     },
     testnet: {
         [ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
@@ -140,6 +140,18 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
         window.open(url, '_blank')
     }
 }
+
+export const isExplorerExist = (tx: BridgeTransactionDto): boolean => {
+    if (tx.status === TransactionStatusEnum.ExecutedOnDestination && tx.destinationTxHash) {
+        const base = appSettings.isMainnet ? EXPLORER_URLS.mainnet[tx.destinationChain] : EXPLORER_URLS.testnet[tx.destinationChain];
+        return !!base && base.trim() !== '';
+    }else if (tx.sourceTxHash){
+        const base = appSettings.isMainnet ? EXPLORER_URLS.mainnet[tx.destinationChain] : EXPLORER_URLS.testnet[tx.destinationChain];
+        return !!base && base.trim() !== '';
+    }
+    
+    return false;
+};
 
 export enum TokenEnum {
 	Ada = 'Ada',
