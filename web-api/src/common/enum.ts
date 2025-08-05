@@ -15,3 +15,11 @@ export enum ChainEnum {
 	Nexus = 'nexus',
 	Cardano = 'cardano',
 }
+
+export enum GroupByTimePeriod {
+	Hour = 'hour',
+	Day = 'day',
+	Week = 'week',
+	Month = 'month',
+	Year = 'year',
+}

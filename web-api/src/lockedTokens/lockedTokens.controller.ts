@@ -6,6 +6,7 @@ import {
 	LockedTokensResponse,
 	TransferredTokensByDay,
 } from './lockedTokens.dto';
+import { GroupByTimePeriod } from 'src/common/enum';
 
 @ApiTags('LockedTokens')
 @Controller('lockedTokens')
@@ -55,11 +56,19 @@ export class LockedTokensController {
 		required: true,
 		description: 'End date in ISO format (e.g., 2024-12-31)',
 	})
+	@ApiQuery({
+		name: 'groupBy',
+		required: false,
+		enum: GroupByTimePeriod,
+		description:
+			'Time period to group by: hour, day, week, or month (default is day)',
+	})
 	@HttpCode(HttpStatus.OK)
-	@Get('transferred-per-day')
+	@Get('transferred')
 	async getTransferredSum(
 		@Query('startDate') startDateStr: string,
 		@Query('endDate') endDateStr: string,
+		@Query('groupBy') groupByStr: GroupByTimePeriod,
 	): Promise<TransferredTokensByDay[]> {
 		const startDate = new Date(startDateStr);
 		const endDate = new Date(endDateStr);
@@ -70,9 +79,18 @@ export class LockedTokensController {
 			);
 		}
 
+		const groupBy: GroupByTimePeriod = groupByStr ?? GroupByTimePeriod.Day;
+
+		if (!Object.values(GroupByTimePeriod).includes(groupBy)) {
+			throw new Error(
+				`Invalid groupBy value. Expected one of: ${Object.values(GroupByTimePeriod).join(', ')}`,
+			);
+		}
+
 		return this.lockedTokensService.sumOfTransferredTokenByDate(
 			startDate,
 			endDate,
+			groupBy,
 		);
 	}
 }

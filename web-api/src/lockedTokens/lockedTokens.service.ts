@@ -13,7 +13,11 @@ import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { Repository } from 'typeorm';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import {
+	ChainEnum,
+	GroupByTimePeriod,
+	TransactionStatusEnum,
+} from 'src/common/enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SettingsService } from 'src/settings/settings.service';
@@ -123,10 +127,29 @@ export class LockedTokensService {
 	public async sumOfTransferredTokenByDate(
 		startDate: Date,
 		endDate: Date,
+		groupBy: GroupByTimePeriod,
 	): Promise<TransferredTokensByDay[]> {
-		const rawResults = await this.bridgeTransactionRepository
+		const rawResults = await this.fetchGroupedTransactionSums(
+			startDate,
+			endDate,
+			groupBy,
+		);
+		return this.transformRawResultsToDto(rawResults, groupBy);
+	}
+
+	private async fetchGroupedTransactionSums(
+		startDate: Date,
+		endDate: Date,
+		groupBy: GroupByTimePeriod,
+	) {
+		const dateTruncUnit = groupBy.toLowerCase();
+
+		return this.bridgeTransactionRepository
 			.createQueryBuilder('tx')
-			.select("TIMEZONE('UTC', DATE_TRUNC('day', tx.finishedAt))", 'day')
+			.select(
+				`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`,
+				'groupedDate',
+			)
 			.addSelect('tx.originChain', 'chain')
 			.addSelect('SUM(tx.amount)', 'amountSum')
 			.addSelect('SUM(tx.nativeTokenAmount)', 'nativeSum')
@@ -137,22 +160,25 @@ export class LockedTokensService {
 				start: startDate,
 				end: endDate,
 			})
-			.groupBy('day, chain')
-			.orderBy('day', 'ASC')
+			.setParameter('truncUnit', dateTruncUnit)
+			.groupBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`)
+			.addGroupBy('tx.originChain')
+			.orderBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`, 'ASC')
 			.getRawMany();
+	}
 
+	private transformRawResultsToDto(
+		rawResults: any[],
+		groupBy: GroupByTimePeriod,
+	): TransferredTokensByDay[] {
 		const groupedByDate: Record<string, TransferredTokensByDay> = {};
 
 		for (const row of rawResults) {
-			const rawDate = new Date(row.day);
-			const utcDate = new Date(
-				Date.UTC(
-					rawDate.getUTCFullYear(),
-					rawDate.getUTCMonth(),
-					rawDate.getUTCDate(),
-				),
+			const normalizedDate = this.normalizeGroupedDate(
+				new Date(row.groupedDate),
+				groupBy,
 			);
-			const dateKey = utcDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
+			const dateKey = normalizedDate.toISOString();
 
 			const chain: string = row.chain;
 			const amountSum: string = row.amountSum;
@@ -166,7 +192,7 @@ export class LockedTokensService {
 
 			if (!groupedByDate[dateKey]) {
 				groupedByDate[dateKey] = {
-					date: utcDate,
+					date: normalizedDate,
 					totalTransferred: {},
 				};
 			}
@@ -187,5 +213,54 @@ export class LockedTokensService {
 		return Object.values(groupedByDate).sort(
 			(a, b) => a.date.getTime() - b.date.getTime(),
 		);
+	}
+
+	private normalizeGroupedDate(date: Date, groupBy: GroupByTimePeriod): Date {
+		switch (groupBy) {
+			case GroupByTimePeriod.Year:
+				return new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+
+			case GroupByTimePeriod.Month:
+				return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+
+			case GroupByTimePeriod.Week: {
+				const day = date.getUTCDay(); // 0 = Sunday, ..., 6 = Saturday
+				const diffToMonday = (day + 6) % 7;
+				return new Date(
+					Date.UTC(
+						date.getUTCFullYear(),
+						date.getUTCMonth(),
+						date.getUTCDate() - diffToMonday,
+					),
+				);
+			}
+
+			case GroupByTimePeriod.Day:
+				return new Date(
+					Date.UTC(
+						date.getUTCFullYear(),
+						date.getUTCMonth(),
+						date.getUTCDate(),
+						0,
+						0,
+						0,
+						0,
+					),
+				);
+
+			case GroupByTimePeriod.Hour:
+			default:
+				return new Date(
+					Date.UTC(
+						date.getUTCFullYear(),
+						date.getUTCMonth(),
+						date.getUTCDate(),
+						date.getUTCHours(),
+						0,
+						0,
+						0,
+					),
+				);
+		}
 	}
 }
