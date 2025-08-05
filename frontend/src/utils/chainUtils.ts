@@ -141,16 +141,6 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
     }
 }
 
-export const fromChainToChainCurrency = (chain: ChainEnum): TokenEnum => {
-    switch (chain) {
-        case ChainEnum.Prime: {
-            return TokenEnum.APEX;
-        }
-        default:
-            return TokenEnum.APEX;
-    }
-}
-
 export enum TokenEnum {
 	Ada = 'Ada',
 	WAda = 'WAda',
@@ -158,9 +148,15 @@ export enum TokenEnum {
 	WAPEX = 'WAPEX',
 }
 
+export const ChainToCurrencyMap: Record<ChainEnum, TokenEnum> = {
+    [ChainEnum.Prime]: TokenEnum.APEX,
+    [ChainEnum.Vector]: TokenEnum.APEX,
+    [ChainEnum.Nexus]: TokenEnum.APEX,
+};
+
 export const TokenEnumToLabel: Record<TokenEnum, string> = {
-  [TokenEnum.Ada]: 'ADA',
-  [TokenEnum.WAda]: 'wADA',
-  [TokenEnum.APEX]: 'AP3X',
-  [TokenEnum.WAPEX]: 'cAP3X', 
+    [TokenEnum.Ada]: 'ADA',
+    [TokenEnum.WAda]: 'wADA',
+    [TokenEnum.APEX]: 'AP3X',
+    [TokenEnum.WAPEX]: 'cAP3X', 
 };
