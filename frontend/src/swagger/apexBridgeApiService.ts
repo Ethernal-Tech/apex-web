@@ -482,10 +482,11 @@ export class LockedTokensControllerClient extends BaseClient {
      * Get sum of transferred tokens per chain
      * @param startDate Start date in ISO format (e.g., 2024-01-01)
      * @param endDate End date in ISO format (e.g., 2024-12-31)
+     * @param groupBy (optional) Time period to group by: hour, day, week, or month (default is day)
      * @return OK - Returns the sum of transferred tokens per chain.
      */
-    getTransferredSum(startDate: string, endDate: string): Promise<LockedTokensResponse> {
-        let url_ = this.baseUrl + "/lockedTokens/transferred-per-day?";
+    getTransferredSum(startDate: string, endDate: string, groupBy: GroupBy | undefined): Promise<LockedTokensResponse> {
+        let url_ = this.baseUrl + "/lockedTokens/transferred?";
         if (startDate === undefined || startDate === null)
             throw new Error("The parameter 'startDate' must be defined and cannot be null.");
         else
@@ -494,6 +495,10 @@ export class LockedTokensControllerClient extends BaseClient {
             throw new Error("The parameter 'endDate' must be defined and cannot be null.");
         else
             url_ += "endDate=" + encodeURIComponent("" + endDate) + "&";
+        if (groupBy === null)
+            throw new Error("The parameter 'groupBy' cannot be null.");
+        else if (groupBy !== undefined)
+            url_ += "groupBy=" + encodeURIComponent("" + groupBy) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ = <RequestInit>{
@@ -1570,6 +1575,14 @@ export class LockedTokensResponse implements ILockedTokensResponse {
 export interface ILockedTokensResponse {
     /** For each chain, the number of locked tokens */
     chains: { [key: string]: string; };
+}
+
+export enum GroupBy {
+    Hour = "hour",
+    Day = "day",
+    Week = "week",
+    Month = "month",
+    Year = "year",
 }
 
 export class ApiException extends Error {
