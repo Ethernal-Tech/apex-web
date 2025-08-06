@@ -138,7 +138,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
 
         <Typography sx={{color:'white',mt:4, mb:2}}>Destination Address</Typography>
         {/* validate inputs */}
-        <PasteTextInput sx={{width:'50%'}} text={destinationAddr} setText={setDestinationAddr} disabled={loading}/>
+        <PasteTextInput sx={{width:'50%'}} text={destinationAddr} setText={setDestinationAddr} disabled={loading} id="dest-addr"/>
 
         <Typography sx={{color:'white',mt:4, mb:1}}>Enter amount to send</Typography>
         <Box sx={{
@@ -152,6 +152,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
                 text={amount}
                 setAmount={setAmount}
                 disabled={loading}
+                id="bridge-amount"
                 sx={{
                     gridColumn:'span 1',
                     borderBottom: '2px solid',
@@ -193,6 +194,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
                     gridColumn:'span 1',
                     textTransform:'uppercase'
                 }}
+                id="bridge-tx"
             >
                 Move funds
             </ButtonCustom>

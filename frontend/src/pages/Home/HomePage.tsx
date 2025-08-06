@@ -175,6 +175,7 @@ const HomePage: React.FC = () => {
         ) : (
        !isLoggedInMemo ? (
         <ButtonCustom 
+          id="bridge-connect"
           variant="white"
           sx={{ textTransform:'uppercase'}}
           onClick={handleConnectClick}>

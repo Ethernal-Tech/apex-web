@@ -55,6 +55,8 @@ const STEP_STATUS = {
     ERROR:'ERROR',
 }
 
+const stepIds = ['src-status', 'bridge-status', 'dest-status'];
+
 type StepType = {
     number:number,
     numberIcon:FunctionComponent<SVGProps<SVGSVGElement>>,
@@ -70,6 +72,7 @@ type StepType = {
 
 interface TransferStepProps {
     step: StepType
+    id: string;
 }
 
 // returns in progress, done, and error icons for required chain (prime, vector, nexus)
@@ -288,7 +291,7 @@ const TransferProgress = ({
                 justifyContent:"space-evenly",
                 gap:'40px'
             }}>
-                {steps.map(step=> <TransferStep key={step.number} step={step}/>)}
+                {steps.map(step=> <TransferStep key={step.number} step={step} id={stepIds[step.number-1]}/>)}
             </Box>
 
             <Box sx={{display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'20px',mt:4, mb:'32px'}}>
