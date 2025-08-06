@@ -210,7 +210,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
 
         <Typography sx={{color:'white',mt:4, mb:2}}>Destination Address</Typography>
         {/* validate inputs */}
-        <PasteTextInput sx={{width:'50%'}} text={destinationAddr} setText={setDestinationAddr} disabled={loading}/>
+        <PasteTextInput sx={{width:'50%'}} text={destinationAddr} setText={setDestinationAddr} disabled={loading} id="dest-addr"/>
         {
           appSettings.isSkyline &&
           <Box sx={{ mt: '20px' }}>
@@ -246,7 +246,8 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
                     borderImageSlice: 1,
                     paddingBottom:2,
                     paddingTop:2
-                }}/>
+                }}
+                id="bridge-amount"/>
 
             <FeeInformation
                 userWalletFee={userWalletFee || '0'}
@@ -281,6 +282,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
                     gridColumn:'span 1',
                     textTransform:'uppercase'
                 }}
+                id="bridge-tx"
             >
                 Move funds
             </ButtonCustom>

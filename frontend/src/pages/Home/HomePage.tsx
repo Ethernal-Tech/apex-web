@@ -204,7 +204,8 @@ const HomePage: React.FC = () => {
         <ButtonCustom 
           variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
           sx={{ textTransform:'uppercase'}}
-          onClick={handleConnectClick}>
+          onClick={handleConnectClick}
+          id="bridge-connect">
             Connect Wallet
         </ButtonCustom>
       ): (

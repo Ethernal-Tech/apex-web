@@ -74,9 +74,10 @@ interface PasteApexAmountInputProps {
   text: string
   setAmount: (text: string) => void
   disabled?: boolean;
+  id?:string
 }
 
-const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmounts, currencyMaxAmount, text, setAmount, disabled }) => {
+const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmounts, currencyMaxAmount, text, setAmount, disabled, id }) => {
   const maxSendable = minBigInt(maxAmounts.maxByAllowed, maxAmounts.maxByBalance).toString();
 
   const chain = useSelector((state: RootState)=> state.chain.chain);
@@ -144,6 +145,7 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
                 onPaste={handlePaste}
                 disabled={disabled}
                 sx={{paddingRight:'50px'}}
+                id={id}
             />
             {/* show max button only if enough funds present, and entered value varies from actual max amount */}
             {isMaxAmountEntered && (
