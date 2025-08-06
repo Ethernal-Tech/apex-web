@@ -165,9 +165,9 @@ const getStepStatus = (stepNumber: number, txStatus: TransactionStatusEnum) => {
     }
 }
 
-const TransferStep = ({step}:TransferStepProps) => {
+const TransferStep = ({step, id}:TransferStepProps) => {
     return (
-        <Box sx={{textAlign:'center'}}>
+        <Box id={id} sx={{textAlign:'center'}}>
             <Box sx={{ display:'flex',flexDirection:'column', alignItems:'center'}}>
                 {/* conditional display of svg icon depending on status. Different steps have different icons */}
                 <Box sx={{height:'120px',display:'flex',alignItems:'center', marginBottom:'40px'}}>   
