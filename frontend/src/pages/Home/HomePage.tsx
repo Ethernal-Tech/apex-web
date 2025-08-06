@@ -185,7 +185,8 @@ const HomePage: React.FC = () => {
         <ButtonCustom 
           variant="white"
           sx={{ textTransform:'uppercase'}}
-          onClick={()=> navigate(NEW_TRANSACTION_ROUTE)}>
+          onClick={()=> navigate(NEW_TRANSACTION_ROUTE)}
+          id="move-funds">
             Move funds
         </ButtonCustom>
       )
