@@ -216,6 +216,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
           <Box sx={{ mt: '20px' }}>
               <Typography mb={'7px'} sx={{ color: white }}>Source Token</Typography>
               <CustomSelect
+                  id="src-tokens"
                   label="SourceToken"
                   icon={memoizedTokenIcon}
                   value={sourceToken || ''}

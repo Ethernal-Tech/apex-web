@@ -19,9 +19,10 @@ interface CustomSelectProps {
   options: Option[];
   width?: string;
   sx?: SxProps<Theme>;
+  id?: string
 }
 
-const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, disabled = false, onChange, options, width }) => {
+const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent, value, disabled = false, onChange, options, width, id }) => {
   const StyledFormControl = styled(FormControl)<{ width?: string }>(({ width }) => ({
     borderRadius: '4px',
     border: '1px solid',
@@ -78,6 +79,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ label, icon: IconComponent,
   return (
     <StyledFormControl width={width}>
       <Select
+        id={id}
         value={value}
         onChange={onChange}
         disabled={disabled}
