@@ -175,6 +175,7 @@ const HomePage: React.FC = () => {
         ) : (
        !isLoggedInMemo ? (
         <ButtonCustom 
+          id="bridge-connect"
           variant="white"
           sx={{ textTransform:'uppercase'}}
           onClick={handleConnectClick}>
@@ -184,7 +185,8 @@ const HomePage: React.FC = () => {
         <ButtonCustom 
           variant="white"
           sx={{ textTransform:'uppercase'}}
-          onClick={()=> navigate(NEW_TRANSACTION_ROUTE)}>
+          onClick={()=> navigate(NEW_TRANSACTION_ROUTE)}
+          id="move-funds">
             Move funds
         </ButtonCustom>
       )
