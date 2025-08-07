@@ -7,6 +7,7 @@ interface ButtonCustomProps {
     sx?: object;
     children?: React.ReactNode;  // Add children prop
     variant?:'red'|'redNavigation'|'white'|'whiteNavigation'|'navigation'|'navigationActive'|'whiteSkyline'|'redSkyline'
+    id?: string
   }
 
 const variantStyles  ={
@@ -100,7 +101,7 @@ const variantStyles  ={
   },
 }
 
-const ButtonCustom: React.FC<ButtonCustomProps> = ({ onClick, disabled, sx, children, variant = 'white' }) => {
+const ButtonCustom: React.FC<ButtonCustomProps> = ({ onClick, disabled, sx, children, variant = 'white', id }) => {
     const CustomButton = styled(Button)({
         boxShadow: 'none',
         borderRadius: '8px',
@@ -114,6 +115,7 @@ const ButtonCustom: React.FC<ButtonCustomProps> = ({ onClick, disabled, sx, chil
     <CustomButton
       onClick={onClick}
       disabled={disabled}
+      id={id}
     >
       {children}
     </CustomButton>

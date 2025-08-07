@@ -49,9 +49,10 @@ interface PasteTextInputProps {
     text: string
     setText: (text: string) => void
     disabled?: boolean;
+    id?: string;
   }
 
-const PasteTextInput:React.FC<PasteTextInputProps> = ({sx, text, setText, disabled}) => {
+const PasteTextInput:React.FC<PasteTextInputProps> = ({sx, text, setText, disabled, id}) => {
 
   const handlePasteClick = async () => {
     try {
@@ -70,6 +71,7 @@ const PasteTextInput:React.FC<PasteTextInputProps> = ({sx, text, setText, disabl
         value={text}
         onChange={(e) => setText(e.target.value)}
         disabled={disabled}
+        id={id}
       />
       {!text && (
         <CustomButton variant="contained" onClick={handlePasteClick}>
