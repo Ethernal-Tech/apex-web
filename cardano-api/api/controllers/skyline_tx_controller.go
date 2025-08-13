@@ -337,6 +337,22 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 ) {
 	cacheUtxosTransformer := utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher)
 
+	amount := big.NewInt(0)
+
+	for _, transaction := range requestBody.Transactions {
+		amount.Add(amount, new(big.Int).SetUint64(transaction.Amount))
+	}
+
+	bridgingAddress, err := utils.GetBridgingAddress(
+		context.Background(),
+		c.appConfig.OracleAPI.URL,
+		c.appConfig.OracleAPI.APIKey,
+		requestBody.SourceChainID,
+		amount.String())
+	if err != nil {
+		return nil, nil, err
+	}
+
 	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, cacheUtxosTransformer)
 	if err != nil {
 		return nil, nil, err
@@ -345,7 +361,7 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 	txInfo, metadata, err := txSender.CreateBridgingTx(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
-		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
+		requestBody.SenderAddr, receivers, bridgingAddress.Address, requestBody.BridgingFee,
 		requestBody.OperationFee,
 	)
 	if err != nil {
@@ -365,19 +381,41 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 	return txInfo, metadata, nil
 }
 
-func (c *SkylineTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
-	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
+func (c *SkylineTxControllerImpl) calculateTxFee(
+	requestBody commonRequest.CreateBridgingTxRequest) (
+	*sendtx.TxFeeInfo,
+	*sendtx.BridgingRequestMetadata,
+	error,
 ) {
+	// Calculate total amount
+	amount := big.NewInt(0)
+	for _, transaction := range requestBody.Transactions {
+		amount.Add(amount, new(big.Int).SetUint64(transaction.Amount))
+	}
+
+	// Get bridging address
+	bridgingAddress, err := utils.GetBridgingAddress(
+		context.Background(),
+		c.appConfig.OracleAPI.URL,
+		c.appConfig.OracleAPI.APIKey,
+		requestBody.SourceChainID,
+		amount.String())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Setup transaction components
 	txSender, receivers, err := c.getTxSenderAndReceivers(
 		requestBody, utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher))
 	if err != nil {
 		return nil, nil, err
 	}
 
+	// Calculate transaction fee
 	txFeeInfo, metadata, err := txSender.CalculateBridgingTxFee(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
-		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
+		requestBody.SenderAddr, receivers, bridgingAddress.Address, requestBody.BridgingFee,
 		requestBody.OperationFee,
 	)
 	if err != nil {
@@ -416,9 +454,13 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
 	return txSender, receivers, nil
 }
 
-func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(w http.ResponseWriter, r *http.Request) {
+func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	c.logger.Debug("get amount of locked tokens", "url", r.URL)
 
+	// Check cache first
 	if c.getLockedTokensCache != nil {
 		cachedResponse, found := c.getLockedTokensCache.Get(getLockedTokensCacheKeyName)
 		if found {
@@ -431,6 +473,16 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(w http.ResponseWriter,
 	}
 
 	calculateLockedTokens := func(cfg *core.CardanoChainConfig) (map[string]string, error) {
+		// Get all bridging addresses
+		bridgingAddresses, err := utils.GetAllBridgingAddress(
+			context.Background(),
+			c.appConfig.OracleAPI.URL,
+			c.appConfig.OracleAPI.APIKey,
+			cfg.ChainID)
+		if err != nil {
+			return nil, err
+		}
+
 		tokensSum := map[string]*big.Int{}
 
 		txProviderCardano, err := cfg.ChainSpecific.CreateTxProvider()
@@ -438,37 +490,43 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(w http.ResponseWriter,
 			return nil, fmt.Errorf("failed to create tx provider. err: %w", err)
 		}
 
-		utxos, err := txProviderCardano.GetUtxos(context.Background(), cfg.BridgingAddresses.BridgingAddress)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get utxos from chain. err: %w", err)
-		}
-
+		// Build token names map for lookup
 		tokenNames := map[string]bool{}
 		for _, nt := range cfg.ChainSpecific.NativeTokens {
 			tokenNames[nt.TokenName] = true
 		}
 
-		for _, utxo := range utxos {
-			if _, exists := tokensSum[wallet.AdaTokenName]; !exists {
-				tokensSum[wallet.AdaTokenName] = big.NewInt(0)
+		// Process each bridging address
+		for _, bridgeAddress := range bridgingAddresses {
+			utxos, err := txProviderCardano.GetUtxos(context.Background(), bridgeAddress)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get utxos from chain. err: %w", err)
 			}
 
-			tokensSum[wallet.AdaTokenName].Add(tokensSum[wallet.AdaTokenName], new(big.Int).SetUint64(utxo.Amount))
+			// Sum tokens from all UTXOs
+			for _, utxo := range utxos {
+				// Add ADA amount
+				if _, exists := tokensSum[wallet.AdaTokenName]; !exists {
+					tokensSum[wallet.AdaTokenName] = big.NewInt(0)
+				}
 
-			for _, nativeToken := range utxo.Tokens {
-				name := nativeToken.TokenName()
+				tokensSum[wallet.AdaTokenName].Add(tokensSum[wallet.AdaTokenName], new(big.Int).SetUint64(utxo.Amount))
 
-				if _, exists := tokenNames[name]; exists {
-					if _, exists := tokensSum[name]; !exists {
-						tokensSum[name] = big.NewInt(0)
+				// Add native tokens
+				for _, nativeToken := range utxo.Tokens {
+					name := nativeToken.TokenName()
+					if _, exists := tokenNames[name]; exists {
+						if _, exists := tokensSum[name]; !exists {
+							tokensSum[name] = big.NewInt(0)
+						}
+
+						tokensSum[name].Add(tokensSum[name], new(big.Int).SetUint64(nativeToken.Amount))
 					}
-
-					tokensSum[name].Add(tokensSum[name], new(big.Int).SetUint64(nativeToken.Amount))
 				}
 			}
 		}
 
-		// Convert to map[string]string
+		// Convert to string map
 		result := map[string]string{}
 		for k, v := range tokensSum {
 			result[k] = v.String()
@@ -477,13 +535,13 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(w http.ResponseWriter,
 		return result, nil
 	}
 
+	// Calculate locked tokens for all chains
 	response := commonResponse.NewLockedTokensResponse(map[string]map[string]string{})
 
 	for chainID, chainCfg := range c.appConfig.CardanoChains {
 		subResponse, err := calculateLockedTokens(chainCfg)
 		if err != nil {
-			utils.WriteErrorResponse(
-				w, r, http.StatusBadRequest, err, c.logger)
+			utils.WriteErrorResponse(w, r, http.StatusBadRequest, err, c.logger)
 
 			return
 		}
@@ -491,9 +549,13 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(w http.ResponseWriter,
 		response.Chains[chainID] = subResponse
 	}
 
+	// Cache the response
 	if c.getLockedTokensCache != nil {
-		// cache item
-		c.getLockedTokensCache.SetWithTTL(getLockedTokensCacheKeyName, response, 1, getLockedTokensCacheDuration)
+		c.getLockedTokensCache.SetWithTTL(
+			getLockedTokensCacheKeyName,
+			response,
+			1,
+			getLockedTokensCacheDuration)
 	}
 
 	utils.WriteResponse(w, r, http.StatusOK, response, c.logger)

@@ -1,10 +1,13 @@
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/Ethernal-Tech/cardano-api/api/model/common/response"
 
@@ -85,4 +88,55 @@ func useUtxoCache(
 	}
 
 	return false
+}
+
+func GetBridgingAddress(
+	ctx context.Context,
+	oracleURL string,
+	apiKey string,
+	chainID, amount string) (
+	*response.BridgingAddressResponse, error,
+) {
+	requestURL := oracleURL + "/api/BridgingAddress/Get"
+
+	u, err := url.Parse(requestURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	q := u.Query()
+	q.Set("chainId", chainID)
+	q.Set("amount", amount)
+	u.RawQuery = q.Encode()
+
+	addressResponse, err := common.HTTPGet[*response.BridgingAddressResponse](
+		ctx, u.String(), apiKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return addressResponse, nil
+}
+
+func GetAllBridgingAddress(ctx context.Context, oracleURL string, apiKey string, chainID string) ([]string, error) {
+	requestURL := oracleURL + "/api/BridgingAddress/GetAllAddresses"
+
+	u, err := url.Parse(requestURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	q := u.Query()
+	q.Set("chainId", chainID)
+	u.RawQuery = q.Encode()
+
+	addressResponse, err := common.HTTPGet[[]string](
+		ctx, u.String(), apiKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return addressResponse, nil
 }

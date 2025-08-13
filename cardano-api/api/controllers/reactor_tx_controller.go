@@ -221,6 +221,23 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxInfo, error,
 ) {
+	// Calculate total amount
+	amount := big.NewInt(0)
+	for _, transaction := range requestBody.Transactions {
+		amount.Add(amount, new(big.Int).SetUint64(transaction.Amount))
+	}
+
+	bridgingAddress, err := utils.GetBridgingAddress(
+		context.Background(),
+		c.appConfig.OracleAPI.URL,
+		c.appConfig.OracleAPI.APIKey,
+		requestBody.SourceChainID,
+		amount.String())
+	if err != nil {
+		return nil, err
+	}
+
+	// Setup transaction components
 	cacheUtxosTransformer := utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher)
 
 	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, cacheUtxosTransformer)
@@ -228,10 +245,15 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		return nil, err
 	}
 
+	// Create the bridging transaction
 	txInfo, _, err := txSender.CreateBridgingTx(
 		context.Background(),
-		requestBody.SourceChainID, requestBody.DestinationChainID,
-		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
+		requestBody.SourceChainID,
+		requestBody.DestinationChainID,
+		requestBody.SenderAddr,
+		receivers,
+		bridgingAddress.Address,
+		requestBody.BridgingFee,
 		0,
 	)
 	if err != nil {
@@ -244,6 +266,7 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		return nil, fmt.Errorf("failed to build tx: %w", err)
 	}
 
+	// Update UTXO cache if available
 	if cacheUtxosTransformer != nil {
 		cacheUtxosTransformer.UpdateUtxos(txInfo.ChosenInputs.Inputs)
 	}
@@ -254,6 +277,22 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
+	amount := big.NewInt(0)
+
+	for _, transaction := range requestBody.Transactions {
+		amount.Add(amount, new(big.Int).SetUint64(transaction.Amount))
+	}
+
+	bridgingAddress, err := utils.GetBridgingAddress(
+		context.Background(),
+		c.appConfig.OracleAPI.URL,
+		c.appConfig.OracleAPI.APIKey,
+		requestBody.SourceChainID,
+		amount.String())
+	if err != nil {
+		return nil, nil, err
+	}
+
 	txSender, receivers, err := c.getTxSenderAndReceivers(
 		requestBody, utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher))
 	if err != nil {
@@ -263,7 +302,7 @@ func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 	txFeeInfo, metadata, err := txSender.CalculateBridgingTxFee(
 		context.Background(),
 		requestBody.SourceChainID, requestBody.DestinationChainID,
-		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
+		requestBody.SenderAddr, receivers, bridgingAddress.Address, requestBody.BridgingFee,
 		0,
 	)
 	if err != nil {
