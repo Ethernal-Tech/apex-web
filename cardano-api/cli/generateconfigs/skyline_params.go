@@ -18,7 +18,6 @@ import (
 const (
 	cardanoNetworkIDFlag               = "cardano-network-id"
 	cardanoNetworkMagicFlag            = "cardano-network-magic"
-	cardanoBridgingAddressFlag         = "cardano-bridging-address"
 	cardanoBridgingFeeAddressFlag      = "cardano-bridging-fee-address"
 	cardanoBridgingFallbackAddressFlag = "cardano-bridging-fallback-address"
 	cardanoOgmiosURLFlag               = "cardano-ogmios-url"
@@ -29,7 +28,6 @@ const (
 
 	cardanoNetworkIDFlagDesc               = "cardano network id"
 	cardanoNetworkMagicFlagDesc            = "cardano network magic (default 0)"
-	cardanoBridgingAddressFlagDesc         = "cardano bridging address"
 	cardanoBridgingFeeAddressFlagDesc      = "cardano bridging fee address"
 	cardanoBridgingFallbackAddressFlagDesc = "cardano bridging fallback address"
 	cardanoOgmiosURLFlagDesc               = "ogmios URL for cardano network"
@@ -50,7 +48,6 @@ const (
 type skylineGenerateConfigsParams struct {
 	primeNetworkID               uint32
 	primeNetworkMagic            uint32
-	primeBridgingAddress         string
 	primeBridgingFeeAddress      string
 	primeBridgingFallbackAddress string
 	primeOgmiosURL               string
@@ -61,7 +58,6 @@ type skylineGenerateConfigsParams struct {
 
 	cardanoNetworkID               uint32
 	cardanoNetworkMagic            uint32
-	cardanoBridgingAddress         string
 	cardanoBridgingFeeAddress      string
 	cardanoBridgingFallbackAddress string
 	cardanoOgmiosURL               string
@@ -89,13 +85,6 @@ type skylineGenerateConfigsParams struct {
 
 func (p *skylineGenerateConfigsParams) validateFlags() error {
 	err := validateAddress(
-		true, p.primeBridgingAddress, primeBridgingAddressFlag,
-		wallet.CardanoNetworkType(p.primeNetworkID))
-	if err != nil {
-		return err
-	}
-
-	err = validateAddress(
 		true, p.primeBridgingFeeAddress, primeBridgingFeeAddressFlag,
 		wallet.CardanoNetworkType(p.primeNetworkID))
 	if err != nil {
@@ -120,13 +109,6 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 
 	if p.primeOgmiosURL != "" && !common.IsValidHTTPURL(p.primeOgmiosURL) {
 		return fmt.Errorf("invalid prime ogmios url: %s", p.primeOgmiosURL)
-	}
-
-	err = validateAddress(
-		true, p.cardanoBridgingAddress, cardanoBridgingAddressFlag,
-		wallet.CardanoNetworkType(p.cardanoNetworkID))
-	if err != nil {
-		return err
 	}
 
 	err = validateAddress(
@@ -197,12 +179,6 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		primeNetworkMagicFlagDesc,
 	)
 	cmd.Flags().StringVar(
-		&p.primeBridgingAddress,
-		primeBridgingAddressFlag,
-		"",
-		primeBridgingAddressFlagDesc,
-	)
-	cmd.Flags().StringVar(
 		&p.primeBridgingFeeAddress,
 		primeBridgingFeeAddressFlag,
 		"",
@@ -256,12 +232,6 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		cardanoNetworkMagicFlag,
 		defaultNetworkMagic,
 		cardanoNetworkMagicFlagDesc,
-	)
-	cmd.Flags().StringVar(
-		&p.cardanoBridgingAddress,
-		cardanoBridgingAddressFlag,
-		"",
-		cardanoBridgingAddressFlagDesc,
 	)
 	cmd.Flags().StringVar(
 		&p.cardanoBridgingFeeAddress,
@@ -411,7 +381,6 @@ func (p *skylineGenerateConfigsParams) Execute(
 				NetworkID:    wallet.CardanoNetworkType(p.primeNetworkID),
 				NetworkMagic: p.primeNetworkMagic,
 				BridgingAddresses: core.BridgingAddresses{
-					BridgingAddress: p.primeBridgingAddress,
 					FeeAddress:      p.primeBridgingFeeAddress,
 					FallbackAddress: p.primeBridgingFallbackAddress,
 				},
@@ -430,7 +399,6 @@ func (p *skylineGenerateConfigsParams) Execute(
 				NetworkID:    wallet.CardanoNetworkType(p.cardanoNetworkID),
 				NetworkMagic: p.cardanoNetworkMagic,
 				BridgingAddresses: core.BridgingAddresses{
-					BridgingAddress: p.cardanoBridgingAddress,
 					FeeAddress:      p.cardanoBridgingFeeAddress,
 					FallbackAddress: p.cardanoBridgingFallbackAddress,
 				},
