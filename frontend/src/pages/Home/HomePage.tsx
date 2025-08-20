@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from "react";
 import { useEffect } from 'react';
-import { Typography, Box, Button, CircularProgress } from '@mui/material';
+import { Typography, Box, Button, CircularProgress, SelectChangeEvent } from '@mui/material';
 import CustomSelect from '../../components/customSelect/CustomSelect';
 import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
 import { ReactComponent as OneDirectionArrowIcon } from '../../assets/oneDirectionArrow.svg';
@@ -54,12 +54,12 @@ const HomePage: React.FC = () => {
     dispatch(setDstChainAction(temp));
   }, [srcChain, dstChain, dispatch]);
 
-  const updateSrcChain = useCallback(
-    (value: ChainEnum) => dispatch(setSrcChainAction(value)),
+  const onChangeSrcChain = useCallback(
+    (evnt: SelectChangeEvent<string>) => dispatch(setSrcChainAction(evnt.target.value as ChainEnum)),
     [dispatch]);
 
-  const updateDstChain = useCallback(
-    (value: ChainEnum) => dispatch(setDstChainAction(value)),
+  const onChangeDstChain = useCallback(
+    (evnt: SelectChangeEvent<string>) => dispatch(setDstChainAction(evnt.target.value as ChainEnum)),
     [dispatch]);
 
   const handleConnectClick = useCallback(
@@ -75,15 +75,15 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     if ((!srcChain || !srcChainOptions.some(x => x.value === srcChain)) && srcChainOptions.length > 0) {
-      updateSrcChain(srcChainOptions[0].value)
+      dispatch(setSrcChainAction(srcChainOptions[0].value));
     }
-  }, [srcChain, srcChainOptions, updateSrcChain]);
+  }, [srcChain, srcChainOptions, dispatch]);
 
   useEffect(() => {
     if ((!dstChain || !dstChainOptions.some(x => x.value === dstChain)) && dstChainOptions.length > 0) {
-      updateDstChain(dstChainOptions[0].value)
+      dispatch(setDstChainAction(dstChainOptions[0].value));
     }
-  }, [dstChain, dstChainOptions, updateDstChain]);
+  }, [dstChain, dstChainOptions, dispatch]);
 
   return (
     <BasePage>
@@ -109,7 +109,7 @@ const HomePage: React.FC = () => {
             icon={srcChainInfo.icon}
             value={srcChain}
             disabled={isLoggedInMemo}
-            onChange={(e) => updateSrcChain(e.target.value as ChainEnum)}
+            onChange={onChangeSrcChain}
             options={srcChainOptions}
             sx={{ width: '240px' }} // Setting minWidth via sx prop
           />
@@ -131,8 +131,8 @@ const HomePage: React.FC = () => {
             label="Destination"
             icon={dstChainInfo.icon}
             value={dstChain}
-            disabled={srcChain !== ChainEnum.Prime || enabledChains.length <= 2}
-            onChange={(e) => updateDstChain(e.target.value as ChainEnum)}
+            disabled={dstChainOptions.length < 2}
+            onChange={onChangeDstChain}
             // todo - makeshift fix, check out details later
             options={dstChainOptions}
             sx={{ width: '240px' }} // Setting minWidth via sx prop
