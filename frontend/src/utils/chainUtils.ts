@@ -2,6 +2,7 @@ import { CardanoAddress } from "../features/Address/interfaces";
 import { CardanoNetworkType } from "../features/Address/types";
 import { ApexBridgeNetwork, TokenEnum } from "../features/enums";
 import appSettings from "../settings/appSettings";
+import { isEvmChain } from "../settings/chain";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
 const TESTNET_NEXUS_NETWORK_ID = BigInt(9070) // for Nexus
@@ -113,12 +114,6 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
     },
 }
 
-export const chainSupported = (chain: ChainEnum): boolean => {
-    return appSettings.isSkyline
-        ? skylineChains.includes(chain)
-        : reactorChains.includes(chain);
-}
-
 const getExplorerTxUrl = (chain: ChainEnum, txHash: string) => {
     const base = appSettings.isMainnet ? EXPLORER_URLS.mainnet[chain] : EXPLORER_URLS.testnet[chain];
 
@@ -151,12 +146,12 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
     }
 
     if (tx.status === TransactionStatusEnum.ExecutedOnDestination && tx.destinationTxHash) {
-        const txHash = tx.destinationChain === ChainEnum.Nexus && !tx.destinationTxHash.startsWith('0x')
+        const txHash = isEvmChain(tx.destinationChain) && !tx.destinationTxHash.startsWith('0x')
         ? `0x${tx.destinationTxHash}` : tx.destinationTxHash;
         const url = getExplorerTxUrl(tx.destinationChain, txHash)
         window.open(url, '_blank')
     } else if (tx.sourceTxHash) {
-        const txHash = tx.originChain === ChainEnum.Nexus && !tx.sourceTxHash.startsWith('0x')
+        const txHash = isEvmChain(tx.originChain) && !tx.sourceTxHash.startsWith('0x')
             ? `0x${tx.sourceTxHash}` : tx.sourceTxHash;
         const url = getExplorerTxUrl(tx.originChain, txHash)
         window.open(url, '_blank')
@@ -207,17 +202,6 @@ export const getIsNativeToken = (chain: ChainEnum, sourceToken: TokenEnum) => {
 
     return sourceToken === TokenEnum.WAPEX;
 }
-
-export const skylineChains: ChainEnum[] = [
-    ChainEnum.Prime,
-    ChainEnum.Cardano,
-]
-
-export const reactorChains: ChainEnum[] = [
-    ChainEnum.Prime,
-    ChainEnum.Vector,
-    ChainEnum.Nexus,
-]
 
 export const TokenEnumToLabel: Record<TokenEnum, string> = {
   [TokenEnum.Ada]: 'ADA',

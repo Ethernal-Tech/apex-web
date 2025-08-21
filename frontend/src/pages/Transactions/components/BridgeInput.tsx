@@ -16,6 +16,7 @@ import { white } from '../../../containers/theme';
 import { fromChainToChainCurrency, getIsNativeToken } from '../../../utils/chainUtils';
 import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
+import { isCardanoChain, isEvmChain } from '../../../settings/chain';
 
 type BridgeInputType = {
     bridgeTxFee: string
@@ -61,7 +62,7 @@ const calculateMaxAmountCurrency = (
 
   const maxAmountAllowedToBridgeDfm = BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
     ? (
-        chain === ChainEnum.Nexus
+        isEvmChain(chain)
           ? BigInt(convertDfmToWei(maxAmountAllowedToBridge))
           : BigInt(maxAmountAllowedToBridge)
     )
@@ -72,7 +73,7 @@ const calculateMaxAmountCurrency = (
       ? maxAmountAllowedToBridgeDfm : BigInt(totalDfmBalance[sourceToken] || '0')
 
   let maxByBalance
-  if (chain === ChainEnum.Nexus) {
+  if (isEvmChain(chain)) {
     maxByBalance = BigInt(totalDfmBalance[sourceToken] || '0') - BigInt(bridgeTxFee) -
       BigInt(minDfmValue) - BigInt(operationFee)
   } else {
@@ -107,13 +108,13 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
     }
 
     try {
-        if (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano) {
+        if (isCardanoChain(chain)) {
             const feeResp = await getCardanoTxFee(destinationAddr, convertApexToDfm(amount || '0', chain), getIsNativeToken(chain, sourceToken));
             setUserWalletFee((feeResp?.fee || 0).toString());
             setBridgeTxFee((feeResp?.bridgingFee || 0).toString());
 
             return;
-        } else if (chain === ChainEnum.Nexus) {
+        } else if (isEvmChain(chain)) {
             const feeResp = await getEthTxFee(destinationAddr, convertApexToDfm(amount || '0', chain));
             const { bridgingFee, isFallback, ...tx } = feeResp;
 
@@ -186,7 +187,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   );
 
   // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
-  const minDfmValue = chain === ChainEnum.Nexus 
+  const minDfmValue = isEvmChain(chain)
     ? convertDfmToWei(minValueToBridge) 
     : appSettings.isSkyline 
       ? appSettings.minUtxoChainValue[chain]

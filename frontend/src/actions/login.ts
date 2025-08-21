@@ -4,13 +4,15 @@ import { Dispatch } from 'redux';
 import { logout } from "./logout";
 import { toast } from "react-toastify";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
-import { chainSupported, checkChainCompatibility, fromChainToNetwork, fromChainToNetworkId, fromEvmNetworkIdToNetwork } from "../utils/chainUtils";
+import { checkChainCompatibility, fromChainToNetwork, fromChainToNetworkId, fromEvmNetworkIdToNetwork } from "../utils/chainUtils";
 import evmWalletHandler, { EVM_SUPPORTED_WALLETS } from "../features/EvmWalletHandler";
 import { setConnectingAction } from "../redux/slices/loginSlice";
 import { setChainAction } from "../redux/slices/chainSlice";
 import { NavigateFunction } from "react-router-dom";
 import { HOME_ROUTE } from "../pages/PageRouter";
 import { setAccountInfoAction } from "../redux/slices/accountInfoSlice";
+import { getSrcChains, isEvmChain } from "../settings/chain";
+import appSettings from "../settings/appSettings";
 
 let onLoadCalled = false
 
@@ -25,7 +27,7 @@ const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainEnum, 
         throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`);
     }
 
-    if (!chainSupported(chain)) {
+    if (!getSrcChains(appSettings.isSkyline).some(x => x === chain)) {
         throw new Error(`Chain: ${chain} not supported.`);
     }
 
@@ -84,7 +86,7 @@ const enableCardanoWallet = async (selectedWalletName: string, chain: ChainEnum,
         throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`);
     }
 
-    if (!chainSupported(chain)) {
+    if (!getSrcChains(appSettings.isSkyline).some(x => x === chain)) {
         throw new Error(`Chain: ${chain} not supported.`);
     }
 
@@ -99,7 +101,7 @@ const enableCardanoWallet = async (selectedWalletName: string, chain: ChainEnum,
 }
 
 const enableWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {// 1. nexus (evm metamask) wallet login handling
-    if(chain === ChainEnum.Nexus){
+    if (isEvmChain(chain)) {
         try {
             return await enableEvmWallet(selectedWalletName, chain, dispatch)
         } catch (e) {
@@ -146,7 +148,7 @@ export const onLoad = async (selectedWalletName: string, chain: ChainEnum, dispa
 export const login = async (chain: ChainEnum, navigate: NavigateFunction, dispatch: Dispatch) => {
     let wallet 
 
-    if (chain === ChainEnum.Nexus) {
+    if (isEvmChain(chain)) {
         const wallets = evmWalletHandler.getInstalledWallets();
         wallet = wallets.length > 0 ? wallets[0].name : undefined;
     } else {
@@ -156,7 +158,7 @@ export const login = async (chain: ChainEnum, navigate: NavigateFunction, dispat
 
 
     if (!wallet) {
-        const supportedWallets = chain === ChainEnum.Nexus ? EVM_SUPPORTED_WALLETS : SUPPORTED_WALLETS;
+        const supportedWallets = isEvmChain(chain) ? EVM_SUPPORTED_WALLETS : SUPPORTED_WALLETS;
         toast.error(`Can not find any supported wallets installed. Supported wallets: ${supportedWallets}`);
         return false;
     }
