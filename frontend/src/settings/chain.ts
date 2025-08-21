@@ -65,7 +65,7 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
         icon: CardanoIcon,
         borderColor: '#0538AF',
         letter: 'C',
-        mainColor: '#077368'
+        mainColor: '#0538AF'
     },
 }
 
