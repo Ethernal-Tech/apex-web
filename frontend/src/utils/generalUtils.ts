@@ -6,10 +6,6 @@ import {Numbers} from "web3-types";
 import {EtherUnits} from "web3-utils";
 
 // chain icons
-import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
-import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
-import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
-import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
 import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg'
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg'
 import { FunctionComponent, SVGProps } from "react";
@@ -177,18 +173,6 @@ export const validateSubmitTxInputsSkyline = (
   if (!checkCardanoAddressCompatibility(destinationChain, addr)) {
     return `Destination address not compatible with destination chain: ${destinationChain}`;
   }
-}
-
-export const chainIcons:{
-  [ChainEnum.Prime]:FunctionComponent<SVGProps<SVGSVGElement>>
-  [ChainEnum.Vector]:FunctionComponent<SVGProps<SVGSVGElement>>
-  [ChainEnum.Nexus]:FunctionComponent<SVGProps<SVGSVGElement>>
-  [ChainEnum.Cardano]:FunctionComponent<SVGProps<SVGSVGElement>>
-} = {
-  [ChainEnum.Prime]:PrimeIcon,
-  [ChainEnum.Vector]:VectorIcon,
-  [ChainEnum.Nexus]:NexusIcon,
-  [ChainEnum.Cardano]:CardanoIcon
 }
 
 export const tokenIcons:{

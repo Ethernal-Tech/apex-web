@@ -1,39 +1,9 @@
+import { SVGProps } from "react";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
-import { capitalizeWord, chainIcons } from "../utils/generalUtils";
-
-type ChainInfo = {
-    value: ChainEnum;
-    label: string;
-    icon: React.FunctionComponent;
-    borderColor: string;
-};
-
-const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
-    [ChainEnum.Prime]: {
-        value: ChainEnum.Prime,
-        label: capitalizeWord(ChainEnum.Prime),
-        icon: chainIcons[ChainEnum.Prime],
-        borderColor: '#077368'
-    },
-    [ChainEnum.Vector]: {
-        value: ChainEnum.Vector,
-        label: capitalizeWord(ChainEnum.Vector),
-        icon: chainIcons[ChainEnum.Vector],
-        borderColor: '#F25041'
-    },
-    [ChainEnum.Nexus]: {
-        value: ChainEnum.Nexus,
-        label: capitalizeWord(ChainEnum.Nexus),
-        icon: chainIcons[ChainEnum.Nexus],
-        borderColor: '#F27B50'
-    },
-    [ChainEnum.Cardano]: {
-        value: ChainEnum.Cardano,
-        label: capitalizeWord(ChainEnum.Cardano),
-        icon: chainIcons[ChainEnum.Cardano],
-        borderColor: '#0538AF'
-    },
-}
+import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
+import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
+import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
+import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
 
 const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
     [ChainEnum.Prime]: [ChainEnum.Vector, ChainEnum.Nexus],
@@ -46,6 +16,47 @@ const skylineChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
     [ChainEnum.Cardano]: [ChainEnum.Prime],
 };
 
+export type ChainInfo = {
+    value: ChainEnum;
+    label: string;
+    icon: React.FunctionComponent<SVGProps<SVGSVGElement>>;
+    borderColor: string;
+};
+
+const unknownChainInfo: ChainInfo = {
+    value: ChainEnum.Prime,
+    label: '',
+    icon: PrimeIcon,
+    borderColor: 'transparent'
+}
+
+const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
+    [ChainEnum.Prime]: {
+        value: ChainEnum.Prime,
+        label: "Prime",
+        icon: PrimeIcon,
+        borderColor: '#077368'
+    },
+    [ChainEnum.Vector]: {
+        value: ChainEnum.Vector,
+        label: "Vector",
+        icon: VectorIcon,
+        borderColor: '#F25041'
+    },
+    [ChainEnum.Nexus]: {
+        value: ChainEnum.Nexus,
+        label: "Nexus",
+        icon: NexusIcon,
+        borderColor: '#F27B50'
+    },
+    [ChainEnum.Cardano]: {
+        value: ChainEnum.Cardano,
+        label: "Cardano",
+        icon: CardanoIcon,
+        borderColor: '#0538AF'
+    },
+}
+
 const getChainDirections = function (isSkyline: boolean): Partial<Record<ChainEnum, ChainEnum[]>> {
     if (isSkyline) {
         return skylineChainDirections;
@@ -54,22 +65,17 @@ const getChainDirections = function (isSkyline: boolean): Partial<Record<ChainEn
 }
 
 export const getChainInfo = function (chain: ChainEnum): ChainInfo {
-    return chainInfoMapping[chain]!;
-} 
+    return chainInfoMapping[chain] || unknownChainInfo;
+}
 
-export const getDstChains = function (isSkyline: boolean, chain: ChainEnum|undefined): ChainInfo[] {
+export const getDstChains = function (isSkyline: boolean, chain: ChainEnum | undefined): ChainEnum[] {
     if (!chain) {
         return [];
     }
 
-    const dirs = getChainDirections(isSkyline)[chain];
-    if (!dirs) {
-        return [];
-    }
-
-    return dirs.map(chain => chainInfoMapping[chain]).filter(x => x !== undefined) as ChainInfo[];
+    return getChainDirections(isSkyline)[chain] || [];
 }
 
-export const getSrcChains = function (isSkyline: boolean): ChainInfo[] {
-    return Object.keys(getChainDirections(isSkyline)).map(chain => chainInfoMapping[chain as ChainEnum]!);
+export const getSrcChains = function (isSkyline: boolean): ChainEnum[] {
+    return Object.keys(getChainDirections(isSkyline)) as ChainEnum[];
 }
