@@ -119,7 +119,7 @@ func GetBridgingAddress(
 	return addressResponse, nil
 }
 
-func GetAllBridgingAddress(ctx context.Context, oracleURL string, apiKey string, chainID string) ([]string, error) {
+func GetAllBridgingAddress(ctx context.Context, oracleURL string, apiKey string, chainID string) (*response.AllBridgingAddressesResponse, error) {
 	requestURL := oracleURL + "/api/BridgingAddress/GetAllAddresses"
 
 	u, err := url.Parse(requestURL)
@@ -131,12 +131,12 @@ func GetAllBridgingAddress(ctx context.Context, oracleURL string, apiKey string,
 	q.Set("chainId", chainID)
 	u.RawQuery = q.Encode()
 
-	addressResponse, err := common.HTTPGet[[]string](
+	allAddressResponse, err := common.HTTPGet[*response.AllBridgingAddressesResponse](
 		ctx, u.String(), apiKey,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return addressResponse, nil
+	return allAddressResponse, nil
 }

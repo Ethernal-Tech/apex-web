@@ -497,7 +497,7 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 		}
 
 		// Process each bridging address
-		for _, bridgeAddress := range bridgingAddresses {
+		for _, bridgeAddress := range bridgingAddresses.Addresses {
 			utxos, err := txProviderCardano.GetUtxos(context.Background(), bridgeAddress)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get utxos from chain. err: %w", err)
