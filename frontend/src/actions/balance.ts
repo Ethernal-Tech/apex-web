@@ -11,12 +11,13 @@ import BlockfrostRetriever from '../features/BlockfrostRetriever';
 import OgmiosRetriever from '../features/OgmiosRetriever';
 import { getUtxoRetrieverType } from '../features/utils';
 import { UtxoRetrieverEnum } from '../features/enums';
+import { isEvmChain } from '../settings/chain';
 
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
 
 const getWalletBalanceAction = async (chain: ChainEnum): Promise<IBalanceState> => {
-    if (chain === ChainEnum.Nexus) { 
+    if (isEvmChain(chain)) { 
         const nexusBalance = await evmWalletHandler.getBalance();
         return { balance: { [fromChainToChainCurrency(chain)]: nexusBalance } };
     }
