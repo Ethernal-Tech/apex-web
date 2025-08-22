@@ -14,16 +14,15 @@ import { capitalizeWord, convertApexToDfm, convertDfmToApex, formatAddress, form
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import appSettings from '../../settings/appSettings';
-import { fromChainToChainNativeToken, TokenEnumToLabel } from '../../utils/chainUtils';
-import { fromChainToChainCurrency } from '../../utils/chainUtils';
 import { getChainInfo } from '../../settings/chain';
+import { getTokenInfoBySrcDst } from '../../settings/token';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
 	const [isLoading, setIsLoading] = useState(false);
 	const tableRef = useRef(null);
 	
-  const chain = useSelector((state: RootState) => state.chain.chain)
+  const {chain, destinationChain} = useSelector((state: RootState) => state.chain);
   const account = useSelector((state: RootState) => state.accountInfo.account);
 
   const headCells = appSettings.isSkyline ? skylineHeadCells : reactorHeadCells;
@@ -238,7 +237,7 @@ const TransactionsTablePage = () => {
               </TableCell>
 
               <TableCell sx={tableCellStyle}>
-                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
+                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {getTokenInfoBySrcDst(chain, destinationChain, true).label}
               </TableCell>
               {
                 appSettings.isSkyline &&
@@ -247,7 +246,7 @@ const TransactionsTablePage = () => {
                     <Box sx={{ ml: 3 }}>-</Box>
                   ) : (
                       <>
-                      {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {TokenEnumToLabel[fromChainToChainNativeToken(chain)]}
+                      {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {getTokenInfoBySrcDst(chain, destinationChain, false).label}
                       </>
                     )}
                   

@@ -1,6 +1,6 @@
 import { CardanoAddress } from "../features/Address/interfaces";
 import { CardanoNetworkType } from "../features/Address/types";
-import { ApexBridgeNetwork, TokenEnum } from "../features/enums";
+import { ApexBridgeNetwork } from "../features/enums";
 import appSettings from "../settings/appSettings";
 import { isEvmChain } from "../settings/chain";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
@@ -158,32 +158,6 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
     }
 }
 
-export const fromChainToChainCurrency = (chain: ChainEnum): TokenEnum => {
-    switch (chain) {
-        case ChainEnum.Prime: {
-            return TokenEnum.APEX;
-        }
-        case ChainEnum.Cardano: {
-            return TokenEnum.Ada;
-        }
-        default:
-            return TokenEnum.APEX;
-    }
-}
-
-export const fromChainToChainNativeToken = (chain: ChainEnum): TokenEnum => {
-    switch (chain) {
-        case ChainEnum.Prime: {
-            return TokenEnum.WAda;
-        }
-        case ChainEnum.Cardano: {
-            return TokenEnum.WAPEX;
-        }
-        default:
-            return TokenEnum.WAda;
-    }
-}
-
 export const fromChainToCurrencySymbol = (chain: ChainEnum): string => {
     switch (chain) {
         default:
@@ -194,18 +168,3 @@ export const fromChainToCurrencySymbol = (chain: ChainEnum): string => {
 export const fromChainToNativeTokenSymbol = (chain: ChainEnum): string => {
     return appSettings.wrappedTokenName[chain];
 }
-
-export const getIsNativeToken = (chain: ChainEnum, sourceToken: TokenEnum) => {
-    if (chain === ChainEnum.Prime) {
-        return sourceToken === TokenEnum.WAda;
-    }
-
-    return sourceToken === TokenEnum.WAPEX;
-}
-
-export const TokenEnumToLabel: Record<TokenEnum, string> = {
-  [TokenEnum.Ada]: 'ADA',
-  [TokenEnum.WAda]: 'wADA',
-  [TokenEnum.APEX]: 'AP3X',
-  [TokenEnum.WAPEX]: 'cAP3X', 
-};

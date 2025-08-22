@@ -4,9 +4,8 @@ import { convertApexToDfm, convertDfmToApex, minBigInt, toFixedFloor } from '../
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import appSettings from '../../../settings/appSettings';
-import { fromChainToChainCurrency, TokenEnumToLabel } from '../../../utils/chainUtils';
+import { getCurrencyTokenInfo } from '../../../settings/token';
 // import './CustomStyles.css'; // Import the CSS file
-
 
 // const apexPriceInDollars = NaN // fiat price doesn't exist for apex
 
@@ -131,6 +130,8 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
   const hasInsufficientBalance = BigInt(convertApexToDfm(text, chain)) > maxAmounts.maxByBalance;
   const overMaxAllowed = BigInt(convertApexToDfm(text, chain)) > maxAmounts.maxByAllowed;
 
+  const currencyToken = getCurrencyTokenInfo(chain);
+
   return (
     <Box sx={sx}>
         <Box sx={{position:'relative'}} display="flex" alignItems="center" width="100%" position="relative">
@@ -162,7 +163,7 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
             }
             {
               !hasInsufficientBalance && !overMaxAllowed && currencyMaxAmount < 0 &&
-              <Typography sx={{color:'#ff5e5e',position:'absolute',bottom:0,left:0}}>Insufficient {TokenEnumToLabel[fromChainToChainCurrency(chain)]}</Typography>
+              <Typography sx={{color:'#ff5e5e',position:'absolute',bottom:0,left:0}}>Insufficient {currencyToken.label}</Typography>
             }
         </Box>
         {/* TODO - removed, as APEX doesn't have a price in fiat equivalent */}
