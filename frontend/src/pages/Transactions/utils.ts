@@ -2,6 +2,8 @@ import { TokenEnum } from "../../features/enums";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { useMemo } from "react";
 import { getBridgingInfo, getCurrencyTokenInfo, getTokenInfo, TokenInfo } from "../../settings/token";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/store";
 
 export interface TokenOption {
   value: TokenEnum;
@@ -20,8 +22,7 @@ const tokenInfoToTokenOption = (info: TokenInfo): TokenOption => {
 }
 
 export const useSupportedSourceTokenOptions = (srcChain: ChainEnum, dstChain: ChainEnum): TokenOption[] => {
-  // TODO: figure out how to filter options with state.settings.cardanoChainsNativeTokens too
-  // const cardanoChainsNativeTokens = useSelector((state: RootState) => state.settings.cardanoChainsNativeTokens);
+  const cardanoChainsNativeTokens = useSelector((state: RootState) => state.settings.cardanoChainsNativeTokens);
 
   return useMemo(() => {
     const bridgingInfo = getBridgingInfo(srcChain, dstChain);
@@ -30,11 +31,12 @@ export const useSupportedSourceTokenOptions = (srcChain: ChainEnum, dstChain: Ch
       options.push(tokenInfoToTokenOption(getCurrencyTokenInfo(srcChain)));
     }
 
-    if (!!bridgingInfo.wrappedToken) {
+    if (!!bridgingInfo.wrappedToken && !!cardanoChainsNativeTokens &&
+      (cardanoChainsNativeTokens[srcChain] || []).some(x => x.dstChainID === dstChain)) {
       options.push(tokenInfoToTokenOption(getTokenInfo(bridgingInfo.wrappedToken!)));
     }
 
     return options;
-  }, [srcChain, dstChain]);
+  }, [cardanoChainsNativeTokens, srcChain, dstChain]);
 };
 
