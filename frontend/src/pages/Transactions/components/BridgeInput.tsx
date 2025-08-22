@@ -138,13 +138,10 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   }, [resetBridgeTxFee])
 
   useEffect(() => {
-      if (!appSettings.isSkyline) {
-        setSourceToken(TokenEnum.APEX)
-      }
-      else if (supportedSourceTokenOptions.length > 0) {
+      if (!supportedSourceTokenOptions.some(x => x.value === sourceToken) && supportedSourceTokenOptions.length > 0) {
         setSourceToken(supportedSourceTokenOptions[0].value);
-      }    
-  }, [chain, supportedSourceTokenOptions])
+      }         
+  }, [sourceToken, supportedSourceTokenOptions])
 
   useEffect(() => {
     if (fetchCreateTxTimeoutRef.current) {
@@ -175,11 +172,6 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   const handleSourceTokenChange = useCallback((e: SelectChangeEvent<string>) => 
     {setSourceTokenCallback(e.target.value as TokenEnum);
   }, [setSourceTokenCallback]);
-
-  const memoizedSourceTokenOptions = useMemo(
-    () => supportedSourceTokenOptions,
-    [supportedSourceTokenOptions]
-  );
 
   const memoizedTokenIcon = useMemo(() => getTokenInfo(sourceToken).icon, [sourceToken]);
 
@@ -219,7 +211,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
                   icon={memoizedTokenIcon}
                   value={sourceToken || ''}
                   onChange={handleSourceTokenChange}
-                  options={memoizedSourceTokenOptions}
+                  options={supportedSourceTokenOptions}
                   width='50%'
               />
           </Box>

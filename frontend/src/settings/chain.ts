@@ -19,7 +19,7 @@ const skylineChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
 
 export type ChainInfo = {
     value: ChainEnum;
-    currencyToken: TokenEnum.APEX,
+    currencyToken: TokenEnum,
     label: string;
     icon: React.FunctionComponent<SVGProps<SVGSVGElement>>;
     letter: string;
@@ -67,7 +67,7 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
     },
     [ChainEnum.Cardano]: {
         value: ChainEnum.Cardano,
-        currencyToken: TokenEnum.APEX,
+        currencyToken: TokenEnum.Ada,
         label: "Cardano",
         icon: CardanoIcon,
         borderColor: '#0538AF',

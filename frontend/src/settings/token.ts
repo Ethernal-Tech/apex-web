@@ -54,7 +54,7 @@ const tokenInfos: Partial<Record<TokenEnum, TokenInfo>> = {
 const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, BridgingInfo>>>> = {
   [ChainEnum.Prime]: {
     [ChainEnum.Cardano]: {
-      isCurrencyBridgingAllowed: true,
+      isCurrencyBridgingAllowed: false,
       wrappedToken: TokenEnum.WAda,
     },
     [ChainEnum.Vector]: {
@@ -67,7 +67,7 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
   [ChainEnum.Cardano]: {
     [ChainEnum.Prime]: {
       isCurrencyBridgingAllowed: true,
-      wrappedToken: TokenEnum.WAPEX,
+      // wrappedToken: TokenEnum.WAPEX,
     },
   },
   [ChainEnum.Vector]: {
