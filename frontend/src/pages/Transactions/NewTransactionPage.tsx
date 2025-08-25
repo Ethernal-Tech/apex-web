@@ -8,12 +8,13 @@ import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import walletHandler from '../../features/WalletHandler';
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
-import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
+import { isCardanoChain, isEvmChain } from "../../settings/chain";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -25,7 +26,7 @@ function NewTransactionPage() {
 	const settings = useSelector((state: RootState) => state.settings);
 	const { minOperationFee, minChainFeeForBridging }  = useSelector((state: RootState) => state.settings);
 
-	const defaultBridgeTxFee = useMemo(() => chain === ChainEnum.Nexus
+	const defaultBridgeTxFee = useMemo(() => isEvmChain(chain)
 		? convertDfmToWei(minChainFeeForBridging[chain] || '0')
 		: minChainFeeForBridging[chain] || '0', [chain, minChainFeeForBridging])
 		
@@ -40,7 +41,7 @@ function NewTransactionPage() {
 	}, [defaultBridgeTxFee])
 
 	const operationFee = useMemo(
-		() => chain === ChainEnum.Nexus
+		() => isEvmChain(chain)
 			? convertDfmToWei(minOperationFee[chain] || '0')
 			: minOperationFee[chain] || '0',
 		[chain, minOperationFee],
@@ -140,7 +141,7 @@ function NewTransactionPage() {
 		async (address: string, amount: string, isNativeToken: boolean) => {
 			setLoading(true);
 			try {
-				if (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano) {
+				if (isCardanoChain(chain)) {
 					const createTxResp = await createCardanoTx(address, amount, isNativeToken);
 					
 					const response = await signAndSubmitCardanoTx(
@@ -149,7 +150,7 @@ function NewTransactionPage() {
 					);
 					
 					response && goToDetails(response);
-				} else if (chain === ChainEnum.Nexus) {
+				} else if (isEvmChain(chain)) {
 					const createTxResp = await createEthTx(address, amount);
 					
 					const response = await signAndSubmitEthTx(

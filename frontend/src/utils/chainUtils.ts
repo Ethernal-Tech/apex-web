@@ -1,7 +1,8 @@
 import { CardanoAddress } from "../features/Address/interfaces";
 import { CardanoNetworkType } from "../features/Address/types";
-import { ApexBridgeNetwork, TokenEnum } from "../features/enums";
+import { ApexBridgeNetwork } from "../features/enums";
 import appSettings from "../settings/appSettings";
+import { isEvmChain } from "../settings/chain";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
 const TESTNET_NEXUS_NETWORK_ID = BigInt(9070) // for Nexus
@@ -113,12 +114,6 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
     },
 }
 
-export const chainSupported = (chain: ChainEnum): boolean => {
-    return appSettings.isSkyline
-        ? skylineChains.includes(chain)
-        : reactorChains.includes(chain);
-}
-
 const getExplorerTxUrl = (chain: ChainEnum, txHash: string) => {
     const base = appSettings.isMainnet ? EXPLORER_URLS.mainnet[chain] : EXPLORER_URLS.testnet[chain];
 
@@ -151,41 +146,15 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
     }
 
     if (tx.status === TransactionStatusEnum.ExecutedOnDestination && tx.destinationTxHash) {
-        const txHash = tx.destinationChain === ChainEnum.Nexus && !tx.destinationTxHash.startsWith('0x')
+        const txHash = isEvmChain(tx.destinationChain) && !tx.destinationTxHash.startsWith('0x')
         ? `0x${tx.destinationTxHash}` : tx.destinationTxHash;
         const url = getExplorerTxUrl(tx.destinationChain, txHash)
         window.open(url, '_blank')
     } else if (tx.sourceTxHash) {
-        const txHash = tx.originChain === ChainEnum.Nexus && !tx.sourceTxHash.startsWith('0x')
+        const txHash = isEvmChain(tx.originChain) && !tx.sourceTxHash.startsWith('0x')
             ? `0x${tx.sourceTxHash}` : tx.sourceTxHash;
         const url = getExplorerTxUrl(tx.originChain, txHash)
         window.open(url, '_blank')
-    }
-}
-
-export const fromChainToChainCurrency = (chain: ChainEnum): TokenEnum => {
-    switch (chain) {
-        case ChainEnum.Prime: {
-            return TokenEnum.APEX;
-        }
-        case ChainEnum.Cardano: {
-            return TokenEnum.Ada;
-        }
-        default:
-            return TokenEnum.APEX;
-    }
-}
-
-export const fromChainToChainNativeToken = (chain: ChainEnum): TokenEnum => {
-    switch (chain) {
-        case ChainEnum.Prime: {
-            return TokenEnum.WAda;
-        }
-        case ChainEnum.Cardano: {
-            return TokenEnum.WAPEX;
-        }
-        default:
-            return TokenEnum.WAda;
     }
 }
 
@@ -199,29 +168,3 @@ export const fromChainToCurrencySymbol = (chain: ChainEnum): string => {
 export const fromChainToNativeTokenSymbol = (chain: ChainEnum): string => {
     return appSettings.wrappedTokenName[chain];
 }
-
-export const getIsNativeToken = (chain: ChainEnum, sourceToken: TokenEnum) => {
-    if (chain === ChainEnum.Prime) {
-        return sourceToken === TokenEnum.WAda;
-    }
-
-    return sourceToken === TokenEnum.WAPEX;
-}
-
-export const skylineChains: ChainEnum[] = [
-    ChainEnum.Prime,
-    ChainEnum.Cardano,
-]
-
-export const reactorChains: ChainEnum[] = [
-    ChainEnum.Prime,
-    ChainEnum.Vector,
-    ChainEnum.Nexus,
-]
-
-export const TokenEnumToLabel: Record<TokenEnum, string> = {
-  [TokenEnum.Ada]: 'ADA',
-  [TokenEnum.WAda]: 'wADA',
-  [TokenEnum.APEX]: 'AP3X',
-  [TokenEnum.WAPEX]: 'cAP3X', 
-};
