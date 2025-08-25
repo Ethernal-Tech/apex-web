@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from "react";
 import { useEffect } from 'react';
-import { Typography, Box, Button, CircularProgress } from '@mui/material';
+import { Typography, Box, Button, CircularProgress, SelectChangeEvent } from '@mui/material';
 import CustomSelect from '../../components/customSelect/CustomSelect';
 import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
 import { ReactComponent as OneDirectionArrowIcon } from '../../assets/oneDirectionArrow.svg';
@@ -13,211 +13,160 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useNavigate } from "react-router-dom";
 import { NEW_TRANSACTION_ROUTE } from "../PageRouter";
-import { getDestinationChain, getSelectedChain } from "../../utils/storageUtils";
-import { setChainAction, setDestinationChainAction } from "../../redux/slices/chainSlice";
+import { setChainAction as setSrcChainAction, setDestinationChainAction as setDstChainAction } from "../../redux/slices/chainSlice";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
-import { capitalizeWord, chainIcons } from "../../utils/generalUtils";
 import { login } from "../../actions/login";
 import appSettings from "../../settings/appSettings";
-
-const reactorChainOptions = [
-  { 
-    value: ChainEnum.Prime,
-    label: capitalizeWord(ChainEnum.Prime),
-    icon: chainIcons[ChainEnum.Prime],
-    borderColor:'#077368' 
-  },
-  { 
-    value: ChainEnum.Vector,
-    label: capitalizeWord(ChainEnum.Vector),
-    icon: chainIcons[ChainEnum.Vector],
-    borderColor:'#F25041'
-  },
-  { 
-    value: ChainEnum.Nexus,
-    label: capitalizeWord(ChainEnum.Nexus),
-    icon: chainIcons[ChainEnum.Nexus],
-    borderColor: '#F27B50'
-  },
-];
-
-const skylineChainOptions = [
-  { 
-    value: ChainEnum.Prime,
-    label: capitalizeWord(ChainEnum.Prime),
-    icon: chainIcons[ChainEnum.Prime],
-    borderColor:'#077368' 
-  },
-  { 
-    value: ChainEnum.Cardano,
-    label: capitalizeWord(ChainEnum.Cardano),
-    icon: chainIcons[ChainEnum.Cardano],
-    borderColor: '#0538AF'
-  }
-];
+import { getChainInfo, getSrcChains, getDstChains } from "../../settings/chain";
 
 const HomePage: React.FC = () => {
   const wallet = useSelector((state: RootState) => state.wallet.wallet);
   const loginConnecting = useSelector((state: RootState) => state.login.connecting);
   const account = useSelector((state: RootState) => state.accountInfo.account);
-	const isLoggedInMemo = !!wallet && !!account;
+  const isLoggedInMemo = !!wallet && !!account;
   const enabledChains = useSelector((state: RootState) => state.settings.enabledChains);
 
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  
-  let chain = useSelector((state: RootState) => state.chain.chain);
-  let destinationChain = useSelector((state: RootState) => state.chain.destinationChain);
 
-  const defaultChainOptions = appSettings.isSkyline ? skylineChainOptions : reactorChainOptions;
+  const srcChain = useSelector((state: RootState) => state.chain.chain);
+  const dstChain = useSelector((state: RootState) => state.chain.destinationChain);
 
-   const supportedChainOptions = useMemo(
-    () => defaultChainOptions.filter(option => enabledChains.includes(option.value)),
-    [enabledChains, defaultChainOptions],
-  );
+  const srcChainOptions = useMemo(
+    () => getSrcChains(appSettings.isSkyline).filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x)),
+    [enabledChains]);
 
-  const destinationSupportedOptions = useMemo(
-    () => supportedChainOptions.filter(x => {
-            // if source chain not prime, destination can only be prime
-            if(chain !== ChainEnum.Prime){
-              return x.value === ChainEnum.Prime;
-            }
-            return x.value !== chain;
-          }),
-    [chain, supportedChainOptions],
-  );
+  const dstChainOptions = useMemo(
+    () => getDstChains(appSettings.isSkyline, srcChain).filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x)),
+    [srcChain, enabledChains]);
 
-  const switchValues =  useCallback(() => {
-    const temp = chain;
-    dispatch(setChainAction(destinationChain));
-    dispatch(setDestinationChainAction(temp));
-  }, [chain, destinationChain, dispatch]);
+  const isSwitchBtnEnabled = useMemo(
+    () => !isLoggedInMemo && getDstChains(appSettings.isSkyline, dstChain).some(chain => chain === srcChain),
+    [srcChain, dstChain, isLoggedInMemo]);
 
-  // if new source is the same as destination, switch the chains
-  const updateSource = useCallback((value: ChainEnum)=>{
-    const destination = getDestinationChain()
-    if(value === destination) return switchValues()
-    dispatch(setChainAction(value))
-  }, [dispatch, switchValues]);
-  
-  // if new destination is the same as source, switch the chains
-  const updateDestination = useCallback((value: ChainEnum)=>{
-    const source = getSelectedChain()
-    if(value === source) return switchValues()
-    dispatch(setDestinationChainAction(value))
-  }, [dispatch, switchValues]);
+  const srcChainInfo = useMemo(() => getChainInfo(srcChain), [srcChain]);
+  const dstChainInfo = useMemo(() => getChainInfo(dstChain), [dstChain]);
+  const color = appSettings.isSkyline ? "whiteSkyline" : "white";
 
-  const handleConnectClick = async () => {
-    if(!enabledChains.includes(chain)) {
-      console.error("chain not supported", chain)
-      return
-    }
+  const switchValues = useCallback(() => {
+    const temp = srcChain;
+    dispatch(setSrcChainAction(dstChain));
+    dispatch(setDstChainAction(temp));
+  }, [srcChain, dstChain, dispatch]);
 
-    await login(chain, navigate, dispatch);
-  }
+  const onChangeSrcChain = useCallback(
+    (evnt: SelectChangeEvent<string>) => dispatch(setSrcChainAction(evnt.target.value as ChainEnum)),
+    [dispatch]);
 
-  const getIconComponent = (value: string): React.FC => {
-    const option = supportedChainOptions.find(opt => opt.value === value);
-    return option ? option.icon : chainIcons[ChainEnum.Prime]; // Default to PrimeIcon if not found
-  };
+  const onChangeDstChain = useCallback(
+    (evnt: SelectChangeEvent<string>) => dispatch(setDstChainAction(evnt.target.value as ChainEnum)),
+    [dispatch]);
+
+  const handleConnectClick = useCallback(
+    async () => {
+      if (!enabledChains.includes(srcChain)) {
+        console.error("chain not supported", srcChain)
+        return
+      }
+
+      await login(srcChain, navigate, dispatch);
+    },
+    [srcChain, enabledChains, navigate, dispatch]);
 
   useEffect(() => {
-    if (!enabledChains.includes(chain) && supportedChainOptions.length > 0) {
-      updateSource(supportedChainOptions[0].value)
+    if ((!srcChain || !srcChainOptions.some(x => x.value === srcChain)) && srcChainOptions.length > 0) {
+      dispatch(setSrcChainAction(srcChainOptions[0].value));
     }
-    if (!enabledChains.includes(destinationChain) && supportedChainOptions.length >= 2) {
-        updateDestination(supportedChainOptions[1].value)
-    }
- }, [enabledChains, chain, destinationChain, supportedChainOptions, updateSource, updateDestination])
+  }, [srcChain, srcChainOptions, dispatch]);
 
- useEffect(() => {
-    if (chain !== ChainEnum.Prime && destinationChain !== ChainEnum.Prime) {
-      dispatch(setDestinationChainAction(ChainEnum.Prime))
+  useEffect(() => {
+    if ((!dstChain || !dstChainOptions.some(x => x.value === dstChain)) && dstChainOptions.length > 0) {
+      dispatch(setDstChainAction(dstChainOptions[0].value));
     }
- }, [chain, destinationChain, dispatch])
+  }, [dstChain, dstChainOptions, dispatch]);
 
   return (
     <BasePage>
-      <Typography 
-        variant="h1" 
-        sx={{ 
+      <Typography
+        variant="h1"
+        sx={{
           color: appSettings.isSkyline ? '#FFFFFF' : '#F25041',
           lineHeight: '',
           fontSize: '44px',
-          fontFamily: appSettings.isSkyline ? 'Goldman, sans-serif' : 'Major Mono Display, sans-serif' 
+          fontFamily: appSettings.isSkyline ? 'Goldman, sans-serif' : 'Major Mono Display, sans-serif'
         }}
       >
         {appSettings.isSkyline ? 'SKYLINE BRIDGE' : 'ReactoR bRidge'}
       </Typography>
 
-      <img src={appSettings.isSkyline ? SkylineBridgeGraph : BridgeGraph} alt="apex bridge graph" style={{height:'280px',marginTop:'32px'}}/>
+      <img src={appSettings.isSkyline ? SkylineBridgeGraph : BridgeGraph} alt="apex bridge graph" style={{ height: '280px', marginTop: '32px' }} />
 
       <Box display="flex" alignItems="center" justifyContent="space-between" pt={2} pb={4}>
         <Box>
-          <Typography mb={'7px'} fontWeight={500} sx={{color: white, fontSize:'13px'}}>SOURCE</Typography>
+          <Typography mb={'7px'} fontWeight={500} sx={{ color: white, fontSize: '13px' }}>SOURCE</Typography>
           <CustomSelect
             label="Source"
-            icon={getIconComponent(chain)}
-            value={chain}
+            icon={srcChainInfo.icon}
+            value={srcChain}
             disabled={isLoggedInMemo}
-            onChange={(e) => updateSource(e.target.value as ChainEnum)}
-            options={supportedChainOptions}
-            sx={{ width: '240px'}} // Setting minWidth via sx prop
+            onChange={onChangeSrcChain}
+            options={srcChainOptions}
+            sx={{ width: '240px' }} // Setting minWidth via sx prop
           />
         </Box>
-        <Button 
-          onClick={switchValues} 
-          disabled={isLoggedInMemo} 
-          sx={{ 
-            mt: '20px', 
-            mx:'28px', 
-            boxShadow: 'none', 
-            background:'none' 
+        <Button
+          onClick={switchValues}
+          disabled={!isSwitchBtnEnabled}
+          sx={{
+            mt: '20px',
+            mx: '28px',
+            boxShadow: 'none',
+            background: 'none'
           }}>
-            {!isLoggedInMemo ? <SwitcherIcon /> : <OneDirectionArrowIcon/>}
+          {!isLoggedInMemo ? <SwitcherIcon /> : <OneDirectionArrowIcon />}
         </Button>
         <Box>
-          <Typography mb={'7px'} fontWeight={500} sx={{color: white, fontSize:'13px'}}>DESTINATION</Typography>
+          <Typography mb={'7px'} fontWeight={500} sx={{ color: white, fontSize: '13px' }}>DESTINATION</Typography>
           <CustomSelect
             label="Destination"
-            icon={getIconComponent(destinationChain)}
-            value={destinationChain}
-            disabled={chain !== ChainEnum.Prime || enabledChains.length <=2 }
-            onChange={(e) => updateDestination(e.target.value as ChainEnum)}
+            icon={dstChainInfo.icon}
+            value={dstChain}
+            disabled={dstChainOptions.length < 2}
+            onChange={onChangeDstChain}
             // todo - makeshift fix, check out details later
-            options={destinationSupportedOptions}
-            sx={{ width: '240px'}} // Setting minWidth via sx prop
+            options={dstChainOptions}
+            sx={{ width: '240px' }} // Setting minWidth via sx prop
           />
         </Box>
       </Box>
       {
         loginConnecting ? (
-            <ButtonCustom 
-              variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
-              sx={{ textTransform:'uppercase'}}
-            >
-                Connect Wallet
-                <CircularProgress sx={{ marginLeft: 1 }} size={20}/>
-            </ButtonCustom>
-        ) : (
-       !isLoggedInMemo ? (
-        <ButtonCustom 
-          variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
-          sx={{ textTransform:'uppercase'}}
-          onClick={handleConnectClick}
-          id="bridge-connect">
+          <ButtonCustom
+            variant={color}
+            sx={{ textTransform: 'uppercase' }}
+          >
             Connect Wallet
-        </ButtonCustom>
-      ): (
-        <ButtonCustom 
-          variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
-          sx={{ textTransform:'uppercase'}}
-          onClick={()=> navigate(NEW_TRANSACTION_ROUTE)}
-          id="move-funds">
-            Move funds
-        </ButtonCustom>
-      )
-    )}
+            <CircularProgress sx={{ marginLeft: 1 }} size={20} />
+          </ButtonCustom>
+        ) : (
+          !isLoggedInMemo ? (
+            <ButtonCustom
+              variant={color}
+              sx={{ textTransform: 'uppercase' }}
+              onClick={handleConnectClick}
+              id="bridge-connect">
+              Connect Wallet
+            </ButtonCustom>
+          ) : (
+            <ButtonCustom
+              variant={color}
+              sx={{ textTransform: 'uppercase' }}
+              onClick={() => navigate(NEW_TRANSACTION_ROUTE)}
+              id="move-funds">
+              Move funds
+            </ButtonCustom>
+          )
+        )}
     </BasePage>
   );
 };
