@@ -5,7 +5,7 @@ import PasteApexAmountInput from "./PasteApexAmountInput";
 import FeeInformation from "../components/FeeInformation";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { calculateChangeMinUtxo, convertApexToDfm, convertDfmToWei, minBigInt, tokenIcons } from '../../../utils/generalUtils';
+import { calculateChangeMinUtxo, convertApexToDfm, convertDfmToWei, minBigInt } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
@@ -13,9 +13,10 @@ import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { white } from '../../../containers/theme';
-import { fromChainToChainCurrency, getIsNativeToken } from '../../../utils/chainUtils';
 import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
+import { getChainInfo, isCardanoChain, isEvmChain } from '../../../settings/chain';
+import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 
 type BridgeInputType = {
     bridgeTxFee: string
@@ -34,7 +35,7 @@ const calculateMaxAmountToken = (
   maxTokenAmountAllowedToBridge: string, chain: ChainEnum,
   sourceToken: TokenEnum | undefined,
 ): { maxByBalance:bigint, maxByAllowed:bigint } => {
-    if (!sourceToken || !getIsNativeToken(chain, sourceToken)) {
+    if (!sourceToken || !isWrappedToken(sourceToken)) {
       return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
     }
 
@@ -57,11 +58,11 @@ const calculateMaxAmountCurrency = (
     return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
   }
 
-  const sourceToken = fromChainToChainCurrency(chain);
+  const sourceToken = getChainInfo(chain).currencyToken;
 
   const maxAmountAllowedToBridgeDfm = BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
     ? (
-        chain === ChainEnum.Nexus
+        isEvmChain(chain)
           ? BigInt(convertDfmToWei(maxAmountAllowedToBridge))
           : BigInt(maxAmountAllowedToBridge)
     )
@@ -72,7 +73,7 @@ const calculateMaxAmountCurrency = (
       ? maxAmountAllowedToBridgeDfm : BigInt(totalDfmBalance[sourceToken] || '0')
 
   let maxByBalance
-  if (chain === ChainEnum.Nexus) {
+  if (isEvmChain(chain)) {
     maxByBalance = BigInt(totalDfmBalance[sourceToken] || '0') - BigInt(bridgeTxFee) -
       BigInt(minDfmValue) - BigInt(operationFee)
   } else {
@@ -93,11 +94,11 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
 
   const walletUTxOs = useSelector((state: RootState) => state.accountInfo.utxos);
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
-  const {chain} = useSelector((state: RootState)=> state.chain);
+  const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
   const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge)
   const maxAmountAllowedToBridge = useSelector((state: RootState) => state.settings.maxAmountAllowedToBridge)
   const maxTokenAmountAllowedToBridge = useSelector((state: RootState) => state.settings.maxTokenAmountAllowedToBridge)
-  const supportedSourceTokenOptions = useSupportedSourceTokenOptions(chain);
+  const supportedSourceTokenOptions = useSupportedSourceTokenOptions(chain, destinationChain);
 
   const fetchWalletFee = useCallback(async () => {
     if (!destinationAddr || !amount || !sourceToken) {
@@ -107,13 +108,13 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
     }
 
     try {
-        if (chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano) {
-            const feeResp = await getCardanoTxFee(destinationAddr, convertApexToDfm(amount || '0', chain), getIsNativeToken(chain, sourceToken));
+        if (isCardanoChain(chain)) {
+            const feeResp = await getCardanoTxFee(destinationAddr, convertApexToDfm(amount || '0', chain), isWrappedToken(sourceToken));
             setUserWalletFee((feeResp?.fee || 0).toString());
             setBridgeTxFee((feeResp?.bridgingFee || 0).toString());
 
             return;
-        } else if (chain === ChainEnum.Nexus) {
+        } else if (isEvmChain(chain)) {
             const feeResp = await getEthTxFee(destinationAddr, convertApexToDfm(amount || '0', chain));
             const { bridgingFee, isFallback, ...tx } = feeResp;
 
@@ -137,13 +138,10 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   }, [resetBridgeTxFee])
 
   useEffect(() => {
-      if (!appSettings.isSkyline) {
-        setSourceToken(TokenEnum.APEX)
-      }
-      else if (supportedSourceTokenOptions.length > 0) {
+      if (!supportedSourceTokenOptions.some(x => x.value === sourceToken) && supportedSourceTokenOptions.length > 0) {
         setSourceToken(supportedSourceTokenOptions[0].value);
-      }    
-  }, [chain, supportedSourceTokenOptions])
+      }         
+  }, [sourceToken, supportedSourceTokenOptions])
 
   useEffect(() => {
     if (fetchCreateTxTimeoutRef.current) {
@@ -175,18 +173,10 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
     {setSourceTokenCallback(e.target.value as TokenEnum);
   }, [setSourceTokenCallback]);
 
-  const memoizedSourceTokenOptions = useMemo(
-    () => supportedSourceTokenOptions,
-    [supportedSourceTokenOptions]
-  );
-
-  const memoizedTokenIcon = useMemo(() => 
-    {return sourceToken ? tokenIcons[sourceToken] : undefined;},  
-    [sourceToken]
-  );
+  const memoizedTokenIcon = useMemo(() => getTokenInfo(sourceToken).icon, [sourceToken]);
 
   // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
-  const minDfmValue = chain === ChainEnum.Nexus 
+  const minDfmValue = isEvmChain(chain)
     ? convertDfmToWei(minValueToBridge) 
     : appSettings.isSkyline 
       ? appSettings.minUtxoChainValue[chain]
@@ -195,13 +185,13 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   const currencyMaxAmounts = calculateMaxAmountCurrency(
     totalDfmBalance, maxAmountAllowedToBridge, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee);
   const tokenMaxAmounts = calculateMaxAmountToken(totalDfmBalance, maxTokenAmountAllowedToBridge, chain, sourceToken);
-  const maxAmounts = sourceToken && getIsNativeToken(chain, sourceToken)
+  const maxAmounts = sourceToken && isWrappedToken(sourceToken)
     ? tokenMaxAmounts : currencyMaxAmounts;
   const currencyMaxAmount = minBigInt(currencyMaxAmounts.maxByAllowed, currencyMaxAmounts.maxByBalance);
 
   const onSubmit = useCallback(async () => {
     if (!sourceToken) return;
-    await submit(destinationAddr, convertApexToDfm(amount || '0', chain), getIsNativeToken(chain, sourceToken))
+    await submit(destinationAddr, convertApexToDfm(amount || '0', chain), isWrappedToken(sourceToken))
   }, [amount, destinationAddr, submit, chain, sourceToken]) 
 
   return (
@@ -221,7 +211,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
                   icon={memoizedTokenIcon}
                   value={sourceToken || ''}
                   onChange={handleSourceTokenChange}
-                  options={memoizedSourceTokenOptions}
+                  options={supportedSourceTokenOptions}
                   width='50%'
               />
           </Box>

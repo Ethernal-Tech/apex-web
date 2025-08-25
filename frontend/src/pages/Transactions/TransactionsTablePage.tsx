@@ -10,19 +10,19 @@ import { reactorHeadCells, skylineHeadCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, convertApexToDfm, convertDfmToApex, formatAddress, formatTxDetailUrl, getChainLabelAndColor, toFixed } from '../../utils/generalUtils';
+import { capitalizeWord, convertApexToDfm, convertDfmToApex, formatAddress, formatTxDetailUrl, toFixed } from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import appSettings from '../../settings/appSettings';
-import { fromChainToChainNativeToken, TokenEnumToLabel } from '../../utils/chainUtils';
-import { fromChainToChainCurrency } from '../../utils/chainUtils';
+import { getChainInfo } from '../../settings/chain';
+import { getTokenInfoBySrcDst } from '../../settings/token';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
 	const [isLoading, setIsLoading] = useState(false);
 	const tableRef = useRef(null);
 	
-  const chain = useSelector((state: RootState) => state.chain.chain)
+  const {chain, destinationChain} = useSelector((state: RootState) => state.chain);
   const account = useSelector((state: RootState) => state.accountInfo.account);
 
   const headCells = appSettings.isSkyline ? skylineHeadCells : reactorHeadCells;
@@ -206,7 +206,7 @@ const TransactionsTablePage = () => {
                 <Box component="span" sx={{
                   display: 'inline-block',
                   color: 'white',
-                  bgcolor: getChainLabelAndColor(transaction.originChain).color,
+                  bgcolor: getChainInfo(transaction.originChain).mainColor,
                   borderRadius: '50%',
                   width: 24,
                   height: 24,
@@ -214,7 +214,7 @@ const TransactionsTablePage = () => {
                   lineHeight: '24px',
                   marginRight: 1,
                 }}>
-                  {getChainLabelAndColor(transaction.originChain).letter}
+                  {getChainInfo(transaction.originChain).letter}
                 </Box>
                 {capitalizeWord(transaction.originChain)}
               </TableCell>
@@ -223,7 +223,7 @@ const TransactionsTablePage = () => {
                 <Box component="span" sx={{
                   display: 'inline-block',
                   color: 'white',
-                  bgcolor: getChainLabelAndColor(transaction.destinationChain).color,
+                  bgcolor: getChainInfo(transaction.destinationChain).mainColor,
                   borderRadius: '50%',
                   width: 24,
                   height: 24,
@@ -231,13 +231,13 @@ const TransactionsTablePage = () => {
                   lineHeight: '24px',
                   marginRight: 1,
                 }}>
-                  {getChainLabelAndColor(transaction.destinationChain).letter}
+                  {getChainInfo(transaction.destinationChain).letter}
                 </Box>
                 {capitalizeWord(transaction.destinationChain)}
               </TableCell>
 
               <TableCell sx={tableCellStyle}>
-                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
+                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {getTokenInfoBySrcDst(chain, destinationChain, true).label}
               </TableCell>
               {
                 appSettings.isSkyline &&
@@ -246,7 +246,7 @@ const TransactionsTablePage = () => {
                     <Box sx={{ ml: 3 }}>-</Box>
                   ) : (
                       <>
-                      {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {TokenEnumToLabel[fromChainToChainNativeToken(chain)]}
+                      {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {getTokenInfoBySrcDst(chain, destinationChain, false).label}
                       </>
                     )}
                   

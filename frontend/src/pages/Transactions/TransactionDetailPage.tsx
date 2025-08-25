@@ -9,14 +9,14 @@ import { BridgeTransactionDto, ChainEnum } from '../../swagger/apexBridgeApiServ
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getAction } from './action';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor, toFixed } from '../../utils/generalUtils';
+import { capitalizeWord, convertDfmToApex, formatAddress, toFixed } from '../../utils/generalUtils';
 import { menuDark } from '../../containers/theme';
 import TransferProgress from './components/TransferProgress';
 import NewTransaction from './components/NewTransaction';
 import ButtonCustom from '../../components/Buttons/ButtonCustom';
 import appSettings from '../../settings/appSettings';
-import { fromChainToChainNativeToken, TokenEnumToLabel } from '../../utils/chainUtils';
-import { fromChainToChainCurrency } from '../../utils/chainUtils';
+import { getChainInfo } from '../../settings/chain';
+import { getTokenInfoBySrcDst } from '../../settings/token';
 
 const tabletMediaQuery = '@media (max-width:800px)'
 
@@ -108,7 +108,7 @@ const TransactionDetailPage = () => {
                         <Box component="span" sx={{
                             display: 'inline-block',
                             color: 'white',
-                            bgcolor: transaction && getChainLabelAndColor(transaction.originChain).color,
+                            bgcolor: transaction && getChainInfo(transaction.originChain).mainColor,
                             borderRadius: '50%',
                             width: 24,
                             height: 24,
@@ -116,7 +116,7 @@ const TransactionDetailPage = () => {
                             lineHeight: '26px',
                             marginRight: 1,
                           }}>
-                            {transaction && getChainLabelAndColor(transaction.originChain).letter}
+                            {transaction && getChainInfo(transaction.originChain).letter}
                         </Box>
                         <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500', display:'inline-block' }}>{capitalizeWord(transaction?.originChain || '')}</Typography>
                       </Box>
@@ -129,7 +129,7 @@ const TransactionDetailPage = () => {
                         <Box component="span" sx={{
                             display: 'inline-block',
                             color: 'white',
-                            bgcolor: transaction && getChainLabelAndColor(transaction.destinationChain).color,
+                            bgcolor: transaction && getChainInfo(transaction.destinationChain).mainColor,
                             borderRadius: '50%',
                             width: 24,
                             height: 24,
@@ -137,14 +137,14 @@ const TransactionDetailPage = () => {
                             lineHeight: '26px',
                             marginRight: 1,
                           }}>
-                            {transaction && getChainLabelAndColor(transaction.destinationChain).letter}
+                            {transaction && getChainInfo(transaction.destinationChain).letter}
                         </Box>
                         <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500', display:'inline-block' }}>{capitalizeWord(transaction?.destinationChain || '')}</Typography>
                       </Box>
                     </Box>
                     <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
                       <Typography variant="subtitle2">Amount:</Typography>
-                      <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && toFixed(convertDfmToApex(transaction?.amount, transaction?.originChain), 6)} {transaction && TokenEnumToLabel[fromChainToChainCurrency(transaction?.originChain)]}
+                      <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>{transaction && toFixed(convertDfmToApex(transaction?.amount, transaction?.originChain), 6)} {transaction && getTokenInfoBySrcDst(transaction.originChain, transaction.destinationChain, false).label}
                       </Typography>
                     </Box>
                     {
@@ -156,7 +156,7 @@ const TransactionDetailPage = () => {
                             <Box sx={{ mr: 4 }}>-</Box>
                           ) : (
                             <>
-                            {transaction && toFixed(convertDfmToApex(transaction?.nativeTokenAmount, transaction?.originChain), 6)} {transaction && TokenEnumToLabel[fromChainToChainNativeToken(transaction?.originChain)]}
+                            {transaction && toFixed(convertDfmToApex(transaction?.nativeTokenAmount, transaction?.originChain), 6)} {transaction && getTokenInfoBySrcDst(transaction.originChain, transaction.destinationChain, true).label}
                             </>
                           )}
                         </Typography>
