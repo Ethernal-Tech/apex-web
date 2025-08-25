@@ -135,6 +135,11 @@ export class TransactionSubmittedDto {
 		description: 'Indicates is fallback mechanism used',
 	})
 	isFallback: boolean;
+
+	@ApiProperty({
+		description: 'Indicates if Layer Zero bridging is used',
+	})
+	isLayerZero: boolean;
 }
 
 export class CreateCardanoTransactionResponseDto {

@@ -106,4 +106,26 @@ export class TransactionController {
 	): Promise<BridgeTransactionDto> {
 		return this.transactionService.transactionSubmitted(model);
 	}
+
+	@ApiOperation({
+		summary: 'Layer Zero transfer proxy call',
+		description:
+			'Layer Zero transfer proxy call',
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: BridgeTransactionDto,
+		description: 'OK - Returns data recieved from Layer Zero API.',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request - Error',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('bridgingTransactionSubmitted')
+	async layerZeroTransfer(
+		@Body() _: any,
+	): Promise<any> {
+		return async () => {};
+	}
 }

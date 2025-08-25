@@ -38,6 +38,10 @@ export type GetBridgingRequestStatesModel = {
 	txRaw: string;
 };
 
+export type GetLayerZeroBridgingRequestStatesModel = {
+	txHash: string;
+};
+
 export const getBridgingRequestStates = async (
 	chainId: string,
 	models: GetBridgingRequestStatesModel[],
@@ -78,6 +82,20 @@ export type HasTxFailedResponse = {
 	failed: boolean;
 };
 
+export const getLayerZeroRequestStates = async (models: GetLayerZeroBridgingRequestStatesModel[]) => {
+	const states = await Promise.all(
+		models.map((model) => getLayerZeroRequestState(model)).filter(x => !!x),
+	);
+
+	return states.reduce((acc: { [key: string]: BridgingRequestState }, cv) => {
+		if (cv) {
+			acc[cv.sourceTxHash] = cv;
+		}
+
+		return acc;
+	}, {});
+}
+
 export const getHasTxFailedRequestStates = async (
 	chainId: string,
 	models: GetBridgingRequestStatesModel[],
@@ -93,6 +111,42 @@ export const getHasTxFailedRequestStates = async (
 
 		return acc;
 	}, {});
+};
+
+export const getLayerZeroRequestState = async (
+	model: GetLayerZeroBridgingRequestStatesModel,
+): Promise<BridgingRequestState | undefined> => {
+	const layerZeroUrl = process.env.LAYERZERO_SCAN_URL;
+	if (!layerZeroUrl) {
+		Logger.error('layer zero scan url not set');
+
+		return 
+	}
+	const endpointUrl = `${layerZeroUrl}/messages/tx/${model.txHash}`;
+
+	Logger.debug(`axios.get: ${endpointUrl}`);
+	try {
+		const response = await axios.get(endpointUrl)
+
+		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
+
+		// TODO: map responseData to status
+		let status: TransactionStatusEnum = TransactionStatusEnum.Pending;
+
+		return {
+			sourceTxHash: model.txHash,
+			status: status,
+		} as BridgingRequestState;
+	} catch (e) {
+		if (e instanceof AxiosError) {
+			Logger.error(
+				`Error while getHasTxFailedRequestState: ${e}. response: ${JSON.stringify(e.response?.data)}`,
+				e.stack,
+			);
+		} else {
+			Logger.error(`Error while getHasTxFailedRequestState: ${e}`, e.stack);
+		}
+	}
 };
 
 export const getHasTxFailedRequestState = async (
@@ -286,6 +340,7 @@ export const mapBridgeTransactionToResponse = (
 	response.status = entity.status;
 	response.createdAt = entity.createdAt;
 	response.finishedAt = entity.finishedAt;
+	response.isLayerZero = entity.isLayerZero;
 	return response;
 };
 

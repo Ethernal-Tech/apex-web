@@ -91,6 +91,11 @@ export class BridgeTransactionDto {
 		required: false,
 	})
 	finishedAt?: Date;
+
+	@ApiProperty({
+		description: 'Transaction is Layer Zero bridging',
+	})
+	isLayerZero: boolean;
 }
 
 export class BridgeTransactionFilterDto extends PaginatedDto {
