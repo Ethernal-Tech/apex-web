@@ -133,7 +133,6 @@ const HomePage: React.FC = () => {
             value={dstChain}
             disabled={dstChainOptions.length < 2}
             onChange={onChangeDstChain}
-            // todo - makeshift fix, check out details later
             options={dstChainOptions}
             sx={{ width: '240px' }} // Setting minWidth via sx prop
           />
