@@ -23,6 +23,8 @@ import {
 	GetBridgingRequestStatesModel,
 	getCentralizedBridgingRequestStates,
 	getHasTxFailedRequestStates,
+	GetLayerZeroBridgingRequestStatesModel,
+	getLayerZeroRequestStates,
 	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
@@ -123,7 +125,17 @@ export class BridgeTransactionService {
 					const models: GetBridgingRequestStatesModel[] = [];
 					const modelsPending: GetBridgingRequestStatesModel[] = [];
 					const modelsCentralized: GetBridgingRequestStatesModel[] = [];
+					const modelsLayerZero: GetLayerZeroBridgingRequestStatesModel[] = [];
 					for (const entity of entities) {
+						// handle layer zero
+						if (entity.isLayerZero) {
+							modelsLayerZero.push({
+								txHash: entity.sourceTxHash,
+							});
+
+							continue;
+						}
+
 						const model: GetBridgingRequestStatesModel = {
 							txHash: entity.sourceTxHash,
 							destinationChainId: entity.destinationChain,
@@ -142,11 +154,12 @@ export class BridgeTransactionService {
 						}
 					}
 
-					const [states, statesCentralized, statesTxFailed] = await Promise.all(
+					const [states, statesCentralized, statesTxFailed, stateslayerZero] = await Promise.all(
 						[
 							getBridgingRequestStates(chain, models),
 							getCentralizedBridgingRequestStates(chain, modelsCentralized),
 							getHasTxFailedRequestStates(chain, modelsPending),
+							getLayerZeroRequestStates(modelsLayerZero),
 						],
 					);
 
@@ -162,10 +175,14 @@ export class BridgeTransactionService {
 						Logger.debug(
 							`updateStatuses - got has tx failed request states: ${JSON.stringify(statesTxFailed)}`,
 						);
+					Object.keys(stateslayerZero).length > 0 &&
+						Logger.debug(
+							`updateStatuses - got bridging request states from layer zero: ${JSON.stringify(stateslayerZero)}`,
+						);
 
 					const updatedBridgeTransactions = updateBridgeTransactionStates(
 						entities,
-						{ ...states, ...statesCentralized },
+						{ ...states, ...statesCentralized, ...stateslayerZero },
 						statesTxFailed,
 					);
 
