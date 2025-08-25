@@ -106,3 +106,12 @@ export const isEvmChain = function (chain: ChainEnum): boolean {
 export const isCardanoChain = function (chain: ChainEnum): boolean {
     return chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano;
 }
+
+export const toChainEnum = function (value: string): ChainEnum {
+    const lower = value.toLowerCase();
+    if (Object.values(ChainEnum).includes(lower as ChainEnum)) {
+        return lower as ChainEnum;
+    }
+    
+    throw new Error(`Invalid chain: ${value}`);
+}

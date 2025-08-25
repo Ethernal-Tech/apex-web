@@ -6,6 +6,7 @@ import { fetchAndUpdateLockedTokensAction } from "../../actions/lockedTokens";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import './lockedTokens.css';
 import { getCurrencyTokenInfo } from "../../settings/token";
+import { toChainEnum } from "../../settings/chain";
 
 
 const decodeHex = (hex: string): string => {
@@ -73,8 +74,7 @@ const LockedTokensComponent = () => {
             const formattedNum = formatBigIntDecimalString(num, 6);
 
             if (innerKey === "lovelace") {
-              // TODO: not generic
-              const tokenLabel = getCurrencyTokenInfo(ChainEnum.Prime).label;
+              const tokenLabel = getCurrencyTokenInfo(toChainEnum(key)).label;
               return `${formattedNum} ${tokenLabel}`;
             } else {
               const parts = innerKey.split(".");
@@ -98,7 +98,6 @@ const LockedTokensComponent = () => {
         outputValue += Object.entries(innerObj).map(([, num]) => BigInt(num > 0 ? num : 0)).reduce((acc, bi) => acc + bi);        
     });
 
-    // TODO: not generic
     const label = getCurrencyTokenInfo(ChainEnum.Prime).label;
 
     return `${formatBigIntDecimalString(outputValue, 6)} ${label}`;
