@@ -4,7 +4,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { capitalizeWord, convertDfmToApex, toFixed } from '../../../utils/generalUtils';
 import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
-import { fromChainToChainCurrency, TokenEnumToLabel } from '../../../utils/chainUtils';
+import { getCurrencyTokenInfo } from '../../../settings/token';
 
 const CustomBox = styled(Box)({
   background:'#075159'
@@ -19,6 +19,8 @@ interface FeeInformationProps {
 }
 
 const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, bridgeTxFee, operationFee, chain }) => {
+  const currencyToken = getCurrencyTokenInfo(chain)
+
   return (
     <CustomBox sx={{
       color:'white',
@@ -51,7 +53,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               </Tooltip>
           </Box>
           {/* TODO AF - check this conversion is correct */}
-          <Box component="span">{BigInt(userWalletFee) > 0 ? toFixed(convertDfmToApex(userWalletFee, chain), 6) : '0'} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
+          <Box component="span">{BigInt(userWalletFee) > 0 ? toFixed(convertDfmToApex(userWalletFee, chain), 6) : '0'} {currencyToken.label}
           </Box>
         </Typography>
         
@@ -71,7 +73,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               <Tooltip
                   title={
                       <Typography color={'white'} sx={{ fontSize: '14px' }}>
-                          This fee covers the bridge blockchain transaction costs. This fee is set to the predefined minimum. When bridging native tokens, the minimum {TokenEnumToLabel[fromChainToChainCurrency(chain)]} required to hold those tokens on {capitalizeWord(chain)} is added.
+                          This fee covers the bridge blockchain transaction costs. This fee is set to the predefined minimum. When bridging native tokens, the minimum {currencyToken.label} required to hold those tokens on {capitalizeWord(chain)} is added.
                       </Typography>
                   }
                   placement="right-start"
@@ -80,7 +82,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               </Tooltip>
           </Box>
           {/* TODO AF - check this conversion is correct */}
-          <Box component="span">{BigInt(bridgeTxFee) > 0 ? toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
+          <Box component="span">{BigInt(bridgeTxFee) > 0 ? toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'} {currencyToken.label}
           </Box>
         </Typography>
         
@@ -110,7 +112,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               </Tooltip>
             </Box>
             {/* TODO AF - check this conversion is correct */}
-            <Box component="span">{BigInt(operationFee) > 0 ? toFixed(convertDfmToApex(operationFee, chain), 6): '0'} {TokenEnumToLabel[fromChainToChainCurrency(chain)]}
+            <Box component="span">{BigInt(operationFee) > 0 ? toFixed(convertDfmToApex(operationFee, chain), 6): '0'} {currencyToken.label}
             </Box>
           </Typography>
         }

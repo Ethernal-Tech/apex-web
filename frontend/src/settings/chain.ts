@@ -4,6 +4,7 @@ import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
 import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
 import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
+import { TokenEnum } from "../features/enums";
 
 const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
     [ChainEnum.Prime]: [ChainEnum.Vector, ChainEnum.Nexus],
@@ -18,6 +19,7 @@ const skylineChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
 
 export type ChainInfo = {
     value: ChainEnum;
+    currencyToken: TokenEnum,
     label: string;
     icon: React.FunctionComponent<SVGProps<SVGSVGElement>>;
     letter: string;
@@ -27,6 +29,7 @@ export type ChainInfo = {
 
 const unknownChainInfo: ChainInfo = {
     value: ChainEnum.Prime,
+    currencyToken: TokenEnum.APEX,
     label: '',
     icon: PrimeIcon,
     letter: '',
@@ -37,6 +40,7 @@ const unknownChainInfo: ChainInfo = {
 const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
     [ChainEnum.Prime]: {
         value: ChainEnum.Prime,
+        currencyToken: TokenEnum.APEX,
         label: "Prime",
         icon: PrimeIcon,
         borderColor: '#077368',
@@ -45,6 +49,7 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
     },
     [ChainEnum.Vector]: {
         value: ChainEnum.Vector,
+        currencyToken: TokenEnum.APEX,
         label: "Vector",
         icon: VectorIcon,
         borderColor: '#F25041',
@@ -53,6 +58,7 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
     },
     [ChainEnum.Nexus]: {
         value: ChainEnum.Nexus,
+        currencyToken: TokenEnum.APEX,
         label: "Nexus",
         icon: NexusIcon,
         borderColor: '#F27B50',
@@ -61,6 +67,7 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
     },
     [ChainEnum.Cardano]: {
         value: ChainEnum.Cardano,
+        currencyToken: TokenEnum.Ada,
         label: "Cardano",
         icon: CardanoIcon,
         borderColor: '#0538AF',
@@ -98,4 +105,13 @@ export const isEvmChain = function (chain: ChainEnum): boolean {
 
 export const isCardanoChain = function (chain: ChainEnum): boolean {
     return chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano;
+}
+
+export const toChainEnum = function (value: string): ChainEnum {
+    const lower = value.toLowerCase();
+    if (Object.values(ChainEnum).includes(lower as ChainEnum)) {
+        return lower as ChainEnum;
+    }
+    
+    throw new Error(`Invalid chain: ${value}`);
 }

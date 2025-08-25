@@ -7,23 +7,20 @@ import { convertDfmToApex, toFixed } from "../../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 import appSettings from "../../../settings/appSettings";
-import { fromChainToChainCurrency, fromChainToChainNativeToken, TokenEnumToLabel } from "../../../utils/chainUtils";
-import { useSupportedSourceTokenOptions } from "../utils";
+import { getBridgingInfo, getTokenInfo } from "../../../settings/token";
+import { getChainInfo } from "../../../settings/chain";
 
 const TotalBalance = () => {
 	const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
-    const chain = useSelector((state: RootState)=> state.chain.chain);
-    const chainCurrency = fromChainToChainCurrency(chain);
-    const chainNativeToken = fromChainToChainNativeToken(chain);
-
-    const supportedSourceTokenOptions = useSupportedSourceTokenOptions(chain);
-
-    const showChainNativeToken = supportedSourceTokenOptions.find(
-        (token) => token.value === chainNativeToken
-    );
+    const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
+    
+    const bridgingInfo = getBridgingInfo(chain, destinationChain);
+    const chainCurrency = getChainInfo(chain).currencyToken;
+    const chainNativeToken = bridgingInfo.wrappedToken
+    const showChainNativeToken = !!chainNativeToken
 
     const totalBalanceInApex = totalDfmBalance[chainCurrency] ? toFixed(convertDfmToApex(totalDfmBalance[chainCurrency], chain), 6) : null;
-    const totalBalanceInNativeToken = appSettings.isSkyline && totalDfmBalance[chainNativeToken] ? toFixed(convertDfmToApex(totalDfmBalance[chainNativeToken], chain), 6) : null;
+    const totalBalanceInNativeToken = appSettings.isSkyline && totalDfmBalance[chainNativeToken!] ? toFixed(convertDfmToApex(totalDfmBalance[chainNativeToken!], chain), 6) : null;
 
     if (appSettings.isSkyline) {
         return (
@@ -58,7 +55,7 @@ const TotalBalance = () => {
                             </Box>
                             }
                         </Typography>
-                        <Typography>{TokenEnumToLabel[chainCurrency]}</Typography>
+                        <Typography>{getTokenInfo(chainCurrency).label}</Typography>
                     </Box>
                 }
 
@@ -77,7 +74,7 @@ const TotalBalance = () => {
                             </Box>
                             }
                         </Typography>
-                        <Typography>{TokenEnumToLabel[chainNativeToken]}</Typography>
+                        <Typography>{getTokenInfo(chainNativeToken).label}</Typography>
                     </Box>
                 }
             </Box>

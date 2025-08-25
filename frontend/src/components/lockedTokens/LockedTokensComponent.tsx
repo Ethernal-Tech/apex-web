@@ -4,12 +4,9 @@ import { RootState } from "../../redux/store";
 import { useEffect, useMemo } from "react";
 import { fetchAndUpdateLockedTokensAction } from "../../actions/lockedTokens";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
-import {
-  TokenEnumToLabel,
-  fromChainToChainCurrency,
-  fromChainToChainNativeToken,
-} from "../../utils/chainUtils";
 import './lockedTokens.css';
+import { getCurrencyTokenInfo } from "../../settings/token";
+import { toChainEnum } from "../../settings/chain";
 
 
 const decodeHex = (hex: string): string => {
@@ -77,8 +74,7 @@ const LockedTokensComponent = () => {
             const formattedNum = formatBigIntDecimalString(num, 6);
 
             if (innerKey === "lovelace") {
-              const tokenLabel =
-                TokenEnumToLabel[fromChainToChainCurrency(ChainEnum.Prime)];
+              const tokenLabel = getCurrencyTokenInfo(toChainEnum(key)).label;
               return `${formattedNum} ${tokenLabel}`;
             } else {
               const parts = innerKey.split(".");
@@ -97,26 +93,14 @@ const LockedTokensComponent = () => {
   }, [lockedTokens]);
 
   const transferredData = useMemo(() => {
-    let sum: {[key:string]:bigint} = {}
-    Object.entries(lockedTokens.totalTransferred).forEach(([key, innerObj]) => {
-
-        const filteredEntries = Object.entries(innerObj).filter(
-          ([, num]) => num > 0
-        );
-        if (filteredEntries.length === 0) return null;
-
-        filteredEntries.forEach(([innerKey, num]) => {
-            const toTokFunc = innerKey === "amount" ? fromChainToChainCurrency : fromChainToChainNativeToken;
-            const tokenKey = toTokFunc(key.toLowerCase() as ChainEnum);
-            sum[tokenKey] = BigInt(sum[tokenKey] || 0) + num;
-        });
+    let outputValue: bigint = BigInt(0);
+    Object.entries(lockedTokens.totalTransferred).forEach(([_, innerObj]) => {
+        outputValue += Object.entries(innerObj).map(([, num]) => BigInt(num > 0 ? num : 0)).reduce((acc, bi) => acc + bi);        
     });
 
-    
-    const outputValue = BigInt(sum[fromChainToChainCurrency(ChainEnum.Prime)] || 0)
-                      + BigInt(sum[fromChainToChainNativeToken(ChainEnum.Cardano)] || 0);
+    const label = getCurrencyTokenInfo(ChainEnum.Prime).label;
 
-    return `${formatBigIntDecimalString(outputValue, 6)} ${TokenEnumToLabel[fromChainToChainCurrency(ChainEnum.Prime)]}`;
+    return `${formatBigIntDecimalString(outputValue, 6)} ${label}`;
   }, [lockedTokens]);
 
   return (
