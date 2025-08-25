@@ -5,6 +5,7 @@ import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
 import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
 import { TokenEnum } from "../features/enums";
+import appSettings from "./appSettings";
 
 const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
     [ChainEnum.Prime]: [ChainEnum.Vector, ChainEnum.Nexus],
@@ -76,27 +77,24 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
     },
 }
 
-const getChainDirections = function (isSkyline: boolean): Partial<Record<ChainEnum, ChainEnum[]>> {
-    if (isSkyline) {
-        return skylineChainDirections;
-    }
-    return reactorChainDirections;
+const getChainDirections = function (): Partial<Record<ChainEnum, ChainEnum[]>> {
+    return appSettings.isSkyline ? skylineChainDirections : reactorChainDirections;
 }
 
 export const getChainInfo = function (chain: ChainEnum): ChainInfo {
     return chainInfoMapping[chain] || unknownChainInfo;
 }
 
-export const getDstChains = function (isSkyline: boolean, chain: ChainEnum | undefined): ChainEnum[] {
+export const getDstChains = function (chain: ChainEnum | undefined): ChainEnum[] {
     if (!chain) {
         return [];
     }
 
-    return getChainDirections(isSkyline)[chain] || [];
+    return getChainDirections()[chain] || [];
 }
 
-export const getSrcChains = function (isSkyline: boolean): ChainEnum[] {
-    return Object.keys(getChainDirections(isSkyline)) as ChainEnum[];
+export const getSrcChains = function (): ChainEnum[] {
+    return Object.keys(getChainDirections()) as ChainEnum[];
 }
 
 export const isEvmChain = function (chain: ChainEnum): boolean {
@@ -112,6 +110,6 @@ export const toChainEnum = function (value: string): ChainEnum {
     if (Object.values(ChainEnum).includes(lower as ChainEnum)) {
         return lower as ChainEnum;
     }
-    
+
     throw new Error(`Invalid chain: ${value}`);
 }

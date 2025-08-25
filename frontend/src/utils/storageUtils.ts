@@ -87,8 +87,8 @@ export const initChainsState = () => {
 	if(!chain || 
 		!destinationChain || 
 		chain === destinationChain ||
-		!getSrcChains(appSettings.isSkyline).some(x => x === chain) ||
-		!getDstChains(appSettings.isSkyline, chain).some(x => x === destinationChain)
+		!getSrcChains().some(x => x === chain) ||
+		!getDstChains(chain).some(x => x === destinationChain)
 	){
 		setSelectedChain(ChainEnum.Prime);
 		setDestinationChain(appSettings.isSkyline ? ChainEnum.Cardano : ChainEnum.Vector);

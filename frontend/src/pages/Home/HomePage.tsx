@@ -33,15 +33,15 @@ const HomePage: React.FC = () => {
   const dstChain = useSelector((state: RootState) => state.chain.destinationChain);
 
   const srcChainOptions = useMemo(
-    () => getSrcChains(appSettings.isSkyline).filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x)),
+    () => getSrcChains().filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x)),
     [enabledChains]);
 
   const dstChainOptions = useMemo(
-    () => getDstChains(appSettings.isSkyline, srcChain).filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x)),
+    () => getDstChains(srcChain).filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x)),
     [srcChain, enabledChains]);
 
   const isSwitchBtnEnabled = useMemo(
-    () => !isLoggedInMemo && getDstChains(appSettings.isSkyline, dstChain).some(chain => chain === srcChain),
+    () => !isLoggedInMemo && getDstChains(dstChain).some(chain => chain === srcChain),
     [srcChain, dstChain, isLoggedInMemo]);
 
   const srcChainInfo = useMemo(() => getChainInfo(srcChain), [srcChain]);
