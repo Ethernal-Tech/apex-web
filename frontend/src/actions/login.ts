@@ -27,7 +27,7 @@ const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainEnum, 
         throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`);
     }
 
-    if (!getSrcChains(appSettings.isSkyline).some(x => x === chain)) {
+    if (!getSrcChains().some(x => x === chain)) {
         throw new Error(`Chain: ${chain} not supported.`);
     }
 
@@ -86,7 +86,7 @@ const enableCardanoWallet = async (selectedWalletName: string, chain: ChainEnum,
         throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`);
     }
 
-    if (!getSrcChains(appSettings.isSkyline).some(x => x === chain)) {
+    if (!getSrcChains().some(x => x === chain)) {
         throw new Error(`Chain: ${chain} not supported.`);
     }
 

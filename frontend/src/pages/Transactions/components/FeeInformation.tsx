@@ -52,7 +52,6 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
                   <HelpOutlineIcon sx={{ marginLeft: '6px', fontSize: '16px' }}/>
               </Tooltip>
           </Box>
-          {/* TODO AF - check this conversion is correct */}
           <Box component="span">{BigInt(userWalletFee) > 0 ? toFixed(convertDfmToApex(userWalletFee, chain), 6) : '0'} {currencyToken.label}
           </Box>
         </Typography>
@@ -81,7 +80,6 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
                   <HelpOutlineIcon sx={{ marginLeft: '6px', fontSize: '16px' }}/>
               </Tooltip>
           </Box>
-          {/* TODO AF - check this conversion is correct */}
           <Box component="span">{BigInt(bridgeTxFee) > 0 ? toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'} {currencyToken.label}
           </Box>
         </Typography>
@@ -111,7 +109,6 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
                   <HelpOutlineIcon sx={{ marginLeft: '6px', fontSize: '16px' }}/>
               </Tooltip>
             </Box>
-            {/* TODO AF - check this conversion is correct */}
             <Box component="span">{BigInt(operationFee) > 0 ? toFixed(convertDfmToApex(operationFee, chain), 6): '0'} {currencyToken.label}
             </Box>
           </Typography>

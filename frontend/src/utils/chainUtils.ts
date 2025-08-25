@@ -5,8 +5,8 @@ import appSettings from "../settings/appSettings";
 import { isEvmChain } from "../settings/chain";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
-const TESTNET_NEXUS_NETWORK_ID = BigInt(9070) // for Nexus
-const MAINNET_NEXUS_NETWORK_ID = BigInt(9071) // TODO: fix when known
+const TESTNET_NEXUS_NETWORK_ID = BigInt(9070) // for Nexus testnet
+const MAINNET_NEXUS_NETWORK_ID = BigInt(9069) // for Nexus mainnet
 
 type ChainData = {
     mainnet: { networkID: number|bigint, network: ApexBridgeNetwork },
@@ -98,7 +98,7 @@ export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: Cardano
     return fromChainToNetworkId(chain) === addr.GetNetwork();
 }
 
-// TODO: will need to add explorer urls for mainnet
+// TODO: will need to add explorer urls for nexus mainnet
 const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]: string}} = {
     mainnet: {
         [ChainEnum.Prime]: 'https://apexscan.org/en',
