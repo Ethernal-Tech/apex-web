@@ -8,7 +8,7 @@ import {
 	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
-import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
+import { BridgeTransactionDto, LayerZeroTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 
 @ApiTags('Transaction')
 @Controller('transaction')
@@ -122,10 +122,10 @@ export class TransactionController {
 		description: 'Bad Request - Error',
 	})
 	@HttpCode(HttpStatus.OK)
-	@Post('bridgingTransactionSubmitted')
+	@Post('layerZeroTransfer')
 	async layerZeroTransfer(
-		@Body() _: any,
+		@Body() model: LayerZeroTransactionDto,
 	): Promise<any> {
-		return async () => {};
+		return this.transactionService.transferLayerZero(model)
 	}
 }

@@ -23,10 +23,11 @@ import {
 	getInputUtxos,
 	mapBridgeTransactionToResponse,
 } from 'src/bridgeTransaction/bridgeTransaction.helper';
-import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
+import { BridgeTransactionDto, LayerZeroTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 import { SettingsService } from 'src/settings/settings.service';
 import { Utxo } from 'src/blockchain/dto';
 import { Logger } from '@nestjs/common';
+import axios from 'axios';
 
 @Injectable()
 export class TransactionService {
@@ -254,6 +255,22 @@ export class TransactionService {
 					`error while confirming tx submittion: ${e}`,
 				);
 			}
+		}
+	}
+
+	async transferLayerZero(dto: LayerZeroTransactionDto): Promise<any> {
+		try {
+			const endpointUrl = `${process.env.LAYERZERO_API_URL}/transfer`;
+			Logger.debug(`axios.get: ${endpointUrl}`);
+			
+			return await axios.get(endpointUrl, {
+				params: dto,
+				headers: {'x-layerzero-api-key': process.env.LAYERZERO_APIKEY},
+			})
+		} catch (e) {			
+			throw new BadRequestException(
+				`error while calling Layer Zero transfer: ${e}`,
+			);
 		}
 	}
 }

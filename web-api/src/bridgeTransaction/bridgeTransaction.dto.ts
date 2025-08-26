@@ -197,3 +197,76 @@ export class BridgeTransactionResponseDto {
 	})
 	total: number;
 }
+
+export class LayerZeroTransactionDto {
+	@ApiProperty({
+		description: 'Source chain name where the OFT transfer originates',
+		type: LayerZeroTransactionDto,
+		required: true
+	})
+	srcChainName: string;
+
+	@ApiProperty({
+		description: 'Destination chain name where the OFT will be received',
+		type: LayerZeroTransactionDto,
+		required: true
+	})
+	dstChainName: string;
+
+	@ApiProperty({
+		description: 'Address of the OFT contract on the source chain',
+		type: LayerZeroTransactionDto,
+		required: true
+	})
+	oftAddress: string;
+
+	@ApiProperty({
+		description: 'Amount to transfer in the smallest unit (wei/satoshi equivalent)',
+		type: LayerZeroTransactionDto,
+		required: true
+	})
+	amount: string;
+
+	@ApiProperty({
+		description: 'Address of the sender wallet',
+		type: LayerZeroTransactionDto,
+		required: true
+	})
+	from: string;
+
+	@ApiProperty({
+		description: 'Address of the recipient wallet (EVM hex or Solana base58)',
+		type: LayerZeroTransactionDto,
+		required: true
+	})
+	to: string;
+
+	@ApiProperty({
+		description: 'Whether to validate balances before creating transaction',
+		type: LayerZeroTransactionDto,
+		default: false,
+		required: false
+	})
+	validate: string;
+
+	@ApiProperty({
+		description: 'Structured LayerZero execution options as JSON string. EXECUTOR OPTIONS: - lzReceive: Set gas limit and optional native drop for lzReceive execution - nativeDrops: Array of native token drops to specific addresses - composeOptions: Array of compose message execution settings with gas and native drop All numeric values for gas limits and native drops should be strings or numbers. Native drop amounts are in wei (e.g., "1000000000000000" = 0.001 ETH).',
+		type: LayerZeroTransactionDto,
+		required: false
+	})
+	options: string;
+	
+	@ApiProperty({
+		description: 'Compose message for advanced OFT operations (hex encoded)',
+		type: LayerZeroTransactionDto,
+		required: false
+	})
+	composeMsg: string;
+
+	@ApiProperty({
+		description: 'OFT command for advanced operations (hex encoded)',
+		type: LayerZeroTransactionDto,
+		required: false
+	})
+	oftCmd: string;
+}
