@@ -247,7 +247,7 @@ export class LayerZeroTransactionDto {
 		default: false,
 		required: false
 	})
-	validate: string;
+	validate: boolean;
 
 	@ApiProperty({
 		description: 'Structured LayerZero execution options as JSON string. EXECUTOR OPTIONS: - lzReceive: Set gas limit and optional native drop for lzReceive execution - nativeDrops: Array of native token drops to specific addresses - composeOptions: Array of compose message execution settings with gas and native drop All numeric values for gas limits and native drops should be strings or numbers. Native drop amounts are in wei (e.g., "1000000000000000" = 0.001 ETH).',
