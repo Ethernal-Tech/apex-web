@@ -16,6 +16,14 @@ export enum ChainEnum {
 	Cardano = 'cardano',
 }
 
+export const ChainExtendedEnum = {
+  ...ChainEnum,
+  Sepolia: "sepolia",
+  Ethereum: "ethereum",
+} as const;
+
+export type ChainExtendedEnum = typeof ChainExtendedEnum[keyof typeof ChainExtendedEnum]; 
+
 export enum GroupByTimePeriod {
 	Hour = 'hour',
 	Day = 'day',

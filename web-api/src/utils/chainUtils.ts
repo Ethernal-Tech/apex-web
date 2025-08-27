@@ -1,4 +1,4 @@
-import { ChainEnum } from 'src/common/enum';
+import { ChainEnum, ChainExtendedEnum } from 'src/common/enum';
 import { CardanoNetworkType } from './Address/types';
 
 const NEXUS_TESTNET_CHAIN_ID = BigInt(9070);
@@ -48,3 +48,6 @@ export const areChainsEqual = (
 };
 
 export const toNumChainID = (chain: ChainEnum) => CHAIN_TO_CHAIN_ID[chain];
+
+export const isCardanoChain = (chain: ChainExtendedEnum) => 
+	chain === ChainExtendedEnum.Cardano || chain === ChainExtendedEnum.Prime || chain === ChainExtendedEnum.Vector;

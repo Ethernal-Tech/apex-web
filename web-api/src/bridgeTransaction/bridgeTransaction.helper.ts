@@ -1,12 +1,13 @@
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import axios, { AxiosError } from 'axios';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import { ChainExtendedEnum, TransactionStatusEnum } from 'src/common/enum';
 import { BridgeTransactionDto } from './bridgeTransaction.dto';
 import { capitalizeWord } from 'src/utils/stringUtils';
 import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization-lib-nodejs';
 import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
+import { isCardanoChain } from 'src/utils/chainUtils';
 
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
@@ -34,7 +35,7 @@ export type BridgingRequestState = {
 
 export type GetBridgingRequestStatesModel = {
 	txHash: string;
-	destinationChainId: ChainEnum;
+	destinationChainId: ChainExtendedEnum;
 	txRaw: string;
 };
 
@@ -130,8 +131,23 @@ export const getLayerZeroRequestState = async (
 
 		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
+		const data = response.data.data[0];
 		// TODO: map responseData to status
 		let status: TransactionStatusEnum = TransactionStatusEnum.Pending;
+		switch (data['status']) {
+			case 'DELIVERED':
+				status = TransactionStatusEnum.ExecutedOnDestination;
+
+				break;
+			default:
+				if (data['destination']['status'] == 'SUCCEEDED') { 
+					status = TransactionStatusEnum.SubmittedToDestination;
+				} else if (data['source']['status'] == 'SUCCEEDED') {
+					status = TransactionStatusEnum.DiscoveredOnSource;
+				}
+
+				break;
+		}
 
 		return {
 			sourceTxHash: model.txHash,
@@ -153,14 +169,14 @@ export const getHasTxFailedRequestState = async (
 	chainId: string,
 	model: GetBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
-	if (!model.txRaw) {
+	if (!model.txRaw || !Object.values(ChainExtendedEnum).some(x => x == chainId)) {
 		return;
 	}
 
 	let ttl: bigint | undefined;
-	if (chainId === ChainEnum.Prime || chainId === ChainEnum.Vector) {
+	if (isCardanoChain(chainId as ChainExtendedEnum)) {
 		ttl = getCardanoTTL(model.txRaw);
-	} else if (chainId === ChainEnum.Nexus) {
+	} else {
 		ttl = getEthTTL(model.txRaw);
 	}
 

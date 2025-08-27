@@ -28,7 +28,7 @@ import {
 	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import { ChainExtendedEnum, TransactionStatusEnum } from 'src/common/enum';
 
 @Injectable()
 export class BridgeTransactionService {
@@ -114,7 +114,7 @@ export class BridgeTransactionService {
 		const job = this.schedulerRegistry.getCronJob('updateStatusesJob');
 		job.stop();
 		try {
-			for (const chain of Object.values(ChainEnum)) {
+			for (const chain of Object.values(ChainExtendedEnum)) {
 				const entities = await this.bridgeTransactionRepository.find({
 					where: {
 						status: In(BridgingRequestNotFinalStates),
