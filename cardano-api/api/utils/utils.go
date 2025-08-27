@@ -94,7 +94,7 @@ func GetBridgingAddress(
 	ctx context.Context,
 	oracleURL string,
 	apiKey string,
-	chainID, amount string) (
+	chainID string) (
 	*response.BridgingAddressResponse, error,
 ) {
 	requestURL := oracleURL + "/api/BridgingAddress/Get"
@@ -106,7 +106,6 @@ func GetBridgingAddress(
 
 	q := u.Query()
 	q.Set("chainId", chainID)
-	q.Set("amount", amount)
 	u.RawQuery = q.Encode()
 
 	addressResponse, err := common.HTTPGet[*response.BridgingAddressResponse](

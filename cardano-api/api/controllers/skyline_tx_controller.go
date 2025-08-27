@@ -337,18 +337,11 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 ) {
 	cacheUtxosTransformer := utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher)
 
-	amount := big.NewInt(0)
-
-	for _, transaction := range requestBody.Transactions {
-		amount.Add(amount, new(big.Int).SetUint64(transaction.Amount))
-	}
-
 	bridgingAddress, err := utils.GetBridgingAddress(
 		context.Background(),
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
-		requestBody.SourceChainID,
-		amount.String())
+		requestBody.SourceChainID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -387,19 +380,12 @@ func (c *SkylineTxControllerImpl) calculateTxFee(
 	*sendtx.BridgingRequestMetadata,
 	error,
 ) {
-	// Calculate total amount
-	amount := big.NewInt(0)
-	for _, transaction := range requestBody.Transactions {
-		amount.Add(amount, new(big.Int).SetUint64(transaction.Amount))
-	}
-
 	// Get bridging address
 	bridgingAddress, err := utils.GetBridgingAddress(
 		context.Background(),
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
-		requestBody.SourceChainID,
-		amount.String())
+		requestBody.SourceChainID)
 	if err != nil {
 		return nil, nil, err
 	}

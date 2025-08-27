@@ -221,18 +221,11 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxInfo, error,
 ) {
-	// Calculate total amount
-	amount := big.NewInt(0)
-	for _, transaction := range requestBody.Transactions {
-		amount.Add(amount, new(big.Int).SetUint64(transaction.Amount))
-	}
-
 	bridgingAddress, err := utils.GetBridgingAddress(
 		context.Background(),
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
-		requestBody.SourceChainID,
-		amount.String())
+		requestBody.SourceChainID)
 	if err != nil {
 		return nil, err
 	}
@@ -277,18 +270,11 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
-	amount := big.NewInt(0)
-
-	for _, transaction := range requestBody.Transactions {
-		amount.Add(amount, new(big.Int).SetUint64(transaction.Amount))
-	}
-
 	bridgingAddress, err := utils.GetBridgingAddress(
 		context.Background(),
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
-		requestBody.SourceChainID,
-		amount.String())
+		requestBody.SourceChainID)
 	if err != nil {
 		return nil, nil, err
 	}
