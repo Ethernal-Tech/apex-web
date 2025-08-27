@@ -139,12 +139,24 @@ export const getLayerZeroRequestState = async (
 				status = TransactionStatusEnum.ExecutedOnDestination;
 
 				break;
-			default:
+			case "INFLIGHT":
 				if (data['destination']['status'] == 'SUCCEEDED') { 
-					status = TransactionStatusEnum.SubmittedToDestination;
-				} else if (data['source']['status'] == 'SUCCEEDED') {
+					status = TransactionStatusEnum.SubmittedToBridge;
+				} else {
 					status = TransactionStatusEnum.DiscoveredOnSource;
 				}
+
+				break;
+			case "PAYLOAD_STORED":
+				status = TransactionStatusEnum.FailedToExecuteOnDestination;
+
+				break;
+			case "CONFIRMING":
+				status = TransactionStatusEnum.SubmittedToDestination;
+
+                break;		
+			case "FAILED": case "BLOCKED": case "UNRESOLVABLE_COMMAND": case "UNRESOLVABLE_COMMAND":
+				status = TransactionStatusEnum.InvalidRequest;
 
 				break;
 		}
