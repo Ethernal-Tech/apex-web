@@ -23,7 +23,7 @@ export class SettingsControllerClient extends BaseClient {
      * Get bridge settings
      * @return OK - Returns the configuration settings.
      */
-    get(): Promise<SettingsResponseDto> {
+    get(): Promise<SettingsFullResponseDto> {
         let url_ = this.baseUrl + "/settings";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -41,14 +41,14 @@ export class SettingsControllerClient extends BaseClient {
         });
     }
 
-    protected processGet(response: Response): Promise<SettingsResponseDto> {
+    protected processGet(response: Response): Promise<SettingsFullResponseDto> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = SettingsResponseDto.fromJS(resultData200);
+            result200 = SettingsFullResponseDto.fromJS(resultData200);
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -56,7 +56,7 @@ export class SettingsControllerClient extends BaseClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<SettingsResponseDto>(null as any);
+        return Promise.resolve<SettingsFullResponseDto>(null as any);
     }
 }
 
@@ -857,6 +857,182 @@ export interface ISettingsResponseDto {
     [key: string]: any;
 }
 
+export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
+    /** Chain name */
+    chain!: LayerZeroChainSettingsDtoChain;
+    /** Chain RPC url */
+    rpcUrl!: string;
+    /** Layer Zero OFT smart contract address */
+    oftAddress!: string;
+    /** EVM chain ID */
+    chainID!: number;
+
+    [key: string]: any;
+
+    constructor(data?: ILayerZeroChainSettingsDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.chain = _data["chain"];
+            this.rpcUrl = _data["rpcUrl"];
+            this.oftAddress = _data["oftAddress"];
+            this.chainID = _data["chainID"];
+        }
+    }
+
+    static fromJS(data: any): LayerZeroChainSettingsDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new LayerZeroChainSettingsDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["chain"] = this.chain;
+        data["rpcUrl"] = this.rpcUrl;
+        data["oftAddress"] = this.oftAddress;
+        data["chainID"] = this.chainID;
+        return data;
+    }
+}
+
+export interface ILayerZeroChainSettingsDto {
+    /** Chain name */
+    chain: LayerZeroChainSettingsDtoChain;
+    /** Chain RPC url */
+    rpcUrl: string;
+    /** Layer Zero OFT smart contract address */
+    oftAddress: string;
+    /** EVM chain ID */
+    chainID: number;
+
+    [key: string]: any;
+}
+
+export class SettingsFullResponseDto implements ISettingsFullResponseDto {
+    /** Specifies the current operating mode of the application */
+    runMode!: string;
+    /** For each source chain, defines the native token that will be received on the destination chain */
+    cardanoChainsNativeTokens!: { [key: string]: NativeTokenDto[]; };
+    /** Settings for bridge */
+    bridgingSettings!: BridgingSettingsDto;
+    /** Participating chains in the bridge */
+    enabledChains!: string[];
+    /** LayerZero chains and their configurations */
+    layerZeroChains!: LayerZeroChainSettingsDto[];
+
+    [key: string]: any;
+
+    constructor(data?: ISettingsFullResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+        if (!data) {
+            this.cardanoChainsNativeTokens = {};
+            this.bridgingSettings = new BridgingSettingsDto();
+            this.enabledChains = [];
+            this.layerZeroChains = [];
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.runMode = _data["runMode"];
+            if (_data["cardanoChainsNativeTokens"]) {
+                this.cardanoChainsNativeTokens = {} as any;
+                for (let key in _data["cardanoChainsNativeTokens"]) {
+                    if (_data["cardanoChainsNativeTokens"].hasOwnProperty(key))
+                        (this.cardanoChainsNativeTokens as any)![key] = _data["cardanoChainsNativeTokens"][key] ? _data["cardanoChainsNativeTokens"][key].map((i: any) => NativeTokenDto.fromJS(i)) : [];
+                }
+            }
+            this.bridgingSettings = _data["bridgingSettings"] ? BridgingSettingsDto.fromJS(_data["bridgingSettings"]) : new BridgingSettingsDto();
+            if (Array.isArray(_data["enabledChains"])) {
+                this.enabledChains = [] as any;
+                for (let item of _data["enabledChains"])
+                    this.enabledChains!.push(item);
+            }
+            if (Array.isArray(_data["layerZeroChains"])) {
+                this.layerZeroChains = [] as any;
+                for (let item of _data["layerZeroChains"])
+                    this.layerZeroChains!.push(LayerZeroChainSettingsDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SettingsFullResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SettingsFullResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["runMode"] = this.runMode;
+        if (this.cardanoChainsNativeTokens) {
+            data["cardanoChainsNativeTokens"] = {};
+            for (let key in this.cardanoChainsNativeTokens) {
+                if (this.cardanoChainsNativeTokens.hasOwnProperty(key))
+                    (data["cardanoChainsNativeTokens"] as any)[key] = (this.cardanoChainsNativeTokens as any)[key];
+            }
+        }
+        data["bridgingSettings"] = this.bridgingSettings ? this.bridgingSettings.toJSON() : undefined as any;
+        if (Array.isArray(this.enabledChains)) {
+            data["enabledChains"] = [];
+            for (let item of this.enabledChains)
+                data["enabledChains"].push(item);
+        }
+        if (Array.isArray(this.layerZeroChains)) {
+            data["layerZeroChains"] = [];
+            for (let item of this.layerZeroChains)
+                data["layerZeroChains"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface ISettingsFullResponseDto {
+    /** Specifies the current operating mode of the application */
+    runMode: string;
+    /** For each source chain, defines the native token that will be received on the destination chain */
+    cardanoChainsNativeTokens: { [key: string]: NativeTokenDto[]; };
+    /** Settings for bridge */
+    bridgingSettings: BridgingSettingsDto;
+    /** Participating chains in the bridge */
+    enabledChains: string[];
+    /** LayerZero chains and their configurations */
+    layerZeroChains: LayerZeroChainSettingsDto[];
+
+    [key: string]: any;
+}
+
 /** Destination chain ID */
 export enum ChainEnum {
     Prime = "prime",
@@ -1274,6 +1450,16 @@ export interface ITransactionSubmittedDto {
     [key: string]: any;
 }
 
+/** Destination chain ID */
+export enum ChainExtendedEnum {
+    Prime = "prime",
+    Vector = "vector",
+    Nexus = "nexus",
+    Cardano = "cardano",
+    Sepolia = "sepolia",
+    Ethereum = "ethereum",
+}
+
 /** Status of bridging request */
 export enum TransactionStatusEnum {
     Pending = "Pending",
@@ -1297,8 +1483,8 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
     amount!: string;
     /** Bridged native token amount */
     nativeTokenAmount!: string;
-    originChain!: ChainEnum;
-    destinationChain!: ChainEnum;
+    originChain!: ChainExtendedEnum;
+    destinationChain!: ChainExtendedEnum;
     /** Transaction hash on source chain */
     sourceTxHash!: string;
     /** Transaction hash on destination chain */
@@ -1385,8 +1571,8 @@ export interface IBridgeTransactionDto {
     amount: string;
     /** Bridged native token amount */
     nativeTokenAmount: string;
-    originChain: ChainEnum;
-    destinationChain: ChainEnum;
+    originChain: ChainExtendedEnum;
+    destinationChain: ChainExtendedEnum;
     /** Transaction hash on source chain */
     sourceTxHash: string;
     /** Transaction hash on destination chain */
@@ -1521,8 +1707,8 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
     perPage?: number | undefined;
     /** Address that initiated the bridging transaction on the source chain */
     senderAddress!: string;
-    originChain!: ChainEnum;
-    destinationChain?: ChainEnum | undefined;
+    originChain!: ChainExtendedEnum;
+    destinationChain?: ChainExtendedEnum | undefined;
     /** Minimum amount of currency */
     amountFrom?: string | undefined;
     /** Maximum amount of currency */
@@ -1606,8 +1792,8 @@ export interface IBridgeTransactionFilterDto {
     perPage?: number | undefined;
     /** Address that initiated the bridging transaction on the source chain */
     senderAddress: string;
-    originChain: ChainEnum;
-    destinationChain?: ChainEnum | undefined;
+    originChain: ChainExtendedEnum;
+    destinationChain?: ChainExtendedEnum | undefined;
     /** Minimum amount of currency */
     amountFrom?: string | undefined;
     /** Maximum amount of currency */
@@ -1922,6 +2108,15 @@ export enum GroupBy {
     Week = "week",
     Month = "month",
     Year = "year",
+}
+
+export enum LayerZeroChainSettingsDtoChain {
+    Prime = "prime",
+    Vector = "vector",
+    Nexus = "nexus",
+    Cardano = "cardano",
+    Sepolia = "sepolia",
+    Ethereum = "ethereum",
 }
 
 export class ApiException extends Error {
