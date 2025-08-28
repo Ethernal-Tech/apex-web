@@ -7,6 +7,13 @@ import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg
 import { TokenEnum } from "../features/enums";
 import appSettings from "./appSettings";
 
+export const ChainExtended = {
+  ...ChainEnum,
+  Ethereum: "ethereum",
+} as const;
+
+export type ChainExtendedEnum = typeof ChainExtended[keyof typeof ChainExtended];
+
 const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
     [ChainEnum.Prime]: [ChainEnum.Vector, ChainEnum.Nexus],
     [ChainEnum.Vector]: [ChainEnum.Prime],
@@ -19,7 +26,7 @@ const skylineChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
 };
 
 export type ChainInfo = {
-    value: ChainEnum;
+    value: ChainExtendedEnum;
     currencyToken: TokenEnum,
     label: string;
     icon: React.FunctionComponent<SVGProps<SVGSVGElement>>;
@@ -38,7 +45,7 @@ const unknownChainInfo: ChainInfo = {
     borderColor: 'transparent'
 }
 
-const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
+const chainInfoMapping: Partial<Record<ChainExtendedEnum, ChainInfo>> = {
     [ChainEnum.Prime]: {
         value: ChainEnum.Prime,
         currencyToken: TokenEnum.APEX,
@@ -75,17 +82,26 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
         letter: 'C',
         mainColor: '#0538AF'
     },
+    [ChainExtended.Ethereum]: {
+        value: ChainExtended.Ethereum,
+        currencyToken: TokenEnum.ETH,
+        label: "Ethereum",
+        icon: VectorIcon, // TODO: Change icon to Ethereum
+        borderColor: '#647cf6',
+        letter: 'E',
+        mainColor: '#647cf6'
+    },
 }
 
-const getChainDirections = function (): Partial<Record<ChainEnum, ChainEnum[]>> {
+const getChainDirections = function (): Partial<Record<ChainExtendedEnum, ChainExtendedEnum[]>> {
     return appSettings.isSkyline ? skylineChainDirections : reactorChainDirections;
 }
 
-export const getChainInfo = function (chain: ChainEnum): ChainInfo {
+export const getChainInfo = function (chain: ChainExtendedEnum): ChainInfo {
     return chainInfoMapping[chain] || unknownChainInfo;
 }
 
-export const getDstChains = function (chain: ChainEnum | undefined): ChainEnum[] {
+export const getDstChains = function (chain: ChainExtendedEnum | undefined): ChainExtendedEnum[] {
     if (!chain) {
         return [];
     }
@@ -97,11 +113,11 @@ export const getSrcChains = function (): ChainEnum[] {
     return Object.keys(getChainDirections()) as ChainEnum[];
 }
 
-export const isEvmChain = function (chain: ChainEnum): boolean {
+export const isEvmChain = function (chain: ChainExtendedEnum): boolean {
     return chain === ChainEnum.Nexus;
 }
 
-export const isCardanoChain = function (chain: ChainEnum): boolean {
+export const isCardanoChain = function (chain: ChainExtendedEnum): boolean {
     return chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano;
 }
 

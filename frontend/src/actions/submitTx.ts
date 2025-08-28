@@ -18,6 +18,8 @@ export const signAndSubmitCardanoTx = async (
 
     const amount = BigInt(createResponse.bridgingFee) + BigInt(createResponse.amount);
 
+    // TODO: Set isLayerZero via createResponse
+
     const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
         originChain: values.originChain,
         senderAddress: values.senderAddress,
@@ -28,6 +30,7 @@ export const signAndSubmitCardanoTx = async (
         txRaw: createResponse.txRaw,
         isFallback: createResponse.isFallback,
         nativeTokenAmount: (createResponse.nativeTokenAmount || 0).toString(),
+        isLayerZero: false
     }));
 
     const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
@@ -86,6 +89,8 @@ export const signAndSubmitEthTx = async (
 
   const amount = BigInt(createResponse.bridgingFee) + BigInt(values.amount);
 
+
+  // TODO: Set isLayerZero via createResponse
   const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
       originChain: values.originChain,
       destinationChain: values.destinationChain,
@@ -99,6 +104,7 @@ export const signAndSubmitEthTx = async (
       amount: amount.toString(),
       isFallback: createResponse.isFallback,
       nativeTokenAmount: '0',
+      isLayerZero: false,
   }));
 
   const response = await tryCatchJsonByAction(bindedSubmittedAction, false);

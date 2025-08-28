@@ -5,6 +5,7 @@ import { capitalizeWord, convertDfmToApex, toFixed } from '../../../utils/genera
 import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import { getCurrencyTokenInfo } from '../../../settings/token';
+import { ChainExtendedEnum } from '../../../settings/chain';
 
 const CustomBox = styled(Box)({
   background:'#075159'
@@ -15,7 +16,7 @@ interface FeeInformationProps {
   userWalletFee: string;
   bridgeTxFee: string;
   operationFee: string;
-  chain: ChainEnum
+  chain: ChainExtendedEnum
 }
 
 const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, bridgeTxFee, operationFee, chain }) => {

@@ -8,13 +8,13 @@ import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import walletHandler from '../../features/WalletHandler';
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
-import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
-import { isCardanoChain, isEvmChain } from "../../settings/chain";
+import {isCardanoChain, isEvmChain } from "../../settings/chain";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -57,8 +57,9 @@ function NewTransactionPage() {
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
 			operationFee: '0', // will be set on backend
-			destinationChain,
-			originChain: chain,
+			// TODO: This DTO needs different type for destination and origin chain.
+			destinationChain: destinationChain as ChainEnum, 
+			originChain: chain as ChainEnum,
 			senderAddress: account,
 			destinationAddress: address,
 			amount,
@@ -100,8 +101,9 @@ function NewTransactionPage() {
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
 			operationFee: '0', // will be set on backend
-			destinationChain,
-			originChain: chain,
+			// TODO: This DTO needs different type for destination and origin chain.
+			destinationChain: destinationChain as ChainEnum,
+			originChain: chain as ChainEnum,
 			senderAddress: account,
 			destinationAddress: address,
 			amount,

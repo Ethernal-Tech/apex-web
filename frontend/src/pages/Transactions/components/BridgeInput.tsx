@@ -15,7 +15,7 @@ import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { white } from '../../../containers/theme';
 import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
-import { getChainInfo, isCardanoChain, isEvmChain } from '../../../settings/chain';
+import { ChainExtendedEnum, getChainInfo, isCardanoChain, isEvmChain } from '../../../settings/chain';
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 
 type BridgeInputType = {
@@ -32,7 +32,7 @@ type BridgeInputType = {
 
 const calculateMaxAmountToken = (
   totalDfmBalance: {[key: string]: string},
-  maxTokenAmountAllowedToBridge: string, chain: ChainEnum,
+  maxTokenAmountAllowedToBridge: string, chain: ChainExtendedEnum,
   sourceToken: TokenEnum | undefined,
 ): { maxByBalance:bigint, maxByAllowed:bigint } => {
     if (!sourceToken || !isWrappedToken(sourceToken)) {
@@ -50,7 +50,7 @@ const calculateMaxAmountToken = (
 
 const calculateMaxAmountCurrency = (
   totalDfmBalance: {[key: string]: string},
-  maxAmountAllowedToBridge: string, chain: ChainEnum,
+  maxAmountAllowedToBridge: string, chain: ChainExtendedEnum,
   changeMinUtxo: number, minDfmValue: string,
   bridgeTxFee: string, operationFee: string,
 ): { maxByBalance:bigint, maxByAllowed:bigint } => {

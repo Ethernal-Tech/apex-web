@@ -3,7 +3,7 @@ import { TokenEnum } from "../features/enums";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg'
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg'
-import { getChainInfo } from "./chain";
+import { ChainExtendedEnum, getChainInfo } from "./chain";
 
 export type BridgingInfo = {
   isCurrencyBridgingAllowed: boolean;
@@ -51,7 +51,7 @@ const tokenInfos: Partial<Record<TokenEnum, TokenInfo>> = {
   }
 }
 
-const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, BridgingInfo>>>> = {
+const tokensDirection: Partial<Record<ChainExtendedEnum, Partial<Record<ChainExtendedEnum, BridgingInfo>>>> = {
   [ChainEnum.Prime]: {
     [ChainEnum.Cardano]: {
       isCurrencyBridgingAllowed: true,
@@ -82,21 +82,21 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
   }
 }
 
-export const getBridgingInfo = (srcChain: ChainEnum, dstChain: ChainEnum): BridgingInfo => {
+export const getBridgingInfo = (srcChain: ChainExtendedEnum, dstChain: ChainExtendedEnum): BridgingInfo => {
   return (tokensDirection[srcChain] || {})[dstChain] || { isCurrencyBridgingAllowed: false };
 }
 
-export const getToken = (srcChain: ChainEnum, dstChain: ChainEnum, isWrappedToken: boolean): TokenEnum | undefined => {
+export const getToken = (srcChain: ChainExtendedEnum, dstChain: ChainExtendedEnum, isWrappedToken: boolean): TokenEnum | undefined => {
   const data = getBridgingInfo(srcChain, dstChain);
   return isWrappedToken ? data?.wrappedToken : getChainInfo(srcChain).currencyToken;
 }
 
 export const getTokenInfo = (token: TokenEnum | undefined): TokenInfo => (token && tokenInfos[token]) || unknownTokenInfo;
 
-export const getTokenInfoBySrcDst = (srcChain: ChainEnum, dstChain: ChainEnum, isWrappedToken: boolean): TokenInfo => {
+export const getTokenInfoBySrcDst = (srcChain: ChainExtendedEnum, dstChain: ChainExtendedEnum, isWrappedToken: boolean): TokenInfo => {
   return getTokenInfo(getToken(srcChain, dstChain, isWrappedToken));
 }
 
 export const isWrappedToken = (token: TokenEnum | undefined): boolean => token === TokenEnum.WAPEX || token === TokenEnum.WAda;
 
-export const getCurrencyTokenInfo = (srcChain: ChainEnum): TokenInfo => getTokenInfo(getChainInfo(srcChain).currencyToken)
+export const getCurrencyTokenInfo = (srcChain: ChainExtendedEnum): TokenInfo => getTokenInfo(getChainInfo(srcChain).currencyToken)

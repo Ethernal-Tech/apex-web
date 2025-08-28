@@ -15,7 +15,7 @@ import { getSrcChains, isEvmChain } from "../settings/chain";
 
 let onLoadCalled = false
 
-const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
+const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainExtendedEnum, dispatch: Dispatch) => {
     const networkId = await evmWalletHandler.getNetworkId();
     const network = fromEvmNetworkIdToNetwork(networkId);
     if (!network) {
@@ -41,7 +41,7 @@ const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainEnum, 
     }))
 }
 
-const onEvmAccountsChanged = async (_accounts: string[], selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch): Promise<void> => {
+const onEvmAccountsChanged = async (_accounts: string[], selectedWalletName: string, chain: ChainExtendedEnum, dispatch: Dispatch): Promise<void> => {
     try {
         await checkAndSetEvmData(selectedWalletName, chain, dispatch)
     } catch (e) {
@@ -53,7 +53,7 @@ const onEvmAccountsChanged = async (_accounts: string[], selectedWalletName: str
     }
 }
 
-const enableEvmWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
+const enableEvmWallet = async (selectedWalletName: string, chain: ChainExtendedEnum, dispatch: Dispatch) => {
     await evmWalletHandler.enable(
         (accounts: string[]) => onEvmAccountsChanged(accounts, selectedWalletName, chain, dispatch));
     let success = evmWalletHandler.checkWallet()
@@ -67,7 +67,7 @@ const enableEvmWallet = async (selectedWalletName: string, chain: ChainEnum, dis
     return true
 }
 
-const enableCardanoWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
+const enableCardanoWallet = async (selectedWalletName: string, chain: ChainExtendedEnum, dispatch: Dispatch) => {
     await walletHandler.enable(selectedWalletName);
     let success = walletHandler.checkWallet();
 
@@ -99,7 +99,7 @@ const enableCardanoWallet = async (selectedWalletName: string, chain: ChainEnum,
     return true;
 }
 
-const enableWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {// 1. nexus (evm metamask) wallet login handling
+const enableWallet = async (selectedWalletName: string, chain: ChainExtendedEnum, dispatch: Dispatch) => {// 1. nexus (evm metamask) wallet login handling
     if (isEvmChain(chain)) {
         try {
             return await enableEvmWallet(selectedWalletName, chain, dispatch)
@@ -125,7 +125,7 @@ const enableWallet = async (selectedWalletName: string, chain: ChainEnum, dispat
 }
 
 
-const connectWallet = async (wallet: string, chain: ChainEnum, dispatch: Dispatch) => {
+const connectWallet = async (wallet: string, chain: ChainExtendedEnum, dispatch: Dispatch) => {
     dispatch(setConnectingAction(true));
     const success = await enableWallet(wallet, chain, dispatch);
     dispatch(setConnectingAction(false));
@@ -133,7 +133,7 @@ const connectWallet = async (wallet: string, chain: ChainEnum, dispatch: Dispatc
     return success;
 }
 
-export const onLoad = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
+export const onLoad = async (selectedWalletName: string, chain: ChainExtendedEnum, dispatch: Dispatch) => {
     if (onLoadCalled) {
         return
     }
@@ -144,7 +144,7 @@ export const onLoad = async (selectedWalletName: string, chain: ChainEnum, dispa
     !success && logout(dispatch);
 }
 
-export const login = async (chain: ChainEnum, navigate: NavigateFunction, dispatch: Dispatch) => {
+export const login = async (chain: ChainExtendedEnum, navigate: NavigateFunction, dispatch: Dispatch) => {
     let wallet 
 
     if (isEvmChain(chain)) {

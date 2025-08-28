@@ -2,7 +2,7 @@ import { CardanoAddress } from "../features/Address/interfaces";
 import { CardanoNetworkType } from "../features/Address/types";
 import { ApexBridgeNetwork } from "../features/enums";
 import appSettings from "../settings/appSettings";
-import { isEvmChain } from "../settings/chain";
+import { ChainExtendedEnum, isEvmChain } from "../settings/chain";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
 const TESTNET_NEXUS_NETWORK_ID = BigInt(9070) // for Nexus testnet
@@ -72,7 +72,7 @@ const NETWORK_TO_CHAIN: {mainnet: {[key: string]: ChainEnum}, testnet: {[key: st
     }
 }
 
-export const fromChainToNetwork = (chain: ChainEnum): ApexBridgeNetwork | undefined => {
+export const fromChainToNetwork = (chain: ChainExtendedEnum): ApexBridgeNetwork | undefined => {
     return appSettings.isMainnet ? CHAIN_DATA[chain]?.mainnet?.network : CHAIN_DATA[chain]?.testnet?.network;
 } 
 
@@ -80,7 +80,7 @@ export const fromNetworkToChain = (network: ApexBridgeNetwork): ChainEnum | unde
     return appSettings.isMainnet ? NETWORK_TO_CHAIN.mainnet[network] : NETWORK_TO_CHAIN.testnet[network];
 } 
 
-export const fromChainToNetworkId = (chain: ChainEnum): number | bigint | undefined => {
+export const fromChainToNetworkId = (chain: ChainExtendedEnum): number | bigint | undefined => {
     return appSettings.isMainnet ? CHAIN_DATA[chain]?.mainnet?.networkID : CHAIN_DATA[chain]?.testnet?.networkID;
 }
 
@@ -90,11 +90,11 @@ export const fromEvmNetworkIdToNetwork = (networkId: bigint): ApexBridgeNetwork 
         : (networkId === TESTNET_NEXUS_NETWORK_ID ? ApexBridgeNetwork.TestnetNexus : undefined);
 }
 
-export const checkChainCompatibility = (chain: ChainEnum, network: ApexBridgeNetwork, networkId: number|bigint): boolean => {
+export const checkChainCompatibility = (chain: ChainExtendedEnum, network: ApexBridgeNetwork, networkId: number|bigint): boolean => {
     return fromChainToNetworkId(chain) === networkId && fromNetworkToChain(network) === chain;
 }
 
-export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: CardanoAddress): boolean => {
+export const checkCardanoAddressCompatibility = (chain: ChainExtendedEnum, addr: CardanoAddress): boolean => {
     return fromChainToNetworkId(chain) === addr.GetNetwork();
 }
 
@@ -158,13 +158,13 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
     }
 }
 
-export const fromChainToCurrencySymbol = (chain: ChainEnum): string => {
+export const fromChainToCurrencySymbol = (chain: ChainExtendedEnum): string => {
     switch (chain) {
         default:
             return 'lovelace';
     }
 }
 
-export const fromChainToNativeTokenSymbol = (chain: ChainEnum): string => {
+export const fromChainToNativeTokenSymbol = (chain: ChainExtendedEnum): string => {
     return appSettings.wrappedTokenName[chain];
 }
