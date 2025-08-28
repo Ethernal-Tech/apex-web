@@ -11,13 +11,13 @@ import BlockfrostRetriever from '../features/BlockfrostRetriever';
 import OgmiosRetriever from '../features/OgmiosRetriever';
 import { getUtxoRetrieverType } from '../features/utils';
 import { UtxoRetrieverEnum } from '../features/enums';
-import { ChainExtendedEnum, getChainInfo, isEvmChain } from '../settings/chain';
+import { getChainInfo, isEvmChain } from '../settings/chain';
 import { getBridgingInfo } from '../settings/token';
 
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
 
-const getWalletBalanceAction = async (srcChain: ChainExtendedEnum, dstChain: ChainExtendedEnum): Promise<IBalanceState> => {
+const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum): Promise<IBalanceState> => {
     const bridgingInfo = getBridgingInfo(srcChain, dstChain);
     const currencyTokenName = getChainInfo(srcChain).currencyToken;
     if (isEvmChain(srcChain)) {

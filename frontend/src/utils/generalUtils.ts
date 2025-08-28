@@ -19,7 +19,7 @@ import {
   TransactionOutput,
   Address,
 } from '@emurgo/cardano-serialization-lib-browser';
-import { ChainExtendedEnum, isCardanoChain, isEvmChain } from "../settings/chain";
+import { isCardanoChain, isEvmChain } from "../settings/chain";
 import { getTokenInfoBySrcDst } from "../settings/token";
 
 export const capitalizeWord = (word: string): string => {
@@ -84,7 +84,7 @@ export const convertDfmToWei = (dfm: string | number): string => {
 };
 
 export const validateSubmitTxInputs = (
-  settings: ISettingsState, sourceChain: ChainExtendedEnum, destinationChain: ChainExtendedEnum,
+  settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
   destinationAddr: string, amount: string, bridgeTxFee: string,
 ): string | undefined => {
   const tokenInfo = getTokenInfoBySrcDst(sourceChain, destinationChain, false);
@@ -129,7 +129,7 @@ export const validateSubmitTxInputs = (
 }
 
 export const validateSubmitTxInputsSkyline = (
-  settings: ISettingsState, sourceChain: ChainExtendedEnum, destinationChain: ChainExtendedEnum,
+  settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
   destinationAddr: string, amount: string, bridgeTxFee: string, operationFee: string, isNativeToken: boolean
 ): string | undefined => {
   const tokenInfo = getTokenInfoBySrcDst(sourceChain, destinationChain, isNativeToken);
@@ -161,7 +161,7 @@ export const validateSubmitTxInputsSkyline = (
 }
 
 // format it differently depending on network (nexus is 18 decimals, prime and vector are 6)
-export const convertDfmToApex = (dfm:string|number, network:ChainExtendedEnum) =>{
+export const convertDfmToApex = (dfm:string|number, network:ChainEnum) =>{
   // avoiding rounding errors
   if(typeof dfm === 'number') dfm = BigInt(dfm).toString()
 
@@ -174,7 +174,7 @@ export const convertDfmToApex = (dfm:string|number, network:ChainExtendedEnum) =
   }
 }
 
-export const convertApexToDfm = (apex:string|number, network:ChainExtendedEnum) =>{
+export const convertApexToDfm = (apex:string|number, network:ChainEnum) =>{
   // avoiding errors
   if(typeof apex === 'number') apex = apex.toString()
 

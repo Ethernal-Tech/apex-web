@@ -14,7 +14,7 @@ import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
-import {ChainExtended, isCardanoChain, isEvmChain } from "../../settings/chain";
+import { isCardanoChain, isEvmChain, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
 import { sendLayerZeroTransaction } from "../../features/layerZero";
 
@@ -56,12 +56,14 @@ function NewTransactionPage() {
 	const prepareCreateCardanoTx = useCallback(async(address: string, amount: string, isNativeToken: boolean = false): Promise<CreateTransactionDto> => {
     	await walletHandler.getChangeAddress(); // this line triggers an error if the wallet account has been changed by the user in the meantime
 
+		const destChain = toApexBridge(destinationChain)
+		const originChain = toApexBridge(chain)
+
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
 			operationFee: '0', // will be set on backend
-			// TODO: This DTO needs different type for destination and origin chain.
-			destinationChain: destinationChain as ChainEnum, 
-			originChain: chain as ChainEnum,
+			destinationChain: destChain!, 
+			originChain: originChain!,
 			senderAddress: account,
 			destinationAddress: address,
 			amount,
@@ -100,12 +102,14 @@ function NewTransactionPage() {
 	}, [bridgeTxFee, chain, destinationChain, operationFee, prepareCreateCardanoTx, settings])
 
 	const prepareCreateEthTx = useCallback((address: string, amount: string): CreateTransactionDto => {
+		const destChain = toApexBridge(destinationChain)
+		const originChain = toApexBridge(chain)
+
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
 			operationFee: '0', // will be set on backend
-			// TODO: This DTO needs different type for destination and origin chain.
-			destinationChain: destinationChain as ChainEnum,
-			originChain: chain as ChainEnum,
+			destinationChain: destChain!,
+			originChain: originChain!,
 			senderAddress: account,
 			destinationAddress: address,
 			amount,
@@ -184,7 +188,7 @@ function NewTransactionPage() {
 		async() =>{
 			setLoading(true);
 			try{
-				if (chain === ChainExtended.Nexus){
+				if (chain === ChainEnum.Nexus){
 					sendLayerZeroTransaction();
 				}else{
 					throw new Error(`Unsupported source chain: ${chain}`);

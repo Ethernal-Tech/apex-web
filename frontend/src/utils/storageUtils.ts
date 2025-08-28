@@ -1,5 +1,5 @@
 import appSettings from "../settings/appSettings";
-import { ChainExtendedEnum, getDstChains, getSrcChains } from "../settings/chain";
+import { getDstChains, getSrcChains } from "../settings/chain";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 
 export type PKLoginDto = {
@@ -43,7 +43,7 @@ export const removeSelectedWallet = () => {
 
 const SELECTED_CHAIN = 'selected_chain';
 
-export const setSelectedChain = (chain: ChainExtendedEnum) => {
+export const setSelectedChain = (chain: ChainEnum) => {
 	localStorage.setItem(SELECTED_CHAIN, chain);
 }
 
@@ -62,17 +62,17 @@ export const removeSelectedChain = () => {
 
 const DESTINATION_CHAIN = 'destination_chain';
 
-export const setDestinationChain = (chain: ChainExtendedEnum) => {
+export const setDestinationChain = (chain: ChainEnum) => {
 	localStorage.setItem(DESTINATION_CHAIN, chain);
 }
 
-export const getDestinationChain = () : ChainExtendedEnum | null => {
+export const getDestinationChain = () : ChainEnum | null => {
 	const item = localStorage.getItem(DESTINATION_CHAIN);
 	if (item === null) {
 		return item;
 	}
 	
-	return item as ChainExtendedEnum;
+	return item as ChainEnum;
 }
 
 export const removeDestinationChain = () => {

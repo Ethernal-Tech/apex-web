@@ -107,7 +107,18 @@ const chainStatusIcons: {
       inProgress: CardanoInProgressIcon,
       done: CardanoSuccessIcon,
       error: CardanoErrorIcon,
-    }
+    },
+    // TODO: Set desired icons
+    [ChainEnum.Ethereum]: {
+      inProgress: NexusInProgressIcon,
+      done: NexusSuccessIcon,
+      error: NexusErrorIcon,
+    },
+    [ChainEnum.Sepolia]: {
+      inProgress: NexusInProgressIcon,
+      done: NexusSuccessIcon,
+      error: NexusErrorIcon,
+    },
   };
 
 const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):StepType[] =>{

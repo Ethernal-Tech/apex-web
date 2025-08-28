@@ -2,11 +2,10 @@ import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { initChainsState, setDestinationChain, setSelectedChain } from '../../utils/storageUtils'
 import { ChainEnum } from '../../swagger/apexBridgeApiService'
-import { ChainExtendedEnum } from '../../settings/chain'
 
 export interface IChainState {
-	chain: ChainExtendedEnum
-	destinationChain: ChainExtendedEnum
+	chain: ChainEnum
+	destinationChain: ChainEnum
 }
 
 const {chain, destinationChain } = initChainsState()
@@ -20,11 +19,11 @@ const chainSlice = createSlice({
 	name: 'chain',
 	initialState,
 	reducers: {
-		setChainAction: (state, action: PayloadAction<ChainExtendedEnum>) => {
+		setChainAction: (state, action: PayloadAction<ChainEnum>) => {
 			setSelectedChain(action.payload);
 			state.chain = action.payload;
 		},
-		setDestinationChainAction: (state, action: PayloadAction<ChainExtendedEnum>) => {
+		setDestinationChainAction: (state, action: PayloadAction<ChainEnum>) => {
 			setDestinationChain(action.payload);
 			state.destinationChain = action.payload;
 		},

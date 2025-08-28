@@ -1,5 +1,5 @@
 import { bridgingTransactionSubmittedAction } from "../pages/Transactions/action";
-import { CreateTransactionDto, CreateCardanoTransactionResponseDto, CreateEthTransactionResponseDto, TransactionSubmittedDto } from "../swagger/apexBridgeApiService";
+import { CreateTransactionDto, CreateCardanoTransactionResponseDto, CreateEthTransactionResponseDto, TransactionSubmittedDto, ChainEnum } from "../swagger/apexBridgeApiService";
 import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
 import walletHandler from "../features/WalletHandler";
 import evmWalletHandler from "../features/EvmWalletHandler";
@@ -21,9 +21,9 @@ export const signAndSubmitCardanoTx = async (
     // TODO: Set isLayerZero via createResponse
 
     const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
-        originChain: values.originChain,
+        originChain: values.originChain as unknown as ChainEnum,
         senderAddress: values.senderAddress,
-        destinationChain: values.destinationChain,
+        destinationChain: values.destinationChain as unknown as ChainEnum,
         receiverAddrs: [values.destinationAddress],
         amount: amount.toString(),
         originTxHash: createResponse.txHash,
@@ -90,10 +90,10 @@ export const signAndSubmitEthTx = async (
   const amount = BigInt(createResponse.bridgingFee) + BigInt(values.amount);
 
 
-  // TODO: Set isLayerZero via createResponse
+  // TODO: Set isLayerZero via createResponse and set layer zero values
   const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
-      originChain: values.originChain,
-      destinationChain: values.destinationChain,
+      originChain: values.originChain as unknown as ChainEnum,
+      destinationChain: values.destinationChain as unknown as ChainEnum,
       originTxHash: receipt.transactionHash.toString(),
       senderAddress: values.senderAddress,
       receiverAddrs: [values.destinationAddress],

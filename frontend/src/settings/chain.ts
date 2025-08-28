@@ -1,5 +1,5 @@
 import { SVGProps } from "react";
-import { ChainEnum } from "../swagger/apexBridgeApiService";
+import { ChainApexBridgeEnum, ChainEnum } from "../swagger/apexBridgeApiService";
 import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
 import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
 import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
@@ -7,27 +7,21 @@ import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg
 import { TokenEnum } from "../features/enums";
 import appSettings from "./appSettings";
 
-export const ChainExtended = {
-  ...ChainEnum,
-  Ethereum: "ethereum",
-} as const;
-
-export type ChainExtendedEnum = typeof ChainExtended[keyof typeof ChainExtended];
-
-const reactorChainDirections: Partial<Record<ChainExtendedEnum, ChainEnum[]>> = {
+const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
     [ChainEnum.Prime]: [ChainEnum.Vector, ChainEnum.Nexus],
     [ChainEnum.Vector]: [ChainEnum.Prime],
     [ChainEnum.Nexus]: [ChainEnum.Prime],
 }
 
-const skylineChainDirections: Partial<Record<ChainExtendedEnum, ChainExtendedEnum[]>> = {
+const skylineChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
     [ChainEnum.Prime]: [ChainEnum.Cardano],
     [ChainEnum.Cardano]: [ChainEnum.Prime],
-    [ChainEnum.Nexus]: [ChainExtended.Ethereum]
+    [ChainEnum.Nexus]: [ChainEnum.Ethereum],
+    [ChainEnum.Ethereum]: [ChainEnum.Nexus]
 };
 
 export type ChainInfo = {
-    value: ChainExtendedEnum;
+    value: ChainEnum;
     currencyToken: TokenEnum,
     label: string;
     icon: React.FunctionComponent<SVGProps<SVGSVGElement>>;
@@ -46,7 +40,7 @@ const unknownChainInfo: ChainInfo = {
     borderColor: 'transparent'
 }
 
-const chainInfoMapping: Partial<Record<ChainExtendedEnum, ChainInfo>> = {
+const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
     [ChainEnum.Prime]: {
         value: ChainEnum.Prime,
         currencyToken: TokenEnum.APEX,
@@ -83,8 +77,8 @@ const chainInfoMapping: Partial<Record<ChainExtendedEnum, ChainInfo>> = {
         letter: 'C',
         mainColor: '#0538AF'
     },
-    [ChainExtended.Ethereum]: {
-        value: ChainExtended.Ethereum,
+    [ChainEnum.Ethereum]: {
+        value: ChainEnum.Ethereum,
         currencyToken: TokenEnum.ETH,
         label: "Ethereum",
         icon: VectorIcon, // TODO: Change icon to Ethereum
@@ -94,15 +88,15 @@ const chainInfoMapping: Partial<Record<ChainExtendedEnum, ChainInfo>> = {
     },
 }
 
-const getChainDirections = function (): Partial<Record<ChainExtendedEnum, ChainExtendedEnum[]>> {
+const getChainDirections = function (): Partial<Record<ChainEnum, ChainEnum[]>> {
     return appSettings.isSkyline ? skylineChainDirections : reactorChainDirections;
 }
 
-export const getChainInfo = function (chain: ChainExtendedEnum): ChainInfo {
+export const getChainInfo = function (chain: ChainEnum): ChainInfo {
     return chainInfoMapping[chain] || unknownChainInfo;
 }
 
-export const getDstChains = function (chain: ChainExtendedEnum | undefined): ChainExtendedEnum[] {
+export const getDstChains = function (chain: ChainEnum | undefined): ChainEnum[] {
     if (!chain) {
         return [];
     }
@@ -114,11 +108,11 @@ export const getSrcChains = function (): ChainEnum[] {
     return Object.keys(getChainDirections()) as ChainEnum[];
 }
 
-export const isEvmChain = function (chain: ChainExtendedEnum): boolean {
+export const isEvmChain = function (chain: ChainEnum): boolean {
     return chain === ChainEnum.Nexus;
 }
 
-export const isCardanoChain = function (chain: ChainExtendedEnum): boolean {
+export const isCardanoChain = function (chain: ChainEnum): boolean {
     return chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano;
 }
 
@@ -129,4 +123,24 @@ export const toChainEnum = function (value: string): ChainEnum {
     }
 
     throw new Error(`Invalid chain: ${value}`);
+}
+
+export function isApexBridgeChain(
+  chain: ChainEnum
+): boolean {
+  switch (chain) {
+    case ChainEnum.Prime:
+    case ChainEnum.Vector:
+    case ChainEnum.Nexus:
+    case ChainEnum.Cardano:
+      return true;
+    default:
+      return false; // sepolia / ethereum → false
+  }
+}
+
+export function toApexBridge(
+  chain: ChainEnum
+): ChainApexBridgeEnum | undefined {
+  return isApexBridgeChain(chain) ? (chain as unknown as ChainApexBridgeEnum) : undefined;
 }

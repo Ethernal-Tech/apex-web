@@ -1,12 +1,12 @@
 import appSettings from "../settings/appSettings";
-import { ChainExtendedEnum, isEvmChain } from "../settings/chain";
+import { isEvmChain } from "../settings/chain";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { UtxoRetrieverEnum } from "./enums";
 import walletHandler from "./WalletHandler";
 
 const supportedWalletVersion = { major: 2, minor: 0, patch: 9, build: 14 };
 
-export const getUtxoRetrieverType = (chain: ChainExtendedEnum): UtxoRetrieverEnum => {
+export const getUtxoRetrieverType = (chain: ChainEnum): UtxoRetrieverEnum => {
     if (isEvmChain(chain)) {
 	    return UtxoRetrieverEnum.Wallet;
     }

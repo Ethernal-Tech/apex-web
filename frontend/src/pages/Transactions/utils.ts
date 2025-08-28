@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { getBridgingInfo, getCurrencyTokenInfo, getTokenInfo, TokenInfo } from "../../settings/token";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { ChainExtendedEnum } from "../../settings/chain";
 
 export interface TokenOption {
   value: TokenEnum;
@@ -22,7 +21,7 @@ const tokenInfoToTokenOption = (info: TokenInfo): TokenOption => {
   };
 }
 
-export const useSupportedSourceTokenOptions = (srcChain: ChainExtendedEnum, dstChain: ChainExtendedEnum): TokenOption[] => {
+export const useSupportedSourceTokenOptions = (srcChain: ChainEnum, dstChain: ChainEnum): TokenOption[] => {
   const cardanoChainsNativeTokens = useSelector((state: RootState) => state.settings.cardanoChainsNativeTokens);
 
   return useMemo(() => {
