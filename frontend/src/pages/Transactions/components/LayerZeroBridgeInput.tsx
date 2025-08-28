@@ -23,7 +23,7 @@ type BridgeInputType = {
     resetBridgeTxFee: () => void
     operationFee: string
     getEthTxFee: (address: string, amount: string) => Promise<CreateEthTransactionResponseDto>
-    submit:(address: string, amount: string, isNativeToken: boolean) => Promise<void>
+    submit:(address: string, amount: string) => Promise<void>
     loading?: boolean;
 }
 
@@ -143,7 +143,7 @@ const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loa
 
   const onSubmit = useCallback(async () => {
     if (!sourceToken) return;
-    await submit(destinationAddr, convertApexToDfm(amount || '0', chain), isWrappedToken(sourceToken))
+    await submit(destinationAddr, convertApexToDfm(amount || '0', chain))
   }, [amount, destinationAddr, submit, chain, sourceToken]) 
 
   return (

@@ -1,20 +1,20 @@
 import BasePage from "../base/BasePage";
 import BridgeInput from "./components/BridgeInput";
-import { convertDfmToWei, formatTxDetailUrl, validateSubmitTxInputs, validateSubmitTxInputsSkyline } from "../../utils/generalUtils";
+import { convertDfmToWei, formatTxDetailUrl, validateSubmitTxInputs, validateSubmitTxInputsSkyline, validateSubmitTxLZInputs } from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import walletHandler from '../../features/WalletHandler';
-import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
-import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
+import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction, layerZeroTransferAction } from "./action";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto, LayerZeroTransactionDto } from "../../swagger/apexBridgeApiService";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
-import { isCardanoChain, isEvmChain, toApexBridge } from "../../settings/chain";
+import { isCardanoChain, isEvmChain, isLayerZeroChain, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
 import { sendLayerZeroTransaction } from "../../features/layerZero";
 
@@ -145,6 +145,41 @@ function NewTransactionPage() {
 		return { createTxDto, createResponse };
 	}, [bridgeTxFee, chain, destinationChain, prepareCreateEthTx, settings])
 
+
+	const prepareLayerZeroTx = useCallback((address: string, amount: string): LayerZeroTransactionDto => {
+		const originChainSetting = settings.layerZeroChains[chain];
+		const destinationChainSetting = settings.layerZeroChains[destinationChain];
+
+		if (!origin) throw new Error(`No LayerZero config for ${chain}`);
+		
+		return new LayerZeroTransactionDto({
+			destinationChain: destinationChain,
+			originChain: chain,
+			oftAddress: originChainSetting.oftAddress,
+    		from: account,
+    		to: address,
+    		validate: true,
+			amount,
+		})
+	}, [account, chain, destinationChain])
+
+	// TODO: Return value from transfer
+	const createLayerZeroTx = useCallback(async (address: string, amount: string): Promise<any> => {
+		const validationErr = validateSubmitTxLZInputs(settings, chain, destinationChain, address, amount) 
+		if (validationErr) {
+			throw new Error(validationErr);
+		}
+
+		const createTxDto =  await prepareLayerZeroTx(address, amount);
+		const bindedCreateAction = layerZeroTransferAction.bind(null, createTxDto);
+		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
+		if (createResponse instanceof ErrorResponse) {
+			throw new Error(createResponse.err)
+		}
+
+		return { createTxDto, createResponse };
+	}, [bridgeTxFee, chain, destinationChain, operationFee, prepareCreateCardanoTx, settings])
+
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: string, isNativeToken: boolean) => {
 			setLoading(true);
@@ -185,11 +220,11 @@ function NewTransactionPage() {
 	);
 
 	const handleLZSubmitCallback = useCallback(
-		async() =>{
+		async(address: string, amount: string) =>{
 			setLoading(true);
 			try{
-				if (chain === ChainEnum.Nexus){
-					sendLayerZeroTransaction();
+				if (isLayerZeroChain(chain)){
+					const createTxResp = await createLayerZeroTx(address, amount);
 				}else{
 					throw new Error(`Unsupported source chain: ${chain}`);
 				}
@@ -204,7 +239,7 @@ function NewTransactionPage() {
 			} finally{
 
 			}
-		},[]
+		},[chain, createLayerZeroTx, goToDetails]
 	)
 
 	return (

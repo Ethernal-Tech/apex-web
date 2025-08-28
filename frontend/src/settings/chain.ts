@@ -112,6 +112,10 @@ export const isEvmChain = function (chain: ChainEnum): boolean {
     return chain === ChainEnum.Nexus;
 }
 
+export const isLayerZeroChain = function (chain: ChainEnum): boolean{
+    return chain === ChainEnum.Nexus || chain === ChainEnum.Ethereum || chain === ChainEnum.Sepolia
+}
+
 export const isCardanoChain = function (chain: ChainEnum): boolean {
     return chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano;
 }

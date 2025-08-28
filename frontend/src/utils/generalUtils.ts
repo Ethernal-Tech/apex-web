@@ -160,6 +160,21 @@ export const validateSubmitTxInputsSkyline = (
   }
 }
 
+export const validateSubmitTxLZInputs = (settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
+  destinationAddr: string, amount: string): string | undefined => {
+    const tokenInfo = getTokenInfoBySrcDst(sourceChain, destinationChain, false);
+    if (BigInt(amount) < BigInt(convertDfmToWei(settings.minValueToBridge))) {
+      return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} ${tokenInfo.label}`;
+    }
+
+    const maxAllowedToBridgeWei = BigInt(convertDfmToWei(settings.maxAmountAllowedToBridge));
+
+    if (maxAllowedToBridgeWei > 0 &&
+        BigInt(amount) > maxAllowedToBridgeWei) {
+      return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedToBridgeWei.toString(10))} ${tokenInfo.label}`;
+    } 
+}
+
 // format it differently depending on network (nexus is 18 decimals, prime and vector are 6)
 export const convertDfmToApex = (dfm:string|number, network:ChainEnum) =>{
   // avoiding rounding errors
