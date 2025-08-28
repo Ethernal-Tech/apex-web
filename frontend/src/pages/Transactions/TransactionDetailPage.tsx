@@ -9,11 +9,13 @@ import { BridgeTransactionDto, ChainEnum } from '../../swagger/apexBridgeApiServ
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getAction } from './action';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, convertDfmToApex, formatAddress, getChainLabelAndColor, toFixed } from '../../utils/generalUtils';
+import { capitalizeWord, convertDfmToApex, formatAddress, toFixed } from '../../utils/generalUtils';
 import { menuDark } from '../../containers/theme'
 import TransferProgress from './components/TransferProgress';
 import NewTransaction from './components/NewTransaction';
 import ButtonCustom from '../../components/Buttons/ButtonCustom';
+
+import { getChainInfo } from '../../settings/chain';
 
 const tabletMediaQuery = '@media (max-width:800px)'
 
@@ -107,7 +109,7 @@ const TransactionDetailPage = () => {
                         <Box component="span" sx={{
                             display: 'inline-block',
                             color: 'white',
-                            bgcolor: transaction && getChainLabelAndColor(transaction.originChain).color,
+                            bgcolor: transaction && getChainInfo(transaction.originChain).mainColor,
                             borderRadius: '50%',
                             width: 24,
                             height: 24,
@@ -115,7 +117,7 @@ const TransactionDetailPage = () => {
                             lineHeight: '26px',
                             marginRight: 1,
                           }}>
-                            {transaction && getChainLabelAndColor(transaction.originChain).letter}
+                            {transaction && getChainInfo(transaction.originChain).letter}
                         </Box>
                         <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500', display:'inline-block' }}>{capitalizeWord(transaction?.originChain || '')}</Typography>
                       </Box>
@@ -128,7 +130,7 @@ const TransactionDetailPage = () => {
                         <Box component="span" sx={{
                             display: 'inline-block',
                             color: 'white',
-                            bgcolor: transaction && getChainLabelAndColor(transaction.destinationChain).color,
+                            bgcolor: transaction && getChainInfo(transaction.destinationChain).mainColor,
                             borderRadius: '50%',
                             width: 24,
                             height: 24,
@@ -136,7 +138,7 @@ const TransactionDetailPage = () => {
                             lineHeight: '26px',
                             marginRight: 1,
                           }}>
-                            {transaction && getChainLabelAndColor(transaction.destinationChain).letter}
+                            {transaction && getChainInfo(transaction.destinationChain).letter}
                         </Box>
                         <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500', display:'inline-block' }}>{capitalizeWord(transaction?.destinationChain || '')}</Typography>
                       </Box>

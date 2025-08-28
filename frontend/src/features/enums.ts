@@ -10,6 +10,10 @@ export enum WalletErrors {
     WalletNotEnabled = 2,
 }
 
+export enum TokenEnum {
+	APEX = 'APEX',
+}
+
 export enum ApexBridgeNetwork {
     MainnetPrime = 'MainnetPrime',
     MainnetVector = 'MainnetVector',

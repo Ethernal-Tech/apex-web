@@ -1,4 +1,5 @@
 import { ChainEnum } from "../swagger/apexBridgeApiService";
+import { getDstChains, getSrcChains } from "../settings/chain";
 
 export type PKLoginDto = {
     address: string,
@@ -80,14 +81,13 @@ export const removeDestinationChain = () => {
 export const initChainsState = () => {
 	const chain = getSelectedChain()
 	const destinationChain = getDestinationChain()
-	const chainValues = Object.values(ChainEnum)
 
 	// reset chains if anything is wrong or missing from localStorage values
 	if(!chain || 
 		!destinationChain || 
 		chain === destinationChain ||
-		!chainValues.includes(chain) ||
-		!chainValues.includes(destinationChain)
+		!getSrcChains().some(x => x === chain) ||
+		!getDstChains(chain).some(x => x === destinationChain)
 	){
 		setSelectedChain(ChainEnum.Prime)
 		setDestinationChain(ChainEnum.Vector)

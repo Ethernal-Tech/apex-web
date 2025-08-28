@@ -6,10 +6,6 @@ import {Numbers} from "web3-types";
 import {EtherUnits} from "web3-utils";
 
 // chain icons
-import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
-import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
-import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
-import { FunctionComponent, SVGProps } from "react";
 import { isAddress } from "web3-validator";
 import { ISettingsState } from "../redux/slices/settingsSlice";
 import { UTxO } from "../features/WalletHandler";
@@ -24,6 +20,9 @@ import {
   Address,
 } from '@emurgo/cardano-serialization-lib-browser';
 
+import { isCardanoChain, isEvmChain } from "../settings/chain";
+import { getTokenInfoBySrc } from "../settings/token";
+
 export const capitalizeWord = (word: string): string => {
     if (!word || word.length === 0) {
         return word;
@@ -31,19 +30,6 @@ export const capitalizeWord = (word: string): string => {
 
     return `${word[0].toUpperCase()}${word.substring(1)}`
 }
-
-export const getChainLabelAndColor = (chain: string):{letter:string, color: string} => {
-  switch (chain.toLowerCase()) {
-    case 'prime':
-      return { letter: 'P', color: '#077368' };
-    case 'nexus':
-      return { letter: 'N', color: '#F27B50' };
-    case 'vector':
-      return { letter: 'V', color: '#F25041' };
-    default:
-      return { letter: '', color: 'transparent' };
-  }
-};
 
 export const formatAddress = (
     address:string|undefined, 
@@ -102,31 +88,33 @@ export const validateSubmitTxInputs = (
   settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
   destinationAddr: string, amount: string, bridgeTxFee: string,
 ): string | undefined => {
-  if ((sourceChain === ChainEnum.Prime || sourceChain === ChainEnum.Vector)) {
+  const tokenInfo = getTokenInfoBySrc(sourceChain);
+
+  if (isCardanoChain(sourceChain)) {
     if (BigInt(amount) < BigInt(settings.minValueToBridge)) {
-      return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} AP3X`;
+      return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} ${tokenInfo.label}`;
     }
 
     const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
 
     if (maxAllowedToBridgeDfm > 0 &&
         BigInt(amount) > maxAllowedToBridgeDfm) {
-      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} AP3X`;
+      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
     } 
-  } else if(sourceChain === ChainEnum.Nexus){
+  } else if(isEvmChain(sourceChain)){
     if (BigInt(amount) < BigInt(convertDfmToWei(settings.minValueToBridge))) {
-      return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} AP3X`;
+      return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} ${tokenInfo.label}`;
     }
 
     const maxAllowedToBridgeWei = BigInt(convertDfmToWei(settings.maxAmountAllowedToBridge));
 
     if (maxAllowedToBridgeWei > 0 &&
         BigInt(amount) > maxAllowedToBridgeWei) {
-      return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedToBridgeWei.toString(10))} AP3X`;
+      return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedToBridgeWei.toString(10))} ${tokenInfo.label}`;
     } 
   }
 
-  if (destinationChain === ChainEnum.Prime || destinationChain === ChainEnum.Vector) {
+  if (isCardanoChain(destinationChain)) {
     const addr = NewAddress(destinationAddr);
     if (!addr || addr instanceof RewardAddress || destinationAddr !== addr.String()) {
       return `Invalid destination address: ${destinationAddr}`;
@@ -135,21 +123,11 @@ export const validateSubmitTxInputs = (
     if (!checkCardanoAddressCompatibility(destinationChain, addr)) {
       return `Destination address not compatible with destination chain: ${destinationChain}`;
     }
-  } else if (destinationChain === ChainEnum.Nexus) {
+  } else if (isEvmChain(destinationChain)) {
     if (!isAddress(destinationAddr)) {
       return `Invalid destination address: ${destinationAddr}`;
     }
   }
-}
-
-export const chainIcons:{
-  [ChainEnum.Prime]:FunctionComponent<SVGProps<SVGSVGElement>>
-  [ChainEnum.Vector]:FunctionComponent<SVGProps<SVGSVGElement>>
-  [ChainEnum.Nexus]:FunctionComponent<SVGProps<SVGSVGElement>>
-} = {
-  [ChainEnum.Prime]:PrimeIcon,
-  [ChainEnum.Vector]:VectorIcon,
-  [ChainEnum.Nexus]:NexusIcon
 }
 
 // format it differently depending on network (nexus is 18 decimals, prime and vector are 6)
@@ -157,12 +135,12 @@ export const convertDfmToApex = (dfm:string|number, network:ChainEnum) =>{
   // avoiding rounding errors
   if(typeof dfm === 'number') dfm = BigInt(dfm).toString()
 
-  switch(network){
-      case ChainEnum.Prime:
-      case ChainEnum.Vector:
-          return convertUtxoDfmToApex(dfm);
-      case ChainEnum.Nexus:
-          return convertEvmDfmToApex(dfm)
+  if (isEvmChain(network)) {
+    return convertEvmDfmToApex(dfm);
+  } else if (isCardanoChain(network)) {
+    return convertUtxoDfmToApex(dfm);
+  } else {
+    return dfm; // should we throw exception here?
   }
 }
 
@@ -170,12 +148,12 @@ export const convertApexToDfm = (apex:string|number, network:ChainEnum) =>{
   // avoiding errors
   if(typeof apex === 'number') apex = apex.toString()
 
-  switch(network){
-      case ChainEnum.Prime:
-      case ChainEnum.Vector:
-          return convertApexToUtxoDfm(apex);
-      case ChainEnum.Nexus:
-          return convertApexToEvmDfm(apex)
+  if (isEvmChain(network)) {
+    return convertApexToEvmDfm(apex);
+  } else if (isCardanoChain(network)) {
+    return convertApexToUtxoDfm(apex);
+  } else {
+    return apex; // should we throw exception here?
   }
 }
 

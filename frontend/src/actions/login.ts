@@ -11,6 +11,7 @@ import { setChainAction } from "../redux/slices/chainSlice";
 import { NavigateFunction } from "react-router-dom";
 import { HOME_ROUTE } from "../pages/PageRouter";
 import { setAccountInfoAction } from "../redux/slices/accountInfoSlice";
+import { isEvmChain } from "../settings/chain";
 
 let onLoadCalled = false
 
@@ -90,7 +91,7 @@ const enableCardanoWallet = async (selectedWalletName: string, chain: ChainEnum,
 }
 
 const enableWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {// 1. nexus (evm metamask) wallet login handling
-    if(chain === ChainEnum.Nexus){
+    if(isEvmChain(chain)){
         try {
             return await enableEvmWallet(selectedWalletName, chain, dispatch)
         } catch (e) {
@@ -137,7 +138,7 @@ export const onLoad = async (selectedWalletName: string, chain: ChainEnum, dispa
 export const login = async (chain: ChainEnum, navigate: NavigateFunction, dispatch: Dispatch) => {
     let wallet 
 
-    if (chain === ChainEnum.Nexus) {
+    if (isEvmChain(chain)) {
         const wallets = evmWalletHandler.getInstalledWallets();
         wallet = wallets.length > 0 ? wallets[0].name : undefined;
     } else {
@@ -147,7 +148,7 @@ export const login = async (chain: ChainEnum, navigate: NavigateFunction, dispat
 
 
     if (!wallet) {
-        const supportedWallets = chain === ChainEnum.Nexus ? EVM_SUPPORTED_WALLETS : SUPPORTED_WALLETS;
+        const supportedWallets = isEvmChain(chain) ? EVM_SUPPORTED_WALLETS : SUPPORTED_WALLETS;
         toast.error(`Can not find any supported wallets installed. Supported wallets: ${supportedWallets}`);
         return false;
     }
