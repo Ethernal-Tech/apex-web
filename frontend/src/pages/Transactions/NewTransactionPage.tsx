@@ -14,7 +14,9 @@ import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
-import {isCardanoChain, isEvmChain } from "../../settings/chain";
+import {ChainExtended, isCardanoChain, isEvmChain } from "../../settings/chain";
+import BridgeInputLZ from "./components/LayerZeroBridgeInput";
+import { sendLayerZeroTransaction } from "../../features/layerZero";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -178,21 +180,56 @@ function NewTransactionPage() {
 		[chain, createCardanoTx, createEthTx, goToDetails],
 	);
 
+	const handleLZSubmitCallback = useCallback(
+		async() =>{
+			setLoading(true);
+			try{
+				if (chain === ChainExtended.Nexus){
+					sendLayerZeroTransaction();
+				}else{
+					throw new Error(`Unsupported source chain: ${chain}`);
+				}
+			}
+			catch(err){
+				console.log(err);
+				if (err instanceof Error && err.message.includes('account changed')) {
+					toast.error(`Wallet account changed. It looks like you switched accounts in your wallet.`)
+				} else {
+					toast.error(`${err}`)
+				}
+			} finally{
+
+			}
+		},[]
+	)
+
 	return (
-		<BasePage>
-			<NewTransaction txInProgress={false}>
-				<BridgeInput
-					bridgeTxFee={bridgeTxFee}
-					setBridgeTxFee={setBridgeTxFee}
-					resetBridgeTxFee={resetBridgeTxFee}
-					operationFee={operationFee}
-					getCardanoTxFee={getCardanoTxFee}
-					getEthTxFee={getEthTxFee}
-					submit={handleSubmitCallback}
-					loading={loading}
-				/>
-			</NewTransaction>
-		</BasePage>
+<BasePage>
+  <NewTransaction txInProgress={false}>
+    {chain === 'nexus' || chain === 'ethereum' ? (
+      <BridgeInputLZ
+        bridgeTxFee={bridgeTxFee}
+		setBridgeTxFee={setBridgeTxFee}
+        operationFee={operationFee}
+		resetBridgeTxFee={resetBridgeTxFee}
+		getEthTxFee={getEthTxFee}
+        submit={handleLZSubmitCallback}
+        loading={loading}
+      />
+    ) : (
+      <BridgeInput
+        bridgeTxFee={bridgeTxFee}
+        setBridgeTxFee={setBridgeTxFee}
+        resetBridgeTxFee={resetBridgeTxFee}
+        operationFee={operationFee}
+        getCardanoTxFee={getCardanoTxFee}
+        getEthTxFee={getEthTxFee}
+        submit={handleSubmitCallback}
+        loading={loading}
+      />
+    )}
+  </NewTransaction>
+</BasePage>
 	)
 }
 

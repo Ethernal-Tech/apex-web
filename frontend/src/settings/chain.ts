@@ -14,15 +14,16 @@ export const ChainExtended = {
 
 export type ChainExtendedEnum = typeof ChainExtended[keyof typeof ChainExtended];
 
-const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
+const reactorChainDirections: Partial<Record<ChainExtendedEnum, ChainEnum[]>> = {
     [ChainEnum.Prime]: [ChainEnum.Vector, ChainEnum.Nexus],
     [ChainEnum.Vector]: [ChainEnum.Prime],
     [ChainEnum.Nexus]: [ChainEnum.Prime],
 }
 
-const skylineChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
+const skylineChainDirections: Partial<Record<ChainExtendedEnum, ChainExtendedEnum[]>> = {
     [ChainEnum.Prime]: [ChainEnum.Cardano],
     [ChainEnum.Cardano]: [ChainEnum.Prime],
+    [ChainEnum.Nexus]: [ChainExtended.Ethereum]
 };
 
 export type ChainInfo = {
