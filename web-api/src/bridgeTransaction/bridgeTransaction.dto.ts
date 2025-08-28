@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty } from 'class-validator';
 import { PaginatedDto } from 'src/common/dto';
-import { ChainExtendedEnum, TransactionStatusEnum } from 'src/common/enum';
+import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
 export class BridgeTransactionDto {
@@ -37,23 +37,23 @@ export class BridgeTransactionDto {
 	nativeTokenAmount: string;
 
 	@IsNotEmpty()
-	@IsEnum(ChainExtendedEnum)
+	@IsEnum(ChainEnum)
 	@ApiProperty({
 		description: 'Source chain ID',
-		enum: ChainExtendedEnum,
+		enum: ChainEnum,
 		enumName: 'ChainExtendedEnum',
 	})
-	originChain: ChainExtendedEnum;
+	originChain: ChainEnum;
 
 	@IsNotEmpty()
-	@IsEnum(ChainExtendedEnum)
+	@IsEnum(ChainEnum)
 	@NotSame('originChain')
 	@ApiProperty({
 		description: 'Destination chain ID',
-		enum: ChainExtendedEnum,
+		enum: ChainEnum,
 		enumName: 'ChainExtendedEnum',
 	})
-	destinationChain: ChainExtendedEnum;
+	destinationChain: ChainEnum;
 
 	@IsNotEmpty()
 	@ApiProperty({
@@ -107,22 +107,22 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 	senderAddress: string;
 
 	@IsNotEmpty()
-	@IsEnum(ChainExtendedEnum)
+	@IsEnum(ChainEnum)
 	@ApiProperty({
 		description: 'Source chain ID',
-		enum: ChainExtendedEnum,
+		enum: ChainEnum,
 		enumName: 'ChainExtendedEnum',
 	})
-	originChain: ChainExtendedEnum;
+	originChain: ChainEnum;
 
 	@ApiProperty({
 		description: 'Destination chain ID',
 		nullable: true,
 		required: false,
-		enum: ChainExtendedEnum,
+		enum: ChainEnum,
 		enumName: 'ChainExtendedEnum',
 	})
-	destinationChain?: ChainExtendedEnum;
+	destinationChain?: ChainEnum;
 
 	@ApiProperty({
 		description: 'Minimum amount of currency',

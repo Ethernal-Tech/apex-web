@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
-import { ChainEnum } from 'src/common/enum';
+import { ChainApexBridgeEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
 export class CreateTransactionDto {
@@ -12,23 +12,23 @@ export class CreateTransactionDto {
 	senderAddress: string;
 
 	@IsNotEmpty()
-	@IsEnum(ChainEnum)
+	@IsEnum(ChainApexBridgeEnum)
 	@ApiProperty({
 		description: 'Source chain ID',
-		enum: ChainEnum,
+		enum: ChainApexBridgeEnum,
 		enumName: 'ChainEnum',
 	})
-	originChain: ChainEnum;
+	originChain: ChainApexBridgeEnum;
 
 	@IsNotEmpty()
-	@IsEnum(ChainEnum)
+	@IsEnum(ChainApexBridgeEnum)
 	@NotSame('originChain')
 	@ApiProperty({
 		description: 'Destination chain ID',
-		enum: ChainEnum,
+		enum: ChainApexBridgeEnum,
 		enumName: 'ChainEnum',
 	})
-	destinationChain: ChainEnum;
+	destinationChain: ChainApexBridgeEnum;
 
 	@IsNotEmpty()
 	@ApiProperty({
@@ -75,23 +75,23 @@ export class CreateTransactionDto {
 
 export class TransactionSubmittedDto {
 	@IsNotEmpty()
-	@IsEnum(ChainEnum)
+	@IsEnum(ChainApexBridgeEnum)
 	@ApiProperty({
 		description: 'Source chain ID',
-		enum: ChainEnum,
+		enum: ChainApexBridgeEnum,
 		enumName: 'ChainEnum',
 	})
-	originChain: ChainEnum;
+	originChain: ChainApexBridgeEnum;
 
 	@IsNotEmpty()
-	@IsEnum(ChainEnum)
+	@IsEnum(ChainApexBridgeEnum)
 	@NotSame('originChain')
 	@ApiProperty({
 		description: 'Destination chain ID',
-		enum: ChainEnum,
+		enum: ChainApexBridgeEnum,
 		enumName: 'ChainEnum',
 	})
-	destinationChain: ChainEnum;
+	destinationChain: ChainApexBridgeEnum;
 
 	@IsNotEmpty()
 	@ApiProperty({

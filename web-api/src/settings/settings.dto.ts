@@ -8,7 +8,7 @@ import {
 	IsPositive,
 	ValidateNested,
 } from 'class-validator';
-import { ChainExtendedEnum } from 'src/common/enum';
+import { ChainEnum } from 'src/common/enum';
 
 export class BridgingSettingsDto {
 	@IsNotEmpty()
@@ -85,9 +85,9 @@ export class LayerZeroChainSettingsDto {
 	@IsNotEmpty()
   	@ApiProperty({
 		description: 'Chain name',
-		enum: ChainExtendedEnum,
+		enum: ChainEnum,
 	})
-	chain: ChainExtendedEnum;
+	chain: ChainEnum;
 
 	@IsNotEmpty()
 	@ApiProperty({

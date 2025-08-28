@@ -1,35 +1,35 @@
-import { ChainEnum, ChainExtendedEnum } from 'src/common/enum';
+import { ChainApexBridgeEnum, ChainEnum } from 'src/common/enum';
 import { CardanoNetworkType } from './Address/types';
 
 const NEXUS_TESTNET_CHAIN_ID = BigInt(9070);
 const NEXUS_MAINNET_CHAIN_ID = BigInt(9069);
 
 export const CHAIN_TO_CHAIN_ID = {
-	[ChainEnum.Prime]: 1,
-	[ChainEnum.Vector]: 2,
-	[ChainEnum.Nexus]: 3,
-	[ChainEnum.Cardano]: 4,
+	[ChainApexBridgeEnum.Prime]: 1,
+	[ChainApexBridgeEnum.Vector]: 2,
+	[ChainApexBridgeEnum.Nexus]: 3,
+	[ChainApexBridgeEnum.Cardano]: 4,
 };
 
 const fromChainToNetworkId = (
-	chain: ChainEnum,
+	chain: ChainApexBridgeEnum,
 	isMainnet: boolean,
 ): number | bigint | undefined => {
 	switch (chain) {
-		case ChainEnum.Prime: {
+		case ChainApexBridgeEnum.Prime: {
 			return isMainnet
 				? CardanoNetworkType.MainNetNetwork
 				: CardanoNetworkType.TestNetNetwork;
 		}
-		case ChainEnum.Vector: {
+		case ChainApexBridgeEnum.Vector: {
 			return isMainnet
 				? CardanoNetworkType.VectorMainNetNetwork
 				: CardanoNetworkType.VectorTestNetNetwork;
 		}
-		case ChainEnum.Nexus: {
+		case ChainApexBridgeEnum.Nexus: {
 			return isMainnet ? NEXUS_MAINNET_CHAIN_ID : NEXUS_TESTNET_CHAIN_ID;
 		}
-		case ChainEnum.Cardano: {
+		case ChainApexBridgeEnum.Cardano: {
 			return isMainnet
 				? CardanoNetworkType.MainNetNetwork
 				: CardanoNetworkType.TestNetNetwork;
@@ -40,14 +40,14 @@ const fromChainToNetworkId = (
 };
 
 export const areChainsEqual = (
-	chain: ChainEnum,
+	chain: ChainApexBridgeEnum,
 	networkId: number | bigint,
 	isMainnet: boolean,
 ): boolean => {
 	return networkId === fromChainToNetworkId(chain, isMainnet);
 };
 
-export const toNumChainID = (chain: ChainEnum) => CHAIN_TO_CHAIN_ID[chain];
+export const toNumChainID = (chain: ChainApexBridgeEnum) => CHAIN_TO_CHAIN_ID[chain];
 
-export const isCardanoChain = (chain: ChainExtendedEnum) => 
-	chain === ChainExtendedEnum.Cardano || chain === ChainExtendedEnum.Prime || chain === ChainExtendedEnum.Vector;
+export const isCardanoChain = (chain: ChainEnum) => 
+	chain === ChainEnum.Cardano || chain === ChainEnum.Prime || chain === ChainEnum.Vector;

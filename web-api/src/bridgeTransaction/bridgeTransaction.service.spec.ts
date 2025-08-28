@@ -4,7 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import { NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { ChainEnum, TransactionStatusEnum } from '../common/enum';
+import { ChainApexBridgeEnum, TransactionStatusEnum } from '../common/enum';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { BridgeTransactionFilterDto } from './bridgeTransaction.dto';
 
@@ -41,8 +41,8 @@ describe('BridgeTransactionService', () => {
 				'addr_test1qqafaqcjl0gfgus77h37dm86z2k00tptt7fhxc205tk5xgnvvehq7dfv0fmfq9dh9d7cjpa6qll0khnqkue77hs0gldsnrhk04';
 			transaction.receiverAddresses =
 				'vector_test1v2xmn45jpn26wrwvlveuvryw4g8nm78m52eh4k5uzf7630gakk0rm';
-			transaction.originChain = ChainEnum.Prime;
-			transaction.destinationChain = ChainEnum.Vector;
+			transaction.originChain = ChainApexBridgeEnum.Prime;
+			transaction.destinationChain = ChainApexBridgeEnum.Vector;
 			transaction.amount = BigInt(100).toString();
 			transaction.nativeTokenAmount = BigInt(0).toString();
 			transaction.sourceTxHash = 'sourceTxHash';
@@ -75,8 +75,8 @@ describe('BridgeTransactionService', () => {
 	describe('getAllFiltered', () => {
 		it('should return the filtered transactions', async () => {
 			const filterDto: BridgeTransactionFilterDto = {
-				originChain: ChainEnum.Prime,
-				destinationChain: ChainEnum.Vector,
+				originChain: ChainApexBridgeEnum.Prime,
+				destinationChain: ChainApexBridgeEnum.Vector,
 				senderAddress:
 					'addr_test1qqafaqcjl0gfgus77h37dm86z2k00tptt7fhxc205tk5xgnvvehq7dfv0fmfq9dh9d7cjpa6qll0khnqkue77hs0gldsnrhk04',
 			};
@@ -94,8 +94,8 @@ describe('BridgeTransactionService', () => {
 
 		it('should return an empty list when no transactions are found', async () => {
 			const filterDto: BridgeTransactionFilterDto = {
-				originChain: ChainEnum.Prime,
-				destinationChain: ChainEnum.Vector,
+				originChain: ChainApexBridgeEnum.Prime,
+				destinationChain: ChainApexBridgeEnum.Vector,
 				senderAddress:
 					'addr_test1qqafaqcjl0gfgus77h37dm86z2k00tptt7fhxc205tk5xgnvvehq7dfv0fmfq9dh9d7cjpa6qll0khnqkue77hs0gldsnrhk04',
 			};

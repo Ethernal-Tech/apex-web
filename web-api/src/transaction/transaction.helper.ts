@@ -1,4 +1,4 @@
-import { ChainEnum } from 'src/common/enum';
+import { ChainApexBridgeEnum } from 'src/common/enum';
 import {
 	CreateCardanoTransactionResponseDto,
 	ErrorResponseDto,
@@ -27,8 +27,8 @@ const prepareCreateCardanoBridgingTx = (
 ) => {
 	// centralized bridge currently doesn't support prime->vector, vector->prime
 	const nexusInvolved =
-		dto.originChain === ChainEnum.Nexus ||
-		dto.destinationChain === ChainEnum.Nexus;
+		dto.originChain === ChainApexBridgeEnum.Nexus ||
+		dto.destinationChain === ChainApexBridgeEnum.Nexus;
 
 	const isCentralized =
 		process.env.USE_CENTRALIZED_BRIDGE === 'true' && nexusInvolved;

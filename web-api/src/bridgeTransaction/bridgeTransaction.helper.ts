@@ -1,6 +1,6 @@
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import axios, { AxiosError } from 'axios';
-import { ChainExtendedEnum, TransactionStatusEnum } from 'src/common/enum';
+import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { BridgeTransactionDto } from './bridgeTransaction.dto';
 import { capitalizeWord } from 'src/utils/stringUtils';
 import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization-lib-nodejs';
@@ -35,7 +35,7 @@ export type BridgingRequestState = {
 
 export type GetBridgingRequestStatesModel = {
 	txHash: string;
-	destinationChainId: ChainExtendedEnum;
+	destinationChainId: ChainEnum;
 	txRaw: string;
 };
 
@@ -181,12 +181,12 @@ export const getHasTxFailedRequestState = async (
 	chainId: string,
 	model: GetBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
-	if (!model.txRaw || !Object.values(ChainExtendedEnum).some(x => x == chainId)) {
+	if (!model.txRaw || !Object.values(ChainEnum).some(x => x == chainId)) {
 		return;
 	}
 
 	let ttl: bigint | undefined;
-	if (isCardanoChain(chainId as ChainExtendedEnum)) {
+	if (isCardanoChain(chainId as ChainEnum)) {
 		ttl = getCardanoTTL(model.txRaw);
 	} else {
 		ttl = getEthTTL(model.txRaw);

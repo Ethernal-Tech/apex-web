@@ -3,7 +3,7 @@ import axios, { AxiosError } from 'axios';
 import { retryForever } from 'src/utils/generalUtils';
 import { LayerZeroChainSettingsDto, SettingsFullResponseDto } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
-import { ChainExtendedEnum } from 'src/common/enum';
+import { ChainEnum } from 'src/common/enum';
 
 const RETRY_DELAY_MS = 5000;
 
@@ -36,7 +36,7 @@ export class SettingsService {
 			}
 
 			const item = new LayerZeroChainSettingsDto();
-			item.chain = subItems[0].trim() as ChainExtendedEnum;
+			item.chain = subItems[0].trim() as ChainEnum;
 			item.rpcUrl = subItems[1].trim();
 			item.oftAddress = subItems[2].trim();
 			item.chainID = parseInt(subItems[3].trim(), 10);

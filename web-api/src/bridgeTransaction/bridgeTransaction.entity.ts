@@ -1,4 +1,4 @@
-import { ChainExtendedEnum, TransactionStatusEnum } from 'src/common/enum';
+import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('bridgeTransactions')
@@ -15,11 +15,11 @@ export class BridgeTransaction {
 	@Column('numeric', { default: '0', scale: 0, precision: 1000 })
 	amount: string;
 
-	@Column({ enum: ChainExtendedEnum, enumName: 'ChainExtendedEnum' })
-	originChain: ChainExtendedEnum;
+	@Column({ enum: ChainEnum, enumName: 'ChainExtendedEnum' })
+	originChain: ChainEnum;
 
-	@Column({ enum: ChainExtendedEnum, enumName: 'ChainExtendedEnum' })
-	destinationChain: ChainExtendedEnum;
+	@Column({ enum: ChainEnum, enumName: 'ChainExtendedEnum' })
+	destinationChain: ChainEnum;
 
 	@Column('numeric', { default: '0', scale: 0, precision: 1000 })
 	nativeTokenAmount: string;
