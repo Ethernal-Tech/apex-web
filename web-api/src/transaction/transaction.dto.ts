@@ -16,7 +16,7 @@ export class CreateTransactionDto {
 	@ApiProperty({
 		description: 'Source chain ID',
 		enum: ChainApexBridgeEnum,
-		enumName: 'ChainEnum',
+		enumName: 'ChainApexBridgeEnum',
 	})
 	originChain: ChainApexBridgeEnum;
 
@@ -26,7 +26,7 @@ export class CreateTransactionDto {
 	@ApiProperty({
 		description: 'Destination chain ID',
 		enum: ChainApexBridgeEnum,
-		enumName: 'ChainEnum',
+		enumName: 'ChainApexBridgeEnum',
 	})
 	destinationChain: ChainApexBridgeEnum;
 
@@ -79,7 +79,7 @@ export class TransactionSubmittedDto {
 	@ApiProperty({
 		description: 'Source chain ID',
 		enum: ChainApexBridgeEnum,
-		enumName: 'ChainEnum',
+		enumName: 'ChainApexBridgeEnum',
 	})
 	originChain: ChainApexBridgeEnum;
 
@@ -89,7 +89,7 @@ export class TransactionSubmittedDto {
 	@ApiProperty({
 		description: 'Destination chain ID',
 		enum: ChainApexBridgeEnum,
-		enumName: 'ChainEnum',
+		enumName: 'ChainApexBridgeEnum',
 	})
 	destinationChain: ChainApexBridgeEnum;
 

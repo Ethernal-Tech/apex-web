@@ -41,7 +41,7 @@ export class BridgeTransactionDto {
 	@ApiProperty({
 		description: 'Source chain ID',
 		enum: ChainEnum,
-		enumName: 'ChainExtendedEnum',
+		enumName: 'ChainEnum',
 	})
 	originChain: ChainEnum;
 
@@ -51,7 +51,7 @@ export class BridgeTransactionDto {
 	@ApiProperty({
 		description: 'Destination chain ID',
 		enum: ChainEnum,
-		enumName: 'ChainExtendedEnum',
+		enumName: 'ChainEnum',
 	})
 	destinationChain: ChainEnum;
 
@@ -111,7 +111,7 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 	@ApiProperty({
 		description: 'Source chain ID',
 		enum: ChainEnum,
-		enumName: 'ChainExtendedEnum',
+		enumName: 'ChainEnum',
 	})
 	originChain: ChainEnum;
 
@@ -120,7 +120,7 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 		nullable: true,
 		required: false,
 		enum: ChainEnum,
-		enumName: 'ChainExtendedEnum',
+		enumName: 'ChainEnum',
 	})
 	destinationChain?: ChainEnum;
 

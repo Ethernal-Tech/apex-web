@@ -15,10 +15,10 @@ export class BridgeTransaction {
 	@Column('numeric', { default: '0', scale: 0, precision: 1000 })
 	amount: string;
 
-	@Column({ enum: ChainEnum, enumName: 'ChainExtendedEnum' })
+	@Column({ enum: ChainEnum, enumName: 'ChainEnum' })
 	originChain: ChainEnum;
 
-	@Column({ enum: ChainEnum, enumName: 'ChainExtendedEnum' })
+	@Column({ enum: ChainEnum, enumName: 'ChainEnum' })
 	destinationChain: ChainEnum;
 
 	@Column('numeric', { default: '0', scale: 0, precision: 1000 })
