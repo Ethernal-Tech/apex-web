@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import { retryForever } from 'src/utils/generalUtils';
-import { LayerZeroChainSettingsDto, SettingsFullResponseDto, SettingsResponseDto } from './settings.dto';
+import { LayerZeroChainSettingsDto, SettingsFullResponseDto } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { ChainExtendedEnum } from 'src/common/enum';
 
