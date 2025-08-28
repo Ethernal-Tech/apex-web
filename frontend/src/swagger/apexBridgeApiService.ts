@@ -1034,7 +1034,7 @@ export interface ISettingsFullResponseDto {
 }
 
 /** Destination chain ID */
-export enum ChainEnum {
+export enum ChainApexBridgeEnum {
     Prime = "prime",
     Vector = "vector",
     Nexus = "nexus",
@@ -1044,8 +1044,8 @@ export enum ChainEnum {
 export class CreateTransactionDto implements ICreateTransactionDto {
     /** Address that initiates the bridging request on the source chain */
     senderAddress!: string;
-    originChain!: ChainEnum;
-    destinationChain!: ChainEnum;
+    originChain!: ChainApexBridgeEnum;
+    destinationChain!: ChainApexBridgeEnum;
     /** Receiver address on destination chain */
     destinationAddress!: string;
     /** Amount to be bridged */
@@ -1117,8 +1117,8 @@ export class CreateTransactionDto implements ICreateTransactionDto {
 export interface ICreateTransactionDto {
     /** Address that initiates the bridging request on the source chain */
     senderAddress: string;
-    originChain: ChainEnum;
-    destinationChain: ChainEnum;
+    originChain: ChainApexBridgeEnum;
+    destinationChain: ChainApexBridgeEnum;
     /** Receiver address on destination chain */
     destinationAddress: string;
     /** Amount to be bridged */
@@ -1339,6 +1339,16 @@ export interface ICreateEthTransactionResponseDto {
     [key: string]: any;
 }
 
+/** Destination chain ID */
+export enum ChainEnum {
+    Prime = "prime",
+    Vector = "vector",
+    Nexus = "nexus",
+    Cardano = "cardano",
+    Sepolia = "sepolia",
+    Ethereum = "ethereum",
+}
+
 export class TransactionSubmittedDto implements ITransactionSubmittedDto {
     originChain!: ChainEnum;
     destinationChain!: ChainEnum;
@@ -1450,16 +1460,6 @@ export interface ITransactionSubmittedDto {
     [key: string]: any;
 }
 
-/** Destination chain ID */
-export enum ChainExtendedEnum {
-    Prime = "prime",
-    Vector = "vector",
-    Nexus = "nexus",
-    Cardano = "cardano",
-    Sepolia = "sepolia",
-    Ethereum = "ethereum",
-}
-
 /** Status of bridging request */
 export enum TransactionStatusEnum {
     Pending = "Pending",
@@ -1483,8 +1483,8 @@ export class BridgeTransactionDto implements IBridgeTransactionDto {
     amount!: string;
     /** Bridged native token amount */
     nativeTokenAmount!: string;
-    originChain!: ChainExtendedEnum;
-    destinationChain!: ChainExtendedEnum;
+    originChain!: ChainEnum;
+    destinationChain!: ChainEnum;
     /** Transaction hash on source chain */
     sourceTxHash!: string;
     /** Transaction hash on destination chain */
@@ -1571,8 +1571,8 @@ export interface IBridgeTransactionDto {
     amount: string;
     /** Bridged native token amount */
     nativeTokenAmount: string;
-    originChain: ChainExtendedEnum;
-    destinationChain: ChainExtendedEnum;
+    originChain: ChainEnum;
+    destinationChain: ChainEnum;
     /** Transaction hash on source chain */
     sourceTxHash: string;
     /** Transaction hash on destination chain */
@@ -1707,8 +1707,8 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
     perPage?: number | undefined;
     /** Address that initiated the bridging transaction on the source chain */
     senderAddress!: string;
-    originChain!: ChainExtendedEnum;
-    destinationChain?: ChainExtendedEnum | undefined;
+    originChain!: ChainEnum;
+    destinationChain?: ChainEnum | undefined;
     /** Minimum amount of currency */
     amountFrom?: string | undefined;
     /** Maximum amount of currency */
@@ -1792,8 +1792,8 @@ export interface IBridgeTransactionFilterDto {
     perPage?: number | undefined;
     /** Address that initiated the bridging transaction on the source chain */
     senderAddress: string;
-    originChain: ChainExtendedEnum;
-    destinationChain?: ChainExtendedEnum | undefined;
+    originChain: ChainEnum;
+    destinationChain?: ChainEnum | undefined;
     /** Minimum amount of currency */
     amountFrom?: string | undefined;
     /** Maximum amount of currency */
