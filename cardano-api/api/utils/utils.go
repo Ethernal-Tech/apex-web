@@ -90,14 +90,14 @@ func useUtxoCache(
 	return false
 }
 
-func GetBridgingAddress(
+func GetAddressToBridgeTo(
 	ctx context.Context,
 	oracleURL string,
 	apiKey string,
 	chainID string) (
 	*response.BridgingAddressResponse, error,
 ) {
-	requestURL := oracleURL + "/api/BridgingAddress/Get"
+	requestURL := oracleURL + "/api/BridgingAddress/GetAddressToBridgeTo"
 
 	u, err := url.Parse(requestURL)
 	if err != nil {
@@ -118,7 +118,12 @@ func GetBridgingAddress(
 	return addressResponse, nil
 }
 
-func GetAllBridgingAddress(ctx context.Context, oracleURL string, apiKey string, chainID string) (*response.AllBridgingAddressesResponse, error) {
+func GetAllBridgingAddress(
+	ctx context.Context,
+	oracleURL string,
+	apiKey string,
+	chainID string,
+) (*response.AllBridgingAddressesResponse, error) {
 	requestURL := oracleURL + "/api/BridgingAddress/GetAllAddresses"
 
 	u, err := url.Parse(requestURL)

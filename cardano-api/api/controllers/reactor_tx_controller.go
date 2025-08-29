@@ -221,7 +221,7 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxInfo, error,
 ) {
-	bridgingAddress, err := utils.GetBridgingAddress(
+	bridgingAddress, err := utils.GetAddressToBridgeTo(
 		context.Background(),
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
@@ -270,7 +270,7 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
-	bridgingAddress, err := utils.GetBridgingAddress(
+	bridgingAddress, err := utils.GetAddressToBridgeTo(
 		context.Background(),
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,

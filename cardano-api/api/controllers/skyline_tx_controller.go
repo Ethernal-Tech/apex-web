@@ -337,7 +337,7 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 ) {
 	cacheUtxosTransformer := utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher)
 
-	bridgingAddress, err := utils.GetBridgingAddress(
+	bridgingAddress, err := utils.GetAddressToBridgeTo(
 		context.Background(),
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
@@ -381,7 +381,7 @@ func (c *SkylineTxControllerImpl) calculateTxFee(
 	error,
 ) {
 	// Get bridging address
-	bridgingAddress, err := utils.GetBridgingAddress(
+	bridgingAddress, err := utils.GetAddressToBridgeTo(
 		context.Background(),
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
