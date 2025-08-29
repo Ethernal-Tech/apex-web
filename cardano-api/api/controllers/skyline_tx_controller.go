@@ -341,7 +341,9 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		context.Background(),
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
-		requestBody.SourceChainID)
+		requestBody.SourceChainID,
+		utils.ContainsNativeTokens(requestBody),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -391,7 +393,9 @@ func (c *SkylineTxControllerImpl) calculateTxFee(
 		context.Background(),
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
-		requestBody.SourceChainID)
+		requestBody.SourceChainID,
+		utils.ContainsNativeTokens(requestBody),
+	)
 	if err != nil {
 		return nil, nil, err
 	}

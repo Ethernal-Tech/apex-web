@@ -90,7 +90,7 @@ func useUtxoCache(
 	return false
 }
 
-func containsNativeTokens(
+func ContainsNativeTokens(
 	requestBody commonRequest.CreateBridgingTxRequest,
 ) bool {
 	for _, tx := range requestBody.Transactions {
@@ -106,7 +106,8 @@ func GetAddressToBridgeTo(
 	ctx context.Context,
 	oracleURL string,
 	apiKey string,
-	chainID string) (
+	chainID string,
+	containsNativeTokens bool) (
 	*response.BridgingAddressResponse, error,
 ) {
 	requestURL := oracleURL + "/api/BridgingAddress/GetAddressToBridgeTo"
@@ -118,6 +119,7 @@ func GetAddressToBridgeTo(
 
 	q := u.Query()
 	q.Set("chainId", chainID)
+	q.Set("containsNativeTokens", fmt.Sprint(containsNativeTokens))
 	u.RawQuery = q.Encode()
 
 	addressResponse, err := common.HTTPGet[*response.BridgingAddressResponse](
