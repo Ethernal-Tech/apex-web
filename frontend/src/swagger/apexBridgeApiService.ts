@@ -1590,25 +1590,25 @@ export interface IBridgeTransactionDto {
 
 export class LayerZeroTransactionDto implements ILayerZeroTransactionDto {
     /** Source chain name where the OFT transfer originates */
-    srcChainName!: LayerZeroTransactionDto;
+    srcChainName!: string;
     /** Destination chain name where the OFT will be received */
-    dstChainName!: LayerZeroTransactionDto;
+    dstChainName!: string;
     /** Address of the OFT contract on the source chain */
-    oftAddress!: LayerZeroTransactionDto;
+    oftAddress!: string;
     /** Amount to transfer in the smallest unit (wei/satoshi equivalent) */
-    amount!: LayerZeroTransactionDto;
+    amount!: string;
     /** Address of the sender wallet */
-    from!: LayerZeroTransactionDto;
+    from!: string;
     /** Address of the recipient wallet (EVM hex or Solana base58) */
-    to!: LayerZeroTransactionDto;
+    to!: string;
     /** Whether to validate balances before creating transaction */
-    validate?: LayerZeroTransactionDto;
+    validate?: boolean;
     /** Structured LayerZero execution options as JSON string. EXECUTOR OPTIONS: - lzReceive: Set gas limit and optional native drop for lzReceive execution - nativeDrops: Array of native token drops to specific addresses - composeOptions: Array of compose message execution settings with gas and native drop All numeric values for gas limits and native drops should be strings or numbers. Native drop amounts are in wei (e.g., "1000000000000000" = 0.001 ETH). */
-    options?: LayerZeroTransactionDto;
+    options?: string;
     /** Compose message for advanced OFT operations (hex encoded) */
-    composeMsg?: LayerZeroTransactionDto;
+    composeMsg?: string;
     /** OFT command for advanced operations (hex encoded) */
-    oftCmd?: LayerZeroTransactionDto;
+    oftCmd?: string;
 
     [key: string]: any;
 
@@ -1620,12 +1620,7 @@ export class LayerZeroTransactionDto implements ILayerZeroTransactionDto {
             }
         }
         if (!data) {
-            this.srcChainName = new LayerZeroTransactionDto();
-            this.dstChainName = new LayerZeroTransactionDto();
-            this.oftAddress = new LayerZeroTransactionDto();
-            this.amount = new LayerZeroTransactionDto();
-            this.from = new LayerZeroTransactionDto();
-            this.to = new LayerZeroTransactionDto();
+            this.validate = false;
         }
     }
 
@@ -1635,16 +1630,16 @@ export class LayerZeroTransactionDto implements ILayerZeroTransactionDto {
                 if (_data.hasOwnProperty(property))
                     this[property] = _data[property];
             }
-            this.srcChainName = _data["srcChainName"] ? LayerZeroTransactionDto.fromJS(_data["srcChainName"]) : new LayerZeroTransactionDto();
-            this.dstChainName = _data["dstChainName"] ? LayerZeroTransactionDto.fromJS(_data["dstChainName"]) : new LayerZeroTransactionDto();
-            this.oftAddress = _data["oftAddress"] ? LayerZeroTransactionDto.fromJS(_data["oftAddress"]) : new LayerZeroTransactionDto();
-            this.amount = _data["amount"] ? LayerZeroTransactionDto.fromJS(_data["amount"]) : new LayerZeroTransactionDto();
-            this.from = _data["from"] ? LayerZeroTransactionDto.fromJS(_data["from"]) : new LayerZeroTransactionDto();
-            this.to = _data["to"] ? LayerZeroTransactionDto.fromJS(_data["to"]) : new LayerZeroTransactionDto();
-            this.validate = _data["validate"] ? LayerZeroTransactionDto.fromJS(_data["validate"]) : undefined as any;
-            this.options = _data["options"] ? LayerZeroTransactionDto.fromJS(_data["options"]) : undefined as any;
-            this.composeMsg = _data["composeMsg"] ? LayerZeroTransactionDto.fromJS(_data["composeMsg"]) : undefined as any;
-            this.oftCmd = _data["oftCmd"] ? LayerZeroTransactionDto.fromJS(_data["oftCmd"]) : undefined as any;
+            this.srcChainName = _data["srcChainName"];
+            this.dstChainName = _data["dstChainName"];
+            this.oftAddress = _data["oftAddress"];
+            this.amount = _data["amount"];
+            this.from = _data["from"];
+            this.to = _data["to"];
+            this.validate = _data["validate"] !== undefined ? _data["validate"] : false;
+            this.options = _data["options"];
+            this.composeMsg = _data["composeMsg"];
+            this.oftCmd = _data["oftCmd"];
         }
     }
 
@@ -1661,41 +1656,41 @@ export class LayerZeroTransactionDto implements ILayerZeroTransactionDto {
             if (this.hasOwnProperty(property))
                 data[property] = this[property];
         }
-        data["srcChainName"] = this.srcChainName ? this.srcChainName.toJSON() : undefined as any;
-        data["dstChainName"] = this.dstChainName ? this.dstChainName.toJSON() : undefined as any;
-        data["oftAddress"] = this.oftAddress ? this.oftAddress.toJSON() : undefined as any;
-        data["amount"] = this.amount ? this.amount.toJSON() : undefined as any;
-        data["from"] = this.from ? this.from.toJSON() : undefined as any;
-        data["to"] = this.to ? this.to.toJSON() : undefined as any;
-        data["validate"] = this.validate ? this.validate.toJSON() : undefined as any;
-        data["options"] = this.options ? this.options.toJSON() : undefined as any;
-        data["composeMsg"] = this.composeMsg ? this.composeMsg.toJSON() : undefined as any;
-        data["oftCmd"] = this.oftCmd ? this.oftCmd.toJSON() : undefined as any;
+        data["srcChainName"] = this.srcChainName;
+        data["dstChainName"] = this.dstChainName;
+        data["oftAddress"] = this.oftAddress;
+        data["amount"] = this.amount;
+        data["from"] = this.from;
+        data["to"] = this.to;
+        data["validate"] = this.validate;
+        data["options"] = this.options;
+        data["composeMsg"] = this.composeMsg;
+        data["oftCmd"] = this.oftCmd;
         return data;
     }
 }
 
 export interface ILayerZeroTransactionDto {
     /** Source chain name where the OFT transfer originates */
-    srcChainName: LayerZeroTransactionDto;
+    srcChainName: string;
     /** Destination chain name where the OFT will be received */
-    dstChainName: LayerZeroTransactionDto;
+    dstChainName: string;
     /** Address of the OFT contract on the source chain */
-    oftAddress: LayerZeroTransactionDto;
+    oftAddress: string;
     /** Amount to transfer in the smallest unit (wei/satoshi equivalent) */
-    amount: LayerZeroTransactionDto;
+    amount: string;
     /** Address of the sender wallet */
-    from: LayerZeroTransactionDto;
+    from: string;
     /** Address of the recipient wallet (EVM hex or Solana base58) */
-    to: LayerZeroTransactionDto;
+    to: string;
     /** Whether to validate balances before creating transaction */
-    validate?: LayerZeroTransactionDto;
+    validate?: boolean;
     /** Structured LayerZero execution options as JSON string. EXECUTOR OPTIONS: - lzReceive: Set gas limit and optional native drop for lzReceive execution - nativeDrops: Array of native token drops to specific addresses - composeOptions: Array of compose message execution settings with gas and native drop All numeric values for gas limits and native drops should be strings or numbers. Native drop amounts are in wei (e.g., "1000000000000000" = 0.001 ETH). */
-    options?: LayerZeroTransactionDto;
+    options?: string;
     /** Compose message for advanced OFT operations (hex encoded) */
-    composeMsg?: LayerZeroTransactionDto;
+    composeMsg?: string;
     /** OFT command for advanced operations (hex encoded) */
-    oftCmd?: LayerZeroTransactionDto;
+    oftCmd?: string;
 
     [key: string]: any;
 }
