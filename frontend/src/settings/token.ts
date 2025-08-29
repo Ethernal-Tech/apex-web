@@ -79,6 +79,14 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
     [ChainEnum.Prime]: {
       isCurrencyBridgingAllowed: true,
     },
+    [ChainEnum.Ethereum]: {
+      isCurrencyBridgingAllowed: true,
+    },
+  },
+  [ChainEnum.Ethereum]: {
+    [ChainEnum.Nexus]: {
+      isCurrencyBridgingAllowed: true,
+    },
   }
 }
 

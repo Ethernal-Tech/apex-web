@@ -89,8 +89,6 @@ export const signAndSubmitEthTx = async (
 
   const amount = BigInt(createResponse.bridgingFee) + BigInt(values.amount);
 
-
-  // TODO: Set isLayerZero via createResponse and set layer zero values
   const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
       originChain: values.originChain as unknown as ChainEnum,
       destinationChain: values.destinationChain as unknown as ChainEnum,
@@ -114,3 +112,43 @@ export const signAndSubmitEthTx = async (
   
   return response;
 }
+
+/* export const signAndSubmitLayerZeroTx = async (
+  createResponse: any,
+) => {
+  if (!evmWalletHandler.checkWallet()) {
+      throw new Error('Wallet not connected.');
+  }
+
+  const {bridgingFee, isFallback, ...txParts} = createResponse;
+  const tx = await fillOutEthTx(txParts, isFallback);
+
+  const receipt = await evmWalletHandler.submitTx(tx);
+
+  const amount = BigInt(createResponse.bridgingFee) + BigInt(values.amount);
+
+
+  // TODO: Set isLayerZero via createResponse and set layer zero values
+  const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
+      originChain: values.originChain as unknown as ChainEnum,
+      destinationChain: values.destinationChain as unknown as ChainEnum,
+      originTxHash: receipt.transactionHash.toString(),
+      senderAddress: values.senderAddress,
+      receiverAddrs: [values.destinationAddress],
+      txRaw: JSON.stringify(
+        { ...tx, block: receipt.blockNumber.toString() },
+        (_: string, value: any) => typeof value === 'bigint' ? `bigint:${value.toString()}` : value,
+      ),
+      amount: amount.toString(),
+      isFallback: createResponse.isFallback,
+      nativeTokenAmount: '0',
+      isLayerZero: true,
+  }));
+
+  const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
+  if (response instanceof ErrorResponse) {
+      throw new Error(response.err)
+  }
+  
+  return response;
+} */

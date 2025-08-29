@@ -203,7 +203,7 @@ const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loa
                 }}
                 id="bridge-amount"/>
 
-                            <ButtonCustom 
+            <ButtonCustom 
                 onClick={onSubmit}
                 variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
                 disabled={loading || currencyMaxAmount < 0}
