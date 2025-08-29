@@ -90,6 +90,18 @@ func useUtxoCache(
 	return false
 }
 
+func containsNativeTokens(
+	requestBody commonRequest.CreateBridgingTxRequest,
+) bool {
+	for _, tx := range requestBody.Transactions {
+		if tx.IsNativeToken == true {
+			return true
+		}
+	}
+
+	return false
+}
+
 func GetAddressToBridgeTo(
 	ctx context.Context,
 	oracleURL string,

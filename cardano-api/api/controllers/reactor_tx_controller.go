@@ -221,15 +221,6 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxInfo, error,
 ) {
-	bridgingAddress, err := utils.GetAddressToBridgeTo(
-		context.Background(),
-		c.appConfig.OracleAPI.URL,
-		c.appConfig.OracleAPI.APIKey,
-		requestBody.SourceChainID)
-	if err != nil {
-		return nil, err
-	}
-
 	// Setup transaction components
 	cacheUtxosTransformer := utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher)
 
@@ -241,13 +232,14 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 	// Create the bridging transaction
 	txInfo, _, err := txSender.CreateBridgingTx(
 		context.Background(),
-		requestBody.SourceChainID,
-		requestBody.DestinationChainID,
-		requestBody.SenderAddr,
-		receivers,
-		bridgingAddress.Address,
-		requestBody.BridgingFee,
-		0,
+		sendtx.BridgingTxInput{
+			SrcChainID:   requestBody.SourceChainID,
+			DstChainID:   requestBody.DestinationChainID,
+			SenderAddr:   requestBody.SenderAddr,
+			Receivers:    receivers,
+			BridgingFee:  requestBody.BridgingFee,
+			OperationFee: 0,
+		},
 	)
 	if err != nil {
 		c.logger.Error("failed to build tx", "err", err)
@@ -270,15 +262,6 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
-	bridgingAddress, err := utils.GetAddressToBridgeTo(
-		context.Background(),
-		c.appConfig.OracleAPI.URL,
-		c.appConfig.OracleAPI.APIKey,
-		requestBody.SourceChainID)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	txSender, receivers, err := c.getTxSenderAndReceivers(
 		requestBody, utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher))
 	if err != nil {
@@ -287,9 +270,14 @@ func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 
 	txFeeInfo, metadata, err := txSender.CalculateBridgingTxFee(
 		context.Background(),
-		requestBody.SourceChainID, requestBody.DestinationChainID,
-		requestBody.SenderAddr, receivers, bridgingAddress.Address, requestBody.BridgingFee,
-		0,
+		sendtx.BridgingTxInput{
+			SrcChainID:   requestBody.SourceChainID,
+			DstChainID:   requestBody.DestinationChainID,
+			SenderAddr:   requestBody.SenderAddr,
+			Receivers:    receivers,
+			BridgingFee:  requestBody.BridgingFee,
+			OperationFee: 0,
+		},
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to calculate tx fee: %w", err)

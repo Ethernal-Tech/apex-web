@@ -353,9 +353,15 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 
 	txInfo, metadata, err := txSender.CreateBridgingTx(
 		context.Background(),
-		requestBody.SourceChainID, requestBody.DestinationChainID,
-		requestBody.SenderAddr, receivers, bridgingAddress.Address, requestBody.BridgingFee,
-		requestBody.OperationFee,
+		sendtx.BridgingTxInput{
+			SrcChainID:      requestBody.SourceChainID,
+			DstChainID:      requestBody.DestinationChainID,
+			SenderAddr:      requestBody.SenderAddr,
+			Receivers:       receivers,
+			BridgingAddress: bridgingAddress.Address,
+			BridgingFee:     requestBody.BridgingFee,
+			OperationFee:    0,
+		},
 	)
 	if err != nil {
 		c.logger.Error("failed to build tx", "err", err)
@@ -400,9 +406,15 @@ func (c *SkylineTxControllerImpl) calculateTxFee(
 	// Calculate transaction fee
 	txFeeInfo, metadata, err := txSender.CalculateBridgingTxFee(
 		context.Background(),
-		requestBody.SourceChainID, requestBody.DestinationChainID,
-		requestBody.SenderAddr, receivers, bridgingAddress.Address, requestBody.BridgingFee,
-		requestBody.OperationFee,
+		sendtx.BridgingTxInput{
+			SrcChainID:      requestBody.SourceChainID,
+			DstChainID:      requestBody.DestinationChainID,
+			SenderAddr:      requestBody.SenderAddr,
+			Receivers:       receivers,
+			BridgingAddress: bridgingAddress.Address,
+			BridgingFee:     requestBody.BridgingFee,
+			OperationFee:    0,
+		},
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
