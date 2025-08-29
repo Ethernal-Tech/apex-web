@@ -108,7 +108,7 @@ class WalletHandler implements UtxoRetriever {
         return await this._enabledWallet!.getChangeAddress()
     }
 
-    getAllUtxos = async (): Promise<UTxO[]> => {
+    getAllUtxos = async (includeCollateral: boolean = false): Promise<UTxO[]> => {
         this._checkWalletAndThrow();
 
         const address = await this.getChangeAddress();
@@ -124,12 +124,14 @@ class WalletHandler implements UtxoRetriever {
             }
         }
 
-        const collateralUtxos = await this._enabledWallet!.getCollateral();
-        for (let i = 0; i < collateralUtxos.length; ++i) {
-            const utxo = collateralUtxos[i];
+        if (includeCollateral){
+            const collateralUtxos = await this._enabledWallet!.getCollateral();
+            for (let i = 0; i < collateralUtxos.length; ++i) {
+                const utxo = collateralUtxos[i];
 
-            if (utxo.output.address === address) {
-                allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] = utxo;
+                if (utxo.output.address === address) {
+                    allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] = utxo;
+                }
             }
         }
 
