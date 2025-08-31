@@ -1,3 +1,5 @@
+import { Data } from "@meshsdk/core"
+import { ChainEnum } from "../swagger/apexBridgeApiService"
 import { UTxO } from "./WalletHandler"
 
 export type StepType = {
@@ -10,3 +12,26 @@ export interface UtxoRetriever {
     getAllUtxos(): Promise<UTxO[]>
     getBalance(allUtxos?: UTxO[]): Promise<{[unit: string]: bigint}>
 }
+
+export type LayerZeroTransferResponse = {
+  dstChainName: ChainEnum;
+  metadata: { 
+    properties: { 
+      approvalRequired: boolean;    
+      dstChainName: ChainEnum; 
+      amount: string;
+    } };
+  transactionData: {
+    approvalTransaction?: {
+      to: string;
+      data: string;
+      gasLimit?: string;
+    };
+    populatedTransaction: {
+      to: string;               
+      data: string;        
+      gasLimit?: string;          
+      value?: string;             
+    };
+  };
+};

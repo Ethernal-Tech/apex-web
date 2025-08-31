@@ -21,8 +21,15 @@ const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum):
     const bridgingInfo = getBridgingInfo(srcChain, dstChain);
     const currencyTokenName = getChainInfo(srcChain).currencyToken;
     if (isEvmChain(srcChain)) {
+        const balances : {[key : string] : string} = {}
+        // if (srcChain != ChainEnum.Nexus){
+
+        // }
+
         const nexusBalance = await evmWalletHandler.getBalance();
-        return { balance: { [currencyTokenName]: nexusBalance } };
+        balances[currencyTokenName] = nexusBalance
+        
+        return { balance: balances};
     }
 
     let utxoRetriever: UtxoRetriever = walletHandler;

@@ -1,5 +1,6 @@
 import Web3 from 'web3';
 import { Transaction } from 'web3-types';
+import { ERC20_MIN_ABI } from './ABI';
 
 type Wallet = {
     name: string;
@@ -94,7 +95,26 @@ class EvmWalletHandler {
         this._checkWalletAndThrow();
         return await this.web3!.eth.getGasPrice();
     }
+
+    getERC20Balance = async(tokenAddress: string) => {
+        this._checkWalletAndThrow();
+
+        const account = await this.getAddress()
+
+        if(!account) throw new Error("No connected wallet address.")
+
+        const contract = new this.web3!.eth.Contract(ERC20_MIN_ABI, tokenAddress);
+
+
+        const rawBalResp = await contract.methods.balanceOf(account).call();
+        const raw = Array.isArray(rawBalResp) ? rawBalResp[0] : rawBalResp;
+
+        const balance = BigInt(raw)
+
+        return this.web3!.utils.fromWei(balance, 'wei');
+    }
 }
 
 const evmWalletHandler = new EvmWalletHandler();
+
 export default evmWalletHandler;

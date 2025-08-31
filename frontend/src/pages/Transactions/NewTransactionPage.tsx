@@ -9,14 +9,13 @@ import { toast } from "react-toastify";
 import walletHandler from '../../features/WalletHandler';
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction, layerZeroTransferAction } from "./action";
 import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto, LayerZeroTransactionDto } from "../../swagger/apexBridgeApiService";
-import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
+import { signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
 import { isCardanoChain, isEvmChain, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
-import { sendLayerZeroTransaction } from "../../features/layerZero";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -227,15 +226,10 @@ function NewTransactionPage() {
 			try{
 				if (isEvmChain(chain)){
 					const createTxResp = await createLayerZeroTx(address, amount);
-/* 
-					const response = await signAndSubmitLayerZeroTx(
-						createTxResp.createTxDto,
-						createTxResp.createResponse,
-					); */
 
+					const response = await signAndSubmitLayerZeroTx(createTxResp);
 
-					//response && goToDetails(response);
-
+					response && goToDetails(response);
 				}else{
 					throw new Error(`Unsupported source chain: ${chain}`);
 				}
@@ -256,7 +250,7 @@ function NewTransactionPage() {
 	return (
 <BasePage>
   <NewTransaction txInProgress={false}>
-    {chain === 'nexus' || chain === 'ethereum' ? (
+    {isEvmChain(chain) ? (
       <BridgeInputLZ
         bridgeTxFee={bridgeTxFee}
 		setBridgeTxFee={setBridgeTxFee}
