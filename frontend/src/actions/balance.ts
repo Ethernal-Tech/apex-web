@@ -12,7 +12,7 @@ import OgmiosRetriever from '../features/OgmiosRetriever';
 import { getUtxoRetrieverType } from '../features/utils';
 import { UtxoRetrieverEnum } from '../features/enums';
 import { getChainInfo, isEvmChain } from '../settings/chain';
-import { getBridgingInfo } from '../settings/token';
+import { erc20TokenInfo, getBridgingInfo } from '../settings/token';
 
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
@@ -22,12 +22,14 @@ const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum):
     const currencyTokenName = getChainInfo(srcChain).currencyToken;
     if (isEvmChain(srcChain)) {
         const balances : {[key : string] : string} = {}
-        // if (srcChain != ChainEnum.Nexus){
+        if (srcChain != ChainEnum.Nexus){
+            const tokenInfo = erc20TokenInfo[srcChain]
+            const erc20Balance = await evmWalletHandler.getERC20Balance(tokenInfo?.[1]!)
+            balances[tokenInfo?.[0].token!] = erc20Balance
+        }
 
-        // }
-
-        const nexusBalance = await evmWalletHandler.getBalance();
-        balances[currencyTokenName] = nexusBalance
+        const balance = await evmWalletHandler.getBalance();
+        balances[currencyTokenName] = balance
         
         return { balance: balances};
     }

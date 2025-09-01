@@ -7,15 +7,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { calculateChangeMinUtxo, convertApexToDfm, convertDfmToWei, minBigInt } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
+import { ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
-import { estimateEthGas } from '../../../actions/submitTx';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
-import { white } from '../../../containers/theme';
 import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
-import { getChainInfo, isCardanoChain, isEvmChain } from '../../../settings/chain';
-import { getTokenInfo, isWrappedToken } from '../../../settings/token';
+import { getChainInfo, isEvmChain } from '../../../settings/chain';
+import { getTokenInfo, isWrappedToken, isWrappedTokenERC20 } from '../../../settings/token';
 
 type BridgeInputType = {
     bridgeTxFee: string
@@ -137,7 +135,7 @@ const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loa
   const currencyMaxAmounts = calculateMaxAmountCurrency(
     totalDfmBalance, maxAmountAllowedToBridge, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee);
   const tokenMaxAmounts = calculateMaxAmountToken(totalDfmBalance, maxTokenAmountAllowedToBridge, chain, sourceToken);
-  const maxAmounts = sourceToken && isWrappedToken(sourceToken)
+  const maxAmounts = sourceToken && chain != ChainEnum.Nexus && isWrappedTokenERC20(sourceToken)
     ? tokenMaxAmounts : currencyMaxAmounts;
   const currencyMaxAmount = minBigInt(currencyMaxAmounts.maxByAllowed, currencyMaxAmounts.maxByBalance);
 
@@ -145,6 +143,21 @@ const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loa
     if (!sourceToken) return;
     await submit(destinationAddr, convertApexToDfm(amount || '0', chain))
   }, [amount, destinationAddr, submit, chain, sourceToken]) 
+
+  // compute entered amount in DFM/wei (same unit as your balances)
+  const enteredDfm = BigInt(convertApexToDfm(amount || '0', chain));
+
+  // validations
+  const isZero = enteredDfm === BigInt(0);
+  const overByBalance = enteredDfm > maxAmounts.maxByBalance;
+  const overByAllowed = enteredDfm > maxAmounts.maxByAllowed;
+
+  const disableMoveFunds =
+    loading ||
+    currencyMaxAmount < 0 ||     // you already had this
+    isZero ||                    // prevent empty/zero submits
+    overByBalance ||             // entered > wallet balance (minus fees)
+    overByAllowed;               // entered > policy/max allowed
 
   return (
     <Box sx={{width:'100%'}}>
@@ -206,7 +219,7 @@ const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loa
             <ButtonCustom 
                 onClick={onSubmit}
                 variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
-                disabled={loading || currencyMaxAmount < 0}
+                disabled={disableMoveFunds}
                 sx={{
                     gridColumn:'span 1',
                     textTransform:'uppercase'

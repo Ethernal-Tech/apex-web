@@ -90,6 +90,10 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
   }
 }
 
+export const erc20TokenInfo: Partial<Record<ChainEnum, [TokenInfo, string]>> = {
+
+}
+
 export const getBridgingInfo = (srcChain: ChainEnum, dstChain: ChainEnum): BridgingInfo => {
   return (tokensDirection[srcChain] || {})[dstChain] || { isCurrencyBridgingAllowed: false };
 }
@@ -106,5 +110,7 @@ export const getTokenInfoBySrcDst = (srcChain: ChainEnum, dstChain: ChainEnum, i
 }
 
 export const isWrappedToken = (token: TokenEnum | undefined): boolean => token === TokenEnum.WAPEX || token === TokenEnum.WAda;
+
+export const isWrappedTokenERC20 = (token: TokenEnum | undefined): boolean =>  token === TokenEnum.ERC20APEX
 
 export const getCurrencyTokenInfo = (srcChain: ChainEnum): TokenInfo => getTokenInfo(getChainInfo(srcChain).currencyToken)
