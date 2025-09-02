@@ -1345,8 +1345,8 @@ export enum ChainEnum {
     Vector = "vector",
     Nexus = "nexus",
     Cardano = "cardano",
-    Sepolia = "sepolia",
-    Ethereum = "ethereum",
+    Base = "base",
+    Bsc = "bsc",
 }
 
 export class TransactionSubmittedDto implements ITransactionSubmittedDto {
@@ -2110,8 +2110,8 @@ export enum LayerZeroChainSettingsDtoChain {
     Vector = "vector",
     Nexus = "nexus",
     Cardano = "cardano",
-    Sepolia = "sepolia",
-    Ethereum = "ethereum",
+    Base = "base",
+    Bsc = "bsc",
 }
 
 export class ApiException extends Error {

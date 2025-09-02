@@ -18,8 +18,8 @@ export enum ChainApexBridgeEnum {
 
 export const ChainEnum = {
   ...ChainApexBridgeEnum,
-  Sepolia: "sepolia",
-  Ethereum: "ethereum",
+	Base: 'base',
+	BNB: 'bsc',
 } as const;
 
 export type ChainEnum = typeof ChainEnum[keyof typeof ChainEnum]; 
