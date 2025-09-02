@@ -14,7 +14,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { Repository } from 'typeorm';
 import {
-	ChainEnum,
+	ChainApexBridgeEnum,
 	GroupByTimePeriod,
 	TransactionStatusEnum,
 } from 'src/common/enum';
@@ -78,7 +78,7 @@ export class LockedTokensService {
 			return cached;
 		}
 
-		const chains = Object.values(ChainEnum);
+		const chains = Object.values(ChainApexBridgeEnum);
 		const result = new LockedTokensResponse();
 		result.chains = {};
 

@@ -23,5 +23,11 @@ Run `npm run build` to build the app
 
 ## Generating Swagger client file
 
+- run cardano-api
+
+- run web-api with 
+- `npm start swagger`
+
 - Must have .net 6.0 sdk installed
 - `npx nswag run ./frontend/src/swagger/apexBridgeService.nswag`
+

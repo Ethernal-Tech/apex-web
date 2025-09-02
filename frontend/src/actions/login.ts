@@ -12,7 +12,6 @@ import { NavigateFunction } from "react-router-dom";
 import { HOME_ROUTE } from "../pages/PageRouter";
 import { setAccountInfoAction } from "../redux/slices/accountInfoSlice";
 import { getSrcChains, isEvmChain } from "../settings/chain";
-import appSettings from "../settings/appSettings";
 
 let onLoadCalled = false
 

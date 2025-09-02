@@ -1,7 +1,7 @@
 import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SettingsService } from './settings.service';
-import { SettingsResponseDto } from './settings.dto';
+import { SettingsFullResponseDto } from './settings.dto';
 
 @ApiTags('Settings')
 @Controller('settings')
@@ -15,12 +15,12 @@ export class SettingsController {
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: SettingsResponseDto,
+		type: SettingsFullResponseDto,
 		description: 'OK - Returns the configuration settings.',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	async get(): Promise<SettingsResponseDto> {
+	async get(): Promise<SettingsFullResponseDto> {
 		return this.settingsService.SettingsResponse;
 	}
 }
