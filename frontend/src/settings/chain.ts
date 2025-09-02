@@ -4,6 +4,8 @@ import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
 import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
 import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
+import {ReactComponent as BaseIcon} from '../assets/chain-icons/base.svg'
+import {ReactComponent as BNBIcon} from '../assets/chain-icons/bsc.svg'
 import { TokenEnum } from "../features/enums";
 import appSettings from "./appSettings";
 
@@ -82,7 +84,7 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
         value: ChainEnum.Base,
         currencyToken: TokenEnum.ETH,
         label: "CoinBase",
-        icon: VectorIcon, // TODO: Change icon to Ethereum
+        icon: BaseIcon, // TODO: Change icon
         borderColor: '#0052FF',
         letter: 'B',
         mainColor: '#0052FF'
@@ -91,7 +93,7 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
         value: ChainEnum.Bsc,
         currencyToken: TokenEnum.ETH,
         label: "BNB",
-        icon: VectorIcon, // TODO: Change icon to Ethereum
+        icon: BNBIcon, // TODO: Change icon
         borderColor: '#F3BA2F',
         letter: 'B',
         mainColor: '#F3BA2F'
