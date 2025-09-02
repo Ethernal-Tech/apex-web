@@ -13,7 +13,7 @@ import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
 import { getChainInfo, isEvmChain } from '../../../settings/chain';
-import { getTokenInfo, isWrappedToken, isWrappedTokenERC20 } from '../../../settings/token';
+import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 
 type BridgeInputType = {
     bridgeTxFee: string
@@ -135,7 +135,7 @@ const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loa
   const currencyMaxAmounts = calculateMaxAmountCurrency(
     totalDfmBalance, maxAmountAllowedToBridge, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee);
   const tokenMaxAmounts = calculateMaxAmountToken(totalDfmBalance, maxTokenAmountAllowedToBridge, chain, sourceToken);
-  const maxAmounts = sourceToken && chain != ChainEnum.Nexus && isWrappedTokenERC20(sourceToken)
+  const maxAmounts = sourceToken && chain != ChainEnum.Nexus && isWrappedToken(sourceToken)
     ? tokenMaxAmounts : currencyMaxAmounts;
   const currencyMaxAmount = minBigInt(currencyMaxAmounts.maxByAllowed, currencyMaxAmounts.maxByBalance);
 

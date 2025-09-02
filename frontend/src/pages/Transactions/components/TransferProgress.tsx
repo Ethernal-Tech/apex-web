@@ -109,12 +109,12 @@ const chainStatusIcons: {
       error: CardanoErrorIcon,
     },
     // TODO: Set desired icons
-    [ChainEnum.Ethereum]: {
+    [ChainEnum.Base]: {
       inProgress: NexusInProgressIcon,
       done: NexusSuccessIcon,
       error: NexusErrorIcon,
     },
-    [ChainEnum.Sepolia]: {
+    [ChainEnum.Bsc]: {
       inProgress: NexusInProgressIcon,
       done: NexusSuccessIcon,
       error: NexusErrorIcon,

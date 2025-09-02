@@ -16,7 +16,6 @@ export enum TokenEnum {
 	APEX = 'APEX',
 	WAPEX = 'WAPEX',
     ETH = "Ether",
-    ERC20APEX= "ERC20APEX"
 }
 
 export enum ApexBridgeNetwork {

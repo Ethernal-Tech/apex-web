@@ -79,13 +79,23 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
     [ChainEnum.Prime]: {
       isCurrencyBridgingAllowed: true,
     },
-    [ChainEnum.Ethereum]: {
+    [ChainEnum.Base]: {
       isCurrencyBridgingAllowed: true,
     },
+    [ChainEnum.Bsc]: {
+      isCurrencyBridgingAllowed: true
+    }
   },
-  [ChainEnum.Ethereum]: {
+  [ChainEnum.Base]: {
     [ChainEnum.Nexus]: {
-      isCurrencyBridgingAllowed: true,
+      isCurrencyBridgingAllowed: false,
+      wrappedToken: TokenEnum.WAPEX
+    },
+  },
+  [ChainEnum.Bsc]: {
+    [ChainEnum.Nexus]: {
+      isCurrencyBridgingAllowed: false,
+      wrappedToken: TokenEnum.WAPEX
     },
   }
 }
@@ -111,6 +121,5 @@ export const getTokenInfoBySrcDst = (srcChain: ChainEnum, dstChain: ChainEnum, i
 
 export const isWrappedToken = (token: TokenEnum | undefined): boolean => token === TokenEnum.WAPEX || token === TokenEnum.WAda;
 
-export const isWrappedTokenERC20 = (token: TokenEnum | undefined): boolean =>  token === TokenEnum.ERC20APEX
 
 export const getCurrencyTokenInfo = (srcChain: ChainEnum): TokenInfo => getTokenInfo(getChainInfo(srcChain).currencyToken)

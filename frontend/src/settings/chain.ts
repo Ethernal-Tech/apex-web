@@ -16,8 +16,9 @@ const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
 const skylineChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
     [ChainEnum.Prime]: [ChainEnum.Cardano],
     [ChainEnum.Cardano]: [ChainEnum.Prime],
-    [ChainEnum.Nexus]: [ChainEnum.Ethereum],
-    [ChainEnum.Ethereum]: [ChainEnum.Nexus]
+    [ChainEnum.Nexus]: [ChainEnum.Base, ChainEnum.Bsc],
+    [ChainEnum.Base]: [ChainEnum.Nexus],
+    [ChainEnum.Bsc]: [ChainEnum.Nexus]
 };
 
 export type ChainInfo = {
@@ -77,14 +78,23 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
         letter: 'C',
         mainColor: '#0538AF'
     },
-    [ChainEnum.Ethereum]: {
-        value: ChainEnum.Ethereum,
+    [ChainEnum.Base]: {
+        value: ChainEnum.Base,
         currencyToken: TokenEnum.ETH,
-        label: "Ethereum",
+        label: "CoinBase",
         icon: VectorIcon, // TODO: Change icon to Ethereum
-        borderColor: '#647cf6',
-        letter: 'E',
-        mainColor: '#647cf6'
+        borderColor: '#0052FF',
+        letter: 'B',
+        mainColor: '#0052FF'
+    },
+    [ChainEnum.Bsc]: {
+        value: ChainEnum.Bsc,
+        currencyToken: TokenEnum.ETH,
+        label: "BNB",
+        icon: VectorIcon, // TODO: Change icon to Ethereum
+        borderColor: '#F3BA2F',
+        letter: 'B',
+        mainColor: '#F3BA2F'
     },
 }
 
@@ -109,7 +119,7 @@ export const getSrcChains = function (): ChainEnum[] {
 }
 
 export const isEvmChain = function (chain: ChainEnum): boolean {
-    return chain === ChainEnum.Nexus || chain === ChainEnum.Ethereum || chain === ChainEnum.Sepolia;
+    return chain === ChainEnum.Nexus || chain === ChainEnum.Base || chain === ChainEnum.Bsc;
 }
 
 export const isCardanoChain = function (chain: ChainEnum): boolean {
