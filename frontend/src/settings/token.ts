@@ -4,6 +4,7 @@ import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg'
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg'
 import { getChainInfo } from "./chain";
+import { Token } from "@mui/icons-material";
 
 export type BridgingInfo = {
   isCurrencyBridgingAllowed: boolean;
@@ -48,6 +49,12 @@ const tokenInfos: Partial<Record<TokenEnum, TokenInfo>> = {
     icon: AdaIcon,
     label: 'wADA',
     borderColor: '#0538AF',
+  },
+  [TokenEnum.WLZAPEX]: {
+    token: TokenEnum.WLZAPEX,
+    icon: ApexIcon,
+    label: 'WLZApex',
+    borderColor: '#077368',
   }
 }
 
@@ -89,14 +96,22 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
   [ChainEnum.Base]: {
     [ChainEnum.Nexus]: {
       isCurrencyBridgingAllowed: false,
-      wrappedToken: TokenEnum.WAPEX
+      wrappedToken: TokenEnum.WLZAPEX
     },
+    [ChainEnum.Bsc]:{
+      isCurrencyBridgingAllowed: false,
+      wrappedToken: TokenEnum.WLZAPEX
+    }
   },
   [ChainEnum.Bsc]: {
     [ChainEnum.Nexus]: {
       isCurrencyBridgingAllowed: false,
-      wrappedToken: TokenEnum.WAPEX
+      wrappedToken: TokenEnum.WLZAPEX
     },
+    [ChainEnum.Base]: {
+      isCurrencyBridgingAllowed: false,
+      wrappedToken: TokenEnum.WLZAPEX
+    }
   }
 }
 
@@ -119,7 +134,8 @@ export const getTokenInfoBySrcDst = (srcChain: ChainEnum, dstChain: ChainEnum, i
   return getTokenInfo(getToken(srcChain, dstChain, isWrappedToken));
 }
 
-export const isWrappedToken = (token: TokenEnum | undefined): boolean => token === TokenEnum.WAPEX || token === TokenEnum.WAda;
+export const isWrappedToken = (token: TokenEnum | undefined): 
+  boolean => token === TokenEnum.WAPEX || token === TokenEnum.WAda || token === TokenEnum.WLZAPEX;
 
 
 export const getCurrencyTokenInfo = (srcChain: ChainEnum): TokenInfo => getTokenInfo(getChainInfo(srcChain).currencyToken)
