@@ -16,6 +16,7 @@ import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
 import { isCardanoChain, isEvmChain, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
+import { getBridgingInfo, isWrappedToken } from "../../settings/token";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -219,10 +220,17 @@ function NewTransactionPage() {
 			setLoading(true);
 			try{
 				if (isEvmChain(chain)){
-					const createTxResp = await createLayerZeroTx(address, amount);
-					const response = await signAndSubmitLayerZeroTx(createTxResp);
+					const bridgingInfo = getBridgingInfo(chain, destinationChain);
 
-					response && goToDetails(response);
+					if (isWrappedToken(bridgingInfo.wrappedToken)){
+						const createTxResp = await createLayerZeroTx(address, amount);
+
+						const response = await signAndSubmitLayerZeroTx(createTxResp);
+
+						response && goToDetails(response);
+					}else{
+
+					}
 				}else{
 					throw new Error(`Unsupported source chain: ${chain}`);
 				}

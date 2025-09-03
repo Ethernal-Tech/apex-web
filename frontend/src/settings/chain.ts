@@ -84,7 +84,7 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
         value: ChainEnum.Base,
         currencyToken: TokenEnum.ETH,
         label: "CoinBase",
-        icon: BaseIcon, // TODO: Change icon
+        icon: BaseIcon,
         borderColor: '#0052FF',
         letter: 'B',
         mainColor: '#0052FF'
@@ -93,7 +93,7 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
         value: ChainEnum.Bsc,
         currencyToken: TokenEnum.ETH,
         label: "BNB",
-        icon: BNBIcon, // TODO: Change icon
+        icon: BNBIcon,
         borderColor: '#F3BA2F',
         letter: 'B',
         mainColor: '#F3BA2F'
