@@ -10,7 +10,7 @@ export class ContactService {
 		const { name, email, message } = contactData;
 		await this.mailerService.sendMail({
 			to: process.env.CONTACT_EMAIL || 'info@ethernal.tech',
-			subject: `Skyline from ${name}`,
+			subject: `Reactor from ${name}`,
 			template: 'contact',
 			context: {
 				name,
