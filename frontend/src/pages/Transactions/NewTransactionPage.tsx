@@ -223,13 +223,13 @@ function NewTransactionPage() {
 					const bridgingInfo = getBridgingInfo(chain, destinationChain);
 
 					if (isWrappedToken(bridgingInfo.wrappedToken)){
+
+					}else{
 						const createTxResp = await createLayerZeroTx(address, amount);
 
 						const response = await signAndSubmitLayerZeroTx(createTxResp);
 
 						response && goToDetails(response);
-					}else{
-
 					}
 				}else{
 					throw new Error(`Unsupported source chain: ${chain}`);
