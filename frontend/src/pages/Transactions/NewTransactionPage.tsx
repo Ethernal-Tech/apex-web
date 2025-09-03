@@ -144,40 +144,34 @@ function NewTransactionPage() {
 		return { createTxDto, createResponse };
 	}, [bridgeTxFee, chain, destinationChain, prepareCreateEthTx, settings])
 
-
-	const prepareLayerZeroTx = useCallback((address: string, amount: string): LayerZeroTransactionDto => {
-		const originChainSetting = settings.layerZeroChains[chain];
-		const destinationChainSetting = settings.layerZeroChains[destinationChain];
-
-		if (!origin) throw new Error(`No LayerZero config for ${chain}`);
-		
-		return new LayerZeroTransactionDto({
-			srcChainName: chain,
-			dstChainName: destinationChain,
-			oftAddress: originChainSetting.oftAddress,
-    		from: account,
-    		to: address,
-    		validate: true,
-			amount,
-		})
-	}, [account, chain, destinationChain])
-
-	// TODO: Return value from transfer
 	const createLayerZeroTx = useCallback(async (address: string, amount: string): Promise<any> => {
 		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount) 
 		if (validationErr) {
 			throw new Error(validationErr);
 		}
 
-		const createTxDto =  await prepareLayerZeroTx(address, amount);
+		const originChainSetting = settings.layerZeroChains[chain];
+		
+		if (!originChainSetting) throw new Error(`No LayerZero config for ${chain}`);
+		
+		const createTxDto = new LayerZeroTransactionDto({
+			srcChainName: chain,
+			dstChainName: destinationChain,
+			oftAddress: originChainSetting.oftAddress,
+    		from: account,
+    		to: address,
+    		validate: true,
+			amount: amount,			
+		});
+
 		const bindedCreateAction = layerZeroTransferAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (createResponse instanceof ErrorResponse) {
 			throw new Error(createResponse.err)
 		}
 
-		return { createTxDto, createResponse };
-	}, [bridgeTxFee, chain, destinationChain, operationFee, prepareLayerZeroTx, settings])
+		return createResponse;
+	}, [bridgeTxFee, chain, destinationChain, operationFee, settings])
 
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: string, isNativeToken: boolean) => {
@@ -226,7 +220,6 @@ function NewTransactionPage() {
 			try{
 				if (isEvmChain(chain)){
 					const createTxResp = await createLayerZeroTx(address, amount);
-
 					const response = await signAndSubmitLayerZeroTx(createTxResp);
 
 					response && goToDetails(response);
