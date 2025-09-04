@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 import walletHandler from '../../features/WalletHandler';
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction, layerZeroTransferAction } from "./action";
 import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto, LayerZeroTransactionDto } from "../../swagger/apexBridgeApiService";
-import { signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx } from "../../actions/submitTx";
+import { signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx as signAndSubmitLZTx } from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { isCardanoChain, isEvmChain, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
 import { getBridgingInfo, isWrappedToken } from "../../settings/token";
+import { buildExtraOptions, createAndSendLayerZeroTransaction as signAndSubmitWrappedLZTx } from "../../features/layerZero";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -143,7 +144,7 @@ function NewTransactionPage() {
 		}
 
 		return { createTxDto, createResponse };
-	}, [bridgeTxFee, chain, destinationChain, prepareCreateEthTx, settings])
+	}, [chain, destinationChain, prepareCreateEthTx, settings])
 
 	const createLayerZeroTx = useCallback(async (address: string, amount: string): Promise<any> => {
 		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount) 
@@ -172,7 +173,24 @@ function NewTransactionPage() {
 		}
 
 		return createResponse;
-	}, [bridgeTxFee, chain, destinationChain, operationFee, settings])
+	}, [chain, destinationChain, operationFee, settings])
+
+	const createLayerZeroWrappedTx = async (address: string, amount: string, dstEid: number): Promise<any> =>{
+		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount) 
+		if (validationErr) {
+			throw new Error(validationErr);
+		}
+
+		return {
+			dstEid: dstEid,
+			to: address,
+			amountLD: amount,
+			minAmountLD: "0", // TODO: put this in settings maybe
+			extraOptions: buildExtraOptions(),
+			composeMsg: "0x",
+			oftCmd: "0x",
+		}
+	}
 
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: string, isNativeToken: boolean) => {
@@ -223,11 +241,15 @@ function NewTransactionPage() {
 					const bridgingInfo = getBridgingInfo(chain, destinationChain);
 
 					if (isWrappedToken(bridgingInfo.wrappedToken)){
+						const createTxResp = await createLayerZeroWrappedTx(address, amount, settings.layerZeroChains[destinationChain].chainID);
 
+						const response = await signAndSubmitWrappedLZTx(createTxResp, settings.layerZeroChains[chain].oftAddress,chain, destinationChain)
+						
+						response && goToDetails(response);
 					}else{
 						const createTxResp = await createLayerZeroTx(address, amount);
 
-						const response = await signAndSubmitLayerZeroTx(createTxResp);
+						const response = await signAndSubmitLZTx(createTxResp);
 
 						response && goToDetails(response);
 					}

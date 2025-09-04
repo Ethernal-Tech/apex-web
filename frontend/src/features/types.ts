@@ -35,3 +35,13 @@ export type LayerZeroTransferResponse = {
     };
   };
 };
+
+export type SendParams = {
+  dstEid: string | number;    
+  to: string;                      
+  amountLD: string;                
+  minAmountLD: string;              
+  extraOptions: string;             
+  composeMsg: string;              
+  oftCmd: string;                   
+};
