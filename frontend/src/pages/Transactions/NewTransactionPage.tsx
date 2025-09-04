@@ -14,7 +14,7 @@ import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
-import { isCardanoChain, isEvmChain, toApexBridge } from "../../settings/chain";
+import { isCardanoChain, isEvmChain, isLZBridging, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
 import { getBridgingInfo, isWrappedToken } from "../../settings/token";
 import { buildExtraOptions, createAndSendLayerZeroTransaction as signAndSubmitWrappedLZTx } from "../../features/layerZero";
@@ -273,7 +273,7 @@ function NewTransactionPage() {
 	return (
 <BasePage>
   <NewTransaction txInProgress={false}>
-    {isEvmChain(chain) ? (
+    {isLZBridging(chain,destinationChain) ? (
       <BridgeInputLZ
         bridgeTxFee={bridgeTxFee}
 		setBridgeTxFee={setBridgeTxFee}

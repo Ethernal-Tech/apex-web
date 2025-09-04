@@ -8,6 +8,9 @@ import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagg
 const TESTNET_NEXUS_NETWORK_ID = BigInt(9070) // for Nexus testnet
 const MAINNET_NEXUS_NETWORK_ID = BigInt(9069) // for Nexus mainnet
 
+const MAINNET_BASE_NETWORK_ID = BigInt(8453) // for Base mainnet
+const TESTNET_BASE_NETWORK_ID = BigInt(84532) // for Base testnet
+
 type ChainData = {
     mainnet: { networkID: number|bigint, network: ApexBridgeNetwork },
     testnet: { networkID: number|bigint, network: ApexBridgeNetwork },
@@ -54,6 +57,16 @@ const CHAIN_DATA: {[key: string]: ChainData} = {
             network: ApexBridgeNetwork.PreviewCardano,
         },
     },
+    [ChainEnum.Base]: {
+        mainnet:{
+            networkID: MAINNET_BASE_NETWORK_ID,
+            network: ApexBridgeNetwork.MainnetBase
+        }, 
+        testnet: {
+            networkID: TESTNET_BASE_NETWORK_ID,
+            network: ApexBridgeNetwork.TestnetBase
+        }
+    }
 }
 
 const NETWORK_TO_CHAIN: {mainnet: {[key: string]: ChainEnum}, testnet: {[key: string]: ChainEnum}} = {
@@ -62,6 +75,8 @@ const NETWORK_TO_CHAIN: {mainnet: {[key: string]: ChainEnum}, testnet: {[key: st
         [ApexBridgeNetwork.MainnetVector]: ChainEnum.Vector,
         [ApexBridgeNetwork.MainnetNexus]: ChainEnum.Nexus,
         [ApexBridgeNetwork.MainnetCardano]: ChainEnum.Cardano,
+        [ApexBridgeNetwork.MainnetBase]: ChainEnum.Base,
+        [ApexBridgeNetwork.MainnetBsc]: ChainEnum.Base
 
     },
     testnet: {
@@ -69,6 +84,8 @@ const NETWORK_TO_CHAIN: {mainnet: {[key: string]: ChainEnum}, testnet: {[key: st
         [ApexBridgeNetwork.TestnetVector]: ChainEnum.Vector,
         [ApexBridgeNetwork.TestnetNexus]: ChainEnum.Nexus,
         [ApexBridgeNetwork.PreviewCardano]: ChainEnum.Cardano,
+        [ApexBridgeNetwork.TestnetBase]: ChainEnum.Base,
+        [ApexBridgeNetwork.TestnetBsc]: ChainEnum.Bsc
     }
 }
 
@@ -76,7 +93,7 @@ export const fromChainToNetwork = (chain: ChainEnum): ApexBridgeNetwork | undefi
     return appSettings.isMainnet ? CHAIN_DATA[chain]?.mainnet?.network : CHAIN_DATA[chain]?.testnet?.network;
 } 
 
-export const fromNetworkToChain = (network: ApexBridgeNetwork): ChainEnum | undefined => {
+export const fromNetworkToChain = (network: string): ChainEnum | undefined => {
     return appSettings.isMainnet ? NETWORK_TO_CHAIN.mainnet[network] : NETWORK_TO_CHAIN.testnet[network];
 } 
 
@@ -84,13 +101,28 @@ export const fromChainToNetworkId = (chain: ChainEnum): number | bigint | undefi
     return appSettings.isMainnet ? CHAIN_DATA[chain]?.mainnet?.networkID : CHAIN_DATA[chain]?.testnet?.networkID;
 }
 
-export const fromEvmNetworkIdToNetwork = (networkId: bigint): ApexBridgeNetwork | undefined => {
-    return appSettings.isMainnet
-        ? (networkId === MAINNET_NEXUS_NETWORK_ID ? ApexBridgeNetwork.MainnetNexus : undefined)
-        : (networkId === TESTNET_NEXUS_NETWORK_ID ? ApexBridgeNetwork.TestnetNexus : undefined);
-}
+export const fromEvmNetworkIdToNetwork = (
+  networkId: bigint
+): ApexBridgeNetwork | undefined => {
+  if (appSettings.isMainnet) {
+    if (networkId === MAINNET_NEXUS_NETWORK_ID) {
+      return ApexBridgeNetwork.MainnetNexus;
+    }
+    if (networkId === MAINNET_BASE_NETWORK_ID) {
+      return ApexBridgeNetwork.MainnetBase;
+    }
+  } else {
+    if (networkId === TESTNET_NEXUS_NETWORK_ID) {
+      return ApexBridgeNetwork.TestnetNexus;
+    }
+    if (networkId === TESTNET_BASE_NETWORK_ID) {
+      return ApexBridgeNetwork.TestnetBase;
+    }
+  }
+  return undefined;
+};
 
-export const checkChainCompatibility = (chain: ChainEnum, network: ApexBridgeNetwork, networkId: number|bigint): boolean => {
+export const checkChainCompatibility = (chain: ChainEnum, network: string, networkId: number|bigint): boolean => {
     return fromChainToNetworkId(chain) === networkId && fromNetworkToChain(network) === chain;
 }
 
@@ -103,14 +135,16 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
     mainnet: {
         [ChainEnum.Prime]: 'https://apexscan.org/en',
         [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
-        [ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
+        [ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
         [ChainEnum.Cardano]: 'https://cardanoscan.io',
+        [ChainEnum.Base]: 'https://base.blockscout.com/'
     },
     testnet: {
         [ChainEnum.Prime]: 'https://explorer.prime.testnet.apexfusion.org',
         [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
         [ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
         [ChainEnum.Cardano]: 'https://preview.cardanoscan.io',
+        [ChainEnum.Base]: 'https://base-sepolia.blockscout.com'
     },
 }
 
@@ -126,6 +160,7 @@ const getExplorerTxUrl = (chain: ChainEnum, txHash: string) => {
                 : `${base}/transaction/hash/${txHash}`;
             break;
         }
+        case ChainEnum.Base:
         case ChainEnum.Nexus: {
             url = `${base}/tx/${txHash}`;
             break;

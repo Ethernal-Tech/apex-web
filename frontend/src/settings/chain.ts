@@ -6,7 +6,7 @@ import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
 import {ReactComponent as BaseIcon} from '../assets/chain-icons/base.svg'
 import {ReactComponent as BNBIcon} from '../assets/chain-icons/bsc.svg'
-import { TokenEnum } from "../features/enums";
+import { ApexBridgeNetwork, TokenEnum } from "../features/enums";
 import appSettings from "./appSettings";
 
 const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
@@ -123,6 +123,13 @@ export const getSrcChains = function (): ChainEnum[] {
 export const isEvmChain = function (chain: ChainEnum): boolean {
     return chain === ChainEnum.Nexus || chain === ChainEnum.Base || chain === ChainEnum.Bsc;
 }
+
+export const isLZBridging = function (originChain: ChainEnum, destinationChain: ChainEnum): boolean {
+    const apexChains = new Set<string>(Object.values(ChainApexBridgeEnum));
+    
+  return !apexChains.has(originChain as unknown as string) &&
+         !apexChains.has(destinationChain as unknown as string);
+} 
 
 export const isCardanoChain = function (chain: ChainEnum): boolean {
     return chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano;

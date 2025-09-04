@@ -24,10 +24,14 @@ export enum ApexBridgeNetwork {
     MainnetVector = 'MainnetVector',
     MainnetNexus = 'MainnetNexus',
     MainnetCardano = 'MainnetCardano',
+    MainnetBase = "MainnetBase",
+    MainnetBsc = "MainnetBsc",
     TestnetPrime = 'TestnetPrime',
     TestnetVector = 'TestnetVector',
     TestnetNexus = 'TestnetNexus',
     PreviewCardano = 'PreviewCardano',
+    TestnetBase = "TestnetBase",
+    TestnetBsc = 'TestnetBsc'
 }
 
 export enum UtxoRetrieverEnum {
