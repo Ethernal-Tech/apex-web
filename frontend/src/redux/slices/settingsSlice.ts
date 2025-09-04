@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import appSettings from '../../settings/appSettings'
-import { ChainEnum, SettingsFullResponseDto, SettingsResponseDto } from '../../swagger/apexBridgeApiService'
+import { SettingsFullResponseDto } from '../../swagger/apexBridgeApiService'
 
 export type CardanoChainsNativeTokens = {
 	[key: string]: { dstChainID: string; tokenName: string; }[];

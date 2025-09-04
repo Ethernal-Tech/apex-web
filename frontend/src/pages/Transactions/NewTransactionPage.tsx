@@ -173,9 +173,9 @@ function NewTransactionPage() {
 		}
 
 		return createResponse;
-	}, [chain, destinationChain, operationFee, settings])
+	}, [account, chain, destinationChain, settings])
 
-	const createLayerZeroWrappedTx = async (address: string, amount: string, dstEid: number): Promise<any> =>{
+	const createLayerZeroWrappedTx = useCallback(async (address: string, amount: string, dstEid: number): Promise<any> =>{
 		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount) 
 		if (validationErr) {
 			throw new Error(validationErr);
@@ -190,7 +190,7 @@ function NewTransactionPage() {
 			composeMsg: "0x",
 			oftCmd: "0x",
 		}
-	}
+	},[chain, destinationChain, settings])
 
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: string, isNativeToken: boolean) => {
@@ -267,7 +267,7 @@ function NewTransactionPage() {
 			} finally{
 				setLoading(false);
 			}
-		},[chain, createLayerZeroTx, goToDetails]
+		},[chain, destinationChain, settings, createLayerZeroTx, createLayerZeroWrappedTx, goToDetails]
 	)
 
 	return (

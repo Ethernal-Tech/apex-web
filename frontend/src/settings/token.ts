@@ -4,7 +4,6 @@ import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg'
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg'
 import { getChainInfo } from "./chain";
-import { Token } from "@mui/icons-material";
 
 export type BridgingInfo = {
   isCurrencyBridgingAllowed: boolean;

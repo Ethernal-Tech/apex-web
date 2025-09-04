@@ -3,7 +3,7 @@ import TotalBalance from "../components/TotalBalance";
 import PasteTextInput from "../components/PasteTextInput";
 import PasteApexAmountInput from "./PasteApexAmountInput";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { calculateChangeMinUtxo, convertApexToDfm, convertDfmToWei, minBigInt } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
@@ -84,9 +84,7 @@ const calculateMaxAmountCurrency = (
 const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loading}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
-  const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
   const [sourceToken, setSourceToken] = useState<TokenEnum | undefined>();
-  const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
   const walletUTxOs = useSelector((state: RootState) => state.accountInfo.utxos);
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
@@ -135,7 +133,7 @@ const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loa
   const currencyMaxAmounts = calculateMaxAmountCurrency(
     totalDfmBalance, maxAmountAllowedToBridge, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee);
   const tokenMaxAmounts = calculateMaxAmountToken(totalDfmBalance, maxTokenAmountAllowedToBridge, chain, sourceToken);
-  const maxAmounts = sourceToken && chain != ChainEnum.Nexus && isWrappedToken(sourceToken)
+  const maxAmounts = sourceToken && chain !== ChainEnum.Nexus && isWrappedToken(sourceToken)
     ? tokenMaxAmounts : currencyMaxAmounts;
   const currencyMaxAmount = minBigInt(currencyMaxAmounts.maxByAllowed, currencyMaxAmounts.maxByBalance);
 

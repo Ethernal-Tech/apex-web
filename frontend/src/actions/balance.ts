@@ -22,10 +22,9 @@ const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum):
     const currencyTokenName = getChainInfo(srcChain).currencyToken;
     if (isEvmChain(srcChain)) {
         const balances : {[key : string] : string} = {}
-        if (srcChain != ChainEnum.Nexus){
+        if (srcChain !== ChainEnum.Nexus){
             const tokenInfo = erc20TokenInfo[srcChain]
-            const erc20Balance = await evmWalletHandler.getERC20Balance(tokenInfo?.[1]!)
-            balances[tokenInfo?.[0].token!] = erc20Balance
+            balances[tokenInfo?.[0].token!] = await evmWalletHandler.getERC20Balance(tokenInfo?.[1]!)
         }
 
         const balance = await evmWalletHandler.getBalance();
