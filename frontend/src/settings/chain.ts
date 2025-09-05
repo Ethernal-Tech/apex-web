@@ -125,11 +125,11 @@ export const isEvmChain = function (chain: ChainEnum): boolean {
 }
 
 export const isLZBridging = function (originChain: ChainEnum, destinationChain: ChainEnum): boolean {
-    const apexChains = new Set<string>(Object.values(ChainApexBridgeEnum));
-    
-  return !apexChains.has(originChain as unknown as string) &&
+  const apexChains = new Set<string>(Object.values(ChainApexBridgeEnum));
+
+  return !apexChains.has(originChain as unknown as string) ||
          !apexChains.has(destinationChain as unknown as string);
-} 
+};
 
 export const isCardanoChain = function (chain: ChainEnum): boolean {
     return chain === ChainEnum.Prime || chain === ChainEnum.Vector || chain === ChainEnum.Cardano;
