@@ -11,6 +11,7 @@ import { RootState } from '../../../redux/store';
 import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
+import { isCardanoChain, isEvmChain } from '../../../settings/chain';
 
 type BridgeInputType = {
     bridgeTxFee: string
@@ -32,7 +33,7 @@ const calculateMaxAmount = (
 
   const maxAmountAllowedToBridgeDfm = BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
     ? (
-        chain === ChainEnum.Nexus
+        isEvmChain(chain)
           ? BigInt(convertDfmToWei(maxAmountAllowedToBridge))
           : BigInt(maxAmountAllowedToBridge)
     )
@@ -43,7 +44,7 @@ const calculateMaxAmount = (
       ? maxAmountAllowedToBridgeDfm : BigInt(totalDfmBalance || '0')
 
   let maxByBalance
-  if (chain === ChainEnum.Nexus) {
+  if (isEvmChain(chain)) {
     maxByBalance = BigInt(totalDfmBalance || '0') - BigInt(bridgeTxFee) - BigInt(minDfmValue)
   } else {
     maxByBalance = BigInt(totalDfmBalance || '0')
@@ -72,12 +73,12 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
     }
 
     try {
-        if (chain === ChainEnum.Prime || chain === ChainEnum.Vector) {
+        if (isCardanoChain(chain)) {
             const feeResp = await getCardanoTxFee(destinationAddr, convertApexToDfm(amount || '0', chain));
             setUserWalletFee((feeResp?.fee || 0).toString());
 
             return;
-        } else if (chain === ChainEnum.Nexus) {
+        } else if (isEvmChain(chain)) {
             const feeResp = await getEthTxFee(destinationAddr, convertApexToDfm(amount || '0', chain));
             const { bridgingFee, isFallback, ...tx } = feeResp;
 
@@ -121,7 +122,7 @@ const BridgeInput = ({bridgeTxFee, getCardanoTxFee, getEthTxFee, submit, loading
   );
 
     // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
-  const minDfmValue = chain === ChainEnum.Nexus ? 
+  const minDfmValue = isEvmChain(chain) ? 
     convertDfmToWei(minValueToBridge) : minValueToBridge;
     
     const maxAmounts = calculateMaxAmount(

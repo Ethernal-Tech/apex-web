@@ -7,6 +7,7 @@ import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization
 import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
+import { isCardanoChain, isEvmChain } from 'src/utils/chainUtils';
 
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
@@ -104,9 +105,9 @@ export const getHasTxFailedRequestState = async (
 	}
 
 	let ttl: bigint | undefined;
-	if (chainId === ChainEnum.Prime || chainId === ChainEnum.Vector) {
+	if (isCardanoChain(chainId as ChainEnum)) {
 		ttl = getCardanoTTL(model.txRaw);
-	} else if (chainId === ChainEnum.Nexus) {
+	} else if (isEvmChain(chainId as ChainEnum)) {
 		ttl = getEthTTL(model.txRaw);
 	}
 

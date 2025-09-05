@@ -42,3 +42,11 @@ export const areChainsEqual = (
 };
 
 export const toNumChainID = (chain: ChainEnum) => CHAIN_TO_CHAIN_ID[chain];
+
+export const isEvmChain = function (chain: ChainEnum): boolean {
+	return chain === ChainEnum.Nexus;
+};
+
+export const isCardanoChain = function (chain: ChainEnum): boolean {
+	return chain === ChainEnum.Prime || chain === ChainEnum.Vector;
+};

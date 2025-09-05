@@ -10,16 +10,17 @@ import { headCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, convertApexToDfm, convertDfmToApex, formatAddress, formatTxDetailUrl, getChainLabelAndColor, toFixed } from '../../utils/generalUtils';
+import { capitalizeWord, convertApexToDfm, convertDfmToApex, formatAddress, formatTxDetailUrl, toFixed } from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
+import { getChainInfo } from '../../settings/chain';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
 	const [isLoading, setIsLoading] = useState(false);
 	const tableRef = useRef(null);
 	
-  const chain = useSelector((state: RootState) => state.chain.chain)
+  const chain = useSelector((state: RootState) => state.chain.chain);
   const account = useSelector((state: RootState) => state.accountInfo.account);
 
 	const [filters, setFilters] = useState(new BridgeTransactionFilterDto({
@@ -193,7 +194,7 @@ const TransactionsTablePage = () => {
                 <Box component="span" sx={{
                   display: 'inline-block',
                   color: 'white',
-                  bgcolor: getChainLabelAndColor(transaction.originChain).color,
+                  bgcolor: getChainInfo(transaction.originChain).mainColor,
                   borderRadius: '50%',
                   width: 24,
                   height: 24,
@@ -201,7 +202,7 @@ const TransactionsTablePage = () => {
                   lineHeight: '24px',
                   marginRight: 1,
                 }}>
-                  {getChainLabelAndColor(transaction.originChain).letter}
+                  {getChainInfo(transaction.originChain).letter}
                 </Box>
                 {capitalizeWord(transaction.originChain)}
               </TableCell>
@@ -209,7 +210,7 @@ const TransactionsTablePage = () => {
                 <Box component="span" sx={{
                   display: 'inline-block',
                   color: 'white',
-                  bgcolor: getChainLabelAndColor(transaction.destinationChain).color,
+                  bgcolor: getChainInfo(transaction.destinationChain).mainColor,
                   borderRadius: '50%',
                   width: 24,
                   height: 24,
@@ -217,7 +218,7 @@ const TransactionsTablePage = () => {
                   lineHeight: '24px',
                   marginRight: 1,
                 }}>
-                  {getChainLabelAndColor(transaction.destinationChain).letter}
+                  {getChainInfo(transaction.destinationChain).letter}
                 </Box>
                 {capitalizeWord(transaction.destinationChain)}
               </TableCell>

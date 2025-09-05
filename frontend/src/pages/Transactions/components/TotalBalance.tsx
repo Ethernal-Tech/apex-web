@@ -6,12 +6,15 @@ import {ReactComponent as ApexIcon} from "../../../assets/icons/apexTransferIcon
 import { convertDfmToApex, toFixed } from "../../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
-import { ChainToCurrencyMap, TokenEnumToLabel } from "../../../utils/chainUtils";
+import { getTokenInfo } from "../../../settings/token";
+import { getChainInfo } from "../../../settings/chain";
 
 const TotalBalance = () => {
 	const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
     const chain = useSelector((state: RootState)=> state.chain.chain);
     const totalBalanceInApex = totalDfmBalance ? toFixed(convertDfmToApex(totalDfmBalance, chain), 6) : null;
+
+    const chainCurrency = getChainInfo(chain).currencyToken;
     
   return (
     <Box px={'17px'} py='20px' sx={{border:'1px solid #077368',color:'#A1B3A0', background:'#075159',borderRadius:'4px', fontWeight:'500'}}>
@@ -34,7 +37,7 @@ const TotalBalance = () => {
 
             <Typography textTransform={'uppercase'} sx={{display:'flex',alignItems:'center'}}>
                 <ApexIcon/>
-                <Box component="span" ml={1}>{TokenEnumToLabel[ChainToCurrencyMap[chain]]}</Box>
+                <Box component="span" ml={1}>{getTokenInfo(chainCurrency).label}</Box>
             </Typography>
         </Box>
 

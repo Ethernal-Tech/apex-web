@@ -2,10 +2,11 @@ import { CardanoAddress } from "../features/Address/interfaces";
 import { CardanoNetworkType } from "../features/Address/types";
 import { ApexBridgeNetwork } from "../features/enums";
 import appSettings from "../settings/appSettings";
+import { isEvmChain } from "../settings/chain";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
-const NEXUS_TESTNET_CHAIN_ID = BigInt(9070);
-const NEXUS_MAINNET_CHAIN_ID = BigInt(9069);
+const TESTNET_NEXUS_NETWORK_ID = BigInt(9070) // for Nexus testnet
+const MAINNET_NEXUS_NETWORK_ID = BigInt(9069) // for Nexus mainnet
 
 type ChainData = {
     mainnet: { networkID: number|bigint, network: ApexBridgeNetwork },
@@ -35,11 +36,11 @@ const CHAIN_DATA: {[key: string]: ChainData} = {
     },
     [ChainEnum.Nexus]:  {
         mainnet: {
-            networkID: NEXUS_MAINNET_CHAIN_ID,
+            networkID: MAINNET_NEXUS_NETWORK_ID,
             network: ApexBridgeNetwork.MainnetNexus,
         },
         testnet: {
-            networkID: NEXUS_TESTNET_CHAIN_ID,
+            networkID: TESTNET_NEXUS_NETWORK_ID,
             network: ApexBridgeNetwork.TestnetNexus,
         },
     },
@@ -72,8 +73,8 @@ export const fromChainToNetworkId = (chain: ChainEnum): number | bigint | undefi
 
 export const fromEvmNetworkIdToNetwork = (networkId: bigint): ApexBridgeNetwork | undefined => {
     return appSettings.isMainnet
-        ? (networkId === NEXUS_MAINNET_CHAIN_ID ? ApexBridgeNetwork.MainnetNexus : undefined)
-        : (networkId === NEXUS_TESTNET_CHAIN_ID ? ApexBridgeNetwork.TestnetNexus : undefined);
+        ? (networkId === MAINNET_NEXUS_NETWORK_ID ? ApexBridgeNetwork.MainnetNexus : undefined)
+        : (networkId === TESTNET_NEXUS_NETWORK_ID ? ApexBridgeNetwork.TestnetNexus : undefined);
 }
 
 export const checkChainCompatibility = (chain: ChainEnum, network: ApexBridgeNetwork, networkId: number|bigint): boolean => {
@@ -84,7 +85,7 @@ export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: Cardano
     return fromChainToNetworkId(chain) === addr.GetNetwork();
 }
 
-// TODO: will need to add explorer urls for mainnet
+// TODO: will need to add explorer urls for nexus mainnet
 const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]: string}} = {
     mainnet: {
         [ChainEnum.Prime]: 'https://apexscan.org/en',
@@ -131,12 +132,12 @@ export const getExplorerUrl = (tx: BridgeTransactionDto | undefined) => {
     }
 
     if (tx.status === TransactionStatusEnum.ExecutedOnDestination && tx.destinationTxHash) {
-        const txHash = tx.destinationChain === ChainEnum.Nexus && !tx.destinationTxHash.startsWith('0x')
+        const txHash = isEvmChain(tx.destinationChain) && !tx.destinationTxHash.startsWith('0x')
             ? `0x${tx.destinationTxHash}` : tx.destinationTxHash;
 
         return getExplorerTxUrl(tx.destinationChain, txHash)
     } else if (tx.sourceTxHash) {
-        const txHash = tx.originChain === ChainEnum.Nexus && !tx.sourceTxHash.startsWith('0x')
+        const txHash = isEvmChain(tx.originChain) && !tx.sourceTxHash.startsWith('0x')
             ? `0x${tx.sourceTxHash}` : tx.sourceTxHash;
 
         return getExplorerTxUrl(tx.originChain, txHash)
@@ -149,23 +150,3 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
           window.open(url, '_blank')
     }
 }
-
-export enum TokenEnum {
-	Ada = 'Ada',
-	WAda = 'WAda',
-	APEX = 'APEX',
-	WAPEX = 'WAPEX',
-}
-
-export const ChainToCurrencyMap: Record<ChainEnum, TokenEnum> = {
-    [ChainEnum.Prime]: TokenEnum.APEX,
-    [ChainEnum.Vector]: TokenEnum.APEX,
-    [ChainEnum.Nexus]: TokenEnum.APEX,
-};
-
-export const TokenEnumToLabel: Record<TokenEnum, string> = {
-    [TokenEnum.Ada]: 'ADA',
-    [TokenEnum.WAda]: 'wADA',
-    [TokenEnum.APEX]: 'AP3X',
-    [TokenEnum.WAPEX]: 'cAP3X', 
-};

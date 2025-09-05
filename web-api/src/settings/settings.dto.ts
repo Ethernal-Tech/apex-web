@@ -1,11 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-	IsNotEmpty,
-	IsObject,
-	IsPositive,
-	ValidateNested,
-} from 'class-validator';
+import { IsNotEmpty, IsPositive, ValidateNested } from 'class-validator';
 
 export class BridgingSettingsDto {
 	@IsNotEmpty()

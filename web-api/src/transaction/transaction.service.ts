@@ -65,7 +65,8 @@ export class TransactionService {
 
 		if (
 			dto.originChain === ChainEnum.Vector &&
-			dto.destinationChain !== ChainEnum.Prime
+			dto.destinationChain !== ChainEnum.Prime &&
+			dto.destinationChain !== ChainEnum.Nexus
 		) {
 			throw new BadRequestException('Invalid destination chain');
 		}
@@ -164,7 +165,10 @@ export class TransactionService {
 			throw new BadRequestException('Invalid origin chain');
 		}
 
-		if (dto.destinationChain !== ChainEnum.Prime) {
+		if (
+			dto.destinationChain !== ChainEnum.Prime &&
+			dto.destinationChain !== ChainEnum.Vector
+		) {
 			throw new BadRequestException('Invalid destination chain');
 		}
 
