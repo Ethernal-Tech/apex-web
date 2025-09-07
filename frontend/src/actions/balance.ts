@@ -20,6 +20,7 @@ const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
 const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum): Promise<IBalanceState> => {
     const bridgingInfo = getBridgingInfo(srcChain, dstChain);
     const currencyTokenName = getChainInfo(srcChain).currencyToken;
+
     if (isEvmChain(srcChain)) {
         const balances : {[key : string] : string} = {}
         if (srcChain !== ChainEnum.Nexus){
@@ -29,7 +30,7 @@ const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum):
 
         const balance = await evmWalletHandler.getBalance();
         balances[currencyTokenName] = balance
-        
+
         return { balance: balances};
     }
 

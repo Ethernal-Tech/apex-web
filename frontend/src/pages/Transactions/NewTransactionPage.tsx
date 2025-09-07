@@ -9,15 +9,15 @@ import { toast } from "react-toastify";
 import walletHandler from '../../features/WalletHandler';
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction, layerZeroTransferAction } from "./action";
 import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto, LayerZeroTransactionDto } from "../../swagger/apexBridgeApiService";
-import { signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx as signAndSubmitLZTx } from "../../actions/submitTx";
+import { signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx} from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
 import { isCardanoChain, isEvmChain, isLZBridging, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
-import { getBridgingInfo, isWrappedToken } from "../../settings/token";
 import { buildExtraOptions, createAndSendLayerZeroTransaction as signAndSubmitWrappedLZTx } from "../../features/layerZero";
+import { LayerZeroTransferResponse } from "../../features/types";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -130,22 +130,6 @@ function NewTransactionPage() {
 		return feeResponse;
 	}, [prepareCreateEthTx])
 
-	const createEthTx = useCallback(async (address: string, amount: string): Promise<CreateEthTxResponse> => {
-		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount);
-		if (validationErr) {
-			throw new Error(validationErr);
-		}
-
-		const createTxDto = prepareCreateEthTx(address, amount);
-		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
-		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
-		if (createResponse instanceof ErrorResponse) {
-			throw new Error(createResponse.err)
-		}
-
-		return { createTxDto, createResponse };
-	}, [chain, destinationChain, prepareCreateEthTx, settings])
-
 	const createLayerZeroTx = useCallback(async (address: string, amount: string): Promise<any> => {
 		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount) 
 		if (validationErr) {
@@ -174,6 +158,33 @@ function NewTransactionPage() {
 
 		return createResponse;
 	}, [account, chain, destinationChain, settings])
+
+
+
+	const getLZEthTxFee = useCallback(async (address: string, amount: string): Promise<LayerZeroTransferResponse> =>{
+		try{
+			return await createLayerZeroTx(address, amount);
+		}
+		catch(err){
+			throw err instanceof Error ? err : new Error(String(err));
+		}
+	}, [createLayerZeroTx])
+
+	const createEthTx = useCallback(async (address: string, amount: string): Promise<CreateEthTxResponse> => {
+		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount);
+		if (validationErr) {
+			throw new Error(validationErr);
+		}
+
+		const createTxDto = prepareCreateEthTx(address, amount);
+		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
+		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
+		if (createResponse instanceof ErrorResponse) {
+			throw new Error(createResponse.err)
+		}
+
+		return { createTxDto, createResponse };
+	}, [chain, destinationChain, prepareCreateEthTx, settings])
 
 	const createLayerZeroWrappedTx = useCallback(async (address: string, amount: string, dstEid: number): Promise<any> =>{
 		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount) 
@@ -237,25 +248,11 @@ function NewTransactionPage() {
 		async(address: string, amount: string) =>{
 			setLoading(true);
 			try{
-				if (isEvmChain(chain)){
-					const bridgingInfo = getBridgingInfo(chain, destinationChain);
+				const createTxResp = await createLayerZeroTx(address, amount);
 
-					if (isWrappedToken(bridgingInfo.wrappedToken)){
-						const createTxResp = await createLayerZeroWrappedTx(address, amount, settings.layerZeroChains[destinationChain].chainID);
+				const response = await signAndSubmitLayerZeroTx(createTxResp);
 
-						const response = await signAndSubmitWrappedLZTx(createTxResp, settings.layerZeroChains[chain].oftAddress,chain, destinationChain)
-						
-						response && goToDetails(response);
-					}else{
-						const createTxResp = await createLayerZeroTx(address, amount);
-
-						const response = await signAndSubmitLZTx(createTxResp);
-
-						response && goToDetails(response);
-					}
-				}else{
-					throw new Error(`Unsupported source chain: ${chain}`);
-				}
+				response && goToDetails(response);
 			}
 			catch(err){
 				console.log(err);
@@ -267,7 +264,7 @@ function NewTransactionPage() {
 			} finally{
 				setLoading(false);
 			}
-		},[chain, destinationChain, settings, createLayerZeroTx, createLayerZeroWrappedTx, goToDetails]
+		},[createLayerZeroTx, goToDetails]
 	)
 
 	return (
@@ -275,11 +272,7 @@ function NewTransactionPage() {
   <NewTransaction txInProgress={false}>
     {isLZBridging(chain,destinationChain) ? (
       <BridgeInputLZ
-        bridgeTxFee={bridgeTxFee}
-		setBridgeTxFee={setBridgeTxFee}
-        operationFee={operationFee}
-		resetBridgeTxFee={resetBridgeTxFee}
-		getEthTxFee={getEthTxFee}
+		getLZEthTxFee={getLZEthTxFee}
         submit={handleLZSubmitCallback}
         loading={loading}
       />

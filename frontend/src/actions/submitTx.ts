@@ -5,6 +5,7 @@ import walletHandler from "../features/WalletHandler";
 import evmWalletHandler from "../features/EvmWalletHandler";
 import { Transaction } from 'web3-types';
 import { LayerZeroTransferResponse } from "../features/types";
+import { isLZWrappedChain } from "../settings/chain";
 
 export const signAndSubmitCardanoTx = async (
     values: CreateTransactionDto,
@@ -166,8 +167,8 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
         isFallback: false,
         isLayerZero: true,
         // TODO: check for this 
-        amount: createResponse.metadata.properties.amount,
-        nativeTokenAmount: '0',
+        amount: isLZWrappedChain(createResponse.dstChainName) ? '0' : createResponse.metadata.properties.amount,
+        nativeTokenAmount: isLZWrappedChain(createResponse.dstChainName) ? createResponse.metadata.properties.amount : '0',
     }));
 
     const response = await tryCatchJsonByAction(bindedSubmittedAction, false);

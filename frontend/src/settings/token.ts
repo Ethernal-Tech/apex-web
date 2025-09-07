@@ -3,6 +3,7 @@ import { TokenEnum } from "../features/enums";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg'
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg'
+import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg'
 import { getChainInfo } from "./chain";
 
 export type BridgingInfo = {
@@ -49,10 +50,16 @@ const tokenInfos: Partial<Record<TokenEnum, TokenInfo>> = {
     label: 'wADA',
     borderColor: '#0538AF',
   },
-  [TokenEnum.WLZAPEX]: {
-    token: TokenEnum.WLZAPEX,
+  [TokenEnum.ETH]: {
+    token: TokenEnum.ETH,
+    icon: EthIcon,
+    label: 'ETH',
+    borderColor: '#8A92B2',
+  },
+  [TokenEnum.BAP3X]: {
+    token: TokenEnum.BAP3X,
     icon: ApexIcon,
-    label: 'WLZApex',
+    label: 'bAP3X',
     borderColor: '#077368',
   }
 }
@@ -95,28 +102,28 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
   [ChainEnum.Base]: {
     [ChainEnum.Nexus]: {
       isCurrencyBridgingAllowed: false,
-      wrappedToken: TokenEnum.WLZAPEX
+      wrappedToken: TokenEnum.BAP3X
     },
     [ChainEnum.Bsc]:{
       isCurrencyBridgingAllowed: false,
-      wrappedToken: TokenEnum.WLZAPEX
+      wrappedToken: TokenEnum.BAP3X
     }
   },
   [ChainEnum.Bsc]: {
     [ChainEnum.Nexus]: {
       isCurrencyBridgingAllowed: false,
-      wrappedToken: TokenEnum.WLZAPEX
+      wrappedToken: TokenEnum.BAP3X
     },
     [ChainEnum.Base]: {
       isCurrencyBridgingAllowed: false,
-      wrappedToken: TokenEnum.WLZAPEX
+      wrappedToken: TokenEnum.BAP3X
     }
   }
 }
 
 export const erc20TokenInfo: Partial<Record<ChainEnum, [TokenInfo, string]>> = {
-
-}
+  [ChainEnum.Base]: [tokenInfos[TokenEnum.BAP3X]!, "0x4200000000000000000000000000000000000006"], // TODO: CHANGE THIS ADDRESS
+  };
 
 export const getBridgingInfo = (srcChain: ChainEnum, dstChain: ChainEnum): BridgingInfo => {
   return (tokensDirection[srcChain] || {})[dstChain] || { isCurrencyBridgingAllowed: false };
@@ -134,7 +141,7 @@ export const getTokenInfoBySrcDst = (srcChain: ChainEnum, dstChain: ChainEnum, i
 }
 
 export const isWrappedToken = (token: TokenEnum | undefined): 
-  boolean => token === TokenEnum.WAPEX || token === TokenEnum.WAda || token === TokenEnum.WLZAPEX;
+  boolean => token === TokenEnum.WAPEX || token === TokenEnum.WAda || token === TokenEnum.BAP3X;
 
 
 export const getCurrencyTokenInfo = (srcChain: ChainEnum): TokenInfo => getTokenInfo(getChainInfo(srcChain).currencyToken)

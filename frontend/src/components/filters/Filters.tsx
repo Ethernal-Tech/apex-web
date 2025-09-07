@@ -170,10 +170,9 @@ export default function Filters({ filters, onFilterChange }: Props) {
 
     const resetFiltersCallback = useCallback(
         () => {
-            // TODO: Temporary fix for ChainEnum cast
             // keep sort
             onFilterChange(new BridgeTransactionFilterDto({
-                originChain: chain as ChainEnum,
+                originChain: chain,
                 senderAddress: account,
                 order: filters.order,
                 orderBy: filters.orderBy,

@@ -6,7 +6,7 @@ import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
 import {ReactComponent as BaseIcon} from '../assets/chain-icons/base.svg'
 import {ReactComponent as BNBIcon} from '../assets/chain-icons/bsc.svg'
-import { ApexBridgeNetwork, TokenEnum } from "../features/enums";
+import { TokenEnum } from "../features/enums";
 import appSettings from "./appSettings";
 
 const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
@@ -19,8 +19,8 @@ const skylineChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
     [ChainEnum.Prime]: [ChainEnum.Cardano],
     [ChainEnum.Cardano]: [ChainEnum.Prime],
     [ChainEnum.Nexus]: [ChainEnum.Base, ChainEnum.Bsc],
-    [ChainEnum.Base]: [ChainEnum.Nexus],
-    [ChainEnum.Bsc]: [ChainEnum.Nexus]
+    [ChainEnum.Base]: [ChainEnum.Nexus, ChainEnum.Bsc],
+    [ChainEnum.Bsc]: [ChainEnum.Nexus, ChainEnum.Base]
 };
 
 export type ChainInfo = {
@@ -162,4 +162,8 @@ export function toApexBridge(
   chain: ChainEnum
 ): ChainApexBridgeEnum | undefined {
   return isApexBridgeChain(chain) ? (chain as unknown as ChainApexBridgeEnum) : undefined;
+}
+
+export function isLZWrappedChain(chain: ChainEnum): boolean{
+    return chain === ChainEnum.Base || chain === ChainEnum.Bsc
 }

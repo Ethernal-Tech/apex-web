@@ -98,14 +98,11 @@ class EvmWalletHandler {
 
     getERC20Balance = async(tokenAddress: string) => {
         this._checkWalletAndThrow();
-
         const account = await this.getAddress()
 
         if(!account) throw new Error("No connected wallet address.")
 
         const contract = new this.web3!.eth.Contract(ERC20_MIN_ABI, tokenAddress);
-
-
         const rawBalResp = await contract.methods.balanceOf(account).call();
         const raw = Array.isArray(rawBalResp) ? rawBalResp[0] : rawBalResp;
 

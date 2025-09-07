@@ -13,8 +13,8 @@ const CustomBox = styled(Box)({
 interface FeeInformationProps {
   sx?: SxProps<Theme>;
   userWalletFee: string;
-  bridgeTxFee: string;
-  operationFee: string;
+  bridgeTxFee?: string;
+  operationFee?: string;
   chain: ChainEnum
 }
 
@@ -57,7 +57,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
         </Typography>
         
         
-        <Typography sx={{
+        {bridgeTxFee && <Typography sx={{
           display:'flex',
           justifyContent:'space-between'
         }}>
@@ -83,9 +83,10 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
           <Box component="span">{BigInt(bridgeTxFee) > 0 ? toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'} {currencyToken.label}
           </Box>
         </Typography>
+        }
         
         {
-          appSettings.isSkyline && BigInt(operationFee) > BigInt(0) &&
+          appSettings.isSkyline && operationFee &&  BigInt(operationFee) > BigInt(0) &&
           <Typography sx={{
             display:'flex',
             justifyContent:'space-between'

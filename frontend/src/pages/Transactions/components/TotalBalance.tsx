@@ -31,7 +31,7 @@ const TotalBalance = () => {
                     <Tooltip
                         title={
                             <Typography color={'white'} sx={{ fontSize: '14px' }}>
-                                This balance reflects the total value of all UTXOs associated with your address. It does not include any additional funds, such as rewards held in your staking (reward) account.
+                                This balance reflects the total value of all funds held by your wallet address. It does not include any tokens or assets that may be staked, locked in contracts, or pending in transactions.
                             </Typography>
                         }
                         placement="right-start"

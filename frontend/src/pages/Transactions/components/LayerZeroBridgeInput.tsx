@@ -3,24 +3,25 @@ import TotalBalance from "../components/TotalBalance";
 import PasteTextInput from "../components/PasteTextInput";
 import PasteApexAmountInput from "./PasteApexAmountInput";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { calculateChangeMinUtxo, convertApexToDfm, convertDfmToWei, minBigInt } from '../../../utils/generalUtils';
+import { useCallback, useEffect, useMemo, useRef,useState } from 'react';
+import { convertApexToDfm } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import { ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
+import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { TokenEnum } from '../../../features/enums';
-import { useSupportedSourceTokenOptions } from '../utils';
-import { getChainInfo, isEvmChain } from '../../../settings/chain';
+import { useSupporedSourceLZTokenOptions } from '../utils';
+import { getChainInfo } from '../../../settings/chain';
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
+import FeeInformation from './FeeInformation';
+import { estimateEthGas } from '../../../actions/submitTx';
+import { LayerZeroTransferResponse } from '../../../features/types';
+import { Transaction } from 'web3';
+import evmWalletHandler from '../../../features/EvmWalletHandler';
 
 type BridgeInputType = {
-    bridgeTxFee: string
-    setBridgeTxFee: (val: string) => void
-    resetBridgeTxFee: () => void
-    operationFee: string
-    getEthTxFee: (address: string, amount: string) => Promise<CreateEthTransactionResponseDto>
+    getLZEthTxFee: (address: string, amount: string) => Promise<LayerZeroTransferResponse>
     submit:(address: string, amount: string) => Promise<void>
     loading?: boolean;
 }
@@ -28,77 +29,107 @@ type BridgeInputType = {
 
 const calculateMaxAmountToken = (
   totalDfmBalance: {[key: string]: string},
-  maxTokenAmountAllowedToBridge: string, chain: ChainEnum,
   sourceToken: TokenEnum | undefined,
-): { maxByBalance:bigint, maxByAllowed:bigint } => {
+): bigint  => {
     if (!sourceToken || !isWrappedToken(sourceToken)) {
-      return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
+      return BigInt(0);
     }
 
     const tokenBalance: bigint = BigInt((sourceToken && totalDfmBalance ? totalDfmBalance[sourceToken] : '0') || '0');
-
-    const tokenBalanceAllowedToUse = BigInt(maxTokenAmountAllowedToBridge || '0') !== BigInt(0) &&
-      tokenBalance > BigInt(maxTokenAmountAllowedToBridge || '0')
-        ? BigInt(maxTokenAmountAllowedToBridge || '0') : tokenBalance
     
-    return {maxByAllowed: tokenBalanceAllowedToUse, maxByBalance: tokenBalance}
+    return tokenBalance;
 }
 
 const calculateMaxAmountCurrency = (
-  totalDfmBalance: {[key: string]: string},
-  maxAmountAllowedToBridge: string, chain: ChainEnum,
-  changeMinUtxo: number, minDfmValue: string,
-  bridgeTxFee: string, operationFee: string,
-): { maxByBalance:bigint, maxByAllowed:bigint } => {
+  totalDfmBalance: {[key: string]: string}, chain: ChainEnum,
+): bigint => {
   if (!totalDfmBalance || !chain) {
-    return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
+    return BigInt(0) ;
   }
 
   const sourceToken = getChainInfo(chain).currencyToken;
 
-  const maxAmountAllowedToBridgeDfm = BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
-    ? (
-        isEvmChain(chain)
-          ? BigInt(convertDfmToWei(maxAmountAllowedToBridge))
-          : BigInt(maxAmountAllowedToBridge)
-    )
-    : BigInt(0);
+  let maxByBalance = BigInt(totalDfmBalance[sourceToken] || '0')
 
-  const balanceAllowedToUse = maxAmountAllowedToBridgeDfm !== BigInt(0) &&
-    BigInt(totalDfmBalance[sourceToken] || '0') > maxAmountAllowedToBridgeDfm
-      ? maxAmountAllowedToBridgeDfm : BigInt(totalDfmBalance[sourceToken] || '0')
-
-  let maxByBalance
-  if (isEvmChain(chain)) {
-    maxByBalance = BigInt(totalDfmBalance[sourceToken] || '0') - BigInt(bridgeTxFee) -
-      BigInt(minDfmValue) - BigInt(operationFee)
-  } else {
-    maxByBalance = BigInt(totalDfmBalance[sourceToken] || '0')
-      - BigInt(appSettings.potentialWalletFee) - BigInt(bridgeTxFee)
-      - BigInt(changeMinUtxo) - BigInt(operationFee)
-  }
-
-  return {maxByAllowed: balanceAllowedToUse, maxByBalance}
+  return maxByBalance
 }
 
-const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loading}:BridgeInputType) => {
+const BridgeInputLZ = ({getLZEthTxFee, submit, loading}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
+  const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
   const [sourceToken, setSourceToken] = useState<TokenEnum | undefined>();
+  const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
-  const walletUTxOs = useSelector((state: RootState) => state.accountInfo.utxos);
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
   const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
-  const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge)
-  const maxAmountAllowedToBridge = useSelector((state: RootState) => state.settings.maxAmountAllowedToBridge)
-  const maxTokenAmountAllowedToBridge = useSelector((state: RootState) => state.settings.maxTokenAmountAllowedToBridge)
-  const supportedSourceTokenOptions = useSupportedSourceTokenOptions(chain, destinationChain);
+  const supportedSourceTokenOptions = useSupporedSourceLZTokenOptions(chain, destinationChain);
+
+    const fetchWalletFee = useCallback(async () => {
+      if (!destinationAddr || !amount || !sourceToken) {
+          setUserWalletFee(undefined);
+  
+          return;
+      }
+
+            console.log("CALLING FATCH");
+
+      
+  
+      try {
+            const feeResp = await getLZEthTxFee(destinationAddr, convertApexToDfm(amount || '0', chain)); 
+
+            console.log("FEE RESP", feeResp)
+
+            const {transactionData} = feeResp;
+            const from = await evmWalletHandler.getAddress()
+            
+            let fee: bigint = BigInt(0) 
+
+            if (transactionData.approvalTransaction) {
+                const { to, data, gasLimit } = transactionData.approvalTransaction;
+                const tx: Transaction = { from, to, data, gasLimit };
+
+                // TODO: check for fallback
+                fee += BigInt(await estimateEthGas(tx, false));
+            }
+
+            const { to, data, value } = transactionData.populatedTransaction;
+            const tx: Transaction = { from, to, data, value: !!value ? BigInt(value) : undefined }
+
+            // TODO: check for fallback
+            fee += BigInt(await estimateEthGas(tx, false));
+            setUserWalletFee(fee.toString());
+  
+            return;
+      } catch (e) {
+          console.log('error while calculating wallet fee', e)
+      }
+  
+      setUserWalletFee(undefined);
+      
+    }, [destinationAddr, amount, chain, sourceToken, getLZEthTxFee])
 
   const setSourceTokenCallback = useCallback((token: TokenEnum) => {
     setSourceToken(token);
     setAmount('');
-    resetBridgeTxFee();
-  }, [resetBridgeTxFee])
+  }, [])
+
+  useEffect(() => {
+    if (fetchCreateTxTimeoutRef.current) {
+        clearTimeout(fetchCreateTxTimeoutRef.current);
+        fetchCreateTxTimeoutRef.current = undefined;
+    }
+
+    fetchCreateTxTimeoutRef.current = setTimeout(fetchWalletFee, 500);
+
+    return () => {
+        if (fetchCreateTxTimeoutRef.current) {
+            clearTimeout(fetchCreateTxTimeoutRef.current);
+            fetchCreateTxTimeoutRef.current = undefined;
+        }
+    }
+  }, [fetchWalletFee])
 
   useEffect(() => {
       if (!supportedSourceTokenOptions.some(x => x.value === sourceToken) && supportedSourceTokenOptions.length > 0) {
@@ -112,30 +143,16 @@ const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loa
     setAmount('')
   }
 
-  const changeMinUtxo = useMemo(
-    () => calculateChangeMinUtxo(walletUTxOs, +appSettings.minUtxoChainValue[chain]),
-    [walletUTxOs, chain],
-  );
-
   const handleSourceTokenChange = useCallback((e: SelectChangeEvent<string>) => 
     {setSourceTokenCallback(e.target.value as TokenEnum);
   }, [setSourceTokenCallback]);
 
   const memoizedTokenIcon = useMemo(() => getTokenInfo(sourceToken).icon, [sourceToken]);
-
-  // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
-  const minDfmValue = isEvmChain(chain)
-    ? convertDfmToWei(minValueToBridge) 
-    : appSettings.isSkyline 
-      ? appSettings.minUtxoChainValue[chain]
-      : minValueToBridge;
   
-  const currencyMaxAmounts = calculateMaxAmountCurrency(
-    totalDfmBalance, maxAmountAllowedToBridge, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee);
-  const tokenMaxAmounts = calculateMaxAmountToken(totalDfmBalance, maxTokenAmountAllowedToBridge, chain, sourceToken);
-  const maxAmounts = sourceToken && chain !== ChainEnum.Nexus && isWrappedToken(sourceToken)
-    ? tokenMaxAmounts : currencyMaxAmounts;
-  const currencyMaxAmount = minBigInt(currencyMaxAmounts.maxByAllowed, currencyMaxAmounts.maxByBalance);
+  const currencyMaxAmount = calculateMaxAmountCurrency(totalDfmBalance, chain);
+  const tokenMaxAmounts = calculateMaxAmountToken(totalDfmBalance, sourceToken);
+  const maxAmount = sourceToken && chain !== ChainEnum.Nexus && isWrappedToken(sourceToken)
+    ? tokenMaxAmounts : currencyMaxAmount;
 
   const onSubmit = useCallback(async () => {
     if (!sourceToken) return;
@@ -147,15 +164,13 @@ const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loa
 
   // validations
   const isZero = enteredDfm === BigInt(0);
-  const overByBalance = enteredDfm > maxAmounts.maxByBalance;
-  const overByAllowed = enteredDfm > maxAmounts.maxByAllowed;
+  const overByBalance = enteredDfm > maxAmount;
 
   const disableMoveFunds =
     loading ||
-    currencyMaxAmount < 0 ||     // you already had this
-    isZero ||                    // prevent empty/zero submits
-    overByBalance ||             // entered > wallet balance (minus fees)
-    overByAllowed;               // entered > policy/max allowed
+    maxAmount < 0 ||        // you already had this
+    isZero ||               // prevent empty/zero submits
+    overByBalance           // entered > wallet balance (minus fees)
 
   return (
     <Box sx={{width:'100%'}}>
@@ -199,7 +214,7 @@ const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loa
         }}>
             {/* validate inputs */}
             <PasteApexAmountInput
-                maxAmounts={maxAmounts}
+                maxAmounts={{maxByBalance : maxAmount, maxByAllowed: BigInt(0)}}
                 currencyMaxAmount={currencyMaxAmount}
                 text={amount}
                 setAmount={setAmount}
@@ -214,6 +229,28 @@ const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loa
                 }}
                 id="bridge-amount"/>
 
+            <FeeInformation
+              userWalletFee={userWalletFee || '0'}
+              chain={chain}
+              sx={{
+                  gridColumn:'span 1',
+                  border: '1px solid #077368',
+                  borderRadius:'8px',
+                  padding:2
+                }}
+            />
+            
+            <ButtonCustom
+                onClick={onDiscard}
+                disabled={loading}
+                variant="red"						
+                sx={{
+                    gridColumn:'span 1',
+                    textTransform:'uppercase'
+                }}>
+                Discard
+            </ButtonCustom>
+
             <ButtonCustom 
                 onClick={onSubmit}
                 variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
@@ -225,17 +262,6 @@ const BridgeInputLZ = ({bridgeTxFee, resetBridgeTxFee, operationFee, submit, loa
                 id="bridge-tx"
             >
                 Move funds
-            </ButtonCustom>
-            
-            <ButtonCustom
-                onClick={onDiscard}
-                disabled={loading}
-                variant="red"						
-                sx={{
-                    gridColumn:'span 1',
-                    textTransform:'uppercase'
-                }}>
-                Discard
             </ButtonCustom>
             
 
