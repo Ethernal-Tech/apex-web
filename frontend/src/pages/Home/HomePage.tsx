@@ -15,7 +15,7 @@ import { NEW_TRANSACTION_ROUTE } from "../PageRouter";
 import { setChainAction as setSrcChainAction, setDestinationChainAction as setDstChainAction } from "../../redux/slices/chainSlice";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { login } from "../../actions/login";
-import { getChainInfo, getSrcChains, getDstChains } from "../../settings/chain";
+import { getChainInfo} from "../../settings/chain";
 
 const HomePage: React.FC = () => {
   const wallet = useSelector((state: RootState) => state.wallet.wallet);
@@ -24,6 +24,8 @@ const HomePage: React.FC = () => {
   const isLoggedInMemo = !!wallet && !!account;
   const enabledChains = useSelector((state: RootState) => state.settings.enabledChains);
 
+  const allowedDirections = useSelector((state: RootState) => state.settings.allowedDirections);
+
   const navigate = useNavigate()
   const dispatch = useDispatch()
   
@@ -31,16 +33,24 @@ const HomePage: React.FC = () => {
   const dstChain = useSelector((state: RootState) => state.chain.destinationChain);
 
   const srcChainOptions = useMemo(
-    () => getSrcChains().filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x)),
-    [enabledChains]);
+    () => {
+      const allowedSrc = Object.keys(allowedDirections) as ChainEnum[]; 
+      return allowedSrc.filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x)); },
+    [allowedDirections, enabledChains]);
 
   const dstChainOptions = useMemo(
-    () => getDstChains(srcChain).filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x)),
-    [srcChain, enabledChains]);
+    () => {
+      const allowedDst = allowedDirections[srcChain] as ChainEnum[] || [] as ChainEnum[];
+      return allowedDst.filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x));
+    },
+    [srcChain, enabledChains, allowedDirections]);
 
   const isSwitchBtnEnabled = useMemo(
-    () => !isLoggedInMemo && getDstChains(dstChain).some(chain => chain === srcChain),
-    [srcChain, dstChain, isLoggedInMemo]);
+    () => { 
+      const allowedDstToSwap = allowedDirections[dstChain] as ChainEnum[] || [] as ChainEnum[];
+      return !isLoggedInMemo && allowedDstToSwap.some(chain => chain === srcChain)
+    },
+    [srcChain, dstChain, isLoggedInMemo, allowedDirections]);
 
   const srcChainInfo = useMemo(() => getChainInfo(srcChain), [srcChain]);
   const dstChainInfo = useMemo(() => getChainInfo(dstChain), [dstChain]);

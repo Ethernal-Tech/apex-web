@@ -9,7 +9,6 @@ import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../../..
 import { FunctionComponent, SVGProps, useEffect, useMemo, useState } from "react"
 import { capitalizeWord } from "../../../utils/generalUtils"
 import { getExplorerUrl, openExplorer } from "../../../utils/chainUtils"
-// import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
 
 // asset svgs
 
@@ -37,10 +36,6 @@ import {ReactComponent as BridgeErrorIcon} from "../../../assets/bridge-status-a
 import {ReactComponent as Step1} from "../../../assets/bridge-status-assets/steps/step-1.svg"
 import {ReactComponent as Step2} from "../../../assets/bridge-status-assets/steps/step-2.svg"
 import {ReactComponent as Step3} from "../../../assets/bridge-status-assets/steps/step-3.svg"
-/* 
-const NexusInProgressIcon = VectorInProgressIcon;
-const NexusSuccessIcon = VectorSuccessIcon;
-const NexusErrorIcon = VectorErrorIcon; */
 
 const TRANSFER_PROGRESS_TEXT = {
     ERROR: 'Transfer Error',

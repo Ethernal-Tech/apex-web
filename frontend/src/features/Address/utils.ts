@@ -15,7 +15,7 @@ export const IsAddressWithValidPrefix = (addr: string): boolean => {
 export const GetPrefix = (n: CardanoNetworkType): string => {
 	switch (n) {
 	case CardanoNetworkType.VectorTestNetNetwork:
-		return "vector_test"
+		return "addr"
 	case CardanoNetworkType.VectorMainNetNetwork:
 		return "vector"
 	case CardanoNetworkType.MainNetNetwork:

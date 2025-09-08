@@ -32,6 +32,16 @@ export class BridgingSettingsDto {
 	@IsPositive()
 	@ApiProperty()
 	maxReceiversPerBridgingRequest: number;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		type: Object,
+		additionalProperties: {
+			type: 'array',
+			items: { type: 'string' },
+		},
+	})
+	allowedDirections: { [key: string]: string[] };
 }
 
 export class SettingsResponseDto {

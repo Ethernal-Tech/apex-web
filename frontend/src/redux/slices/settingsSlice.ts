@@ -9,6 +9,7 @@ export interface ISettingsState {
 	maxAmountAllowedToBridge: string
 	minValueToBridge: string
 	enabledChains: string[]
+	allowedDirections: { [key: string]: string[] }
 }
 
 const initialState: ISettingsState = {
@@ -17,6 +18,7 @@ const initialState: ISettingsState = {
 	maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,
 	minValueToBridge: appSettings.minValueToBridge,
 	enabledChains: appSettings.enabledChains,
+	allowedDirections: {},
 }
 
 const settingsSlice = createSlice({
@@ -32,6 +34,10 @@ const settingsSlice = createSlice({
 				acc[key] = value.toString();
 				return acc;
 			}, {} as { [key: string]: string });
+			state.allowedDirections = Object.entries(action.payload.bridgingSettings.allowedDirections).reduce((acc, [key, value]) => {
+				acc[key] = value;
+				return acc;
+			}, {} as { [key: string]: string[] });
 			state.minValueToBridge = action.payload.bridgingSettings.minValueToBridge.toString();
 			state.maxAmountAllowedToBridge = action.payload.bridgingSettings.maxAmountAllowedToBridge;
 			state.enabledChains = action.payload.enabledChains;

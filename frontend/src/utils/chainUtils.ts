@@ -30,7 +30,7 @@ const CHAIN_DATA: {[key: string]: ChainData} = {
             network: ApexBridgeNetwork.MainnetVector,
         },
         testnet: {
-            networkID: CardanoNetworkType.VectorTestNetNetwork,
+            networkID: CardanoNetworkType.MainNetNetwork,
             network: ApexBridgeNetwork.TestnetVector,
         },
     },
