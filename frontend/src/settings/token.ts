@@ -5,6 +5,7 @@ import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg'
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg'
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg'
 import { getChainInfo } from "./chain";
+import { Token } from "@mui/icons-material";
 
 export type BridgingInfo = {
   isCurrencyBridgingAllowed: boolean;
@@ -61,7 +62,19 @@ const tokenInfos: Partial<Record<TokenEnum, TokenInfo>> = {
     icon: ApexIcon,
     label: 'bAP3X',
     borderColor: '#077368',
-  }
+  },
+  [TokenEnum.BNAP3X]: {
+    token: TokenEnum.BNAP3X,
+    icon: ApexIcon,
+    label: 'bnAP3X',
+    borderColor: '#F3BA2F',
+  },
+  [TokenEnum.BNB]: {
+    token: TokenEnum.BNB,
+    icon: ApexIcon,
+    label: 'BNB',
+    borderColor: '#F3BA2F',
+  },
 }
 
 const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, BridgingInfo>>>> = {
@@ -112,17 +125,18 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
   [ChainEnum.Bsc]: {
     [ChainEnum.Nexus]: {
       isCurrencyBridgingAllowed: false,
-      wrappedToken: TokenEnum.BAP3X
+      wrappedToken: TokenEnum.BNAP3X
     },
     [ChainEnum.Base]: {
       isCurrencyBridgingAllowed: false,
-      wrappedToken: TokenEnum.BAP3X
+      wrappedToken: TokenEnum.BNAP3X
     }
   }
 }
 
 export const erc20TokenInfo: Partial<Record<ChainEnum, [TokenInfo, string]>> = {
-  [ChainEnum.Base]: [tokenInfos[TokenEnum.BAP3X]!, "0x4200000000000000000000000000000000000006"], // TODO: CHANGE THIS ADDRESS
+  [ChainEnum.Base]: [tokenInfos[TokenEnum.BAP3X]!, "0x4200000000000000000000000000000000000006"], // TODO: CHANGE THIS ADDRESS TO REAL
+  [ChainEnum.Bsc]: [tokenInfos[TokenEnum.BNAP3X]!, "0x4200000000000000000000000000000000000006"] // TODO: CHANGE THIS ADDRESS TO REAL
   };
 
 export const getBridgingInfo = (srcChain: ChainEnum, dstChain: ChainEnum): BridgingInfo => {

@@ -15,8 +15,10 @@ export enum TokenEnum {
 	WAda = 'WAda',
 	APEX = 'APEX',
 	WAPEX = 'WAPEX',
-    ETH = "ETH",
-    BAP3X = 'bAP3X'
+    ETH = 'ETH',
+    BAP3X = 'bAP3X',
+    BNAP3X = 'bnAP3X',
+    BNB = 'BNB'
 }
 
 export enum ApexBridgeNetwork {

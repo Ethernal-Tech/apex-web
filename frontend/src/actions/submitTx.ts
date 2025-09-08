@@ -129,7 +129,7 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
         if (!!gasLimit) {
             tx.gasLimit = BigInt(gasLimit);
         } else {
-            tx.gasLimit = await estimateEthGas(tx, false) ?? await evmWalletHandler.estimateGas(tx);
+            tx.gasLimit = await estimateEthGas(tx, false);
         }
 
         const receipt = await evmWalletHandler.submitTx(tx);
@@ -145,7 +145,7 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
     if (!!gasLimit) {
         sendTx.gasLimit = BigInt(gasLimit);
     } else {
-        sendTx.gasLimit = await estimateEthGas(sendTx, false) ?? await evmWalletHandler.estimateGas(sendTx);
+        sendTx.gasLimit = await estimateEthGas(sendTx, false);
     }
 
     // Return the receipt from the actual send

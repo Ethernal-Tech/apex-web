@@ -11,6 +11,9 @@ const MAINNET_NEXUS_NETWORK_ID = BigInt(9069) // for Nexus mainnet
 const MAINNET_BASE_NETWORK_ID = BigInt(8453) // for Base mainnet
 const TESTNET_BASE_NETWORK_ID = BigInt(84532) // for Base testnet
 
+const MAINNET_BSC_NETWORK_ID = BigInt(56) // for BNB Smart Chain mainnet
+const TESTNET_BSC_NETWORK_ID = BigInt(97) // for BNB Smart Chain testnet(check for this)
+
 type ChainData = {
     mainnet: { networkID: number|bigint, network: ApexBridgeNetwork },
     testnet: { networkID: number|bigint, network: ApexBridgeNetwork },
@@ -66,6 +69,16 @@ const CHAIN_DATA: {[key: string]: ChainData} = {
             networkID: TESTNET_BASE_NETWORK_ID,
             network: ApexBridgeNetwork.TestnetBase
         }
+    },
+    [ChainEnum.Bsc]: {
+        mainnet:{
+            networkID: MAINNET_BSC_NETWORK_ID,
+            network: ApexBridgeNetwork.MainnetBsc
+        }, 
+        testnet: {
+            networkID: TESTNET_BSC_NETWORK_ID,
+            network: ApexBridgeNetwork.TestnetBsc
+        }
     }
 }
 
@@ -76,7 +89,7 @@ const NETWORK_TO_CHAIN: {mainnet: {[key: string]: ChainEnum}, testnet: {[key: st
         [ApexBridgeNetwork.MainnetNexus]: ChainEnum.Nexus,
         [ApexBridgeNetwork.MainnetCardano]: ChainEnum.Cardano,
         [ApexBridgeNetwork.MainnetBase]: ChainEnum.Base,
-        [ApexBridgeNetwork.MainnetBsc]: ChainEnum.Base
+        [ApexBridgeNetwork.MainnetBsc]: ChainEnum.Bsc
 
     },
     testnet: {
@@ -111,12 +124,18 @@ export const fromEvmNetworkIdToNetwork = (
     if (networkId === MAINNET_BASE_NETWORK_ID) {
       return ApexBridgeNetwork.MainnetBase;
     }
+    if (networkId === MAINNET_BSC_NETWORK_ID) {
+        return ApexBridgeNetwork.MainnetBsc
+    }
   } else {
     if (networkId === TESTNET_NEXUS_NETWORK_ID) {
       return ApexBridgeNetwork.TestnetNexus;
     }
     if (networkId === TESTNET_BASE_NETWORK_ID) {
       return ApexBridgeNetwork.TestnetBase;
+    }
+    if (networkId === TESTNET_BSC_NETWORK_ID) {
+        return ApexBridgeNetwork.TestnetBsc
     }
   }
   return undefined;
