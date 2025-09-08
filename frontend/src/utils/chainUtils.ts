@@ -26,7 +26,7 @@ const CHAIN_DATA: {[key: string]: ChainData} = {
     },
     [ChainEnum.Vector]:  {
         mainnet: {
-            networkID: CardanoNetworkType.VectorMainNetNetwork,
+            networkID: CardanoNetworkType.MainNetNetwork,
             network: ApexBridgeNetwork.MainnetVector,
         },
         testnet: {

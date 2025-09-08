@@ -21,9 +21,7 @@ const fromChainToNetworkId = (
 				: CardanoNetworkType.TestNetNetwork;
 		}
 		case ChainEnum.Vector: {
-			return isMainnet
-				? CardanoNetworkType.VectorMainNetNetwork
-				: CardanoNetworkType.MainNetNetwork;
+			return CardanoNetworkType.MainNetNetwork;
 		}
 		case ChainEnum.Nexus: {
 			return isMainnet ? NEXUS_MAINNET_CHAIN_ID : NEXUS_TESTNET_CHAIN_ID;

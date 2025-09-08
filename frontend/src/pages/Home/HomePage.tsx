@@ -40,14 +40,14 @@ const HomePage: React.FC = () => {
 
   const dstChainOptions = useMemo(
     () => {
-      const allowedDst = allowedDirections[srcChain] as ChainEnum[] || [] as ChainEnum[];
+      const allowedDst = (allowedDirections[srcChain] || []) as ChainEnum[];
       return allowedDst.filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x));
     },
     [srcChain, enabledChains, allowedDirections]);
 
   const isSwitchBtnEnabled = useMemo(
     () => { 
-      const allowedDstToSwap = allowedDirections[dstChain] as ChainEnum[] || [] as ChainEnum[];
+      const allowedDstToSwap = (allowedDirections[dstChain] || []) as ChainEnum[];
       return !isLoggedInMemo && allowedDstToSwap.some(chain => chain === srcChain)
     },
     [srcChain, dstChain, isLoggedInMemo, allowedDirections]);
