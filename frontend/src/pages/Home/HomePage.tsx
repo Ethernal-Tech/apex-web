@@ -34,8 +34,8 @@ const HomePage: React.FC = () => {
 
   const srcChainOptions = useMemo(
     () => {
-      const allowedSrc = Object.keys(allowedDirections) as ChainEnum[]; 
-      return allowedSrc.filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x)); },
+      const allowedSrc = Object.keys(allowedDirections); 
+      return enabledChains.filter(chain => allowedSrc.includes(chain)).map(x => getChainInfo(x as ChainEnum)); },
     [allowedDirections, enabledChains]);
 
   const dstChainOptions = useMemo(

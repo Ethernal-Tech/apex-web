@@ -54,8 +54,5 @@ export const isAllowedDirection = function (
 	destinationChain: ChainEnum,
 	allowedDirections: { [key: string]: string[] },
 ): boolean {
-	if (allowedDirections[originChain] === undefined) {
-		return false;
-	}
-	return allowedDirections[originChain].includes(destinationChain);
+	return (allowedDirections[originChain] || []).includes(destinationChain);
 };

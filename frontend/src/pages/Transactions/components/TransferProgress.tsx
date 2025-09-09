@@ -119,7 +119,7 @@ const getStepText = (stepNumber: number, originChain: ChainEnum, destinationChai
     }
 
     if (stepNumber === 3) {
-        return `The assets goes from the Bridge Wallet to the address on the ${capitalizeWord(destinationChain)} Chain.`;
+        return `The assets go from the Bridge Wallet to the address on the ${capitalizeWord(destinationChain)} Chain.`;
     }
 
     return 'There is a blockchain of the bridge that facilitates the transaction.';
