@@ -89,7 +89,7 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
     mainnet: {
         [ChainEnum.Prime]: 'https://apexscan.org/en',
         [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
-        [ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org/',
+        [ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
     },
     testnet: {
         [ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
