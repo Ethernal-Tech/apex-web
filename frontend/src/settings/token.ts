@@ -32,37 +32,6 @@ const tokenInfos: Partial<Record<TokenEnum, TokenInfo>> = {
   },
 }
 
-const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, BridgingInfo>>>> = {
-  [ChainEnum.Prime]: {
-    [ChainEnum.Vector]: {
-      isCurrencyBridgingAllowed: true,
-    },
-    [ChainEnum.Nexus]: {
-      isCurrencyBridgingAllowed: true,
-    }
-  },
-  [ChainEnum.Vector]: {
-    [ChainEnum.Prime]: {
-      isCurrencyBridgingAllowed: true,
-    },
-    [ChainEnum.Nexus]: {
-      isCurrencyBridgingAllowed: true,
-    }
-  },
-  [ChainEnum.Nexus]: {
-    [ChainEnum.Prime]: {
-      isCurrencyBridgingAllowed: true,
-    },
-    [ChainEnum.Vector]: {
-      isCurrencyBridgingAllowed: true,
-    },
-  }
-}
-
-export const getBridgingInfo = (srcChain: ChainEnum, dstChain: ChainEnum): BridgingInfo => {
-  return (tokensDirection[srcChain] || {})[dstChain] || { isCurrencyBridgingAllowed: false };
-}
-
 export const getToken = (srcChain: ChainEnum): TokenEnum | undefined => {
   return getChainInfo(srcChain).currencyToken;
 }

@@ -5,12 +5,6 @@ import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
 import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { TokenEnum } from "../features/enums";
 
-const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
-    [ChainEnum.Prime]: [ChainEnum.Vector, ChainEnum.Nexus],
-    [ChainEnum.Vector]: [ChainEnum.Prime, ChainEnum.Nexus],
-    [ChainEnum.Nexus]: [ChainEnum.Prime, ChainEnum.Vector],
-}
-
 export type ChainInfo = {
     value: ChainEnum;
     currencyToken: TokenEnum,
@@ -61,24 +55,8 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
     },
 }
 
-const getChainDirections = function (): Partial<Record<ChainEnum, ChainEnum[]>> {
-    return reactorChainDirections;
-}
-
 export const getChainInfo = function (chain: ChainEnum): ChainInfo {
     return chainInfoMapping[chain] || unknownChainInfo;
-}
-
-export const getDstChains = function (chain: ChainEnum | undefined): ChainEnum[] {
-    if (!chain) {
-        return [];
-    }
-
-    return getChainDirections()[chain] || [];
-}
-
-export const getSrcChains = function (): ChainEnum[] {
-    return Object.keys(getChainDirections()) as ChainEnum[];
 }
 
 export const isEvmChain = function (chain: ChainEnum): boolean {
@@ -87,13 +65,4 @@ export const isEvmChain = function (chain: ChainEnum): boolean {
 
 export const isCardanoChain = function (chain: ChainEnum): boolean {
     return chain === ChainEnum.Prime || chain === ChainEnum.Vector;
-}
-
-export const toChainEnum = function (value: string): ChainEnum {
-    const lower = value.toLowerCase();
-    if (Object.values(ChainEnum).includes(lower as ChainEnum)) {
-        return lower as ChainEnum;
-    }
-
-    throw new Error(`Invalid chain: ${value}`);
 }

@@ -485,6 +485,7 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
     minValueToBridge!: number;
     maxAmountAllowedToBridge!: string;
     maxReceiversPerBridgingRequest!: number;
+    allowedDirections!: { [key: string]: string[]; };
 
     constructor(data?: IBridgingSettingsDto) {
         if (data) {
@@ -513,6 +514,16 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
                 for (let key in _data["minUtxoChainValue"]) {
                     if (_data["minUtxoChainValue"].hasOwnProperty(key))
                         this.minUtxoChainValue![key] = _data["minUtxoChainValue"][key];
+                }
+            }
+            if (_data["allowedDirections"]) {
+                this.allowedDirections = {} as any;
+                for (let key in _data["allowedDirections"]) {
+                    if (_data["allowedDirections"].hasOwnProperty(key)) {
+                        this.allowedDirections![key] = [] as any;
+                        for (let item of _data["allowedDirections"][key])
+                            this.allowedDirections![key]!.push(item);
+                    }
                 }
             }
             this.minValueToBridge = _data["minValueToBridge"];
@@ -544,6 +555,17 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
                     data["minUtxoChainValue"][key] = this.minUtxoChainValue[key];
             }
         }
+        if (this.allowedDirections) {
+            data["allowedDirections"] = {};
+            for (let key in this.allowedDirections) {
+                if (this.allowedDirections.hasOwnProperty(key))
+                    if (Array.isArray(this.allowedDirections[key])) {
+                        data["allowedDirections"][key] = [];
+                        for (let item of this.allowedDirections[key])
+                            data["allowedDirections"][key].push(item);
+                    }
+            }
+        }
         data["minValueToBridge"] = this.minValueToBridge;
         data["maxAmountAllowedToBridge"] = this.maxAmountAllowedToBridge;
         data["maxReceiversPerBridgingRequest"] = this.maxReceiversPerBridgingRequest;
@@ -557,6 +579,7 @@ export interface IBridgingSettingsDto {
     minValueToBridge: number;
     maxAmountAllowedToBridge: string;
     maxReceiversPerBridgingRequest: number;
+    allowedDirections: { [key: string]: string[]; };
 }
 
 export class SettingsResponseDto implements ISettingsResponseDto {

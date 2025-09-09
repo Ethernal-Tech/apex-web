@@ -5,6 +5,7 @@
   "dependencies": {
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
+    "@emurgo/cardano-serialization-lib-browser": "^14.1.1",
     "@emurgo/cardano-serialization-lib-nodejs": "^11.5.0",
     "@fontsource/roboto": "^5.0.8",
     "@meshsdk/core": "1.7.20",
