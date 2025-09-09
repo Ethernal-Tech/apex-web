@@ -85,12 +85,11 @@ export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: Cardano
     return fromChainToNetworkId(chain) === addr.GetNetwork();
 }
 
-// TODO: will need to add explorer urls for nexus mainnet
 const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]: string}} = {
     mainnet: {
         [ChainEnum.Prime]: 'https://apexscan.org/en',
         [ChainEnum.Vector]: '',
-        [ChainEnum.Nexus]: '',
+        [ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
     },
     testnet: {
         [ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
