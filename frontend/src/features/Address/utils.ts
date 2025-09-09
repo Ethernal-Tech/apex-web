@@ -8,14 +8,11 @@ export type Bech32DecodeData = {
 
 export const IsAddressWithValidPrefix = (addr: string): boolean => {
     return addr.startsWith('addr') ||
-            addr.startsWith('vector') ||
             addr.startsWith('stake');
 }
 
 export const GetPrefix = (n: CardanoNetworkType): string => {
 	switch (n) {
-	case CardanoNetworkType.VectorTestNetNetwork:
-	case CardanoNetworkType.VectorMainNetNetwork:
 	case CardanoNetworkType.MainNetNetwork:
 		return "addr"
 	case CardanoNetworkType.TestNetNetwork:
@@ -27,8 +24,6 @@ export const GetPrefix = (n: CardanoNetworkType): string => {
 export const GetStakePrefix = (n: CardanoNetworkType): string => {
 	switch (n) {
 	case CardanoNetworkType.MainNetNetwork:
-    case CardanoNetworkType.VectorMainNetNetwork:
-    case CardanoNetworkType.VectorTestNetNetwork:
 		return "stake"
 	case CardanoNetworkType.TestNetNetwork:
 		return "stake_test"
