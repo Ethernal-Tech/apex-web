@@ -27,6 +27,11 @@ import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dt
 import { SettingsService } from 'src/settings/settings.service';
 import { Utxo } from 'src/blockchain/dto';
 import { Logger } from '@nestjs/common';
+import {
+	isAllowedDirection,
+	isCardanoChain,
+	isEvmChain,
+} from 'src/utils/chainUtils';
 
 @Injectable()
 export class TransactionService {
@@ -48,27 +53,21 @@ export class TransactionService {
 			throw new BadRequestException('Chain not supported');
 		}
 
-		if (
-			dto.originChain !== ChainEnum.Prime &&
-			dto.originChain !== ChainEnum.Vector
-		) {
+		if (!isCardanoChain(dto.originChain)) {
 			throw new BadRequestException('Invalid origin chain');
 		}
 
 		if (
-			dto.originChain === ChainEnum.Prime &&
-			dto.destinationChain !== ChainEnum.Vector &&
-			dto.destinationChain !== ChainEnum.Nexus
+			!isAllowedDirection(
+				dto.originChain,
+				dto.destinationChain,
+				this.settingsService.SettingsResponse.bridgingSettings
+					.allowedDirections,
+			)
 		) {
-			throw new BadRequestException('Invalid destination chain');
-		}
-
-		if (
-			dto.originChain === ChainEnum.Vector &&
-			dto.destinationChain !== ChainEnum.Prime &&
-			dto.destinationChain !== ChainEnum.Nexus
-		) {
-			throw new BadRequestException('Invalid destination chain');
+			throw new BadRequestException(
+				`Bridging from ${dto.originChain} to ${dto.destinationChain} not supported`,
+			);
 		}
 
 		const destMinFee =
@@ -161,15 +160,21 @@ export class TransactionService {
 			throw new BadRequestException('Chain not supported');
 		}
 
-		if (dto.originChain !== ChainEnum.Nexus) {
+		if (!isEvmChain(dto.originChain)) {
 			throw new BadRequestException('Invalid origin chain');
 		}
 
 		if (
-			dto.destinationChain !== ChainEnum.Prime &&
-			dto.destinationChain !== ChainEnum.Vector
+			!isAllowedDirection(
+				dto.originChain,
+				dto.destinationChain,
+				this.settingsService.SettingsResponse.bridgingSettings
+					.allowedDirections,
+			)
 		) {
-			throw new BadRequestException('Invalid destination chain');
+			throw new BadRequestException(
+				`Bridging from ${dto.originChain} to ${dto.destinationChain} not supported`,
+			);
 		}
 
 		const tx = await createEthBridgingTx(

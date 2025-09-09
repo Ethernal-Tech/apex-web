@@ -26,11 +26,11 @@ const CHAIN_DATA: {[key: string]: ChainData} = {
     },
     [ChainEnum.Vector]:  {
         mainnet: {
-            networkID: CardanoNetworkType.VectorMainNetNetwork,
+            networkID: CardanoNetworkType.MainNetNetwork,
             network: ApexBridgeNetwork.MainnetVector,
         },
         testnet: {
-            networkID: CardanoNetworkType.VectorTestNetNetwork,
+            networkID: CardanoNetworkType.MainNetNetwork,
             network: ApexBridgeNetwork.TestnetVector,
         },
     },
@@ -88,12 +88,12 @@ export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: Cardano
 const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]: string}} = {
     mainnet: {
         [ChainEnum.Prime]: 'https://apexscan.org/en',
-        [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
+        [ChainEnum.Vector]: '',
         [ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
     },
     testnet: {
         [ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
-        [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
+        [ChainEnum.Vector]: '',
         [ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
     },
 }
