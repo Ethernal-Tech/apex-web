@@ -26,6 +26,7 @@ type APIConfig struct {
 }
 
 type BridgingAddresses struct {
+	BridgingAddress string `json:"address"`
 	FeeAddress      string `json:"feeAddress"`
 	FallbackAddress string `json:"fallbackAddress"`
 }
@@ -178,9 +179,15 @@ func (config CardanoChainConfig) ToSendTxChainConfig(
 		return res, err
 	}
 
+	bridgingAddress := config.BridgingAddresses.BridgingAddress
+	if useFallback {
+		bridgingAddress = config.BridgingAddresses.FallbackAddress
+	}
+
 	return sendtx.ChainConfig{
 		CardanoCliBinary:      cardanowallet.ResolveCardanoCliBinary(config.NetworkID),
 		TxProvider:            txProvider,
+		MultiSigAddr:          bridgingAddress,
 		TestNetMagic:          uint(config.NetworkMagic),
 		TTLSlotNumberInc:      config.ChainSpecific.TTLSlotNumberInc,
 		MinUtxoValue:          appConfig.BridgingSettings.MinUtxoChainValue[config.ChainID],

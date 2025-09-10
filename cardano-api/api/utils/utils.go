@@ -94,7 +94,7 @@ func ContainsNativeTokens(
 	requestBody commonRequest.CreateBridgingTxRequest,
 ) bool {
 	for _, tx := range requestBody.Transactions {
-		if tx.IsNativeToken == true {
+		if tx.IsNativeToken {
 			return true
 		}
 	}
@@ -110,17 +110,13 @@ func GetAddressToBridgeTo(
 	containsNativeTokens bool) (
 	*response.BridgingAddressResponse, error,
 ) {
-	requestURL := oracleURL + "/api/BridgingAddress/GetAddressToBridgeTo"
+	requestURL := oracleURL + fmt.Sprintf("/api/BridgingAddress/GetAddressToBridgeTo?chainId=%s&containsNativeTokens=%t",
+		chainID, containsNativeTokens)
 
 	u, err := url.Parse(requestURL)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	q := u.Query()
-	q.Set("chainId", chainID)
-	q.Set("containsNativeTokens", fmt.Sprint(containsNativeTokens))
-	u.RawQuery = q.Encode()
 
 	addressResponse, err := common.HTTPGet[*response.BridgingAddressResponse](
 		ctx, u.String(), apiKey,
@@ -138,16 +134,12 @@ func GetAllBridgingAddress(
 	apiKey string,
 	chainID string,
 ) (*response.AllBridgingAddressesResponse, error) {
-	requestURL := oracleURL + "/api/BridgingAddress/GetAllAddresses"
+	requestURL := oracleURL + fmt.Sprintf("/api/BridgingAddress/GetAllAddresses?chainId=%s", chainID)
 
 	u, err := url.Parse(requestURL)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	q := u.Query()
-	q.Set("chainId", chainID)
-	u.RawQuery = q.Encode()
 
 	allAddressResponse, err := common.HTTPGet[*response.AllBridgingAddressesResponse](
 		ctx, u.String(), apiKey,
