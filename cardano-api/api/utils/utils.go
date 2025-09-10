@@ -118,14 +118,9 @@ func GetAddressToBridgeTo(
 		log.Fatal(err)
 	}
 
-	addressResponse, err := common.HTTPGet[*response.BridgingAddressResponse](
+	return common.HTTPGet[*response.BridgingAddressResponse](
 		ctx, u.String(), apiKey,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return addressResponse, nil
 }
 
 func GetAllBridgingAddress(
@@ -141,12 +136,7 @@ func GetAllBridgingAddress(
 		log.Fatal(err)
 	}
 
-	allAddressResponse, err := common.HTTPGet[*response.AllBridgingAddressesResponse](
+	return common.HTTPGet[*response.AllBridgingAddressesResponse](
 		ctx, u.String(), apiKey,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	return allAddressResponse, nil
 }

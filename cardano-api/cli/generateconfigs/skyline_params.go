@@ -48,7 +48,6 @@ const (
 type skylineGenerateConfigsParams struct {
 	primeNetworkID               uint32
 	primeNetworkMagic            uint32
-	primeBridgingAddress         string
 	primeBridgingFeeAddress      string
 	primeBridgingFallbackAddress string
 	primeOgmiosURL               string
@@ -86,13 +85,6 @@ type skylineGenerateConfigsParams struct {
 
 func (p *skylineGenerateConfigsParams) validateFlags() error {
 	err := validateAddress(
-		true, p.primeBridgingAddress, primeBridgingAddressFlag,
-		wallet.CardanoNetworkType(p.primeNetworkID))
-	if err != nil {
-		return err
-	}
-
-	err = validateAddress(
 		true, p.primeBridgingFeeAddress, primeBridgingFeeAddressFlag,
 		wallet.CardanoNetworkType(p.primeNetworkID))
 	if err != nil {
@@ -185,12 +177,6 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		primeNetworkMagicFlag,
 		uint32(wallet.MainNetProtocolMagic),
 		primeNetworkMagicFlagDesc,
-	)
-	cmd.Flags().StringVar(
-		&p.primeBridgingAddress,
-		primeBridgingAddressFlag,
-		"",
-		primeBridgingAddressFlagDesc,
 	)
 	cmd.Flags().StringVar(
 		&p.primeBridgingFeeAddress,
@@ -395,7 +381,6 @@ func (p *skylineGenerateConfigsParams) Execute(
 				NetworkID:    wallet.CardanoNetworkType(p.primeNetworkID),
 				NetworkMagic: p.primeNetworkMagic,
 				BridgingAddresses: core.BridgingAddresses{
-					BridgingAddress: p.primeBridgingAddress,
 					FeeAddress:      p.primeBridgingFeeAddress,
 					FallbackAddress: p.primeBridgingFallbackAddress,
 				},
