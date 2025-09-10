@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -115,7 +114,8 @@ func GetAddressToBridgeTo(
 
 	u, err := url.Parse(requestURL)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("parse request URL %q (chainID=%s & containsNativeTokens %t): %w",
+			requestURL, chainID, containsNativeTokens, err)
 	}
 
 	return common.HTTPGet[*response.BridgingAddressResponse](
@@ -133,7 +133,7 @@ func GetAllBridgingAddress(
 
 	u, err := url.Parse(requestURL)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("parse request URL %q (chainID=%s): %w", requestURL, chainID, err)
 	}
 
 	return common.HTTPGet[*response.AllBridgingAddressesResponse](
