@@ -91,6 +91,7 @@ export class LockedTokensService {
 					status: TransactionStatusEnum.ExecutedOnDestination,
 				})
 				.andWhere('tx.originChain = :chain', { chain })
+				.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
 				.getRawOne();
 
 			const tokens =
@@ -111,6 +112,7 @@ export class LockedTokensService {
 						status: TransactionStatusEnum.ExecutedOnDestination,
 					})
 					.andWhere('tx.originChain = :chain', { chain })
+					.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
 					.getRawOne();
 
 				chainResult[tokenName] = nativeSum;
