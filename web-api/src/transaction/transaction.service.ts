@@ -23,11 +23,12 @@ import {
 	getInputUtxos,
 	mapBridgeTransactionToResponse,
 } from 'src/bridgeTransaction/bridgeTransaction.helper';
-import { BridgeTransactionDto, LayerZeroTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
+import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 import { SettingsService } from 'src/settings/settings.service';
 import { Utxo } from 'src/blockchain/dto';
 import { Logger } from '@nestjs/common';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
+import { LayerZeroTransferDto, LayerZeroTransferResponseDto } from './layerzerotransaction.dto';
 
 @Injectable()
 export class TransactionService {
@@ -35,7 +36,7 @@ export class TransactionService {
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly settingsService: SettingsService,
-	) {}
+	) { }
 
 	private async validateCreateCardanoTx(dto: CreateTransactionDto) {
 		if (
@@ -99,7 +100,7 @@ export class TransactionService {
 
 		const srcMinOperationFee =
 			this.settingsService.SettingsResponse.bridgingSettings.minOperationFee[
-				dto.originChain
+			dto.originChain
 			];
 
 		const minOperationFee = BigInt(srcMinOperationFee || '0');
@@ -258,19 +259,23 @@ export class TransactionService {
 		}
 	}
 
-	async transferLayerZero(dto: LayerZeroTransactionDto): Promise<any> {
+	async transferLayerZero(dto: LayerZeroTransferDto): Promise<LayerZeroTransferResponseDto> {
 		try {
 			const endpointUrl = `${process.env.LAYERZERO_API_URL}/transfer`;
 			Logger.debug(`axios.get: ${endpointUrl}`);
 			
-			return await axios.get(endpointUrl, {
+			const response: AxiosResponse<any, any> = await axios.get(endpointUrl, {
 				params: dto,
-				headers: {'x-layerzero-api-key': process.env.LAYERZERO_APIKEY},
+				headers: { 'x-layerzero-api-key': process.env.LAYERZERO_APIKEY },
 			})
-		} catch (e) {			
-			throw new BadRequestException(
-				`error while calling Layer Zero transfer: ${e}`,
-			);
+
+			return response.data as LayerZeroTransferResponseDto;
+		} catch (error) {
+			if (axios.isAxiosError(error)) {
+				throw new BadRequestException(`Request failed: ${error.response?.data.message || error.message}`);
+			}
+
+			throw new BadRequestException(`error while calling Layer Zero transfer: ${error}`);
 		}
 	}
 }
