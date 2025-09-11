@@ -160,6 +160,7 @@ export class LockedTokensService {
 				start: startDate,
 				end: endDate,
 			})
+			.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
 			.setParameter('truncUnit', dateTruncUnit)
 			.groupBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`)
 			.addGroupBy('tx.originChain')
