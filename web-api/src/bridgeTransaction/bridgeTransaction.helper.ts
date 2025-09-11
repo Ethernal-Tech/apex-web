@@ -133,19 +133,63 @@ export const getLayerZeroRequestState = async (
 
 		const data = response.data.data[0];
 
-		// TODO: map responseData to status
+		/*
+			global: "INFLIGHT" //  "Source transaction sent"
+			source: "VALIDATING_TX"
+			destination: "WAITING"
+			verification.dvn: "WAITING"
+			verification.dvn.dvns: "WAITING"
+			verification.sealer: "WAITING"
+
+			global: "INFLIGHT" // Ready for DVNs to verify"
+			source: "SUCCEEDED"
+			destination: "WAITING"
+			verification.dvn: "WAITING"
+			verification.dvn.dvns: "VALIDATING_TX"
+			verification.sealer: "WAITING"
+
+			global: "INFLIGHT" // Ready for committer to commit verification
+			source: "SUCCEEDED"
+			destination: "WAITING"
+			verification.dvn: "SUCCEEDED"
+			verification.dvn.dvns: "SUCCEEDED"
+			verification.sealer: "WAITING"
+		
+			global: "INFLIGHT" // Verification committed
+			source: "SUCCEEDED"
+			destination: "WAITING"
+			verification.dvn: "SUCCEEDED"
+			verification.dvn.dvns: "SUCCEEDED"
+			verification.sealer: "SUCCEEDED"
+
+			global: "INFLIGHT" // Executor transaction confirmed
+			source: "SUCCEEDED"
+			destination: "SUCCEEDED"
+			verification.dvn: "SUCCEEDED"
+			verification.dvn.dvns: "SUCCEEDED"
+			verification.sealer: "SUCCEEDED"
+
+			global: "DELIVERED" // Executor transaction confirmed
+			source: "SUCCEEDED"
+			destination: "SUCCEEDED"
+			verification.dvn: "SUCCEEDED"
+			verification.dvn.dvns: "SUCCEEDED"
+			verification.sealer: "SUCCEEDED"
+		*/
 		let status: TransactionStatusEnum = TransactionStatusEnum.Pending;
 		switch (data['status'].name) {
-			case 'DELIVERED':
-				status = TransactionStatusEnum.ExecutedOnDestination;
-
-				break;
 			case "INFLIGHT":
 				if (data['destination']['status'] == 'SUCCEEDED') { 
+					status = TransactionStatusEnum.SubmittedToDestination;
+				} else if (data['source']['status'] == 'SUCCEEDED') { 
 					status = TransactionStatusEnum.SubmittedToBridge;
 				} else {
 					status = TransactionStatusEnum.DiscoveredOnSource;
 				}
+				
+				break;
+			case 'DELIVERED':
+				status = TransactionStatusEnum.ExecutedOnDestination;
 
 				break;
 			case "PAYLOAD_STORED":
@@ -155,7 +199,7 @@ export const getLayerZeroRequestState = async (
 			case "CONFIRMING":
 				status = TransactionStatusEnum.SubmittedToDestination;
 
-                break;		
+                break;
 			case "FAILED": case "BLOCKED": case "UNRESOLVABLE_COMMAND": case "UNRESOLVABLE_COMMAND":
 				status = TransactionStatusEnum.InvalidRequest;
 
