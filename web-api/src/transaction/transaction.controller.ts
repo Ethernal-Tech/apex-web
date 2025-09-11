@@ -115,7 +115,7 @@ export class TransactionController {
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: BridgeTransactionDto,
+		type: LayerZeroTransferResponseDto,
 		description: 'OK - Returns data recieved from Layer Zero API.',
 	})
 	@ApiResponse({
