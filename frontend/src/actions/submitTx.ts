@@ -153,7 +153,6 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
         ),
         isFallback: false,
         isLayerZero: true,
-        // TODO: check for this 
         amount: transactionData.populatedTransaction.value,
         nativeTokenAmount: isLZWrappedChain(toApexBridgeName(createResponse.dstChainName)) ? createResponse.metadata.properties.amount : '0',
     }));
