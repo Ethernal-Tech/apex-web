@@ -16,7 +16,6 @@ import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
 import { isCardanoChain, isEvmChain, isLZBridging, toApexBridge, toLayerZeroChainName } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
-import { buildExtraOptions, createAndSendLayerZeroTransaction as signAndSubmitWrappedLZTx } from "../../features/layerZero";
 import { LayerZeroTransferResponse } from "../../features/types";
 
 function NewTransactionPage() {	
@@ -146,7 +145,7 @@ function NewTransactionPage() {
 			oftAddress: originChainSetting.oftAddress,
     		from: account,
     		to: address,
-    		validate: true,
+    		validate: false,
 			amount: amount,			
 		});
 
@@ -185,23 +184,6 @@ function NewTransactionPage() {
 
 		return { createTxDto, createResponse };
 	}, [chain, destinationChain, prepareCreateEthTx, settings])
-
-	const createLayerZeroWrappedTx = useCallback(async (address: string, amount: string, dstEid: number): Promise<any> =>{
-		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount) 
-		if (validationErr) {
-			throw new Error(validationErr);
-		}
-
-		return {
-			dstEid: dstEid,
-			to: address,
-			amountLD: amount,
-			minAmountLD: "0", // TODO: put this in settings maybe
-			extraOptions: buildExtraOptions(),
-			composeMsg: "0x",
-			oftCmd: "0x",
-		}
-	},[chain, destinationChain, settings])
 
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: string, isNativeToken: boolean) => {
