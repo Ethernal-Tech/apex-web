@@ -99,17 +99,23 @@ export const validateSubmitTxInputs = (
         BigInt(amount) > maxAllowedToBridgeDfm) {
       return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
     } 
-  } else if (isEvmChain(sourceChain) && !isLZBridging(sourceChain, destinationChain)){
-    if (BigInt(amount) < BigInt(convertDfmToWei(settings.minValueToBridge))) {
-      return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} ${tokenInfo.label}`;
+  } else if (isEvmChain(sourceChain)){
+    if (isLZBridging(sourceChain, destinationChain)){
+      if (BigInt(amount) === BigInt(0)){
+        return 'Amount cant be zero'
+      }
+    }else{
+      if (BigInt(amount) < BigInt(convertDfmToWei(settings.minValueToBridge))) {
+        return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} ${tokenInfo.label}`;
+      }
+
+      const maxAllowedToBridgeWei = BigInt(convertDfmToWei(settings.maxAmountAllowedToBridge));
+
+      if (maxAllowedToBridgeWei > 0 &&
+          BigInt(amount) > maxAllowedToBridgeWei) {
+        return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedToBridgeWei.toString(10))} ${tokenInfo.label}`;
+      } 
     }
-
-    const maxAllowedToBridgeWei = BigInt(convertDfmToWei(settings.maxAmountAllowedToBridge));
-
-    if (maxAllowedToBridgeWei > 0 &&
-        BigInt(amount) > maxAllowedToBridgeWei) {
-      return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedToBridgeWei.toString(10))} ${tokenInfo.label}`;
-    } 
   }
 
   if (isCardanoChain(destinationChain)) {

@@ -2,7 +2,7 @@ import { CardanoAddress } from "../features/Address/interfaces";
 import { CardanoNetworkType } from "../features/Address/types";
 import { ApexBridgeNetwork } from "../features/enums";
 import appSettings from "../settings/appSettings";
-import { isEvmChain } from "../settings/chain";
+import { isEvmChain, isLZBridging } from "../settings/chain";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
 const TESTNET_NEXUS_NETWORK_ID = BigInt(9070) // for Nexus testnet
@@ -156,18 +156,20 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
         [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
         [ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
         [ChainEnum.Cardano]: 'https://cardanoscan.io',
-        [ChainEnum.Base]: 'https://base.blockscout.com/'
     },
     testnet: {
         [ChainEnum.Prime]: 'https://explorer.prime.testnet.apexfusion.org',
         [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
         [ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
         [ChainEnum.Cardano]: 'https://preview.cardanoscan.io',
-        [ChainEnum.Base]: 'https://base-sepolia.blockscout.com'
     },
 }
 
-const getExplorerTxUrl = (chain: ChainEnum, txHash: string) => {
+const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boolean) => {
+    if (isLZBridging) {
+        return `https://layerzeroscan.com/tx/${txHash}`
+    }
+
     const base = appSettings.isMainnet ? EXPLORER_URLS.mainnet[chain] : EXPLORER_URLS.testnet[chain];
 
     let url
@@ -197,6 +199,12 @@ const getExplorerTxUrl = (chain: ChainEnum, txHash: string) => {
 export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
     if (!tx) {
         return;
+    }
+
+    if (tx.isLayerZero){
+        const url = getExplorerTxUrl(tx.originChain, tx.sourceTxHash, true)
+        window.open(url, '_blank')
+        return
     }
 
     if (tx.status === TransactionStatusEnum.ExecutedOnDestination && tx.destinationTxHash) {
