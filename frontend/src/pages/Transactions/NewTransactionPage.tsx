@@ -14,7 +14,7 @@ import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
-import { isCardanoChain, isEvmChain, isLZBridging, toApexBridge } from "../../settings/chain";
+import { isCardanoChain, isEvmChain, isLZBridging, toApexBridge, toLayerZeroChainName } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
 import { buildExtraOptions, createAndSendLayerZeroTransaction as signAndSubmitWrappedLZTx } from "../../features/layerZero";
 import { LayerZeroTransferResponse } from "../../features/types";
@@ -141,8 +141,8 @@ function NewTransactionPage() {
 		if (!originChainSetting) throw new Error(`No LayerZero config for ${chain}`);
 		
 		const createTxDto = new LayerZeroTransactionDto({
-			srcChainName: chain,
-			dstChainName: destinationChain,
+			srcChainName: toLayerZeroChainName(chain),
+			dstChainName: toLayerZeroChainName(destinationChain),
 			oftAddress: originChainSetting.oftAddress,
     		from: account,
     		to: address,
