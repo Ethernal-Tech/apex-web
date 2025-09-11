@@ -253,6 +253,9 @@ function NewTransactionPage() {
   <NewTransaction txInProgress={false}>
     {isLZBridging(chain,destinationChain) ? (
       <BridgeInputLZ
+		bridgeTxFee={bridgeTxFee}
+        setBridgeTxFee={setBridgeTxFee}
+        resetBridgeTxFee={resetBridgeTxFee}
 		getLZEthTxFee={getLZEthTxFee}
         submit={handleLZSubmitCallback}
         loading={loading}

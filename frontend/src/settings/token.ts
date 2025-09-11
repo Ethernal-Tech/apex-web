@@ -134,11 +134,6 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
   }
 }
 
-export const erc20TokenInfo: Partial<Record<ChainEnum, [TokenInfo, string]>> = {
-  [ChainEnum.Base]: [tokenInfos[TokenEnum.BAP3X]!, "0x4200000000000000000000000000000000000006"], // TODO: CHANGE THIS ADDRESS TO REAL
-  [ChainEnum.Bsc]: [tokenInfos[TokenEnum.BNAP3X]!, "0x4200000000000000000000000000000000000006"] // TODO: CHANGE THIS ADDRESS TO REAL
-  };
-
 export const getBridgingInfo = (srcChain: ChainEnum, dstChain: ChainEnum): BridgingInfo => {
   return (tokensDirection[srcChain] || {})[dstChain] || { isCurrencyBridgingAllowed: false };
 }

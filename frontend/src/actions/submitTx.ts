@@ -121,8 +121,7 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
     const from = await evmWalletHandler.getAddress()    
 
     if (transactionData.approvalTransaction) {
-        const { to, data, gasLimit } = transactionData.approvalTransaction;
-        const tx: Transaction = { from, to, data };
+        const tx: Transaction = { from, ...transactionData.transactionData.approvalTransaction };
 
         const receipt = await evmWalletHandler.submitTx(tx);
         if (receipt.status !== 1) {
@@ -133,6 +132,7 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
     const { to } = transactionData.populatedTransaction;
     const sendTx: Transaction = { from, ...transactionData.populatedTransaction}
 
+    sendTx.gasLimit = 1500000
     // Return the receipt from the actual send
     const receipt = await evmWalletHandler.submitTx(sendTx);
     if (receipt.status !== BigInt(1)) {
@@ -154,7 +154,7 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
         isFallback: false,
         isLayerZero: true,
         // TODO: check for this 
-        amount: isLZWrappedChain(toApexBridgeName(createResponse.dstChainName)) ? '0' : createResponse.metadata.properties.amount,
+        amount: transactionData.populatedTransaction.value,
         nativeTokenAmount: isLZWrappedChain(toApexBridgeName(createResponse.dstChainName)) ? createResponse.metadata.properties.amount : '0',
     }));
 

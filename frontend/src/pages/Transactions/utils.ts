@@ -1,7 +1,7 @@
 import { TokenEnum } from "../../features/enums";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { useMemo } from "react";
-import { erc20TokenInfo, getBridgingInfo, getCurrencyTokenInfo, getTokenInfo, TokenInfo } from "../../settings/token";
+import { getBridgingInfo, getCurrencyTokenInfo, getTokenInfo, TokenInfo } from "../../settings/token";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 
@@ -49,7 +49,7 @@ export const useSupporedSourceLZTokenOptions = (srcChain: ChainEnum, dstChain: C
       options.push(tokenInfoToTokenOption(getCurrencyTokenInfo(srcChain)));
     }
 
-    if (!!bridgingInfo.wrappedToken && erc20TokenInfo[srcChain]?.[0].token == bridgingInfo.wrappedToken) {
+    if (!!bridgingInfo.wrappedToken) {
       options.push(tokenInfoToTokenOption(getTokenInfo(bridgingInfo.wrappedToken!)));
     }
 

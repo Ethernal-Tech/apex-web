@@ -12,7 +12,7 @@ import appSettings from '../../../settings/appSettings';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { TokenEnum } from '../../../features/enums';
 import { useSupporedSourceLZTokenOptions } from '../utils';
-import { getChainInfo } from '../../../settings/chain';
+import { getChainInfo, isLZWrappedChain } from '../../../settings/chain';
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 import FeeInformation from './FeeInformation';
 import { estimateEthGas } from '../../../actions/submitTx';
@@ -20,6 +20,9 @@ import { Transaction } from 'web3';
 import evmWalletHandler from '../../../features/EvmWalletHandler';
 
 type BridgeInputType = {
+    bridgeTxFee: string
+    setBridgeTxFee: (val: string) => void
+    resetBridgeTxFee: () => void
     getLZEthTxFee: (address: string, amount: string) => Promise<LayerZeroTransferResponseDto>
     submit:(address: string, amount: string) => Promise<void>
     loading?: boolean;
@@ -53,7 +56,7 @@ const calculateMaxAmountCurrency = (
   return maxByBalance
 }
 
-const BridgeInputLZ = ({getLZEthTxFee, submit, loading}:BridgeInputType) => {
+const BridgeInputLZ = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, getLZEthTxFee, submit, loading}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
   const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
@@ -70,35 +73,37 @@ const BridgeInputLZ = ({getLZEthTxFee, submit, loading}:BridgeInputType) => {
   
           return;
       }
-
-            console.log("CALLING FATCH");
-
       
-  
       try {
             const feeResp = await getLZEthTxFee(destinationAddr, convertApexToDfm(amount || '0', chain)); 
 
-            console.log("FEE RESP", feeResp)
-
-            const {transactionData} = feeResp;
-            const from = await evmWalletHandler.getAddress()
+            // const {transactionData} = feeResp;
+            // const from = await evmWalletHandler.getAddress()
             
-            let fee: bigint = BigInt(0) 
+            // let fee: bigint = BigInt(0) 
 
-            if (transactionData.approvalTransaction) {
-                const { to, data, gasLimit } = transactionData.approvalTransaction;
-                const tx: Transaction = { from, to, data, gasLimit };
+            // if (transactionData.approvalTransaction) {
+            //     const { to, data, gasLimit } = transactionData.approvalTransaction;
+            //     const tx: Transaction = { from, to, data, gasLimit };
 
-                // TODO: check for fallback
-                fee += BigInt(await estimateEthGas(tx, false));
+            //     // TODO: check for fallback
+            //     fee += BigInt(await estimateEthGas(tx, false));
+            // }
+
+            // const { to, data, value } = transactionData.populatedTransaction;
+            // const tx: Transaction = { from, to, data, value: !!value ? BigInt(value) : undefined }
+
+            // // TODO: check for fallback
+            // fee += BigInt(await estimateEthGas(tx, false));
+            // setUserWalletFee(fee.toString());
+
+            if (isLZWrappedChain(chain)) {
+                setBridgeTxFee(feeResp.transactionData.populatedTransaction.value) 
+            }else{
+                const amount = BigInt(feeResp.metadata.properties.amount);
+                const valueBig = BigInt(feeResp.transactionData.populatedTransaction.value);
+                setBridgeTxFee((valueBig-amount).toString(10));
             }
-
-            const { to, data, value } = transactionData.populatedTransaction;
-            const tx: Transaction = { from, to, data, value: !!value ? BigInt(value) : undefined }
-
-            // TODO: check for fallback
-            fee += BigInt(await estimateEthGas(tx, false));
-            setUserWalletFee(fee.toString());
   
             return;
       } catch (e) {
@@ -112,7 +117,8 @@ const BridgeInputLZ = ({getLZEthTxFee, submit, loading}:BridgeInputType) => {
   const setSourceTokenCallback = useCallback((token: TokenEnum) => {
     setSourceToken(token);
     setAmount('');
-  }, [])
+    resetBridgeTxFee();
+  }, [resetBridgeTxFee])
 
   useEffect(() => {
     if (fetchCreateTxTimeoutRef.current) {
@@ -229,8 +235,10 @@ const BridgeInputLZ = ({getLZEthTxFee, submit, loading}:BridgeInputType) => {
                 id="bridge-amount"/>
 
             <FeeInformation
-              userWalletFee={userWalletFee || '0'}
+              //userWalletFee={userWalletFee || '0'}
+              bridgeTxFee={bridgeTxFee || '0'}
               chain={chain}
+              isLayerZero={true}
               sx={{
                   gridColumn:'span 1',
                   border: '1px solid #077368',

@@ -12,13 +12,14 @@ const CustomBox = styled(Box)({
 
 interface FeeInformationProps {
   sx?: SxProps<Theme>;
-  userWalletFee: string;
+  userWalletFee?: string;
   bridgeTxFee?: string;
   operationFee?: string;
   chain: ChainEnum
+  isLayerZero?: boolean
 }
 
-const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, bridgeTxFee, operationFee, chain }) => {
+const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, bridgeTxFee, operationFee, chain, isLayerZero }) => {
   const currencyToken = getCurrencyTokenInfo(chain)
 
   return (
@@ -29,7 +30,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
       justifyContent:'space-between',
       ...sx
       }}>
-        <Typography sx={{
+        {userWalletFee && <Typography sx={{
           display:'flex',
           justifyContent:'space-between'
         }}>
@@ -54,7 +55,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
           </Box>
           <Box component="span">{BigInt(userWalletFee) > 0 ? toFixed(convertDfmToApex(userWalletFee, chain), 6) : '0'} {currencyToken.label}
           </Box>
-        </Typography>
+        </Typography>}
         
         
         {bridgeTxFee && <Typography sx={{
@@ -72,7 +73,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               <Tooltip
                   title={
                       <Typography color={'white'} sx={{ fontSize: '14px' }}>
-                          This fee covers the bridge blockchain transaction costs. This fee is set to the predefined minimum. When bridging native tokens, the minimum {currencyToken.label} required to hold those tokens on {capitalizeWord(chain)} is added.
+                         {isLayerZero ? 'This fee covers the bridge blockchain transaction costs.' : `This fee covers the bridge blockchain transaction costs. This fee is set to the predefined minimum. When bridging native tokens, the minimum ${currencyToken.label} required to hold those tokens on ${capitalizeWord(chain)} is added.`}
                       </Typography>
                   }
                   placement="right-start"
@@ -126,7 +127,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
             }}>
               Estimated time
             </Box>
-          <Box component="span">{appSettings.isSkyline ? '28-35 minutes' : '16-20 minutes'}</Box>
+           {isLayerZero ? <Box>{'1-5 minutes'}</Box> : <Box component="span">{appSettings.isSkyline ? '28-35 minutes' : '16-20 minutes'}</Box>}
         </Typography>
     </CustomBox>
   );
