@@ -155,7 +155,7 @@ export const getTokenInfoBySrcDst = (srcChain: ChainEnum, dstChain: ChainEnum, i
 }
 
 export const isWrappedToken = (token: TokenEnum | undefined): 
-  boolean => token === TokenEnum.WAPEX || token === TokenEnum.WAda || token === TokenEnum.BAP3X;
+  boolean => token === TokenEnum.WAPEX || token === TokenEnum.WAda || token === TokenEnum.BAP3X || token === TokenEnum.BNAP3X;
 
 
 export const getCurrencyTokenInfo = (srcChain: ChainEnum): TokenInfo => getTokenInfo(getChainInfo(srcChain).currencyToken)

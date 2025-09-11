@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef,useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import { ChainEnum } from '../../../swagger/apexBridgeApiService';
+import { ChainEnum, LayerZeroTransferResponseDto } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { TokenEnum } from '../../../features/enums';
@@ -16,12 +16,11 @@ import { getChainInfo } from '../../../settings/chain';
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 import FeeInformation from './FeeInformation';
 import { estimateEthGas } from '../../../actions/submitTx';
-import { LayerZeroTransferResponse } from '../../../features/types';
 import { Transaction } from 'web3';
 import evmWalletHandler from '../../../features/EvmWalletHandler';
 
 type BridgeInputType = {
-    getLZEthTxFee: (address: string, amount: string) => Promise<LayerZeroTransferResponse>
+    getLZEthTxFee: (address: string, amount: string) => Promise<LayerZeroTransferResponseDto>
     submit:(address: string, amount: string) => Promise<void>
     loading?: boolean;
 }

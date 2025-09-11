@@ -19,7 +19,7 @@ import {
   TransactionOutput,
   Address,
 } from '@emurgo/cardano-serialization-lib-browser';
-import { isCardanoChain, isEvmChain } from "../settings/chain";
+import { isCardanoChain, isEvmChain, isLZBridging } from "../settings/chain";
 import { getTokenInfoBySrcDst } from "../settings/token";
 
 export const capitalizeWord = (word: string): string => {
@@ -99,7 +99,7 @@ export const validateSubmitTxInputs = (
         BigInt(amount) > maxAllowedToBridgeDfm) {
       return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
     } 
-  } else if (isEvmChain(sourceChain)){
+  } else if (isEvmChain(sourceChain) && !isLZBridging(sourceChain, destinationChain)){
     if (BigInt(amount) < BigInt(convertDfmToWei(settings.minValueToBridge))) {
       return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} ${tokenInfo.label}`;
     }

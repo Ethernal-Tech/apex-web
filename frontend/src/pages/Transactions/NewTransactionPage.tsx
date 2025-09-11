@@ -8,7 +8,7 @@ import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import walletHandler from '../../features/WalletHandler';
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction, layerZeroTransferAction } from "./action";
-import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto, LayerZeroTransactionDto } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto, LayerZeroTransferDto, LayerZeroTransferResponseDto } from "../../swagger/apexBridgeApiService";
 import { signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx} from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import appSettings from "../../settings/appSettings";
@@ -16,7 +16,6 @@ import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
 import { isCardanoChain, isEvmChain, isLZBridging, toApexBridge, toLayerZeroChainName } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
-import { LayerZeroTransferResponse } from "../../features/types";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -129,7 +128,7 @@ function NewTransactionPage() {
 		return feeResponse;
 	}, [prepareCreateEthTx])
 
-	const createLayerZeroTx = useCallback(async (address: string, amount: string): Promise<any> => {
+	const createLayerZeroTx = useCallback(async (address: string, amount: string): Promise<LayerZeroTransferResponseDto> => {
 		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount) 
 		if (validationErr) {
 			throw new Error(validationErr);
@@ -139,7 +138,7 @@ function NewTransactionPage() {
 		
 		if (!originChainSetting) throw new Error(`No LayerZero config for ${chain}`);
 		
-		const createTxDto = new LayerZeroTransactionDto({
+		const createTxDto = new LayerZeroTransferDto({
 			srcChainName: toLayerZeroChainName(chain),
 			dstChainName: toLayerZeroChainName(destinationChain),
 			oftAddress: originChainSetting.oftAddress,
@@ -160,7 +159,7 @@ function NewTransactionPage() {
 
 
 
-	const getLZEthTxFee = useCallback(async (address: string, amount: string): Promise<LayerZeroTransferResponse> =>{
+	const getLZEthTxFee = useCallback(async (address: string, amount: string): Promise<LayerZeroTransferResponseDto> =>{
 		try{
 			return await createLayerZeroTx(address, amount);
 		}

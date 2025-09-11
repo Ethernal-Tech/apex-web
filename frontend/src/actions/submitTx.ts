@@ -1,11 +1,10 @@
 import { bridgingTransactionSubmittedAction } from "../pages/Transactions/action";
-import { CreateTransactionDto, CreateCardanoTransactionResponseDto, CreateEthTransactionResponseDto, TransactionSubmittedDto, ChainEnum } from "../swagger/apexBridgeApiService";
+import { CreateTransactionDto, CreateCardanoTransactionResponseDto, CreateEthTransactionResponseDto, TransactionSubmittedDto, ChainEnum, LayerZeroTransferResponseDto } from "../swagger/apexBridgeApiService";
 import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
 import walletHandler from "../features/WalletHandler";
 import evmWalletHandler from "../features/EvmWalletHandler";
 import { Transaction } from 'web3-types';
-import { LayerZeroTransferResponse } from "../features/types";
-import { isLZWrappedChain } from "../settings/chain";
+import { isLZWrappedChain, toApexBridgeName } from "../settings/chain";
 
 export const signAndSubmitCardanoTx = async (
     values: CreateTransactionDto,
@@ -113,7 +112,7 @@ export const signAndSubmitEthTx = async (
   return response;
 }
 
-export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransferResponse) => {
+export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransferResponseDto) => {
     if (!evmWalletHandler.checkWallet()) {
         throw new Error('Wallet not connected.');
     }
@@ -125,38 +124,26 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
         const { to, data, gasLimit } = transactionData.approvalTransaction;
         const tx: Transaction = { from, to, data };
 
-        // If LZ gave a gasLimit, use it, else estimate
-        if (!!gasLimit) {
-            tx.gasLimit = BigInt(gasLimit);
-        } else {
-            tx.gasLimit = await estimateEthGas(tx, false);
-        }
-
         const receipt = await evmWalletHandler.submitTx(tx);
         if (receipt.status !== 1) {
             throw new Error('Approval transaction has been failed');
         }
     }
 
-    const { to, data, gasLimit, value } = transactionData.populatedTransaction;
-    const sendTx: Transaction = { from, to, data, value: !!value ? BigInt(value) : undefined }
-
-    // If LZ gave a gasLimit, use it, else estimate
-    if (!!gasLimit) {
-        sendTx.gasLimit = BigInt(gasLimit);
-    } else {
-        sendTx.gasLimit = await estimateEthGas(sendTx, false);
-    }
+    const { to } = transactionData.populatedTransaction;
+    const sendTx: Transaction = { from, ...transactionData.populatedTransaction}
 
     // Return the receipt from the actual send
     const receipt = await evmWalletHandler.submitTx(sendTx);
-    if (receipt.status !== 1) {
-        throw new Error('send transaction has been failed');
+    if (receipt.status !== BigInt(1)) {
+         throw new Error('send transaction has been failed');
     }
 
+    console.log("Receipt status typeof", typeof receipt.status, "Anv value", receipt.status)
+
     const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
-        originChain: createResponse.dstChainName,
-        destinationChain: createResponse.metadata.properties.dstChainName,
+        originChain: toApexBridgeName(createResponse.dstChainName),
+        destinationChain: toApexBridgeName(createResponse.metadata.properties.dstChainName),
         originTxHash: receipt.transactionHash.toString(),
         senderAddress: from!,
         receiverAddrs: [to!],
@@ -167,8 +154,8 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
         isFallback: false,
         isLayerZero: true,
         // TODO: check for this 
-        amount: isLZWrappedChain(createResponse.dstChainName) ? '0' : createResponse.metadata.properties.amount,
-        nativeTokenAmount: isLZWrappedChain(createResponse.dstChainName) ? createResponse.metadata.properties.amount : '0',
+        amount: isLZWrappedChain(toApexBridgeName(createResponse.dstChainName)) ? '0' : createResponse.metadata.properties.amount,
+        nativeTokenAmount: isLZWrappedChain(toApexBridgeName(createResponse.dstChainName)) ? createResponse.metadata.properties.amount : '0',
     }));
 
     const response = await tryCatchJsonByAction(bindedSubmittedAction, false);

@@ -214,6 +214,7 @@ export class TransactionService {
 		nativeTokenAmount,
 		txRaw,
 		isFallback,
+		isLayerZero,
 	}: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
 		const entity = new BridgeTransaction();
 
@@ -234,6 +235,7 @@ export class TransactionService {
 		entity.status = TransactionStatusEnum.Pending;
 		entity.txRaw = txRaw;
 		entity.isCentralized = isFallback;
+		entity.isLayerZero = isLayerZero;
 
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);

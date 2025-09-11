@@ -176,3 +176,12 @@ export function toLayerZeroChainName(chain: ChainEnum): string{
         return chain
     }
 }
+
+export function toApexBridgeName(chain: string): ChainEnum{
+    switch (chain){
+        case 'apexfusionnexus':
+            return ChainEnum.Nexus
+        default: 
+            return chain as unknown as ChainEnum
+    }
+}

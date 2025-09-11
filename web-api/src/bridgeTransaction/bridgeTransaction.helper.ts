@@ -132,9 +132,10 @@ export const getLayerZeroRequestState = async (
 		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
 		const data = response.data.data[0];
+
 		// TODO: map responseData to status
 		let status: TransactionStatusEnum = TransactionStatusEnum.Pending;
-		switch (data['status']) {
+		switch (data['status'].name) {
 			case 'DELIVERED':
 				status = TransactionStatusEnum.ExecutedOnDestination;
 
@@ -168,11 +169,11 @@ export const getLayerZeroRequestState = async (
 	} catch (e) {
 		if (e instanceof AxiosError) {
 			Logger.error(
-				`Error while getHasTxFailedRequestState: ${e}. response: ${JSON.stringify(e.response?.data)}`,
+				`Error while getLayerZeroRequestState: ${e}. response: ${JSON.stringify(e.response?.data)}`,
 				e.stack,
 			);
 		} else {
-			Logger.error(`Error while getHasTxFailedRequestState: ${e}`, e.stack);
+			Logger.error(`Error while getLayerZeroRequestState: ${e}`, e.stack);
 		}
 	}
 };

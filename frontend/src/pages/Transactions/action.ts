@@ -1,4 +1,4 @@
-import { BridgeTransactionControllerClient, BridgeTransactionFilterDto, CreateTransactionDto, LayerZeroTransactionDto, TransactionControllerClient, TransactionSubmittedDto } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionControllerClient, BridgeTransactionFilterDto, CreateTransactionDto, LayerZeroTransferDto, TransactionControllerClient, TransactionSubmittedDto } from '../../swagger/apexBridgeApiService';
 
 export const getAction = (id:number) => {
 	const client = new BridgeTransactionControllerClient();
@@ -30,7 +30,7 @@ export const bridgingTransactionSubmittedAction = (model: TransactionSubmittedDt
 	return client.bridgingTransactionSubmitted(model);
 }
 
-export const layerZeroTransferAction = (model: LayerZeroTransactionDto) => {
+export const layerZeroTransferAction = (model: LayerZeroTransferDto) => {
 	const client = new TransactionControllerClient();
 	return client.layerZeroTransfer(model);
 }
