@@ -7,8 +7,17 @@ import { Transaction } from 'web3-types';
 import { isLZWrappedChain, toApexBridgeName } from "../settings/chain";
 import Web3 from "web3";
 
-const feePercMult: bigint = BigInt(150);
-const gasLimitPercMult: bigint = BigInt(150);
+type TxDetailsOptions = {
+    feePercMult: bigint;
+    gasLimitPercMult: bigint
+    fixedLayerZeroGasLimit: bigint | undefined;
+}
+
+const defaultTxDetailsOptions: TxDetailsOptions = {
+    feePercMult: BigInt(220),
+    gasLimitPercMult: BigInt(170),
+    fixedLayerZeroGasLimit: undefined
+};
 
 export const signAndSubmitCardanoTx = async (
     values: CreateTransactionDto,
@@ -172,47 +181,50 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
     return response;
 }
 
-export const populateTxDetails = async (tx: Transaction): Promise<Transaction> => {
+export const populateTxDetails = async (
+    tx: Transaction, opts: TxDetailsOptions = defaultTxDetailsOptions,
+): Promise<Transaction> => {
     if (typeof window.ethereum === 'undefined') {
         throw new Error("can not instantiate web3 provider");
     }
 
     const web3 = new Web3(window.ethereum);
+    const response = { ...tx };
 
-    let gasLimit: bigint;
     if (!tx.gas) {
-        gasLimit = await web3.eth.estimateGas(tx);
-    } else {
-        gasLimit = BigInt(tx.gas);
+        if (!!opts.fixedLayerZeroGasLimit) {
+            response.gas = opts.fixedLayerZeroGasLimit;
+        } else {
+            const gasLimit = await web3.eth.estimateGas(tx);
+            response.gas = gasLimit * opts.gasLimitPercMult / BigInt(100);
+        }
     }
-
-    const response = {
-        ...tx,
-        gasLimit: gasLimit * gasLimitPercMult / BigInt(100),
-        gas: gasLimit * gasLimitPercMult / BigInt(100),
-    };
 
     try {
         // Try to get pending block baseFeePerGas (EIP-1559 chains)
         const block = await web3.eth.getBlock("pending");
         if (block.baseFeePerGas) {
             // Use EIP-1559 fees
-            response.maxPriorityFeePerGas = await web3.eth.getMaxPriorityFeePerGas();
-            response.maxFeePerGas = block.baseFeePerGas * feePercMult / BigInt(100);
+            const tipCap = await web3.eth.getMaxPriorityFeePerGas();
+            response.maxPriorityFeePerGas = tipCap * opts.feePercMult / BigInt(100);
+            response.maxFeePerGas = block.baseFeePerGas * opts.feePercMult / BigInt(100);
 
             return response
         }
     } catch (_) { }
 
     // Legacy fallback
-    response.gasPrice = await web3.eth.getGasPrice();
+    const gasPrice = await web3.eth.getGasPrice();
+    response.gasPrice = gasPrice * opts.feePercMult / BigInt(100);
 
     return response;
 };
 
-export const estimateEthTxFee = async (tx: Transaction): Promise<bigint> => {
+export const estimateEthTxFee = async (
+    tx: Transaction, opts: TxDetailsOptions = defaultTxDetailsOptions,
+): Promise<bigint> => {
     if (!tx.gas || (!tx.gasPrice && !tx.maxFeePerGas)) {
-        tx = await populateTxDetails(tx)
+        tx = await populateTxDetails(tx, opts)
     }
 
     const gasLimit = BigInt(tx.gas!);
