@@ -230,8 +230,7 @@ function NewTransactionPage() {
 			setLoading(true);
 			try{
 				const createTxResp = await createLayerZeroTx(address, amount);
-
-				const response = await signAndSubmitLayerZeroTx(createTxResp);
+				const response = await signAndSubmitLayerZeroTx(address, createTxResp);
 
 				response && goToDetails(response);
 			}

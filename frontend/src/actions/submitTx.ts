@@ -127,7 +127,7 @@ export const signAndSubmitEthTx = async (
   return response;
 }
 
-export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransferResponseDto) => {
+export const signAndSubmitLayerZeroTx = async (receiverAddr: string, createResponse: LayerZeroTransferResponseDto) => {
     if (!evmWalletHandler.checkWallet()) {
         throw new Error('Wallet not connected.');
     }
@@ -146,7 +146,6 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
         }
     }
 
-    const { to } = transactionData.populatedTransaction;
     const sendTx: Transaction = await populateTxDetails({
         from, ...transactionData.populatedTransaction,
     });
@@ -164,7 +163,7 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
         destinationChain: toApexBridgeName(createResponse.metadata.properties.dstChainName),
         originTxHash: receipt.transactionHash.toString(),
         senderAddress: from!,
-        receiverAddrs: [to!],
+        receiverAddrs: [receiverAddr],
         txRaw: JSON.stringify(
             { ...sendTx, block: receipt.blockNumber.toString() },
             (_: string, value: any) => typeof value === 'bigint' ? `bigint:${value.toString()}` : value,
