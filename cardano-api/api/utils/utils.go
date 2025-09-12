@@ -1,10 +1,12 @@
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/Ethernal-Tech/cardano-api/api/model/common/response"
 
@@ -85,4 +87,56 @@ func useUtxoCache(
 	}
 
 	return false
+}
+
+func ContainsNativeTokens(
+	requestBody commonRequest.CreateBridgingTxRequest,
+) bool {
+	for _, tx := range requestBody.Transactions {
+		if tx.IsNativeToken {
+			return true
+		}
+	}
+
+	return false
+}
+
+func GetAddressToBridgeTo(
+	ctx context.Context,
+	oracleURL string,
+	apiKey string,
+	chainID string,
+	containsNativeTokens bool) (
+	*response.BridgingAddressResponse, error,
+) {
+	requestURL := oracleURL + fmt.Sprintf("/api/BridgingAddress/GetAddressToBridgeTo?chainId=%s&containsNativeTokens=%t",
+		chainID, containsNativeTokens)
+
+	u, err := url.Parse(requestURL)
+	if err != nil {
+		return nil, fmt.Errorf("parse request URL %q (chainID=%s & containsNativeTokens %t): %w",
+			requestURL, chainID, containsNativeTokens, err)
+	}
+
+	return common.HTTPGet[*response.BridgingAddressResponse](
+		ctx, u.String(), apiKey,
+	)
+}
+
+func GetAllBridgingAddress(
+	ctx context.Context,
+	oracleURL string,
+	apiKey string,
+	chainID string,
+) (*response.AllBridgingAddressesResponse, error) {
+	requestURL := oracleURL + fmt.Sprintf("/api/BridgingAddress/GetAllAddresses?chainId=%s", chainID)
+
+	u, err := url.Parse(requestURL)
+	if err != nil {
+		return nil, fmt.Errorf("parse request URL %q (chainID=%s): %w", requestURL, chainID, err)
+	}
+
+	return common.HTTPGet[*response.AllBridgingAddressesResponse](
+		ctx, u.String(), apiKey,
+	)
 }
