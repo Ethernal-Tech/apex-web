@@ -202,12 +202,11 @@ export const populateTxDetails = async (
     }
 
     try {
-        const feeHistory = await web3.eth.getFeeHistory(1, 'latest', [100]);
+        const feeHistory = await web3.eth.getFeeHistory(5, 'latest', [100]); // give 100% tip
         const baseFeePerGasList = feeHistory.baseFeePerGas as unknown as bigint[];
         if (!!baseFeePerGasList) {
-            const baseFee = baseFeePerGasList[baseFeePerGasList.length - 1];
-            const lastRewards = feeHistory.reward[feeHistory.reward.length - 1];
-            let tipCap = BigInt(lastRewards[lastRewards.length - 1]) * opts.feePercMult / BigInt(100);
+            const baseFee = baseFeePerGasList.reduce((a, b) => a + b, BigInt(0)) / BigInt(baseFeePerGasList.length);
+            let tipCap = feeHistory.reward.reduce((a, b) => a + BigInt(b[0]), BigInt(0)) / BigInt(feeHistory.reward.length);
             if (tipCap === BigInt(0)) {
                 tipCap = opts.defaultTipCap;
             }
