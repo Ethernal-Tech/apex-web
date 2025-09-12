@@ -2,7 +2,7 @@ import { CardanoAddress } from "../features/Address/interfaces";
 import { CardanoNetworkType } from "../features/Address/types";
 import { ApexBridgeNetwork } from "../features/enums";
 import appSettings from "../settings/appSettings";
-import { isEvmChain, isLZBridging } from "../settings/chain";
+import { isEvmChain } from "../settings/chain";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
 const TESTNET_NEXUS_NETWORK_ID = BigInt(9070) // for Nexus testnet

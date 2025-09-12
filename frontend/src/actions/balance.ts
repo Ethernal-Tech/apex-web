@@ -12,7 +12,7 @@ import OgmiosRetriever from '../features/OgmiosRetriever';
 import { getUtxoRetrieverType } from '../features/utils';
 import { UtxoRetrieverEnum } from '../features/enums';
 import { getChainInfo, isEvmChain } from '../settings/chain';
-import { getBridgingInfo, getToken, getTokenInfo } from '../settings/token';
+import { getBridgingInfo, getToken } from '../settings/token';
 import { LayerZeroChains } from '../redux/slices/settingsSlice';
 
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;

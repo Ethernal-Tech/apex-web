@@ -3,8 +3,9 @@ import { CreateTransactionDto, CreateCardanoTransactionResponseDto, CreateEthTra
 import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
 import walletHandler from "../features/WalletHandler";
 import evmWalletHandler from "../features/EvmWalletHandler";
-import { Transaction } from 'web3-types';
+import { Numbers, Transaction } from 'web3-types';
 import { isLZWrappedChain, toApexBridgeName } from "../settings/chain";
+import Web3 from "web3";
 
 export const signAndSubmitCardanoTx = async (
     values: CreateTransactionDto,
@@ -164,3 +165,34 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
 
     return response;
 }
+
+export const estimateEthTxFee = async (tx: Transaction, multFactor: number = 1.5): Promise<bigint> => {
+	const eth = window.ethereum
+
+	if (typeof eth === 'undefined') {
+		throw new Error("can not instantiate web3 provider");
+	}
+
+	const web3 = new Web3(eth);
+
+    let gasLimit: Numbers|undefined = tx.gas;
+
+    if (!gasLimit) {
+        gasLimit = await evmWalletHandler.estimateGas(tx);
+    }
+	
+    try {
+		// Try to get pending block baseFeePerGas (EIP-1559 chains)
+        const maxPriorityFeePerGas = await web3.eth.getMaxPriorityFeePerGas();            
+		const block = await web3.eth.getBlock("pending");
+		if (block.baseFeePerGas) {
+			// Use EIP-1559 fees
+		    const maxFeePerGas = (block.baseFeePerGas! * BigInt(multFactor * 100)) / BigInt(100) + maxPriorityFeePerGas;
+            return BigInt(gasLimit) * maxFeePerGas;            
+		}
+	} catch (_) { }
+
+	// Legacy fallback
+	const gasPrice = await web3.eth.getGasPrice();
+    return (gasPrice * BigInt(multFactor*100) * BigInt(gasLimit)) / BigInt(100);
+};

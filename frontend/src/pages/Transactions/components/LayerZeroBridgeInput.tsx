@@ -15,9 +15,8 @@ import { useSupporedSourceLZTokenOptions } from '../utils';
 import { getChainInfo, isLZWrappedChain } from '../../../settings/chain';
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 import FeeInformation from './FeeInformation';
-import { estimateEthGas } from '../../../actions/submitTx';
-import { Transaction } from 'web3';
 import evmWalletHandler from '../../../features/EvmWalletHandler';
+import { estimateEthTxFee } from '../../../actions/submitTx';
 
 type BridgeInputType = {
     bridgeTxFee: string
@@ -70,6 +69,7 @@ const BridgeInputLZ = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, getLZEthT
     const fetchWalletFee = useCallback(async () => {
       if (!destinationAddr || !amount || !sourceToken) {
           setUserWalletFee(undefined);
+          setBridgeTxFee("");
   
           return;
       }
@@ -77,25 +77,20 @@ const BridgeInputLZ = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, getLZEthT
       try {
             const feeResp = await getLZEthTxFee(destinationAddr, convertApexToDfm(amount || '0', chain)); 
 
-            // const {transactionData} = feeResp;
-            // const from = await evmWalletHandler.getAddress()
+            const {transactionData} = feeResp;
+            const from = await evmWalletHandler.getAddress();
             
-            // let fee: bigint = BigInt(0) 
+            let approvalTxFee: bigint = BigInt(0);
 
-            // if (transactionData.approvalTransaction) {
-            //     const { to, data, gasLimit } = transactionData.approvalTransaction;
-            //     const tx: Transaction = { from, to, data, gasLimit };
+            if (transactionData.approvalTransaction) {
+                approvalTxFee = await estimateEthTxFee({ ...transactionData.approvalTransaction, from });
+            }
 
-            //     // TODO: check for fallback
-            //     fee += BigInt(await estimateEthGas(tx, false));
-            // }
+            const baseTxFee = await estimateEthTxFee({ ...transactionData.populatedTransaction, from })            
+            const totalTxFee = approvalTxFee + baseTxFee;
 
-            // const { to, data, value } = transactionData.populatedTransaction;
-            // const tx: Transaction = { from, to, data, value: !!value ? BigInt(value) : undefined }
-
-            // // TODO: check for fallback
-            // fee += BigInt(await estimateEthGas(tx, false));
-            // setUserWalletFee(fee.toString());
+            // TODO: convert from wei to DFM?
+            setUserWalletFee(totalTxFee.toString(10));
 
             if (isLZWrappedChain(chain)) {
                 setBridgeTxFee(feeResp.transactionData.populatedTransaction.value) 
@@ -111,8 +106,8 @@ const BridgeInputLZ = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, getLZEthT
       }
   
       setUserWalletFee(undefined);
-      
-    }, [destinationAddr, amount, chain, sourceToken, getLZEthTxFee])
+      setBridgeTxFee("");
+    }, [destinationAddr, amount, chain, sourceToken, getLZEthTxFee, setBridgeTxFee])
 
   const setSourceTokenCallback = useCallback((token: TokenEnum) => {
     setSourceToken(token);
@@ -235,7 +230,7 @@ const BridgeInputLZ = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, getLZEthT
                 id="bridge-amount"/>
 
             <FeeInformation
-              //userWalletFee={userWalletFee || '0'}
+              userWalletFee={userWalletFee || '0'}
               bridgeTxFee={bridgeTxFee || '0'}
               chain={chain}
               isLayerZero={true}
