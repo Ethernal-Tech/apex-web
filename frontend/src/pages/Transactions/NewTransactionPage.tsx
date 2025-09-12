@@ -1,20 +1,21 @@
 import BasePage from "../base/BasePage";
 import BridgeInput from "./components/BridgeInput";
-import { convertDfmToWei, formatTxDetailUrl, validateSubmitTxInputs, validateSubmitTxInputsSkyline } from "../../utils/generalUtils";
+import { convertDfmToWei, formatTxDetailUrl, validateSubmitTxInputs, validateSubmitTxInputsSkyline} from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import walletHandler from '../../features/WalletHandler';
-import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
-import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
-import { signAndSubmitCardanoTx, signAndSubmitEthTx } from "../../actions/submitTx";
+import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction, layerZeroTransferAction } from "./action";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto, LayerZeroTransferDto, LayerZeroTransferResponseDto } from "../../swagger/apexBridgeApiService";
+import { signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx} from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
-import { isCardanoChain, isEvmChain } from "../../settings/chain";
+import { isCardanoChain, isEvmChain, isLZBridging, toApexBridge, toLayerZeroChainName } from "../../settings/chain";
+import BridgeInputLZ from "./components/LayerZeroBridgeInput";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -54,11 +55,14 @@ function NewTransactionPage() {
 	const prepareCreateCardanoTx = useCallback(async(address: string, amount: string, isNativeToken: boolean = false): Promise<CreateTransactionDto> => {
     	await walletHandler.getChangeAddress(); // this line triggers an error if the wallet account has been changed by the user in the meantime
 
+		const destChain = toApexBridge(destinationChain)
+		const originChain = toApexBridge(chain)
+
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
 			operationFee: '0', // will be set on backend
-			destinationChain,
-			originChain: chain,
+			destinationChain: destChain!, 
+			originChain: originChain!,
 			senderAddress: account,
 			destinationAddress: address,
 			amount,
@@ -81,7 +85,7 @@ function NewTransactionPage() {
 	const createCardanoTx = useCallback(async (address: string, amount: string, isNativeToken: boolean): Promise<CreateCardanoTxResponse> => {
 		const validationErr = appSettings.isSkyline
 			? validateSubmitTxInputsSkyline(settings, chain, destinationChain, address, amount, bridgeTxFee, operationFee, isNativeToken) 
-			: validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
+			: validateSubmitTxInputs(settings, chain, destinationChain, address, amount);
 		if (validationErr) {
 			throw new Error(validationErr);
 		}
@@ -97,11 +101,14 @@ function NewTransactionPage() {
 	}, [bridgeTxFee, chain, destinationChain, operationFee, prepareCreateCardanoTx, settings])
 
 	const prepareCreateEthTx = useCallback((address: string, amount: string): CreateTransactionDto => {
+		const destChain = toApexBridge(destinationChain)
+		const originChain = toApexBridge(chain)
+
 		return new CreateTransactionDto({
 			bridgingFee: '0', // will be set on backend
 			operationFee: '0', // will be set on backend
-			destinationChain,
-			originChain: chain,
+			destinationChain: destChain!,
+			originChain: originChain!,
 			senderAddress: account,
 			destinationAddress: address,
 			amount,
@@ -121,8 +128,48 @@ function NewTransactionPage() {
 		return feeResponse;
 	}, [prepareCreateEthTx])
 
+	const createLayerZeroTx = useCallback(async (address: string, amount: string): Promise<LayerZeroTransferResponseDto> => {
+		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount) 
+		if (validationErr) {
+			throw new Error(validationErr);
+		}
+
+		const originChainSetting = settings.layerZeroChains[chain];
+		
+		if (!originChainSetting) throw new Error(`No LayerZero config for ${chain}`);
+		
+		const createTxDto = new LayerZeroTransferDto({
+			srcChainName: toLayerZeroChainName(chain),
+			dstChainName: toLayerZeroChainName(destinationChain),
+			oftAddress: originChainSetting.oftAddress,
+    		from: account,
+    		to: address,
+    		validate: false,
+			amount: amount,			
+		});
+
+		const bindedCreateAction = layerZeroTransferAction.bind(null, createTxDto);
+		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
+		if (createResponse instanceof ErrorResponse) {
+			throw new Error(createResponse.err)
+		}
+
+		return createResponse;
+	}, [account, chain, destinationChain, settings])
+
+
+
+	const getLZEthTxFee = useCallback(async (address: string, amount: string): Promise<LayerZeroTransferResponseDto> =>{
+		try{
+			return await createLayerZeroTx(address, amount);
+		}
+		catch(err){
+			throw err instanceof Error ? err : new Error(String(err));
+		}
+	}, [createLayerZeroTx])
+
 	const createEthTx = useCallback(async (address: string, amount: string): Promise<CreateEthTxResponse> => {
-		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount, bridgeTxFee);
+		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount);
 		if (validationErr) {
 			throw new Error(validationErr);
 		}
@@ -135,7 +182,7 @@ function NewTransactionPage() {
 		}
 
 		return { createTxDto, createResponse };
-	}, [bridgeTxFee, chain, destinationChain, prepareCreateEthTx, settings])
+	}, [chain, destinationChain, prepareCreateEthTx, settings])
 
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: string, isNativeToken: boolean) => {
@@ -148,6 +195,8 @@ function NewTransactionPage() {
 						createTxResp.createTxDto,
 						createTxResp.createResponse,
 					);
+
+					console.log("signed transaction");
 					
 					response && goToDetails(response);
 				} else if (isEvmChain(chain)) {
@@ -176,21 +225,54 @@ function NewTransactionPage() {
 		[chain, createCardanoTx, createEthTx, goToDetails],
 	);
 
+	const handleLZSubmitCallback = useCallback(
+		async(address: string, amount: string) =>{
+			setLoading(true);
+			try{
+				const createTxResp = await createLayerZeroTx(address, amount);
+				const response = await signAndSubmitLayerZeroTx(address, createTxResp);
+
+				response && goToDetails(response);
+			}
+			catch(err){
+				console.log(err);
+				if (err instanceof Error && err.message.includes('account changed')) {
+					toast.error(`Wallet account changed. It looks like you switched accounts in your wallet.`)
+				} else {
+					toast.error(`${err}`)
+				}
+			} finally{
+				setLoading(false);
+			}
+		},[createLayerZeroTx, goToDetails]
+	)
+
 	return (
-		<BasePage>
-			<NewTransaction txInProgress={false}>
-				<BridgeInput
-					bridgeTxFee={bridgeTxFee}
-					setBridgeTxFee={setBridgeTxFee}
-					resetBridgeTxFee={resetBridgeTxFee}
-					operationFee={operationFee}
-					getCardanoTxFee={getCardanoTxFee}
-					getEthTxFee={getEthTxFee}
-					submit={handleSubmitCallback}
-					loading={loading}
-				/>
-			</NewTransaction>
-		</BasePage>
+<BasePage>
+  <NewTransaction txInProgress={false}>
+    {isLZBridging(chain,destinationChain) ? (
+      <BridgeInputLZ
+		bridgeTxFee={bridgeTxFee}
+        setBridgeTxFee={setBridgeTxFee}
+        resetBridgeTxFee={resetBridgeTxFee}
+		getLZEthTxFee={getLZEthTxFee}
+        submit={handleLZSubmitCallback}
+        loading={loading}
+      />
+    ) : (
+      <BridgeInput
+        bridgeTxFee={bridgeTxFee}
+        setBridgeTxFee={setBridgeTxFee}
+        resetBridgeTxFee={resetBridgeTxFee}
+        operationFee={operationFee}
+        getCardanoTxFee={getCardanoTxFee}
+        getEthTxFee={getEthTxFee}
+        submit={handleSubmitCallback}
+        loading={loading}
+      />
+    )}
+  </NewTransaction>
+</BasePage>
 	)
 }
 

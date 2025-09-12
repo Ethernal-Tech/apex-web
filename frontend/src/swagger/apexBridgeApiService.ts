@@ -274,7 +274,7 @@ export class TransactionControllerClient extends BaseClient {
      * Layer Zero transfer proxy call
      * @return OK - Returns data recieved from Layer Zero API.
      */
-    layerZeroTransfer(body: LayerZeroTransactionDto): Promise<BridgeTransactionDto> {
+    layerZeroTransfer(body: LayerZeroTransferDto): Promise<LayerZeroTransferResponseDto> {
         let url_ = this.baseUrl + "/transaction/layerZeroTransfer";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -296,14 +296,14 @@ export class TransactionControllerClient extends BaseClient {
         });
     }
 
-    protected processLayerZeroTransfer(response: Response): Promise<BridgeTransactionDto> {
+    protected processLayerZeroTransfer(response: Response): Promise<LayerZeroTransferResponseDto> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = BridgeTransactionDto.fromJS(resultData200);
+            result200 = LayerZeroTransferResponseDto.fromJS(resultData200);
             return result200;
             });
         } else if (status === 400) {
@@ -315,7 +315,7 @@ export class TransactionControllerClient extends BaseClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<BridgeTransactionDto>(null as any);
+        return Promise.resolve<LayerZeroTransferResponseDto>(null as any);
     }
 }
 
@@ -1588,7 +1588,7 @@ export interface IBridgeTransactionDto {
     [key: string]: any;
 }
 
-export class LayerZeroTransactionDto implements ILayerZeroTransactionDto {
+export class LayerZeroTransferDto implements ILayerZeroTransferDto {
     /** Source chain name where the OFT transfer originates */
     srcChainName!: string;
     /** Destination chain name where the OFT will be received */
@@ -1612,7 +1612,7 @@ export class LayerZeroTransactionDto implements ILayerZeroTransactionDto {
 
     [key: string]: any;
 
-    constructor(data?: ILayerZeroTransactionDto) {
+    constructor(data?: ILayerZeroTransferDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -1643,9 +1643,9 @@ export class LayerZeroTransactionDto implements ILayerZeroTransactionDto {
         }
     }
 
-    static fromJS(data: any): LayerZeroTransactionDto {
+    static fromJS(data: any): LayerZeroTransferDto {
         data = typeof data === 'object' ? data : {};
-        let result = new LayerZeroTransactionDto();
+        let result = new LayerZeroTransferDto();
         result.init(data);
         return result;
     }
@@ -1670,7 +1670,7 @@ export class LayerZeroTransactionDto implements ILayerZeroTransactionDto {
     }
 }
 
-export interface ILayerZeroTransactionDto {
+export interface ILayerZeroTransferDto {
     /** Source chain name where the OFT transfer originates */
     srcChainName: string;
     /** Destination chain name where the OFT will be received */
@@ -1691,6 +1691,416 @@ export interface ILayerZeroTransactionDto {
     composeMsg?: string;
     /** OFT command for advanced operations (hex encoded) */
     oftCmd?: string;
+
+    [key: string]: any;
+}
+
+export class MetadataPropertiesDto implements IMetadataPropertiesDto {
+    /** Address of the destination OFT contract */
+    dstOftAddress!: string;
+    /** Type of the destination OFT adapter */
+    dstOftType!: string;
+    /** Name of the destination chain */
+    dstChainName!: string;
+    /** Amount being transferred (in smallest units) */
+    amount!: string;
+    /** Shared decimals used for cross-chain transfer */
+    sharedDecimals!: number;
+    /** Local decimals of the token on the source chain */
+    localDecimals!: number;
+
+    [key: string]: any;
+
+    constructor(data?: IMetadataPropertiesDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.dstOftAddress = _data["dstOftAddress"];
+            this.dstOftType = _data["dstOftType"];
+            this.dstChainName = _data["dstChainName"];
+            this.amount = _data["amount"];
+            this.sharedDecimals = _data["sharedDecimals"];
+            this.localDecimals = _data["localDecimals"];
+        }
+    }
+
+    static fromJS(data: any): MetadataPropertiesDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new MetadataPropertiesDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["dstOftAddress"] = this.dstOftAddress;
+        data["dstOftType"] = this.dstOftType;
+        data["dstChainName"] = this.dstChainName;
+        data["amount"] = this.amount;
+        data["sharedDecimals"] = this.sharedDecimals;
+        data["localDecimals"] = this.localDecimals;
+        return data;
+    }
+}
+
+export interface IMetadataPropertiesDto {
+    /** Address of the destination OFT contract */
+    dstOftAddress: string;
+    /** Type of the destination OFT adapter */
+    dstOftType: string;
+    /** Name of the destination chain */
+    dstChainName: string;
+    /** Amount being transferred (in smallest units) */
+    amount: string;
+    /** Shared decimals used for cross-chain transfer */
+    sharedDecimals: number;
+    /** Local decimals of the token on the source chain */
+    localDecimals: number;
+
+    [key: string]: any;
+}
+
+export class MetadataTimestampsDto implements IMetadataTimestampsDto {
+    /** Timestamp of when the transaction was created */
+    created!: number;
+
+    [key: string]: any;
+
+    constructor(data?: IMetadataTimestampsDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.created = _data["created"];
+        }
+    }
+
+    static fromJS(data: any): MetadataTimestampsDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new MetadataTimestampsDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["created"] = this.created;
+        return data;
+    }
+}
+
+export interface IMetadataTimestampsDto {
+    /** Timestamp of when the transaction was created */
+    created: number;
+
+    [key: string]: any;
+}
+
+export class MetadataDto implements IMetadataDto {
+    /** Key properties describing the transfer */
+    properties!: MetadataPropertiesDto;
+    /** Timestamps related to the transfer lifecycle */
+    timestamps!: MetadataTimestampsDto;
+
+    [key: string]: any;
+
+    constructor(data?: IMetadataDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+        if (!data) {
+            this.properties = new MetadataPropertiesDto();
+            this.timestamps = new MetadataTimestampsDto();
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.properties = _data["properties"] ? MetadataPropertiesDto.fromJS(_data["properties"]) : new MetadataPropertiesDto();
+            this.timestamps = _data["timestamps"] ? MetadataTimestampsDto.fromJS(_data["timestamps"]) : new MetadataTimestampsDto();
+        }
+    }
+
+    static fromJS(data: any): MetadataDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new MetadataDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["properties"] = this.properties ? this.properties.toJSON() : undefined as any;
+        data["timestamps"] = this.timestamps ? this.timestamps.toJSON() : undefined as any;
+        return data;
+    }
+}
+
+export interface IMetadataDto {
+    /** Key properties describing the transfer */
+    properties: MetadataPropertiesDto;
+    /** Timestamps related to the transfer lifecycle */
+    timestamps: MetadataTimestampsDto;
+
+    [key: string]: any;
+}
+
+export class PopulatedTransactionDto implements IPopulatedTransactionDto {
+    /** Raw transaction calldata to be submitted */
+    data!: string;
+    /** Destination address for the transaction */
+    to!: string;
+    /** Value in wei being sent with the transaction */
+    value!: string;
+
+    [key: string]: any;
+
+    constructor(data?: IPopulatedTransactionDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.data = _data["data"];
+            this.to = _data["to"];
+            this.value = _data["value"];
+        }
+    }
+
+    static fromJS(data: any): PopulatedTransactionDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new PopulatedTransactionDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["data"] = this.data;
+        data["to"] = this.to;
+        data["value"] = this.value;
+        return data;
+    }
+}
+
+export interface IPopulatedTransactionDto {
+    /** Raw transaction calldata to be submitted */
+    data: string;
+    /** Destination address for the transaction */
+    to: string;
+    /** Value in wei being sent with the transaction */
+    value: string;
+
+    [key: string]: any;
+}
+
+export class TransactionDataDto implements ITransactionDataDto {
+    /** Populated transaction ready for signing and sending */
+    populatedTransaction!: PopulatedTransactionDto;
+
+    [key: string]: any;
+
+    constructor(data?: ITransactionDataDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+        if (!data) {
+            this.populatedTransaction = new PopulatedTransactionDto();
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.populatedTransaction = _data["populatedTransaction"] ? PopulatedTransactionDto.fromJS(_data["populatedTransaction"]) : new PopulatedTransactionDto();
+        }
+    }
+
+    static fromJS(data: any): TransactionDataDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TransactionDataDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["populatedTransaction"] = this.populatedTransaction ? this.populatedTransaction.toJSON() : undefined as any;
+        return data;
+    }
+}
+
+export interface ITransactionDataDto {
+    /** Populated transaction ready for signing and sending */
+    populatedTransaction: PopulatedTransactionDto;
+
+    [key: string]: any;
+}
+
+export class LayerZeroTransferResponseDto implements ILayerZeroTransferResponseDto {
+    /** Transaction history on the destination chain */
+    dstTxHistory!: any[][];
+    /** Indicates whether the transfer should be simulated before sending */
+    shouldSimulate!: boolean;
+    /** Type of the response object */
+    type!: string;
+    /** Timestamp of when this response was created */
+    created!: number;
+    /** Name of the destination chain for this transfer */
+    dstChainName!: string;
+    /** Metadata describing the transfer */
+    metadata!: MetadataDto;
+    /** Transaction data including populated transaction */
+    transactionData!: TransactionDataDto;
+    /** Type of transaction being executed */
+    transactionType!: string;
+
+    [key: string]: any;
+
+    constructor(data?: ILayerZeroTransferResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+        if (!data) {
+            this.dstTxHistory = [];
+            this.metadata = new MetadataDto();
+            this.transactionData = new TransactionDataDto();
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            if (Array.isArray(_data["dstTxHistory"])) {
+                this.dstTxHistory = [] as any;
+                for (let item of _data["dstTxHistory"])
+                    this.dstTxHistory!.push(item);
+            }
+            this.shouldSimulate = _data["shouldSimulate"];
+            this.type = _data["type"];
+            this.created = _data["created"];
+            this.dstChainName = _data["dstChainName"];
+            this.metadata = _data["metadata"] ? MetadataDto.fromJS(_data["metadata"]) : new MetadataDto();
+            this.transactionData = _data["transactionData"] ? TransactionDataDto.fromJS(_data["transactionData"]) : new TransactionDataDto();
+            this.transactionType = _data["transactionType"];
+        }
+    }
+
+    static fromJS(data: any): LayerZeroTransferResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new LayerZeroTransferResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        if (Array.isArray(this.dstTxHistory)) {
+            data["dstTxHistory"] = [];
+            for (let item of this.dstTxHistory)
+                data["dstTxHistory"].push(item);
+        }
+        data["shouldSimulate"] = this.shouldSimulate;
+        data["type"] = this.type;
+        data["created"] = this.created;
+        data["dstChainName"] = this.dstChainName;
+        data["metadata"] = this.metadata ? this.metadata.toJSON() : undefined as any;
+        data["transactionData"] = this.transactionData ? this.transactionData.toJSON() : undefined as any;
+        data["transactionType"] = this.transactionType;
+        return data;
+    }
+}
+
+export interface ILayerZeroTransferResponseDto {
+    /** Transaction history on the destination chain */
+    dstTxHistory: any[][];
+    /** Indicates whether the transfer should be simulated before sending */
+    shouldSimulate: boolean;
+    /** Type of the response object */
+    type: string;
+    /** Timestamp of when this response was created */
+    created: number;
+    /** Name of the destination chain for this transfer */
+    dstChainName: string;
+    /** Metadata describing the transfer */
+    metadata: MetadataDto;
+    /** Transaction data including populated transaction */
+    transactionData: TransactionDataDto;
+    /** Type of transaction being executed */
+    transactionType: string;
 
     [key: string]: any;
 }

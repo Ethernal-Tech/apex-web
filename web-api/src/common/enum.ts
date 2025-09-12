@@ -17,12 +17,12 @@ export enum ChainApexBridgeEnum {
 }
 
 export const ChainEnum = {
-  ...ChainApexBridgeEnum,
+	...ChainApexBridgeEnum,
 	Base: 'base',
 	BNB: 'bsc',
 } as const;
 
-export type ChainEnum = typeof ChainEnum[keyof typeof ChainEnum]; 
+export type ChainEnum = (typeof ChainEnum)[keyof typeof ChainEnum];
 
 export enum GroupByTimePeriod {
 	Hour = 'hour',

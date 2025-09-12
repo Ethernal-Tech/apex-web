@@ -83,7 +83,7 @@ export class NativeTokenDto {
 
 export class LayerZeroChainSettingsDto {
 	@IsNotEmpty()
-  	@ApiProperty({
+	@ApiProperty({
 		description: 'Chain name',
 		enum: ChainEnum,
 	})

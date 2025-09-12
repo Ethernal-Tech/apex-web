@@ -8,7 +8,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 import appSettings from "../../../settings/appSettings";
 import { getBridgingInfo, getTokenInfo } from "../../../settings/token";
-import { getChainInfo } from "../../../settings/chain";
+import { getChainInfo, isLZBridging } from "../../../settings/chain";
 
 const TotalBalance = () => {
 	const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
@@ -28,11 +28,19 @@ const TotalBalance = () => {
                 <Typography textTransform={'uppercase'} color={'white'} sx={{display:'flex',alignItems:'center'}}>
                     <WalletIcon/>
                     <Box component="span" ml={1}>Available Balance</Box>
-                    <Tooltip
+                    <Tooltip 
                         title={
+                            isLZBridging(chain, destinationChain) ? (
+                            // TODO: Set desired sentences for layer zero briding.
+                            <Typography color={'white'} sx={{ fontSize: '14px' }}>
+                                This balance reflects the total amount of tokens available on the source chain for LayerZero bridging. 
+                                It does not include any unconfirmed transfers, pending approvals, or tokens that are locked on the destination chain.
+                            </Typography>
+                            ) : (
                             <Typography color={'white'} sx={{ fontSize: '14px' }}>
                                 This balance reflects the total value of all UTXOs associated with your address. It does not include any additional funds, such as rewards held in your staking (reward) account.
                             </Typography>
+                            )
                         }
                         placement="right-start"
                     >

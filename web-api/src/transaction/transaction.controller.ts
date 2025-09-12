@@ -8,7 +8,11 @@ import {
 	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
-import { BridgeTransactionDto, LayerZeroTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
+import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
+import {
+	LayerZeroTransferDto as LayerZeroTransferDto,
+	LayerZeroTransferResponseDto,
+} from './layerzerotransaction.dto';
 
 @ApiTags('Transaction')
 @Controller('transaction')
@@ -109,12 +113,11 @@ export class TransactionController {
 
 	@ApiOperation({
 		summary: 'Layer Zero transfer proxy call',
-		description:
-			'Layer Zero transfer proxy call',
+		description: 'Layer Zero transfer proxy call',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: BridgeTransactionDto,
+		type: LayerZeroTransferResponseDto,
 		description: 'OK - Returns data recieved from Layer Zero API.',
 	})
 	@ApiResponse({
@@ -124,8 +127,8 @@ export class TransactionController {
 	@HttpCode(HttpStatus.OK)
 	@Post('layerZeroTransfer')
 	async layerZeroTransfer(
-		@Body() model: LayerZeroTransactionDto,
-	): Promise<any> {
-		return this.transactionService.transferLayerZero(model)
+		@Body() model: LayerZeroTransferDto,
+	): Promise<LayerZeroTransferResponseDto> {
+		return this.transactionService.transferLayerZero(model);
 	}
 }

@@ -41,7 +41,7 @@ const checkAndSetEvmData = async (selectedWalletName: string, chain: ChainEnum, 
     }))
 }
 
-const onEvmAccountsChanged = async (_accounts: string[], selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch): Promise<void> => {
+const onEvmAccountsChanged = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch): Promise<void> => {
     try {
         await checkAndSetEvmData(selectedWalletName, chain, dispatch)
     } catch (e) {
@@ -54,8 +54,16 @@ const onEvmAccountsChanged = async (_accounts: string[], selectedWalletName: str
 }
 
 const enableEvmWallet = async (selectedWalletName: string, chain: ChainEnum, dispatch: Dispatch) => {
+    const expectedChainId = fromChainToNetworkId(chain);
+    if (!expectedChainId) {
+        throw new Error(`Chain ${chain} not supported.`);
+    }
+
     await evmWalletHandler.enable(
-        (accounts: string[]) => onEvmAccountsChanged(accounts, selectedWalletName, chain, dispatch));
+        BigInt(expectedChainId),
+        (_: string[]) => onEvmAccountsChanged(selectedWalletName, chain, dispatch),
+        (_: string) => onEvmAccountsChanged(selectedWalletName, chain, dispatch)
+    );
     let success = evmWalletHandler.checkWallet()
 
     if (!success) {

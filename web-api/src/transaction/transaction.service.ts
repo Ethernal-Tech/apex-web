@@ -23,11 +23,15 @@ import {
 	getInputUtxos,
 	mapBridgeTransactionToResponse,
 } from 'src/bridgeTransaction/bridgeTransaction.helper';
-import { BridgeTransactionDto, LayerZeroTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
+import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 import { SettingsService } from 'src/settings/settings.service';
 import { Utxo } from 'src/blockchain/dto';
 import { Logger } from '@nestjs/common';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
+import {
+	LayerZeroTransferDto,
+	LayerZeroTransferResponseDto,
+} from './layerzerotransaction.dto';
 
 @Injectable()
 export class TransactionService {
@@ -213,6 +217,7 @@ export class TransactionService {
 		nativeTokenAmount,
 		txRaw,
 		isFallback,
+		isLayerZero,
 	}: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
 		const entity = new BridgeTransaction();
 
@@ -233,6 +238,7 @@ export class TransactionService {
 		entity.status = TransactionStatusEnum.Pending;
 		entity.txRaw = txRaw;
 		entity.isCentralized = isFallback;
+		entity.isLayerZero = isLayerZero;
 
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
@@ -258,18 +264,28 @@ export class TransactionService {
 		}
 	}
 
-	async transferLayerZero(dto: LayerZeroTransactionDto): Promise<any> {
+	async transferLayerZero(
+		dto: LayerZeroTransferDto,
+	): Promise<LayerZeroTransferResponseDto> {
 		try {
 			const endpointUrl = `${process.env.LAYERZERO_API_URL}/transfer`;
 			Logger.debug(`axios.get: ${endpointUrl}`);
-			
-			return await axios.get(endpointUrl, {
+
+			const response: AxiosResponse<any, any> = await axios.get(endpointUrl, {
 				params: dto,
-				headers: {'x-layerzero-api-key': process.env.LAYERZERO_APIKEY},
-			})
-		} catch (e) {			
+				headers: { 'x-layerzero-api-key': process.env.LAYERZERO_APIKEY },
+			});
+
+			return response.data as LayerZeroTransferResponseDto;
+		} catch (error) {
+			if (axios.isAxiosError(error)) {
+				throw new BadRequestException(
+					`Request failed: ${error.response?.data.message || error.message}`,
+				);
+			}
+
 			throw new BadRequestException(
-				`error while calling Layer Zero transfer: ${e}`,
+				`error while calling Layer Zero transfer: ${error}`,
 			);
 		}
 	}

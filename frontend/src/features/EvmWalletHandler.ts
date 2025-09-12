@@ -1,5 +1,8 @@
 import Web3 from 'web3';
 import { Transaction } from 'web3-types';
+import { toHex } from "web3-utils";
+import { ERC20_MIN_ABI } from './ABI';
+import { wait } from '../utils/generalUtils';
 
 type Wallet = {
     name: string;
@@ -13,9 +16,13 @@ export const EVM_SUPPORTED_WALLETS = [{
     version: 'N/A', // MetaMask does not provide API version directly
 }]
 
+const MAX_RETRY_COUNT = 5;
+const RETRY_WAIT_TIME = 1000;
+
 class EvmWalletHandler {
     private web3: Web3 | undefined;
-    private onAccountsChanged: (accounts: string[]) => Promise<void> = async () => undefined
+    private onAccountsChanged: (accounts: string[]) => Promise<void> = async () => undefined;
+    private onChainChanged: (chainId: string) => Promise<void> = async () => undefined;
 
     getInstalledWallets = (): Wallet[] => {
         if (typeof window.ethereum === 'undefined') return [];
@@ -23,22 +30,33 @@ class EvmWalletHandler {
         return EVM_SUPPORTED_WALLETS;
     };
 
-    accountsChanged = async (accounts: string[]) => await this.onAccountsChanged(accounts)
+    accountsChanged = async (accounts: string[]) => await this.onAccountsChanged(accounts);
+    chainChanged = async (chainId: string) => await this.onChainChanged(chainId);
 
-    enable = async (onAccountsChanged: (accounts: string[]) => Promise<void>) => {
+    enable = async (
+        expectedChainId: bigint,
+        onAccountsChanged: (accounts: string[]) => Promise<void>,
+        onChainChanged: (chainId: string) => Promise<void>,
+    ) => {
         if (typeof window.ethereum !== 'undefined') {
             this.web3 = new Web3(window.ethereum);
             this.web3.transactionBlockTimeout = 200;
         }
 
         if (this.web3) {
-            this.onAccountsChanged = onAccountsChanged
-            window.ethereum.on('accountsChanged', this.accountsChanged)
+            this.onAccountsChanged = onAccountsChanged;
+            this.onChainChanged = onChainChanged;
+            window.ethereum.on('accountsChanged', this.accountsChanged);
+            window.ethereum.on('chainChanged', this.chainChanged);
+
+            await this.forceChainWithRetry(expectedChainId);
 
             try {
                 await window.ethereum.request({ method: 'eth_requestAccounts' });
             } catch (error) {
                 console.error('User denied account access');
+
+                return;
             }
         }
     };
@@ -46,7 +64,8 @@ class EvmWalletHandler {
     clearEnabledWallet = () => {
         this.web3 = undefined;
         if (typeof window.ethereum !== 'undefined') {
-            window.ethereum.removeListener('accountsChanged', this.accountsChanged)
+            window.ethereum.removeListener('accountsChanged', this.accountsChanged);
+            window.ethereum.removeListener('chainChanged', this.chainChanged);
         }
     };
 
@@ -59,6 +78,47 @@ class EvmWalletHandler {
             throw new Error('Wallet not enabled');
         }
     };
+
+	private forceChainWithRetry = async (expectedChainId: bigint, retryCount: number = 1): Promise<void> => {
+		let wrongChain = false;
+		try {
+            const chainId = await window.ethereum.request({ method: 'eth_chainId' }) as unknown as string;
+			wrongChain = parseChainId(chainId) !== expectedChainId;
+		}
+		catch (enableError: any) {
+			const enableErr = enableError?.data?.originalError ?? enableError;
+			if (retryCount < MAX_RETRY_COUNT && enableErr.code !== 4001) {
+				if (enableErr.code === 4902) {
+					wrongChain = true;
+				}
+				else {
+					await wait(RETRY_WAIT_TIME);
+
+					return await this.forceChainWithRetry(expectedChainId, retryCount + 1);
+				}
+			}
+			else {
+				throw enableError;
+			}
+		}
+
+		if (wrongChain) {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: toHex(expectedChainId) }],
+                });
+            } catch (e) {
+                console.log(e);
+
+                throw new Error(`Failed to switch to network with ID: ${expectedChainId}. Try adding that network to the wallet first.`);
+            }
+
+			await wait(RETRY_WAIT_TIME);
+
+			return await this.forceChainWithRetry(expectedChainId, retryCount + 1);
+		}
+	}
 
     // PROXY
 
@@ -94,7 +154,29 @@ class EvmWalletHandler {
         this._checkWalletAndThrow();
         return await this.web3!.eth.getGasPrice();
     }
+
+    getERC20Balance = async(tokenAddress: string) => {
+        this._checkWalletAndThrow();
+        const account = await this.getAddress()
+
+        if(!account) throw new Error("No connected wallet address.")
+
+        const contract = new this.web3!.eth.Contract(ERC20_MIN_ABI, tokenAddress);
+        const rawBalResp = await contract.methods.balanceOf(account).call();
+        const raw = Array.isArray(rawBalResp) ? rawBalResp[0] : rawBalResp;
+
+        const balance = BigInt(raw)
+
+        return this.web3!.utils.fromWei(balance, 'wei');
+    }
 }
 
+const parseChainId = (chainId: string | number): bigint => {
+	return BigInt(typeof chainId === 'number'
+        ? chainId
+        : Number.parseInt(chainId, chainId.startsWith('0x') ? 16 : 10));
+};
+
 const evmWalletHandler = new EvmWalletHandler();
+
 export default evmWalletHandler;

@@ -40,3 +40,20 @@ export const useSupportedSourceTokenOptions = (srcChain: ChainEnum, dstChain: Ch
   }, [cardanoChainsNativeTokens, srcChain, dstChain]);
 };
 
+export const useSupporedSourceLZTokenOptions = (srcChain: ChainEnum, dstChain: ChainEnum): TokenOption[] => {
+  return useMemo(() =>{
+    const bridgingInfo = getBridgingInfo(srcChain, dstChain);
+    const options: TokenOption[] = [];
+
+    if (bridgingInfo.isCurrencyBridgingAllowed) {
+      options.push(tokenInfoToTokenOption(getCurrencyTokenInfo(srcChain)));
+    }
+
+    if (!!bridgingInfo.wrappedToken) {
+      options.push(tokenInfoToTokenOption(getTokenInfo(bridgingInfo.wrappedToken!)));
+    }
+
+    return options
+  }, [srcChain, dstChain]);
+}
+

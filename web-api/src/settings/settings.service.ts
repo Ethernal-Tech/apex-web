@@ -1,7 +1,10 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import { retryForever } from 'src/utils/generalUtils';
-import { LayerZeroChainSettingsDto, SettingsFullResponseDto } from './settings.dto';
+import {
+	LayerZeroChainSettingsDto,
+	SettingsFullResponseDto,
+} from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { ChainEnum } from 'src/common/enum';
 
@@ -29,22 +32,24 @@ export class SettingsService {
 		);
 
 		const chains = (process.env.LAYERZERO_CONFIG || '').split(',');
-		this.SettingsResponse.layerZeroChains = chains.map(x => {
-			const subItems = x.split("::")
-			if (subItems.length < 4) {
-				return;
-			}
+		this.SettingsResponse.layerZeroChains = chains
+			.map((x) => {
+				const subItems = x.split('::');
+				if (subItems.length < 4) {
+					return;
+				}
 
-			const item = new LayerZeroChainSettingsDto();
-			item.chain = subItems[0].trim() as ChainEnum;
-			item.rpcUrl = subItems[1].trim();
-			item.oftAddress = subItems[2].trim();
-			item.chainID = parseInt(subItems[3].trim(), 10);
-			
-			return item
-		}).filter(x => !!x);
+				const item = new LayerZeroChainSettingsDto();
+				item.chain = subItems[0].trim() as ChainEnum;
+				item.rpcUrl = subItems[1].trim();
+				item.oftAddress = subItems[2].trim();
+				item.chainID = parseInt(subItems[3].trim(), 10);
 
-		this.SettingsResponse.layerZeroChains.forEach(x => {
+				return item;
+			})
+			.filter((x) => !!x);
+
+		this.SettingsResponse.layerZeroChains.forEach((x) => {
 			if (!this.SettingsResponse.enabledChains.includes(x.chain)) {
 				this.SettingsResponse.enabledChains.push(x.chain);
 			}

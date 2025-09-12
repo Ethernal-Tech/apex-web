@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper
 import BasePage from '../base/BasePage';
 import { Link } from 'react-router-dom';
 import FullPageSpinner from '../../components/spinner/Spinner';
-import { BridgeTransactionFilterDto, BridgeTransactionResponseDto } from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionFilterDto, BridgeTransactionResponseDto, ChainEnum } from '../../swagger/apexBridgeApiService';
 import Filters from '../../components/filters/Filters';
 import { visuallyHidden } from '@mui/utils';
 import { reactorHeadCells, skylineHeadCells } from './tableConfig';
@@ -28,7 +28,7 @@ const TransactionsTablePage = () => {
   const headCells = appSettings.isSkyline ? skylineHeadCells : reactorHeadCells;
 
 	const [filters, setFilters] = useState(new BridgeTransactionFilterDto({
-    originChain: chain,
+    originChain: chain as ChainEnum,
     senderAddress: account,
   }));
 
