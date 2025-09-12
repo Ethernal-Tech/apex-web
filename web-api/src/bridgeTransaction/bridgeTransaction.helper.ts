@@ -83,9 +83,11 @@ export type HasTxFailedResponse = {
 	failed: boolean;
 };
 
-export const getLayerZeroRequestStates = async (models: GetLayerZeroBridgingRequestStatesModel[]) => {
+export const getLayerZeroRequestStates = async (
+	models: GetLayerZeroBridgingRequestStatesModel[],
+) => {
 	const states = await Promise.all(
-		models.map((model) => getLayerZeroRequestState(model)).filter(x => !!x),
+		models.map((model) => getLayerZeroRequestState(model)).filter((x) => !!x),
 	);
 
 	return states.reduce((acc: { [key: string]: BridgingRequestState }, cv) => {
@@ -95,7 +97,7 @@ export const getLayerZeroRequestStates = async (models: GetLayerZeroBridgingRequ
 
 		return acc;
 	}, {});
-}
+};
 
 export const getHasTxFailedRequestStates = async (
 	chainId: string,
@@ -121,13 +123,13 @@ export const getLayerZeroRequestState = async (
 	if (!layerZeroUrl) {
 		Logger.error('layer zero scan url not set');
 
-		return 
+		return;
 	}
 	const endpointUrl = `${layerZeroUrl}/messages/tx/${model.txHash}`;
 
 	Logger.debug(`axios.get: ${endpointUrl}`);
 	try {
-		const response = await axios.get(endpointUrl)
+		const response = await axios.get(endpointUrl);
 
 		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
@@ -178,29 +180,32 @@ export const getLayerZeroRequestState = async (
 		*/
 		let status: TransactionStatusEnum = TransactionStatusEnum.Pending;
 		switch (data['status'].name) {
-			case "INFLIGHT":
-				if (data['destination']['status'] == 'SUCCEEDED') { 
+			case 'INFLIGHT':
+				if (data['destination']['status'] == 'SUCCEEDED') {
 					status = TransactionStatusEnum.SubmittedToDestination;
-				} else if (data['source']['status'] == 'SUCCEEDED') { 
+				} else if (data['source']['status'] == 'SUCCEEDED') {
 					status = TransactionStatusEnum.SubmittedToBridge;
 				} else {
 					status = TransactionStatusEnum.DiscoveredOnSource;
 				}
-				
+
 				break;
 			case 'DELIVERED':
 				status = TransactionStatusEnum.ExecutedOnDestination;
 
 				break;
-			case "PAYLOAD_STORED":
+			case 'PAYLOAD_STORED':
 				status = TransactionStatusEnum.FailedToExecuteOnDestination;
 
 				break;
-			case "CONFIRMING":
+			case 'CONFIRMING':
 				status = TransactionStatusEnum.SubmittedToDestination;
 
-                break;
-			case "FAILED": case "BLOCKED": case "UNRESOLVABLE_COMMAND": case "UNRESOLVABLE_COMMAND":
+				break;
+			case 'FAILED':
+			case 'BLOCKED':
+			case 'UNRESOLVABLE_COMMAND':
+			case 'UNRESOLVABLE_COMMAND':
 				status = TransactionStatusEnum.InvalidRequest;
 
 				break;
@@ -226,7 +231,7 @@ export const getHasTxFailedRequestState = async (
 	chainId: string,
 	model: GetBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
-	if (!model.txRaw || !Object.values(ChainEnum).some(x => x == chainId)) {
+	if (!model.txRaw || !Object.values(ChainEnum).some((x) => x == chainId)) {
 		return;
 	}
 

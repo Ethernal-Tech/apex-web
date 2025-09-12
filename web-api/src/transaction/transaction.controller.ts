@@ -9,7 +9,10 @@ import {
 } from './transaction.dto';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
-import { LayerZeroTransferDto as LayerZeroTransferDto, LayerZeroTransferResponseDto } from './layerzerotransaction.dto';
+import {
+	LayerZeroTransferDto as LayerZeroTransferDto,
+	LayerZeroTransferResponseDto,
+} from './layerzerotransaction.dto';
 
 @ApiTags('Transaction')
 @Controller('transaction')
@@ -110,8 +113,7 @@ export class TransactionController {
 
 	@ApiOperation({
 		summary: 'Layer Zero transfer proxy call',
-		description:
-			'Layer Zero transfer proxy call',
+		description: 'Layer Zero transfer proxy call',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -127,6 +129,6 @@ export class TransactionController {
 	async layerZeroTransfer(
 		@Body() model: LayerZeroTransferDto,
 	): Promise<LayerZeroTransferResponseDto> {
-		return this.transactionService.transferLayerZero(model)
+		return this.transactionService.transferLayerZero(model);
 	}
 }
