@@ -11,12 +11,14 @@ type TxDetailsOptions = {
     feePercMult: bigint;
     gasLimitPercMult: bigint
     fixedLayerZeroGasLimit: bigint | undefined;
+    defaultTipCap: bigint;
 }
 
 const defaultTxDetailsOptions: TxDetailsOptions = {
-    feePercMult: BigInt(220),
+    feePercMult: BigInt(180),
     gasLimitPercMult: BigInt(170),
-    fixedLayerZeroGasLimit: undefined
+    fixedLayerZeroGasLimit: undefined,
+    defaultTipCap: BigInt(1000000000), // 1 gwei
 };
 
 export const signAndSubmitCardanoTx = async (
@@ -201,13 +203,18 @@ export const populateTxDetails = async (
     }
 
     try {
-        // Try to get pending block baseFeePerGas (EIP-1559 chains)
-        const block = await web3.eth.getBlock("pending");
-        if (block.baseFeePerGas) {
-            // Use EIP-1559 fees
-            const tipCap = await web3.eth.getMaxPriorityFeePerGas();
-            response.maxPriorityFeePerGas = tipCap * opts.feePercMult / BigInt(100);
-            response.maxFeePerGas = block.baseFeePerGas * opts.feePercMult / BigInt(100);
+        const feeHistory = await web3.eth.getFeeHistory(1, 'latest', [100]);
+        const baseFeePerGasList = feeHistory.baseFeePerGas as unknown as bigint[];
+        if (!!baseFeePerGasList) {
+            const baseFee = baseFeePerGasList[baseFeePerGasList.length - 1];
+            const lastRewards = feeHistory.reward[feeHistory.reward.length - 1];
+            let tipCap = BigInt(lastRewards[lastRewards.length - 1]) * opts.feePercMult / BigInt(100);
+            if (tipCap === BigInt(0)) {
+                tipCap = opts.defaultTipCap;
+            }
+
+            response.maxPriorityFeePerGas = tipCap;
+            response.maxFeePerGas = baseFee * opts.feePercMult / BigInt(100) + tipCap;
 
             return response
         }
@@ -229,7 +236,7 @@ export const estimateEthTxFee = async (
 
     const gasLimit = BigInt(tx.gas!);
     if (!!tx.maxFeePerGas) {
-        return (BigInt(tx.maxFeePerGas) + BigInt(tx.maxPriorityFeePerGas!)) * gasLimit;
+        return BigInt(tx.maxFeePerGas) * gasLimit;
     }
 
     return BigInt(tx.gasPrice!) * gasLimit;
