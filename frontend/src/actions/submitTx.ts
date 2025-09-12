@@ -3,9 +3,12 @@ import { CreateTransactionDto, CreateCardanoTransactionResponseDto, CreateEthTra
 import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
 import walletHandler from "../features/WalletHandler";
 import evmWalletHandler from "../features/EvmWalletHandler";
-import { Numbers, Transaction } from 'web3-types';
+import { Transaction } from 'web3-types';
 import { isLZWrappedChain, toApexBridgeName } from "../settings/chain";
 import Web3 from "web3";
+
+const feePercMult: bigint = BigInt(150);
+const gasLimitPercMult: bigint = BigInt(150);
 
 export const signAndSubmitCardanoTx = async (
     values: CreateTransactionDto,
@@ -58,7 +61,7 @@ export const fillOutEthTx = async (tx: Transaction, isFallback: boolean) => {
 
 export const estimateEthGas = async (tx: Transaction, isFallback: boolean) => {
     if (!evmWalletHandler.checkWallet()) {
-      return BigInt(0);
+        return BigInt(0);
     }
 
     const filledTx = await fillOutEthTx(tx, isFallback)
@@ -118,11 +121,13 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
         throw new Error('Wallet not connected.');
     }
 
-    const {transactionData} = createResponse;
-    const from = await evmWalletHandler.getAddress()    
+    const { transactionData } = createResponse;
+    const from = await evmWalletHandler.getAddress();
 
     if (transactionData.approvalTransaction) {
-        const tx: Transaction = { from, ...transactionData.transactionData.approvalTransaction };
+        const tx: Transaction = await populateTxDetails({
+            from, ...transactionData.transactionData.approvalTransaction
+        });
 
         const receipt = await evmWalletHandler.submitTx(tx);
         if (receipt.status !== 1) {
@@ -131,13 +136,14 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
     }
 
     const { to } = transactionData.populatedTransaction;
-    const sendTx: Transaction = { from, ...transactionData.populatedTransaction}
+    const sendTx: Transaction = await populateTxDetails({
+        from, ...transactionData.populatedTransaction,
+    });
 
-    sendTx.gasLimit = 1500000
     // Return the receipt from the actual send
     const receipt = await evmWalletHandler.submitTx(sendTx);
     if (receipt.status !== BigInt(1)) {
-         throw new Error('send transaction has been failed');
+        throw new Error('send transaction has been failed');
     }
 
     console.log("Receipt status typeof", typeof receipt.status, "Anv value", receipt.status)
@@ -149,8 +155,8 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
         senderAddress: from!,
         receiverAddrs: [to!],
         txRaw: JSON.stringify(
-        { ...sendTx, block: receipt.blockNumber.toString() },
-        (_: string, value: any) => typeof value === 'bigint' ? `bigint:${value.toString()}` : value,
+            { ...sendTx, block: receipt.blockNumber.toString() },
+            (_: string, value: any) => typeof value === 'bigint' ? `bigint:${value.toString()}` : value,
         ),
         isFallback: false,
         isLayerZero: true,
@@ -166,9 +172,7 @@ export const signAndSubmitLayerZeroTx = async (createResponse: LayerZeroTransfer
     return response;
 }
 
-export const estimateEthTxFee = async (
-    tx: Transaction, multFactor: number = 1.5, gasLimitMin: bigint = BigInt(1500000),
-): Promise<bigint> => {
+export const populateTxDetails = async (tx: Transaction): Promise<Transaction> => {
     if (typeof window.ethereum === 'undefined') {
         throw new Error("can not instantiate web3 provider");
     }
@@ -182,22 +186,39 @@ export const estimateEthTxFee = async (
         gasLimit = BigInt(tx.gas);
     }
 
-    if (gasLimit < gasLimitMin) {
-        gasLimit = gasLimitMin;
-    }
+    const response = {
+        ...tx,
+        gasLimit: gasLimit * gasLimitPercMult / BigInt(100),
+        gas: gasLimit * gasLimitPercMult / BigInt(100),
+    };
 
     try {
         // Try to get pending block baseFeePerGas (EIP-1559 chains)
-        const maxPriorityFeePerGas = await web3.eth.getMaxPriorityFeePerGas();
         const block = await web3.eth.getBlock("pending");
         if (block.baseFeePerGas) {
             // Use EIP-1559 fees
-            const maxFeePerGas = (block.baseFeePerGas! * BigInt(multFactor * 100)) / BigInt(100) + maxPriorityFeePerGas;
-            return gasLimit * maxFeePerGas;
+            response.maxPriorityFeePerGas = await web3.eth.getMaxPriorityFeePerGas();
+            response.maxFeePerGas = block.baseFeePerGas * feePercMult / BigInt(100);
+
+            return response
         }
     } catch (_) { }
 
     // Legacy fallback
-    const gasPrice = await web3.eth.getGasPrice();
-    return (gasPrice * BigInt(multFactor * 100) * gasLimit) / BigInt(100);
+    response.gasPrice = await web3.eth.getGasPrice();
+
+    return response;
 };
+
+export const estimateEthTxFee = async (tx: Transaction): Promise<bigint> => {
+    if (!tx.gas || (!tx.gasPrice && !tx.maxFeePerGas)) {
+        tx = await populateTxDetails(tx)
+    }
+
+    const gasLimit = BigInt(tx.gas!);
+    if (!!tx.maxFeePerGas) {
+        return (BigInt(tx.maxFeePerGas) + BigInt(tx.maxPriorityFeePerGas!)) * gasLimit;
+    }
+
+    return BigInt(tx.gasPrice!) * gasLimit;
+}
