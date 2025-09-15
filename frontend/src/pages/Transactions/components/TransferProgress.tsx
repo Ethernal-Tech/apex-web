@@ -2,6 +2,7 @@ import { Box, CircularProgress, Typography } from "@mui/material"
 import {ReactComponent as Done1icon} from "../../../assets/bridge-status-icons/step-done1.svg"
 import {ReactComponent as Done2icon} from "../../../assets/bridge-status-icons/step-done2.svg"
 import {ReactComponent as Done3icon} from "../../../assets/bridge-status-icons/step-done3.svg"
+import {ReactComponent as RefundIcon} from "../../../assets/bridge-status-icons/refund.svg"
 import ButtonCustom from "../../../components/Buttons/ButtonCustom"
 import { TRANSACTIONS_ROUTE } from "../../PageRouter"
 import { useNavigate } from "react-router-dom"
@@ -41,6 +42,8 @@ const TRANSFER_PROGRESS_TEXT = {
     ERROR: 'Transfer Error',
     DONE: 'Transfer Complete',
     IN_PROGRESS: 'Transfer in Progress',
+    REFUND_IN_PROGRESS: 'Refund in Progress',
+    REFUND_IS_DONE: 'Refund Complete',
 }
 
 const STEP_STATUS = {
@@ -71,15 +74,34 @@ interface TransferStepProps {
 }
 
 // returns in progress, done, and error icons for required chain (prime, vector, nexus)
-const getChainIcons = (chain:ChainEnum) => {
-    return {
-        inProgress: chain === ChainEnum.Prime ? PrimeInProgressIcon : chain === ChainEnum.Vector ? VectorInProgressIcon : NexusInProgressIcon,
-        done: chain === ChainEnum.Prime ? PrimeSuccessIcon : chain === ChainEnum.Vector ? VectorSuccessIcon : NexusSuccessIcon,
-        error: chain === ChainEnum.Prime ? PrimeErrorIcon : chain === ChainEnum.Vector ? VectorErrorIcon : NexusErrorIcon,
-    }   
-}
+const getChainIcons = (chain: ChainEnum) => chainStatusIcons[chain];
 
-const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):StepType[] =>{
+const chainStatusIcons: {
+    [key in ChainEnum]: {
+      inProgress: FunctionComponent<SVGProps<SVGSVGElement>>,
+      done: FunctionComponent<SVGProps<SVGSVGElement>>,
+      error: FunctionComponent<SVGProps<SVGSVGElement>>,
+    }
+  } = {
+    [ChainEnum.Prime]: {
+      inProgress: PrimeInProgressIcon,
+      done: PrimeSuccessIcon,
+      error: PrimeErrorIcon,
+    },
+    [ChainEnum.Vector]: {
+      inProgress: VectorInProgressIcon,
+      done: VectorSuccessIcon,
+      error: VectorErrorIcon,
+    },
+    [ChainEnum.Nexus]: {
+      inProgress: NexusInProgressIcon,
+      done: NexusSuccessIcon,
+      error: NexusErrorIcon,
+    }
+  };
+
+
+const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum, isRefund: boolean):StepType[] =>{
     return [
         {
             number:1,
@@ -94,7 +116,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step2,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<Done2icon/>,
+            doneIcon: isRefund ? <RefundIcon/> : <Done2icon/>,
             asset:{
                 inProgress: BridgeInProgressIcon,
                 done: BridgeSuccessIcon,
@@ -106,19 +128,21 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step3,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<Done3icon/>,
-            asset: getChainIcons(destinationChain)
+            doneIcon: isRefund ? <RefundIcon/> : <Done3icon/>,
+            asset: getChainIcons(isRefund ? sourceChain : destinationChain)
         }
     ]
-
 }
 
-const getStepText = (stepNumber: number, originChain: ChainEnum, destinationChain: ChainEnum) => {
+const getStepText = (stepNumber: number, originChain: ChainEnum, destinationChain: ChainEnum, isRefund: boolean) => {
     if (stepNumber === 1) {
         return `Your address on the ${capitalizeWord(originChain)} Chain sends assets to the Bridge Wallet.`;
     }
 
     if (stepNumber === 3) {
+        if (isRefund) {
+            return `The assets are returned from the bridge wallet to the addresses on the ${capitalizeWord(originChain)} chain.`
+        } 
         return `The assets go from the Bridge Wallet to the address on the ${capitalizeWord(destinationChain)} Chain.`;
     }
 
@@ -243,18 +267,20 @@ const TransferProgress = ({
         );
     }, [tx])
 
-    const transferProgress = (function(txStatus: TransactionStatusEnum){
+    const transferProgress = (function(txStatus: TransactionStatusEnum, isRefund: boolean){
         switch (txStatus) {
-            case TransactionStatusEnum.ExecutedOnDestination: return TRANSFER_PROGRESS_TEXT.DONE;
+            case TransactionStatusEnum.ExecutedOnDestination: 
+                return isRefund ? TRANSFER_PROGRESS_TEXT.REFUND_IS_DONE : TRANSFER_PROGRESS_TEXT.DONE;
             case TransactionStatusEnum.InvalidRequest: return TRANSFER_PROGRESS_TEXT.ERROR;
-            default: return TRANSFER_PROGRESS_TEXT.IN_PROGRESS;
+            default:
+                return isRefund ? TRANSFER_PROGRESS_TEXT.REFUND_IN_PROGRESS : TRANSFER_PROGRESS_TEXT.IN_PROGRESS;
         }
-    })(txStatusToShow)
+    })(txStatusToShow, tx.isRefund)
 
     const steps = useMemo(() => {
-        const defaultSteps = getDefaultSteps(tx.originChain, tx.destinationChain)
+        const defaultSteps = getDefaultSteps(tx.originChain, tx.destinationChain, tx.isRefund)
         return defaultSteps.map(dStep => {
-            const text = getStepText(dStep.number, tx.originChain, tx.destinationChain);
+            const text = getStepText(dStep.number, tx.originChain, tx.destinationChain, tx.isRefund);
             const status = getStepStatus(dStep.number, txStatusToShow);
             return {
                 ...dStep,
@@ -262,7 +288,7 @@ const TransferProgress = ({
                 status,
             }
         })
-    }, [tx.destinationChain, tx.originChain, txStatusToShow])
+    }, [tx.destinationChain, tx.originChain, txStatusToShow, tx.isRefund])
 
     const onOpenExplorer = () => openExplorer(tx);
     return (
@@ -276,6 +302,7 @@ const TransferProgress = ({
                 {transferProgress}
 
                 {transferProgress !== TRANSFER_PROGRESS_TEXT.DONE && transferProgress !== TRANSFER_PROGRESS_TEXT.ERROR &&
+                    transferProgress !== TRANSFER_PROGRESS_TEXT.REFUND_IS_DONE &&
                     <CircularProgress sx={{ marginLeft: 2, color:'white', position:'relative',top:'5px' }} size={22}/>
                 }
             </Typography>
