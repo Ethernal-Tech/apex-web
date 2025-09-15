@@ -116,7 +116,7 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
       isCurrencyBridgingAllowed: false,
       wrappedToken: TokenEnum.BAP3X
     },
-    [ChainEnum.Bsc]:{
+    [ChainEnum.Bsc]: {
       isCurrencyBridgingAllowed: false,
       wrappedToken: TokenEnum.BAP3X
     }
@@ -148,8 +148,10 @@ export const getTokenInfoBySrcDst = (srcChain: ChainEnum, dstChain: ChainEnum, i
   return getTokenInfo(getToken(srcChain, dstChain, isWrappedToken));
 }
 
-export const isWrappedToken = (token: TokenEnum | undefined): 
+export const isWrappedToken = (token: TokenEnum | undefined):
   boolean => token === TokenEnum.WAPEX || token === TokenEnum.WAda || token === TokenEnum.BAP3X || token === TokenEnum.BNAP3X;
 
-
 export const getCurrencyTokenInfo = (srcChain: ChainEnum): TokenInfo => getTokenInfo(getChainInfo(srcChain).currencyToken)
+
+export const isCurrencyBridgingAllowed = (srcChain: ChainEnum, dstChain: ChainEnum): boolean =>
+  getBridgingInfo(srcChain, dstChain).isCurrencyBridgingAllowed

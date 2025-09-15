@@ -164,10 +164,6 @@ export function toApexBridge(
   return isApexBridgeChain(chain) ? (chain as unknown as ChainApexBridgeEnum) : undefined;
 }
 
-export function isLZWrappedChain(chain: ChainEnum): boolean{
-    return chain === ChainEnum.Base || chain === ChainEnum.Bsc
-}
-
 export function toLayerZeroChainName(chain: ChainEnum): string{
     switch (chain){
     case ChainEnum.Nexus:

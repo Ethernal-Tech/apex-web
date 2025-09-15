@@ -12,8 +12,8 @@ import appSettings from '../../../settings/appSettings';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { TokenEnum } from '../../../features/enums';
 import { useSupporedSourceLZTokenOptions } from '../utils';
-import { getChainInfo, isLZWrappedChain } from '../../../settings/chain';
-import { getTokenInfo, isWrappedToken } from '../../../settings/token';
+import { getChainInfo } from '../../../settings/chain';
+import { getTokenInfo, isCurrencyBridgingAllowed, isWrappedToken } from '../../../settings/token';
 import FeeInformation from './FeeInformation';
 import evmWalletHandler from '../../../features/EvmWalletHandler';
 import { estimateEthTxFee } from '../../../actions/submitTx';
@@ -92,7 +92,7 @@ const BridgeInputLZ = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, getLZEthT
             // TODO: convert from wei to DFM?
             setUserWalletFee(totalTxFee.toString(10));
 
-            if (isLZWrappedChain(chain)) {
+            if (!isCurrencyBridgingAllowed(chain, destinationChain)) {
                 setBridgeTxFee(feeResp.transactionData.populatedTransaction.value) 
             }else{
                 const amount = BigInt(feeResp.metadata.properties.amount);
@@ -107,7 +107,7 @@ const BridgeInputLZ = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, getLZEthT
   
       setUserWalletFee(undefined);
       setBridgeTxFee("");
-    }, [destinationAddr, amount, chain, sourceToken, getLZEthTxFee, setBridgeTxFee])
+    }, [destinationAddr, amount, chain, destinationChain, sourceToken, getLZEthTxFee, setBridgeTxFee])
 
   const setSourceTokenCallback = useCallback((token: TokenEnum) => {
     setSourceToken(token);

@@ -4,8 +4,9 @@ import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
 import walletHandler from "../features/WalletHandler";
 import evmWalletHandler from "../features/EvmWalletHandler";
 import { Transaction } from 'web3-types';
-import { isLZWrappedChain, toApexBridgeName } from "../settings/chain";
+import { toApexBridgeName } from "../settings/chain";
 import Web3 from "web3";
+import { isCurrencyBridgingAllowed } from "../settings/token";
 
 type TxDetailsOptions = {
     feePercMult: bigint;
@@ -158,9 +159,13 @@ export const signAndSubmitLayerZeroTx = async (receiverAddr: string, createRespo
 
     console.log("Receipt status typeof", typeof receipt.status, "Anv value", receipt.status)
 
+    const originalSrcChain = toApexBridgeName(createResponse.dstChainName);
+    const originalDstChain = toApexBridgeName(createResponse.metadata.properties.dstChainName);
+    const isWrappedToken = !isCurrencyBridgingAllowed(originalSrcChain, originalDstChain);
+    
     const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
-        originChain: toApexBridgeName(createResponse.dstChainName),
-        destinationChain: toApexBridgeName(createResponse.metadata.properties.dstChainName),
+        originChain: originalSrcChain,
+        destinationChain: originalDstChain,
         originTxHash: receipt.transactionHash.toString(),
         senderAddress: from!,
         receiverAddrs: [receiverAddr],
@@ -171,7 +176,7 @@ export const signAndSubmitLayerZeroTx = async (receiverAddr: string, createRespo
         isFallback: false,
         isLayerZero: true,
         amount: transactionData.populatedTransaction.value,
-        nativeTokenAmount: isLZWrappedChain(toApexBridgeName(createResponse.dstChainName)) ? createResponse.metadata.properties.amount : '0',
+        nativeTokenAmount: isWrappedToken ? createResponse.metadata.properties.amount : '0',
     }));
 
     const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
@@ -202,7 +207,7 @@ export const populateTxDetails = async (
     }
 
     try {
-        const feeHistory = await web3.eth.getFeeHistory(5, 'latest', [100]); // give 100% tip
+        const feeHistory = await web3.eth.getFeeHistory(5, 'latest', [90]); // give 90% tip
         const baseFeePerGasList = feeHistory.baseFeePerGas as unknown as bigint[];
         if (!!baseFeePerGasList) {
             const baseFee = baseFeePerGasList.reduce((a, b) => a + b, BigInt(0)) / BigInt(baseFeePerGasList.length);
