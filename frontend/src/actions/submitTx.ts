@@ -142,7 +142,7 @@ export const signAndSubmitLayerZeroTx = async (receiverAddr: string, createRespo
         });
 
         const receipt = await evmWalletHandler.submitTx(tx);
-        if (receipt.status !== 1) {
+        if (receipt.status !== BigInt(1)) {
             throw new Error('Approval transaction has been failed');
         }
     }
@@ -156,8 +156,6 @@ export const signAndSubmitLayerZeroTx = async (receiverAddr: string, createRespo
     if (receipt.status !== BigInt(1)) {
         throw new Error('send transaction has been failed');
     }
-
-    console.log("Receipt status typeof", typeof receipt.status, "Anv value", receipt.status)
 
     const originalSrcChain = toApexBridgeName(createResponse.dstChainName);
     const originalDstChain = toApexBridgeName(createResponse.metadata.properties.dstChainName);
