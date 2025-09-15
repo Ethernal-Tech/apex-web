@@ -41,7 +41,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               alignItems: 'center',
               color:'rgba(255,255,255,0.6)'
             }}>
-              User Wallet Fee:
+              {isLayerZero ? 'Estimated Network Fee' : 'User Wallet Fee'}:
               <Tooltip
                   title={
                       <Typography color={'white'} sx={{ fontSize: '14px' }}>
