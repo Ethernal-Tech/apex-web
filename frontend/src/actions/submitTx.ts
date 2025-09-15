@@ -1,12 +1,15 @@
-import { bridgingTransactionSubmittedAction } from "../pages/Transactions/action";
-import { CreateTransactionDto, CreateCardanoTransactionResponseDto, CreateEthTransactionResponseDto, TransactionSubmittedDto, ChainEnum, LayerZeroTransferResponseDto } from "../swagger/apexBridgeApiService";
+import { bridgingTransactionSubmittedAction, layerZeroTransferAction } from "../pages/Transactions/action";
+import { CreateTransactionDto, CreateCardanoTransactionResponseDto, CreateEthTransactionResponseDto, TransactionSubmittedDto, ChainEnum, LayerZeroTransferResponseDto, LayerZeroTransferDto } from "../swagger/apexBridgeApiService";
 import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
 import walletHandler from "../features/WalletHandler";
 import evmWalletHandler from "../features/EvmWalletHandler";
 import { Transaction } from 'web3-types';
-import { toApexBridgeName } from "../settings/chain";
+import { toApexBridgeName, toLayerZeroChainName } from "../settings/chain";
 import Web3 from "web3";
 import { isCurrencyBridgingAllowed } from "../settings/token";
+import { ISettingsState } from "../redux/slices/settingsSlice";
+import { validateSubmitTxInputs } from "../utils/generalUtils";
+import { SendTransactionOptions } from "web3/lib/commonjs/eth.exports";
 
 type TxDetailsOptions = {
     feePercMult: bigint;
@@ -17,9 +20,9 @@ type TxDetailsOptions = {
 
 const defaultTxDetailsOptions: TxDetailsOptions = {
     feePercMult: BigInt(180),
-    gasLimitPercMult: BigInt(170),
+    gasLimitPercMult: BigInt(180),
     fixedLayerZeroGasLimit: undefined,
-    defaultTipCap: BigInt(1000000000), // 1 gwei
+    defaultTipCap: BigInt(2000000000), // 2 gwei
 };
 
 export const signAndSubmitCardanoTx = async (
@@ -135,32 +138,43 @@ export const signAndSubmitLayerZeroTx = async (receiverAddr: string, createRespo
 
     const { transactionData } = createResponse;
     const from = await evmWalletHandler.getAddress();
+    const opts : SendTransactionOptions = {
+        checkRevertBeforeSending: false,
+    };
 
     if (transactionData.approvalTransaction) {
+        console.log('processing layer zero approval tx...');
         const tx: Transaction = await populateTxDetails({
             from, ...transactionData.transactionData.approvalTransaction
         });
 
-        const receipt = await evmWalletHandler.submitTx(tx);
+        console.log('submitting layer zero approval tx...', tx);
+        const receipt = await evmWalletHandler.submitTx(tx, opts);
         if (receipt.status !== BigInt(1)) {
             throw new Error('Approval transaction has been failed');
         }
+
+        console.log('layer zero approval tx has been submitted');
     }
 
+    console.log('processing layer zero send tx...');
     const sendTx: Transaction = await populateTxDetails({
         from, ...transactionData.populatedTransaction,
     });
 
+    console.log('submitting layer zero send tx...', sendTx);
     // Return the receipt from the actual send
-    const receipt = await evmWalletHandler.submitTx(sendTx);
+    const receipt = await evmWalletHandler.submitTx(sendTx, opts);
     if (receipt.status !== BigInt(1)) {
         throw new Error('send transaction has been failed');
     }
 
+    console.log('layer zero send tx has been submitted', sendTx.value);
+
     const originalSrcChain = toApexBridgeName(createResponse.dstChainName);
     const originalDstChain = toApexBridgeName(createResponse.metadata.properties.dstChainName);
     const isWrappedToken = !isCurrencyBridgingAllowed(originalSrcChain, originalDstChain);
-    
+
     const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
         originChain: originalSrcChain,
         destinationChain: originalDstChain,
@@ -189,7 +203,7 @@ export const populateTxDetails = async (
     tx: Transaction, opts: TxDetailsOptions = defaultTxDetailsOptions,
 ): Promise<Transaction> => {
     if (typeof window.ethereum === 'undefined') {
-        throw new Error("can not instantiate web3 provider");
+        throw new Error('can not instantiate web3 provider');
     }
 
     const web3 = new Web3(window.ethereum);
@@ -198,13 +212,19 @@ export const populateTxDetails = async (
     if (!tx.gas) {
         if (!!opts.fixedLayerZeroGasLimit) {
             response.gas = opts.fixedLayerZeroGasLimit;
+            response.gasLimit = response.gas;
+            console.log('gas for the transaction has been set to default value', opts.fixedLayerZeroGasLimit);
         } else {
+            console.log('estimating gas for the transaction');
             const gasLimit = await web3.eth.estimateGas(tx);
+            console.log('gas for the transaction has been estimated', gasLimit);
             response.gas = gasLimit * opts.gasLimitPercMult / BigInt(100);
+            response.gasLimit = response.gas;
         }
     }
 
     try {
+        console.log('retrieving fee history for calculating tx fee');
         const feeHistory = await web3.eth.getFeeHistory(5, 'latest', [90]); // give 90% tip
         const baseFeePerGasList = feeHistory.baseFeePerGas as unknown as bigint[];
         if (!!baseFeePerGasList) {
@@ -214,6 +234,8 @@ export const populateTxDetails = async (
                 tipCap = opts.defaultTipCap;
             }
 
+            console.log('fee history for calculating tx fee has been retrieved', 'tipCap', tipCap, 'baseFee', baseFee);
+
             response.maxPriorityFeePerGas = tipCap;
             response.maxFeePerGas = baseFee * opts.feePercMult / BigInt(100) + tipCap;
 
@@ -222,7 +244,9 @@ export const populateTxDetails = async (
     } catch (_) { }
 
     // Legacy fallback
+    console.log('retrieving gas price (legacy tx)');
     const gasPrice = await web3.eth.getGasPrice();
+    console.log('gas price (legacy tx) has been retrieved', gasPrice);
     response.gasPrice = gasPrice * opts.feePercMult / BigInt(100);
 
     return response;
@@ -241,4 +265,38 @@ export const estimateEthTxFee = async (
     }
 
     return BigInt(tx.gasPrice!) * gasLimit;
+}
+
+export const getLayerZeroTransferResponse = async function (
+    settings: ISettingsState, srcChain: ChainEnum, dstChain: ChainEnum,
+    fromAddr: string, toAddr: string, amount: string,
+): Promise<LayerZeroTransferResponseDto> {
+    const validationErr = validateSubmitTxInputs(settings, srcChain, dstChain, fromAddr, amount);
+    if (!!validationErr) {
+        throw new Error(validationErr);
+    }
+
+    const originChainSetting = settings.layerZeroChains[srcChain];
+
+    if (!originChainSetting) throw new Error(`No LayerZero config for ${srcChain}`);
+
+    const createTxDto = new LayerZeroTransferDto({
+        srcChainName: toLayerZeroChainName(srcChain),
+        dstChainName: toLayerZeroChainName(dstChain),
+        oftAddress: originChainSetting.oftAddress,
+        from: fromAddr,
+        to: toAddr,
+        validate: false,
+        amount: amount,
+    });
+
+    const bindedCreateAction = layerZeroTransferAction.bind(null, createTxDto);
+    const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
+    if (createResponse instanceof ErrorResponse) {
+        throw new Error(createResponse.err)
+    }
+
+    console.log('layer zero transfer response', createResponse);
+
+    return createResponse;
 }

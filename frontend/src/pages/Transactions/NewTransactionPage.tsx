@@ -7,14 +7,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import walletHandler from '../../features/WalletHandler';
-import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction, layerZeroTransferAction } from "./action";
-import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto, LayerZeroTransferDto, LayerZeroTransferResponseDto } from "../../swagger/apexBridgeApiService";
-import { signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx} from "../../actions/submitTx";
+import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
+import { getLayerZeroTransferResponse, signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx} from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
-import { isCardanoChain, isEvmChain, isLZBridging, toApexBridge, toLayerZeroChainName } from "../../settings/chain";
+import { isCardanoChain, isEvmChain, isLZBridging, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
 
 function NewTransactionPage() {	
@@ -128,46 +128,6 @@ function NewTransactionPage() {
 		return feeResponse;
 	}, [prepareCreateEthTx])
 
-	const createLayerZeroTx = useCallback(async (address: string, amount: string): Promise<LayerZeroTransferResponseDto> => {
-		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount) 
-		if (validationErr) {
-			throw new Error(validationErr);
-		}
-
-		const originChainSetting = settings.layerZeroChains[chain];
-		
-		if (!originChainSetting) throw new Error(`No LayerZero config for ${chain}`);
-		
-		const createTxDto = new LayerZeroTransferDto({
-			srcChainName: toLayerZeroChainName(chain),
-			dstChainName: toLayerZeroChainName(destinationChain),
-			oftAddress: originChainSetting.oftAddress,
-    		from: account,
-    		to: address,
-    		validate: false,
-			amount: amount,			
-		});
-
-		const bindedCreateAction = layerZeroTransferAction.bind(null, createTxDto);
-		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
-		if (createResponse instanceof ErrorResponse) {
-			throw new Error(createResponse.err)
-		}
-
-		return createResponse;
-	}, [account, chain, destinationChain, settings])
-
-
-
-	const getLZEthTxFee = useCallback(async (address: string, amount: string): Promise<LayerZeroTransferResponseDto> =>{
-		try{
-			return await createLayerZeroTx(address, amount);
-		}
-		catch(err){
-			throw err instanceof Error ? err : new Error(String(err));
-		}
-	}, [createLayerZeroTx])
-
 	const createEthTx = useCallback(async (address: string, amount: string): Promise<CreateEthTxResponse> => {
 		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount);
 		if (validationErr) {
@@ -226,11 +186,12 @@ function NewTransactionPage() {
 	);
 
 	const handleLZSubmitCallback = useCallback(
-		async(address: string, amount: string) =>{
+		async(toAddress: string, amount: string) =>{
 			setLoading(true);
+			
 			try{
-				const createTxResp = await createLayerZeroTx(address, amount);
-				const response = await signAndSubmitLayerZeroTx(address, createTxResp);
+				const lzResponse = await getLayerZeroTransferResponse(settings, chain, destinationChain, account, toAddress, amount);
+				const response = await signAndSubmitLayerZeroTx(toAddress, lzResponse);
 
 				response && goToDetails(response);
 			}
@@ -244,7 +205,7 @@ function NewTransactionPage() {
 			} finally{
 				setLoading(false);
 			}
-		},[createLayerZeroTx, goToDetails]
+		},[settings, chain, destinationChain, account, goToDetails]
 	)
 
 	return (
@@ -255,8 +216,7 @@ function NewTransactionPage() {
 		bridgeTxFee={bridgeTxFee}
         setBridgeTxFee={setBridgeTxFee}
         resetBridgeTxFee={resetBridgeTxFee}
-		getLZEthTxFee={getLZEthTxFee}
-        submit={handleLZSubmitCallback}
+		submit={handleLZSubmitCallback}
         loading={loading}
       />
     ) : (

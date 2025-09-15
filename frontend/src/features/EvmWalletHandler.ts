@@ -3,6 +3,7 @@ import { Transaction } from 'web3-types';
 import { toHex } from "web3-utils";
 import { ERC20_MIN_ABI } from './ABI';
 import { wait } from '../utils/generalUtils';
+import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
 
 type Wallet = {
     name: string;
@@ -20,7 +21,7 @@ const MAX_RETRY_COUNT = 5;
 const RETRY_WAIT_TIME = 1000;
 
 class EvmWalletHandler {
-    private web3: Web3 | undefined;
+    private _enabled: boolean = false;
     private onAccountsChanged: (accounts: string[]) => Promise<void> = async () => undefined;
     private onChainChanged: (chainId: string) => Promise<void> = async () => undefined;
 
@@ -30,6 +31,17 @@ class EvmWalletHandler {
         return EVM_SUPPORTED_WALLETS;
     };
 
+    getWeb3 = (): Web3 | undefined => {
+        if (typeof window.ethereum === 'undefined') {
+            return;
+        }
+
+        const web3 = new Web3(window.ethereum);
+        web3.transactionBlockTimeout = 200;
+
+        return web3;
+    }
+
     accountsChanged = async (accounts: string[]) => await this.onAccountsChanged(accounts);
     chainChanged = async (chainId: string) => await this.onChainChanged(chainId);
 
@@ -38,38 +50,38 @@ class EvmWalletHandler {
         onAccountsChanged: (accounts: string[]) => Promise<void>,
         onChainChanged: (chainId: string) => Promise<void>,
     ) => {
-        if (typeof window.ethereum !== 'undefined') {
-            this.web3 = new Web3(window.ethereum);
-            this.web3.transactionBlockTimeout = 200;
+        if (!this.getWeb3()) {
+            return;
         }
 
-        if (this.web3) {
-            this.onAccountsChanged = onAccountsChanged;
-            this.onChainChanged = onChainChanged;
-            window.ethereum.on('accountsChanged', this.accountsChanged);
-            window.ethereum.on('chainChanged', this.chainChanged);
+        this._enabled = true;
 
-            await this.forceChainWithRetry(expectedChainId);
+        this.onAccountsChanged = onAccountsChanged;
+        this.onChainChanged = onChainChanged;
+        window.ethereum.on('accountsChanged', this.accountsChanged);
+        window.ethereum.on('chainChanged', this.chainChanged);
 
-            try {
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
-            } catch (error) {
-                console.error('User denied account access');
+        await this.forceChainWithRetry(expectedChainId);
 
-                return;
-            }
+        try {
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+        } catch (error) {
+            console.error('User denied account access');
+            this._enabled = false;
+
+            return;
         }
     };
 
     clearEnabledWallet = () => {
-        this.web3 = undefined;
+        this._enabled = false;
         if (typeof window.ethereum !== 'undefined') {
             window.ethereum.removeListener('accountsChanged', this.accountsChanged);
             window.ethereum.removeListener('chainChanged', this.chainChanged);
         }
     };
 
-    private _isEnabled = () => !!this.web3;
+    private _isEnabled = () => !!this._enabled && !!this.getWeb3();
 
     checkWallet = (): boolean => this._isEnabled();
 
@@ -124,35 +136,35 @@ class EvmWalletHandler {
 
     getAddress = async (): Promise<string | undefined> => {
         this._checkWalletAndThrow();
-        const accounts = await this.web3!.eth.getAccounts();
+        const accounts = await this.getWeb3()!.eth.getAccounts();
         return accounts.length > 0 ? accounts[0] : undefined;
     };
 
     getBalance = async (): Promise<string> => {
         this._checkWalletAndThrow();
-        const accounts = await this.web3!.eth.getAccounts();
-        const balance = await this.web3!.eth.getBalance(accounts[0]);
-        return this.web3!.utils.fromWei(balance, 'wei');
+        const accounts = await this.getWeb3()!.eth.getAccounts();
+        const balance = await this.getWeb3()!.eth.getBalance(accounts[0]);
+        return this.getWeb3()!.utils.fromWei(balance, 'wei');
     };
 
     getNetworkId = async (): Promise<bigint> => {
         this._checkWalletAndThrow();
-        return await this.web3!.eth.net.getId();
+        return await this.getWeb3()!.eth.net.getId();
     };
         
-    submitTx = async (tx:Transaction) =>{
+    submitTx = async (tx:Transaction, opts?: SendTransactionOptions) =>{
         this._checkWalletAndThrow();
-        return await this.web3!.eth.sendTransaction(tx);
+        return await this.getWeb3()!.eth.sendTransaction(tx, undefined, opts);
     }
 
     estimateGas = async (tx:Transaction) =>{
         this._checkWalletAndThrow();
-        return await this.web3!.eth.estimateGas(tx);
+        return await this.getWeb3()!.eth.estimateGas(tx);
     }
 
     getGasPrice = async () =>{
         this._checkWalletAndThrow();
-        return await this.web3!.eth.getGasPrice();
+        return await this.getWeb3()!.eth.getGasPrice();
     }
 
     getERC20Balance = async(tokenAddress: string) => {
@@ -161,13 +173,14 @@ class EvmWalletHandler {
 
         if(!account) throw new Error("No connected wallet address.")
 
-        const contract = new this.web3!.eth.Contract(ERC20_MIN_ABI, tokenAddress);
+        const web3 = this.getWeb3();
+        const contract = new web3!.eth.Contract(ERC20_MIN_ABI, tokenAddress);
         const rawBalResp = await contract.methods.balanceOf(account).call();
         const raw = Array.isArray(rawBalResp) ? rawBalResp[0] : rawBalResp;
 
         const balance = BigInt(raw)
 
-        return this.web3!.utils.fromWei(balance, 'wei');
+        return web3!.utils.fromWei(balance, 'wei');
     }
 }
 

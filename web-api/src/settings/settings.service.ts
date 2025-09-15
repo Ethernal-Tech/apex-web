@@ -35,15 +35,14 @@ export class SettingsService {
 		this.SettingsResponse.layerZeroChains = chains
 			.map((x) => {
 				const subItems = x.split('::');
-				if (subItems.length < 4) {
+				if (subItems.length < 3) {
 					return;
 				}
 
 				const item = new LayerZeroChainSettingsDto();
 				item.chain = subItems[0].trim() as ChainEnum;
-				item.rpcUrl = subItems[1].trim();
-				item.oftAddress = subItems[2].trim();
-				item.chainID = parseInt(subItems[3].trim(), 10);
+				item.oftAddress = subItems[1].trim();
+				item.chainID = parseInt(subItems[2].trim(), 10);
 
 				return item;
 			})

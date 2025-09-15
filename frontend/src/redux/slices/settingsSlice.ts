@@ -7,7 +7,7 @@ export type CardanoChainsNativeTokens = {
 	[key: string]: { dstChainID: string; tokenName: string; }[];
 }
 
-export type LayerZeroChains = Record<string, { rpcUrl: string; oftAddress: string; chainID: number }>;
+export type LayerZeroChains = Record<string, { oftAddress: string; chainID: number }>;
 
 export interface ISettingsState {
 	minUtxoChainValue: { [key: string]: string }
@@ -57,7 +57,7 @@ const settingsSlice = createSlice({
 			state.enabledChains = action.payload.enabledChains;
 			state.layerZeroChains = action.payload.layerZeroChains.reduce<LayerZeroChains>((acc, cfg) => {
 			const key = String(cfg.chain).toLowerCase();
-			acc[key] = { rpcUrl: cfg.rpcUrl, oftAddress: cfg.oftAddress, chainID: cfg.chainID };
+			acc[key] = { oftAddress: cfg.oftAddress, chainID: cfg.chainID };
 			return acc;
 			}, {});
 		},
