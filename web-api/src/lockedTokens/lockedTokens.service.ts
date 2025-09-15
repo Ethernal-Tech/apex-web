@@ -91,6 +91,7 @@ export class LockedTokensService {
 					status: TransactionStatusEnum.ExecutedOnDestination,
 				})
 				.andWhere('tx.originChain = :chain', { chain })
+				.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
 				.getRawOne();
 
 			const tokens =
@@ -111,6 +112,7 @@ export class LockedTokensService {
 						status: TransactionStatusEnum.ExecutedOnDestination,
 					})
 					.andWhere('tx.originChain = :chain', { chain })
+					.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
 					.getRawOne();
 
 				chainResult[tokenName] = nativeSum;
@@ -160,6 +162,7 @@ export class LockedTokensService {
 				start: startDate,
 				end: endDate,
 			})
+			.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
 			.setParameter('truncUnit', dateTruncUnit)
 			.groupBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`)
 			.addGroupBy('tx.originChain')

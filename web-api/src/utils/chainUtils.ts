@@ -47,7 +47,10 @@ export const areChainsEqual = (
 	return networkId === fromChainToNetworkId(chain, isMainnet);
 };
 
-export const toNumChainID = (chain: ChainApexBridgeEnum) => CHAIN_TO_CHAIN_ID[chain];
+export const toNumChainID = (chain: ChainApexBridgeEnum) =>
+	CHAIN_TO_CHAIN_ID[chain];
 
-export const isCardanoChain = (chain: ChainEnum) => 
-	chain === ChainEnum.Cardano || chain === ChainEnum.Prime || chain === ChainEnum.Vector;
+export const isCardanoChain = (chain: ChainEnum) =>
+	chain === ChainEnum.Cardano ||
+	chain === ChainEnum.Prime ||
+	chain === ChainEnum.Vector;

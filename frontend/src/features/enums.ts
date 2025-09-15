@@ -15,6 +15,10 @@ export enum TokenEnum {
 	WAda = 'WAda',
 	APEX = 'APEX',
 	WAPEX = 'WAPEX',
+    ETH = 'ETH',
+    BAP3X = 'bAP3X',
+    BNAP3X = 'bnAP3X',
+    BNB = 'BNB'
 }
 
 export enum ApexBridgeNetwork {
@@ -22,10 +26,14 @@ export enum ApexBridgeNetwork {
     MainnetVector = 'MainnetVector',
     MainnetNexus = 'MainnetNexus',
     MainnetCardano = 'MainnetCardano',
+    MainnetBase = "MainnetBase",
+    MainnetBsc = "MainnetBsc",
     TestnetPrime = 'TestnetPrime',
     TestnetVector = 'TestnetVector',
     TestnetNexus = 'TestnetNexus',
     PreviewCardano = 'PreviewCardano',
+    TestnetBase = "TestnetBase",
+    TestnetBsc = 'TestnetBsc'
 }
 
 export enum UtxoRetrieverEnum {

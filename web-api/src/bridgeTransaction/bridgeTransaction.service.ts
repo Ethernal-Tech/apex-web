@@ -154,14 +154,13 @@ export class BridgeTransactionService {
 						}
 					}
 
-					const [states, statesCentralized, statesTxFailed, stateslayerZero] = await Promise.all(
-						[
+					const [states, statesCentralized, statesTxFailed, stateslayerZero] =
+						await Promise.all([
 							getBridgingRequestStates(chain, models),
 							getCentralizedBridgingRequestStates(chain, modelsCentralized),
 							getHasTxFailedRequestStates(chain, modelsPending),
 							getLayerZeroRequestStates(modelsLayerZero),
-						],
-					);
+						]);
 
 					Object.keys(states).length > 0 &&
 						Logger.debug(
