@@ -14,7 +14,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { Repository } from 'typeorm';
 import {
-	ChainEnum,
+	ChainApexBridgeEnum,
 	GroupByTimePeriod,
 	TransactionStatusEnum,
 } from 'src/common/enum';
@@ -78,7 +78,7 @@ export class LockedTokensService {
 			return cached;
 		}
 
-		const chains = Object.values(ChainEnum);
+		const chains = Object.values(ChainApexBridgeEnum);
 		const result = new LockedTokensResponse();
 		result.chains = {};
 
@@ -91,6 +91,7 @@ export class LockedTokensService {
 					status: TransactionStatusEnum.ExecutedOnDestination,
 				})
 				.andWhere('tx.originChain = :chain', { chain })
+				.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
 				.getRawOne();
 
 			const tokens =
@@ -111,6 +112,7 @@ export class LockedTokensService {
 						status: TransactionStatusEnum.ExecutedOnDestination,
 					})
 					.andWhere('tx.originChain = :chain', { chain })
+					.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
 					.getRawOne();
 
 				chainResult[tokenName] = nativeSum;
@@ -160,6 +162,7 @@ export class LockedTokensService {
 				start: startDate,
 				end: endDate,
 			})
+			.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
 			.setParameter('truncUnit', dateTruncUnit)
 			.groupBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`)
 			.addGroupBy('tx.originChain')

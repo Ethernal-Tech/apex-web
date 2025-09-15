@@ -7,6 +7,7 @@ import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization
 import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
+import { isCardanoChain } from 'src/utils/chainUtils';
 
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
@@ -36,6 +37,10 @@ export type GetBridgingRequestStatesModel = {
 	txHash: string;
 	destinationChainId: ChainEnum;
 	txRaw: string;
+};
+
+export type GetLayerZeroBridgingRequestStatesModel = {
+	txHash: string;
 };
 
 export const getBridgingRequestStates = async (
@@ -78,6 +83,22 @@ export type HasTxFailedResponse = {
 	failed: boolean;
 };
 
+export const getLayerZeroRequestStates = async (
+	models: GetLayerZeroBridgingRequestStatesModel[],
+) => {
+	const states = await Promise.all(
+		models.map((model) => getLayerZeroRequestState(model)).filter((x) => !!x),
+	);
+
+	return states.reduce((acc: { [key: string]: BridgingRequestState }, cv) => {
+		if (cv) {
+			acc[cv.sourceTxHash] = cv;
+		}
+
+		return acc;
+	}, {});
+};
+
 export const getHasTxFailedRequestStates = async (
 	chainId: string,
 	models: GetBridgingRequestStatesModel[],
@@ -95,18 +116,129 @@ export const getHasTxFailedRequestStates = async (
 	}, {});
 };
 
+export const getLayerZeroRequestState = async (
+	model: GetLayerZeroBridgingRequestStatesModel,
+): Promise<BridgingRequestState | undefined> => {
+	const layerZeroUrl = process.env.LAYERZERO_SCAN_URL;
+	if (!layerZeroUrl) {
+		Logger.error('layer zero scan url not set');
+
+		return;
+	}
+	const endpointUrl = `${layerZeroUrl}/messages/tx/${model.txHash}`;
+
+	Logger.debug(`axios.get: ${endpointUrl}`);
+	try {
+		const response = await axios.get(endpointUrl);
+
+		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
+
+		const data = response.data.data[0];
+
+		/*
+			global: "INFLIGHT" //  "Source transaction sent"
+			source: "VALIDATING_TX"
+			destination: "WAITING"
+			verification.dvn: "WAITING"
+			verification.dvn.dvns: "WAITING"
+			verification.sealer: "WAITING"
+
+			global: "INFLIGHT" // Ready for DVNs to verify"
+			source: "SUCCEEDED"
+			destination: "WAITING"
+			verification.dvn: "WAITING"
+			verification.dvn.dvns: "VALIDATING_TX"
+			verification.sealer: "WAITING"
+
+			global: "INFLIGHT" // Ready for committer to commit verification
+			source: "SUCCEEDED"
+			destination: "WAITING"
+			verification.dvn: "SUCCEEDED"
+			verification.dvn.dvns: "SUCCEEDED"
+			verification.sealer: "WAITING"
+		
+			global: "INFLIGHT" // Verification committed
+			source: "SUCCEEDED"
+			destination: "WAITING"
+			verification.dvn: "SUCCEEDED"
+			verification.dvn.dvns: "SUCCEEDED"
+			verification.sealer: "SUCCEEDED"
+
+			global: "INFLIGHT" // Executor transaction confirmed
+			source: "SUCCEEDED"
+			destination: "SUCCEEDED"
+			verification.dvn: "SUCCEEDED"
+			verification.dvn.dvns: "SUCCEEDED"
+			verification.sealer: "SUCCEEDED"
+
+			global: "DELIVERED" // Executor transaction confirmed
+			source: "SUCCEEDED"
+			destination: "SUCCEEDED"
+			verification.dvn: "SUCCEEDED"
+			verification.dvn.dvns: "SUCCEEDED"
+			verification.sealer: "SUCCEEDED"
+		*/
+		let status: TransactionStatusEnum = TransactionStatusEnum.Pending;
+		switch (data['status'].name) {
+			case 'INFLIGHT':
+				if (data['destination']['status'] == 'SUCCEEDED') {
+					status = TransactionStatusEnum.SubmittedToDestination;
+				} else if (data['source']['status'] == 'SUCCEEDED') {
+					status = TransactionStatusEnum.SubmittedToBridge;
+				} else {
+					status = TransactionStatusEnum.DiscoveredOnSource;
+				}
+
+				break;
+			case 'DELIVERED':
+				status = TransactionStatusEnum.ExecutedOnDestination;
+
+				break;
+			case 'PAYLOAD_STORED':
+				status = TransactionStatusEnum.FailedToExecuteOnDestination;
+
+				break;
+			case 'CONFIRMING':
+				status = TransactionStatusEnum.SubmittedToDestination;
+
+				break;
+			case 'FAILED':
+			case 'BLOCKED':
+			case 'UNRESOLVABLE_COMMAND':
+			case 'UNRESOLVABLE_COMMAND':
+				status = TransactionStatusEnum.InvalidRequest;
+
+				break;
+		}
+
+		return {
+			sourceTxHash: model.txHash,
+			status: status,
+		} as BridgingRequestState;
+	} catch (e) {
+		if (e instanceof AxiosError) {
+			Logger.error(
+				`Error while getLayerZeroRequestState: ${e}. response: ${JSON.stringify(e.response?.data)}`,
+				e.stack,
+			);
+		} else {
+			Logger.error(`Error while getLayerZeroRequestState: ${e}`, e.stack);
+		}
+	}
+};
+
 export const getHasTxFailedRequestState = async (
 	chainId: string,
 	model: GetBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
-	if (!model.txRaw) {
+	if (!model.txRaw || !Object.values(ChainEnum).some((x) => x == chainId)) {
 		return;
 	}
 
 	let ttl: bigint | undefined;
-	if (chainId === ChainEnum.Prime || chainId === ChainEnum.Vector) {
+	if (isCardanoChain(chainId as ChainEnum)) {
 		ttl = getCardanoTTL(model.txRaw);
-	} else if (chainId === ChainEnum.Nexus) {
+	} else {
 		ttl = getEthTTL(model.txRaw);
 	}
 
@@ -286,6 +418,7 @@ export const mapBridgeTransactionToResponse = (
 	response.status = entity.status;
 	response.createdAt = entity.createdAt;
 	response.finishedAt = entity.finishedAt;
+	response.isLayerZero = entity.isLayerZero;
 	return response;
 };
 

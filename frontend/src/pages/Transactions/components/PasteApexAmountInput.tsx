@@ -128,7 +128,7 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
   
   // Returns true if entered value to send exceedes the maximum amount a user can send (balance - fees)
   const hasInsufficientBalance = BigInt(convertApexToDfm(text, chain)) > maxAmounts.maxByBalance;
-  const overMaxAllowed = BigInt(convertApexToDfm(text, chain)) > maxAmounts.maxByAllowed;
+  const overMaxAllowed = BigInt(convertApexToDfm(text, chain)) > maxAmounts.maxByAllowed && maxAmounts.maxByAllowed > 0;
 
   const currencyToken = getCurrencyTokenInfo(chain);
 

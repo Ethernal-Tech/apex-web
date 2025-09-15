@@ -1,11 +1,14 @@
 import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+	IsArray,
+	IsInt,
 	IsNotEmpty,
 	IsObject,
 	IsPositive,
 	ValidateNested,
 } from 'class-validator';
+import { ChainEnum } from 'src/common/enum';
 
 export class BridgingSettingsDto {
 	@IsNotEmpty()
@@ -78,6 +81,37 @@ export class NativeTokenDto {
 	tokenName: string;
 }
 
+export class LayerZeroChainSettingsDto {
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Chain name',
+		enum: ChainEnum,
+	})
+	chain: ChainEnum;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Chain RPC url',
+	})
+	rpcUrl: string;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Layer Zero OFT smart contract address',
+		example: '0x1234567890abcdef1234567890abcdef12345678',
+	})
+	oftAddress: string;
+
+	@IsNotEmpty()
+	@IsInt()
+	@IsPositive()
+	@ApiProperty({
+		description: 'EVM chain ID',
+		example: 43114, // Avalanche example
+	})
+	chainID: number;
+}
+
 @ApiExtraModels(NativeTokenDto)
 export class SettingsResponseDto {
 	@IsNotEmpty()
@@ -115,4 +149,17 @@ export class SettingsResponseDto {
 		description: 'Participating chains in the bridge',
 	})
 	enabledChains: string[];
+}
+
+@ApiExtraModels(SettingsResponseDto, LayerZeroChainSettingsDto)
+export class SettingsFullResponseDto extends SettingsResponseDto {
+	@IsNotEmpty()
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => LayerZeroChainSettingsDto)
+	@ApiProperty({
+		description: 'LayerZero chains and their configurations',
+		type: () => [LayerZeroChainSettingsDto],
+	})
+	layerZeroChains: LayerZeroChainSettingsDto[];
 }

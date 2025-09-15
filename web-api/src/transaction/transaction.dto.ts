@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
-import { ChainEnum } from 'src/common/enum';
+import { ChainApexBridgeEnum, ChainEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
 export class CreateTransactionDto {
@@ -12,23 +12,23 @@ export class CreateTransactionDto {
 	senderAddress: string;
 
 	@IsNotEmpty()
-	@IsEnum(ChainEnum)
+	@IsEnum(ChainApexBridgeEnum)
 	@ApiProperty({
 		description: 'Source chain ID',
-		enum: ChainEnum,
-		enumName: 'ChainEnum',
+		enum: ChainApexBridgeEnum,
+		enumName: 'ChainApexBridgeEnum',
 	})
-	originChain: ChainEnum;
+	originChain: ChainApexBridgeEnum;
 
 	@IsNotEmpty()
-	@IsEnum(ChainEnum)
+	@IsEnum(ChainApexBridgeEnum)
 	@NotSame('originChain')
 	@ApiProperty({
 		description: 'Destination chain ID',
-		enum: ChainEnum,
-		enumName: 'ChainEnum',
+		enum: ChainApexBridgeEnum,
+		enumName: 'ChainApexBridgeEnum',
 	})
-	destinationChain: ChainEnum;
+	destinationChain: ChainApexBridgeEnum;
 
 	@IsNotEmpty()
 	@ApiProperty({
@@ -135,6 +135,11 @@ export class TransactionSubmittedDto {
 		description: 'Indicates is fallback mechanism used',
 	})
 	isFallback: boolean;
+
+	@ApiProperty({
+		description: 'Indicates if Layer Zero bridging is used',
+	})
+	isLayerZero: boolean;
 }
 
 export class CreateCardanoTransactionResponseDto {

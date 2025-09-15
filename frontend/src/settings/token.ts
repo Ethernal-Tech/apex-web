@@ -3,6 +3,7 @@ import { TokenEnum } from "../features/enums";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg'
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg'
+import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg'
 import { getChainInfo } from "./chain";
 
 export type BridgingInfo = {
@@ -48,7 +49,31 @@ const tokenInfos: Partial<Record<TokenEnum, TokenInfo>> = {
     icon: AdaIcon,
     label: 'wADA',
     borderColor: '#0538AF',
-  }
+  },
+  [TokenEnum.ETH]: {
+    token: TokenEnum.ETH,
+    icon: EthIcon,
+    label: 'ETH',
+    borderColor: '#8A92B2',
+  },
+  [TokenEnum.BAP3X]: {
+    token: TokenEnum.BAP3X,
+    icon: ApexIcon,
+    label: 'bAP3X',
+    borderColor: '#077368',
+  },
+  [TokenEnum.BNAP3X]: {
+    token: TokenEnum.BNAP3X,
+    icon: ApexIcon,
+    label: 'bnAP3X',
+    borderColor: '#F3BA2F',
+  },
+  [TokenEnum.BNB]: {
+    token: TokenEnum.BNB,
+    icon: ApexIcon,
+    label: 'BNB',
+    borderColor: '#F3BA2F',
+  },
 }
 
 const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, BridgingInfo>>>> = {
@@ -79,6 +104,32 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
     [ChainEnum.Prime]: {
       isCurrencyBridgingAllowed: true,
     },
+    [ChainEnum.Base]: {
+      isCurrencyBridgingAllowed: true,
+    },
+    [ChainEnum.Bsc]: {
+      isCurrencyBridgingAllowed: true
+    }
+  },
+  [ChainEnum.Base]: {
+    [ChainEnum.Nexus]: {
+      isCurrencyBridgingAllowed: false,
+      wrappedToken: TokenEnum.BAP3X
+    },
+    [ChainEnum.Bsc]: {
+      isCurrencyBridgingAllowed: false,
+      wrappedToken: TokenEnum.BAP3X
+    }
+  },
+  [ChainEnum.Bsc]: {
+    [ChainEnum.Nexus]: {
+      isCurrencyBridgingAllowed: false,
+      wrappedToken: TokenEnum.BNAP3X
+    },
+    [ChainEnum.Base]: {
+      isCurrencyBridgingAllowed: false,
+      wrappedToken: TokenEnum.BNAP3X
+    }
   }
 }
 
@@ -97,6 +148,10 @@ export const getTokenInfoBySrcDst = (srcChain: ChainEnum, dstChain: ChainEnum, i
   return getTokenInfo(getToken(srcChain, dstChain, isWrappedToken));
 }
 
-export const isWrappedToken = (token: TokenEnum | undefined): boolean => token === TokenEnum.WAPEX || token === TokenEnum.WAda;
+export const isWrappedToken = (token: TokenEnum | undefined):
+  boolean => token === TokenEnum.WAPEX || token === TokenEnum.WAda || token === TokenEnum.BAP3X || token === TokenEnum.BNAP3X;
 
 export const getCurrencyTokenInfo = (srcChain: ChainEnum): TokenInfo => getTokenInfo(getChainInfo(srcChain).currencyToken)
+
+export const isCurrencyBridgingAllowed = (srcChain: ChainEnum, dstChain: ChainEnum): boolean =>
+  getBridgingInfo(srcChain, dstChain).isCurrencyBridgingAllowed

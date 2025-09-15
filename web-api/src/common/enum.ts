@@ -9,12 +9,20 @@ export enum TransactionStatusEnum {
 	ExecutedOnDestination = 'ExecutedOnDestination',
 }
 
-export enum ChainEnum {
+export enum ChainApexBridgeEnum {
 	Prime = 'prime',
 	Vector = 'vector',
 	Nexus = 'nexus',
 	Cardano = 'cardano',
 }
+
+export const ChainEnum = {
+	...ChainApexBridgeEnum,
+	Base: 'base',
+	BNB: 'bsc',
+} as const;
+
+export type ChainEnum = (typeof ChainEnum)[keyof typeof ChainEnum];
 
 export enum GroupByTimePeriod {
 	Hour = 'hour',

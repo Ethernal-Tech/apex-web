@@ -16,7 +16,7 @@ import {
 	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import { ChainApexBridgeEnum, TransactionStatusEnum } from 'src/common/enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThan, Repository } from 'typeorm';
 import {
@@ -27,6 +27,11 @@ import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dt
 import { SettingsService } from 'src/settings/settings.service';
 import { Utxo } from 'src/blockchain/dto';
 import { Logger } from '@nestjs/common';
+import axios, { AxiosResponse } from 'axios';
+import {
+	LayerZeroTransferDto,
+	LayerZeroTransferResponseDto,
+} from './layerzerotransaction.dto';
 
 @Injectable()
 export class TransactionService {
@@ -49,32 +54,32 @@ export class TransactionService {
 		}
 
 		if (
-			dto.originChain !== ChainEnum.Prime &&
-			dto.originChain !== ChainEnum.Vector &&
-			dto.originChain !== ChainEnum.Cardano
+			dto.originChain !== ChainApexBridgeEnum.Prime &&
+			dto.originChain !== ChainApexBridgeEnum.Vector &&
+			dto.originChain !== ChainApexBridgeEnum.Cardano
 		) {
 			throw new BadRequestException('Invalid origin chain');
 		}
 
 		if (
-			dto.originChain === ChainEnum.Prime &&
-			dto.destinationChain !== ChainEnum.Vector &&
-			dto.destinationChain !== ChainEnum.Nexus &&
-			dto.destinationChain !== ChainEnum.Cardano
+			dto.originChain === ChainApexBridgeEnum.Prime &&
+			dto.destinationChain !== ChainApexBridgeEnum.Vector &&
+			dto.destinationChain !== ChainApexBridgeEnum.Nexus &&
+			dto.destinationChain !== ChainApexBridgeEnum.Cardano
 		) {
 			throw new BadRequestException('Invalid destination chain');
 		}
 
 		if (
-			dto.originChain === ChainEnum.Vector &&
-			dto.destinationChain !== ChainEnum.Prime
+			dto.originChain === ChainApexBridgeEnum.Vector &&
+			dto.destinationChain !== ChainApexBridgeEnum.Prime
 		) {
 			throw new BadRequestException('Invalid destination chain');
 		}
 
 		if (
-			dto.originChain === ChainEnum.Cardano &&
-			dto.destinationChain !== ChainEnum.Prime
+			dto.originChain === ChainApexBridgeEnum.Cardano &&
+			dto.destinationChain !== ChainApexBridgeEnum.Prime
 		) {
 			throw new BadRequestException('Invalid destination chain');
 		}
@@ -182,11 +187,11 @@ export class TransactionService {
 			throw new BadRequestException('Chain not supported');
 		}
 
-		if (dto.originChain !== ChainEnum.Nexus) {
+		if (dto.originChain !== ChainApexBridgeEnum.Nexus) {
 			throw new BadRequestException('Invalid origin chain');
 		}
 
-		if (dto.destinationChain !== ChainEnum.Prime) {
+		if (dto.destinationChain !== ChainApexBridgeEnum.Prime) {
 			throw new BadRequestException('Invalid destination chain');
 		}
 
@@ -212,6 +217,7 @@ export class TransactionService {
 		nativeTokenAmount,
 		txRaw,
 		isFallback,
+		isLayerZero,
 	}: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
 		const entity = new BridgeTransaction();
 
@@ -221,7 +227,7 @@ export class TransactionService {
 		entity.senderAddress = senderAddress ?? entity.senderAddress;
 		entity.receiverAddresses = receiverAddresses ?? entity.receiverAddresses;
 		entity.destinationChain =
-			(destinationChain as ChainEnum) ?? entity.destinationChain;
+			(destinationChain as ChainApexBridgeEnum) ?? entity.destinationChain;
 		entity.amount = amount ? amount : entity.amount;
 		entity.nativeTokenAmount = nativeTokenAmount
 			? nativeTokenAmount
@@ -232,6 +238,7 @@ export class TransactionService {
 		entity.status = TransactionStatusEnum.Pending;
 		entity.txRaw = txRaw;
 		entity.isCentralized = isFallback;
+		entity.isLayerZero = isLayerZero;
 
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
@@ -254,6 +261,32 @@ export class TransactionService {
 					`error while confirming tx submittion: ${e}`,
 				);
 			}
+		}
+	}
+
+	async transferLayerZero(
+		dto: LayerZeroTransferDto,
+	): Promise<LayerZeroTransferResponseDto> {
+		try {
+			const endpointUrl = `${process.env.LAYERZERO_API_URL}/transfer`;
+			Logger.debug(`axios.get: ${endpointUrl}`);
+
+			const response: AxiosResponse<any, any> = await axios.get(endpointUrl, {
+				params: dto,
+				headers: { 'x-layerzero-api-key': process.env.LAYERZERO_APIKEY },
+			});
+
+			return response.data as LayerZeroTransferResponseDto;
+		} catch (error) {
+			if (axios.isAxiosError(error)) {
+				throw new BadRequestException(
+					`Request failed: ${error.response?.data.message || error.message}`,
+				);
+			}
+
+			throw new BadRequestException(
+				`error while calling Layer Zero transfer: ${error}`,
+			);
 		}
 	}
 }
