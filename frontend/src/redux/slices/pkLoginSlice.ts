@@ -1,14 +1,19 @@
-import { createSlice } from '@reduxjs/toolkit'
-import type { PayloadAction } from '@reduxjs/toolkit'
-import { PKLoginDto, getPKLogin, removePKLogin, setPKLogin } from '../../utils/storageUtils'
+import { createSlice } from '@reduxjs/toolkit';
+import type { PayloadAction } from '@reduxjs/toolkit';
+import {
+	PKLoginDto,
+	getPKLogin,
+	removePKLogin,
+	setPKLogin,
+} from '../../utils/storageUtils';
 
 export interface IPKLoginState {
-	pkLogin: PKLoginDto | null
+	pkLogin: PKLoginDto | null;
 }
 
 const initialState: IPKLoginState = {
 	pkLogin: getPKLogin(),
-}
+};
 
 const pkLoginSlice = createSlice({
 	name: 'pkLogin',
@@ -21,11 +26,11 @@ const pkLoginSlice = createSlice({
 		removePKLoginAction: (state) => {
 			removePKLogin();
 			state.pkLogin = null;
-		}
+		},
 	},
-})
+});
 
 // Action creators are generated for each case reducer function
-export const { setPKLoginAction, removePKLoginAction } = pkLoginSlice.actions
+export const { setPKLoginAction, removePKLoginAction } = pkLoginSlice.actions;
 
-export default pkLoginSlice.reducer
+export default pkLoginSlice.reducer;

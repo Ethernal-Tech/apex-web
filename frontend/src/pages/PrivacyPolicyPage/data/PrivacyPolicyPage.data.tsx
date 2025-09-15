@@ -1,6 +1,5 @@
 // privacy policy html string
-export const privacyPolicyHtml =  
-`<div class="writtenContent">
+export const privacyPolicyHtml = `<div class="writtenContent">
         <h1 class="code-line" data-line-start=0 data-line-end=2 ><a id="Personal_Data_Protection_Policy_0"></a><strong>Personal Data Protection Policy</strong></h1>
         <p class="has-line-data" data-line-start="3" data-line-end="4">Last Updated: 24.01.2025</p>
         <h2 class="code-line" data-line-start=5 data-line-end=7 ><a id="1_INTRODUCTORY_INFORMATION_5"></a><strong>1. INTRODUCTORY INFORMATION</strong></h2>
@@ -224,4 +223,4 @@ export const privacyPolicyHtml =
         <h2 class="code-line" data-line-start=251 data-line-end=253 ><a id="10_FINAL_PROVISIONS_251"></a>10. FINAL PROVISIONS</h2>
         <p class="has-line-data" data-line-start="254" data-line-end="255">At Apex, we can change this Policy at any time. We shall notify you of the change of the Policy on our website. We shall consider that you agree with the new version of this Policy if, after the new version enters into force, you continue to use our website and other services defined by this Policy.</p>
         <p class="has-line-data" data-line-start="256" data-line-end="257">The current version of this Policy will be available on our website: <a href="https://apexfusion.org/privacy-policy">https://apexfusion.org/privacy-policy</a>.</p>
-    </div>`
+    </div>`;

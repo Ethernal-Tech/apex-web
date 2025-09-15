@@ -1,7 +1,6 @@
-
-import { UtxoRetriever } from "./types";
-import { getAssetsSumMap } from "../utils/generalUtils";
-import { UTxO } from "./WalletHandler";
+import { UtxoRetriever } from './types';
+import { getAssetsSumMap } from '../utils/generalUtils';
+import { UTxO } from './WalletHandler';
 
 type JsonRpcRequest = {
 	jsonrpc: '2.0';
@@ -15,13 +14,13 @@ type JsonRpcRequest = {
 type OgmiosUtxo = {
 	transaction: {
 		id: string;
-	},
+	};
 	index: number;
 	address: string;
 	value: {
 		[key: string]: {
-			[key: string]: number
-		},
+			[key: string]: number;
+		};
 	};
 	datumHash?: string;
 	datum?: string;
@@ -49,7 +48,7 @@ class OgmiosRetriever implements UtxoRetriever {
 			jsonrpc: '2.0',
 			method: 'queryLedgerState/utxo',
 			params: {
-				addresses: [this.address]
+				addresses: [this.address],
 			},
 			id: 1,
 		};
@@ -62,21 +61,24 @@ class OgmiosRetriever implements UtxoRetriever {
 			});
 
 			if (!response.ok) {
-				throw new Error(`Request failed with status ${response.status}`);
+				throw new Error(
+					`Request failed with status ${response.status}`,
+				);
 			}
 
 			const data: UtxoResponse = await response.json();
 
 			if ('error' in data) {
-				throw new Error(`Ogmios returned error: ${JSON.stringify(data.error)}`);
+				throw new Error(
+					`Ogmios returned error: ${JSON.stringify(data.error)}`,
+				);
 			}
 
 			return data.result.map(toMeshSdkUtxo);
+		} catch (e) {
+			throw new Error(`failed to query ogmios for utxos. e: ${e}`);
 		}
-		catch (e) {
-			throw new Error(`failed to query ogmios for utxos. e: ${e}`)
-		}
-	}
+	};
 
 	getBalance = async (allUtxos?: UTxO[]): Promise<string> => {
 		if (allUtxos === undefined) {
@@ -84,12 +86,11 @@ class OgmiosRetriever implements UtxoRetriever {
 		}
 
 		const assetsSumMap = getAssetsSumMap(allUtxos);
-        return (assetsSumMap['lovelace'] || BigInt(0)).toString(10);
-	}
+		return (assetsSumMap['lovelace'] || BigInt(0)).toString(10);
+	};
 }
 
 export default OgmiosRetriever;
-
 
 const toMeshSdkUtxo = (utxo: OgmiosUtxo): UTxO => ({
 	input: { outputIndex: utxo.index, txHash: utxo.transaction.id || '' },
@@ -112,4 +113,4 @@ const toMeshSdkUtxo = (utxo: OgmiosUtxo): UTxO => ({
 			};
 		}),
 	},
-})
+});

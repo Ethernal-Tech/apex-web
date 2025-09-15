@@ -5,171 +5,180 @@ import { ApexBridgeNetwork } from './enums';
 import { UtxoRetriever } from './types';
 
 type Wallet = {
-    name: string;
-    icon: string;
-    version: string;
+	name: string;
+	icon: string;
+	version: string;
 };
 
-export const SUPPORTED_WALLETS = ['eternl']
+export const SUPPORTED_WALLETS = ['eternl'];
 
 class WalletHandler implements UtxoRetriever {
-    private _enabledWallet: BrowserWallet | undefined;
+	private _enabledWallet: BrowserWallet | undefined;
 
-    getNativeAPI = () => (this._enabledWallet as any)?._walletInstance;
+	getNativeAPI = () => (this._enabledWallet as any)?._walletInstance;
 
-    getInstalledWallets = (): Wallet[] =>  {
-        if (window.cardano === undefined) return [];
-    
-        return SUPPORTED_WALLETS.filter(
-            (sw) => window.cardano[sw] !== undefined
-        ).map((sw) => ({
-            name: window.cardano[sw].name,
-            icon: window.cardano[sw].icon,
-            version: window.cardano[sw].apiVersion,
-        }));
-    };
+	getInstalledWallets = (): Wallet[] => {
+		if (window.cardano === undefined) return [];
 
-    version = (): any => {
-        const nativeAPI = this.getNativeAPI();
-        const experimentalAPI = nativeAPI['experimental'];
-        if (!experimentalAPI) {
-            throw new Error('experimental not defined');
-        }
+		return SUPPORTED_WALLETS.filter(
+			(sw) => window.cardano[sw] !== undefined,
+		).map((sw) => ({
+			name: window.cardano[sw].name,
+			icon: window.cardano[sw].icon,
+			version: window.cardano[sw].apiVersion,
+		}));
+	};
 
-        const appVersion = experimentalAPI['appVersion'];
-        if (!appVersion ) {
-            throw new Error('appVersion not defined');
-        }
+	version = (): any => {
+		const nativeAPI = this.getNativeAPI();
+		const experimentalAPI = nativeAPI['experimental'];
+		if (!experimentalAPI) {
+			throw new Error('experimental not defined');
+		}
 
-        return appVersion;
-    }
+		const appVersion = experimentalAPI['appVersion'];
+		if (!appVersion) {
+			throw new Error('appVersion not defined');
+		}
 
-    enable = async (walletName: string) => {
-        this._enabledWallet = await BrowserWallet.enable(walletName);
-    }
+		return appVersion;
+	};
 
-    clearEnabledWallet = () => {
-        this._enabledWallet = undefined;
-    }
+	enable = async (walletName: string) => {
+		this._enabledWallet = await BrowserWallet.enable(walletName);
+	};
 
-    private _isEnabled = () => !!this._enabledWallet;
+	clearEnabledWallet = () => {
+		this._enabledWallet = undefined;
+	};
 
-    checkWallet = (): boolean => this._isEnabled() && this._enabledWallet instanceof BrowserWallet;
+	private _isEnabled = () => !!this._enabledWallet;
 
-    private _checkWalletAndThrow = () => {
-        if (!this.checkWallet()) {
-            throw new Error('Wallet not enabled')
-        }
-    }
+	checkWallet = (): boolean =>
+		this._isEnabled() && this._enabledWallet instanceof BrowserWallet;
 
+	private _checkWalletAndThrow = () => {
+		if (!this.checkWallet()) {
+			throw new Error('Wallet not enabled');
+		}
+	};
 
-    getNetwork = async (): Promise<ApexBridgeNetwork | undefined> => {
-        this._checkWalletAndThrow();
+	getNetwork = async (): Promise<ApexBridgeNetwork | undefined> => {
+		this._checkWalletAndThrow();
 
-        try {
-            const nativeAPI = this.getNativeAPI();
-            const experimentalAPI = nativeAPI['experimental'];
-            if (!experimentalAPI) {
-                throw new Error('experimental not defined');
-            }
+		try {
+			const nativeAPI = this.getNativeAPI();
+			const experimentalAPI = nativeAPI['experimental'];
+			if (!experimentalAPI) {
+				throw new Error('experimental not defined');
+			}
 
-            const getConnectedNetworkId = experimentalAPI['getConnectedNetworkId'];
-            if (!getConnectedNetworkId) {
-                throw new Error('getConnectedNetworkId not defined');
-            }
+			const getConnectedNetworkId =
+				experimentalAPI['getConnectedNetworkId'];
+			if (!getConnectedNetworkId) {
+				throw new Error('getConnectedNetworkId not defined');
+			}
 
-            const eternlNetworkId = await getConnectedNetworkId();
-            return ETERNL_NETWORK_ID_TO_APEX_BRIDGE_NETWORK[eternlNetworkId];
-        } catch (e) {
-            console.log(e)
-        }
-    }
+			const eternlNetworkId = await getConnectedNetworkId();
+			return ETERNL_NETWORK_ID_TO_APEX_BRIDGE_NETWORK[eternlNetworkId];
+		} catch (e) {
+			console.log(e);
+		}
+	};
 
-    // PROXY
+	// PROXY
 
-    getChangeAddress = async (): Promise<string> => {
-        this._checkWalletAndThrow();
+	getChangeAddress = async (): Promise<string> => {
+		this._checkWalletAndThrow();
 
-        try {
-            const networkId = await this.getNetworkId();
-            const nativeAPI = this.getNativeAPI();
-            const changeAddr = await nativeAPI.getChangeAddress();
-            const changeAddrBytes = toBytes(changeAddr);
-            
-            const addr = NewAddressFromBytes(changeAddrBytes);
-            const realChangeAddr = addr?.String(networkId);
-            if (realChangeAddr) {
-                return realChangeAddr;
-            }
-        } catch (e) {
-            console.log(e)
-        }
+		try {
+			const networkId = await this.getNetworkId();
+			const nativeAPI = this.getNativeAPI();
+			const changeAddr = await nativeAPI.getChangeAddress();
+			const changeAddrBytes = toBytes(changeAddr);
 
-        return await this._enabledWallet!.getChangeAddress()
-    }
+			const addr = NewAddressFromBytes(changeAddrBytes);
+			const realChangeAddr = addr?.String(networkId);
+			if (realChangeAddr) {
+				return realChangeAddr;
+			}
+		} catch (e) {
+			console.log(e);
+		}
 
-    getAllUtxos = async (includeCollateral: boolean = false): Promise<UTxO[]> => {
-        this._checkWalletAndThrow();
+		return await this._enabledWallet!.getChangeAddress();
+	};
 
-        const address = await this.getChangeAddress();
+	getAllUtxos = async (includeCollateral = false): Promise<UTxO[]> => {
+		this._checkWalletAndThrow();
 
-        const allUtxosMap: {[key: string]: UTxO} = {};
+		const address = await this.getChangeAddress();
 
-        const utxos = await this._enabledWallet!.getUtxos()
-        for (let i = 0; i < utxos.length; ++i) {
-            const utxo = utxos[i];
+		const allUtxosMap: { [key: string]: UTxO } = {};
 
-            if (utxo.output.address === address) {
-                allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] = utxo;
-            }
-        }
+		const utxos = await this._enabledWallet!.getUtxos();
+		for (let i = 0; i < utxos.length; ++i) {
+			const utxo = utxos[i];
 
-        if (includeCollateral){
-            const collateralUtxos = await this._enabledWallet!.getCollateral();
-            for (let i = 0; i < collateralUtxos.length; ++i) {
-                const utxo = collateralUtxos[i];
+			if (utxo.output.address === address) {
+				allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] =
+					utxo;
+			}
+		}
 
-                if (utxo.output.address === address) {
-                    allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] = utxo;
-                }
-            }
-        }
+		if (includeCollateral) {
+			const collateralUtxos = await this._enabledWallet!.getCollateral();
+			for (let i = 0; i < collateralUtxos.length; ++i) {
+				const utxo = collateralUtxos[i];
 
-        return Object.values(allUtxosMap);
-    }
+				if (utxo.output.address === address) {
+					allUtxosMap[
+						`${utxo.input.txHash}#${utxo.input.outputIndex}`
+					] = utxo;
+				}
+			}
+		}
 
-    getBalance = async (allUtxos?: UTxO[]): Promise<string> => {
-        if (allUtxos === undefined) {
-            allUtxos = await this.getAllUtxos();
-        }
+		return Object.values(allUtxosMap);
+	};
 
-        const assetsSumMap = getAssetsSumMap(allUtxos);
-        return (assetsSumMap['lovelace'] || BigInt(0)).toString(10);
-    }
+	getBalance = async (allUtxos?: UTxO[]): Promise<string> => {
+		if (allUtxos === undefined) {
+			allUtxos = await this.getAllUtxos();
+		}
 
-    getNetworkId = async (): Promise<number> => {
-        this._checkWalletAndThrow();
-        return await this._enabledWallet!.getNetworkId();
-    }
+		const assetsSumMap = getAssetsSumMap(allUtxos);
+		return (assetsSumMap['lovelace'] || BigInt(0)).toString(10);
+	};
 
-    signTx = async (unsignedTx: string, partialSign?: boolean): Promise<string> => {
-        this._checkWalletAndThrow();
-        return await this._enabledWallet!.signTx(unsignedTx, partialSign);
-    }
+	getNetworkId = async (): Promise<number> => {
+		this._checkWalletAndThrow();
+		return await this._enabledWallet!.getNetworkId();
+	};
 
-    submitTx = async (tx: string): Promise<string> => {
-        this._checkWalletAndThrow();
-        return await this._enabledWallet!.submitTx(tx);
-    };
+	signTx = async (
+		unsignedTx: string,
+		partialSign?: boolean,
+	): Promise<string> => {
+		this._checkWalletAndThrow();
+		return await this._enabledWallet!.signTx(unsignedTx, partialSign);
+	};
+
+	submitTx = async (tx: string): Promise<string> => {
+		this._checkWalletAndThrow();
+		return await this._enabledWallet!.submitTx(tx);
+	};
 }
 
 const walletHandler = new WalletHandler();
 export default walletHandler;
 export type { BrowserWallet, Wallet, Asset, UTxO };
 
-const ETERNL_NETWORK_ID_TO_APEX_BRIDGE_NETWORK: {[key: string]: ApexBridgeNetwork} = {
-    'afvt': ApexBridgeNetwork.TestnetVector,
-    'afvm': ApexBridgeNetwork.MainnetVector,
-    'afpt': ApexBridgeNetwork.TestnetPrime,
-    'afpm': ApexBridgeNetwork.MainnetPrime,
-}
+const ETERNL_NETWORK_ID_TO_APEX_BRIDGE_NETWORK: {
+	[key: string]: ApexBridgeNetwork;
+} = {
+	afvt: ApexBridgeNetwork.TestnetVector,
+	afvm: ApexBridgeNetwork.MainnetVector,
+	afpt: ApexBridgeNetwork.TestnetPrime,
+	afpm: ApexBridgeNetwork.MainnetPrime,
+};

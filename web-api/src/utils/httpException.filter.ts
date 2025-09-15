@@ -30,7 +30,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
 					? JSON.parse(eResponseStr)
 					: eResponseStr;
 			error = eResponse.error || eResponse.err;
-		} catch {}
+		} catch (e) {
+			Logger.error(
+				`Failed to parse exception intercepted - ex: ${JSON.stringify(error)}, e: ${JSON.stringify(e)}`,
+				e.stack,
+			);
+		}
 
 		response.status(status).json({
 			statusCode: status,
