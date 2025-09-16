@@ -95,9 +95,9 @@ func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	utxos, err := infracom.ExecuteWithRetry(context.Background(),
+	utxos, err := infracom.ExecuteWithRetry(r.Context(),
 		func(ctx context.Context) ([]wallet.Utxo, error) {
-			return txProvider.GetUtxos(context.Background(), address)
+			return txProvider.GetUtxos(ctx, address)
 		}, infracom.WithRetryCount(10), infracom.WithRetryWaitTime(time.Second))
 
 	if err != nil {
@@ -155,7 +155,7 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 	}
 
 	fee, err := bridgingTxSender.GetTxFee(
-		context.Background(), requestBody.DestinationChainID,
+		r.Context(), requestBody.DestinationChainID,
 		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
 		skipUtxos, minUtxoValue,
 	)
@@ -206,7 +206,7 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 	}
 
 	txRawBytes, txHash, txInputs, err := bridgingTxSender.CreateTx(
-		context.Background(), requestBody.DestinationChainID,
+		r.Context(), requestBody.DestinationChainID,
 		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
 		skipUtxos, minUtxoValue,
 	)
