@@ -24,9 +24,6 @@ type APIImpl struct {
 	logger    hclog.Logger
 
 	serverClosedCh chan bool
-
-	baseCtxCancel context.CancelFunc
-	connCancels   []context.CancelFunc
 }
 
 var _ core.API = (*APIImpl)(nil)
@@ -79,14 +76,12 @@ func (api *APIImpl) Start() {
 		Handler:           api.handler,
 		ReadHeaderTimeout: 3 * time.Second,
 		BaseContext: func(l net.Listener) context.Context {
-			cc, cancel := context.WithCancel(api.ctx)
-			api.baseCtxCancel = cancel
+			cc, _ := context.WithCancel(api.ctx)
 
 			return cc
 		},
 		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
-			cc, cancel := context.WithCancel(ctx)
-			api.connCancels = append(api.connCancels, cancel)
+			cc, _ := context.WithCancel(ctx)
 
 			return cc
 		},
@@ -134,14 +129,6 @@ func (api *APIImpl) Dispose() error {
 
 		api.logger.Debug("Called forceful Close")
 	case <-api.serverClosedCh:
-	}
-
-	for _, cancel := range api.connCancels {
-		cancel()
-	}
-
-	if api.baseCtxCancel != nil {
-		api.baseCtxCancel()
 	}
 
 	api.logger.Debug("Finished disposing")
