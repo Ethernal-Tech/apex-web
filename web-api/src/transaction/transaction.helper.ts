@@ -20,6 +20,9 @@ import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
 import { BridgingSettingsDto } from 'src/settings/settings.dto';
 import { convertDfmToWei } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
+import { AppConfigService } from 'src/config/config.service';
+
+const cfg = new AppConfigService();
 
 const prepareCreateCardanoBridgingTx = (
 	dto: CreateTransactionDto,
@@ -30,8 +33,7 @@ const prepareCreateCardanoBridgingTx = (
 		dto.originChain === ChainEnum.Nexus ||
 		dto.destinationChain === ChainEnum.Nexus;
 
-	const isCentralized =
-		process.env.USE_CENTRALIZED_BRIDGE === 'true' && nexusInvolved;
+	const isCentralized = cfg.features.useCentralizedBridge && nexusInvolved;
 
 	const body = {
 		senderAddr: dto.senderAddress,
@@ -56,7 +58,7 @@ export const createCardanoBridgingTx = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
 ): Promise<CreateCardanoTransactionResponseDto> => {
-	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
+	const apiUrl = cfg.cardanoApiUrl || 'http://localhost:40000';
 	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 	const endpointUrl = apiUrl + `/api/CardanoTx/CreateBridgingTx`;
 
@@ -92,7 +94,7 @@ export const getCardanoBridgingTxFee = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
 ): Promise<CardanoTransactionFeeResponseDto> => {
-	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
+	const apiUrl = cfg.cardanoApiUrl || 'http://localhost:40000';
 	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 	const endpointUrl = apiUrl + `/api/CardanoTx/GetBridgingTxFee`;
 
@@ -151,9 +153,9 @@ export const createEthBridgingTx = (
 		);
 	}
 
-	const isMainnet = process.env.IS_MAINNET == 'true';
-
-	if (!areChainsEqual(dto.destinationChain, addr.GetNetwork(), isMainnet)) {
+	if (
+		!areChainsEqual(dto.destinationChain, addr.GetNetwork(), cfg.app.isMainnet)
+	) {
 		throw new BadRequestException(
 			`Destination address: ${dto.destinationAddress} not compatible with destination chain: ${dto.destinationChain}`,
 		);
@@ -184,10 +186,10 @@ export const createEthBridgingTx = (
 		);
 	}
 
-	const isCentralized = process.env.USE_CENTRALIZED_BRIDGE === 'true';
-
-	const createFunc = isCentralized ? ethCentralizedBridgingTx : ethBridgingTx;
-	return createFunc(dto, BigInt(dto.amount) + bridgingFee, bridgingFee);
+	const createFunc = cfg.features.useCentralizedBridge
+		? ethCentralizedBridgingTx
+		: ethBridgingTx;
+	return await createFunc(dto, BigInt(dto.amount) + bridgingFee, bridgingFee);
 };
 
 const ethBridgingTx = (
@@ -195,7 +197,7 @@ const ethBridgingTx = (
 	value: bigint,
 	bridgingFee: bigint,
 ): CreateEthTransactionResponseDto => {
-	const to = process.env.NEXUS_BRIDGING_ADDR;
+	const to = cfg.bridge.addresses.nexusBridging;
 	if (!to) {
 		throw new BadRequestException('Empty to address');
 	}
@@ -229,7 +231,7 @@ const ethCentralizedBridgingTx = (
 	value: bigint,
 	bridgingFee: bigint,
 ): CreateEthTransactionResponseDto => {
-	const to = process.env.NEXUS_CENTRALIZED_BRIDGING_ADDR;
+	const to = cfg.bridge.addresses.nexusBridging;
 	if (!to) {
 		throw new BadRequestException('Empty to address');
 	}
