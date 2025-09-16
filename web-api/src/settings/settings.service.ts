@@ -3,6 +3,7 @@ import axios, { AxiosError } from 'axios';
 import { retryForever } from 'src/utils/generalUtils';
 import { SettingsResponseDto } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
+import { AppConfigService } from 'src/config/config.service';
 
 const RETRY_DELAY_MS = 5000;
 
@@ -10,10 +11,10 @@ const RETRY_DELAY_MS = 5000;
 export class SettingsService {
 	SettingsResponse: SettingsResponseDto;
 
-	constructor() {}
+	constructor(private readonly cfg: AppConfigService) {}
 
 	async init() {
-		const apiUrl = process.env.CARDANO_API_URL;
+		const apiUrl = this.cfg.cardanoApiUrl;
 		const apiKey = process.env.CARDANO_API_API_KEY;
 
 		if (!apiUrl || !apiKey) {
