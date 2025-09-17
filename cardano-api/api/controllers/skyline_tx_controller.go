@@ -103,7 +103,7 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txFeeInfo, bridgingRequestMetadata, err := c.calculateTxFee(requestBody)
+	txFeeInfo, bridgingRequestMetadata, err := c.calculateTxFee(r.Context(), requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
@@ -143,7 +143,7 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txInfo, bridgingRequestMetadata, err := c.createTx(requestBody)
+	txInfo, bridgingRequestMetadata, err := c.createTx(r.Context(), requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
@@ -332,13 +332,13 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	return nil
 }
 
-func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
+func (c *SkylineTxControllerImpl) createTx(ctx context.Context, requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
 	cacheUtxosTransformer := utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher)
 
 	bridgingAddress, err := utils.GetAddressToBridgeTo(
-		context.Background(),
+		ctx,
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
 		requestBody.SourceChainID,
@@ -354,7 +354,7 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 	}
 
 	txInfo, metadata, err := txSender.CreateBridgingTx(
-		context.Background(),
+		ctx,
 		sendtx.BridgingTxInput{
 			SrcChainID:      requestBody.SourceChainID,
 			DstChainID:      requestBody.DestinationChainID,
@@ -383,6 +383,7 @@ func (c *SkylineTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 }
 
 func (c *SkylineTxControllerImpl) calculateTxFee(
+	ctx context.Context,
 	requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxFeeInfo,
 	*sendtx.BridgingRequestMetadata,
@@ -390,7 +391,7 @@ func (c *SkylineTxControllerImpl) calculateTxFee(
 ) {
 	// Get bridging address
 	bridgingAddress, err := utils.GetAddressToBridgeTo(
-		context.Background(),
+		ctx,
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
 		requestBody.SourceChainID,
@@ -409,7 +410,7 @@ func (c *SkylineTxControllerImpl) calculateTxFee(
 
 	// Calculate transaction fee
 	txFeeInfo, metadata, err := txSender.CalculateBridgingTxFee(
-		context.Background(),
+		ctx,
 		sendtx.BridgingTxInput{
 			SrcChainID:      requestBody.SourceChainID,
 			DstChainID:      requestBody.DestinationChainID,
@@ -477,7 +478,7 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 	calculateLockedTokens := func(cfg *core.CardanoChainConfig) (map[string]string, error) {
 		// Get all bridging addresses
 		bridgingAddresses, err := utils.GetAllBridgingAddress(
-			context.Background(),
+			r.Context(),
 			c.appConfig.OracleAPI.URL,
 			c.appConfig.OracleAPI.APIKey,
 			cfg.ChainID)
@@ -500,7 +501,7 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 
 		// Process each bridging address
 		for _, bridgeAddress := range bridgingAddresses.Addresses {
-			utxos, err := txProviderCardano.GetUtxos(context.Background(), bridgeAddress)
+			utxos, err := txProviderCardano.GetUtxos(r.Context(), bridgeAddress)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get utxos from chain. err: %w", err)
 			}

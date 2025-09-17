@@ -68,7 +68,7 @@ func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txFeeInfo, _, err := c.calculateTxFee(requestBody)
+	txFeeInfo, _, err := c.calculateTxFee(r.Context(), requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
@@ -96,7 +96,7 @@ func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txInfo, err := c.createTx(requestBody)
+	txInfo, err := c.createTx(r.Context(), requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
@@ -218,7 +218,7 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	return nil
 }
 
-func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
+func (c *ReactorTxControllerImpl) createTx(ctx context.Context, requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxInfo, error,
 ) {
 	// Setup transaction components
@@ -231,7 +231,7 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 
 	// Create the bridging transaction
 	txInfo, _, err := txSender.CreateBridgingTx(
-		context.Background(),
+		ctx,
 		sendtx.BridgingTxInput{
 			SrcChainID:   requestBody.SourceChainID,
 			DstChainID:   requestBody.DestinationChainID,
@@ -259,7 +259,8 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 	return txInfo, nil
 }
 
-func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
+func (c *ReactorTxControllerImpl) calculateTxFee(
+	ctx context.Context, requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
 	txSender, receivers, err := c.getTxSenderAndReceivers(
@@ -269,7 +270,7 @@ func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 	}
 
 	txFeeInfo, metadata, err := txSender.CalculateBridgingTxFee(
-		context.Background(),
+		ctx,
 		sendtx.BridgingTxInput{
 			SrcChainID:   requestBody.SourceChainID,
 			DstChainID:   requestBody.DestinationChainID,
