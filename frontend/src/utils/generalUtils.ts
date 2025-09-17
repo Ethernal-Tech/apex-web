@@ -1,13 +1,9 @@
-import { NewAddress, RewardAddress } from "../features/Address/addreses";
 import { BridgeTransactionDto, ChainEnum } from "../swagger/apexBridgeApiService";
-import { checkCardanoAddressCompatibility } from "./chainUtils";
 import Web3 from "web3";
 import {Numbers} from "web3-types";
 import {EtherUnits} from "web3-utils";
 
 // chain icons
-import { isAddress } from "web3-validator";
-import { ISettingsState } from "../redux/slices/settingsSlice";
 import { UTxO } from "../features/WalletHandler";
 import {
   BigNum,
@@ -20,7 +16,6 @@ import {
   Address,
 } from '@emurgo/cardano-serialization-lib-browser';
 import { isCardanoChain, isEvmChain, isLZBridging } from "../settings/chain";
-import { getTokenInfoBySrcDst } from "../settings/token";
 import appSettings from "../settings/appSettings";
 
 export const capitalizeWord = (word: string): string => {
@@ -46,7 +41,7 @@ export const formatAddress = (
   return `${firstPart}...${lastPart}`;
 }
 
-const fromWei = (number: Numbers, unit: EtherUnits | number): string => {
+export const fromWei = (number: Numbers, unit: EtherUnits | number): string => {
     const val = Web3.utils.fromWei(number, unit);
     return val.endsWith('.') ? val.slice(0, -1) : val;
 }
@@ -86,90 +81,6 @@ export const convertDfmToWei = (dfm: string | number): string => {
 
 export const shouldUseMainnet = (src: ChainEnum, dst: ChainEnum): boolean =>
   appSettings.isMainnet || isLZBridging(src, dst);
-
-export const validateSubmitTxInputs = (
-  settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
-  destinationAddr: string, amount: string
-): string | undefined => {
-  const tokenInfo = getTokenInfoBySrcDst(sourceChain, destinationChain, false);
-  if (isCardanoChain(sourceChain)) {
-    if (BigInt(amount) < BigInt(settings.minValueToBridge)) {
-      return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} ${tokenInfo.label}`;
-    }
-
-    const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
-
-    if (maxAllowedToBridgeDfm > 0 &&
-        BigInt(amount) > maxAllowedToBridgeDfm) {
-      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
-    } 
-  } else if (isEvmChain(sourceChain)){
-    if (isLZBridging(sourceChain, destinationChain)){
-      if (BigInt(amount) === BigInt(0)){
-        return 'Amount cant be zero'
-      }
-    }else{
-      if (BigInt(amount) < BigInt(convertDfmToWei(settings.minValueToBridge))) {
-        return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} ${tokenInfo.label}`;
-      }
-
-      const maxAllowedToBridgeWei = BigInt(convertDfmToWei(settings.maxAmountAllowedToBridge));
-
-      if (maxAllowedToBridgeWei > 0 &&
-          BigInt(amount) > maxAllowedToBridgeWei) {
-        return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedToBridgeWei.toString(10))} ${tokenInfo.label}`;
-      } 
-    }
-  }
-
-  if (isCardanoChain(destinationChain)) {
-    const addr = NewAddress(destinationAddr);
-    if (!addr || addr instanceof RewardAddress || destinationAddr !== addr.String()) {
-      return `Invalid destination address: ${destinationAddr}`;
-    }
-  
-    if (!checkCardanoAddressCompatibility(destinationChain, addr, shouldUseMainnet(sourceChain, destinationChain))) {
-      return `Destination address not compatible with destination chain: ${destinationChain}`;
-    }
-  } else if (isEvmChain(destinationChain)) {
-    if (!isAddress(destinationAddr)) {
-      return `Invalid destination address: ${destinationAddr}`;
-    }
-  }
-}
-
-export const validateSubmitTxInputsSkyline = (
-  settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
-  destinationAddr: string, amount: string, bridgeTxFee: string, operationFee: string, isNativeToken: boolean
-): string | undefined => {
-  const tokenInfo = getTokenInfoBySrcDst(sourceChain, destinationChain, isNativeToken);
-  const chain = isNativeToken ? destinationChain : sourceChain;
-  if (BigInt(amount) < BigInt(settings.minUtxoChainValue[chain])) {
-    return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(BigInt(settings.minUtxoChainValue[chain]).toString(10))} ${tokenInfo.label}`;
-  }
-
-  if (!isNativeToken) {
-    const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge)
-    if (maxAllowedToBridgeDfm > 0 && BigInt(amount) > maxAllowedToBridgeDfm) {
-      return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
-    }
-  } else {
-    const maxTokenAllowedToBridgeDfm = BigInt(settings.maxTokenAmountAllowedToBridge)
-    if (maxTokenAllowedToBridgeDfm > 0 && BigInt(amount)> maxTokenAllowedToBridgeDfm) {
-      return `Token amount more than maximum allowed: ${convertUtxoDfmToApex(maxTokenAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
-    } 
-  }
-
-  const addr = NewAddress(destinationAddr);
-  if (!addr || addr instanceof RewardAddress || destinationAddr !== addr.String()) {
-    return `Invalid destination address: ${destinationAddr}`;
-  }
-
-  if (!checkCardanoAddressCompatibility(destinationChain, addr, shouldUseMainnet(sourceChain, destinationChain))) {
-    return `Destination address not compatible with destination chain: ${destinationChain}`;
-  }
-}
-
 
 // format it differently depending on network (nexus is 18 decimals, prime and vector are 6)
 export const convertDfmToApex = (dfm:string|number, network:ChainEnum) =>{

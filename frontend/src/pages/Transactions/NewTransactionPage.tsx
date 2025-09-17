@@ -1,6 +1,6 @@
 import BasePage from "../base/BasePage";
 import BridgeInput from "./components/BridgeInput";
-import { convertDfmToWei, formatTxDetailUrl, validateSubmitTxInputs, validateSubmitTxInputsSkyline} from "../../utils/generalUtils";
+import { convertDfmToWei, formatTxDetailUrl } from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -11,11 +11,11 @@ import { createCardanoTransactionAction, createEthTransactionAction, getCardanoT
 import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
 import { getLayerZeroTransferResponse, signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx} from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
-import appSettings from "../../settings/appSettings";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
 import { isCardanoChain, isEvmChain, isLZBridging, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
+import { validateSubmitTxInputs } from "../../utils/validationUtils";
 
 function NewTransactionPage() {	
 	const [loading, setLoading] = useState(false);
@@ -83,9 +83,7 @@ function NewTransactionPage() {
 	}, [prepareCreateCardanoTx])
 
 	const createCardanoTx = useCallback(async (address: string, amount: string, isNativeToken: boolean): Promise<CreateCardanoTxResponse> => {
-		const validationErr = appSettings.isSkyline
-			? validateSubmitTxInputsSkyline(settings, chain, destinationChain, address, amount, bridgeTxFee, operationFee, isNativeToken) 
-			: validateSubmitTxInputs(settings, chain, destinationChain, address, amount);
+		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount, isNativeToken, settings);
 		if (validationErr) {
 			throw new Error(validationErr);
 		}
@@ -129,7 +127,7 @@ function NewTransactionPage() {
 	}, [prepareCreateEthTx])
 
 	const createEthTx = useCallback(async (address: string, amount: string): Promise<CreateEthTxResponse> => {
-		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount);
+		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount, false, settings);
 		if (validationErr) {
 			throw new Error(validationErr);
 		}

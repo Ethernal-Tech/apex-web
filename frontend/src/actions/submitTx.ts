@@ -8,8 +8,8 @@ import { toApexBridgeName, toLayerZeroChainName } from "../settings/chain";
 import Web3 from "web3";
 import { isCurrencyBridgingAllowed } from "../settings/token";
 import { ISettingsState } from "../redux/slices/settingsSlice";
-import { validateSubmitTxInputs } from "../utils/generalUtils";
 import { SendTransactionOptions } from "web3/lib/commonjs/eth.exports";
+import { validateSubmitTxInputs } from "../utils/validationUtils";
 
 type TxDetailsOptions = {
     feePercMult: bigint;
@@ -271,7 +271,7 @@ export const getLayerZeroTransferResponse = async function (
     settings: ISettingsState, srcChain: ChainEnum, dstChain: ChainEnum,
     fromAddr: string, toAddr: string, amount: string,
 ): Promise<LayerZeroTransferResponseDto> {
-    const validationErr = validateSubmitTxInputs(settings, srcChain, dstChain, fromAddr, amount);
+    const validationErr = validateSubmitTxInputs(srcChain, dstChain, fromAddr, amount, false, settings);
     if (!!validationErr) {
         throw new Error(validationErr);
     }

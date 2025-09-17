@@ -72,7 +72,8 @@ export class TransactionService {
 
 		if (
 			dto.originChain === ChainApexBridgeEnum.Vector &&
-			dto.destinationChain !== ChainApexBridgeEnum.Prime
+			dto.destinationChain !== ChainApexBridgeEnum.Prime &&
+			dto.destinationChain !== ChainApexBridgeEnum.Nexus
 		) {
 			throw new BadRequestException('Invalid destination chain');
 		}

@@ -9,10 +9,16 @@ import {ReactComponent as BNBIcon} from '../assets/chain-icons/bsc.svg'
 import { TokenEnum } from "../features/enums";
 import appSettings from "./appSettings";
 
+export enum BridgingType {
+  Reactor = 1,
+  Skyline,
+  LayerZero,
+}
+
 const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
     [ChainEnum.Prime]: [ChainEnum.Vector, ChainEnum.Nexus],
-    [ChainEnum.Vector]: [ChainEnum.Prime],
-    [ChainEnum.Nexus]: [ChainEnum.Prime],
+    [ChainEnum.Vector]: [ChainEnum.Prime, ChainEnum.Nexus],
+    [ChainEnum.Nexus]: [ChainEnum.Prime, ChainEnum.Vector],
 }
 
 const skylineChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
@@ -180,4 +186,13 @@ export function toApexBridgeName(chain: string): ChainEnum{
         default: 
             return chain as unknown as ChainEnum
     }
+}
+
+export function getBridgingType(srcChain: ChainEnum, dstChain: ChainEnum): BridgingType {
+    if ((reactorChainDirections[srcChain] || []).includes(dstChain)) {
+        return BridgingType.Reactor;
+    } else if ((skylineChainDirections[srcChain] || []).includes(dstChain)) {
+        return BridgingType.Skyline;
+    }
+    return BridgingType.LayerZero;
 }
