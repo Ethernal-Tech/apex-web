@@ -32,6 +32,7 @@ import {
 	LayerZeroTransferDto,
 	LayerZeroTransferResponseDto,
 } from './layerzerotransaction.dto';
+import { isAllowedDirection, isCardanoChain, isEvmChain } from 'src/utils/chainUtils';
 
 @Injectable()
 export class TransactionService {
@@ -39,7 +40,7 @@ export class TransactionService {
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly settingsService: SettingsService,
-	) {}
+	) { }
 
 	private async validateCreateCardanoTx(dto: CreateTransactionDto) {
 		if (
@@ -53,36 +54,21 @@ export class TransactionService {
 			throw new BadRequestException('Chain not supported');
 		}
 
-		if (
-			dto.originChain !== ChainApexBridgeEnum.Prime &&
-			dto.originChain !== ChainApexBridgeEnum.Vector &&
-			dto.originChain !== ChainApexBridgeEnum.Cardano
-		) {
+		if (!isCardanoChain(dto.originChain)) {
 			throw new BadRequestException('Invalid origin chain');
 		}
 
 		if (
-			dto.originChain === ChainApexBridgeEnum.Prime &&
-			dto.destinationChain !== ChainApexBridgeEnum.Vector &&
-			dto.destinationChain !== ChainApexBridgeEnum.Nexus &&
-			dto.destinationChain !== ChainApexBridgeEnum.Cardano
+			!isAllowedDirection(
+				dto.originChain,
+				dto.destinationChain,
+				this.settingsService.SettingsResponse.bridgingSettings
+					.allowedDirections,
+			)
 		) {
-			throw new BadRequestException('Invalid destination chain');
-		}
-
-		if (
-			dto.originChain === ChainApexBridgeEnum.Vector &&
-			dto.destinationChain !== ChainApexBridgeEnum.Prime &&
-			dto.destinationChain !== ChainApexBridgeEnum.Nexus
-		) {
-			throw new BadRequestException('Invalid destination chain');
-		}
-
-		if (
-			dto.originChain === ChainApexBridgeEnum.Cardano &&
-			dto.destinationChain !== ChainApexBridgeEnum.Prime
-		) {
-			throw new BadRequestException('Invalid destination chain');
+			throw new BadRequestException(
+				`Bridging from ${dto.originChain} to ${dto.destinationChain} not supported`,
+			);
 		}
 
 		const srcMinFee =
@@ -104,7 +90,7 @@ export class TransactionService {
 
 		const srcMinOperationFee =
 			this.settingsService.SettingsResponse.bridgingSettings.minOperationFee[
-				dto.originChain
+			dto.originChain
 			];
 
 		const minOperationFee = BigInt(srcMinOperationFee || '0');
@@ -188,12 +174,21 @@ export class TransactionService {
 			throw new BadRequestException('Chain not supported');
 		}
 
-		if (dto.originChain !== ChainApexBridgeEnum.Nexus) {
+		if (!isEvmChain(dto.originChain)) {
 			throw new BadRequestException('Invalid origin chain');
 		}
 
-		if (dto.destinationChain !== ChainApexBridgeEnum.Prime) {
-			throw new BadRequestException('Invalid destination chain');
+		if (
+			!isAllowedDirection(
+				dto.originChain,
+				dto.destinationChain,
+				this.settingsService.SettingsResponse.bridgingSettings
+					.allowedDirections,
+			)
+		) {
+			throw new BadRequestException(
+				`Bridging from ${dto.originChain} to ${dto.destinationChain} not supported`,
+			);
 		}
 
 		const tx = await createEthBridgingTx(

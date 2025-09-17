@@ -11,7 +11,7 @@ import { setChainAction } from "../redux/slices/chainSlice";
 import { NavigateFunction } from "react-router-dom";
 import { HOME_ROUTE } from "../pages/PageRouter";
 import { setAccountInfoAction } from "../redux/slices/accountInfoSlice";
-import { getSrcChains, isEvmChain } from "../settings/chain";
+import { isEvmChain } from "../settings/chain";
 import { shouldUseMainnet } from "../utils/generalUtils";
 
 let onLoadCalled = false
@@ -30,9 +30,9 @@ const checkAndSetEvmData = async (selectedWalletName: string, srcChain: ChainEnu
         throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`);
     }
 
-    if (!getSrcChains().some(x => x === srcChain)) {
-        throw new Error(`Chain: ${srcChain} not supported.`);
-    }
+    // if (!getSrcChains().some(x => x === srcChain)) {
+    //     throw new Error(`Chain: ${srcChain} not supported.`);
+    // }
 
     const account = await evmWalletHandler.getAddress();
     if (!account) {
@@ -100,9 +100,9 @@ const enableCardanoWallet = async (selectedWalletName: string, srcChain: ChainEn
         throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`);
     }
 
-    if (!getSrcChains().some(x => x === srcChain)) {
-        throw new Error(`Chain: ${srcChain} not supported.`);
-    }
+    // if (!getSrcChains().some(x => x === srcChain)) {
+    //     throw new Error(`Chain: ${srcChain} not supported.`);
+    // }
 
     const account = await walletHandler.getChangeAddress();
 

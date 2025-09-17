@@ -22,9 +22,7 @@ const fromChainToNetworkId = (
 				: CardanoNetworkType.TestNetNetwork;
 		}
 		case ChainApexBridgeEnum.Vector: {
-			return isMainnet
-				? CardanoNetworkType.VectorMainNetNetwork
-				: CardanoNetworkType.VectorTestNetNetwork;
+			return CardanoNetworkType.MainNetNetwork;
 		}
 		case ChainApexBridgeEnum.Nexus: {
 			return isMainnet ? NEXUS_MAINNET_CHAIN_ID : NEXUS_TESTNET_CHAIN_ID;
@@ -51,6 +49,15 @@ export const toNumChainID = (chain: ChainApexBridgeEnum) =>
 	CHAIN_TO_CHAIN_ID[chain];
 
 export const isCardanoChain = (chain: ChainEnum) =>
-	chain === ChainEnum.Cardano ||
-	chain === ChainEnum.Prime ||
-	chain === ChainEnum.Vector;
+	chain === ChainEnum.Cardano || chain === ChainEnum.Prime || chain === ChainEnum.Vector;
+
+export const isEvmChain = (chain: ChainEnum) => chain === ChainEnum.Nexus;
+
+export const isAllowedDirection = function (
+	originChain: ChainEnum,
+	destinationChain: ChainEnum,
+	allowedDirections: { [key: string]: string[] },
+): boolean {
+	return (allowedDirections[originChain] || []).includes(destinationChain);
+};
+

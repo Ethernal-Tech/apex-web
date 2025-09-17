@@ -7,9 +7,9 @@ import { Transaction } from 'web3-types';
 import { toApexBridgeName, toLayerZeroChainName } from "../settings/chain";
 import Web3 from "web3";
 import { isCurrencyBridgingAllowed } from "../settings/token";
-import { ISettingsState } from "../redux/slices/settingsSlice";
 import { SendTransactionOptions } from "web3/lib/commonjs/eth.exports";
 import { validateSubmitTxInputs } from "../utils/validationUtils";
+import { ISettingsState } from "../settings/settingsRedux";
 
 type TxDetailsOptions = {
     feePercMult: bigint;

@@ -1,11 +1,11 @@
 import { isAddress } from "web3-validator";
-import { ISettingsState } from "../redux/slices/settingsSlice";
 import { BridgingType, getBridgingType, isCardanoChain, isEvmChain } from "../settings/chain";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { getTokenInfoBySrcDst } from "../settings/token";
 import { NewAddress, RewardAddress } from "../features/Address/addreses";
 import { checkCardanoAddressCompatibility } from "./chainUtils";
 import { convertDfmToWei, fromWei } from "./generalUtils";
+import { ISettingsState } from "../settings/settingsRedux";
 
 export const validateSubmitTxInputs = (
     srcChain: ChainEnum, dstChain: ChainEnum, dstAddr: string, amount: string,

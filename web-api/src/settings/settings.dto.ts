@@ -65,6 +65,16 @@ export class BridgingSettingsDto {
 		description: 'Maximum number of receivers allowed in a bridging request',
 	})
 	maxReceiversPerBridgingRequest: number;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		type: Object,
+		additionalProperties: {
+			type: 'array',
+			items: { type: 'string' },
+		},
+	})
+	allowedDirections: { [key: string]: string[] };
 }
 
 export class NativeTokenDto {

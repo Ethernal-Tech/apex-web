@@ -48,6 +48,12 @@ export class SettingsService {
 			})
 			.filter((x) => !!x);
 
+		if (this.SettingsResponse.runMode === "skyline") {
+			this.SettingsResponse.bridgingSettings.allowedDirections[ChainEnum.Nexus] = [ChainEnum.Base, ChainEnum.BNB];
+			this.SettingsResponse.bridgingSettings.allowedDirections[ChainEnum.Base] = [ChainEnum.Nexus, ChainEnum.BNB];
+			this.SettingsResponse.bridgingSettings.allowedDirections[ChainEnum.BNB] = [ChainEnum.Nexus, ChainEnum.Base];
+		}
+
 		this.SettingsResponse.layerZeroChains.forEach((x) => {
 			if (!this.SettingsResponse.enabledChains.includes(x.chain)) {
 				this.SettingsResponse.enabledChains.push(x.chain);

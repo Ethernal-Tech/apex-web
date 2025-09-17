@@ -13,20 +13,20 @@ import { getUtxoRetrieverType } from '../features/utils';
 import { UtxoRetrieverEnum } from '../features/enums';
 import { getChainInfo, isEvmChain } from '../settings/chain';
 import { getBridgingInfo, getToken } from '../settings/token';
-import { LayerZeroChains } from '../redux/slices/settingsSlice';
 import { shouldUseMainnet } from '../utils/generalUtils';
+import { ISettingsState } from '../settings/settingsRedux';
 
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
 
-const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, lzChainsSetting : LayerZeroChains): Promise<IBalanceState> => {
+const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState): Promise<IBalanceState> => {
     const bridgingInfo = getBridgingInfo(srcChain, dstChain);
     const currencyTokenName = getChainInfo(srcChain).currencyToken;
 
     if (isEvmChain(srcChain)) {
         const balances : {[key : string] : string} = {}
         if (srcChain !== ChainEnum.Nexus){
-            const oftAddress = lzChainsSetting[srcChain].oftAddress;
+            const oftAddress = settings.layerZeroChains[srcChain].oftAddress;
             const token = getToken(srcChain, dstChain, true);
             balances[token!] = await evmWalletHandler.getERC20Balance(oftAddress)
         }
@@ -68,7 +68,7 @@ const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, 
 export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
     const srcChain = getCurrentSrcChain();
     const dstChain = store.getState().chain.destinationChain;
-    const lzChainsSettings = store.getState().settings.layerZeroChains;
+    const lzChainsSettings = store.getState().settings;
 
     if (!srcChain) {
         return;

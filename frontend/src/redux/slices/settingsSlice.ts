@@ -2,24 +2,7 @@ import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import appSettings from '../../settings/appSettings'
 import { SettingsFullResponseDto } from '../../swagger/apexBridgeApiService'
-
-export type CardanoChainsNativeTokens = {
-	[key: string]: { dstChainID: string; tokenName: string; }[];
-}
-
-export type LayerZeroChains = Record<string, { oftAddress: string; chainID: number }>;
-
-export interface ISettingsState {
-	minUtxoChainValue: { [key: string]: string }
-	minChainFeeForBridging: { [key: string]: string }
-	minOperationFee: { [key: string]: string }
-	maxAmountAllowedToBridge: string
-	maxTokenAmountAllowedToBridge: string
-	minValueToBridge: string
-	cardanoChainsNativeTokens: CardanoChainsNativeTokens
-	enabledChains: string[]
-	layerZeroChains: LayerZeroChains
-}
+import { ISettingsState, LayerZeroChains } from '../../settings/settingsRedux'
 
 const initialState: ISettingsState = {
 	minUtxoChainValue: appSettings.minUtxoChainValue,
@@ -30,7 +13,8 @@ const initialState: ISettingsState = {
 	minValueToBridge: appSettings.minValueToBridge,
 	cardanoChainsNativeTokens: {},
 	enabledChains: appSettings.enabledChains,
-	layerZeroChains: {}
+	layerZeroChains: {},
+	allowedDirections: {},
 }
 
 const settingsSlice = createSlice({
@@ -50,15 +34,19 @@ const settingsSlice = createSlice({
 				acc[key] = value.toString();
 				return acc;
 			}, {} as { [key: string]: string });
+			state.allowedDirections = Object.entries(action.payload.bridgingSettings.allowedDirections).reduce((acc, [key, value]) => {
+				acc[key] = value;
+				return acc;
+			}, {} as { [key: string]: string[] });
 			state.minValueToBridge = action.payload.bridgingSettings.minValueToBridge.toString();
 			state.maxAmountAllowedToBridge = action.payload.bridgingSettings.maxAmountAllowedToBridge;
 			state.maxTokenAmountAllowedToBridge = action.payload.bridgingSettings.maxTokenAmountAllowedToBridge;
 			state.cardanoChainsNativeTokens = action.payload.cardanoChainsNativeTokens;
 			state.enabledChains = action.payload.enabledChains;
 			state.layerZeroChains = action.payload.layerZeroChains.reduce<LayerZeroChains>((acc, cfg) => {
-			const key = String(cfg.chain).toLowerCase();
-			acc[key] = { oftAddress: cfg.oftAddress, chainID: cfg.chainID };
-			return acc;
+				const key = String(cfg.chain).toLowerCase();
+				acc[key] = { oftAddress: cfg.oftAddress, chainID: cfg.chainID };
+				return acc;
 			}, {});
 		},
 	},

@@ -96,7 +96,7 @@ function NewTransactionPage() {
 		}
 
 		return { createTxDto, createResponse };
-	}, [bridgeTxFee, chain, destinationChain, operationFee, prepareCreateCardanoTx, settings])
+	}, [chain, destinationChain, prepareCreateCardanoTx, settings])
 
 	const prepareCreateEthTx = useCallback((address: string, amount: string): CreateTransactionDto => {
 		const destChain = toApexBridge(destinationChain)

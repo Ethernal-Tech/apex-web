@@ -24,25 +24,24 @@ const HomePage: React.FC = () => {
   const loginConnecting = useSelector((state: RootState) => state.login.connecting);
   const account = useSelector((state: RootState) => state.accountInfo.account);
   const isLoggedInMemo = !!wallet && !!account;
-  const enabledChains = useSelector((state: RootState) => state.settings.enabledChains);
-
+  const settings = useSelector((state: RootState) => state.settings)
+  
   const navigate = useNavigate()
   const dispatch = useDispatch()
 
-  const srcChain = useSelector((state: RootState) => state.chain.chain);
-  const dstChain = useSelector((state: RootState) => state.chain.destinationChain);
+  const {chain: srcChain, destinationChain: dstChain} = useSelector((state: RootState) => state.chain);
 
   const srcChainOptions = useMemo(
-    () => getSrcChains().filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x)),
-    [enabledChains]);
+    () => getSrcChains(settings).filter(chain => settings.enabledChains.includes(chain)).map(x => getChainInfo(x)),
+    [settings]);
 
   const dstChainOptions = useMemo(
-    () => getDstChains(srcChain).filter(chain => enabledChains.includes(chain)).map(x => getChainInfo(x)),
-    [srcChain, enabledChains]);
+    () => getDstChains(srcChain, settings).filter(chain => settings.enabledChains.includes(chain)).map(x => getChainInfo(x)),
+    [srcChain, settings]);
 
   const isSwitchBtnEnabled = useMemo(
-    () => !isLoggedInMemo && getDstChains(dstChain).some(chain => chain === srcChain),
-    [srcChain, dstChain, isLoggedInMemo]);
+    () => !isLoggedInMemo && getDstChains(dstChain, settings).some(chain => chain === srcChain),
+    [srcChain, dstChain, isLoggedInMemo, settings]);
 
   const srcChainInfo = useMemo(() => getChainInfo(srcChain), [srcChain]);
   const dstChainInfo = useMemo(() => getChainInfo(dstChain), [dstChain]);
@@ -64,14 +63,14 @@ const HomePage: React.FC = () => {
 
   const handleConnectClick = useCallback(
     async () => {
-      if (!enabledChains.includes(srcChain)) {
+      if (!settings.enabledChains.includes(srcChain)) {
         console.error("chain not supported", srcChain)
         return
       }
 
       await login(srcChain, dstChain, navigate, dispatch);
     },
-    [srcChain, dstChain, enabledChains, navigate, dispatch]);
+    [srcChain, settings.enabledChains, navigate, dispatch]);
 
   useEffect(() => {
     if ((!srcChain || !srcChainOptions.some(x => x.value === srcChain)) && srcChainOptions.length > 0) {

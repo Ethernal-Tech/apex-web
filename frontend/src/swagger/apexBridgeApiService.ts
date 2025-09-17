@@ -652,6 +652,7 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
     maxTokenAmountAllowedToBridge!: string;
     /** Maximum number of receivers allowed in a bridging request */
     maxReceiversPerBridgingRequest!: number;
+    allowedDirections!: { [key: string]: string[]; };
 
     [key: string]: any;
 
@@ -696,6 +697,16 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
                         (this.minUtxoChainValue as any)![key] = _data["minUtxoChainValue"][key];
                 }
             }
+            if (_data["allowedDirections"]) {
+                this.allowedDirections = {} as any;
+                for (let key in _data["allowedDirections"]) {
+                    if (_data["allowedDirections"].hasOwnProperty(key)) {
+                        this.allowedDirections![key] = [] as any;
+                        for (let item of _data["allowedDirections"][key])
+                            this.allowedDirections![key]!.push(item);
+                    }
+                }
+            }
             this.minValueToBridge = _data["minValueToBridge"];
             this.maxAmountAllowedToBridge = _data["maxAmountAllowedToBridge"];
             this.maxTokenAmountAllowedToBridge = _data["maxTokenAmountAllowedToBridge"];
@@ -737,6 +748,17 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
                     (data["minUtxoChainValue"] as any)[key] = (this.minUtxoChainValue as any)[key];
             }
         }
+        if (this.allowedDirections) {
+            data["allowedDirections"] = {};
+            for (let key in this.allowedDirections) {
+                if (this.allowedDirections.hasOwnProperty(key))
+                    if (Array.isArray(this.allowedDirections[key])) {
+                        data["allowedDirections"][key] = [];
+                        for (let item of this.allowedDirections[key])
+                            data["allowedDirections"][key].push(item);
+                    }
+            }
+        }
         data["minValueToBridge"] = this.minValueToBridge;
         data["maxAmountAllowedToBridge"] = this.maxAmountAllowedToBridge;
         data["maxTokenAmountAllowedToBridge"] = this.maxTokenAmountAllowedToBridge;
@@ -760,6 +782,7 @@ export interface IBridgingSettingsDto {
     maxTokenAmountAllowedToBridge: string;
     /** Maximum number of receivers allowed in a bridging request */
     maxReceiversPerBridgingRequest: number;
+    allowedDirections: { [key: string]: string[]; };
 
     [key: string]: any;
 }
