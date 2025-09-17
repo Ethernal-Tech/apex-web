@@ -14,6 +14,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { Repository } from 'typeorm';
 import {
+	BridgingModeEnum,
 	ChainApexBridgeEnum,
 	GroupByTimePeriod,
 	TransactionStatusEnum,
@@ -95,7 +96,7 @@ export class LockedTokensService {
 				.getRawOne();
 
 			const tokens =
-				this.settingsService.SettingsResponse.cardanoChainsNativeTokens[chain];
+				this.settingsService.SettingsResponse.settingsPerMode[BridgingModeEnum.Skyline].cardanoChainsNativeTokens[chain];
 
 			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
 
@@ -188,7 +189,7 @@ export class LockedTokensService {
 			const nativeSum: string = row.nativeSum;
 
 			const tokens =
-				this.settingsService.SettingsResponse.cardanoChainsNativeTokens?.[
+				this.settingsService.SettingsResponse.settingsPerMode[BridgingModeEnum.Skyline].cardanoChainsNativeTokens?.[
 					chain
 				];
 			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();

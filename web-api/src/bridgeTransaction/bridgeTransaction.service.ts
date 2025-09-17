@@ -28,13 +28,16 @@ import {
 	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import { BridgingModeEnum, ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import { getBridgingMode } from 'src/utils/chainUtils';
+import { SettingsService } from 'src/settings/settings.service';
 
 @Injectable()
 export class BridgeTransactionService {
 	constructor(
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
+		private readonly settingsService: SettingsService,
 		private readonly schedulerRegistry: SchedulerRegistry,
 	) {}
 
@@ -122,8 +125,10 @@ export class BridgeTransactionService {
 					},
 				});
 				if (entities.length > 0) {
-					const models: GetBridgingRequestStatesModel[] = [];
-					const modelsPending: GetBridgingRequestStatesModel[] = [];
+					const modelsReactor: GetBridgingRequestStatesModel[] = [];
+					const modelsPendingReactor: GetBridgingRequestStatesModel[] = [];
+					const modelsSkyline: GetBridgingRequestStatesModel[] = [];
+					const modelsPendingSkyline: GetBridgingRequestStatesModel[] = [];
 					const modelsCentralized: GetBridgingRequestStatesModel[] = [];
 					const modelsLayerZero: GetLayerZeroBridgingRequestStatesModel[] = [];
 					for (const entity of entities) {
@@ -142,23 +147,36 @@ export class BridgeTransactionService {
 							txRaw: entity.txRaw,
 						};
 
-						const arr = entity.isCentralized ? modelsCentralized : models;
-						arr.push(model);
+						if (entity.isCentralized) {
+							modelsCentralized.push(model);
+						} else {
+							const bridgingMode = getBridgingMode(
+								entity.originChain, entity.destinationChain, this.settingsService.SettingsResponse);
+							if (bridgingMode === BridgingModeEnum.Skyline) {
+								modelsSkyline.push(model);
+							} else {
+								modelsReactor.push(model);
+							}
 
-						if (
-							entity.status === TransactionStatusEnum.Pending &&
-							!!entity.txRaw &&
-							!entity.isCentralized
-						) {
-							modelsPending.push(model);
-						}
+							if (
+								entity.status === TransactionStatusEnum.Pending && !!entity.txRaw
+							) {
+								if (bridgingMode === BridgingModeEnum.Skyline) {
+									modelsPendingSkyline.push(model);
+								} else {
+									modelsPendingReactor.push(model);
+								}
+							}
+						}											
 					}
 
 					const [states, statesCentralized, statesTxFailed, stateslayerZero] =
 						await Promise.all([
-							getBridgingRequestStates(chain, models),
+							getBridgingRequestStates(chain, BridgingModeEnum.Skyline, modelsSkyline),
+							getBridgingRequestStates(chain, BridgingModeEnum.Reactor, modelsReactor),
 							getCentralizedBridgingRequestStates(chain, modelsCentralized),
-							getHasTxFailedRequestStates(chain, modelsPending),
+							getHasTxFailedRequestStates(chain, BridgingModeEnum.Skyline, modelsPendingSkyline),
+							getHasTxFailedRequestStates(chain, BridgingModeEnum.Reactor, modelsPendingReactor),
 							getLayerZeroRequestStates(modelsLayerZero),
 						]);
 

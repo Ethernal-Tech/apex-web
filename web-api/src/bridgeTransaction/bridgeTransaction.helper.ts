@@ -1,6 +1,6 @@
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import axios, { AxiosError } from 'axios';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import { BridgingModeEnum, ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { BridgeTransactionDto } from './bridgeTransaction.dto';
 import { capitalizeWord } from 'src/utils/stringUtils';
 import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization-lib-nodejs';
@@ -44,13 +44,26 @@ export type GetLayerZeroBridgingRequestStatesModel = {
 };
 
 export const getBridgingRequestStates = async (
-	chainId: string,
-	models: GetBridgingRequestStatesModel[],
+	chainId: string, bridgingMode: BridgingModeEnum, models: GetBridgingRequestStatesModel[],
 ) => {
-	const oracleUrl = process.env.ORACLE_URL || 'http://localhost:40000';
-	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
-	let endpointUrl =
-		oracleUrl + `/api/BridgingRequestState/GetMultiple?chainId=${chainId}`;
+	let oracleUrl: string | undefined;
+	let oracleApiKey: string | undefined;
+
+	switch (bridgingMode) {
+		case BridgingModeEnum.Reactor:
+			oracleUrl = process.env.ORACLE_REACTOR_URL;
+			oracleApiKey = process.env.ORACLE_REACTOR_API_KEY;
+			break;
+		case BridgingModeEnum.Skyline:
+			oracleUrl = process.env.ORACLE_SKYLINE_URL;
+			oracleApiKey = process.env.ORACLE_SKYLINE_API_KEY;
+			break;
+	}
+
+	oracleUrl = oracleUrl || 'http://localhost:40000';
+	oracleApiKey = oracleApiKey || 'test_api_key';
+	
+	let endpointUrl = oracleUrl + `/api/BridgingRequestState/GetMultiple?chainId=${chainId}`;
 
 	for (const model of models) {
 		endpointUrl += `&txHash=${model.txHash}`;
@@ -100,11 +113,10 @@ export const getLayerZeroRequestStates = async (
 };
 
 export const getHasTxFailedRequestStates = async (
-	chainId: string,
-	models: GetBridgingRequestStatesModel[],
+	chainId: string, bridgingMode: BridgingModeEnum, models: GetBridgingRequestStatesModel[],
 ) => {
 	const states = await Promise.all(
-		models.map((model) => getHasTxFailedRequestState(chainId, model)),
+		models.map((model) => getHasTxFailedRequestState(chainId, bridgingMode, model)),
 	);
 
 	return states.reduce((acc: { [key: string]: BridgingRequestState }, cv) => {
@@ -228,8 +240,7 @@ export const getLayerZeroRequestState = async (
 };
 
 export const getHasTxFailedRequestState = async (
-	chainId: string,
-	model: GetBridgingRequestStatesModel,
+	chainId: string, bridgingMode: BridgingModeEnum, model: GetBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
 	if (!model.txRaw || !Object.values(ChainEnum).some((x) => x == chainId)) {
 		return;
@@ -246,8 +257,23 @@ export const getHasTxFailedRequestState = async (
 		return;
 	}
 
-	const oracleUrl = process.env.ORACLE_URL || 'http://localhost:40000';
-	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
+	let oracleUrl: string | undefined;
+	let oracleApiKey: string | undefined;
+
+	switch (bridgingMode) {
+		case BridgingModeEnum.Reactor:
+			oracleUrl = process.env.ORACLE_REACTOR_URL;
+			oracleApiKey = process.env.ORACLE_REACTOR_API_KEY;
+			break;
+		case BridgingModeEnum.Skyline:
+			oracleUrl = process.env.ORACLE_SKYLINE_URL;
+			oracleApiKey = process.env.ORACLE_SKYLINE_API_KEY;
+			break;
+	}
+
+	oracleUrl = oracleUrl || 'http://localhost:40000';
+	oracleApiKey = oracleApiKey || 'test_api_key';
+	
 	const endpointUrl =
 		oracleUrl +
 		`/api/OracleState/GetHasTxFailed?chainId=${chainId}&txHash=${model.txHash}&ttl=${ttl.toString(10)}`;

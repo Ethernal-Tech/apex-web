@@ -4,10 +4,12 @@ import { BridgeTransactionService } from './bridgeTransaction.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SettingsModule } from 'src/settings/settings.module';
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([BridgeTransaction]),
 		ScheduleModule.forRoot(),
+		SettingsModule,
 	],
 	controllers: [BridgeTransactionController],
 	providers: [BridgeTransactionService],
