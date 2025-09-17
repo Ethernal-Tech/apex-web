@@ -1,6 +1,5 @@
 // terms of service html string
-export const termsOfServiceHtml =  
-`<div class="writtenContent max-w-4xl w-[80%] mx-auto py-20 mb:p-20 bg-background text-white mb-12">
+export const termsOfServiceHtml = `<div class="writtenContent max-w-4xl w-[80%] mx-auto py-20 mb:p-20 bg-background text-white mb-12">
         <h1 class="code-line" data-line-start=0 data-line-end=2 ><a id="Terms_of_Use_0"></a><strong>Terms of Use</strong></h1>
         <p class="has-line-data" data-line-start="3" data-line-end="4">Last Updated: 18th Jan 2025</p>
         <p class="has-line-data" data-line-start="5" data-line-end="6">These Terms of Use provide the terms and conditions under which you, whether personally or on behalf of an entity (&quot;<strong>you</strong>&quot; or &quot;<strong>your</strong>“), are permitted to use, interact with, or otherwise access the Websites or Features provided by Apex Fusion Foundation (together with its affiliates, &quot;<strong>Apex</strong>&quot; &quot;<strong>we</strong>,” &quot;<strong>us</strong>,&quot; or &quot;<strong>our</strong>&quot;). These Terms should be read together with other such documents and terms or policies that are appended hereto or that incorporated into these Terms by reference (collectively, the &quot;<strong>Terms</strong>&quot;).</p>
@@ -198,4 +197,4 @@ export const termsOfServiceHtml =
         <p class="has-line-data" data-line-start="234" data-line-end="235">13.4. No Waiver. The failure of Apex to enforce any provision of these Terms or respond to a breach by you or others shall not constitute a waiver of its rights to enforce any other terms or conditions or respond to any breaches in the future.</p>
         <h2 class="code-line" data-line-start=236 data-line-end=238 ><a id="14_Contact_Information_236"></a><strong>14.</strong> <strong>Contact Information</strong></h2>
         <p class="has-line-data" data-line-start="239" data-line-end="240">14.1. If you have any questions about these Terms, please contact us at Apex Fusion Foundation at <a href="mailto:compliance@foundation.apexfusion.org">compliance@foundation.apexfusion.org</a>.</p>
-    </div>`
+    </div>`;

@@ -9,7 +9,10 @@ import NewTransactionPage from './Transactions/NewTransactionPage';
 
 import withMiddleware from '../middleware/withMiddleware';
 import { onLoad } from '../actions/login';
-import { fetchAndUpdateBalanceAction, getUpdateBalanceInterval } from '../actions/balance';
+import {
+	fetchAndUpdateBalanceAction,
+	getUpdateBalanceInterval,
+} from '../actions/balance';
 import { fetchAndUpdateSettingsAction } from '../actions/settings';
 import TermsOfServicePage from './TermsOfServicePage/TermsOfServicePage';
 import PrivacyPolicyPage from './PrivacyPolicyPage/PrivacyPolicyPage';
@@ -22,81 +25,117 @@ export const PRIVACY_POLICY_ROUTE = '/privacy-policy';
 export const TERMS_OF_SERVICE_ROUTE = '/terms-of-service';
 
 const PageRouter: React.FC = () => {
-
 	const wallet = useSelector((state: RootState) => state.wallet.wallet);
 	const chain = useSelector((state: RootState) => state.chain.chain);
 	const dispatch = useDispatch();
-  const account = useSelector((state: RootState) => state.accountInfo.account);
+	const account = useSelector(
+		(state: RootState) => state.accountInfo.account,
+	);
 	const isFullyLoggedIn = !!wallet && !!account;
-  const balanceIntervalHandle = useRef<NodeJS.Timer>();
-	
+	const balanceIntervalHandle = useRef<NodeJS.Timer>();
+
 	const isLoggedInMemo = !!wallet;
 
 	useEffect(() => {
 		if (isLoggedInMemo) {
 			onLoad(wallet, chain, dispatch);
 		}
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	useEffect(() => {
-		fetchAndUpdateSettingsAction(dispatch)
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+		fetchAndUpdateSettingsAction(dispatch);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
-  useEffect(() => {
-    if (balanceIntervalHandle.current) {
-      clearInterval(balanceIntervalHandle.current)
-      balanceIntervalHandle.current = undefined
-    }
+	useEffect(() => {
+		if (balanceIntervalHandle.current) {
+			clearInterval(balanceIntervalHandle.current);
+			balanceIntervalHandle.current = undefined;
+		}
 
-    if (!isFullyLoggedIn) {
-      return
-    }
+		if (!isFullyLoggedIn) {
+			return;
+		}
 
-    fetchAndUpdateBalanceAction(dispatch)
+		fetchAndUpdateBalanceAction(dispatch);
 
-    balanceIntervalHandle.current = setInterval(async () => {
-      await fetchAndUpdateBalanceAction(dispatch)
-    }, getUpdateBalanceInterval())
+		balanceIntervalHandle.current = setInterval(async () => {
+			await fetchAndUpdateBalanceAction(dispatch);
+		}, getUpdateBalanceInterval());
 
-    return () => {
-      if (balanceIntervalHandle.current) {
-        clearInterval(balanceIntervalHandle.current)
-        balanceIntervalHandle.current = undefined
-      }
-    }
-  }, [dispatch, isFullyLoggedIn])
+		return () => {
+			if (balanceIntervalHandle.current) {
+				clearInterval(balanceIntervalHandle.current);
+				balanceIntervalHandle.current = undefined;
+			}
+		};
+	}, [dispatch, isFullyLoggedIn]);
 
+	const renderHomePage = <HomePage />;
 
-  const renderHomePage = <HomePage />;
+	const renderTransactionsPage = useMemo(
+		() =>
+			isLoggedInMemo ? (
+				<TransactionsTablePage />
+			) : (
+				<Navigate to={HOME_ROUTE} />
+			),
+		[isLoggedInMemo],
+	);
 
-  const renderTransactionsPage = useMemo(
-    () => (isLoggedInMemo ? <TransactionsTablePage /> : <Navigate to={HOME_ROUTE} />),
-    [isLoggedInMemo]
-  );
+	const renderNewTransactionPage = useMemo(
+		() =>
+			isLoggedInMemo ? (
+				<NewTransactionPage />
+			) : (
+				<Navigate to={HOME_ROUTE} />
+			),
+		[isLoggedInMemo],
+	);
 
-  const renderNewTransactionPage = useMemo(
-    () => (isLoggedInMemo ? <NewTransactionPage /> : <Navigate to={HOME_ROUTE} />),
-    [isLoggedInMemo]
-  );
+	const renderTransactionDetailsPage = useMemo(
+		() =>
+			isLoggedInMemo ? (
+				<TransactionDetailPage />
+			) : (
+				<Navigate to={HOME_ROUTE} />
+			),
+		[isLoggedInMemo],
+	);
 
-  const renderTransactionDetailsPage = useMemo(
-    () => (isLoggedInMemo ? <TransactionDetailPage /> : <Navigate to={HOME_ROUTE} />),
-    [isLoggedInMemo]
-  );
-
-  return (
-    <Routes>
-        <Route path={HOME_ROUTE} element={withMiddleware(() => renderHomePage)({})} />
-        <Route path={TRANSACTIONS_ROUTE} element={withMiddleware(() => renderTransactionsPage)({})} />
-        <Route path={NEW_TRANSACTION_ROUTE} element={withMiddleware(() => renderNewTransactionPage)({})} />
-        <Route path={TRANSACTION_DETAILS_ROUTE} element={withMiddleware(() => renderTransactionDetailsPage)({})} />
-        <Route path={TERMS_OF_SERVICE_ROUTE} element={withMiddleware(() => <TermsOfServicePage/>)({})} />
-        <Route path={PRIVACY_POLICY_ROUTE} element={withMiddleware(() => <PrivacyPolicyPage/>)({})} />
-        <Route path='*' element={withMiddleware(() => renderHomePage)({})} />
-    </Routes>
-  );
+	return (
+		<Routes>
+			<Route
+				path={HOME_ROUTE}
+				element={withMiddleware(() => renderHomePage)({})}
+			/>
+			<Route
+				path={TRANSACTIONS_ROUTE}
+				element={withMiddleware(() => renderTransactionsPage)({})}
+			/>
+			<Route
+				path={NEW_TRANSACTION_ROUTE}
+				element={withMiddleware(() => renderNewTransactionPage)({})}
+			/>
+			<Route
+				path={TRANSACTION_DETAILS_ROUTE}
+				element={withMiddleware(() => renderTransactionDetailsPage)({})}
+			/>
+			<Route
+				path={TERMS_OF_SERVICE_ROUTE}
+				element={withMiddleware(() => <TermsOfServicePage />)({})}
+			/>
+			<Route
+				path={PRIVACY_POLICY_ROUTE}
+				element={withMiddleware(() => <PrivacyPolicyPage />)({})}
+			/>
+			<Route
+				path="*"
+				element={withMiddleware(() => renderHomePage)({})}
+			/>
+		</Routes>
+	);
 };
 
 export default PageRouter;

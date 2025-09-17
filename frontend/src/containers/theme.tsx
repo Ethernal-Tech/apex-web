@@ -1,9 +1,9 @@
 import { hexToRgb } from '@mui/material/styles';
-import { createTheme } from "@mui/material";
+import { createTheme } from '@mui/material';
 
 // defined colors used in theme
-export const menuDark = '#051D26';;
-export const white = "#ffffff";
+export const menuDark = '#051D26';
+export const white = '#ffffff';
 export const menuOverlay = `rgba(${hexToRgb(menuDark)},0.6)`;
 
 // TODO AF- NOT USED FOR NOW
@@ -19,7 +19,7 @@ export const theme2 = createTheme({
 					'&:hover': {
 						backgroundColor: menuDark,
 						color: white,
-					}
+					},
 				},
 			},
 		},
@@ -32,9 +32,9 @@ export const theme2 = createTheme({
 					'&:hover': {
 						backgroundColor: menuDark,
 						color: white,
-					}
-				}
-			}
+					},
+				},
+			},
 		},
 		// mui menu
 		MuiMenu: {
@@ -53,22 +53,21 @@ export const theme2 = createTheme({
 					'& li': {
 						backgroundColor: menuDark,
 						color: white,
-						'& svg':{
-							color:white
+						'& svg': {
+							color: white,
 						},
 						'&:hover': {
 							backgroundColor: white,
 							color: menuDark,
-							'& svg':{
-								color:menuDark
-							}
+							'& svg': {
+								color: menuDark,
+							},
 						},
 					},
 				},
-			}
+			},
 		},
 	},
 });
 
-
-export const theme = createTheme({})
+export const theme = createTheme({});

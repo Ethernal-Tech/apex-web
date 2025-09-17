@@ -1,9 +1,7 @@
-import { Typography } from "@mui/material"
+import { Typography } from '@mui/material';
 
 const ChainIcon = () => {
-  return (
-    <Typography>ChainIcon</Typography>
-  )
-}
+	return <Typography>ChainIcon</Typography>;
+};
 
-export default ChainIcon
+export default ChainIcon;
