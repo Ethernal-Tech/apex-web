@@ -1,5 +1,4 @@
 import { configureStore } from '@reduxjs/toolkit';
-import pkLoginSlice from './slices/pkLoginSlice';
 import walletSlice from './slices/walletSlice';
 import chainSlice from './slices/chainSlice';
 import loginSlice from './slices/loginSlice';
@@ -8,7 +7,6 @@ import settingsSlice from './slices/settingsSlice';
 
 export const store = configureStore({
 	reducer: {
-		pkLogin: pkLoginSlice,
 		wallet: walletSlice,
 		accountInfo: accountInfoSlice,
 		chain: chainSlice,
