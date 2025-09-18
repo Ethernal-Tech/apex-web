@@ -69,9 +69,9 @@ const HomePage: React.FC = () => {
         return
       }
 
-      await login(srcChain, navigate, dispatch);
+      await login(srcChain, dstChain, navigate, dispatch);
     },
-    [srcChain, enabledChains, navigate, dispatch]);
+    [srcChain, dstChain, enabledChains, navigate, dispatch]);
 
   useEffect(() => {
     if ((!srcChain || !srcChainOptions.some(x => x.value === srcChain)) && srcChainOptions.length > 0) {
@@ -131,7 +131,7 @@ const HomePage: React.FC = () => {
             label="Destination"
             icon={dstChainInfo.icon}
             value={dstChain}
-            disabled={dstChainOptions.length < 2}
+            disabled={isLoggedInMemo || dstChainOptions.length < 2}
             onChange={onChangeDstChain}
             options={dstChainOptions}
             sx={{ width: '240px' }} // Setting minWidth via sx prop

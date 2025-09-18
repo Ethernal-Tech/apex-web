@@ -28,6 +28,7 @@ const PageRouter: React.FC = () => {
   const location = useLocation();
 	const wallet = useSelector((state: RootState) => state.wallet.wallet);
 	const chain = useSelector((state: RootState) => state.chain.chain);
+	const destinationChain = useSelector((state: RootState) => state.chain.destinationChain);
 	const dispatch = useDispatch();
   const account = useSelector((state: RootState) => state.accountInfo.account);
 	const isFullyLoggedIn = !!wallet && !!account;
@@ -37,7 +38,7 @@ const PageRouter: React.FC = () => {
 
 	useEffect(() => {
 		if (isLoggedInMemo) {
-			onLoad(wallet, chain, dispatch);
+			onLoad(wallet, chain, destinationChain, dispatch);
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
