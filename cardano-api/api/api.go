@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -74,6 +75,16 @@ func (api *APIImpl) Start() {
 		Addr:              fmt.Sprintf(":%d", api.apiConfig.Port),
 		Handler:           api.handler,
 		ReadHeaderTimeout: 3 * time.Second,
+		BaseContext: func(l net.Listener) context.Context {
+			cc, _ := context.WithCancel(api.ctx)
+
+			return cc
+		},
+		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
+			cc, _ := context.WithCancel(ctx)
+
+			return cc
+		},
 	}
 
 	api.serverClosedCh = make(chan bool)

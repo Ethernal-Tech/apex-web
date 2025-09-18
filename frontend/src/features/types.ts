@@ -7,6 +7,6 @@ export type StepType = {
 }
 
 export interface UtxoRetriever {
-  getAllUtxos(): Promise<UTxO[]>
-  getBalance(allUtxos?: UTxO[]): Promise<{ [unit: string]: bigint }>
+    getAllUtxos(includeCollateral?: boolean): Promise<UTxO[]>
+    getBalance(allUtxos?: UTxO[]): Promise<{[unit: string]: bigint}>
 }

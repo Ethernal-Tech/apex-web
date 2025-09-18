@@ -68,7 +68,7 @@ func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txFeeInfo, _, err := c.calculateTxFee(requestBody)
+	txFeeInfo, _, err := c.calculateTxFee(r.Context(), requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
@@ -96,7 +96,7 @@ func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txInfo, err := c.createTx(requestBody)
+	txInfo, err := c.createTx(r.Context(), requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
@@ -218,9 +218,10 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	return nil
 }
 
-func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridgingTxRequest) (
+func (c *ReactorTxControllerImpl) createTx(ctx context.Context, requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxInfo, error,
 ) {
+	// Setup transaction components
 	cacheUtxosTransformer := utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher)
 
 	txSender, receivers, err := c.getTxSenderAndReceivers(requestBody, cacheUtxosTransformer)
@@ -228,11 +229,17 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		return nil, err
 	}
 
+	// Create the bridging transaction
 	txInfo, _, err := txSender.CreateBridgingTx(
-		context.Background(),
-		requestBody.SourceChainID, requestBody.DestinationChainID,
-		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
-		0,
+		ctx,
+		sendtx.BridgingTxInput{
+			SrcChainID:   requestBody.SourceChainID,
+			DstChainID:   requestBody.DestinationChainID,
+			SenderAddr:   requestBody.SenderAddr,
+			Receivers:    receivers,
+			BridgingFee:  requestBody.BridgingFee,
+			OperationFee: 0,
+		},
 	)
 	if err != nil {
 		c.logger.Error("failed to build tx", "err", err)
@@ -244,6 +251,7 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 		return nil, fmt.Errorf("failed to build tx: %w", err)
 	}
 
+	// Update UTXO cache if available
 	if cacheUtxosTransformer != nil {
 		cacheUtxosTransformer.UpdateUtxos(txInfo.ChosenInputs.Inputs)
 	}
@@ -251,7 +259,8 @@ func (c *ReactorTxControllerImpl) createTx(requestBody commonRequest.CreateBridg
 	return txInfo, nil
 }
 
-func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.CreateBridgingTxRequest) (
+func (c *ReactorTxControllerImpl) calculateTxFee(
+	ctx context.Context, requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxFeeInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
 	txSender, receivers, err := c.getTxSenderAndReceivers(
@@ -261,10 +270,15 @@ func (c *ReactorTxControllerImpl) calculateTxFee(requestBody commonRequest.Creat
 	}
 
 	txFeeInfo, metadata, err := txSender.CalculateBridgingTxFee(
-		context.Background(),
-		requestBody.SourceChainID, requestBody.DestinationChainID,
-		requestBody.SenderAddr, receivers, requestBody.BridgingFee,
-		0,
+		ctx,
+		sendtx.BridgingTxInput{
+			SrcChainID:   requestBody.SourceChainID,
+			DstChainID:   requestBody.DestinationChainID,
+			SenderAddr:   requestBody.SenderAddr,
+			Receivers:    receivers,
+			BridgingFee:  requestBody.BridgingFee,
+			OperationFee: 0,
+		},
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to calculate tx fee: %w", err)
