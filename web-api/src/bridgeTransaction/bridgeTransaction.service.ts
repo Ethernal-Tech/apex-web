@@ -170,7 +170,7 @@ export class BridgeTransactionService {
 						}											
 					}
 
-					const [states, statesCentralized, statesTxFailed, stateslayerZero] =
+					const [statesSkyline, statesReactor, statesCentralized, statesTxFailedSkyline, statesTxFailedReactor, stateslayerZero] =
 						await Promise.all([
 							getBridgingRequestStates(chain, BridgingModeEnum.Skyline, modelsSkyline),
 							getBridgingRequestStates(chain, BridgingModeEnum.Reactor, modelsReactor),
@@ -180,17 +180,25 @@ export class BridgeTransactionService {
 							getLayerZeroRequestStates(modelsLayerZero),
 						]);
 
-					Object.keys(states).length > 0 &&
+					Object.keys(statesSkyline).length > 0 &&
 						Logger.debug(
-							`updateStatuses - got bridging request states: ${JSON.stringify(states)}`,
+							`updateStatuses - got bridging request states skyline: ${JSON.stringify(statesSkyline)}`,
+						);
+					Object.keys(statesReactor).length > 0 &&
+						Logger.debug(
+							`updateStatuses - got bridging request states reactor: ${JSON.stringify(statesReactor)}`,
 						);
 					Object.keys(statesCentralized).length > 0 &&
 						Logger.debug(
 							`updateStatuses - got centralized bridging request states: ${JSON.stringify(statesCentralized)}`,
 						);
-					Object.keys(statesTxFailed).length > 0 &&
+					Object.keys(statesTxFailedSkyline).length > 0 &&
 						Logger.debug(
-							`updateStatuses - got has tx failed request states: ${JSON.stringify(statesTxFailed)}`,
+							`updateStatuses - got has tx failed request states skyline: ${JSON.stringify(statesTxFailedSkyline)}`,
+						);
+					Object.keys(statesTxFailedReactor).length > 0 &&
+						Logger.debug(
+							`updateStatuses - got has tx failed request states reactor: ${JSON.stringify(statesTxFailedReactor)}`,
 						);
 					Object.keys(stateslayerZero).length > 0 &&
 						Logger.debug(
@@ -199,8 +207,8 @@ export class BridgeTransactionService {
 
 					const updatedBridgeTransactions = updateBridgeTransactionStates(
 						entities,
-						{ ...states, ...statesCentralized, ...stateslayerZero },
-						statesTxFailed,
+						{ ...statesSkyline, ...statesReactor, ...statesCentralized, ...stateslayerZero },
+						{ ...statesTxFailedReactor, ...statesTxFailedSkyline },
 					);
 
 					Object.keys(updatedBridgeTransactions).length > 0 &&

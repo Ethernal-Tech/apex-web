@@ -46,6 +46,10 @@ export type GetLayerZeroBridgingRequestStatesModel = {
 export const getBridgingRequestStates = async (
 	chainId: string, bridgingMode: BridgingModeEnum, models: GetBridgingRequestStatesModel[],
 ) => {
+	if (models.length == 0) {
+		return {};
+	}
+
 	let oracleUrl: string | undefined;
 	let oracleApiKey: string | undefined;
 

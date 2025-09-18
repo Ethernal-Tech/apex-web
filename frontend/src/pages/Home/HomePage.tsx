@@ -32,11 +32,11 @@ const HomePage: React.FC = () => {
   const {chain: srcChain, destinationChain: dstChain} = useSelector((state: RootState) => state.chain);
 
   const srcChainOptions = useMemo(
-    () => getSrcChains(settings).filter(chain => settings.enabledChains.includes(chain)).map(x => getChainInfo(x)),
+    () => getSrcChains(settings).map(x => getChainInfo(x)),
     [settings]);
 
   const dstChainOptions = useMemo(
-    () => getDstChains(srcChain, settings).filter(chain => settings.enabledChains.includes(chain)).map(x => getChainInfo(x)),
+    () => getDstChains(srcChain, settings).map(x => getChainInfo(x)),
     [srcChain, settings]);
 
   const isSwitchBtnEnabled = useMemo(
@@ -62,15 +62,12 @@ const HomePage: React.FC = () => {
     [dispatch]);
 
   const handleConnectClick = useCallback(
-    async () => {
-      if (!settings.enabledChains.includes(srcChain)) {
-        console.error("chain not supported", srcChain)
-        return
+    async() => {
+      if (Object.keys(settings.allowedDirections).length > 0) {
+        await login(srcChain, dstChain, navigate, settings, dispatch);
       }
-
-      await login(srcChain, dstChain, navigate, dispatch);
     },
-    [srcChain, settings.enabledChains, navigate, dispatch]);
+    [srcChain, dstChain, settings, navigate, dispatch]);
 
   useEffect(() => {
     if ((!srcChain || !srcChainOptions.some(x => x.value === srcChain)) && srcChainOptions.length > 0) {
@@ -106,7 +103,7 @@ const HomePage: React.FC = () => {
           <CustomSelect
             label="Source"
             icon={srcChainInfo.icon}
-            value={srcChain}
+            value={srcChainOptions.some(x => x.value === srcChain) ? srcChain : ""}
             disabled={isLoggedInMemo}
             onChange={onChangeSrcChain}
             options={srcChainOptions}
@@ -129,7 +126,7 @@ const HomePage: React.FC = () => {
           <CustomSelect
             label="Destination"
             icon={dstChainInfo.icon}
-            value={dstChain}
+            value={dstChainOptions.some(x => x.value === dstChain) ? dstChain : ""}
             disabled={isLoggedInMemo || dstChainOptions.length < 2}
             onChange={onChangeDstChain}
             options={dstChainOptions}

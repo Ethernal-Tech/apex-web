@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { getBridgingInfo, getCurrencyTokenInfo, getTokenInfo, TokenInfo } from "../../settings/token";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
+import { getBridgingMode } from "../../settings/chain";
 
 export interface TokenOption {
   value: TokenEnum;
@@ -22,7 +23,10 @@ const tokenInfoToTokenOption = (info: TokenInfo): TokenOption => {
 }
 
 export const useSupportedSourceTokenOptions = (srcChain: ChainEnum, dstChain: ChainEnum): TokenOption[] => {
-  const cardanoChainsNativeTokens = useSelector((state: RootState) => state.settings.cardanoChainsNativeTokens);
+  const settings = useSelector((state: RootState) => state.settings)
+  
+  const bridgingModeInfo = getBridgingMode(srcChain, dstChain, settings);
+  const cardanoChainsNativeTokens = bridgingModeInfo.settings?.cardanoChainsNativeTokens;
 
   return useMemo(() => {
     const bridgingInfo = getBridgingInfo(srcChain, dstChain);

@@ -81,6 +81,14 @@ export class SettingsService {
 			allowedDirections[ChainEnum.Nexus] = [ChainEnum.Base, ChainEnum.BNB];
 		}
 
+		const enabledChains = new Set<string>();
+		// reactor
+		reactorSettings.enabledChains.forEach(chain => enabledChains.add(chain));
+		// skyline
+		skylineSettings.enabledChains.forEach(chain => enabledChains.add(chain));
+		// layer zero
+		layerZeroChains.forEach(x => enabledChains.add(x.chain));
+
 		this.SettingsResponse = new SettingsFullResponseDto();
 		this.SettingsResponse.layerZeroChains = layerZeroChains;
 		this.SettingsResponse.settingsPerMode = {
@@ -88,6 +96,7 @@ export class SettingsService {
 			[BridgingModeEnum.Skyline]: skylineSettings,
 		};
 		this.SettingsResponse.allowedDirections = allowedDirections;
+		this.SettingsResponse.enabledChains = Array.from(enabledChains);
 
 		Logger.debug(`settings dto ${JSON.stringify(this.SettingsResponse)}`);
 	}

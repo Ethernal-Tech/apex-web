@@ -13,45 +13,34 @@ type SettingsResponse struct {
 	CardanoChainsNativeTokens map[string][]sendtx.TokenExchangeConfig `json:"cardanoChainsNativeTokens"`
 	// Settings for bridge
 	BridgingSettings core.BridgingSettings `json:"bridgingSettings"`
+	// Participating chains in the bridge
+	EnabledChains []string `json:"enabledChains"`
 } // @name SettingsResponse
 
 func NewSettingsResponse(
 	config *core.AppConfig,
 ) *SettingsResponse {
-	isEnabled := map[string]bool{}
+	var enabledChains []string
 
 	nativeTokens := map[string][]sendtx.TokenExchangeConfig{}
 	for chainID, cfg := range config.CardanoChains {
 		nativeTokens[chainID] = cfg.ChainSpecific.NativeTokens
-		isEnabled[chainID] = cfg.IsEnabled
+
+		if cfg.IsEnabled {
+			enabledChains = append(enabledChains, chainID)
+		}
 	}
 
 	for chainID, cfg := range config.EthChains {
-		isEnabled[chainID] = cfg.IsEnabled
-	}
-
-	bridgingSettings := config.BridgingSettings
-	bridgingSettings.AllowedDirections = map[string][]string{}
-
-	for chainID, chains := range config.BridgingSettings.AllowedDirections {
-		if !isEnabled[chainID] {
-			continue
+		if cfg.IsEnabled {
+			enabledChains = append(enabledChains, chainID)
 		}
-
-		var directions []string
-
-		for _, dstChainID := range chains {
-			if isEnabled[dstChainID] {
-				directions = append(directions, dstChainID)
-			}
-		}
-
-		bridgingSettings.AllowedDirections[chainID] = directions
 	}
 
 	return &SettingsResponse{
 		RunMode:                   config.RunMode,
 		CardanoChainsNativeTokens: nativeTokens,
-		BridgingSettings:          bridgingSettings,
+		BridgingSettings:          config.BridgingSettings,
+		EnabledChains:             enabledChains,
 	}
 }

@@ -13,7 +13,7 @@ import { getLayerZeroTransferResponse, signAndSubmitCardanoTx, signAndSubmitEthT
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
-import { isCardanoChain, isEvmChain, isLZBridging, toApexBridge } from "../../settings/chain";
+import { getBridgingMode, isCardanoChain, isEvmChain, isLZBridging, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
 import { validateSubmitTxInputs } from "../../utils/validationUtils";
 
@@ -24,8 +24,13 @@ function NewTransactionPage() {
 	const chain = useSelector((state: RootState)=> state.chain.chain);
 	const destinationChain = useSelector((state: RootState)=> state.chain.destinationChain);
 	const account = useSelector((state: RootState) => state.accountInfo.account);
-	const settings = useSelector((state: RootState) => state.settings);
-	const { minOperationFee, minChainFeeForBridging }  = useSelector((state: RootState) => state.settings);
+	const settings = useSelector((state: RootState) => state.settings)
+
+  	const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
+	const { minOperationFee, minChainFeeForBridging }  = bridgingModeInfo.settings || {
+		minOperationFee: {} as { [key: string]: string },
+		minChainFeeForBridging: {} as { [key: string]: string },
+	};
 
 	const defaultBridgeTxFee = useMemo(() => isEvmChain(chain)
 		? convertDfmToWei(minChainFeeForBridging[chain] || '0')

@@ -1,23 +1,26 @@
 import { isAddress } from "web3-validator";
-import { BridgingType, getBridgingType, isCardanoChain, isEvmChain } from "../settings/chain";
+import { BridgingModeEnum, getBridgingMode, isCardanoChain, isEvmChain } from "../settings/chain";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { getTokenInfoBySrcDst } from "../settings/token";
 import { NewAddress, RewardAddress } from "../features/Address/addreses";
 import { checkCardanoAddressCompatibility } from "./chainUtils";
-import { convertDfmToWei, fromWei } from "./generalUtils";
-import { ISettingsState } from "../settings/settingsRedux";
+import { convertDfmToWei, fromWei, shouldUseMainnet } from "./generalUtils";
+import { ISettingsState, SettingsPerMode } from "../settings/settingsRedux";
 
 export const validateSubmitTxInputs = (
     srcChain: ChainEnum, dstChain: ChainEnum, dstAddr: string, amount: string,
-    isNativeToken?: boolean, settings?: ISettingsState,
+    isNativeToken: boolean, settings?: ISettingsState,
 ): string | undefined => {
-    switch (getBridgingType(srcChain, dstChain)) {
-    case BridgingType.LayerZero:
+    const subSettings = getBridgingMode(srcChain, dstChain, settings);
+    switch (subSettings.bridgingMode) {
+    case BridgingModeEnum.LayerZero:
         return layerZeroValidation(BigInt(amount), dstAddr);
-    case BridgingType.Skyline:
-        return skylineValidaton(srcChain, dstChain, dstAddr, BigInt(amount), isNativeToken, settings);
+    case BridgingModeEnum.Skyline:
+        return skylineValidaton(srcChain, dstChain, dstAddr, BigInt(amount), isNativeToken, subSettings.settings!);
+    case BridgingModeEnum.Reactor:
+        return reactorValidation(srcChain, dstChain, dstAddr, BigInt(amount), subSettings.settings!);
     default:
-        return reactorValidation(srcChain, dstChain, dstAddr, BigInt(amount), settings);
+        return `unknown direction ${srcChain} -> ${dstChain}`;
     }    
 }
 
@@ -32,7 +35,7 @@ function layerZeroValidation(amount: bigint, dstAddr: string): string | undefine
 
 function reactorValidation(
     srcChain: ChainEnum, dstChain: ChainEnum, dstAddr: string,
-    amount: bigint, settings?: ISettingsState,
+    amount: bigint, settings: SettingsPerMode,
 ) {
     if (!settings) {
         return "settings not provided";
@@ -67,7 +70,7 @@ function reactorValidation(
             return `Invalid destination address: ${dstAddr}`;
         }
 
-        if (!checkCardanoAddressCompatibility(dstChain, addr)) {
+        if (!checkCardanoAddressCompatibility(dstChain, addr, shouldUseMainnet(srcChain, dstChain))) {
             return `Destination address not compatible with destination chain: ${dstChain}`;
         }
     } else if (isEvmChain(dstChain)) {
@@ -79,12 +82,8 @@ function reactorValidation(
 
 function skylineValidaton(
     srcChain: ChainEnum, dstChain: ChainEnum, dstAddr: string, amount: bigint,
-    isNativeToken?: boolean, settings?: ISettingsState,
+    isNativeToken: boolean, settings: SettingsPerMode,
 ): string | undefined {
-    if (!isNativeToken || !settings) {
-        return "settings or isNativeToken not provided";
-    }
-
     const tokenInfo = getTokenInfoBySrcDst(srcChain, dstChain, isNativeToken);
     const chain = isNativeToken ? dstChain : srcChain;
     const minUtxo = BigInt(settings.minUtxoChainValue[chain]);
@@ -110,8 +109,8 @@ function skylineValidaton(
         return `Invalid destination address: ${dstAddr}`;
     }
 
-    if (!checkCardanoAddressCompatibility(dstChain, addr)) {
-        return `Destination address not compatible with destination chain: ${dstAddr}`;
+    if (!checkCardanoAddressCompatibility(dstChain, addr, shouldUseMainnet(srcChain, dstChain))) {
+        return `Destination address not compatible with destination chain: ${dstChain}`;
     }
 }
 
