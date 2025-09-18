@@ -1,8 +1,6 @@
 export const KeyHashSize = 28
 
 export enum CardanoNetworkType {
-	VectorMainNetNetwork = 3,
-	VectorTestNetNetwork = 2,
 	MainNetNetwork = 1,
 	TestNetNetwork = 0,
 }

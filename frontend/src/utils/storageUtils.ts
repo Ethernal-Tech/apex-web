@@ -1,5 +1,4 @@
 import appSettings from "../settings/appSettings";
-import { getDstChains, getSrcChains } from "../settings/chain";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 
 export type PKLoginDto = {
@@ -84,12 +83,7 @@ export const initChainsState = () => {
 	const destinationChain = getDestinationChain();
 	
 	// reset chains if anything is wrong or missing from localStorage values
-	if(!chain || 
-		!destinationChain || 
-		chain === destinationChain ||
-		!getSrcChains().some(x => x === chain) ||
-		!getDstChains(chain).some(x => x === destinationChain)
-	){
+	if (!chain || !destinationChain || chain === destinationChain) {
 		setSelectedChain(ChainEnum.Prime);
 		setDestinationChain(appSettings.isSkyline ? ChainEnum.Cardano : ChainEnum.Vector);
 		return {

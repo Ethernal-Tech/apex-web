@@ -32,11 +32,11 @@ const CHAIN_DATA: {[key: string]: ChainData} = {
     },
     [ChainEnum.Vector]:  {
         mainnet: {
-            networkID: CardanoNetworkType.VectorMainNetNetwork,
+            networkID: CardanoNetworkType.MainNetNetwork,
             network: ApexBridgeNetwork.MainnetVector,
         },
         testnet: {
-            networkID: CardanoNetworkType.VectorTestNetNetwork,
+            networkID: CardanoNetworkType.MainNetNetwork,
             network: ApexBridgeNetwork.TestnetVector,
         },
     },
@@ -151,18 +151,18 @@ export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: Cardano
 
 // TODO: will need to add explorer urls for nexus mainnet
 const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]: string}} = {
-    mainnet: {
+     mainnet: {
         [ChainEnum.Prime]: 'https://apexscan.org/en',
-        [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
+        [ChainEnum.Vector]: '',
         [ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
         [ChainEnum.Cardano]: 'https://cardanoscan.io',
     },
     testnet: {
-        [ChainEnum.Prime]: 'https://explorer.prime.testnet.apexfusion.org',
-        [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
+        [ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
+        [ChainEnum.Vector]: '',
         [ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
         [ChainEnum.Cardano]: 'https://preview.cardanoscan.io',
-    },
+    },    
 }
 
 const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boolean) => {

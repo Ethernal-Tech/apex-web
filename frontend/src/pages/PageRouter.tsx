@@ -26,9 +26,10 @@ export const TERMS_OF_SERVICE_ROUTE = '/terms-of-service';
 
 const PageRouter: React.FC = () => {
   const location = useLocation();
+	const settings = useSelector((state: RootState) => state.settings);
 	const wallet = useSelector((state: RootState) => state.wallet.wallet);
 	const chain = useSelector((state: RootState) => state.chain.chain);
-	const destinationChain = useSelector((state: RootState) => state.chain.destinationChain);
+  const destinationChain = useSelector((state: RootState) => state.chain.destinationChain);
 	const dispatch = useDispatch();
   const account = useSelector((state: RootState) => state.accountInfo.account);
 	const isFullyLoggedIn = !!wallet && !!account;
@@ -38,10 +39,10 @@ const PageRouter: React.FC = () => {
 
 	useEffect(() => {
 		if (isLoggedInMemo) {
-			onLoad(wallet, chain, destinationChain, dispatch);
+			onLoad(wallet, chain, destinationChain, settings, dispatch);
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+	}, [settings])
 
 	useEffect(() => {
 		fetchAndUpdateSettingsAction(dispatch)

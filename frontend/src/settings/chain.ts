@@ -7,21 +7,19 @@ import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg
 import {ReactComponent as BaseIcon} from '../assets/chain-icons/base.svg'
 import {ReactComponent as BNBIcon} from '../assets/chain-icons/bsc.svg'
 import { TokenEnum } from "../features/enums";
-import appSettings from "./appSettings";
+import { ISettingsState, SettingsPerMode } from "./settingsRedux";
 
-const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
-    [ChainEnum.Prime]: [ChainEnum.Vector, ChainEnum.Nexus],
-    [ChainEnum.Vector]: [ChainEnum.Prime],
-    [ChainEnum.Nexus]: [ChainEnum.Prime],
+export enum BridgingModeEnum {
+    Reactor = 'reactor',
+    Skyline = 'skyline',
+    LayerZero = 'layerzero',
+    Unknown = 'unknown'
 }
 
-const skylineChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
-    [ChainEnum.Prime]: [ChainEnum.Cardano],
-    [ChainEnum.Cardano]: [ChainEnum.Prime],
-    [ChainEnum.Nexus]: [ChainEnum.Base, ChainEnum.Bsc],
-    [ChainEnum.Base]: [ChainEnum.Nexus, ChainEnum.Bsc],
-    [ChainEnum.Bsc]: [ChainEnum.Nexus, ChainEnum.Base]
-};
+export type BridgingModeWithSettings = {
+	settings?: SettingsPerMode
+	bridgingMode: BridgingModeEnum
+}
 
 export type ChainInfo = {
     value: ChainEnum;
@@ -100,25 +98,26 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
     },
 }
 
-const getChainDirections = function (): Partial<Record<ChainEnum, ChainEnum[]>> {
-    return appSettings.isSkyline ? skylineChainDirections : reactorChainDirections;
+const getChainDirections = function (settings: ISettingsState): Partial<Record<ChainEnum, ChainEnum[]>> {
+    return settings.allowedDirections;
 }
 
 export const getChainInfo = function (chain: ChainEnum): ChainInfo {
     return chainInfoMapping[chain] || unknownChainInfo;
 }
 
-export const getDstChains = function (chain: ChainEnum | undefined): ChainEnum[] {
+export const getDstChains = function (chain: ChainEnum | undefined, settings: ISettingsState): ChainEnum[] {
     if (!chain) {
         return [];
     }
 
-    return getChainDirections()[chain] || [];
+    return (getChainDirections(settings)[chain] || []).filter(x => settings.enabledChains.includes(x));
 }
 
-export const getSrcChains = function (): ChainEnum[] {
-    return Object.keys(getChainDirections()) as ChainEnum[];
+export const getSrcChains = function (settings: ISettingsState): ChainEnum[] {
+    return (Object.keys(getChainDirections(settings)) as ChainEnum[]).filter(x => settings.enabledChains.includes(x));
 }
+
 
 export const isEvmChain = function (chain: ChainEnum): boolean {
     return chain === ChainEnum.Nexus || chain === ChainEnum.Base || chain === ChainEnum.Bsc;
@@ -180,4 +179,26 @@ export function toApexBridgeName(chain: string): ChainEnum{
         default: 
             return chain as unknown as ChainEnum
     }
+}
+
+export function getBridgingMode(
+    srcChain: ChainEnum, dstChain: ChainEnum, settings?: ISettingsState,
+): BridgingModeWithSettings {
+    for (const [key, value] of Object.entries(settings?.settingsPerMode || {})) {
+        if (
+            srcChain in value.allowedDirections &&
+            value.allowedDirections[srcChain].includes(dstChain)
+        ) {
+            return {
+                settings: value,
+                bridgingMode: key as unknown as BridgingModeEnum,
+            }
+        }
+    }
+
+    if (isLZBridging(srcChain, dstChain)) {
+        return { bridgingMode: BridgingModeEnum.LayerZero };
+    }
+
+    return { bridgingMode: BridgingModeEnum.Unknown };
 }
