@@ -14,6 +14,7 @@ import { UtxoRetrieverEnum } from '../features/enums';
 import { getChainInfo, isEvmChain } from '../settings/chain';
 import { getBridgingInfo, getToken } from '../settings/token';
 import { LayerZeroChains } from '../redux/slices/settingsSlice';
+import { shouldUseMainnet } from '../utils/generalUtils';
 
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
@@ -110,5 +111,5 @@ const getCurrentSrcChain = (): ChainEnum | undefined => {
         return;
     }
     
-    return fromNetworkToChain(network);
+    return fromNetworkToChain(network, shouldUseMainnet(chainInfo.chain, chainInfo.destinationChain));
 }

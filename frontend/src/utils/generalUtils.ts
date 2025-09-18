@@ -21,6 +21,7 @@ import {
 } from '@emurgo/cardano-serialization-lib-browser';
 import { isCardanoChain, isEvmChain, isLZBridging } from "../settings/chain";
 import { getTokenInfoBySrcDst } from "../settings/token";
+import appSettings from "../settings/appSettings";
 
 export const capitalizeWord = (word: string): string => {
     if (!word || word.length === 0) {
@@ -83,6 +84,9 @@ export const convertDfmToWei = (dfm: string | number): string => {
 	return toWei(dfm, 12);
 };
 
+export const shouldUseMainnet = (src: ChainEnum, dst: ChainEnum): boolean =>
+  appSettings.isMainnet || isLZBridging(src, dst);
+
 export const validateSubmitTxInputs = (
   settings: ISettingsState, sourceChain: ChainEnum, destinationChain: ChainEnum,
   destinationAddr: string, amount: string
@@ -124,7 +128,7 @@ export const validateSubmitTxInputs = (
       return `Invalid destination address: ${destinationAddr}`;
     }
   
-    if (!checkCardanoAddressCompatibility(destinationChain, addr)) {
+    if (!checkCardanoAddressCompatibility(destinationChain, addr, shouldUseMainnet(sourceChain, destinationChain))) {
       return `Destination address not compatible with destination chain: ${destinationChain}`;
     }
   } else if (isEvmChain(destinationChain)) {
@@ -161,7 +165,7 @@ export const validateSubmitTxInputsSkyline = (
     return `Invalid destination address: ${destinationAddr}`;
   }
 
-  if (!checkCardanoAddressCompatibility(destinationChain, addr)) {
+  if (!checkCardanoAddressCompatibility(destinationChain, addr, shouldUseMainnet(sourceChain, destinationChain))) {
     return `Destination address not compatible with destination chain: ${destinationChain}`;
   }
 }

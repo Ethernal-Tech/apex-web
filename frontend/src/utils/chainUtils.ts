@@ -102,22 +102,22 @@ const NETWORK_TO_CHAIN: {mainnet: {[key: string]: ChainEnum}, testnet: {[key: st
     }
 }
 
-export const fromChainToNetwork = (chain: ChainEnum): ApexBridgeNetwork | undefined => {
-    return appSettings.isMainnet ? CHAIN_DATA[chain]?.mainnet?.network : CHAIN_DATA[chain]?.testnet?.network;
+export const fromChainToNetwork = (chain: ChainEnum, useMainnet: boolean): ApexBridgeNetwork | undefined => {
+    return useMainnet ? CHAIN_DATA[chain]?.mainnet?.network : CHAIN_DATA[chain]?.testnet?.network;
 } 
 
-export const fromNetworkToChain = (network: string): ChainEnum | undefined => {
-    return appSettings.isMainnet ? NETWORK_TO_CHAIN.mainnet[network] : NETWORK_TO_CHAIN.testnet[network];
+export const fromNetworkToChain = (network: string, useMainnet: boolean): ChainEnum | undefined => {
+    return useMainnet ? NETWORK_TO_CHAIN.mainnet[network] : NETWORK_TO_CHAIN.testnet[network];
 } 
 
-export const fromChainToNetworkId = (chain: ChainEnum): number | bigint | undefined => {
-    return appSettings.isMainnet ? CHAIN_DATA[chain]?.mainnet?.networkID : CHAIN_DATA[chain]?.testnet?.networkID;
+export const fromChainToNetworkId = (chain: ChainEnum, useMainnet: boolean): number | bigint | undefined => {
+    return useMainnet ? CHAIN_DATA[chain]?.mainnet?.networkID : CHAIN_DATA[chain]?.testnet?.networkID;
 }
 
 export const fromEvmNetworkIdToNetwork = (
-  networkId: bigint
+  networkId: bigint, useMainnet: boolean,
 ): ApexBridgeNetwork | undefined => {
-  if (appSettings.isMainnet) {
+  if (useMainnet) {
     if (networkId === MAINNET_NEXUS_NETWORK_ID) {
       return ApexBridgeNetwork.MainnetNexus;
     }
@@ -141,12 +141,12 @@ export const fromEvmNetworkIdToNetwork = (
   return undefined;
 };
 
-export const checkChainCompatibility = (chain: ChainEnum, network: string, networkId: number|bigint): boolean => {
-    return fromChainToNetworkId(chain) === networkId && fromNetworkToChain(network) === chain;
+export const checkChainCompatibility = (chain: ChainEnum, network: string, networkId: number|bigint, useMainnet: boolean): boolean => {
+    return fromChainToNetworkId(chain, useMainnet) === networkId && fromNetworkToChain(network, useMainnet) === chain;
 }
 
-export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: CardanoAddress): boolean => {
-    return fromChainToNetworkId(chain) === addr.GetNetwork();
+export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: CardanoAddress, useMainnet: boolean): boolean => {
+    return fromChainToNetworkId(chain, useMainnet) === addr.GetNetwork();
 }
 
 // TODO: will need to add explorer urls for nexus mainnet
