@@ -4,7 +4,7 @@ export type CardanoChainsNativeTokens = {
 
 export type LayerZeroChains = Record<string, { oftAddress: string; chainID: number }>;
 
-export interface ISettingsState {
+export interface SettingsPerMode {
 	minUtxoChainValue: { [key: string]: string }
 	minChainFeeForBridging: { [key: string]: string }
 	minOperationFee: { [key: string]: string }
@@ -12,7 +12,15 @@ export interface ISettingsState {
 	maxTokenAmountAllowedToBridge: string
 	minValueToBridge: string
 	cardanoChainsNativeTokens: CardanoChainsNativeTokens
-	enabledChains: string[]
-	layerZeroChains: LayerZeroChains
 	allowedDirections: { [key: string]: string[] }
 }
+
+export interface ISettingsState {
+	settingsPerMode: { [key: string]: SettingsPerMode }
+	enabledChains: string[]
+	allowedDirections: { [key: string]: string[] }
+	layerZeroChains: LayerZeroChains
+}
+
+
+

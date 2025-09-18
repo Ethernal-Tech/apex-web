@@ -667,6 +667,7 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
             this.minChainFeeForBridging = {};
             this.minOperationFee = {};
             this.minUtxoChainValue = {};
+            this.allowedDirections = {};
         }
     }
 
@@ -697,20 +698,17 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
                         (this.minUtxoChainValue as any)![key] = _data["minUtxoChainValue"][key];
                 }
             }
-            if (_data["allowedDirections"]) {
-                this.allowedDirections = {} as any;
-                for (let key in _data["allowedDirections"]) {
-                    if (_data["allowedDirections"].hasOwnProperty(key)) {
-                        this.allowedDirections![key] = [] as any;
-                        for (let item of _data["allowedDirections"][key])
-                            this.allowedDirections![key]!.push(item);
-                    }
-                }
-            }
             this.minValueToBridge = _data["minValueToBridge"];
             this.maxAmountAllowedToBridge = _data["maxAmountAllowedToBridge"];
             this.maxTokenAmountAllowedToBridge = _data["maxTokenAmountAllowedToBridge"];
             this.maxReceiversPerBridgingRequest = _data["maxReceiversPerBridgingRequest"];
+            if (_data["allowedDirections"]) {
+                this.allowedDirections = {} as any;
+                for (let key in _data["allowedDirections"]) {
+                    if (_data["allowedDirections"].hasOwnProperty(key))
+                        (this.allowedDirections as any)![key] = _data["allowedDirections"][key] !== undefined ? _data["allowedDirections"][key] : [];
+                }
+            }
         }
     }
 
@@ -748,21 +746,17 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
                     (data["minUtxoChainValue"] as any)[key] = (this.minUtxoChainValue as any)[key];
             }
         }
-        if (this.allowedDirections) {
-            data["allowedDirections"] = {};
-            for (let key in this.allowedDirections) {
-                if (this.allowedDirections.hasOwnProperty(key))
-                    if (Array.isArray(this.allowedDirections[key])) {
-                        data["allowedDirections"][key] = [];
-                        for (let item of this.allowedDirections[key])
-                            data["allowedDirections"][key].push(item);
-                    }
-            }
-        }
         data["minValueToBridge"] = this.minValueToBridge;
         data["maxAmountAllowedToBridge"] = this.maxAmountAllowedToBridge;
         data["maxTokenAmountAllowedToBridge"] = this.maxTokenAmountAllowedToBridge;
         data["maxReceiversPerBridgingRequest"] = this.maxReceiversPerBridgingRequest;
+        if (this.allowedDirections) {
+            data["allowedDirections"] = {};
+            for (let key in this.allowedDirections) {
+                if (this.allowedDirections.hasOwnProperty(key))
+                    (data["allowedDirections"] as any)[key] = (this.allowedDirections as any)[key];
+            }
+        }
         return data;
     }
 }
@@ -794,8 +788,6 @@ export class SettingsResponseDto implements ISettingsResponseDto {
     cardanoChainsNativeTokens!: { [key: string]: NativeTokenDto[]; };
     /** Settings for bridge */
     bridgingSettings!: BridgingSettingsDto;
-    /** Participating chains in the bridge */
-    enabledChains!: string[];
 
     [key: string]: any;
 
@@ -809,7 +801,6 @@ export class SettingsResponseDto implements ISettingsResponseDto {
         if (!data) {
             this.cardanoChainsNativeTokens = {};
             this.bridgingSettings = new BridgingSettingsDto();
-            this.enabledChains = [];
         }
     }
 
@@ -828,11 +819,6 @@ export class SettingsResponseDto implements ISettingsResponseDto {
                 }
             }
             this.bridgingSettings = _data["bridgingSettings"] ? BridgingSettingsDto.fromJS(_data["bridgingSettings"]) : new BridgingSettingsDto();
-            if (Array.isArray(_data["enabledChains"])) {
-                this.enabledChains = [] as any;
-                for (let item of _data["enabledChains"])
-                    this.enabledChains!.push(item);
-            }
         }
     }
 
@@ -858,11 +844,6 @@ export class SettingsResponseDto implements ISettingsResponseDto {
             }
         }
         data["bridgingSettings"] = this.bridgingSettings ? this.bridgingSettings.toJSON() : undefined as any;
-        if (Array.isArray(this.enabledChains)) {
-            data["enabledChains"] = [];
-            for (let item of this.enabledChains)
-                data["enabledChains"].push(item);
-        }
         return data;
     }
 }
@@ -874,8 +855,6 @@ export interface ISettingsResponseDto {
     cardanoChainsNativeTokens: { [key: string]: NativeTokenDto[]; };
     /** Settings for bridge */
     bridgingSettings: BridgingSettingsDto;
-    /** Participating chains in the bridge */
-    enabledChains: string[];
 
     [key: string]: any;
 }
@@ -906,7 +885,6 @@ export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
                     this[property] = _data[property];
             }
             this.chain = _data["chain"];
-            this.rpcUrl = _data["rpcUrl"];
             this.oftAddress = _data["oftAddress"];
             this.chainID = _data["chainID"];
         }
@@ -926,7 +904,6 @@ export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
                 data[property] = this[property];
         }
         data["chain"] = this.chain;
-        data["rpcUrl"] = this.rpcUrl;
         data["oftAddress"] = this.oftAddress;
         data["chainID"] = this.chainID;
         return data;
@@ -945,14 +922,12 @@ export interface ILayerZeroChainSettingsDto {
 }
 
 export class SettingsFullResponseDto implements ISettingsFullResponseDto {
-    /** Specifies the current operating mode of the application */
-    runMode!: string;
-    /** For each source chain, defines the native token that will be received on the destination chain */
-    cardanoChainsNativeTokens!: { [key: string]: NativeTokenDto[]; };
-    /** Settings for bridge */
-    bridgingSettings!: BridgingSettingsDto;
+    /** Settings per bridging mode (reactor, skyline) */
+    settingsPerMode!: { [key: string]: SettingsResponseDto; };
     /** Participating chains in the bridge */
     enabledChains!: string[];
+    /** All allowed directions */
+    allowedDirections!: { [key: string]: string[]; };
     /** LayerZero chains and their configurations */
     layerZeroChains!: LayerZeroChainSettingsDto[];
 
@@ -966,9 +941,9 @@ export class SettingsFullResponseDto implements ISettingsFullResponseDto {
             }
         }
         if (!data) {
-            this.cardanoChainsNativeTokens = {};
-            this.bridgingSettings = new BridgingSettingsDto();
             this.enabledChains = [];
+            this.settingsPerMode = {};
+            this.allowedDirections = {};
             this.layerZeroChains = [];
         }
     }
@@ -979,15 +954,20 @@ export class SettingsFullResponseDto implements ISettingsFullResponseDto {
                 if (_data.hasOwnProperty(property))
                     this[property] = _data[property];
             }
-            this.runMode = _data["runMode"];
-            if (_data["cardanoChainsNativeTokens"]) {
-                this.cardanoChainsNativeTokens = {} as any;
-                for (let key in _data["cardanoChainsNativeTokens"]) {
-                    if (_data["cardanoChainsNativeTokens"].hasOwnProperty(key))
-                        (this.cardanoChainsNativeTokens as any)![key] = _data["cardanoChainsNativeTokens"][key] ? _data["cardanoChainsNativeTokens"][key].map((i: any) => NativeTokenDto.fromJS(i)) : [];
+            if (_data["settingsPerMode"]) {
+                this.settingsPerMode = {} as any;
+                for (let key in _data["settingsPerMode"]) {
+                    if (_data["settingsPerMode"].hasOwnProperty(key))
+                        (this.settingsPerMode as any)![key] = _data["settingsPerMode"][key] ? SettingsResponseDto.fromJS(_data["settingsPerMode"][key]) : new SettingsResponseDto();
                 }
             }
-            this.bridgingSettings = _data["bridgingSettings"] ? BridgingSettingsDto.fromJS(_data["bridgingSettings"]) : new BridgingSettingsDto();
+            if (_data["allowedDirections"]) {
+                this.allowedDirections = {} as any;
+                for (let key in _data["allowedDirections"]) {
+                    if (_data["allowedDirections"].hasOwnProperty(key))
+                        (this.allowedDirections as any)![key] = _data["allowedDirections"][key] !== undefined ? _data["allowedDirections"][key] : [];
+                }
+            }
             if (Array.isArray(_data["enabledChains"])) {
                 this.enabledChains = [] as any;
                 for (let item of _data["enabledChains"])
@@ -1014,15 +994,20 @@ export class SettingsFullResponseDto implements ISettingsFullResponseDto {
             if (this.hasOwnProperty(property))
                 data[property] = this[property];
         }
-        data["runMode"] = this.runMode;
-        if (this.cardanoChainsNativeTokens) {
-            data["cardanoChainsNativeTokens"] = {};
-            for (let key in this.cardanoChainsNativeTokens) {
-                if (this.cardanoChainsNativeTokens.hasOwnProperty(key))
-                    (data["cardanoChainsNativeTokens"] as any)[key] = (this.cardanoChainsNativeTokens as any)[key];
+        if (this.settingsPerMode) {
+            data["settingsPerMode"] = {};
+            for (let key in this.settingsPerMode) {
+                if (this.settingsPerMode.hasOwnProperty(key))
+                    (data["settingsPerMode"] as any)[key] = this.settingsPerMode[key] ? this.settingsPerMode[key].toJSON() : undefined as any;
             }
         }
-        data["bridgingSettings"] = this.bridgingSettings ? this.bridgingSettings.toJSON() : undefined as any;
+        if (this.allowedDirections) {
+            data["allowedDirections"] = {};
+            for (let key in this.allowedDirections) {
+                if (this.allowedDirections.hasOwnProperty(key))
+                    (data["allowedDirections"] as any)[key] = (this.allowedDirections as any)[key];
+            }
+        }
         if (Array.isArray(this.enabledChains)) {
             data["enabledChains"] = [];
             for (let item of this.enabledChains)
@@ -1038,14 +1023,12 @@ export class SettingsFullResponseDto implements ISettingsFullResponseDto {
 }
 
 export interface ISettingsFullResponseDto {
-    /** Specifies the current operating mode of the application */
-    runMode: string;
-    /** For each source chain, defines the native token that will be received on the destination chain */
-    cardanoChainsNativeTokens: { [key: string]: NativeTokenDto[]; };
-    /** Settings for bridge */
-    bridgingSettings: BridgingSettingsDto;
+    /** Settings per bridging mode (reactor, skyline) */
+    settingsPerMode: { [key: string]: SettingsResponseDto; };
     /** Participating chains in the bridge */
     enabledChains: string[];
+    /** All allowed directions */
+    allowedDirections: { [key: string]: string[]; };
     /** LayerZero chains and their configurations */
     layerZeroChains: LayerZeroChainSettingsDto[];
 

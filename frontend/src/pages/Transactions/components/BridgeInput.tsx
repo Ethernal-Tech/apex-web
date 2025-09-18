@@ -15,7 +15,7 @@ import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { white } from '../../../containers/theme';
 import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
-import { getChainInfo, isCardanoChain, isEvmChain } from '../../../settings/chain';
+import { getBridgingMode, getChainInfo, isCardanoChain, isEvmChain } from '../../../settings/chain';
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 
 type BridgeInputType = {
@@ -95,9 +95,12 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   const walletUTxOs = useSelector((state: RootState) => state.accountInfo.utxos);
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
   const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
-  const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge)
-  const maxAmountAllowedToBridge = useSelector((state: RootState) => state.settings.maxAmountAllowedToBridge)
-  const maxTokenAmountAllowedToBridge = useSelector((state: RootState) => state.settings.maxTokenAmountAllowedToBridge)
+  const settings = useSelector((state: RootState) => state.settings)
+
+  const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
+  const minValueToBridge = bridgingModeInfo.settings!.minValueToBridge;
+  const maxAmountAllowedToBridge = bridgingModeInfo.settings!.maxAmountAllowedToBridge;
+  const maxTokenAmountAllowedToBridge = bridgingModeInfo.settings!.maxTokenAmountAllowedToBridge;
   const supportedSourceTokenOptions = useSupportedSourceTokenOptions(chain, destinationChain);
 
   const fetchWalletFee = useCallback(async () => {

@@ -32,11 +32,11 @@ const HomePage: React.FC = () => {
   const {chain: srcChain, destinationChain: dstChain} = useSelector((state: RootState) => state.chain);
 
   const srcChainOptions = useMemo(
-    () => getSrcChains(settings).filter(chain => settings.enabledChains.includes(chain)).map(x => getChainInfo(x)),
+    () => getSrcChains(settings).map(x => getChainInfo(x)),
     [settings]);
 
   const dstChainOptions = useMemo(
-    () => getDstChains(srcChain, settings).filter(chain => settings.enabledChains.includes(chain)).map(x => getChainInfo(x)),
+    () => getDstChains(srcChain, settings).map(x => getChainInfo(x)),
     [srcChain, settings]);
 
   const isSwitchBtnEnabled = useMemo(
@@ -62,15 +62,8 @@ const HomePage: React.FC = () => {
     [dispatch]);
 
   const handleConnectClick = useCallback(
-    async () => {
-      if (!settings.enabledChains.includes(srcChain)) {
-        console.error("chain not supported", srcChain)
-        return
-      }
-
-      await login(srcChain, dstChain, navigate, dispatch);
-    },
-    [srcChain, settings.enabledChains, navigate, dispatch]);
+    async() => await login(srcChain, dstChain, navigate, settings, dispatch),
+    [srcChain, settings, navigate, dispatch]);
 
   useEffect(() => {
     if ((!srcChain || !srcChainOptions.some(x => x.value === srcChain)) && srcChainOptions.length > 0) {

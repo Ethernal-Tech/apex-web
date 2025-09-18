@@ -8,7 +8,7 @@ import {
 	IsPositive,
 	ValidateNested,
 } from 'class-validator';
-import { BridgingModeEnum, ChainEnum } from 'src/common/enum';
+import { ChainEnum } from 'src/common/enum';
 
 export class BridgingSettingsDto {
 	@IsNotEmpty()
@@ -116,7 +116,7 @@ export class LayerZeroChainSettingsDto {
 	chainID: number;
 }
 
-@ApiExtraModels(NativeTokenDto)
+@ApiExtraModels(NativeTokenDto, BridgingSettingsDto)
 export class SettingsResponseDto {
 	@IsNotEmpty()
 	@ApiProperty({
@@ -147,6 +147,12 @@ export class SettingsResponseDto {
 		type: BridgingSettingsDto,
 	})
 	bridgingSettings: BridgingSettingsDto;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Participating chains in the bridge',
+	})
+	enabledChains: string[];
 }
 
 @ApiExtraModels(SettingsResponseDto, LayerZeroChainSettingsDto)
@@ -154,17 +160,15 @@ export class SettingsFullResponseDto {
 	@IsNotEmpty()
 	@ApiProperty({
 		description: 'Settings per bridging mode (reactor, skyline)',
-		type: Object,
-		additionalProperties: {
-			type: 'SettingsResponseDto',
-		},
+		type: 'object',
+  		additionalProperties: { $ref: getSchemaPath(SettingsResponseDto) },
 	})
 	settingsPerMode: { [key: string]: SettingsResponseDto }
 	
 	@IsNotEmpty()
 	@ApiProperty({
 		description: 'All allowed directions',
-		type: Object,
+		type: 'object',
 		additionalProperties: {
 			type: 'array',
 			items: { type: 'string' },
@@ -181,4 +185,10 @@ export class SettingsFullResponseDto {
 		type: () => [LayerZeroChainSettingsDto],
 	})
 	layerZeroChains: LayerZeroChainSettingsDto[];
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Participating chains in the bridge',
+	})
+	enabledChains: string[];
 }

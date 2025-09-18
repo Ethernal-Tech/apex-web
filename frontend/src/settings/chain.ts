@@ -7,13 +7,18 @@ import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg
 import {ReactComponent as BaseIcon} from '../assets/chain-icons/base.svg'
 import {ReactComponent as BNBIcon} from '../assets/chain-icons/bsc.svg'
 import { TokenEnum } from "../features/enums";
-import { ISettingsState } from "./settingsRedux";
-import appSettings from "./appSettings";
+import { ISettingsState, SettingsPerMode } from "./settingsRedux";
 
-export enum BridgingType {
-  Reactor = 1,
-  Skyline,
-  LayerZero,
+export enum BridgingModeEnum {
+    Reactor = 'reactor',
+    Skyline = 'skyline',
+    LayerZero = 'layerzero',
+    Unknown = 'unknown'
+}
+
+export type BridgingModeWithSettings = {
+	settings?: SettingsPerMode
+	bridgingMode: BridgingModeEnum
 }
 
 export type ChainInfo = {
@@ -106,11 +111,11 @@ export const getDstChains = function (chain: ChainEnum | undefined, settings: IS
         return [];
     }
 
-    return getChainDirections(settings)[chain] || [];
+    return (getChainDirections(settings)[chain] || []).filter(x => settings.enabledChains.includes(x));
 }
 
 export const getSrcChains = function (settings: ISettingsState): ChainEnum[] {
-    return Object.keys(getChainDirections(settings)) as ChainEnum[];
+    return (Object.keys(getChainDirections(settings)) as ChainEnum[]).filter(x => settings.enabledChains.includes(x));
 }
 
 
@@ -176,12 +181,24 @@ export function toApexBridgeName(chain: string): ChainEnum{
     }
 }
 
-export function getBridgingType(srcChain: ChainEnum, dstChain: ChainEnum): BridgingType {
-    if (isLZBridging(srcChain, dstChain)) {
-        return BridgingType.LayerZero;    
-    } else if (appSettings.isSkyline) {
-        return BridgingType.Skyline;
+export function getBridgingMode(
+    srcChain: ChainEnum, dstChain: ChainEnum, settings?: ISettingsState,
+): BridgingModeWithSettings {
+    for (const [key, value] of Object.entries(settings?.settingsPerMode || {})) {
+        if (
+            srcChain in value.allowedDirections &&
+            value.allowedDirections[srcChain].includes(dstChain)
+        ) {
+            return {
+                settings: value,
+                bridgingMode: key as unknown as BridgingModeEnum,
+            }
+        }
     }
-    
-    return BridgingType.Reactor;    
+
+    if (isLZBridging(srcChain, dstChain)) {
+        return { bridgingMode: BridgingModeEnum.LayerZero };
+    }
+
+    return { bridgingMode: BridgingModeEnum.Unknown };
 }

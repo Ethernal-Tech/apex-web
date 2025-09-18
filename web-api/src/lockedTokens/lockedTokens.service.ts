@@ -37,11 +37,11 @@ export class LockedTokensService {
 	}
 
 	endpointUrl: string;
-	apiKey = process.env.CARDANO_API_API_KEY;
+	apiKey = process.env.CARDANO_API_SKYLINE_API_KEY;
 
 	async init() {
 		this.endpointUrl =
-			process.env.CARDANO_API_URL + `/api/CardanoTx/GetLockedTokens`;
+			process.env.CARDANO_API_SKYLINE_URL + `/api/CardanoTx/GetLockedTokens`;
 	}
 
 	public async getLockedTokens(): Promise<LockedTokensResponse> {

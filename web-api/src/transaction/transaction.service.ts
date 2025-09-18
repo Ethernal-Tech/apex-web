@@ -43,8 +43,15 @@ export class TransactionService {
 	) { }
 
 	private async validateCreateCardanoTx(dto: CreateTransactionDto) {
+		if (
+			!this.settingsService.SettingsResponse.enabledChains.includes(dto.originChain) ||
+			!this.settingsService.SettingsResponse.enabledChains.includes(dto.destinationChain)
+		) {
+			throw new BadRequestException('Chain not supported');
+		}
+
 		if (!isCardanoChain(dto.originChain)) {
-			throw new BadRequestException(`Source chain ${dto.originChain} is not Cardano chain`);
+			throw new BadRequestException(`Chain ${dto.originChain} is not Cardano chain`);
 		}
 
 		const settings = getBridgingSettings(dto.originChain, dto.destinationChain, this.settingsService.SettingsResponse)
@@ -139,8 +146,15 @@ export class TransactionService {
 	async createEth(
 		dto: CreateTransactionDto,
 	): Promise<CreateEthTransactionResponseDto> {
+		if (
+			!this.settingsService.SettingsResponse.enabledChains.includes(dto.originChain) ||
+			!this.settingsService.SettingsResponse.enabledChains.includes(dto.destinationChain)
+		) {
+			throw new BadRequestException('Chain not supported');
+		}
+
 		if (!isEvmChain(dto.originChain)) {
-			throw new BadRequestException(`Source chain ${dto.originChain} is not EVM chain`);
+			throw new BadRequestException(`Chain ${dto.originChain} is not EVM chain`);
 		}
 
 		const settings = getBridgingSettings(dto.originChain, dto.destinationChain, this.settingsService.SettingsResponse)
