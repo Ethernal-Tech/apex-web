@@ -190,8 +190,8 @@ export class EnterpriseAddress implements CardanoAddress {
 	GetStake(): StakeCredential {
 		captureAndThrowError(
 			'not available',
-			'NewTransactionPage.tsx',
-			'handleSubmitCallback',
+			'addreses.ts',
+			'GetStake',
 		);
 	}
 	GetNetwork(): CardanoNetworkType {
@@ -222,8 +222,8 @@ export class RewardAddress implements CardanoAddress {
 	GetPayment(): StakeCredential {
 		captureAndThrowError(
 			'not available',
-			'NewTransactionPage.tsx',
-			'handleSubmitCallback',
+			'addreses.ts',
+			'GetPayment',
 		);
 	}
 	GetStake(): StakeCredential {
