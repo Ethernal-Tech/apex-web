@@ -19,6 +19,8 @@ import { NavigateFunction } from 'react-router-dom';
 import { HOME_ROUTE } from '../pages/PageRouter';
 import { setAccountInfoAction } from '../redux/slices/accountInfoSlice';
 import { isEvmChain } from '../settings/chain';
+import * as Sentry from '@sentry/react';
+import { captureAndThrowError } from '../utils/generalUtils';
 
 let onLoadCalled = false;
 
@@ -30,19 +32,27 @@ const checkAndSetEvmData = async (
 	const networkId = await evmWalletHandler.getNetworkId();
 	const network = fromEvmNetworkIdToNetwork(networkId);
 	if (!network) {
-		throw new Error(
+		captureAndThrowError(
 			`Invalid networkId: ${networkId}. Expected networkId: ${fromChainToNetworkId(chain)}. Please select network with networkId: ${fromChainToNetworkId(chain)} in your wallet.`,
+			'login.ts',
+			'checkAndSetEvmData',
 		);
 	}
 
 	if (!checkChainCompatibility(chain, network, networkId)) {
-		throw new Error(
+		captureAndThrowError(
 			`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`,
+			'login.ts',
+			'checkAndSetEvmData',
 		);
 	}
 	const account = await evmWalletHandler.getAddress();
 	if (!account) {
-		throw new Error('No accounts connected');
+		captureAndThrowError(
+			`No accounts connected`,
+			'login.ts',
+			'checkAndSetEvmData',
+		);
 	}
 
 	dispatch(setWalletAction(selectedWalletName));
@@ -68,6 +78,13 @@ const onEvmAccountsChanged = async (
 		console.log(we);
 		toast.error(we);
 
+		Sentry.captureException(we, {
+			tags: {
+				component: 'login.ts',
+				action: 'onEvmAccountsChanged',
+			},
+		});
+
 		await logout(dispatch);
 	}
 };
@@ -79,7 +96,11 @@ const enableEvmWallet = async (
 ) => {
 	const expectedChainId = fromChainToNetworkId(chain);
 	if (!expectedChainId) {
-		throw new Error(`Chain ${chain} not supported.`);
+		captureAndThrowError(
+			`Chain ${chain} not supported.`,
+			'login.ts',
+			'enableEvmWallet',
+		);
 	}
 
 	await evmWalletHandler.enable(
@@ -92,7 +113,11 @@ const enableEvmWallet = async (
 	const success = evmWalletHandler.checkWallet();
 
 	if (!success) {
-		throw new Error('Failed to connect to wallet.');
+		captureAndThrowError(
+			`Failed to connect to wallet.`,
+			'login.ts',
+			'enableEvmWallet',
+		);
 	}
 
 	await checkAndSetEvmData(selectedWalletName, chain, dispatch);
@@ -109,20 +134,28 @@ const enableCardanoWallet = async (
 	const success = walletHandler.checkWallet();
 
 	if (!success) {
-		throw new Error('Failed to connect to wallet.');
+		captureAndThrowError(
+			`Failed to connect to wallet.`,
+			'login.ts',
+			'enableCardanoWallet',
+		);
 	}
 
 	const networkId = await walletHandler.getNetworkId();
 	const network = await walletHandler.getNetwork();
 	if (!network) {
-		throw new Error(
+		captureAndThrowError(
 			`Invalid network: ${network}. Expected network: ${fromChainToNetwork(chain)}. Please select ${fromChainToNetwork(chain)} network in your wallet.`,
+			'login.ts',
+			'enableCardanoWallet',
 		);
 	}
 
 	if (!checkChainCompatibility(chain, network, networkId)) {
-		throw new Error(
+		captureAndThrowError(
 			`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`,
+			'login.ts',
+			'enableCardanoWallet',
 		);
 	}
 
@@ -153,6 +186,13 @@ const enableWallet = async (
 		} catch (e) {
 			console.log(e);
 			toast.error(`${e}`);
+
+			Sentry.captureException(e, {
+				tags: {
+					component: 'login.ts',
+					action: 'enableWallet',
+				},
+			});
 		}
 
 		evmWalletHandler.clearEnabledWallet();
@@ -165,6 +205,13 @@ const enableWallet = async (
 	} catch (e) {
 		console.log(e);
 		toast.error(`${e}`);
+
+		Sentry.captureException(e, {
+			tags: {
+				component: 'login.ts',
+				action: 'enableWallet',
+			},
+		});
 	}
 
 	walletHandler.clearEnabledWallet();
@@ -217,9 +264,17 @@ export const login = async (
 		const supportedWallets = isEvmChain(chain)
 			? EVM_SUPPORTED_WALLETS
 			: SUPPORTED_WALLETS;
-		toast.error(
-			`Can not find any supported wallets installed. Supported wallets: ${supportedWallets}`,
-		);
+
+		const e = `Can not find any supported wallets installed. Supported wallets: ${supportedWallets}`;
+		toast.error(e);
+
+		Sentry.captureException(new Error(e), {
+			tags: {
+				component: 'login.ts',
+				action: 'login',
+			},
+		});
+
 		return false;
 	}
 
