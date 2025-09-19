@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Sentry from '@sentry/react';
 import ReactDOM from 'react-dom/client';
 import reportWebVitals from './reportWebVitals';
 import './index.css';
@@ -10,6 +11,21 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import AppContainer from './containers/AppContainer';
 import { ToastContainer } from 'react-toastify';
+
+Sentry.init({
+	dsn: 'https://dc5c04127a9dafdd144c99a9e9e90786@o4510034117722112.ingest.de.sentry.io/4510034124603472',
+	sendDefaultPii: true,
+	integrations: [
+		Sentry.consoleLoggingIntegration({ levels: ['log', 'warn', 'error'] }),
+		Sentry.replayIntegration(),
+		Sentry.browserTracingIntegration(),
+	],
+	enableLogs: true,
+	replaysSessionSampleRate: 0.1,
+	replaysOnErrorSampleRate: 1.0,
+	tracesSampleRate: 1.0,
+	tracePropagationTargets: ['localhost', /^\/\//],
+});
 
 const root = ReactDOM.createRoot(
 	document.getElementById('root') as HTMLElement,
