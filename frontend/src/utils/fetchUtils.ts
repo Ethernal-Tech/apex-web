@@ -1,5 +1,6 @@
 import { toast } from 'react-toastify';
 import { ApiException } from '../swagger/apexBridgeApiService';
+import * as Sentry from '@sentry/react';
 
 export class ErrorResponse {
     err: string;
@@ -19,13 +20,27 @@ const toErrResponse = (error: any): ErrorResponse => {
 				if (inner) {
 					return new ErrorResponse({ err: `${inner}` })
 				}
-			} catch {}
+			} catch (e) {
+				Sentry.captureException(e, {
+					tags: {
+						component: 'fetchUtils.ts',
+						action: 'toErrResponse',
+					},
+				});
+			}
 
 			return new ErrorResponse({ err: `${apiException.response}` })
 		} else if (apiException?.result) {
 			return new ErrorResponse({ err: `${apiException.result}` })
 		}
-	} catch {}
+	} catch (e) {
+		Sentry.captureException(e, {
+			tags: {
+				component: 'fetchUtils.ts',
+				action: 'toErrResponse',
+			},
+		});
+	}
 
 	return new ErrorResponse({ err: `${error}` })
 }

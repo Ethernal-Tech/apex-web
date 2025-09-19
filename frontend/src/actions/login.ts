@@ -12,7 +12,8 @@ import { NavigateFunction } from "react-router-dom";
 import { HOME_ROUTE } from "../pages/PageRouter";
 import { setAccountInfoAction } from "../redux/slices/accountInfoSlice";
 import { getSrcChains, isEvmChain } from "../settings/chain";
-import { shouldUseMainnet } from "../utils/generalUtils";
+import { shouldUseMainnet, captureAndThrowError } from "../utils/generalUtils";
+
 
 let onLoadCalled = false
 
@@ -22,21 +23,37 @@ const checkAndSetEvmData = async (selectedWalletName: string, srcChain: ChainEnu
     const network = fromEvmNetworkIdToNetwork(networkId, useMainnet);
     if (!network) {
         const expectedNetworkId = fromChainToNetworkId(srcChain, useMainnet);
-        throw new Error(`Invalid networkId: ${networkId}. Expected networkId: ${expectedNetworkId}. Please select network with networkId: ${expectedNetworkId} in your wallet.`);
+        captureAndThrowError(
+            `Invalid networkId: ${networkId}. Expected networkId: ${expectedNetworkId}. Please select network with networkId: ${expectedNetworkId} in your wallet.`,
+            'login.ts',
+            'checkAndSetEvmData',
+        );
     }
 
     if (!checkChainCompatibility(srcChain, network, networkId, useMainnet)) {
         const expectedNetwork = fromChainToNetworkId(srcChain, useMainnet);
-        throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`);
+        captureAndThrowError(
+            `Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`,
+            'login.ts',
+            'checkAndSetEvmData',
+        );
     }
 
     if (!getSrcChains().some(x => x === srcChain)) {
-        throw new Error(`Chain: ${srcChain} not supported.`);
+        captureAndThrowError(
+            `Chain: ${srcChain} not supported.`,
+            'login.ts',
+            'checkAndSetEvmData',
+        );
     }
 
     const account = await evmWalletHandler.getAddress();
     if (!account) {
-        throw new Error('No accounts connected')
+        captureAndThrowError(
+            'No accounts connected',
+            'login.ts',
+            'checkAndSetEvmData',
+        );
     }
 
     dispatch(setWalletAction(selectedWalletName));
@@ -60,7 +77,11 @@ const onEvmAccountsChanged = async (selectedWalletName: string, srcChain: ChainE
 const enableEvmWallet = async (selectedWalletName: string, srcChain: ChainEnum, dstChain: ChainEnum, dispatch: Dispatch) => {
     const expectedChainId = fromChainToNetworkId(srcChain, shouldUseMainnet(srcChain, dstChain));
     if (!expectedChainId) {
-        throw new Error(`Chain ${srcChain} not supported.`);
+        captureAndThrowError(
+            `Chain ${srcChain} not supported.`,
+            'login.ts',
+            'enableEvmWallet',
+        );
     }
 
     await evmWalletHandler.enable(
@@ -71,7 +92,11 @@ const enableEvmWallet = async (selectedWalletName: string, srcChain: ChainEnum, 
     let success = evmWalletHandler.checkWallet()
 
     if (!success) {
-        throw new Error('Failed to connect to wallet.');
+        captureAndThrowError(
+            'Failed to connect to wallet.',
+            'login.ts',
+            'enableEvmWallet',
+        );
     }
 
     await checkAndSetEvmData(selectedWalletName, srcChain, dstChain, dispatch)
@@ -84,7 +109,11 @@ const enableCardanoWallet = async (selectedWalletName: string, srcChain: ChainEn
     let success = walletHandler.checkWallet();
 
     if (!success) {
-        throw new Error('Failed to connect to wallet.');
+        captureAndThrowError(
+            'Failed to connect to wallet.',
+            'login.ts',
+            'enableCardanoWallet',
+        );
     }
 
     const useMainnet = shouldUseMainnet(srcChain, dstChain);
@@ -92,16 +121,28 @@ const enableCardanoWallet = async (selectedWalletName: string, srcChain: ChainEn
     const network = await walletHandler.getNetwork();
     if (!network) {
         const expectedNetwork = fromChainToNetwork(srcChain, useMainnet)
-        throw new Error(`Invalid network: ${network}. Expected network: ${expectedNetwork}. Please select ${expectedNetwork} network in your wallet.`);
+        captureAndThrowError(
+            `Invalid network: ${network}. Expected network: ${expectedNetwork}. Please select ${expectedNetwork} network in your wallet.`,
+            'login.ts',
+            'enableCardanoWallet',
+        );
     }
 
     if (!checkChainCompatibility(srcChain, network, networkId, useMainnet)) {
         const expectedNetwork = fromChainToNetwork(srcChain, useMainnet)
-        throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`);
+        captureAndThrowError(
+            `Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`,
+            'login.ts',
+            'enableCardanoWallet',
+        );
     }
 
     if (!getSrcChains().some(x => x === srcChain)) {
-        throw new Error(`Chain: ${srcChain} not supported.`);
+        captureAndThrowError(
+            `Chain: ${srcChain} not supported.`,
+            'login.ts',
+            'enableCardanoWallet',
+        );
     }
 
     const account = await walletHandler.getChangeAddress();

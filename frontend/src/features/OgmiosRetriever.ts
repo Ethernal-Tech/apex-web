@@ -1,6 +1,6 @@
 
 import { UtxoRetriever } from "./types";
-import { getAssetsSumMap } from "../utils/generalUtils";
+import { getAssetsSumMap, captureAndThrowError } from "../utils/generalUtils";
 import { UTxO } from "./WalletHandler";
 
 type JsonRpcRequest = {
@@ -62,19 +62,31 @@ class OgmiosRetriever implements UtxoRetriever {
 			});
 
 			if (!response.ok) {
-				throw new Error(`Request failed with status ${response.status}`);
+				captureAndThrowError(
+					`Request failed with status ${response.status}`,
+					'OgmiosRetriever.ts',
+					'getAllUtxos',
+				);
 			}
 
 			const data: UtxoResponse = await response.json();
 
 			if ('error' in data) {
-				throw new Error(`Ogmios returned error: ${JSON.stringify(data.error)}`);
+				captureAndThrowError(
+					`Ogmios returned error: ${JSON.stringify(data.error)}`,
+					'OgmiosRetriever.ts',
+					'getAllUtxos',
+				);
 			}
 
 			return data.result.map(toMeshSdkUtxo);
 		}
 		catch (e) {
-			throw new Error(`failed to query ogmios for utxos. e: ${e}`)
+			captureAndThrowError(
+				`failed to query ogmios for utxos. e: ${e}`,
+				'OgmiosRetriever.ts',
+				'getAllUtxos',
+			);
 		}
 	}
 

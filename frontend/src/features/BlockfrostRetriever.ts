@@ -1,6 +1,6 @@
 
 import { UtxoRetriever } from "./types";
-import { getAssetsSumMap } from "../utils/generalUtils";
+import { getAssetsSumMap, captureAndThrowError } from "../utils/generalUtils";
 import { UTxO } from "./WalletHandler";
 
 class BlockfrostRetriever implements UtxoRetriever {
@@ -28,7 +28,11 @@ class BlockfrostRetriever implements UtxoRetriever {
 			);
 
 			if (!response.ok) {
-				throw new Error(`Request failed with status ${response.status}`);
+				captureAndThrowError(
+					`Request failed with status ${response.status}`,
+					'BlockfrostRetriever.ts',
+					'getAllUtxos',
+				);
 			}
 
 			const data: BlockfrostUtxo[] = await response.json();
@@ -36,7 +40,11 @@ class BlockfrostRetriever implements UtxoRetriever {
 			return data.map(toMeshSdkUtxo);
 		}
 		catch (e) {
-			throw new Error(`failed to get blockfrost utxos. e: ${e}`)
+			captureAndThrowError(
+				`failed to get blockfrost utxos. e: ${e}`,
+				'BlockfrostRetriever.ts',
+				'getAllUtxos',
+			);
 		}
 	}
 

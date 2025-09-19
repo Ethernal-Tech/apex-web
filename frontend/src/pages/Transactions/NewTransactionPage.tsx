@@ -1,6 +1,6 @@
 import BasePage from "../base/BasePage";
 import BridgeInput from "./components/BridgeInput";
-import { convertDfmToWei, formatTxDetailUrl, validateSubmitTxInputs, validateSubmitTxInputsSkyline} from "../../utils/generalUtils";
+import { convertDfmToWei, formatTxDetailUrl, validateSubmitTxInputs, validateSubmitTxInputsSkyline, captureAndThrowError} from "../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -76,7 +76,11 @@ function NewTransactionPage() {
 		const bindedCreateAction = getCardanoTransactionFeeAction.bind(null, createTxDto);
 		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
-			throw new Error(feeResponse.err)
+			captureAndThrowError(
+				feeResponse.err,
+				'NewTransactionPage.tsx',
+				'getCardanoTxFee',
+			);
 		}
 
 		return feeResponse;
@@ -87,14 +91,22 @@ function NewTransactionPage() {
 			? validateSubmitTxInputsSkyline(settings, chain, destinationChain, address, amount, bridgeTxFee, operationFee, isNativeToken) 
 			: validateSubmitTxInputs(settings, chain, destinationChain, address, amount);
 		if (validationErr) {
-			throw new Error(validationErr);
+			captureAndThrowError(
+				validationErr,
+				'NewTransactionPage.tsx',
+				'createCardanoTx',
+			);
 		}
 
 		const createTxDto =  await prepareCreateCardanoTx(address, amount, isNativeToken);
 		const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (createResponse instanceof ErrorResponse) {
-			throw new Error(createResponse.err)
+			captureAndThrowError(
+				createResponse.err,
+				'NewTransactionPage.tsx',
+				'createCardanoTx',
+			);
 		}
 
 		return { createTxDto, createResponse };
@@ -122,7 +134,11 @@ function NewTransactionPage() {
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
 		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (feeResponse instanceof ErrorResponse) {
-			throw new Error(feeResponse.err)
+			captureAndThrowError(
+				feeResponse.err,
+				'NewTransactionPage.tsx',
+				'getEthTxFee',
+			);
 		}
 
 		return feeResponse;
@@ -131,14 +147,22 @@ function NewTransactionPage() {
 	const createEthTx = useCallback(async (address: string, amount: string): Promise<CreateEthTxResponse> => {
 		const validationErr = validateSubmitTxInputs(settings, chain, destinationChain, address, amount);
 		if (validationErr) {
-			throw new Error(validationErr);
+			captureAndThrowError(
+				validationErr,
+				'NewTransactionPage.tsx',
+				'createEthTx',
+			);
 		}
 
 		const createTxDto = prepareCreateEthTx(address, amount);
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
 		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
 		if (createResponse instanceof ErrorResponse) {
-			throw new Error(createResponse.err)
+			captureAndThrowError(
+				createResponse.err,
+				'NewTransactionPage.tsx',
+				'createEthTx',
+			);
 		}
 
 		return { createTxDto, createResponse };
@@ -169,7 +193,11 @@ function NewTransactionPage() {
 					
 					response && goToDetails(response);
 				} else {
-					throw new Error(`Unsupported source chain: ${chain}`);
+					captureAndThrowError(
+						`Unsupported source chain: ${chain}`,
+						'NewTransactionPage.tsx',
+						'handleSubmitCallback',
+					);
 				}
 			}catch(err) {
 				console.log(err);

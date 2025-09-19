@@ -1,6 +1,6 @@
 import { BrowserWallet, Asset, UTxO } from '@meshsdk/core';
 import { NewAddressFromBytes } from './Address/addreses';
-import { getAssetsSumMap, toBytes } from '../utils/generalUtils';
+import { getAssetsSumMap, toBytes, captureAndThrowError } from '../utils/generalUtils';
 import { ApexBridgeNetwork } from './enums';
 import { UtxoRetriever } from './types';
 
@@ -35,12 +35,20 @@ class WalletHandler implements UtxoRetriever {
         const nativeAPI = this.getNativeAPI();
         const experimentalAPI = nativeAPI['experimental'];
         if (!experimentalAPI) {
-            throw new Error('experimental not defined');
+            captureAndThrowError(
+				`experimental not defined`,
+				'WalletHandler.ts',
+				'version',
+			);
         }
 
         const appVersion = experimentalAPI['appVersion'];
         if (!appVersion ) {
-            throw new Error('appVersion not defined');
+            captureAndThrowError(
+				`appVersion not defined`,
+				'WalletHandler.ts',
+				'version',
+			);
         }
 
         return appVersion;
@@ -60,7 +68,11 @@ class WalletHandler implements UtxoRetriever {
 
     private _checkWalletAndThrow = () => {
         if (!this.checkWallet()) {
-            throw new Error('Wallet not enabled')
+            captureAndThrowError(
+				`Wallet not enabled`,
+				'WalletHandler.ts',
+				'_checkWalletAndThrow',
+			);
         }
     }
 
@@ -71,12 +83,20 @@ class WalletHandler implements UtxoRetriever {
             const nativeAPI = this.getNativeAPI();
             const experimentalAPI = nativeAPI['experimental'];
             if (!experimentalAPI) {
-                throw new Error('experimental not defined');
+                captureAndThrowError(
+					`experimental not defined`,
+					'WalletHandler.ts',
+					'getNetwork',
+				);
             }
 
             const getConnectedNetworkId = experimentalAPI['getConnectedNetworkId'];
             if (!getConnectedNetworkId) {
-                throw new Error('getConnectedNetworkId not defined');
+                captureAndThrowError(
+					`getConnectedNetworkId not defined`,
+					'WalletHandler.ts',
+					'getNetwork',
+				);
             }
 
             const eternlNetworkId = await getConnectedNetworkId();

@@ -10,6 +10,7 @@ import { isCurrencyBridgingAllowed } from "../settings/token";
 import { ISettingsState } from "../redux/slices/settingsSlice";
 import { validateSubmitTxInputs } from "../utils/generalUtils";
 import { SendTransactionOptions } from "web3/lib/commonjs/eth.exports";
+import { captureAndThrowError } from '../utils/generalUtils';
 
 type TxDetailsOptions = {
     feePercMult: bigint;
@@ -30,7 +31,11 @@ export const signAndSubmitCardanoTx = async (
     createResponse: CreateCardanoTransactionResponseDto,
 ) => {
     if (!walletHandler.checkWallet()) {
-        throw new Error('Wallet not connected.');
+        captureAndThrowError(
+            'Wallet not connected.',
+			'submitTx.ts',
+			'signAndSubmitCardanoTx',
+		);
     }
 
     const signedTxRaw = await walletHandler.signTx(createResponse.txRaw);
@@ -53,7 +58,11 @@ export const signAndSubmitCardanoTx = async (
 
     const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
     if (response instanceof ErrorResponse) {
-        throw new Error(response.err)
+        captureAndThrowError(
+            response.err,
+			'submitTx.ts',
+			'signAndSubmitCardanoTx',
+		);
     }
 
     return response;
@@ -97,7 +106,11 @@ export const signAndSubmitEthTx = async (
   createResponse: CreateEthTransactionResponseDto,
 ) => {
   if (!evmWalletHandler.checkWallet()) {
-      throw new Error('Wallet not connected.');
+        captureAndThrowError(
+            'Wallet not connected.',
+			'submitTx.ts',
+			'signAndSubmitEthTx',
+		);
   }
 
   const {bridgingFee, isFallback, ...txParts} = createResponse;
@@ -125,7 +138,11 @@ export const signAndSubmitEthTx = async (
 
   const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
   if (response instanceof ErrorResponse) {
-      throw new Error(response.err)
+      captureAndThrowError(
+            response.err,
+			'submitTx.ts',
+			'signAndSubmitEthTx',
+		);
   }
   
   return response;
@@ -133,7 +150,11 @@ export const signAndSubmitEthTx = async (
 
 export const signAndSubmitLayerZeroTx = async (receiverAddr: string, createResponse: LayerZeroTransferResponseDto) => {
     if (!evmWalletHandler.checkWallet()) {
-        throw new Error('Wallet not connected.');
+        captureAndThrowError(
+            'Wallet not connected.',
+			'submitTx.ts',
+			'signAndSubmitLayerZeroTx',
+		);
     }
 
     const { transactionData } = createResponse;
@@ -151,7 +172,11 @@ export const signAndSubmitLayerZeroTx = async (receiverAddr: string, createRespo
         console.log('submitting layer zero approval tx...', tx);
         const receipt = await evmWalletHandler.submitTx(tx, opts);
         if (receipt.status !== BigInt(1)) {
-            throw new Error('Approval transaction has been failed');
+            captureAndThrowError(
+                'Approval transaction has been failed',
+                'submitTx.ts',
+                'signAndSubmitLayerZeroTx',
+            );
         }
 
         console.log('layer zero approval tx has been submitted');
@@ -166,7 +191,11 @@ export const signAndSubmitLayerZeroTx = async (receiverAddr: string, createRespo
     // Return the receipt from the actual send
     const receipt = await evmWalletHandler.submitTx(sendTx, opts);
     if (receipt.status !== BigInt(1)) {
-        throw new Error('send transaction has been failed');
+        captureAndThrowError(
+            'send transaction has been failed',
+			'submitTx.ts',
+			'signAndSubmitLayerZeroTx',
+		);
     }
 
     console.log('layer zero send tx has been submitted', sendTx.value);
@@ -193,7 +222,11 @@ export const signAndSubmitLayerZeroTx = async (receiverAddr: string, createRespo
 
     const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
     if (response instanceof ErrorResponse) {
-        throw new Error(response.err)
+        captureAndThrowError(
+            response.err,
+			'submitTx.ts',
+			'signAndSubmitLayerZeroTx',
+		)
     }
 
     return response;
@@ -203,7 +236,11 @@ export const populateTxDetails = async (
     tx: Transaction, opts: TxDetailsOptions = defaultTxDetailsOptions,
 ): Promise<Transaction> => {
     if (typeof window.ethereum === 'undefined') {
-        throw new Error('can not instantiate web3 provider');
+        captureAndThrowError(
+            'can not instantiate web3 provider',
+			'submitTx.ts',
+			'populateTxDetails',
+		);
     }
 
     const web3 = new Web3(window.ethereum);
@@ -273,12 +310,22 @@ export const getLayerZeroTransferResponse = async function (
 ): Promise<LayerZeroTransferResponseDto> {
     const validationErr = validateSubmitTxInputs(settings, srcChain, dstChain, fromAddr, amount);
     if (!!validationErr) {
-        throw new Error(validationErr);
+        captureAndThrowError(
+            validationErr,
+			'submitTx.ts',
+			'getLayerZeroTransferResponse',
+		);
     }
 
     const originChainSetting = settings.layerZeroChains[srcChain];
 
-    if (!originChainSetting) throw new Error(`No LayerZero config for ${srcChain}`);
+    if (!originChainSetting) { 
+        captureAndThrowError(
+            `No LayerZero config for ${srcChain}`,
+			'submitTx.ts',
+			'getLayerZeroTransferResponse',
+		);
+    }
 
     const createTxDto = new LayerZeroTransferDto({
         srcChainName: toLayerZeroChainName(srcChain),
@@ -293,7 +340,11 @@ export const getLayerZeroTransferResponse = async function (
     const bindedCreateAction = layerZeroTransferAction.bind(null, createTxDto);
     const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
     if (createResponse instanceof ErrorResponse) {
-        throw new Error(createResponse.err)
+        captureAndThrowError(
+            createResponse.err,
+			'submitTx.ts',
+			'getLayerZeroTransferResponse',
+		)
     }
 
     console.log('layer zero transfer response', createResponse);
