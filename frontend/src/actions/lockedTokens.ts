@@ -2,6 +2,7 @@ import { Dispatch } from "@reduxjs/toolkit";
 import { LockedTokensControllerClient } from "../swagger/apexBridgeApiService";
 import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
 import { setLockedTokensAction } from "../redux/slices/lockedTokensSlice";
+import { captureAndThrowError } from "../utils/generalUtils"
 
 export const getLockedTokensAction = async () => {
   const client = new LockedTokensControllerClient();
@@ -15,7 +16,11 @@ export const fetchAndUpdateLockedTokensAction = async (dispatch: Dispatch) => {
   );
 
   if (lockedTokensResp instanceof ErrorResponse) {
-    throw new Error(`Error while fetching settings: ${lockedTokensResp.err}`);
+    captureAndThrowError(
+      `Error while fetching settings: ${lockedTokensResp.err}`,
+      'lockedTokens.ts',
+      'fetchAndUpdateLockedTokensAction',
+    );
   }
 
   dispatch(setLockedTokensAction(lockedTokensResp));

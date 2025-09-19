@@ -8,6 +8,7 @@ import {ReactComponent as BaseIcon} from '../assets/chain-icons/base.svg'
 import {ReactComponent as BNBIcon} from '../assets/chain-icons/bsc.svg'
 import { TokenEnum } from "../features/enums";
 import appSettings from "./appSettings";
+import { captureAndThrowError } from "../utils/generalUtils"
 
 const reactorChainDirections: Partial<Record<ChainEnum, ChainEnum[]>> = {
     [ChainEnum.Prime]: [ChainEnum.Vector, ChainEnum.Nexus],
@@ -141,7 +142,7 @@ export const toChainEnum = function (value: string): ChainEnum {
         return lower as ChainEnum;
     }
 
-    throw new Error(`Invalid chain: ${value}`);
+    captureAndThrowError(`Invalid chain: ${value}`, "chain.ts", "toChainEnum");
 }
 
 export function isApexBridgeChain(

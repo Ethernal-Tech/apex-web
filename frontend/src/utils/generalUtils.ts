@@ -22,6 +22,7 @@ import {
 import { isCardanoChain, isEvmChain, isLZBridging } from "../settings/chain";
 import { getTokenInfoBySrcDst } from "../settings/token";
 import appSettings from "../settings/appSettings";
+import * as Sentry from '@sentry/react';
 
 export const capitalizeWord = (word: string): string => {
     if (!word || word.length === 0) {
@@ -273,7 +274,11 @@ export const retry = async <T>(
 		}
 	}
 
-	throw new Error(`failed to execute callback. tryCount: ${tryCount}`);
+	captureAndThrowError(
+    `failed to execute callback. tryCount: ${tryCount}`,
+    'generalUtils.ts',
+    'retry',
+  );
 };
 
 export const getAssetsSumMap = (utxos: UTxO[]) => {
@@ -300,7 +305,11 @@ const TX_OUT_SIZE_ADDITIONAL = 160;
 
 const calculateMinUtxo = (utxos: UTxO[]) => {
   if (utxos.length === 0) {
-    throw new Error('UTxO array is empty');
+    captureAndThrowError(
+      'UTxO array is empty', 
+      'generalUtils.ts',
+			'calculateMinUtxo',
+    );
   }
 
   const value = Value.new(BigNum.from_str('0'));
@@ -353,4 +362,21 @@ export const calculateChangeMinUtxo = (utxos: UTxO[] | undefined, defaultMinUtxo
 
   // if the calculation failed and we have native tokens, take changeMinUtxo to be 2*defaultMinUtxo
   return Object.keys(getAssetsSumMap(utxos)).length > 1 ? 2 * defaultMinUtxo : defaultMinUtxo;
+};
+
+export function captureAndThrowError(
+	message: string | Error,
+	component: string,
+	action: string,
+): never {
+	const err = message instanceof Error ? message : new Error(String(message));
+
+	Sentry.captureException(err, {
+		tags: {
+			component: component,
+			action: action,
+		},
+	});
+
+	throw err;
 };

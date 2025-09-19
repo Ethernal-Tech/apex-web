@@ -2,7 +2,7 @@ import Web3 from 'web3';
 import { Transaction } from 'web3-types';
 import { toHex } from "web3-utils";
 import { ERC20_MIN_ABI } from './ABI';
-import { wait } from '../utils/generalUtils';
+import { wait, captureAndThrowError } from '../utils/generalUtils';
 import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
 
 type Wallet = {
@@ -87,7 +87,11 @@ class EvmWalletHandler {
 
     private _checkWalletAndThrow = () => {
         if (!this.checkWallet()) {
-            throw new Error('Wallet not enabled');
+            captureAndThrowError(
+				`Wallet not enabled`,
+				'EvmWalletHandler.ts',
+				'_checkWalletAndThrow',
+			);
         }
     };
 
@@ -110,7 +114,11 @@ class EvmWalletHandler {
 				}
 			}
 			else {
-				throw enableError;
+                captureAndThrowError(
+                    enableError,
+                    'EvmWalletHandler.ts',
+                    'forceChainWithRetry',
+                );
 			}
 		}
 
@@ -123,7 +131,11 @@ class EvmWalletHandler {
             } catch (e) {
                 console.log(e);
 
-                throw new Error(`Failed to switch to network with ID: ${expectedChainId}. Try adding that network to the wallet first.`);
+                captureAndThrowError(
+					`Failed to switch to network with ID: ${expectedChainId}. Try adding that network to the wallet first.`,
+					'EvmWalletHandler.ts',
+					'forceChainWithRetry',
+				);
             }
 
 			await wait(RETRY_WAIT_TIME);
@@ -171,7 +183,12 @@ class EvmWalletHandler {
         this._checkWalletAndThrow();
         const account = await this.getAddress()
 
-        if(!account) throw new Error("No connected wallet address.")
+        if(!account)
+            captureAndThrowError(
+				`No connected wallet address.`,
+				'EvmWalletHandler.ts',
+				'getERC20Balance',
+			);
 
         const web3 = this.getWeb3();
         const contract = new web3!.eth.Contract(ERC20_MIN_ABI, tokenAddress);

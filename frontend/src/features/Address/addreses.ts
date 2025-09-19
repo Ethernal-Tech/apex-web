@@ -1,6 +1,7 @@
 import { CardanoAddress } from "./interfaces";
 import { StakeCredential, CardanoNetworkType, KeyHashSize, StakeCredentialType } from "./types";
 import { Bech32DecodeToBase256, Bech32EncodeFromBase256, GetPrefix, GetStakePrefix, IsAddressWithValidPrefix } from "./utils";
+import { captureAndThrowError } from '../../utils/generalUtils';
 
 const NewStakeCredential = (data: Uint8Array, isScript: boolean): (StakeCredential | undefined) => {
     if (data.length < KeyHashSize) {
@@ -161,7 +162,11 @@ export class EnterpriseAddress implements CardanoAddress {
         return this.Payment;
     }
     GetStake(): StakeCredential {
-        throw new Error('not available');
+        captureAndThrowError(
+			'not available',
+			'addreses.ts',
+			'GetStake',
+		);
     }
     GetNetwork(): CardanoNetworkType {
         return this.Network;
@@ -186,7 +191,11 @@ export class RewardAddress implements CardanoAddress {
     ) {}
 
     GetPayment(): StakeCredential {
-        throw new Error('not available');
+        captureAndThrowError(
+			'not available',
+			'addreses.ts',
+			'GetPayment',
+		);
     }
     GetStake(): StakeCredential {
         return this.Stake;
