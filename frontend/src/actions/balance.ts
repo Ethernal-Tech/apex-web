@@ -1,7 +1,7 @@
 import { Dispatch } from '@reduxjs/toolkit';
 import { store } from '../redux/store';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
-import { fromChainToNativeTokenSymbol, fromChainToCurrencySymbol, fromNetworkToChain } from '../utils/chainUtils';
+import { fromNetworkToChain, getTokenNameFromSettings, LovelaceTokenName } from '../utils/chainUtils';
 import { IBalanceState, updateBalanceAction } from '../redux/slices/accountInfoSlice';
 import evmWalletHandler from '../features/EvmWalletHandler';
 import walletHandler from '../features/WalletHandler';
@@ -11,7 +11,7 @@ import BlockfrostRetriever from '../features/BlockfrostRetriever';
 import OgmiosRetriever from '../features/OgmiosRetriever';
 import { getUtxoRetrieverType } from '../features/utils';
 import { UtxoRetrieverEnum } from '../features/enums';
-import { getChainInfo, isEvmChain } from '../settings/chain';
+import { getBridgingMode, getChainInfo, isEvmChain } from '../settings/chain';
 import { getBridgingInfo, getToken } from '../settings/token';
 import { shouldUseMainnet } from '../utils/generalUtils';
 import { ISettingsState } from '../settings/settingsRedux';
@@ -47,18 +47,20 @@ const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, 
         utxoRetriever = new BlockfrostRetriever(
             addr, utxoRetrieverConfig.url, utxoRetrieverConfig.dmtrApiKey);
     } else if (utxoRetrieverType === UtxoRetrieverEnum.Ogmios) {
-        utxoRetriever = new OgmiosRetriever(
-            addr, utxoRetrieverConfig.url);
+        utxoRetriever = new OgmiosRetriever(addr, utxoRetrieverConfig.url);
     }
 
     const utxos = await utxoRetriever.getAllUtxos();
     const balance = await utxoRetriever.getBalance(utxos);
+
     const finalBalance: { [key: string]: string } = {
-        [currencyTokenName]: (balance[fromChainToCurrencySymbol(srcChain)] || BigInt(0)).toString(10)
+        [currencyTokenName]: (balance[LovelaceTokenName] || BigInt(0)).toString(10)
     }
     if (!!bridgingInfo.wrappedToken) {
-        finalBalance[bridgingInfo.wrappedToken!] = (balance[fromChainToNativeTokenSymbol(srcChain)] || BigInt(0)).toString(10);
+        const tokenName = getTokenNameFromSettings(srcChain, dstChain, settings);
+        finalBalance[bridgingInfo.wrappedToken!] = (balance[tokenName] || BigInt(0)).toString(10);
     }
+
     return {
         balance: finalBalance,
         utxos,
