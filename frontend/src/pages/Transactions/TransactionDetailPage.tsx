@@ -55,8 +55,8 @@ const TransactionDetailPage = () => {
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-  const isSkyline = !!transaction && 
-    getBridgingMode(transaction.originChain, transaction.destinationChain, settings).bridgingMode === BridgingModeEnum.Skyline;
+  const isNotReactor = !!transaction && 
+    getBridgingMode(transaction.originChain, transaction.destinationChain, settings).bridgingMode !== BridgingModeEnum.Reactor;
 
   return (
     <BasePage>
@@ -153,7 +153,7 @@ const TransactionDetailPage = () => {
                       </Typography>
                     </Box>
                     {
-                      isSkyline &&
+                      isNotReactor &&
                       <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
                         <Typography variant="subtitle2">Token Amount:</Typography>
                         <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>

@@ -21,6 +21,8 @@ interface FeeInformationProps {
 
 const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, bridgeTxFee, operationFee, chain, bridgingMode }) => {
   const currencyToken = getCurrencyTokenInfo(chain)
+  const isSkylineMode = bridgingMode === BridgingModeEnum.Skyline;
+  const isLayerZeroMode = bridgingMode === BridgingModeEnum.LayerZero;
 
   return (
     <CustomBox sx={{
@@ -41,7 +43,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               alignItems: 'center',
               color:'rgba(255,255,255,0.6)'
             }}>
-              {bridgingMode === BridgingModeEnum.LayerZero ? 'Estimated Network Fee' : 'User Wallet Fee'}:
+              {isLayerZeroMode ? 'Estimated Network Fee' : 'User Wallet Fee'}:
               <Tooltip
                   title={
                       <Typography color={'white'} sx={{ fontSize: '14px' }}>
@@ -73,7 +75,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
               <Tooltip
                   title={
                       <Typography color={'white'} sx={{ fontSize: '14px' }}>
-                         {bridgingMode === BridgingModeEnum.LayerZero ? 'This fee covers the bridge blockchain transaction costs.' : `This fee covers the bridge blockchain transaction costs. This fee is set to the predefined minimum. When bridging native tokens, the minimum ${currencyToken.label} required to hold those tokens on ${capitalizeWord(chain)} is added.`}
+                         {isLayerZeroMode ? 'This fee covers the bridge blockchain transaction costs.' : `This fee covers the bridge blockchain transaction costs. This fee is set to the predefined minimum. When bridging native tokens, the minimum ${currencyToken.label} required to hold those tokens on ${capitalizeWord(chain)} is added.`}
                       </Typography>
                   }
                   placement="right-start"
@@ -87,7 +89,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
         }
         
         {
-          bridgingMode === BridgingModeEnum.Skyline && operationFee &&  BigInt(operationFee) > BigInt(0) &&
+          isSkylineMode && operationFee &&  BigInt(operationFee) > BigInt(0) &&
           <Typography sx={{
             display:'flex',
             justifyContent:'space-between'
@@ -127,7 +129,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
             }}>
               Estimated time
             </Box>
-           {bridgingMode === BridgingModeEnum.LayerZero ? <Box>{'1-5 minutes'}</Box> : <Box component="span">{bridgingMode === BridgingModeEnum.Skyline ? '28-35 minutes' : '16-20 minutes'}</Box>}
+           {isLayerZeroMode ? <Box>{'1-5 minutes'}</Box> : <Box component="span">{isSkylineMode ? '28-35 minutes' : '16-20 minutes'}</Box>}
         </Typography>
     </CustomBox>
   );

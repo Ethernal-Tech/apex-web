@@ -8,7 +8,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 import appSettings from "../../../settings/appSettings";
 import { getBridgingInfo, getTokenInfo } from "../../../settings/token";
-import { BridgingModeEnum, getBridgingMode, getChainInfo, isLZBridging } from "../../../settings/chain";
+import { BridgingModeEnum, getBridgingMode, getChainInfo } from "../../../settings/chain";
 
 const TotalBalance = () => {
 	const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
@@ -17,15 +17,16 @@ const TotalBalance = () => {
     
     const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
     const isSkylineMode = bridgingModeInfo.bridgingMode === BridgingModeEnum.Skyline;
+    const isLayerZeroMode = bridgingModeInfo.bridgingMode === BridgingModeEnum.LayerZero;
     const bridgingInfo = getBridgingInfo(chain, destinationChain);
     const chainCurrency = getChainInfo(chain).currencyToken;
     const chainNativeToken = bridgingInfo.wrappedToken
     const showChainNativeToken = !!chainNativeToken
 
     const totalBalanceInApex = totalDfmBalance[chainCurrency] ? toFixed(convertDfmToApex(totalDfmBalance[chainCurrency], chain), 6) : null;
-    const totalBalanceInNativeToken = isSkylineMode && totalDfmBalance[chainNativeToken!] ? toFixed(convertDfmToApex(totalDfmBalance[chainNativeToken!], chain), 6) : null;
+    const totalBalanceInNativeToken = (isSkylineMode || isLayerZeroMode) && totalDfmBalance[chainNativeToken!] ? toFixed(convertDfmToApex(totalDfmBalance[chainNativeToken!], chain), 6) : null;
 
-    if (isSkylineMode) {
+    if (isSkylineMode || isLayerZeroMode) {
         return (
             <Box px={'17px'} py='20px' sx={{border:'1px solid #077368',color:'#A1B3A0', background:'transparent',borderRadius:'4px', fontWeight:'500'}}>
                 <Typography textTransform={'uppercase'} color={'white'} sx={{display:'flex',alignItems:'center'}}>
@@ -33,7 +34,7 @@ const TotalBalance = () => {
                     <Box component="span" ml={1}>Available Balance</Box>
                     <Tooltip 
                         title={
-                            isLZBridging(chain, destinationChain) ? (
+                            isLayerZeroMode ? (
                             // TODO: Set desired sentences for layer zero briding.
                             <Typography color={'white'} sx={{ fontSize: '14px' }}>
                                 This balance reflects the total amount of tokens available on the source chain for LayerZero bridging. 

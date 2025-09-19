@@ -13,7 +13,7 @@ import { getLayerZeroTransferResponse, signAndSubmitCardanoTx, signAndSubmitEthT
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
-import { getBridgingMode, isCardanoChain, isEvmChain, isLZBridging, toApexBridge } from "../../settings/chain";
+import { BridgingModeEnum, getBridgingMode, isCardanoChain, isEvmChain, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
 import { validateSubmitTxInputs } from "../../utils/validationUtils";
 
@@ -214,7 +214,7 @@ function NewTransactionPage() {
 	return (
 <BasePage>
   <NewTransaction txInProgress={false}>
-    {isLZBridging(chain,destinationChain) ? (
+    {bridgingModeInfo.bridgingMode === BridgingModeEnum.LayerZero ? (
       <BridgeInputLZ
 		bridgeTxFee={bridgeTxFee}
         setBridgeTxFee={setBridgeTxFee}
