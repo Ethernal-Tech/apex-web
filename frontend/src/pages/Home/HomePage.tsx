@@ -127,7 +127,7 @@ const HomePage: React.FC = () => {
             label="Destination"
             icon={dstChainInfo.icon}
             value={dstChainOptions.some(x => x.value === dstChain) ? dstChain : ""}
-            disabled={isLoggedInMemo || dstChainOptions.length < 2}
+            disabled={(isLoggedInMemo && !appSettings.isMainnet) || dstChainOptions.length < 2}
             onChange={onChangeDstChain}
             options={dstChainOptions}
             sx={{ width: '240px' }} // Setting minWidth via sx prop

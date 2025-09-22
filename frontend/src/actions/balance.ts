@@ -11,7 +11,7 @@ import BlockfrostRetriever from '../features/BlockfrostRetriever';
 import OgmiosRetriever from '../features/OgmiosRetriever';
 import { getUtxoRetrieverType } from '../features/utils';
 import { UtxoRetrieverEnum } from '../features/enums';
-import { getBridgingMode, getChainInfo, isEvmChain } from '../settings/chain';
+import { getChainInfo, isEvmChain } from '../settings/chain';
 import { getBridgingInfo, getToken } from '../settings/token';
 import { shouldUseMainnet } from '../utils/generalUtils';
 import { ISettingsState } from '../settings/settingsRedux';

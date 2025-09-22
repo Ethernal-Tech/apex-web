@@ -22,6 +22,7 @@ const RETRY_WAIT_TIME = 1000;
 
 class EvmWalletHandler {
     private _enabled: boolean = false;
+    private web3: Web3 | undefined;
     private onAccountsChanged: (accounts: string[]) => Promise<void> = async () => undefined;
     private onChainChanged: (chainId: string) => Promise<void> = async () => undefined;
 
@@ -32,14 +33,16 @@ class EvmWalletHandler {
     };
 
     getWeb3 = (): Web3 | undefined => {
-        if (typeof window.ethereum === 'undefined') {
-            return;
+        if (this.web3 === undefined) {
+            if (typeof window.ethereum === 'undefined') {
+                return;
+            }
+
+            this.web3 = new Web3(window.ethereum);
+            this.web3.transactionBlockTimeout = 200;
         }
 
-        const web3 = new Web3(window.ethereum);
-        web3.transactionBlockTimeout = 200;
-
-        return web3;
+        return this.web3;
     }
 
     accountsChanged = async (accounts: string[]) => await this.onAccountsChanged(accounts);
@@ -144,6 +147,7 @@ class EvmWalletHandler {
         this._checkWalletAndThrow();
         const accounts = await this.getWeb3()!.eth.getAccounts();
         const balance = await this.getWeb3()!.eth.getBalance(accounts[0]);
+        this.getWeb3()?.removeAllListeners()
         return this.getWeb3()!.utils.fromWei(balance, 'wei');
     };
 
