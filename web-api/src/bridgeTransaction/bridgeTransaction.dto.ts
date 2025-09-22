@@ -172,6 +172,13 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 		required: false,
 	})
 	receiverAddress?: string;
+
+	@ApiProperty({
+		description: 'Retrieve transaction which are bridged with Reactor bridge',
+		nullable: true,
+		required: false,
+	})
+	onlyReactor?: boolean;
 }
 
 export class BridgeTransactionResponseDto {

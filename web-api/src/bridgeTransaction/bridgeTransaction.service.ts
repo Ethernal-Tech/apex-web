@@ -84,6 +84,11 @@ export class BridgeTransactionService {
 			where.receiverAddresses = Like(model.receiverAddress);
 		}
 
+		if (model.onlyReactor) {
+			where.originChain = In([ChainEnum.Prime, ChainEnum.Vector, ChainEnum.Nexus]);
+			where.destinationChain = In([ChainEnum.Prime, ChainEnum.Vector, ChainEnum.Nexus]);
+		}
+
 		const page = model.page || 0;
 		const take = model.perPage || 10;
 		const skip = page * take;
