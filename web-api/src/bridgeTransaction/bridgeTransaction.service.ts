@@ -85,8 +85,13 @@ export class BridgeTransactionService {
 		}
 
 		if (model.onlyReactor) {
-			where.originChain = In([ChainEnum.Prime, ChainEnum.Vector, ChainEnum.Nexus]);
-			where.destinationChain = In([ChainEnum.Prime, ChainEnum.Vector, ChainEnum.Nexus]);
+			if (!model.destinationChain) {
+				where.destinationChain = In([ChainEnum.Prime, ChainEnum.Vector, ChainEnum.Nexus]);
+			}
+
+			if (!model.originChain) {
+				where.originChain = In([ChainEnum.Prime, ChainEnum.Vector, ChainEnum.Nexus]);
+			}
 		}
 
 		const page = model.page || 0;
