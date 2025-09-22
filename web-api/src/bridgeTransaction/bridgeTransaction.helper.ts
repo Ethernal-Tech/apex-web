@@ -8,6 +8,7 @@ import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
 import { isCardanoChain } from 'src/utils/chainUtils';
+import { getUrlAndApiKey } from 'src/utils/generalUtils';
 
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
@@ -50,24 +51,8 @@ export const getBridgingRequestStates = async (
 		return {};
 	}
 
-	let oracleUrl: string | undefined;
-	let oracleApiKey: string | undefined;
-
-	switch (bridgingMode) {
-		case BridgingModeEnum.Reactor:
-			oracleUrl = process.env.ORACLE_REACTOR_URL;
-			oracleApiKey = process.env.ORACLE_REACTOR_API_KEY;
-			break;
-		case BridgingModeEnum.Skyline:
-			oracleUrl = process.env.ORACLE_SKYLINE_URL;
-			oracleApiKey = process.env.ORACLE_SKYLINE_API_KEY;
-			break;
-	}
-
-	oracleUrl = oracleUrl || 'http://localhost:40000';
-	oracleApiKey = oracleApiKey || 'test_api_key';
-	
-	let endpointUrl = oracleUrl + `/api/BridgingRequestState/GetMultiple?chainId=${chainId}`;
+	const { url, apiKey } = getUrlAndApiKey(bridgingMode, true);	
+	let endpointUrl = url + `/api/BridgingRequestState/GetMultiple?chainId=${chainId}`;
 
 	for (const model of models) {
 		endpointUrl += `&txHash=${model.txHash}`;
@@ -77,7 +62,7 @@ export const getBridgingRequestStates = async (
 	try {
 		const response = await axios.get(endpointUrl, {
 			headers: {
-				'X-API-KEY': oracleApiKey,
+				'X-API-KEY': apiKey,
 			},
 		});
 
@@ -261,32 +246,15 @@ export const getHasTxFailedRequestState = async (
 		return;
 	}
 
-	let oracleUrl: string | undefined;
-	let oracleApiKey: string | undefined;
-
-	switch (bridgingMode) {
-		case BridgingModeEnum.Reactor:
-			oracleUrl = process.env.ORACLE_REACTOR_URL;
-			oracleApiKey = process.env.ORACLE_REACTOR_API_KEY;
-			break;
-		case BridgingModeEnum.Skyline:
-			oracleUrl = process.env.ORACLE_SKYLINE_URL;
-			oracleApiKey = process.env.ORACLE_SKYLINE_API_KEY;
-			break;
-	}
-
-	oracleUrl = oracleUrl || 'http://localhost:40000';
-	oracleApiKey = oracleApiKey || 'test_api_key';
-	
-	const endpointUrl =
-		oracleUrl +
+	const { url, apiKey } = getUrlAndApiKey(bridgingMode, true);
+	const endpointUrl = url +
 		`/api/OracleState/GetHasTxFailed?chainId=${chainId}&txHash=${model.txHash}&ttl=${ttl.toString(10)}`;
 
 	Logger.debug(`axios.get: ${endpointUrl}`);
 	try {
 		const response = await axios.get(endpointUrl, {
 			headers: {
-				'X-API-KEY': oracleApiKey,
+				'X-API-KEY': apiKey,
 			},
 		});
 

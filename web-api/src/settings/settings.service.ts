@@ -32,14 +32,10 @@ export class SettingsService {
 			throw new Error('cardano api url or api key not defined for reactor');
 		}
 
-		const skylineSettings = await retryForever(
-			() => this.fetchOnce(skylineUrl, skylineApiKey),
-			RETRY_DELAY_MS,
-		);
-		const reactorSettings = await retryForever(
-			() => this.fetchOnce(reactorUrl, reactorApiKey),
-			RETRY_DELAY_MS,
-		);
+		const [skylineSettings, reactorSettings] = await Promise.all([
+			retryForever(() => this.fetchOnce(skylineUrl, skylineApiKey), RETRY_DELAY_MS),
+			retryForever(() => this.fetchOnce(reactorUrl, reactorApiKey), RETRY_DELAY_MS),
+		]);
 
 		const layerZeroChains = (process.env.LAYERZERO_CONFIG || '').split(',').map((x) => {
 			const subItems = x.split('::');
