@@ -1,6 +1,7 @@
 import BasePage from '../base/BasePage';
 import BridgeInput from './components/BridgeInput';
 import {
+	captureAndThrowError,
 	convertDfmToWei,
 	formatTxDetailUrl,
 	validateSubmitTxInputs,
@@ -81,7 +82,11 @@ function NewTransactionPage() {
 				amount,
 			);
 			if (validationErr) {
-				throw new Error(validationErr);
+				captureAndThrowError(
+					validationErr,
+					'NewTransactionPage.tsx',
+					'prepareCreateCardanoTx',
+				);
 			}
 
 			return new CreateTransactionDto({
@@ -112,7 +117,11 @@ function NewTransactionPage() {
 				false,
 			);
 			if (feeResponse instanceof ErrorResponse) {
-				throw new Error(feeResponse.err);
+				captureAndThrowError(
+					feeResponse.err,
+					'NewTransactionPage.tsx',
+					'getCardanoTxFee',
+				);
 			}
 
 			return feeResponse;
@@ -135,7 +144,11 @@ function NewTransactionPage() {
 				false,
 			);
 			if (createResponse instanceof ErrorResponse) {
-				throw new Error(createResponse.err);
+				captureAndThrowError(
+					createResponse.err,
+					'NewTransactionPage.tsx',
+					'createCardanoTx',
+				);
 			}
 
 			return { createTxDto, createResponse };
@@ -152,14 +165,18 @@ function NewTransactionPage() {
 			const network = fromEvmNetworkIdToNetwork(networkId);
 
 			if (!network) {
-				throw new Error(
+				captureAndThrowError(
 					`Invalid networkId: ${networkId}. Expected networkId: ${fromChainToNetworkId(chain)}. Please select network with networkId: ${fromChainToNetworkId(chain)} in your wallet.`,
+					'NewTransactionPage.tsx',
+					'prepareCreateEthTx',
 				);
 			}
 
 			if (!checkChainCompatibility(chain, network, networkId)) {
-				throw new Error(
+				captureAndThrowError(
 					`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`,
+					'NewTransactionPage.tsx',
+					'prepareCreateEthTx',
 				);
 			}
 
@@ -171,7 +188,11 @@ function NewTransactionPage() {
 				amount,
 			);
 			if (validationErr) {
-				throw new Error(validationErr);
+				captureAndThrowError(
+					validationErr,
+					'NewTransactionPage.tsx',
+					'prepareCreateEthTx',
+				);
 			}
 
 			return new CreateTransactionDto({
@@ -202,7 +223,11 @@ function NewTransactionPage() {
 				false,
 			);
 			if (feeResponse instanceof ErrorResponse) {
-				throw new Error(feeResponse.err);
+				captureAndThrowError(
+					feeResponse.err,
+					'NewTransactionPage.tsx',
+					'getEthTxFee',
+				);
 			}
 
 			return feeResponse;
@@ -225,7 +250,11 @@ function NewTransactionPage() {
 				false,
 			);
 			if (createResponse instanceof ErrorResponse) {
-				throw new Error(createResponse.err);
+				captureAndThrowError(
+					createResponse.err,
+					'NewTransactionPage.tsx',
+					'createEthTx',
+				);
 			}
 
 			return { createTxDto, createResponse };
@@ -256,7 +285,11 @@ function NewTransactionPage() {
 
 					response && goToDetails(response);
 				} else {
-					throw new Error(`Unsupported source chain: ${chain}`);
+					captureAndThrowError(
+						`Unsupported source chain: ${chain}`,
+						'NewTransactionPage.tsx',
+						'handleSubmitCallback',
+					);
 				}
 			} catch (err) {
 				console.log(err);

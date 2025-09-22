@@ -9,13 +9,18 @@ import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
 import walletHandler from '../features/WalletHandler';
 import evmWalletHandler from '../features/EvmWalletHandler';
 import { Transaction } from 'web3-types';
+import { captureAndThrowError } from '../utils/generalUtils';
 
 export const signAndSubmitCardanoTx = async (
 	values: CreateTransactionDto,
 	createResponse: CreateCardanoTransactionResponseDto,
 ) => {
 	if (!walletHandler.checkWallet()) {
-		throw new Error('Wallet not connected.');
+		captureAndThrowError(
+			`Wallet not connected.`,
+			'submitTx.ts',
+			'signAndSubmitCardanoTx',
+		);
 	}
 
 	const signedTxRaw = await walletHandler.signTx(createResponse.txRaw);
@@ -39,7 +44,11 @@ export const signAndSubmitCardanoTx = async (
 
 	const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
 	if (response instanceof ErrorResponse) {
-		throw new Error(response.err);
+		captureAndThrowError(
+			response.err,
+			'submitTx.ts',
+			'signAndSubmitCardanoTx',
+		);
 	}
 
 	return response;
@@ -83,7 +92,11 @@ export const signAndSubmitEthTx = async (
 	createResponse: CreateEthTransactionResponseDto,
 ) => {
 	if (!evmWalletHandler.checkWallet()) {
-		throw new Error('Wallet not connected.');
+		captureAndThrowError(
+			`Wallet not connected.`,
+			'submitTx.ts',
+			'signAndSubmitEthTx',
+		);
 	}
 
 	const { bridgingFee, isFallback, ...txParts } = createResponse;
@@ -115,7 +128,7 @@ export const signAndSubmitEthTx = async (
 
 	const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
 	if (response instanceof ErrorResponse) {
-		throw new Error(response.err);
+		captureAndThrowError(response.err, 'submitTx.ts', 'signAndSubmitEthTx');
 	}
 
 	return response;

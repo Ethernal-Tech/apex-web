@@ -1,7 +1,7 @@
 import { Dispatch } from '@reduxjs/toolkit';
 import { SettingsControllerClient } from '../swagger/apexBridgeApiService';
 import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
-import { retryForever } from '../utils/generalUtils';
+import { retryForever, captureAndThrowError } from '../utils/generalUtils';
 import { setSettingsAction } from '../redux/slices/settingsSlice';
 
 const RETRY_DELAY_MS = 5000;
@@ -18,8 +18,10 @@ export const fetchAndUpdateSettingsAction = async (dispatch: Dispatch) => {
 			false,
 		);
 		if (settingsResp instanceof ErrorResponse) {
-			throw new Error(
+			captureAndThrowError(
 				`Error while fetching settings: ${settingsResp.err}`,
+				'settings.ts',
+				'fetchAndUpdateSettingsAction',
 			);
 		}
 

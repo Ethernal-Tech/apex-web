@@ -1,5 +1,6 @@
 import { toast } from 'react-toastify';
 import { ApiException } from '../swagger/apexBridgeApiService';
+import * as Sentry from '@sentry/react';
 
 export class ErrorResponse {
 	err: string;
@@ -21,6 +22,13 @@ const toErrResponse = (error: any): ErrorResponse => {
 				}
 			} catch (e) {
 				console.log('Failed to parse apiException.response', e);
+
+				Sentry.captureException(e, {
+					tags: {
+						component: 'fetchUtils.ts',
+						action: 'toErrResponse',
+					},
+				});
 			}
 
 			return new ErrorResponse({ err: `${apiException.response}` });
@@ -29,6 +37,13 @@ const toErrResponse = (error: any): ErrorResponse => {
 		}
 	} catch (e) {
 		console.log('Error occured while creating err response', e);
+
+		Sentry.captureException(e, {
+			tags: {
+				component: 'fetchUtils.ts',
+				action: 'toErrResponse',
+			},
+		});
 	}
 
 	return new ErrorResponse({ err: `${error}` });
