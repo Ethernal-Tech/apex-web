@@ -114,6 +114,13 @@ export class BridgeTransactionService {
 	// every 10 seconds
 	@Cron('*/10 * * * * *', { name: 'updateStatusesJob' })
 	async updateStatuses(): Promise<void> {
+		if (!process.env.STATUS_UPDATE_MODES_SUPPORTED) {
+			Logger.warn("cronjob CRONJOB_MODES_SUPPORTED not set");
+			return;
+		}
+
+		const modesSupported = new Set<string>(process.env.STATUS_UPDATE_MODES_SUPPORTED.split(','));
+
 		const job = this.schedulerRegistry.getCronJob('updateStatusesJob');
 		job.stop();
 		try {
@@ -134,9 +141,11 @@ export class BridgeTransactionService {
 					for (const entity of entities) {
 						// handle layer zero
 						if (entity.isLayerZero) {
-							modelsLayerZero.push({
-								txHash: entity.sourceTxHash,
-							});
+							if (modesSupported.has(BridgingModeEnum.LayerZero)) {
+								modelsLayerZero.push({
+									txHash: entity.sourceTxHash,
+								});
+							}
 
 							continue;
 						}
@@ -148,26 +157,36 @@ export class BridgeTransactionService {
 						};
 
 						if (entity.isCentralized) {
-							modelsCentralized.push(model);
+							if (modesSupported.has(BridgingModeEnum.Centralized)) {
+								modelsCentralized.push(model);
+							}
 						} else {
 							const bridgingMode = getBridgingMode(
 								entity.originChain, entity.destinationChain, this.settingsService.SettingsResponse);
 							if (bridgingMode === BridgingModeEnum.Skyline) {
-								modelsSkyline.push(model);
+								if (modesSupported.has(BridgingModeEnum.Skyline)) {
+									modelsSkyline.push(model);
+								}
 							} else {
-								modelsReactor.push(model);
+								if (modesSupported.has(BridgingModeEnum.Reactor)) {
+									modelsReactor.push(model);
+								}
 							}
 
 							if (
 								entity.status === TransactionStatusEnum.Pending && !!entity.txRaw
 							) {
 								if (bridgingMode === BridgingModeEnum.Skyline) {
-									modelsPendingSkyline.push(model);
+									if (modesSupported.has(BridgingModeEnum.Skyline)) {
+										modelsPendingSkyline.push(model);
+									}
 								} else {
-									modelsPendingReactor.push(model);
+									if (modesSupported.has(BridgingModeEnum.Reactor)) {
+										modelsPendingReactor.push(model);
+									}
 								}
 							}
-						}											
+						}
 					}
 
 					const [statesSkyline, statesReactor, statesCentralized, statesTxFailedSkyline, statesTxFailedReactor, stateslayerZero] =

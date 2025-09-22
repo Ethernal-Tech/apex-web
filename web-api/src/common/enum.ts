@@ -35,5 +35,6 @@ export enum GroupByTimePeriod {
 export enum BridgingModeEnum {
 	Reactor = 'reactor',
 	Skyline = 'skyline',
-	LayerZero = 'layerzero'
+	LayerZero = 'layerzero',
+	Centralized='centralized'
 }
