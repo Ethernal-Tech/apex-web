@@ -8,6 +8,7 @@ import { ReactComponent as BaseIcon } from '../assets/chain-icons/base.svg'
 import { ReactComponent as BNBIcon } from '../assets/chain-icons/bsc.svg'
 import { TokenEnum } from "../features/enums";
 import { ISettingsState, SettingsPerMode } from "./settingsRedux";
+import appSettings from "./appSettings";
 
 export enum BridgingModeEnum {
     Reactor = 'reactor',
@@ -107,7 +108,12 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 }
 
 const getChainDirections = function (settings: ISettingsState): Partial<Record<ChainEnum, ChainEnum[]>> {
-    return settings.allowedDirections;
+    // for skyline retrieve merged directions
+    if (appSettings.isSkyline) {
+        return settings.allowedDirections;
+    }
+    // for reactor just allowed directions for reactor
+    return settings.settingsPerMode[BridgingModeEnum.Reactor].allowedDirections;
 }
 
 const prepareChainsList = function (chains: ChainEnum[] | undefined, settings: ISettingsState): ChainEnum[] {
