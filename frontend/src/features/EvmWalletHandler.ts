@@ -147,7 +147,6 @@ class EvmWalletHandler {
         this._checkWalletAndThrow();
         const accounts = await this.getWeb3()!.eth.getAccounts();
         const balance = await this.getWeb3()!.eth.getBalance(accounts[0]);
-        this.getWeb3()?.removeAllListeners()
         return this.getWeb3()!.utils.fromWei(balance, 'wei');
     };
 

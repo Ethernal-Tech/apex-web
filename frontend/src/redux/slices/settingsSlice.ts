@@ -3,10 +3,11 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 import appSettings from '../../settings/appSettings'
 import { SettingsFullResponseDto } from '../../swagger/apexBridgeApiService'
 import { ISettingsState, LayerZeroChains, SettingsPerMode } from '../../settings/settingsRedux'
+import { BridgingModeEnum } from '../../settings/chain'
 
 const initialState: ISettingsState = {
 	settingsPerMode: {
-		'skyline': {
+		[BridgingModeEnum.Skyline]: {
 			minUtxoChainValue: appSettings.minUtxoChainValue,
 			minChainFeeForBridging: appSettings.minChainFeeForBridging,
 			minOperationFee: appSettings.minOperationFee,
@@ -16,7 +17,7 @@ const initialState: ISettingsState = {
 			cardanoChainsNativeTokens: {},
 			allowedDirections: {},
 		},
-		'reactor': {
+		[BridgingModeEnum.Reactor]: {
 			minUtxoChainValue: appSettings.minUtxoChainValue,
 			minChainFeeForBridging: appSettings.minChainFeeForBridging,
 			minOperationFee: appSettings.minOperationFee,

@@ -41,7 +41,7 @@ export const formatAddress = (
   return `${firstPart}...${lastPart}`;
 }
 
-export const fromWei = (number: Numbers, unit: EtherUnits | number): string => {
+const fromWei = (number: Numbers, unit: EtherUnits | number): string => {
     const val = Web3.utils.fromWei(number, unit);
     return val.endsWith('.') ? val.slice(0, -1) : val;
 }
@@ -52,7 +52,7 @@ const toWei = (number: Numbers, unit: EtherUnits | number): string => {
 }
 
 // converts dfm to apex (prime and vector)
-const convertUtxoDfmToApex = (dfm:string|number):string =>{
+export const convertUtxoDfmToApex = (dfm:string|number):string =>{
   return fromWei(dfm,'lovelace');
 }
 
@@ -62,7 +62,7 @@ const convertApexToUtxoDfm = (apex: string|number):string => {
 }
 
 // convert wei to dfm (nexus)
-const convertEvmDfmToApex = (dfm:string|number):string =>{
+export const convertEvmDfmToApex = (dfm:string|number):string =>{
   return fromWei(dfm,'ether');
 }
 

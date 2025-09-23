@@ -4,7 +4,7 @@ import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { getTokenInfoBySrcDst } from "../settings/token";
 import { NewAddress, RewardAddress } from "../features/Address/addreses";
 import { checkCardanoAddressCompatibility } from "./chainUtils";
-import { convertDfmToWei, fromWei, shouldUseMainnet } from "./generalUtils";
+import { convertDfmToWei, convertEvmDfmToApex, convertUtxoDfmToApex, shouldUseMainnet } from "./generalUtils";
 import { ISettingsState, SettingsPerMode } from "../settings/settingsRedux";
 
 export const validateSubmitTxInputs = (
@@ -112,14 +112,4 @@ function skylineValidaton(
     if (!checkCardanoAddressCompatibility(dstChain, addr, shouldUseMainnet(srcChain, dstChain))) {
         return `Destination address not compatible with destination chain: ${dstChain}`;
     }
-}
-
-// converts dfm to apex (prime and vector)
-const convertUtxoDfmToApex = (dfm: string | number): string => {
-    return fromWei(dfm, 'lovelace');
-}
-
-// convert wei to dfm (nexus)
-const convertEvmDfmToApex = (dfm: string | number): string => {
-    return fromWei(dfm, 'ether');
 }

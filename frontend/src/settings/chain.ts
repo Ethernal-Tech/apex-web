@@ -110,7 +110,7 @@ const getChainDirections = function (settings: ISettingsState): Partial<Record<C
     return settings.allowedDirections;
 }
 
-const prepareChainsLits = function (chains: ChainEnum[] | undefined, settings: ISettingsState): ChainEnum[] {
+const prepareChainsList = function (chains: ChainEnum[] | undefined, settings: ISettingsState): ChainEnum[] {
     return (chains || []).filter(x => settings.enabledChains.includes(x))
         .sort((a, b) => getChainInfo(a).order - getChainInfo(b).order);
 }
@@ -124,11 +124,11 @@ export const getDstChains = function (chain: ChainEnum | undefined, settings: IS
         return [];
     }
 
-    return prepareChainsLits(getChainDirections(settings)[chain], settings);
+    return prepareChainsList(getChainDirections(settings)[chain], settings);
 }
 
 export const getSrcChains = function (settings: ISettingsState): ChainEnum[] {
-    return prepareChainsLits(Object.keys(getChainDirections(settings)) as ChainEnum[], settings);
+    return prepareChainsList(Object.keys(getChainDirections(settings)) as ChainEnum[], settings);
 }
 
 export const isEvmChain = function (chain: ChainEnum): boolean {

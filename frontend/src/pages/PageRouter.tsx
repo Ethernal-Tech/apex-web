@@ -42,7 +42,7 @@ const PageRouter: React.FC = () => {
 			onLoad(wallet, chain, destinationChain, settings, dispatch);
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [settings, isLoggedInMemo])
+	}, [settings])
 
 	useEffect(() => {
 		fetchAndUpdateSettingsAction(dispatch)
