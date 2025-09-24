@@ -96,7 +96,9 @@ export class LockedTokensService {
 				.getRawOne();
 
 			const tokens =
-				this.settingsService.SettingsResponse.settingsPerMode[BridgingModeEnum.Skyline].cardanoChainsNativeTokens[chain];
+				this.settingsService.SettingsResponse.settingsPerMode[
+					BridgingModeEnum.Skyline
+				].cardanoChainsNativeTokens[chain];
 
 			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
 
@@ -189,9 +191,9 @@ export class LockedTokensService {
 			const nativeSum: string = row.nativeSum;
 
 			const tokens =
-				this.settingsService.SettingsResponse.settingsPerMode[BridgingModeEnum.Skyline].cardanoChainsNativeTokens?.[
-					chain
-				];
+				this.settingsService.SettingsResponse.settingsPerMode[
+					BridgingModeEnum.Skyline
+				].cardanoChainsNativeTokens?.[chain];
 			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
 
 			if (!groupedByDate[dateKey]) {

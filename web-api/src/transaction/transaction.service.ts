@@ -32,7 +32,11 @@ import {
 	LayerZeroTransferDto,
 	LayerZeroTransferResponseDto,
 } from './layerzerotransaction.dto';
-import { getBridgingSettings, isCardanoChain, isEvmChain } from 'src/utils/chainUtils';
+import {
+	getBridgingSettings,
+	isCardanoChain,
+	isEvmChain,
+} from 'src/utils/chainUtils';
 
 @Injectable()
 export class TransactionService {
@@ -40,26 +44,38 @@ export class TransactionService {
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly settingsService: SettingsService,
-	) { }
+	) {}
 
 	private async validateCreateCardanoTx(dto: CreateTransactionDto) {
 		if (
-			!this.settingsService.SettingsResponse.enabledChains.includes(dto.originChain) ||
-			!this.settingsService.SettingsResponse.enabledChains.includes(dto.destinationChain)
+			!this.settingsService.SettingsResponse.enabledChains.includes(
+				dto.originChain,
+			) ||
+			!this.settingsService.SettingsResponse.enabledChains.includes(
+				dto.destinationChain,
+			)
 		) {
 			throw new BadRequestException('Chain not supported');
 		}
 
 		if (!isCardanoChain(dto.originChain)) {
-			throw new BadRequestException(`Chain ${dto.originChain} is not Cardano chain`);
+			throw new BadRequestException(
+				`Chain ${dto.originChain} is not Cardano chain`,
+			);
 		}
 
-		const settings = getBridgingSettings(dto.originChain, dto.destinationChain, this.settingsService.SettingsResponse)
+		const settings = getBridgingSettings(
+			dto.originChain,
+			dto.destinationChain,
+			this.settingsService.SettingsResponse,
+		);
 		if (!settings) {
-			throw new BadRequestException(`Bridging from ${dto.originChain} to ${dto.destinationChain} not supported`);
+			throw new BadRequestException(
+				`Bridging from ${dto.originChain} to ${dto.destinationChain} not supported`,
+			);
 		}
 
-		const srcMinFee = settings.minChainFeeForBridging[dto.originChain];				
+		const srcMinFee = settings.minChainFeeForBridging[dto.originChain];
 		if (!srcMinFee) {
 			throw new InternalServerErrorException(
 				`No minFee for source chain: ${dto.originChain}`,
@@ -119,7 +135,11 @@ export class TransactionService {
 		this.validateCreateCardanoTx(dto);
 
 		const recentInputs = await this.getRecentInputs(dto);
-		const tx = await createCardanoBridgingTx(dto, recentInputs, this.settingsService.SettingsResponse);
+		const tx = await createCardanoBridgingTx(
+			dto,
+			recentInputs,
+			this.settingsService.SettingsResponse,
+		);
 
 		if (!tx) {
 			throw new BadRequestException('error while creating bridging tx');
@@ -134,7 +154,11 @@ export class TransactionService {
 		this.validateCreateCardanoTx(dto);
 
 		const recentInputs = await this.getRecentInputs(dto);
-		const feeResp = await getCardanoBridgingTxFee(dto, recentInputs, this.settingsService.SettingsResponse);
+		const feeResp = await getCardanoBridgingTxFee(
+			dto,
+			recentInputs,
+			this.settingsService.SettingsResponse,
+		);
 
 		if (!feeResp) {
 			throw new BadRequestException('error while getting bridging tx fee');
@@ -147,19 +171,31 @@ export class TransactionService {
 		dto: CreateTransactionDto,
 	): Promise<CreateEthTransactionResponseDto> {
 		if (
-			!this.settingsService.SettingsResponse.enabledChains.includes(dto.originChain) ||
-			!this.settingsService.SettingsResponse.enabledChains.includes(dto.destinationChain)
+			!this.settingsService.SettingsResponse.enabledChains.includes(
+				dto.originChain,
+			) ||
+			!this.settingsService.SettingsResponse.enabledChains.includes(
+				dto.destinationChain,
+			)
 		) {
 			throw new BadRequestException('Chain not supported');
 		}
 
 		if (!isEvmChain(dto.originChain)) {
-			throw new BadRequestException(`Chain ${dto.originChain} is not EVM chain`);
+			throw new BadRequestException(
+				`Chain ${dto.originChain} is not EVM chain`,
+			);
 		}
 
-		const settings = getBridgingSettings(dto.originChain, dto.destinationChain, this.settingsService.SettingsResponse)
+		const settings = getBridgingSettings(
+			dto.originChain,
+			dto.destinationChain,
+			this.settingsService.SettingsResponse,
+		);
 		if (!settings) {
-			throw new BadRequestException(`Bridging from ${dto.originChain} to ${dto.destinationChain} not supported`);
+			throw new BadRequestException(
+				`Bridging from ${dto.originChain} to ${dto.destinationChain} not supported`,
+			);
 		}
 
 		const tx = await createEthBridgingTx(dto, settings);

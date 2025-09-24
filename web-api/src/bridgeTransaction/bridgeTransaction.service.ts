@@ -28,7 +28,11 @@ import {
 	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
-import { BridgingModeEnum, ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import {
+	BridgingModeEnum,
+	ChainEnum,
+	TransactionStatusEnum,
+} from 'src/common/enum';
 import { getBridgingMode } from 'src/utils/chainUtils';
 import { SettingsService } from 'src/settings/settings.service';
 
@@ -86,11 +90,19 @@ export class BridgeTransactionService {
 
 		if (model.onlyReactor) {
 			if (!model.destinationChain) {
-				where.destinationChain = In([ChainEnum.Prime, ChainEnum.Vector, ChainEnum.Nexus]);
+				where.destinationChain = In([
+					ChainEnum.Prime,
+					ChainEnum.Vector,
+					ChainEnum.Nexus,
+				]);
 			}
 
 			if (!model.originChain) {
-				where.originChain = In([ChainEnum.Prime, ChainEnum.Vector, ChainEnum.Nexus]);
+				where.originChain = In([
+					ChainEnum.Prime,
+					ChainEnum.Vector,
+					ChainEnum.Nexus,
+				]);
 			}
 		}
 
@@ -125,11 +137,13 @@ export class BridgeTransactionService {
 	@Cron('*/10 * * * * *', { name: 'updateStatusesJob' })
 	async updateStatuses(): Promise<void> {
 		if (!process.env.STATUS_UPDATE_MODES_SUPPORTED) {
-			Logger.warn("cronjob CRONJOB_MODES_SUPPORTED not set");
+			Logger.warn('cronjob CRONJOB_MODES_SUPPORTED not set');
 			return;
 		}
 
-		const modesSupported = new Set<string>(process.env.STATUS_UPDATE_MODES_SUPPORTED.split(','));
+		const modesSupported = new Set<string>(
+			process.env.STATUS_UPDATE_MODES_SUPPORTED.split(','),
+		);
 
 		const job = this.schedulerRegistry.getCronJob('updateStatusesJob');
 		job.stop();
@@ -172,7 +186,10 @@ export class BridgeTransactionService {
 							}
 						} else {
 							const bridgingMode = getBridgingMode(
-								entity.originChain, entity.destinationChain, this.settingsService.SettingsResponse);
+								entity.originChain,
+								entity.destinationChain,
+								this.settingsService.SettingsResponse,
+							);
 							if (bridgingMode === BridgingModeEnum.Skyline) {
 								if (modesSupported.has(BridgingModeEnum.Skyline)) {
 									modelsSkyline.push(model);
@@ -184,7 +201,8 @@ export class BridgeTransactionService {
 							}
 
 							if (
-								entity.status === TransactionStatusEnum.Pending && !!entity.txRaw
+								entity.status === TransactionStatusEnum.Pending &&
+								!!entity.txRaw
 							) {
 								if (bridgingMode === BridgingModeEnum.Skyline) {
 									if (modesSupported.has(BridgingModeEnum.Skyline)) {
@@ -199,15 +217,37 @@ export class BridgeTransactionService {
 						}
 					}
 
-					const [statesSkyline, statesReactor, statesCentralized, statesTxFailedSkyline, statesTxFailedReactor, stateslayerZero] =
-						await Promise.all([
-							getBridgingRequestStates(chain, BridgingModeEnum.Skyline, modelsSkyline),
-							getBridgingRequestStates(chain, BridgingModeEnum.Reactor, modelsReactor),
-							getCentralizedBridgingRequestStates(chain, modelsCentralized),
-							getHasTxFailedRequestStates(chain, BridgingModeEnum.Skyline, modelsPendingSkyline),
-							getHasTxFailedRequestStates(chain, BridgingModeEnum.Reactor, modelsPendingReactor),
-							getLayerZeroRequestStates(modelsLayerZero),
-						]);
+					const [
+						statesSkyline,
+						statesReactor,
+						statesCentralized,
+						statesTxFailedSkyline,
+						statesTxFailedReactor,
+						stateslayerZero,
+					] = await Promise.all([
+						getBridgingRequestStates(
+							chain,
+							BridgingModeEnum.Skyline,
+							modelsSkyline,
+						),
+						getBridgingRequestStates(
+							chain,
+							BridgingModeEnum.Reactor,
+							modelsReactor,
+						),
+						getCentralizedBridgingRequestStates(chain, modelsCentralized),
+						getHasTxFailedRequestStates(
+							chain,
+							BridgingModeEnum.Skyline,
+							modelsPendingSkyline,
+						),
+						getHasTxFailedRequestStates(
+							chain,
+							BridgingModeEnum.Reactor,
+							modelsPendingReactor,
+						),
+						getLayerZeroRequestStates(modelsLayerZero),
+					]);
 
 					Object.keys(statesSkyline).length > 0 &&
 						Logger.debug(
@@ -236,7 +276,12 @@ export class BridgeTransactionService {
 
 					const updatedBridgeTransactions = updateBridgeTransactionStates(
 						entities,
-						{ ...statesSkyline, ...statesReactor, ...statesCentralized, ...stateslayerZero },
+						{
+							...statesSkyline,
+							...statesReactor,
+							...statesCentralized,
+							...stateslayerZero,
+						},
 						{ ...statesTxFailedReactor, ...statesTxFailedSkyline },
 					);
 

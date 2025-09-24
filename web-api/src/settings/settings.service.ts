@@ -10,12 +10,12 @@ import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { BridgingModeEnum, ChainEnum } from 'src/common/enum';
 
 const RETRY_DELAY_MS = 5000;
-const settingsApiPath = `/api/CardanoTx/GetSettings`
+const settingsApiPath = `/api/CardanoTx/GetSettings`;
 @Injectable()
 export class SettingsService {
 	SettingsResponse: SettingsFullResponseDto;
 
-	constructor() { }
+	constructor() {}
 
 	async init() {
 		const skylineUrl = process.env.CARDANO_API_SKYLINE_URL;
@@ -33,27 +33,38 @@ export class SettingsService {
 		}
 
 		const [skylineSettings, reactorSettings] = await Promise.all([
-			retryForever(() => this.fetchOnce(skylineUrl, skylineApiKey), RETRY_DELAY_MS),
-			retryForever(() => this.fetchOnce(reactorUrl, reactorApiKey), RETRY_DELAY_MS),
+			retryForever(
+				() => this.fetchOnce(skylineUrl, skylineApiKey),
+				RETRY_DELAY_MS,
+			),
+			retryForever(
+				() => this.fetchOnce(reactorUrl, reactorApiKey),
+				RETRY_DELAY_MS,
+			),
 		]);
 
-		const layerZeroChains = (process.env.LAYERZERO_CONFIG || '').split(',').map((x) => {
-			const subItems = x.split('::');
-			if (subItems.length < 3) {
-				return;
-			}
+		const layerZeroChains = (process.env.LAYERZERO_CONFIG || '')
+			.split(',')
+			.map((x) => {
+				const subItems = x.split('::');
+				if (subItems.length < 3) {
+					return undefined;
+				}
 
-			const item = new LayerZeroChainSettingsDto();
-			item.chain = subItems[0].trim() as ChainEnum;
-			item.oftAddress = subItems[1].trim();
-			item.chainID = parseInt(subItems[2].trim(), 10);
+				const item = new LayerZeroChainSettingsDto();
+				item.chain = subItems[0].trim() as ChainEnum;
+				item.oftAddress = subItems[1].trim();
+				item.chainID = parseInt(subItems[2].trim(), 10);
 
-			return item;
-		}).filter((x) => !!x);
+				return item;
+			})
+			.filter((x) => !!x);
 
 		const allowedDirections: { [key: string]: string[] } = {};
 		// reactor
-		for (const [srcChain, dstChains] of Object.entries(reactorSettings.bridgingSettings.allowedDirections)) {
+		for (const [srcChain, dstChains] of Object.entries(
+			reactorSettings.bridgingSettings.allowedDirections,
+		)) {
 			if (srcChain in allowedDirections) {
 				allowedDirections[srcChain].push(...dstChains);
 			} else {
@@ -61,7 +72,9 @@ export class SettingsService {
 			}
 		}
 		// skyline
-		for (const [srcChain, dstChains] of Object.entries(skylineSettings.bridgingSettings.allowedDirections)) {
+		for (const [srcChain, dstChains] of Object.entries(
+			skylineSettings.bridgingSettings.allowedDirections,
+		)) {
 			if (srcChain in allowedDirections) {
 				allowedDirections[srcChain].push(...dstChains);
 			} else {
@@ -79,11 +92,11 @@ export class SettingsService {
 
 		const enabledChains = new Set<string>();
 		// reactor
-		reactorSettings.enabledChains.forEach(chain => enabledChains.add(chain));
+		reactorSettings.enabledChains.forEach((chain) => enabledChains.add(chain));
 		// skyline
-		skylineSettings.enabledChains.forEach(chain => enabledChains.add(chain));
+		skylineSettings.enabledChains.forEach((chain) => enabledChains.add(chain));
 		// layer zero
-		layerZeroChains.forEach(x => enabledChains.add(x.chain));
+		layerZeroChains.forEach((x) => enabledChains.add(x.chain));
 
 		this.SettingsResponse = new SettingsFullResponseDto();
 		this.SettingsResponse.layerZeroChains = layerZeroChains;
@@ -97,7 +110,10 @@ export class SettingsService {
 		Logger.debug(`settings dto ${JSON.stringify(this.SettingsResponse)}`);
 	}
 
-	private async fetchOnce(url: string, apiKey: string): Promise<SettingsResponseDto> {
+	private async fetchOnce(
+		url: string,
+		apiKey: string,
+	): Promise<SettingsResponseDto> {
 		const endpointUrl = url + settingsApiPath;
 
 		Logger.debug(`axios.get: ${endpointUrl}`);

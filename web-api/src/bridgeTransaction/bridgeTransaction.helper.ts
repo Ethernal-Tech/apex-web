@@ -1,6 +1,10 @@
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import axios, { AxiosError } from 'axios';
-import { BridgingModeEnum, ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import {
+	BridgingModeEnum,
+	ChainEnum,
+	TransactionStatusEnum,
+} from 'src/common/enum';
 import { BridgeTransactionDto } from './bridgeTransaction.dto';
 import { capitalizeWord } from 'src/utils/stringUtils';
 import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization-lib-nodejs';
@@ -45,14 +49,17 @@ export type GetLayerZeroBridgingRequestStatesModel = {
 };
 
 export const getBridgingRequestStates = async (
-	chainId: string, bridgingMode: BridgingModeEnum, models: GetBridgingRequestStatesModel[],
+	chainId: string,
+	bridgingMode: BridgingModeEnum,
+	models: GetBridgingRequestStatesModel[],
 ) => {
 	if (models.length == 0) {
 		return {};
 	}
 
-	const { url, apiKey } = getUrlAndApiKey(bridgingMode, true);	
-	let endpointUrl = url + `/api/BridgingRequestState/GetMultiple?chainId=${chainId}`;
+	const { url, apiKey } = getUrlAndApiKey(bridgingMode, true);
+	let endpointUrl =
+		url + `/api/BridgingRequestState/GetMultiple?chainId=${chainId}`;
 
 	for (const model of models) {
 		endpointUrl += `&txHash=${model.txHash}`;
@@ -102,10 +109,14 @@ export const getLayerZeroRequestStates = async (
 };
 
 export const getHasTxFailedRequestStates = async (
-	chainId: string, bridgingMode: BridgingModeEnum, models: GetBridgingRequestStatesModel[],
+	chainId: string,
+	bridgingMode: BridgingModeEnum,
+	models: GetBridgingRequestStatesModel[],
 ) => {
 	const states = await Promise.all(
-		models.map((model) => getHasTxFailedRequestState(chainId, bridgingMode, model)),
+		models.map((model) =>
+			getHasTxFailedRequestState(chainId, bridgingMode, model),
+		),
 	);
 
 	return states.reduce((acc: { [key: string]: BridgingRequestState }, cv) => {
@@ -229,7 +240,9 @@ export const getLayerZeroRequestState = async (
 };
 
 export const getHasTxFailedRequestState = async (
-	chainId: string, bridgingMode: BridgingModeEnum, model: GetBridgingRequestStatesModel,
+	chainId: string,
+	bridgingMode: BridgingModeEnum,
+	model: GetBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
 	if (!model.txRaw || !Object.values(ChainEnum).some((x) => x == chainId)) {
 		return;
@@ -247,7 +260,8 @@ export const getHasTxFailedRequestState = async (
 	}
 
 	const { url, apiKey } = getUrlAndApiKey(bridgingMode, true);
-	const endpointUrl = url +
+	const endpointUrl =
+		url +
 		`/api/OracleState/GetHasTxFailed?chainId=${chainId}&txHash=${model.txHash}&ttl=${ttl.toString(10)}`;
 
 	Logger.debug(`axios.get: ${endpointUrl}`);
