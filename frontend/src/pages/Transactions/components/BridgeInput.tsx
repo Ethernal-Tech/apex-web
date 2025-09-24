@@ -15,7 +15,7 @@ import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { white } from '../../../containers/theme';
 import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
-import { getChainInfo, isCardanoChain, isEvmChain } from '../../../settings/chain';
+import { BridgingModeEnum, getBridgingMode, getChainInfo, isCardanoChain, isEvmChain } from '../../../settings/chain';
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 
 type BridgeInputType = {
@@ -95,9 +95,12 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   const walletUTxOs = useSelector((state: RootState) => state.accountInfo.utxos);
   const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
   const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
-  const minValueToBridge = useSelector((state: RootState) => state.settings.minValueToBridge)
-  const maxAmountAllowedToBridge = useSelector((state: RootState) => state.settings.maxAmountAllowedToBridge)
-  const maxTokenAmountAllowedToBridge = useSelector((state: RootState) => state.settings.maxTokenAmountAllowedToBridge)
+  const settings = useSelector((state: RootState) => state.settings);
+
+  const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
+  const minValueToBridge = bridgingModeInfo?.settings?.minValueToBridge || '0';
+  const maxAmountAllowedToBridge = bridgingModeInfo?.settings?.maxAmountAllowedToBridge || '0';
+  const maxTokenAmountAllowedToBridge = bridgingModeInfo?.settings?.maxTokenAmountAllowedToBridge || '0';
   const supportedSourceTokenOptions = useSupportedSourceTokenOptions(chain, destinationChain);
 
   const fetchWalletFee = useCallback(async () => {
@@ -176,11 +179,14 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   const memoizedTokenIcon = useMemo(() => getTokenInfo(sourceToken).icon, [sourceToken]);
 
   // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
-  const minDfmValue = isEvmChain(chain)
-    ? convertDfmToWei(minValueToBridge) 
-    : appSettings.isSkyline 
-      ? appSettings.minUtxoChainValue[chain]
-      : minValueToBridge;
+  let minDfmValue: string;
+  if (isEvmChain(chain)) {
+    minDfmValue = convertDfmToWei(minValueToBridge);
+  } else if (bridgingModeInfo.bridgingMode === BridgingModeEnum.Skyline) {
+    minDfmValue = appSettings.minUtxoChainValue[chain];
+  } else {
+    minDfmValue = minValueToBridge;
+  }
   
   const currencyMaxAmounts = calculateMaxAmountCurrency(
     totalDfmBalance, maxAmountAllowedToBridge, chain, changeMinUtxo, minDfmValue, bridgeTxFee, operationFee);
@@ -245,6 +251,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
                 bridgeTxFee={bridgeTxFee || '0'}
                 operationFee={operationFee || '0'}
                 chain={chain}
+                bridgingMode={bridgingModeInfo.bridgingMode}
                 sx={{
                     gridColumn:'span 1',
                     border: '1px solid #077368',

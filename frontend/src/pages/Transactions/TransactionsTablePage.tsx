@@ -39,6 +39,11 @@ const TransactionsTablePage = () => {
       }
 
       const filtersCorrected = new BridgeTransactionFilterDto({ ...filters });
+      
+      if (!appSettings.isSkyline) {
+        filtersCorrected.onlyReactor = true;
+      }
+
       if (filtersCorrected.amountFrom) {
         filtersCorrected.amountFrom = convertApexToDfm(filtersCorrected.amountFrom, chain)
       }

@@ -99,9 +99,15 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
     [ChainEnum.Prime]: {
       isCurrencyBridgingAllowed: true,
     },
+    [ChainEnum.Nexus]: {
+      isCurrencyBridgingAllowed: true,
+    }
   },
   [ChainEnum.Nexus]: {
     [ChainEnum.Prime]: {
+      isCurrencyBridgingAllowed: true,
+    },
+    [ChainEnum.Vector]: {
       isCurrencyBridgingAllowed: true,
     },
     [ChainEnum.Base]: {

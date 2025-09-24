@@ -1,6 +1,10 @@
 import { BridgeTransaction } from './bridgeTransaction.entity';
 import axios, { AxiosError } from 'axios';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import {
+	BridgingModeEnum,
+	ChainEnum,
+	TransactionStatusEnum,
+} from 'src/common/enum';
 import { BridgeTransactionDto } from './bridgeTransaction.dto';
 import { capitalizeWord } from 'src/utils/stringUtils';
 import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization-lib-nodejs';
@@ -8,6 +12,7 @@ import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
 import { isCardanoChain } from 'src/utils/chainUtils';
+import { getUrlAndApiKey } from 'src/utils/generalUtils';
 
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
@@ -45,12 +50,16 @@ export type GetLayerZeroBridgingRequestStatesModel = {
 
 export const getBridgingRequestStates = async (
 	chainId: string,
+	bridgingMode: BridgingModeEnum,
 	models: GetBridgingRequestStatesModel[],
 ) => {
-	const oracleUrl = process.env.ORACLE_URL || 'http://localhost:40000';
-	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
+	if (models.length == 0) {
+		return {};
+	}
+
+	const { url, apiKey } = getUrlAndApiKey(bridgingMode, true);
 	let endpointUrl =
-		oracleUrl + `/api/BridgingRequestState/GetMultiple?chainId=${chainId}`;
+		url + `/api/BridgingRequestState/GetMultiple?chainId=${chainId}`;
 
 	for (const model of models) {
 		endpointUrl += `&txHash=${model.txHash}`;
@@ -60,7 +69,7 @@ export const getBridgingRequestStates = async (
 	try {
 		const response = await axios.get(endpointUrl, {
 			headers: {
-				'X-API-KEY': oracleApiKey,
+				'X-API-KEY': apiKey,
 			},
 		});
 
@@ -101,10 +110,13 @@ export const getLayerZeroRequestStates = async (
 
 export const getHasTxFailedRequestStates = async (
 	chainId: string,
+	bridgingMode: BridgingModeEnum,
 	models: GetBridgingRequestStatesModel[],
 ) => {
 	const states = await Promise.all(
-		models.map((model) => getHasTxFailedRequestState(chainId, model)),
+		models.map((model) =>
+			getHasTxFailedRequestState(chainId, bridgingMode, model),
+		),
 	);
 
 	return states.reduce((acc: { [key: string]: BridgingRequestState }, cv) => {
@@ -229,6 +241,7 @@ export const getLayerZeroRequestState = async (
 
 export const getHasTxFailedRequestState = async (
 	chainId: string,
+	bridgingMode: BridgingModeEnum,
 	model: GetBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
 	if (!model.txRaw || !Object.values(ChainEnum).some((x) => x == chainId)) {
@@ -246,17 +259,16 @@ export const getHasTxFailedRequestState = async (
 		return;
 	}
 
-	const oracleUrl = process.env.ORACLE_URL || 'http://localhost:40000';
-	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
+	const { url, apiKey } = getUrlAndApiKey(bridgingMode, true);
 	const endpointUrl =
-		oracleUrl +
+		url +
 		`/api/OracleState/GetHasTxFailed?chainId=${chainId}&txHash=${model.txHash}&ttl=${ttl.toString(10)}`;
 
 	Logger.debug(`axios.get: ${endpointUrl}`);
 	try {
 		const response = await axios.get(endpointUrl, {
 			headers: {
-				'X-API-KEY': oracleApiKey,
+				'X-API-KEY': apiKey,
 			},
 		});
 

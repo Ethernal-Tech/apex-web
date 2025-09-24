@@ -6,7 +6,6 @@ import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../../..
 import { FunctionComponent, SVGProps, useEffect, useMemo, useState } from "react"
 import { capitalizeWord } from "../../../utils/generalUtils"
 import { openExplorer } from "../../../utils/chainUtils"
-// import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
 
 import {ReactComponent as DoneIcon} from "../../../assets/bridge-status-icons/step-done1.svg"
 
@@ -40,10 +39,6 @@ import {ReactComponent as Step1} from "../../../assets/bridge-status-assets/step
 import {ReactComponent as Step2} from "../../../assets/bridge-status-assets/steps/step-2.svg"
 import {ReactComponent as Step3} from "../../../assets/bridge-status-assets/steps/step-3.svg"
 import appSettings from "../../../settings/appSettings"
-/* 
-const NexusInProgressIcon = VectorInProgressIcon;
-const NexusSuccessIcon = VectorSuccessIcon;
-const NexusErrorIcon = VectorErrorIcon; */
 
 const TRANSFER_PROGRESS_TEXT = {
     ERROR: 'Transfer Error',
@@ -161,7 +156,7 @@ const getStepText = (stepNumber: number, originChain: ChainEnum, destinationChai
     }
 
     if (stepNumber === 3) {
-        return `The assets goes from the Bridge Wallet to the address on the ${capitalizeWord(destinationChain)} Chain.`;
+        return `The assets go from the Bridge Wallet to the address on the ${capitalizeWord(destinationChain)} Chain.`;
     }
 
     return 'There is a blockchain of the bridge that facilitates the transaction.';
