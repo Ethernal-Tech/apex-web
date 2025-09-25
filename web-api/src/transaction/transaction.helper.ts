@@ -20,9 +20,9 @@ import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
 import { BridgingSettingsDto } from 'src/settings/settings.dto';
 import { convertDfmToWei } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
-import { AppConfigService } from 'src/config/config.service';
+import { getAppSettings } from 'src/appSettings/appSettings';
 
-const cfg = new AppConfigService();
+const appSettings = getAppSettings();
 
 const prepareCreateCardanoBridgingTx = (
 	dto: CreateTransactionDto,
@@ -33,7 +33,8 @@ const prepareCreateCardanoBridgingTx = (
 		dto.originChain === ChainEnum.Nexus ||
 		dto.destinationChain === ChainEnum.Nexus;
 
-	const isCentralized = cfg.features.useCentralizedBridge && nexusInvolved;
+	const isCentralized =
+		appSettings.features.useCentralizedBridge && nexusInvolved;
 
 	const body = {
 		senderAddr: dto.senderAddress,
@@ -58,7 +59,7 @@ export const createCardanoBridgingTx = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
 ): Promise<CreateCardanoTransactionResponseDto> => {
-	const apiUrl = cfg.cardanoApiUrl || 'http://localhost:40000';
+	const apiUrl = appSettings.cardanoApiUrl || 'http://localhost:40000';
 	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 	const endpointUrl = apiUrl + `/api/CardanoTx/CreateBridgingTx`;
 
@@ -94,7 +95,7 @@ export const getCardanoBridgingTxFee = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
 ): Promise<CardanoTransactionFeeResponseDto> => {
-	const apiUrl = cfg.cardanoApiUrl || 'http://localhost:40000';
+	const apiUrl = appSettings.cardanoApiUrl || 'http://localhost:40000';
 	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 	const endpointUrl = apiUrl + `/api/CardanoTx/GetBridgingTxFee`;
 
@@ -154,7 +155,11 @@ export const createEthBridgingTx = (
 	}
 
 	if (
-		!areChainsEqual(dto.destinationChain, addr.GetNetwork(), cfg.app.isMainnet)
+		!areChainsEqual(
+			dto.destinationChain,
+			addr.GetNetwork(),
+			appSettings.app.isMainnet,
+		)
 	) {
 		throw new BadRequestException(
 			`Destination address: ${dto.destinationAddress} not compatible with destination chain: ${dto.destinationChain}`,
@@ -186,7 +191,7 @@ export const createEthBridgingTx = (
 		);
 	}
 
-	const createFunc = cfg.features.useCentralizedBridge
+	const createFunc = appSettings.features.useCentralizedBridge
 		? ethCentralizedBridgingTx
 		: ethBridgingTx;
 	return await createFunc(dto, BigInt(dto.amount) + bridgingFee, bridgingFee);

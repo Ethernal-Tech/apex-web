@@ -7,6 +7,7 @@ import { BridgeTransactionModule } from './bridgeTransaction/bridgeTransaction.m
 import { SettingsModule } from './settings/settings.module';
 import { MailerConfigModule } from './mailer/mailer.module';
 import { ContactModule } from './contact/contact.module';
+import { AppSettingsModule } from './appSettings/appSettings.module';
 
 @Module({
 	imports: [
@@ -19,6 +20,7 @@ import { ContactModule } from './contact/contact.module';
 		TransactionModule,
 		BridgeTransactionModule,
 		ContactModule,
+		AppSettingsModule,
 	],
 	controllers: [],
 	providers: [],

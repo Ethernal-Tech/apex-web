@@ -6,13 +6,13 @@ const { AppConfigService } = require('../dist/config/config.service');
 setCWDToScriptsDir();
 
 dotenv.config({ path: path.join(process.cwd(), '../.env') });
-const cfg = new AppConfigService();
+const appSettings = new AppConfigService();
 
 const dbConfig = {
 	user: process.env.DB_USERNAME,
-	host: cfg.db.host,
-	port: cfg.db.port,
-	database: cfg.db.name,
+	host: appSettings.db.host,
+	port: appSettings.db.port,
+	database: appSettings.db.name,
 	password: process.env.DB_PASSWORD,
 };
 

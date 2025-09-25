@@ -32,7 +32,7 @@ import {
 	isCardanoChain,
 	isEvmChain,
 } from 'src/utils/chainUtils';
-import { AppConfigService } from 'src/config/config.service';
+import { AppSettingsService } from 'src/appSettings/appSettings.service';
 
 @Injectable()
 export class TransactionService {
@@ -40,7 +40,7 @@ export class TransactionService {
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly settingsService: SettingsService,
-		private readonly appSettings: AppConfigService,
+		private readonly appSettings: AppSettingsService,
 	) {}
 
 	private validateCreateCardanoTx(dto: CreateTransactionDto) {

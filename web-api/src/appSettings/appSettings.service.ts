@@ -62,7 +62,7 @@ function deepMerge<T>(base: Partial<T>, override: Partial<T>): T {
 function resolveConfigDir(): string {
 	const candidates = [
 		path.resolve(process.cwd(), 'dist', 'config'), // prod after build
-		path.resolve(process.cwd(), 'src/config/settings'), // dev
+		path.resolve(process.cwd(), 'src/appSettings/settings'), // dev
 		path.resolve(__dirname, '../config'),
 		path.resolve(__dirname, '../../config'),
 	];
@@ -79,13 +79,13 @@ function resolveConfigDir(): string {
 }
 
 @Injectable()
-export class AppConfigService {
+export class AppSettingsService {
 	private readonly settings: AppSettings;
 
 	constructor() {
-		const cfgDir = resolveConfigDir();
+		const settingsDir = resolveConfigDir();
 
-		const commonPath = path.join(cfgDir, 'settings.json');
+		const commonPath = path.join(settingsDir, 'settings.json');
 
 		const envName = (process.env.NODE_ENV ?? '').toLowerCase().trim();
 
