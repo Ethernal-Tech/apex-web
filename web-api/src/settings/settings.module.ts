@@ -1,15 +1,16 @@
 import { Module } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { SettingsController } from './settings.controller';
-import { AppConfigService } from 'src/config/config.service';
-import { AppSettingsModule } from 'src/config/config.module';
+import { AppSettingsService } from 'src/appSettings/appSettings.service';
 
 const providers = [
 	{
 		provide: SettingsService,
-		inject: [AppConfigService],
-		useFactory: async (cfg: AppConfigService): Promise<SettingsService> => {
-			const s = new SettingsService(cfg);
+		inject: [AppSettingsService],
+		useFactory: async (
+			appSettings: AppSettingsService,
+		): Promise<SettingsService> => {
+			const s = new SettingsService(appSettings);
 			await s.init();
 			return s;
 		},
@@ -17,7 +18,7 @@ const providers = [
 ];
 
 @Module({
-	imports: [AppSettingsModule],
+	imports: [],
 	providers,
 	exports: providers,
 	controllers: [SettingsController],

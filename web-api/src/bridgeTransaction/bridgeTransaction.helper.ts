@@ -8,9 +8,9 @@ import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
 import { isCardanoChain, isEvmChain } from 'src/utils/chainUtils';
-import { AppConfigService } from 'src/config/config.service';
+import { getAppSettings } from 'src/appSettings/appSettings';
 
-const cfg = new AppConfigService();
+const appSettings = getAppSettings();
 
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
@@ -51,7 +51,7 @@ export const getBridgingRequestStates = async (
 		return {};
 	}
 
-	const oracleUrl = cfg.oracleUrl;
+	const oracleUrl = appSettings.oracleUrl;
 	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
 	let endpointUrl =
 		oracleUrl + `/api/BridgingRequestState/GetMultiple?chainId=${chainId}`;
@@ -123,7 +123,7 @@ export const getHasTxFailedRequestState = async (
 		return;
 	}
 
-	const oracleUrl = cfg.oracleUrl || 'http://localhost:40000';
+	const oracleUrl = appSettings.oracleUrl || 'http://localhost:40000';
 	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
 	const endpointUrl =
 		oracleUrl +
