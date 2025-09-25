@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { WalletController } from './wallet.controller';
-import { AppSettingsModule } from 'src/config/config.module';
 
 @Module({
-	imports: [AppSettingsModule],
+	imports: [],
 	providers: [],
 	controllers: [WalletController],
 })
