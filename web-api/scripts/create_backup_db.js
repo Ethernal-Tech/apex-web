@@ -1,16 +1,19 @@
 const dotenv = require('dotenv');
 const path = require('path');
 const { runCommand, setCWDToScriptsDir, dropDB } = require('./utils');
+const { AppConfigService } = require('../dist/config/config.service');
 
 setCWDToScriptsDir();
 
 dotenv.config({ path: path.join(process.cwd(), '../.env') });
 
+const appSettings = new AppConfigService()
+
 const dbConfig = {
 	user: process.env.DB_USERNAME,
-	host: process.env.DB_HOST,
-	port: process.env.DB_PORT,
-	database: process.env.DB_NAME,
+	host: appSettings.db.host,
+	port: appSettings.db.port,
+	database: appSettings.db.name,
 	password: process.env.DB_PASSWORD,
 };
 
