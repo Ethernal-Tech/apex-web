@@ -59,7 +59,7 @@ export const createCardanoBridgingTx = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
 ): Promise<CreateCardanoTransactionResponseDto> => {
-	const apiUrl = appSettings.cardanoApiUrl || 'http://localhost:40000';
+	const apiUrl = appSettings.cardanoApiUrl;
 	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 	const endpointUrl = apiUrl + `/api/CardanoTx/CreateBridgingTx`;
 
@@ -95,7 +95,7 @@ export const getCardanoBridgingTxFee = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
 ): Promise<CardanoTransactionFeeResponseDto> => {
-	const apiUrl = appSettings.cardanoApiUrl || 'http://localhost:40000';
+	const apiUrl = appSettings.cardanoApiUrl;
 	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 	const endpointUrl = apiUrl + `/api/CardanoTx/GetBridgingTxFee`;
 
