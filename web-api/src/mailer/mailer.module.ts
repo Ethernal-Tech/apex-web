@@ -14,7 +14,7 @@ dotenv.config({ path: '.env' });
 			useFactory: (appSettings: AppSettingsService) => ({
 				transport: {
 					host: appSettings.email.smtpHost,
-					port: appSettings.email.smtpPort || 465,
+					port: appSettings.email.smtpPort,
 					secure: true,
 					auth: {
 						user: process.env.SMTP_USER,

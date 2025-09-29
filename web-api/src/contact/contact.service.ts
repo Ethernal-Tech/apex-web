@@ -13,7 +13,7 @@ export class ContactService {
 	async submitContactForm(contactData: CreateContactDto): Promise<void> {
 		const { name, email, message } = contactData;
 		await this.mailerService.sendMail({
-			to: this.appSettings.email.contactEmail || 'info@ethernal.tech',
+			to: this.appSettings.email.contactEmail,
 			subject: `Reactor from ${name}`,
 			template: 'contact',
 			context: {

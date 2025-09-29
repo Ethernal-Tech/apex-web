@@ -92,7 +92,7 @@ export class TransactionService {
 
 	async getRecentInputs(dto: CreateTransactionDto): Promise<Utxo[]> {
 		const recentInputsThresholdMinutes =
-			this.appSettings.bridge.recentInputsThresholdMinutes || 5;
+			this.appSettings.bridge.recentInputsThresholdMinutes;
 		const threshold = new Date(
 			Date.now() - recentInputsThresholdMinutes * 60 * 1000,
 		);

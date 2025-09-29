@@ -13,9 +13,7 @@ export interface AppSettings {
 		corsAllowList: string[];
 		isMainnet: boolean;
 	};
-	features: {
-		useCentralizedBridge: boolean;
-	};
+	features: { useCentralizedBridge: boolean };
 	bridge: {
 		ethTxTtlInc: number;
 		recentInputsThresholdMinutes: number;
@@ -45,11 +43,51 @@ export interface AppSettings {
 	};
 }
 
-function deepMerge<T>(base: Partial<T>, override: Partial<T>): T {
+// ✅ no `Function` type used
+type AnyFn = (...args: unknown[]) => unknown;
+type Primitive = string | number | boolean | bigint | symbol | null | undefined;
+
+type DeepPartial<T> = T extends Primitive
+	? T
+	: T extends AnyFn
+		? T // leave functions as-is
+		: T extends readonly (infer U)[]
+			? readonly DeepPartial<U>[] // readonly arrays
+			: T extends (infer U)[]
+				? DeepPartial<U>[] // mutable arrays
+				: T extends object
+					? { [K in keyof T]?: DeepPartial<T[K]> }
+					: T;
+
+// keep your defaults, but type them as DeepPartial
+const DEFAULTS: Readonly<DeepPartial<AppSettings>> = {
+	app: {
+		port: 3500,
+	},
+	bridge: {
+		recentInputsThresholdMinutes: 5,
+	},
+	services: {
+		oracleUrl: 'http://localhost:40000',
+		cardanoApiUrl: 'http://localhost:40000',
+	},
+	database: {
+		port: 5432,
+	},
+	email: {
+		contactEmail: 'info@ethernal.tech',
+		smtpPort: 465,
+	},
+};
+
+function deepMerge<T>(
+	base: DeepPartial<T>,
+	override: DeepPartial<T>,
+): DeepPartial<T> {
 	const out: any = Array.isArray(base)
 		? [...(base as any)]
 		: { ...(base as any) };
-	for (const [k, v] of Object.entries(override)) {
+	for (const [k, v] of Object.entries(override ?? {})) {
 		if (v && typeof v === 'object' && !Array.isArray(v)) {
 			out[k] = deepMerge(out[k] ?? {}, v as any);
 		} else {
@@ -93,14 +131,20 @@ export class AppSettingsService {
 
 		const common = JSON.parse(
 			fs.readFileSync(settingsPath, 'utf8'),
-		) as AppSettings;
+		) as DeepPartial<AppSettings>;
 		const perEnv = fs.existsSync(settingsPath)
 			? (JSON.parse(
 					fs.readFileSync(settingsPath, 'utf8'),
-				) as Partial<AppSettings>)
+				) as DeepPartial<AppSettings>)
 			: {};
 
-		this.settings = deepMerge<AppSettings>(common, perEnv);
+		// DEFAULTS -> common -> perEnv
+		const merged = deepMerge<AppSettings>(
+			deepMerge<AppSettings>(DEFAULTS, common),
+			perEnv,
+		) as AppSettings;
+
+		this.settings = merged;
 	}
 
 	get all(): AppSettings {
