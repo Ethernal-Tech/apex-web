@@ -3,7 +3,15 @@ import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel =
+	| 'emerg'
+	| 'alert'
+	| 'crit'
+	| 'error'
+	| 'warning'
+	| 'notice'
+	| 'info'
+	| 'debug';
 
 export interface AppSettings {
 	app: {
@@ -110,7 +118,7 @@ function resolveConfigDir(): string {
 	if (!hit) {
 		throw new Error(
 			`Config folder not found. Looked in: ${candidates.join(' , ')}. ` +
-				`Ensure nest-cli.json copies config/**/*.json to dist.`,
+				`Ensure nest-cli.json copies appSettings/settings/*.json to dist.`,
 		);
 	}
 	return hit;
