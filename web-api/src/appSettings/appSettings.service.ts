@@ -51,7 +51,6 @@ export interface AppSettings {
 	};
 }
 
-// ✅ no `Function` type used
 type AnyFn = (...args: unknown[]) => unknown;
 type Primitive = string | number | boolean | bigint | symbol | null | undefined;
 
@@ -67,7 +66,6 @@ type DeepPartial<T> = T extends Primitive
 					? { [K in keyof T]?: DeepPartial<T[K]> }
 					: T;
 
-// keep your defaults, but type them as DeepPartial
 const DEFAULTS: Readonly<DeepPartial<AppSettings>> = {
 	app: {
 		port: 3500,
@@ -159,7 +157,6 @@ export class AppSettingsService {
 		return this.settings;
 	}
 
-	// Convenience getters
 	get port() {
 		return this.settings.app.port;
 	}
