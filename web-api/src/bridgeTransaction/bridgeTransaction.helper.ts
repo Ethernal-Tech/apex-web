@@ -47,7 +47,7 @@ export const getBridgingRequestStates = async (
 	chainId: string,
 	models: GetBridgingRequestStatesModel[],
 ) => {
-	const oracleUrl = appSettings.oracleUrl || 'http://localhost:40000';
+	const oracleUrl = appSettings.oracleUrl;
 	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
 	let endpointUrl =
 		oracleUrl + `/api/BridgingRequestState/GetMultiple?chainId=${chainId}`;
@@ -119,7 +119,7 @@ export const getHasTxFailedRequestState = async (
 		return;
 	}
 
-	const oracleUrl = appSettings.oracleUrl || 'http://localhost:40000';
+	const oracleUrl = appSettings.oracleUrl;
 	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
 	const endpointUrl =
 		oracleUrl +
@@ -177,8 +177,7 @@ export const getCentralizedBridgingRequestState = async (
 	chainId: string,
 	model: GetBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
-	const centralizedApiUrl =
-		process.env.CENTRALIZED_API_URL || 'http://localhost:40000';
+	const centralizedApiUrl = process.env.CENTRALIZED_API_URL;
 
 	const direction = `${chainId}To${capitalizeWord(model.destinationChainId)}`;
 	const statusApiUrl = `${centralizedApiUrl}/api/txStatus/${direction}/${model.txHash}`;

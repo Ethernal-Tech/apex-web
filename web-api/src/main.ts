@@ -36,7 +36,7 @@ async function bootstrap() {
 	app.useGlobalFilters(new HttpExceptionFilter());
 	app.useGlobalInterceptors(new LoggingInterceptor());
 
-	const port = appSettings.port || 3500;
+	const port = appSettings.port;
 
 	await app.listen(port);
 }

@@ -33,7 +33,7 @@ export class WalletController {
 		@Query('chain') chain: string,
 		@Query('address') address: string,
 	): Promise<BalanceResponseDto> {
-		const apiUrl = this.appSettings.cardanoApiUrl || 'http://localhost:40000';
+		const apiUrl = this.appSettings.cardanoApiUrl;
 		const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 		const endpointUrl =
 			apiUrl + `/api/CardanoTx/GetBalance?chainId=${chain}&address=${address}`;
