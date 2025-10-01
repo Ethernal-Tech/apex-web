@@ -221,14 +221,17 @@ export class TransactionService {
 	}: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
 		const entity = new BridgeTransaction();
 
-		const receiverAddresses = receiverAddrs.join(', ');
+		const receiverAddresses = receiverAddrs
+			.map((a) => (a ?? '').trim())
+			.filter(Boolean)
+			.join(', ');
 
-		entity.sourceTxHash = originTxHash;
-		entity.senderAddress = senderAddress ?? entity.senderAddress;
+		entity.sourceTxHash = (originTxHash ?? '').trim();
+		entity.senderAddress = (senderAddress ?? '').trim() || entity.senderAddress;
 		entity.receiverAddresses = receiverAddresses ?? entity.receiverAddresses;
 		entity.destinationChain =
 			(destinationChain as ChainApexBridgeEnum) ?? entity.destinationChain;
-		entity.amount = amount ? amount : entity.amount;
+		entity.amount = (amount ?? '').trim() || entity.amount;
 		entity.nativeTokenAmount = nativeTokenAmount
 			? nativeTokenAmount
 			: entity.nativeTokenAmount;
