@@ -232,9 +232,8 @@ export class TransactionService {
 		entity.destinationChain =
 			(destinationChain as ChainApexBridgeEnum) ?? entity.destinationChain;
 		entity.amount = (amount ?? '').trim() || entity.amount;
-		entity.nativeTokenAmount = nativeTokenAmount
-			? nativeTokenAmount
-			: entity.nativeTokenAmount;
+		entity.nativeTokenAmount =
+			(nativeTokenAmount ?? '').trim() || entity.nativeTokenAmount;
 
 		entity.originChain = originChain;
 		entity.createdAt = new Date();
