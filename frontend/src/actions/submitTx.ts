@@ -27,11 +27,11 @@ export const signAndSubmitCardanoTx = async (
 		null,
 		new TransactionSubmittedDto({
 			originChain: values.originChain,
-			senderAddress: values.senderAddress.trim(),
+			senderAddress: values.senderAddress,
 			destinationChain: values.destinationChain,
-			receiverAddrs: [values.destinationAddress.trim()],
+			receiverAddrs: [values.destinationAddress],
 			amount: amount.toString(),
-			originTxHash: createResponse.txHash.trim(),
+			originTxHash: createResponse.txHash,
 			txRaw: createResponse.txRaw,
 			isFallback: createResponse.isFallback,
 		}),
@@ -98,9 +98,9 @@ export const signAndSubmitEthTx = async (
 		new TransactionSubmittedDto({
 			originChain: values.originChain,
 			destinationChain: values.destinationChain,
-			originTxHash: receipt.transactionHash.toString().trim(),
-			senderAddress: values.senderAddress.trim(),
-			receiverAddrs: [values.destinationAddress.trim()],
+			originTxHash: receipt.transactionHash.toString(),
+			senderAddress: values.senderAddress,
+			receiverAddrs: [values.destinationAddress],
 			txRaw: JSON.stringify(
 				{ ...tx, block: receipt.blockNumber.toString() },
 				(_: string, value: any) =>
