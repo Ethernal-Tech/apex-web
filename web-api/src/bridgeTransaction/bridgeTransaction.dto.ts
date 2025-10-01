@@ -96,6 +96,13 @@ export class BridgeTransactionDto {
 		description: 'Transaction is Layer Zero bridging',
 	})
 	isLayerZero: boolean;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		type: Boolean,
+		description: 'Is in refund phase',
+	})
+	isRefund: boolean;
 }
 
 export class BridgeTransactionFilterDto extends PaginatedDto {
