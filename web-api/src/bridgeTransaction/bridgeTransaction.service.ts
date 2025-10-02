@@ -131,6 +131,7 @@ export class BridgeTransactionService {
 					where: {
 						status: In(BridgingRequestNotFinalStates),
 						originChain: chain,
+						destinationChain: In(Object.values(ChainEnum)), // Support only Reactor
 					},
 				});
 				if (entities.length > 0) {
