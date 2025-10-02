@@ -82,3 +82,16 @@ $ $ cd .\frontend\
 $ npm start
 
 ```
+
+# Newest setup
+
+- Start two `cardano-api` instances, one for `Skyline` and one for `Reactor`:
+```bash
+$ go run main.go run-cardano-api --config config_skyline.json
+$ go run main.go run-cardano-api --config config_reactor.json
+```
+- Start one `web-api` instance. This instance communicates with both `Skyline` and `Reactor` `cardano-api` instances, as well as with both `Oracles`.
+Configure it using the following environment variables:
+ORACLE_SKYLINE_URL, ORACLE_SKYLINE_API_KEY, ORACLE_REACTOR_URL, ORACLE_REACTOR_API_KEY, CARDANO_API_SKYLINE_URL, CARDANO_API_SKYLINE_API_KEY,
+CARDANO_API_REACTOR_URL, CARDANO_API_REACTOR_API_KEY
+- Start the `frontend`, which communicates with the `web-api` as usual.

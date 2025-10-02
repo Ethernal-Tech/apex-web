@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { BridgingModeEnum } from 'src/common/enum';
 import Web3 from 'web3';
 import { Numbers } from 'web3-types';
 import { EtherUnits } from 'web3-utils';
@@ -73,4 +74,38 @@ export const convertWeiToDfm = (wei: string | number): string => {
 
 export const convertDfmToWei = (dfm: string | number): string => {
 	return toWei(dfm, 12);
+};
+
+export type urlAndApiKey = { url: string; apiKey: string };
+
+export const getUrlAndApiKey = (
+	bridgingMode: BridgingModeEnum,
+	isOracle: boolean,
+): urlAndApiKey => {
+	let url: string | undefined;
+	let apiKey: string | undefined;
+
+	switch (bridgingMode) {
+		case BridgingModeEnum.Reactor:
+			url = isOracle
+				? process.env.ORACLE_REACTOR_URL
+				: process.env.CARDANO_API_REACTOR_URL;
+			apiKey = isOracle
+				? process.env.ORACLE_REACTOR_API_KEY
+				: process.env.CARDANO_API_REACTOR_API_KEY;
+			break;
+		case BridgingModeEnum.Skyline:
+			url = isOracle
+				? process.env.ORACLE_SKYLINE_URL
+				: process.env.CARDANO_API_SKYLINE_URL;
+			apiKey = isOracle
+				? process.env.ORACLE_SKYLINE_API_KEY
+				: process.env.CARDANO_API_SKYLINE_API_KEY;
+			break;
+	}
+
+	return {
+		url: url || 'http://localhost:40000',
+		apiKey: apiKey || 'test_api_key',
+	};
 };

@@ -69,6 +69,8 @@ type BridgingSettings struct {
 	MaxTokenAmountAllowedToBridge *big.Int `json:"maxTokenAmountAllowedToBridge" swaggertype:"string"`
 	// Maximum number of receivers allowed in a bridging request
 	MaxReceiversPerBridgingRequest int `json:"maxReceiversPerBridgingRequest"`
+	// Allowed directions map [src chain] => list of dst chains
+	AllowedDirections map[string][]string `json:"allowedDirections"`
 } // @name BridgingSettings
 
 type AppConfig struct {
@@ -130,6 +132,7 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 			MaxAmountAllowedToBridge:       maxAmountAllowedToBridge,
 			MaxTokenAmountAllowedToBridge:  maxTokenAmountAllowedToBridge,
 			MaxReceiversPerBridgingRequest: settingsResponse.MaxReceiversPerBridgingRequest,
+			AllowedDirections:              settingsResponse.AllowedDirections,
 		}
 
 		logger.Debug("applied settings from oracle API", "settings", settingsResponse)

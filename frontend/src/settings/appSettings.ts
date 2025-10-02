@@ -21,11 +21,6 @@ export class AppSettings {
 		cardano: "0",
 	};
 
-	private _wrappedTokenName: { [key: string]: string } = {
-		prime: "",
-		cardano: "",
-	}
-
 	private _utxoRetriever: UtxoRetrieverConfig = {}
     private _maxAmountAllowedToBridge: string = "0";
 	private _maxTokenAmountAllowedToBridge: string = "0";
@@ -42,7 +37,6 @@ export class AppSettings {
 		this._minUtxoChainValue = settingsJson.minUtxoChainValue;
 		this._minChainFeeForBridging = settingsJson.minChainFeeForBridging;
 		this._minOperationFee = settingsJson.minOperationFee;
-		this._wrappedTokenName = settingsJson.wrappedTokenName;
 		this._utxoRetriever = settingsJson.utxoRetriever;
 		this._maxAmountAllowedToBridge = settingsJson.maxAmountAllowedToBridge;
 		this._maxTokenAmountAllowedToBridge = settingsJson.maxTokenAmountAllowedToBridge;
@@ -66,10 +60,6 @@ export class AppSettings {
 
 	get minOperationFee(): { [key: string]: string } {
 		return this._minOperationFee;
-	}
-
-	get wrappedTokenName(): { [key: string]: string } {
-		return this._wrappedTokenName;
 	}
 
 	get utxoRetriever(): UtxoRetrieverConfig {
