@@ -161,10 +161,10 @@ export class SettingsFullResponseDto {
 	@ApiProperty({
 		description: 'Settings per bridging mode (reactor, skyline)',
 		type: 'object',
-  		additionalProperties: { $ref: getSchemaPath(SettingsResponseDto) },
+		additionalProperties: { $ref: getSchemaPath(SettingsResponseDto) },
 	})
-	settingsPerMode: { [key: string]: SettingsResponseDto }
-	
+	settingsPerMode: { [key: string]: SettingsResponseDto };
+
 	@IsNotEmpty()
 	@ApiProperty({
 		description: 'All allowed directions',
