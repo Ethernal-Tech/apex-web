@@ -8,6 +8,7 @@ import { capitalizeWord } from "../../../utils/generalUtils"
 import { openExplorer } from "../../../utils/chainUtils"
 
 import {ReactComponent as DoneIcon} from "../../../assets/bridge-status-icons/step-done1.svg"
+import {ReactComponent as RefundIcon} from "../../../assets/bridge-status-icons/refund.svg"
 
 // prime icons
 import {ReactComponent as PrimeInProgressIcon} from "../../../assets/bridge-status-assets/prime-progress.svg"
@@ -44,6 +45,8 @@ const TRANSFER_PROGRESS_TEXT = {
     ERROR: 'Transfer Error',
     DONE: 'Transfer Complete',
     IN_PROGRESS: 'Transfer in Progress',
+    REFUND_IN_PROGRESS: 'Refund in Progress',
+    REFUND_IS_DONE: 'Refund Complete',
 }
 
 const STEP_STATUS = {
@@ -116,7 +119,7 @@ const chainStatusIcons: {
     },
   };
 
-const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):StepType[] =>{
+const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum, isRefund: boolean):StepType[] =>{
     return [
         {
             number:1,
@@ -131,7 +134,7 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step2,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<DoneIcon/>,
+            doneIcon: isRefund ? <RefundIcon/> : <DoneIcon/>,
             asset:{
                 inProgress: BridgeInProgressIcon,
                 done: BridgeSuccessIcon,
@@ -143,19 +146,22 @@ const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum):Step
             numberIcon:Step3,
             text:'',
             status:STEP_STATUS.WAITING,
-            doneIcon:<DoneIcon/>,
-            asset: getChainIcons(destinationChain)
+            doneIcon: isRefund ? <RefundIcon/> : <DoneIcon/>,
+            asset: getChainIcons(isRefund ? sourceChain : destinationChain)
         }
     ]
 
 }
 
-const getStepText = (stepNumber: number, originChain: ChainEnum, destinationChain: ChainEnum) => {
+const getStepText = (stepNumber: number, originChain: ChainEnum, destinationChain: ChainEnum, isRefund: boolean) => {
     if (stepNumber === 1) {
         return `Your address on the ${capitalizeWord(originChain)} Chain sends assets to the Bridge Wallet.`;
     }
 
     if (stepNumber === 3) {
+        if (isRefund) {
+            return `The assets are returned from the bridge wallet to the addresses on the ${capitalizeWord(originChain)} chain.`
+        }
         return `The assets go from the Bridge Wallet to the address on the ${capitalizeWord(destinationChain)} Chain.`;
     }
 
@@ -280,18 +286,20 @@ const TransferProgress = ({
         );
     }, [tx])
 
-    const transferProgress = (function(txStatus: TransactionStatusEnum){
+    const transferProgress = (function(txStatus: TransactionStatusEnum, isRefund: boolean) {
         switch (txStatus) {
-            case TransactionStatusEnum.ExecutedOnDestination: return TRANSFER_PROGRESS_TEXT.DONE;
+            case TransactionStatusEnum.ExecutedOnDestination:
+                return isRefund ? TRANSFER_PROGRESS_TEXT.REFUND_IS_DONE : TRANSFER_PROGRESS_TEXT.DONE;
             case TransactionStatusEnum.InvalidRequest: return TRANSFER_PROGRESS_TEXT.ERROR;
-            default: return TRANSFER_PROGRESS_TEXT.IN_PROGRESS;
+            default:
+                return isRefund ? TRANSFER_PROGRESS_TEXT.REFUND_IN_PROGRESS : TRANSFER_PROGRESS_TEXT.IN_PROGRESS;
         }
-    })(txStatusToShow)	
+    })(txStatusToShow, tx.isRefund)	
 
     const steps = useMemo(() => {
-        const defaultSteps = getDefaultSteps(tx.originChain, tx.destinationChain)
+        const defaultSteps = getDefaultSteps(tx.originChain, tx.destinationChain, tx.isRefund)
         return defaultSteps.map(dStep => {
-            const text = getStepText(dStep.number, tx.originChain, tx.destinationChain);
+            const text = getStepText(dStep.number, tx.originChain, tx.destinationChain, tx.isRefund);
             const status = getStepStatus(dStep.number, txStatusToShow);
             return {
                 ...dStep,
@@ -299,7 +307,7 @@ const TransferProgress = ({
                 status,
             }
         })
-    }, [tx.destinationChain, tx.originChain, txStatusToShow])
+    }, [tx.destinationChain, tx.originChain, txStatusToShow, tx.isRefund])
 
     const onOpenExplorer = () => openExplorer(tx);
     return (
@@ -313,6 +321,7 @@ const TransferProgress = ({
                 {transferProgress}
 
                 {transferProgress !== TRANSFER_PROGRESS_TEXT.DONE && transferProgress !== TRANSFER_PROGRESS_TEXT.ERROR &&
+                    transferProgress !== TRANSFER_PROGRESS_TEXT.REFUND_IS_DONE &&
                     <CircularProgress sx={{ marginLeft: 2, color:'white', position:'relative',top:'5px' }} size={22}/>
                 }
             </Typography>

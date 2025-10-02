@@ -47,4 +47,7 @@ export class BridgeTransaction {
 
 	@Column({ default: false })
 	isLayerZero: boolean;
+
+	@Column({ default: false })
+	isRefund: boolean;
 }

@@ -186,9 +186,9 @@ const TransactionDetailPage = () => {
                     <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between'}}>
                       <Typography variant="subtitle2">Status:</Typography>
                       <Box sx={{display:'flex'}}>
-                        <Box sx={{marginRight:1}} component='img' src={(transaction && getStatusIconAndLabel(transaction.status).icon) || ''} alt=''/>
+                        <Box sx={{marginRight:1}} component='img' src={(transaction && getStatusIconAndLabel(transaction.status, transaction.isRefund).icon) || ''} alt=''/>
                         <Typography sx={{textTransform:'capitalize', display:'inline-block'}}>
-                          {transaction && getStatusIconAndLabel(transaction.status).label}
+                          {transaction && getStatusIconAndLabel(transaction.status, transaction.isRefund).label}
                         </Typography>
                       </Box>
                     </Box>

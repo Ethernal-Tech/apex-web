@@ -36,6 +36,7 @@ export type BridgingRequestState = {
 	sourceTxHash: string;
 	status: TransactionStatusEnum;
 	destinationTxHash?: string;
+	isRefund: boolean;
 };
 
 export type GetBridgingRequestStatesModel = {
@@ -389,7 +390,9 @@ export const updateBridgeTransactionStates = (
 			txFailedState &&
 			entity.status === TransactionStatusEnum.Pending;
 
-		if (statusChanged) {
+		const isRefundChanged = state && entity.isRefund !== state.isRefund;
+
+		if (statusChanged || isRefundChanged) {
 			updateBridgeTransactionState(entity, state);
 			statusUpdatedBridgeTransactions.push(entity);
 		}
@@ -408,6 +411,7 @@ const updateBridgeTransactionState = (
 	state: BridgingRequestState,
 ) => {
 	entity.status = state.status;
+	entity.isRefund = state.isRefund;
 	if (!BridgingRequestNotFinalStatesMap[entity.status]) {
 		entity.destinationTxHash = state.destinationTxHash;
 		entity.finishedAt = new Date();
@@ -431,6 +435,7 @@ export const mapBridgeTransactionToResponse = (
 	response.createdAt = entity.createdAt;
 	response.finishedAt = entity.finishedAt;
 	response.isLayerZero = entity.isLayerZero;
+	response.isRefund = entity.isRefund;
 	return response;
 };
 
