@@ -14,3 +14,8 @@ export enum ChainEnum {
 	Vector = 'vector',
 	Nexus = 'nexus',
 }
+
+export enum BridgingModeEnum {
+	Reactor = 'reactor',
+	Centralized = 'centralized',
+}

@@ -21,6 +21,9 @@ export class BridgeTransaction {
 	@Column({ enum: ChainEnum, enumName: 'ChainEnum' })
 	destinationChain: ChainEnum;
 
+	@Column('numeric', { default: '0', scale: 0, precision: 1000 })
+	nativeTokenAmount: string;
+
 	@Column({ enum: TransactionStatusEnum, enumName: 'TransactionStatusEnum' })
 	status: TransactionStatusEnum;
 
@@ -41,6 +44,9 @@ export class BridgeTransaction {
 
 	@Column({ default: false })
 	isCentralized: boolean;
+
+	@Column({ default: false })
+	isLayerZero: boolean;
 
 	@Column({ default: false })
 	isRefund: boolean;

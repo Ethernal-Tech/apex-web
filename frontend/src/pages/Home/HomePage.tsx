@@ -24,7 +24,7 @@ import {
 } from '../../redux/slices/chainSlice';
 import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import { login } from '../../actions/login';
-import { getChainInfo } from '../../settings/chain';
+import { getChainInfo, getDstChains, getSrcChains } from '../../settings/chain';
 
 const HomePage: React.FC = () => {
 	const wallet = useSelector((state: RootState) => state.wallet.wallet);
@@ -35,13 +35,7 @@ const HomePage: React.FC = () => {
 		(state: RootState) => state.accountInfo.account,
 	);
 	const isLoggedInMemo = !!wallet && !!account;
-	const enabledChains = useSelector(
-		(state: RootState) => state.settings.enabledChains,
-	);
-
-	const allowedDirections = useSelector(
-		(state: RootState) => state.settings.allowedDirections,
-	);
+	const settings = useSelector((state: RootState) => state.settings);
 
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
@@ -51,28 +45,24 @@ const HomePage: React.FC = () => {
 		(state: RootState) => state.chain.destinationChain,
 	);
 
-	const srcChainOptions = useMemo(() => {
-		const allowedSrc = Object.keys(allowedDirections);
-		return enabledChains
-			.filter((chain) => allowedSrc.includes(chain))
-			.map((x) => getChainInfo(x as ChainEnum));
-	}, [allowedDirections, enabledChains]);
+	const srcChainOptions = useMemo(
+		() => getSrcChains(settings).map((x) => getChainInfo(x)),
+		[settings],
+	);
 
-	const dstChainOptions = useMemo(() => {
-		const allowedDst = (allowedDirections[srcChain] || []) as ChainEnum[];
-		return allowedDst
-			.filter((chain) => enabledChains.includes(chain))
-			.map((x) => getChainInfo(x));
-	}, [srcChain, enabledChains, allowedDirections]);
+	const dstChainOptions = useMemo(
+		() => getDstChains(srcChain, settings).map((x) => getChainInfo(x)),
+		[srcChain, settings],
+	);
 
-	const isSwitchBtnEnabled = useMemo(() => {
-		const allowedDstToSwap = (allowedDirections[dstChain] ||
-			[]) as ChainEnum[];
-		return (
+	const isSwitchBtnEnabled = useMemo(
+		() =>
 			!isLoggedInMemo &&
-			allowedDstToSwap.some((chain) => chain === srcChain)
-		);
-	}, [srcChain, dstChain, isLoggedInMemo, allowedDirections]);
+			getDstChains(dstChain, settings).some(
+				(chain) => chain === srcChain,
+			),
+		[srcChain, dstChain, isLoggedInMemo, settings],
+	);
 
 	const srcChainInfo = useMemo(() => getChainInfo(srcChain), [srcChain]);
 	const dstChainInfo = useMemo(() => getChainInfo(dstChain), [dstChain]);
@@ -96,13 +86,10 @@ const HomePage: React.FC = () => {
 	);
 
 	const handleConnectClick = useCallback(async () => {
-		if (!enabledChains.includes(srcChain)) {
-			console.error('chain not supported', srcChain);
-			return;
+		if (Object.keys(settings.allowedDirections).length > 0) {
+			await login(srcChain, navigate, settings, dispatch);
 		}
-
-		await login(srcChain, navigate, dispatch);
-	}, [srcChain, enabledChains, navigate, dispatch]);
+	}, [srcChain, settings, navigate, dispatch]);
 
 	useEffect(() => {
 		if (

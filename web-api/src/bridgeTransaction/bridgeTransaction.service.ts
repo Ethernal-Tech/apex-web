@@ -26,7 +26,11 @@ import {
 	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import {
+	BridgingModeEnum,
+	ChainEnum,
+	TransactionStatusEnum,
+} from 'src/common/enum';
 
 @Injectable()
 export class BridgeTransactionService {
@@ -68,6 +72,23 @@ export class BridgeTransactionService {
 			where.receiverAddresses = Like(model.receiverAddress);
 		}
 
+		// because we are using same db as skyline - additional filtering needed
+		if (!model.destinationChain) {
+			where.destinationChain = In([
+				ChainEnum.Prime,
+				ChainEnum.Vector,
+				ChainEnum.Nexus,
+			]);
+		}
+
+		if (!model.originChain) {
+			where.originChain = In([
+				ChainEnum.Prime,
+				ChainEnum.Vector,
+				ChainEnum.Nexus,
+			]);
+		}
+
 		const page = model.page || 0;
 		const take = model.perPage || 10;
 		const skip = page * take;
@@ -101,11 +122,16 @@ export class BridgeTransactionService {
 		const job = this.schedulerRegistry.getCronJob('updateStatusesJob');
 		job.stop();
 		try {
+			const modesSupported = new Set<string>(
+				(process.env.STATUS_UPDATE_MODES_SUPPORTED || '').split(','),
+			);
+
 			for (const chain of Object.values(ChainEnum)) {
 				const entities = await this.bridgeTransactionRepository.find({
 					where: {
 						status: In(BridgingRequestNotFinalStates),
 						originChain: chain,
+						destinationChain: In(Object.values(ChainEnum)), // Support only Reactor
 					},
 				});
 				if (entities.length > 0) {
@@ -119,15 +145,19 @@ export class BridgeTransactionService {
 							txRaw: entity.txRaw,
 						};
 
-						const arr = entity.isCentralized ? modelsCentralized : models;
-						arr.push(model);
+						if (entity.isCentralized) {
+							if (modesSupported.has(BridgingModeEnum.Centralized)) {
+								modelsCentralized.push(model);
+							}
+						} else if (modesSupported.has(BridgingModeEnum.Reactor)) {
+							models.push(model);
 
-						if (
-							entity.status === TransactionStatusEnum.Pending &&
-							!!entity.txRaw &&
-							!entity.isCentralized
-						) {
-							modelsPending.push(model);
+							if (
+								entity.status === TransactionStatusEnum.Pending &&
+								!!entity.txRaw
+							) {
+								modelsPending.push(model);
+							}
 						}
 					}
 

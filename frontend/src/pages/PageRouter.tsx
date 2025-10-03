@@ -25,6 +25,7 @@ export const PRIVACY_POLICY_ROUTE = '/privacy-policy';
 export const TERMS_OF_SERVICE_ROUTE = '/terms-of-service';
 
 const PageRouter: React.FC = () => {
+	const settings = useSelector((state: RootState) => state.settings);
 	const wallet = useSelector((state: RootState) => state.wallet.wallet);
 	const chain = useSelector((state: RootState) => state.chain.chain);
 	const dispatch = useDispatch();
@@ -37,11 +38,14 @@ const PageRouter: React.FC = () => {
 	const isLoggedInMemo = !!wallet;
 
 	useEffect(() => {
-		if (isLoggedInMemo) {
-			onLoad(wallet, chain, dispatch);
+		if (
+			isLoggedInMemo &&
+			Object.keys(settings.allowedDirections).length > 0
+		) {
+			onLoad(wallet, chain, settings, dispatch);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [settings]);
 
 	useEffect(() => {
 		fetchAndUpdateSettingsAction(dispatch);
