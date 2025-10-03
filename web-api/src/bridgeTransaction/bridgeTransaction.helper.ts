@@ -44,6 +44,10 @@ export const getBridgingRequestStates = async (
 	chainId: string,
 	models: GetBridgingRequestStatesModel[],
 ) => {
+	if (models.length === 0) {
+		return {};
+	}
+
 	const oracleUrl = process.env.ORACLE_URL || 'http://localhost:40000';
 	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
 	let endpointUrl =
