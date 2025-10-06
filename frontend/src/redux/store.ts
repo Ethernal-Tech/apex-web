@@ -6,6 +6,7 @@ import loginSlice from './slices/loginSlice'
 import accountInfoSlice from './slices/accountInfoSlice'
 import settingsSlice from './slices/settingsSlice'
 import lockedTokensSlice from './slices/lockedTokensSlice'
+import layerZeroSlice from './slices/layerZeroSlice'
 
 export const store = configureStore({
 	reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
 		login: loginSlice,
 		settings: settingsSlice,
 		lockedTokens: lockedTokensSlice,
+		layerZeroLockedTokens: layerZeroSlice
 	},
 	middleware: (getDefaultMiddleware) => getDefaultMiddleware({ serializableCheck: false }),
 })

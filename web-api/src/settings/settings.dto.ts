@@ -101,6 +101,12 @@ export class LayerZeroChainSettingsDto {
 
 	@IsNotEmpty()
 	@ApiProperty({
+		description: 'Chain RPC url',
+	})
+	rpcUrl: string;
+
+	@IsNotEmpty()
+	@ApiProperty({
 		description: 'Layer Zero OFT smart contract address',
 		example: '0x1234567890abcdef1234567890abcdef12345678',
 	})

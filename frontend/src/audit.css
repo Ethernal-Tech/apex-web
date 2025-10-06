@@ -1,0 +1,242 @@
+/* Audit.css */
+.skyline-bridge-section {
+  padding-top: 0;
+  background: transparent !important;
+}
+
+/* Global tint inside the section */
+.skyline-bridge-section,
+.skyline-bridge-section * {
+  color: #eaf7f6 !important;
+}
+
+.skyline-bridge-section .MuiTypography-root,
+.skyline-bridge-section .MuiTableCell-root,
+.skyline-bridge-section .MuiInputBase-input,
+.skyline-bridge-section .MuiInputLabel-root,
+.skyline-bridge-section .MuiSelect-select,
+.skyline-bridge-section .MuiMenuItem-root,
+.skyline-bridge-section .MuiSvgIcon-root {
+  color: #eaf7f6 !important;
+  fill: #eaf7f6 !important;
+}
+
+/* Cards */
+.skyline-bridge-section .audit-card {
+  background: rgba(6, 34, 37, 0.92) !important;
+  border: 1px solid #077368 !important;
+  border-radius: 8px !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+}
+
+.skyline-bridge-section .audit-card--accent {
+  border-top: 3px solid #0b5855 !important;
+}
+
+.skyline-bridge-section .audit-card-content {
+  padding: 18px !important;
+}
+
+/* Titles */
+.skyline-bridge-section .audit-title {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 12px;  /* mt: 3 (theme spacing 4px * 3) */
+  margin-bottom: 4px; /* mb: 1 */
+}
+
+@media (min-width: 900px) { /* MUI 'md' */
+  .skyline-bridge-section .audit-title {
+    font-size: 48px;
+  }
+}
+
+.skyline-bridge-section .audit-h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-top: 20px;   /* 2.5 * 8px ~= 20px (close to MUI spacing) */
+  margin-bottom: 8px; /* 1 */
+}
+
+@media (min-width: 900px) {
+  .skyline-bridge-section .audit-h2 {
+    font-size: 28px;
+  }
+}
+
+.skyline-bridge-section .audit-amount {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+@media (min-width: 900px) {
+  .skyline-bridge-section .audit-amount {
+    font-size: 18px;
+  }
+}
+
+/* Grid (3 → 2 → 1) */
+.skyline-bridge-section .audit-grid-3 {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .skyline-bridge-section .audit-grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .skyline-bridge-section .audit-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Full-width section band */
+.skyline-bridge-section .audit-section {
+  background: transparent !important;
+  max-width: none;
+  width: 80vw;
+  margin-left: calc(50% - 40vw);
+  margin-right: calc(50% - 40vw);
+  padding: 24px 16px 40px;
+}
+
+/* Two-column responsive */
+.skyline-bridge-section .audit-2col {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1200px) {
+  .skyline-bridge-section .audit-2col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Table */
+.skyline-bridge-section .audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.skyline-bridge-section .audit-table thead tr {
+  background: rgba(8, 40, 42, 0.95) !important;
+}
+
+.skyline-bridge-section .audit-table th,
+.skyline-bridge-section .audit-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(11, 88, 85, 0.35) !important;
+}
+
+.skyline-bridge-section .audit-table tbody tr:nth-of-type(odd) {
+  background: rgba(6, 34, 37, 0.75) !important;
+}
+
+.skyline-bridge-section .audit-table tbody tr:nth-of-type(even) {
+  background: rgba(6, 34, 37, 0.55) !important;
+}
+
+.skyline-bridge-section .audit-section .MuiTabs-root {
+  margin-bottom: 16px;
+}
+
+/* Tab look */
+.skyline-bridge-section .audit-section .MuiTab-root {
+  text-transform: none;
+  font-weight: 700;
+  margin-right: 8px; /* mr: 2 */
+}
+
+/* Indicator color */
+.skyline-bridge-section .audit-section .MuiTabs-indicator {
+  background-color: #0b5855;
+}
+
+/* ===== LockedTvbPanel layout & utilities ===== */
+.skyline-bridge-section .audit-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px; /* gap: 2.5 */
+  align-items: start;
+}
+@media (min-width: 1200px) {
+  .skyline-bridge-section .audit-layout {
+    grid-template-columns: 1.5fr 1fr; /* lg: "1.5fr 1fr" */
+  }
+}
+
+/* Spacing utils */
+.audit-mb-20 { margin-bottom: 20px; }  /* mb: 2.5 */
+.audit-mb-16 { margin-bottom: 16px; }  /* mb: 2   */
+.audit-mb-8  { margin-bottom: 8px; }   /* mb: 1   */
+.audit-mb-10 { margin-bottom: 10px; }  /* mb: 1.25 */
+.audit-my-6  { margin-top: 6px; margin-bottom: 6px; }
+.audit-my-4  { margin-top: 4px; margin-bottom: 4px; }
+
+/* Gap overrides */
+.skyline-bridge-section .audit-grid-3.audit-gap-18 { gap: 18px; }
+.audit-gap-12 { gap: 12px; }
+
+/* Horizontal scroll + top margin */
+.audit-scroll-x { margin-top: 16px; overflow-x: auto; }
+
+/* Flex row helper */
+.audit-row { display: flex; align-items: center; justify-content: space-between; }
+
+/* Typography helpers */
+.font-14 { font-size: 14px; }
+
+/* Toolbar groups */
+.audit-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;          /* 1.25 */
+  flex-wrap: wrap;
+  margin-bottom: 12px; /* 1.5 */
+}
+.audit-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* 1.5 */
+  flex-wrap: wrap;
+}
+
+/* Card subtitle */
+.audit-card-subtitle { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+
+/* Width utility: 100% → 50% at md+ */
+.audit-w-half-md { width: 100%; }
+@media (min-width: 900px) {
+  .audit-w-half-md { width: 50%; }
+}
+
+/* Grid: 1 → 2 cols at md+ */
+.audit-grid-md-2 { display: grid; grid-template-columns: 1fr; }
+@media (min-width: 900px) {
+  .audit-grid-md-2 { grid-template-columns: 1fr 1fr; }
+}
+
+.skyline-bridge-section .audit-layout-2col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px; /* gap: 2.5 */
+}
+@media (min-width: 1200px) { /* lg */
+  .skyline-bridge-section .audit-layout-2col {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Font weight utility (used instead of inline sx) */
+.fw-700 { font-weight: 700; }
+

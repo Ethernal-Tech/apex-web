@@ -1,16 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsPositive } from 'class-validator';
+import { IsNotEmptyObject, IsObject } from 'class-validator';
 
 export class LockedTokensDto {
 	@ApiProperty({
-		description: 'Mapping of chains to their locked tokens by token type',
+		description: 'Per chain → token → address → amoumt.',
 		type: 'object',
 		additionalProperties: {
 			type: 'object',
-			additionalProperties: { type: 'string' },
+			additionalProperties: {
+				type: 'object',
+				additionalProperties: { type: 'string' },
+			},
 		},
 	})
-	chains: { [key: string]: { [innerKey: string]: string } };
+	chains: {
+		[chainName: string]: { [tokenName: string]: { [address: string]: string } };
+	};
 
 	@ApiProperty({
 		description: 'Mapping of total transfered tokens per chain',
@@ -20,18 +25,48 @@ export class LockedTokensDto {
 			additionalProperties: { type: 'string' },
 		},
 	})
-	totalTransfered: { [key: string]: { [innerKey: string]: string } };
+	totalTransferred: { [key: string]: { [innerKey: string]: string } };
+
+	@ApiProperty({
+		description: 'Mapping of total transfered tokens per chain',
+		type: 'object',
+		additionalProperties: {
+			type: 'object',
+			additionalProperties: { type: 'string' },
+		},
+	})
+	totalTransferredLayerZero: { [key: string]: { [innerKey: string]: string } };
 }
 
 export class LockedTokensResponse {
-	@IsNotEmpty()
-	@IsPositive()
 	@ApiProperty({
-		description: 'For each chain, the number of locked tokens',
-		type: Object,
-		additionalProperties: { type: 'string' },
+		description: 'Per chain → token → address → amoumt.',
+		type: 'object',
+		additionalProperties: {
+			type: 'object',
+			additionalProperties: {
+				type: 'object',
+				additionalProperties: { type: 'string' },
+			},
+		},
 	})
-	chains: { [key: string]: { [innerKey: string]: string } };
+	@IsObject()
+	@IsNotEmptyObject()
+	chains!: {
+		[chainName: string]: { [tokenName: string]: { [address: string]: string } };
+	};
+}
+
+export class TransferredTokensResponse {
+	@ApiProperty({
+		description: 'Mapping of total transfered tokens per chain',
+		type: 'object',
+		additionalProperties: {
+			type: 'object',
+			additionalProperties: { type: 'string' },
+		},
+	})
+	totalTransferred: { [key: string]: { [innerKey: string]: string } };
 }
 
 export class TransferredTokensByDay {

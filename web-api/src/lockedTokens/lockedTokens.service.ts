@@ -7,6 +7,7 @@ import {
 import {
 	LockedTokensResponse,
 	TransferredTokensByDay,
+	TransferredTokensResponse,
 } from './lockedTokens.dto';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
@@ -15,13 +16,21 @@ import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entit
 import { Repository } from 'typeorm';
 import {
 	BridgingModeEnum,
-	ChainApexBridgeEnum,
+	ChainEnum,
 	GroupByTimePeriod,
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SettingsService } from 'src/settings/settings.service';
+import { layerZeroChains, skylineChains } from './token.helper';
+
+const isZeroLike = (v: unknown): boolean => {
+	if (v === null || v === undefined) return true;
+	const s = String(v).trim();
+	// empty → zero; "0", "+0", "00", "0.0", "000.0000" → zero
+	return s === '' || /^([+]?0+(\.0+)?)$/.test(s);
+};
 
 @Injectable()
 export class LockedTokensService {
@@ -71,17 +80,18 @@ export class LockedTokensService {
 		}
 	}
 
-	public async sumTransferredTokensPerChain(): Promise<LockedTokensResponse> {
+	public async sumTransferredTokensPerChain(): Promise<TransferredTokensResponse> {
 		const cacheKey = 'transferredTokensPerChainNestedMap';
-		const cached = await this.cacheManager.get<LockedTokensResponse>(cacheKey);
+		const cached =
+			await this.cacheManager.get<TransferredTokensResponse>(cacheKey);
 
 		if (cached !== undefined) {
 			return cached;
 		}
 
-		const chains = Object.values(ChainApexBridgeEnum);
-		const result = new LockedTokensResponse();
-		result.chains = {};
+		const chains = skylineChains();
+		const result = new TransferredTokensResponse();
+		result.totalTransferred = {};
 
 		for (const chain of chains) {
 			// Always query amountSum
@@ -102,9 +112,11 @@ export class LockedTokensService {
 
 			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
 
-			const chainResult: Record<string, string> = {
-				amount: amountSum,
-			};
+			const chainResult: Record<string, string> = {};
+
+			if (!isZeroLike(amountSum)) {
+				chainResult['lovelace'] = amountSum;
+			}
 
 			// ✅ Only query nativeSum if tokenName exists and is non-empty
 			if (tokenName) {
@@ -118,10 +130,76 @@ export class LockedTokensService {
 					.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
 					.getRawOne();
 
-				chainResult[tokenName] = nativeSum;
+				if (!isZeroLike(nativeSum)) {
+					chainResult[tokenName] = nativeSum;
+				}
 			}
 
-			result.chains[chain] = chainResult;
+			if (Object.keys(chainResult).length > 0) {
+				result.totalTransferred[chain] = chainResult;
+			}
+		}
+
+		await this.cacheManager.set(cacheKey, result, 30);
+
+		return result;
+	}
+
+	public async sumLayerZeroTransferredTokensPerChain(): Promise<TransferredTokensResponse> {
+		const cacheKey = 'transferredTokensPerChainLayerZero';
+		const cached =
+			await this.cacheManager.get<TransferredTokensResponse>(cacheKey);
+
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const chains = layerZeroChains();
+		const result = new TransferredTokensResponse();
+		result.totalTransferred = {};
+
+		for (const chain of chains) {
+			const chainResult: Record<string, string> = {};
+			for (const innerChain of chains) {
+				// Always query amountSum
+				if (chain !== innerChain) {
+					if (chain === ChainEnum.Nexus) {
+						const { amountSum } = await this.bridgeTransactionRepository
+							.createQueryBuilder('tx')
+							.select('SUM(tx.amount)', 'amountSum')
+							.where('tx.status = :status', {
+								status: TransactionStatusEnum.ExecutedOnDestination,
+							})
+							.andWhere('tx.originChain = :innerChain', { chain })
+							.andWhere('tx.destinationChain = :chain', { innerChain })
+							.andWhere('tx.isLayerZero = :isLZ', { isLZ: true })
+							.getRawOne();
+
+						if (!isZeroLike(amountSum)) {
+							chainResult['amount'] = amountSum;
+						}
+					} else if (chain === ChainEnum.Base || chain === ChainEnum.BNB) {
+						const { nativeSum } = await this.bridgeTransactionRepository
+							.createQueryBuilder('tx')
+							.select('SUM(tx.nativeTokenAmount)', 'nativeSum')
+							.where('tx.status = :status', {
+								status: TransactionStatusEnum.ExecutedOnDestination,
+							})
+							.andWhere('tx.originChain = :innerChain', { chain })
+							.andWhere('tx.destinationChain = :chain', { innerChain })
+							.andWhere('tx.isLayerZero = :isLZ', { isLZ: true })
+							.getRawOne();
+
+						if (!isZeroLike(nativeSum)) {
+							chainResult['native'] = nativeSum;
+						}
+					}
+				}
+			}
+
+			if (Object.keys(chainResult).length > 0) {
+				result.totalTransferred[chain] = chainResult;
+			}
 		}
 
 		await this.cacheManager.set(cacheKey, result, 30);
