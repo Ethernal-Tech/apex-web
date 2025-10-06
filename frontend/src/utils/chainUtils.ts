@@ -236,7 +236,7 @@ export const getTokenNameFromSettings = (srcChain: ChainEnum, dstChain: ChainEnu
     for (const item of bridgingModeInfo.settings.cardanoChainsNativeTokens[srcChain]) {
         if (item.dstChainID === dstChain) {
             const subs = item.tokenName.split('.');
-            if (subs.length != 2) {
+            if (subs.length !== 2) {
                 return item.tokenName;
             }
 
