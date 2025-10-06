@@ -240,6 +240,16 @@ export const minBigInt = (...args: bigint[]): bigint => {
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
+export const shortRetryOptions = {
+    retryCnt: 10,
+    waitTime: 1000,
+}
+
+export const longRetryOptions = {
+    retryCnt: 20,
+    waitTime: 5000,
+}
+
 export const wait = async (durationMs: number) =>
 	new Promise((res) => setTimeout(res, durationMs));
 

@@ -12,13 +12,13 @@ import { NavigateFunction } from "react-router-dom";
 import { HOME_ROUTE } from "../pages/PageRouter";
 import { setAccountInfoAction } from "../redux/slices/accountInfoSlice";
 import { getSrcChains, isEvmChain } from "../settings/chain";
-import { shouldUseMainnet } from "../utils/generalUtils";
+import { retry, shortRetryOptions, shouldUseMainnet } from "../utils/generalUtils";
 
 let onLoadCalled = false
 
 const checkAndSetEvmData = async (selectedWalletName: string, srcChain: ChainEnum, dstChain: ChainEnum, dispatch: Dispatch) => {
     const useMainnet = shouldUseMainnet(srcChain, dstChain);
-    const networkId = await evmWalletHandler.getNetworkId();
+    const networkId = await retry(evmWalletHandler.getNetworkId, shortRetryOptions.retryCnt, shortRetryOptions.waitTime);
     const network = fromEvmNetworkIdToNetwork(networkId, useMainnet);
     if (!network) {
         const expectedNetworkId = fromChainToNetworkId(srcChain, useMainnet);
@@ -34,7 +34,7 @@ const checkAndSetEvmData = async (selectedWalletName: string, srcChain: ChainEnu
         throw new Error(`Chain: ${srcChain} not supported.`);
     }
 
-    const account = await evmWalletHandler.getAddress();
+    const account = await retry(evmWalletHandler.getAddress, shortRetryOptions.retryCnt, shortRetryOptions.waitTime);
     if (!account) {
         throw new Error('No accounts connected')
     }

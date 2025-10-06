@@ -14,7 +14,7 @@ import { UtxoRetrieverEnum } from '../features/enums';
 import { getChainInfo, isEvmChain } from '../settings/chain';
 import { getBridgingInfo, getToken } from '../settings/token';
 import { LayerZeroChains } from '../redux/slices/settingsSlice';
-import { shouldUseMainnet } from '../utils/generalUtils';
+import { retry, shortRetryOptions, shouldUseMainnet } from '../utils/generalUtils';
 
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
@@ -28,10 +28,10 @@ const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, 
         if (srcChain !== ChainEnum.Nexus){
             const oftAddress = lzChainsSetting[srcChain].oftAddress;
             const token = getToken(srcChain, dstChain, true);
-            balances[token!] = await evmWalletHandler.getERC20Balance(oftAddress)
+            balances[token!] = await retry(() => evmWalletHandler.getERC20Balance(oftAddress), shortRetryOptions.retryCnt, shortRetryOptions.waitTime)
         }
 
-        const balance = await evmWalletHandler.getBalance();
+        const balance = await retry(evmWalletHandler.getBalance, shortRetryOptions.retryCnt, shortRetryOptions.waitTime);
         balances[currencyTokenName] = balance
 
         return { balance: balances};
