@@ -176,7 +176,7 @@ export const signAndSubmitLayerZeroTx = async (
         console.log('processing layer zero approval tx...');
         const tx: Transaction = await populateTxDetails({
             from: account, ...transactionData.transactionData.approvalTransaction
-        }, txType, defaultTxDetailsOptions, true);
+        }, txType, defaultTxDetailsOptions);
 
         updateLoadingState({ content: 'Signing and submitting the approval transaction...' })
 
@@ -192,7 +192,7 @@ export const signAndSubmitLayerZeroTx = async (
     console.log('processing layer zero send tx...');
     const sendTx: Transaction = await populateTxDetails({
         from: account, ...transactionData.populatedTransaction,
-    }, txType, defaultTxDetailsOptions, true);
+    }, txType, defaultTxDetailsOptions);
     
     updateLoadingState({ content: 'Signing and submitting the bridging transaction...' })
 
@@ -246,7 +246,7 @@ export const signAndSubmitLayerZeroTx = async (
 export const populateTxDetails = async (
     tx: Transaction, 
     txType: LayerZeroChainSettingsDtoTxType,
-    opts: TxDetailsOptions = defaultTxDetailsOptions, shouldThrow = false,
+    opts: TxDetailsOptions = defaultTxDetailsOptions,
 ): Promise<Transaction> => {
     if (!evmWalletHandler.checkWallet()) {
         throw new Error('Wallet not connected.');
@@ -269,35 +269,28 @@ export const populateTxDetails = async (
     }
 
     if (txType === LayerZeroChainSettingsDtoTxType.London) {
-      try {
-          console.log('retrieving fee history for calculating tx fee');
-          const feeHistory = await retry(
-              () => evmWalletHandler.getFeeHistory(5, 'latest', [90]), // give 90% tip
-              longRetryOptions.retryCnt, longRetryOptions.waitTime,
-          );
-          const baseFeePerGasList = feeHistory.baseFeePerGas as unknown as bigint[];
-          if (!baseFeePerGasList) {
-            throw new Error('feeHistory.baseFeePerGas not defined')
-          }
-
-          const baseFee = baseFeePerGasList.reduce((a, b) => a + b, BigInt(0)) / BigInt(baseFeePerGasList.length);
-          let tipCap = feeHistory.reward.reduce((a, b) => a + BigInt(b[0]), BigInt(0)) / BigInt(feeHistory.reward.length);
-          if (tipCap === BigInt(0)) {
-              tipCap = opts.defaultTipCap;
-          }
-
-          console.log('fee history for calculating tx fee has been retrieved', 'tipCap', tipCap, 'baseFee', baseFee);
-
-          response.maxPriorityFeePerGas = tipCap;
-          response.maxFeePerGas = baseFee * opts.feePercMult / BigInt(100) + tipCap;
-
-          return response
-      } catch (e: any) {
-        console.log('failed retrieving fee history. err', e)
-        if (shouldThrow) {
-          throw e;
-        }
+      console.log('retrieving fee history for calculating tx fee');
+      const feeHistory = await retry(
+          () => evmWalletHandler.getFeeHistory(5, 'latest', [90]), // give 90% tip
+          longRetryOptions.retryCnt, longRetryOptions.waitTime,
+      );
+      const baseFeePerGasList = feeHistory.baseFeePerGas as unknown as bigint[];
+      if (!baseFeePerGasList) {
+        throw new Error('feeHistory.baseFeePerGas not defined')
       }
+
+      const baseFee = baseFeePerGasList.reduce((a, b) => a + b, BigInt(0)) / BigInt(baseFeePerGasList.length);
+      let tipCap = feeHistory.reward.reduce((a, b) => a + BigInt(b[0]), BigInt(0)) / BigInt(feeHistory.reward.length);
+      if (tipCap === BigInt(0)) {
+          tipCap = opts.defaultTipCap;
+      }
+
+      console.log('fee history for calculating tx fee has been retrieved', 'tipCap', tipCap, 'baseFee', baseFee);
+
+      response.maxPriorityFeePerGas = tipCap;
+      response.maxFeePerGas = baseFee * opts.feePercMult / BigInt(100) + tipCap;
+
+      return response
     } else {
       // Legacy fallback
       console.log('retrieving gas price (legacy tx)');
@@ -313,7 +306,7 @@ export const estimateEthTxFee = async (
     tx: Transaction, txType: LayerZeroChainSettingsDtoTxType, opts: TxDetailsOptions = defaultTxDetailsOptions,
 ): Promise<bigint> => {
     if (!tx.gas || (!tx.gasPrice && !tx.maxFeePerGas)) {
-        tx = await populateTxDetails(tx, txType, opts, false)
+        tx = await populateTxDetails(tx, txType, opts)
     }
 
     const gasLimit = BigInt(tx.gas!);

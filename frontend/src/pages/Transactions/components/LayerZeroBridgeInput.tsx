@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import { ChainEnum, LayerZeroChainSettingsDtoTxType } from '../../../swagger/apexBridgeApiService';
+import { ChainEnum, LayerZeroChainSettingsDtoTxType, TransactionDataDto } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { TokenEnum } from '../../../features/enums';
@@ -72,12 +72,31 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
       return;
     }
 
+    let transactionData: TransactionDataDto
+
     try {
       const amountDfm = convertApexToDfm(amount || '0', chain);
       const lzResponse = await getLayerZeroTransferResponse(settings, chain, destinationChain, account, destinationAddr, amountDfm);
 
-      const { transactionData } = lzResponse;
+      transactionData = lzResponse.transactionData;
 
+      if (!isCurrencyBridgingAllowed(chain, destinationChain)) {
+        setBridgeTxFee(transactionData.populatedTransaction.value)
+      } else {
+        const amount = BigInt(lzResponse.metadata.properties.amount);
+        const valueBig = BigInt(transactionData.populatedTransaction.value);
+        setBridgeTxFee((valueBig - amount).toString(10));
+      }
+    }
+    catch (e) {
+      console.log('error while calculating bridging fee', e)
+      setUserWalletFee(undefined);
+      setBridgeTxFee("");
+
+      return;
+    }
+
+    try {
       let approvalTxFee: bigint = BigInt(0);
 
       if (transactionData.approvalTransaction) {
@@ -95,22 +114,9 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
 
       // TODO: convert from wei to DFM?
       setUserWalletFee(totalTxFee.toString(10));
-
-      if (!isCurrencyBridgingAllowed(chain, destinationChain)) {
-        setBridgeTxFee(transactionData.populatedTransaction.value)
-      } else {
-        const amount = BigInt(lzResponse.metadata.properties.amount);
-        const valueBig = BigInt(transactionData.populatedTransaction.value);
-        setBridgeTxFee((valueBig - amount).toString(10));
-      }
-
-      return;
     } catch (e) {
       console.log('error while calculating wallet fee', e)
     }
-
-    setUserWalletFee(undefined);
-    setBridgeTxFee("");
   }, [destinationAddr, amount, chain, destinationChain, sourceToken, settings, account, setBridgeTxFee]);
 
   const setSourceTokenCallback = useCallback((token: TokenEnum) => {
