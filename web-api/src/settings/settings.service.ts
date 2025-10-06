@@ -6,7 +6,7 @@ import {
 	SettingsFullResponseDto,
 } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
-import { ChainEnum } from 'src/common/enum';
+import { ChainEnum, TxTypeEnum } from 'src/common/enum';
 
 const RETRY_DELAY_MS = 5000;
 
@@ -35,7 +35,7 @@ export class SettingsService {
 		this.SettingsResponse.layerZeroChains = chains
 			.map((x) => {
 				const subItems = x.split('::');
-				if (subItems.length < 3) {
+				if (subItems.length < 4) {
 					return;
 				}
 
@@ -43,6 +43,7 @@ export class SettingsService {
 				item.chain = subItems[0].trim() as ChainEnum;
 				item.oftAddress = subItems[1].trim();
 				item.chainID = parseInt(subItems[2].trim(), 10);
+				item.txType = subItems[3].trim() as TxTypeEnum;
 
 				return item;
 			})
