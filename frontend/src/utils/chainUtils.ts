@@ -168,6 +168,11 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
     },    
 }
 
+const CHAIN_URLS: {[key:string]: string} ={
+    [ChainEnum.Base]:'https://mainnet.base.org',
+    [ChainEnum.Bsc]:'https://bsc-dataseed.bnbchain.org'
+}
+
 export const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boolean, isNativeExplorer?: boolean) => {
     if (isLZBridging && !isNativeExplorer) {
         return `https://layerzeroscan.com/tx/${txHash}`

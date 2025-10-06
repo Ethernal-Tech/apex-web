@@ -1,3 +1,4 @@
+import { ChainEnum } from "../swagger/apexBridgeApiService"
 import { UTxO } from "./WalletHandler"
 
 export type StepType = {
@@ -10,3 +11,11 @@ export interface UtxoRetriever {
     getAllUtxos(includeCollateral?: boolean): Promise<UTxO[]>
     getBalance(allUtxos?: UTxO[]): Promise<{[unit: string]: bigint}>
 }
+
+export type TotalSupply = {
+  decimals: number;
+  symbol: string;
+  raw: bigint;
+  formatted: string;
+  chain: string;
+};

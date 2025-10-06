@@ -893,6 +893,8 @@ export enum TxTypeEnum {
 export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
     /** Chain name */
     chain!: LayerZeroChainSettingsDtoChain;
+    /** Chain RPC url */
+    rpcUrl!: string;
     /** Layer Zero OFT smart contract address */
     oftAddress!: string;
     /** EVM chain ID */
@@ -947,6 +949,8 @@ export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
 export interface ILayerZeroChainSettingsDto {
     /** Chain name */
     chain: LayerZeroChainSettingsDtoChain;
+    /** Chain RPC url */
+    rpcUrl: string;
     /** Layer Zero OFT smart contract address */
     oftAddress: string;
     /** EVM chain ID */
@@ -2415,10 +2419,12 @@ export enum BridgingModeEnum {
 }
 
 export class LockedTokensDto implements ILockedTokensDto {
-    /** Mapping of chains to their locked tokens by token type */
-    chains!: { [key: string]: { [key: string]: string; }; };
+    /** Per chain → token → address → amoumt. */
+    chains!: { [key: string]: { [key: string]: { [key: string]: string; }; }; };
     /** Mapping of total transfered tokens per chain */
-    totalTransfered!: { [key: string]: { [key: string]: string; }; };
+    totalTransferred!: { [key: string]: { [key: string]: string; }; };
+    /** Mapping of total transfered tokens per chain */
+    totalTransferredLayerZero!: { [key: string]: { [key: string]: string; }; };
 
     [key: string]: any;
 
@@ -2431,7 +2437,8 @@ export class LockedTokensDto implements ILockedTokensDto {
         }
         if (!data) {
             this.chains = {};
-            this.totalTransfered = {};
+            this.totalTransferred = {};
+            this.totalTransferredLayerZero = {};
         }
     }
 
@@ -2448,11 +2455,18 @@ export class LockedTokensDto implements ILockedTokensDto {
                         (this.chains as any)![key] = _data["chains"][key] !== undefined ? _data["chains"][key] : {};
                 }
             }
-            if (_data["totalTransfered"]) {
-                this.totalTransfered = {} as any;
-                for (let key in _data["totalTransfered"]) {
-                    if (_data["totalTransfered"].hasOwnProperty(key))
-                        (this.totalTransfered as any)![key] = _data["totalTransfered"][key] !== undefined ? _data["totalTransfered"][key] : {};
+            if (_data["totalTransferred"]) {
+                this.totalTransferred = {} as any;
+                for (let key in _data["totalTransferred"]) {
+                    if (_data["totalTransferred"].hasOwnProperty(key))
+                        (this.totalTransferred as any)![key] = _data["totalTransferred"][key] !== undefined ? _data["totalTransferred"][key] : {};
+                }
+            }
+            if (_data["totalTransferredLayerZero"]) {
+                this.totalTransferredLayerZero = {} as any;
+                for (let key in _data["totalTransferredLayerZero"]) {
+                    if (_data["totalTransferredLayerZero"].hasOwnProperty(key))
+                        (this.totalTransferredLayerZero as any)![key] = _data["totalTransferredLayerZero"][key] !== undefined ? _data["totalTransferredLayerZero"][key] : {};
                 }
             }
         }
@@ -2478,11 +2492,18 @@ export class LockedTokensDto implements ILockedTokensDto {
                     (data["chains"] as any)[key] = (this.chains as any)[key];
             }
         }
-        if (this.totalTransfered) {
-            data["totalTransfered"] = {};
-            for (let key in this.totalTransfered) {
-                if (this.totalTransfered.hasOwnProperty(key))
-                    (data["totalTransfered"] as any)[key] = (this.totalTransfered as any)[key];
+        if (this.totalTransferred) {
+            data["totalTransferred"] = {};
+            for (let key in this.totalTransferred) {
+                if (this.totalTransferred.hasOwnProperty(key))
+                    (data["totalTransferred"] as any)[key] = (this.totalTransferred as any)[key];
+            }
+        }
+        if (this.totalTransferredLayerZero) {
+            data["totalTransferredLayerZero"] = {};
+            for (let key in this.totalTransferredLayerZero) {
+                if (this.totalTransferredLayerZero.hasOwnProperty(key))
+                    (data["totalTransferredLayerZero"] as any)[key] = (this.totalTransferredLayerZero as any)[key];
             }
         }
         return data;
@@ -2490,17 +2511,19 @@ export class LockedTokensDto implements ILockedTokensDto {
 }
 
 export interface ILockedTokensDto {
-    /** Mapping of chains to their locked tokens by token type */
-    chains: { [key: string]: { [key: string]: string; }; };
+    /** Per chain → token → address → amoumt. */
+    chains: { [key: string]: { [key: string]: { [key: string]: string; }; }; };
     /** Mapping of total transfered tokens per chain */
-    totalTransfered: { [key: string]: { [key: string]: string; }; };
+    totalTransferred: { [key: string]: { [key: string]: string; }; };
+    /** Mapping of total transfered tokens per chain */
+    totalTransferredLayerZero: { [key: string]: { [key: string]: string; }; };
 
     [key: string]: any;
 }
 
 export class LockedTokensResponse implements ILockedTokensResponse {
-    /** For each chain, the number of locked tokens */
-    chains!: { [key: string]: string; };
+    /** Per chain → token → address → amoumt. */
+    chains!: { [key: string]: { [key: string]: { [key: string]: string; }; }; };
 
     [key: string]: any;
 
@@ -2526,7 +2549,7 @@ export class LockedTokensResponse implements ILockedTokensResponse {
                 this.chains = {} as any;
                 for (let key in _data["chains"]) {
                     if (_data["chains"].hasOwnProperty(key))
-                        (this.chains as any)![key] = _data["chains"][key];
+                        (this.chains as any)![key] = _data["chains"][key] !== undefined ? _data["chains"][key] : {};
                 }
             }
         }
@@ -2557,8 +2580,8 @@ export class LockedTokensResponse implements ILockedTokensResponse {
 }
 
 export interface ILockedTokensResponse {
-    /** For each chain, the number of locked tokens */
-    chains: { [key: string]: string; };
+    /** Per chain → token → address → amoumt. */
+    chains: { [key: string]: { [key: string]: { [key: string]: string; }; }; };
 
     [key: string]: any;
 }

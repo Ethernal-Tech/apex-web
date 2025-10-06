@@ -5,6 +5,10 @@ import { SettingsFullResponseDto } from '../../swagger/apexBridgeApiService'
 import { ISettingsState, LayerZeroChains, SettingsPerMode } from '../../settings/settingsRedux'
 import { BridgingModeEnum } from '../../settings/chain'
 
+export type CardanoChainsNativeTokens = {
+	[key: string]: { dstChainID: string; tokenName: string; }[];
+}
+
 const initialState: ISettingsState = {
 	settingsPerMode: {
 		[BridgingModeEnum.Skyline]: {

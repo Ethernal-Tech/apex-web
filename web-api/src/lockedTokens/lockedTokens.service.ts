@@ -7,6 +7,7 @@ import {
 import {
 	LockedTokensResponse,
 	TransferredTokensByDay,
+	TransferredTokensResponse,
 } from './lockedTokens.dto';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
@@ -80,7 +81,8 @@ export class LockedTokensService {
 		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<LockedTokensResponse> {
 		const cacheKey = 'transferredTokensPerChainNestedMap';
-		const cached = await this.cacheManager.get<LockedTokensResponse>(cacheKey);
+		const cached =
+			await this.cacheManager.get<TransferredTokensResponse>(cacheKey);
 
 		if (cached !== undefined) {
 			return cached;
