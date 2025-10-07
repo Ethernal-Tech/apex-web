@@ -874,6 +874,12 @@ export interface ISettingsResponseDto {
     [key: string]: any;
 }
 
+/** Tx type */
+export enum TxTypeEnum {
+    Legacy = "Legacy",
+    London = "London",
+}
+
 export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
     /** Chain name */
     chain!: LayerZeroChainSettingsDtoChain;
@@ -881,6 +887,7 @@ export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
     oftAddress!: string;
     /** EVM chain ID */
     chainID!: number;
+    txType!: TxTypeEnum;
 
     [key: string]: any;
 
@@ -902,6 +909,7 @@ export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
             this.chain = _data["chain"];
             this.oftAddress = _data["oftAddress"];
             this.chainID = _data["chainID"];
+            this.txType = _data["txType"];
         }
     }
 
@@ -921,6 +929,7 @@ export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
         data["chain"] = this.chain;
         data["oftAddress"] = this.oftAddress;
         data["chainID"] = this.chainID;
+        data["txType"] = this.txType;
         return data;
     }
 }
@@ -932,6 +941,7 @@ export interface ILayerZeroChainSettingsDto {
     oftAddress: string;
     /** EVM chain ID */
     chainID: number;
+    txType: TxTypeEnum;
 
     [key: string]: any;
 }

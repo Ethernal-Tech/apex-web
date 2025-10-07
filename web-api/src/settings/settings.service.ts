@@ -7,7 +7,7 @@ import {
 	SettingsResponseDto,
 } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
-import { BridgingModeEnum, ChainEnum } from 'src/common/enum';
+import { BridgingModeEnum, ChainEnum, TxTypeEnum } from 'src/common/enum';
 
 const RETRY_DELAY_MS = 5000;
 const settingsApiPath = `/api/CardanoTx/GetSettings`;
@@ -47,14 +47,15 @@ export class SettingsService {
 			.split(',')
 			.map((x) => {
 				const subItems = x.split('::');
-				if (subItems.length < 3) {
-					return undefined;
+				if (subItems.length < 4) {
+					return;
 				}
 
 				const item = new LayerZeroChainSettingsDto();
 				item.chain = subItems[0].trim() as ChainEnum;
 				item.oftAddress = subItems[1].trim();
 				item.chainID = parseInt(subItems[2].trim(), 10);
+				item.txType = subItems[3].trim() as TxTypeEnum;
 
 				return item;
 			})

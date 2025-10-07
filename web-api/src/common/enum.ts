@@ -24,6 +24,13 @@ export const ChainEnum = {
 
 export type ChainEnum = (typeof ChainEnum)[keyof typeof ChainEnum];
 
+export const TxTypeEnum = {
+	Legacy: 'Legacy',
+	London: 'London',
+} as const;
+
+export type TxTypeEnum = (typeof TxTypeEnum)[keyof typeof TxTypeEnum];
+
 export enum GroupByTimePeriod {
 	Hour = 'hour',
 	Day = 'day',

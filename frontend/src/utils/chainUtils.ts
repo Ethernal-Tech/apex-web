@@ -151,13 +151,14 @@ export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: Cardano
     return fromChainToNetworkId(chain, useMainnet) === addr.GetNetwork();
 }
 
-// TODO: will need to add explorer urls for nexus mainnet
 const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]: string}} = {
      mainnet: {
         [ChainEnum.Prime]: 'https://apexscan.org/en',
         [ChainEnum.Vector]: '',
         [ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
         [ChainEnum.Cardano]: 'https://cardanoscan.io',
+        [ChainEnum.Base]: 'https://basescan.org',
+        [ChainEnum.Bsc]: 'https://bscscan.com',
     },
     testnet: {
         [ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
@@ -167,12 +168,14 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
     },    
 }
 
-const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boolean) => {
-    if (isLZBridging) {
+export const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boolean, isNativeExplorer?: boolean) => {
+    if (isLZBridging && !isNativeExplorer) {
         return `https://layerzeroscan.com/tx/${txHash}`
     }
 
-    const base = appSettings.isMainnet ? EXPLORER_URLS.mainnet[chain] : EXPLORER_URLS.testnet[chain];
+    const base = appSettings.isMainnet || isLZBridging ? EXPLORER_URLS.mainnet[chain] : EXPLORER_URLS.testnet[chain];
+
+    if (!base || base.trim() === '') return;
 
     let url
     switch (chain) {
@@ -184,6 +187,7 @@ const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boole
             break;
         }
         case ChainEnum.Base:
+        case ChainEnum.Bsc:
         case ChainEnum.Nexus: {
             url = `${base}/tx/${txHash}`;
             break;
@@ -198,27 +202,30 @@ const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boole
     return url;
 }
 
-export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
+export const getExplorerUrl = (tx: BridgeTransactionDto | undefined) => {
     if (!tx) {
         return;
     }
 
     if (tx.isLayerZero){
-        const url = getExplorerTxUrl(tx.originChain, tx.sourceTxHash, true)
-        window.open(url, '_blank')
-        return
+        return getExplorerTxUrl(tx.originChain, tx.sourceTxHash, true);
     }
 
     if (tx.status === TransactionStatusEnum.ExecutedOnDestination && tx.destinationTxHash) {
         const txHash = isEvmChain(tx.destinationChain) && !tx.destinationTxHash.startsWith('0x')
         ? `0x${tx.destinationTxHash}` : tx.destinationTxHash;
-        const url = getExplorerTxUrl(tx.destinationChain, txHash)
-        window.open(url, '_blank')
+        return getExplorerTxUrl(tx.destinationChain, txHash);
     } else if (tx.sourceTxHash) {
         const txHash = isEvmChain(tx.originChain) && !tx.sourceTxHash.startsWith('0x')
             ? `0x${tx.sourceTxHash}` : tx.sourceTxHash;
-        const url = getExplorerTxUrl(tx.originChain, txHash)
-        window.open(url, '_blank')
+        return getExplorerTxUrl(tx.originChain, txHash);
+    }
+}
+
+export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
+    const url = getExplorerUrl(tx);
+    if (url) {
+        window.open(url, '_blank');
     }
 }
 

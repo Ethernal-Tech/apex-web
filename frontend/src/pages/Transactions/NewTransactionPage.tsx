@@ -8,7 +8,7 @@ import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import walletHandler from '../../features/WalletHandler';
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
-import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto, TxTypeEnum } from "../../swagger/apexBridgeApiService";
 import { getLayerZeroTransferResponse, signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx} from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import NewTransaction from "./components/NewTransaction";
@@ -16,9 +16,10 @@ import { useNavigate } from "react-router-dom";
 import { BridgingModeEnum, getBridgingMode, isCardanoChain, isEvmChain, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
 import { validateSubmitTxInputs } from "../../utils/validationUtils";
+import { SubmitLoadingState, UpdateSubmitLoadingState } from "../../utils/statusUtils";
 
 function NewTransactionPage() {	
-	const [loading, setLoading] = useState(false);
+	const [loadingState, setLoadingState] = useState<SubmitLoadingState | undefined>();
 	
 	const navigate = useNavigate();
 	const chain = useSelector((state: RootState)=> state.chain.chain);
@@ -52,6 +53,13 @@ function NewTransactionPage() {
 			: minOperationFee[chain] || '0',
 		[chain, minOperationFee],
 	)
+
+	const updateLoadingState = useCallback((newState: UpdateSubmitLoadingState) => {
+		setLoadingState((oldState: SubmitLoadingState | undefined) => ({
+			content: newState?.content || oldState?.content,
+			txHash: newState?.txHash || oldState?.txHash,
+		} as SubmitLoadingState));
+	}, []);
 
 	const goToDetails = useCallback((tx: BridgeTransactionDto) => {
 		navigate(formatTxDetailUrl(tx));
@@ -149,7 +157,10 @@ function NewTransactionPage() {
 
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: string, isNativeToken: boolean) => {
-			setLoading(true);
+			setLoadingState({
+				content: 'Preparing the transaction...',
+				txHash: undefined,
+			});
 			try {
 				if (isCardanoChain(chain)) {
 					const createTxResp = await createCardanoTx(address, amount, isNativeToken);
@@ -157,6 +168,7 @@ function NewTransactionPage() {
 					const response = await signAndSubmitCardanoTx(
 						createTxResp.createTxDto,
 						createTxResp.createResponse,
+						updateLoadingState,
 					);
 
 					console.log("signed transaction");
@@ -168,6 +180,7 @@ function NewTransactionPage() {
 					const response = await signAndSubmitEthTx(
 						createTxResp.createTxDto,
 						createTxResp.createResponse,
+						updateLoadingState,
 					);
 					
 					response && goToDetails(response);
@@ -182,19 +195,28 @@ function NewTransactionPage() {
 					toast.error(`${err}`)
 				}
 			} finally {
-				setLoading(false);
+				setLoadingState(undefined);
 			}
 		},
-		[chain, createCardanoTx, createEthTx, goToDetails],
+		[chain, createCardanoTx, createEthTx, goToDetails, updateLoadingState],
 	);
 
 	const handleLZSubmitCallback = useCallback(
 		async(toAddress: string, amount: string) =>{
-			setLoading(true);
+			setLoadingState({
+				content: 'Preparing the transaction...',
+				txHash: undefined,
+			});
 			
 			try{
 				const lzResponse = await getLayerZeroTransferResponse(settings, chain, destinationChain, account, toAddress, amount);
-				const response = await signAndSubmitLayerZeroTx(toAddress, lzResponse);
+				const response = await signAndSubmitLayerZeroTx(
+					account,
+					settings.layerZeroChains[chain]?.txType || TxTypeEnum.Legacy,
+					toAddress,
+					lzResponse,
+					updateLoadingState,
+				);
 
 				response && goToDetails(response);
 			}
@@ -206,9 +228,9 @@ function NewTransactionPage() {
 					toast.error(`${err}`)
 				}
 			} finally{
-				setLoading(false);
+				setLoadingState(undefined);
 			}
-		},[settings, chain, destinationChain, account, goToDetails]
+		},[settings, chain, destinationChain, account, updateLoadingState, goToDetails]
 	)
 
 	return (
@@ -220,7 +242,7 @@ function NewTransactionPage() {
         setBridgeTxFee={setBridgeTxFee}
         resetBridgeTxFee={resetBridgeTxFee}
 		submit={handleLZSubmitCallback}
-        loading={loading}
+        loadingState={loadingState}
       />
     ) : (
       <BridgeInput
@@ -231,7 +253,7 @@ function NewTransactionPage() {
         getCardanoTxFee={getCardanoTxFee}
         getEthTxFee={getEthTxFee}
         submit={handleSubmitCallback}
-        loading={loading}
+        loadingState={loadingState}
       />
     )}
   </NewTransaction>

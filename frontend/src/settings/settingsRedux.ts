@@ -1,8 +1,10 @@
+import { TxTypeEnum } from "../swagger/apexBridgeApiService";
+
 export type CardanoChainsNativeTokens = {
 	[key: string]: { dstChainID: string; tokenName: string; }[];
 }
 
-export type LayerZeroChains = Record<string, { oftAddress: string; chainID: number }>;
+export type LayerZeroChains = Record<string, { oftAddress: string; chainID: number, txType: TxTypeEnum }>;
 
 export interface SettingsPerMode {
 	minUtxoChainValue: { [key: string]: string }

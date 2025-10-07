@@ -1,8 +1,8 @@
 import Web3 from 'web3';
-import { Transaction } from 'web3-types';
+import { BlockNumberOrTag, Numbers, Transaction } from 'web3-types';
 import { toHex } from "web3-utils";
 import { ERC20_MIN_ABI } from './ABI';
-import { wait } from '../utils/generalUtils';
+import { shortRetryOptions, wait } from '../utils/generalUtils';
 import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
 
 type Wallet = {
@@ -16,9 +16,6 @@ export const EVM_SUPPORTED_WALLETS = [{
     icon: 'https://metamask.io/images/metamask-logo.png', // MetaMask icon URL
     version: 'N/A', // MetaMask does not provide API version directly
 }]
-
-const MAX_RETRY_COUNT = 5;
-const RETRY_WAIT_TIME = 1000;
 
 class EvmWalletHandler {
     private _enabled: boolean = false;
@@ -102,12 +99,12 @@ class EvmWalletHandler {
 		}
 		catch (enableError: any) {
 			const enableErr = enableError?.data?.originalError ?? enableError;
-			if (retryCount < MAX_RETRY_COUNT && enableErr.code !== 4001) {
+			if (retryCount < shortRetryOptions.retryCnt && enableErr.code !== 4001) {
 				if (enableErr.code === 4902) {
 					wrongChain = true;
 				}
 				else {
-					await wait(RETRY_WAIT_TIME);
+					await wait(shortRetryOptions.waitTime);
 
 					return await this.forceChainWithRetry(expectedChainId, retryCount + 1);
 				}
@@ -129,7 +126,7 @@ class EvmWalletHandler {
                 throw new Error(`Failed to switch to network with ID: ${expectedChainId}. Try adding that network to the wallet first.`);
             }
 
-			await wait(RETRY_WAIT_TIME);
+			await wait(shortRetryOptions.waitTime);
 
 			return await this.forceChainWithRetry(expectedChainId, retryCount + 1);
 		}
@@ -155,14 +152,19 @@ class EvmWalletHandler {
         return await this.getWeb3()!.eth.net.getId();
     };
         
-    submitTx = async (tx:Transaction, opts?: SendTransactionOptions) =>{
+    submitTx = (tx:Transaction, opts?: SendTransactionOptions) =>{
         this._checkWalletAndThrow();
-        return await this.getWeb3()!.eth.sendTransaction(tx, undefined, opts);
+        return this.getWeb3()!.eth.sendTransaction(tx, undefined, opts);
     }
 
     estimateGas = async (tx:Transaction) =>{
         this._checkWalletAndThrow();
         return await this.getWeb3()!.eth.estimateGas(tx);
+    }
+
+    getFeeHistory = async (blockCount: Numbers, newestBlock: BlockNumberOrTag | undefined, rewardPercentiles: Numbers[]) =>{
+        this._checkWalletAndThrow();
+        return await this.getWeb3()!.eth.getFeeHistory(blockCount, newestBlock, rewardPercentiles);
     }
 
     getGasPrice = async () =>{

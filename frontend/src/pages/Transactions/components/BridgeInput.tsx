@@ -17,6 +17,8 @@ import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
 import { BridgingModeEnum, getBridgingMode, getChainInfo, isCardanoChain, isEvmChain } from '../../../settings/chain';
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
+import SubmitLoading from './SubmitLoading';
+import { SubmitLoadingState } from '../../../utils/statusUtils';
 
 type BridgeInputType = {
     bridgeTxFee: string
@@ -26,7 +28,7 @@ type BridgeInputType = {
     getCardanoTxFee: (address: string, amount: string, isNativeToken: boolean) => Promise<CardanoTransactionFeeResponseDto>
     getEthTxFee: (address: string, amount: string) => Promise<CreateEthTransactionResponseDto>
     submit:(address: string, amount: string, isNativeToken: boolean) => Promise<void>
-    loading?: boolean;
+    loadingState: SubmitLoadingState | undefined;
 }
 
 
@@ -85,7 +87,7 @@ const calculateMaxAmountCurrency = (
   return {maxByAllowed: balanceAllowedToUse, maxByBalance}
 }
 
-const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFee, getCardanoTxFee, getEthTxFee, submit, loading}:BridgeInputType) => {
+const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFee, getCardanoTxFee, getEthTxFee, submit, loadingState}:BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
   const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
@@ -206,7 +208,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
 
         <Typography sx={{color:'white',mt:4, mb:2}}>Destination Address</Typography>
         {/* validate inputs */}
-        <PasteTextInput sx={{width:'50%'}} text={destinationAddr} setText={setDestinationAddr} disabled={loading} id="dest-addr"/>
+        <PasteTextInput sx={{width:'50%'}} text={destinationAddr} setText={setDestinationAddr} disabled={!!loadingState} id="dest-addr"/>
         {
           appSettings.isSkyline &&
           <Box sx={{ mt: '20px' }}>
@@ -235,7 +237,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
                 currencyMaxAmount={currencyMaxAmount}
                 text={amount}
                 setAmount={setAmount}
-                disabled={loading}
+                disabled={!!loadingState}
                 sx={{
                     gridColumn:'span 1',
                     borderBottom: '2px solid',
@@ -260,10 +262,24 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
 
                 }}
             />
-            
+
+            {!!loadingState &&
+                <Box 
+                  sx={{
+                    gridColumn:'span 2',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}
+                >
+                    <SubmitLoading loadingState={loadingState}/>
+                </Box>
+            }
+
             <ButtonCustom
                 onClick={onDiscard}
-                disabled={loading}
+                disabled={!!loadingState}
                 variant="red"						
                 sx={{
                     gridColumn:'span 1',
@@ -275,7 +291,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
             <ButtonCustom 
                 onClick={onSubmit}
                 variant={appSettings.isSkyline ? "whiteSkyline" : "white"}
-                disabled={loading || currencyMaxAmount < 0}
+                disabled={!!loadingState || currencyMaxAmount < 0}
                 sx={{
                     gridColumn:'span 1',
                     textTransform:'uppercase'

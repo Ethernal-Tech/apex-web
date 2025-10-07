@@ -42,7 +42,7 @@ const settingsSlice = createSlice({
 			state.allowedDirections = action.payload.allowedDirections;
 			state.layerZeroChains = action.payload.layerZeroChains.reduce<LayerZeroChains>((acc, cfg) => {
 				const key = String(cfg.chain).toLowerCase();
-				acc[key] = { oftAddress: cfg.oftAddress, chainID: cfg.chainID };
+				acc[key] = { oftAddress: cfg.oftAddress, chainID: cfg.chainID, txType: cfg.txType };
 				return acc;
 			}, {});
 			state.settingsPerMode = Object.entries(action.payload.settingsPerMode).reduce((acc, [mode, modeSettings]) => {

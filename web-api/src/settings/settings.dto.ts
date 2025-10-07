@@ -8,7 +8,7 @@ import {
 	IsPositive,
 	ValidateNested,
 } from 'class-validator';
-import { ChainEnum } from 'src/common/enum';
+import { ChainEnum, TxTypeEnum } from 'src/common/enum';
 
 export class BridgingSettingsDto {
 	@IsNotEmpty()
@@ -114,6 +114,14 @@ export class LayerZeroChainSettingsDto {
 		example: 43114, // Avalanche example
 	})
 	chainID: number;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Tx type',
+		enum: TxTypeEnum,
+		enumName: 'TxTypeEnum',
+	})
+	txType: TxTypeEnum;
 }
 
 @ApiExtraModels(NativeTokenDto, BridgingSettingsDto)
