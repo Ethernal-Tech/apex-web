@@ -1,15 +1,18 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import CustomSelect from "../../components/customSelect/CustomSelect";
-import { isEvmChain, ChainInfo, getSrcChains, getChainInfo } from "../../settings/chain";
+import { isEvmChain, getSrcChains, getChainInfo } from "../../settings/chain";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { formatBigIntDecimalString } from "../lockedTokens/LockedTokensComponent";
-
-/* ---------- Types ---------- */
-type ChainsBig = Record<string, Record<string, Record<string, bigint>>>;
+import ButtonCustom from "../Buttons/ButtonCustom";
+import { openAuditExplorer } from "../../utils/chainUtils";
+import explorerPng from "@../../../public/explorer.png"
+import { decodeTokenKey } from "../../utils/tokenUtils";
+import { getTokenInfo } from "../../settings/token";
+import { TokenEnum } from "../../features/enums";
 
 type LockedTvbPanelProps = {
-  chains: ChainsBig;
+  chains: Record<string, Record<string, Record<string, bigint>>>;
   chainKeys: string[];
   perChainTotals: Record<string, Record<string, bigint>>;
   tokenTotalsAllChains: Record<string, bigint>;
@@ -20,30 +23,6 @@ type LockedTvbPanelProps = {
 
   enabledChains: ChainEnum[];
 };
-
-const decodeHex = (hex: string): string => {
-  try {
-    return decodeURIComponent(hex.replace(/(..)/g, "%$1"));
-  } catch (e) {
-    return "[InvalidHex]";
-  }
-};
-
-/* ---------- Local helpers ---------- */
-function decodeTokenKey(tokenKey: string): string {
-  if (tokenKey === "lovelace" || tokenKey === "amount") return "AP3X";
-  const parts = tokenKey.split(".");
-  if (parts.length < 2) return tokenKey;
-  const hex = parts[1];
-  let decoded = "";
-  try {
-    decoded = decodeHex(hex) as string;
-  } catch {
-    /* ignore */
-  }
-  if (!decoded || /invalid\s*hex/i.test(decoded)) return hex;
-  return decoded;
-}
 
 function sumToken(addrMap: Record<string, bigint>): bigint {
   let acc = BigInt(0);
@@ -71,7 +50,7 @@ const LockedTvbPanel: React.FC<LockedTvbPanelProps> = ({
   }, [enabledChains]);
 
   // Selection state for per-address table
-  const [selChain, setSelChain] = useState<string>(() => chainKeys[0] ?? "");
+  const [selChain, setSelChain] = useState<string>(() => ChainEnum.Prime);
   const tokensOfSelChain = useMemo(
     () => Object.keys(chains[selChain] ?? {}),
     [chains, selChain]
@@ -104,7 +83,7 @@ const LockedTvbPanel: React.FC<LockedTvbPanelProps> = ({
               return (
                 <Box key={label} className="audit-card">
                   <Box className="audit-card-content audit-row">
-                    <Typography>{decodeTokenKey(label)}</Typography>
+                    <Typography>{label}</Typography>
                     <Typography className="audit-amount">
                       {formatBigIntDecimalString(amt, 6)}
                     </Typography>
@@ -115,13 +94,13 @@ const LockedTvbPanel: React.FC<LockedTvbPanelProps> = ({
         </Box>
 
         <Typography className="audit-h2">Total locked per Chain</Typography>
-        <Box className="audit-grid-3 audit-mb-20">
+        <Box className="audit-grid-3">
           {chainKeys.map((ck) => {
             const rows = Object.entries(perChainTotals[ck] ?? {})
               .sort((a, b) => Number(b[1] - a[1]))
-              .map(([token, amt]) => ({ token: decodeTokenKey(token), amt }));
+              .map(([token, amt]) => ({ token: decodeTokenKey(token, ck), amt }));
             return (
-              <Box key={ck} className="audit-card audit-card--accent">
+              <Box key={ck} className="audit-card">
                 <Box className="audit-card-content">
                   <Typography className="audit-card-subtitle audit-mb-10">
                     {ck.toUpperCase()}
@@ -144,7 +123,7 @@ const LockedTvbPanel: React.FC<LockedTvbPanelProps> = ({
         </Box>
 
         <Typography className="audit-h2">Per-address Breakdown</Typography>
-        <Box className="audit-card audit-card--accent">
+        <Box className="audit-card">
           <Box className="audit-card-content">
             <Box className="audit-toolbar">
               <Box className="audit-toolbar-left">
@@ -179,6 +158,9 @@ const LockedTvbPanel: React.FC<LockedTvbPanelProps> = ({
               <table className="audit-table">
                 <thead>
                   <tr>
+                    <th>
+                      Explorer
+                    </th>
                     <th>Address</th>
                     <th style={{ textAlign: "center" }}>Amount</th>
                   </tr>
@@ -188,6 +170,15 @@ const LockedTvbPanel: React.FC<LockedTvbPanelProps> = ({
                     .sort((a, b) => Number(b[1] - a[1]))
                     .map(([addr, amt]) => (
                       <tr key={addr}>
+                        <td>
+                          <ButtonCustom
+                            variant="redSkyline"
+                            onClick={() => openAuditExplorer(selChain as ChainEnum, addr)}
+                            sx={{ minWidth: 36, padding: "6px", lineHeight: 0 }} // small, square-ish
+                          >
+                            <img src={explorerPng} alt="" width={34} height={34} />
+                          </ButtonCustom>
+                        </td>
                         <td
                           style={{
                             fontFamily: "monospace",
@@ -196,7 +187,7 @@ const LockedTvbPanel: React.FC<LockedTvbPanelProps> = ({
                         >
                           {addr}
                         </td>
-                        <td style={{ textAlign: "right", fontSize: "16px", fontWeight: "700" }}>
+                        <td style={{ textAlign: "center", fontSize: "16px", fontWeight: "700" }}>
                           {formatBigIntDecimalString(amt, 6)}
                         </td>
                       </tr>
@@ -215,7 +206,7 @@ const LockedTvbPanel: React.FC<LockedTvbPanelProps> = ({
         <Box className="audit-mb-8 audit-w-half-md">
           <Box className="audit-card">
             <Box className="audit-card-content audit-row">
-              <Typography>AP3X</Typography>
+              <Typography>{getTokenInfo(TokenEnum.APEX).label}</Typography>
               <Typography className="audit-amount">
                 {formatBigIntDecimalString(tvbGrandTotal, 6)}
               </Typography>

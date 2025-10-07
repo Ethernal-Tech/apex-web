@@ -168,12 +168,13 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
     },    
 }
 
-const CHAIN_URLS: {[key:string]: string} ={
-    [ChainEnum.Base]:'https://mainnet.base.org',
-    [ChainEnum.Bsc]:'https://bsc-dataseed.bnbchain.org'
+export const CHAIN_URLS: {[key:string]: string} ={
+    [ChainEnum.Nexus]:  'https://partner-rpc-1.nexus.route3.dev',
+    [ChainEnum.Base]:   'https://mainnet.base.org',
+    [ChainEnum.Bsc]:    'https://bsc-dataseed.bnbchain.org'
 }
 
-export const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boolean, isNativeExplorer?: boolean) => {
+export const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boolean, isNativeExplorer?: boolean, isTx = true) => {
     if (isLZBridging && !isNativeExplorer) {
         return `https://layerzeroscan.com/tx/${txHash}`
     }
@@ -196,10 +197,21 @@ export const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?
         case ChainEnum.Bsc:
         case ChainEnum.Nexus: {
             url = `${base}/tx/${txHash}`;
-            break;
+            if (isTx){
+                url = appSettings.isMainnet
+                    ? `${base}/transaction/${txHash}/summary/`
+                    : `${base}/transaction/hash/${txHash}`;
+                break;
+            }else{
+                url = appSettings.isMainnet
+                    ? `${base}/address/${txHash}`
+                    : `${base}/${txHash}`;
+                break;
+            }
         }
         case ChainEnum.Cardano: {
-            url = `${base}/transaction/${txHash}`;
+            url = isTx? `${base}/transaction/${txHash}`
+            : `${base}/address/${txHash}`;
             break;
         }
         default:
@@ -258,4 +270,27 @@ export const getTokenNameFromSettings = (srcChain: ChainEnum, dstChain: ChainEnu
     }
 
     return "";
+}
+
+export const skylineChains = (): ChainEnum[] => {
+	return [ChainEnum.Prime, ChainEnum.Cardano];
+};
+
+
+export function layerZeroChain(): ChainEnum[]{
+ return[
+    ChainEnum.Base,
+    ChainEnum.Bsc,
+    ChainEnum.Nexus
+ ]
+}
+
+export const openAuditExplorer = (chain: ChainEnum, address: string) => {
+    if (isEvmChain(chain)){
+        const url = getExplorerTxUrl(chain, address, true , false)
+        window.open(url, '_blank')
+    }else{
+        const url = getExplorerTxUrl(chain, address, false, false)
+        window.open(url, "_blank")
+    }
 }

@@ -48,7 +48,6 @@ export class SettingsService {
 			.map((x) => {
 				const subItems = x.split('::');
 				if (subItems.length < 4) {
-				if (subItems.length < 4) {
 					return;
 				}
 

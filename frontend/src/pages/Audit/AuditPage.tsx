@@ -8,14 +8,10 @@ import BasePage from "../base/BasePage"; // <-- add this import (adjust path if 
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import LockedTvbPanel from "../../components/Audit/SkylineAudit";
 import LayerZeroPanel from "../../components/Audit/LayerZeroAudit";
-import { getLayerZeroWrappedToken } from "../../settings/token";
+import { getLayerZeroWrappedToken, getTokenInfo } from "../../settings/token";
 import "../../audit.css";
+import { TokenEnum } from "../../features/enums";
 
-/* ---------- Types ---------- */
-type ChainsBig = Record<string, Record<string, Record<string, bigint>>>;
-type TvbAgg = Record<string, Record<string, bigint>>;
-
-/* ---------- Helpers ---------- */
 function sumToken(addrMap: Record<string, bigint>): bigint {
   let acc = BigInt(0);
   for (const v of Object.values(addrMap)) acc += v;
@@ -40,9 +36,9 @@ const AuditPage: React.FC = () => {
     (state: RootState) => state.settings.enabledChains as ChainEnum[]
   );
 
-  const chains = (lockedTokens?.chains ?? {}) as ChainsBig;
-  const tvbChains = (lockedTokens?.totalTransferred ?? {}) as TvbAgg;
-  const tvbLzChains = (lockedTokens?.totalTransferredLayerZero ?? {}) as TvbAgg;
+  const chains = lockedTokens.chains;
+  const tvbChains = lockedTokens.totalTransferred;
+  const tvbLzChains = lockedTokens.totalTransferredLayerZero;
 
   const { chainKeys, perChainTotals, tokenTotalsAllChains } = useMemo(() => {
     const chainKeys = Object.keys(chains);
@@ -52,8 +48,10 @@ const AuditPage: React.FC = () => {
       const totals = sumChain(tokenMap);
       perChainTotals[chain] = totals;
       for (const [token, amt] of Object.entries(totals)) {
+        if (chain !== ChainEnum.Cardano){
         tokenTotalsAllChains[token] =
           (tokenTotalsAllChains[token] ?? BigInt(0)) + amt;
+        }
       }
     }
     return { chainKeys, perChainTotals, tokenTotalsAllChains };

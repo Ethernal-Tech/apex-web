@@ -1,20 +1,20 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
-import { TotalSupply } from '../../features/types'
+import { TotalLockedLZ } from '../../features/types'
 
 export interface IChainState {
-    lockedTokens: TotalSupply[]
+    lockedTokens: bigint
 }
 
 const initialState: IChainState = {
-    lockedTokens: []
+    lockedTokens: BigInt(0)
 }
 
 const layerZeroLockedSlice = createSlice({
-    name: 'chain',
+    name: 'lockedTokensLZ',
     initialState,
     reducers: {
-        setLayerZeroLockedAction: (state, action: PayloadAction<TotalSupply[]>) => {
+        setLayerZeroLockedAction: (state, action: PayloadAction<bigint>) => {
             state.lockedTokens = action.payload
         },
     },
