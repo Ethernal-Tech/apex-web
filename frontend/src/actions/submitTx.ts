@@ -328,7 +328,7 @@ export const getLayerZeroTransferResponse = async function (
     settings: ISettingsState, srcChain: ChainEnum, dstChain: ChainEnum,
     fromAddr: string, toAddr: string, amount: string,
 ): Promise<LayerZeroTransferResponseDto> {
-    const validationErr = validateSubmitTxInputs(srcChain, dstChain, fromAddr, amount, false, settings);
+    const validationErr = validateSubmitTxInputs(srcChain, dstChain, toAddr, amount, false, settings);
     if (!!validationErr) {
         throw new Error(validationErr);
     }
