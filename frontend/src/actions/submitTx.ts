@@ -1,5 +1,5 @@
 import { bridgingTransactionSubmittedAction, layerZeroTransferAction } from "../pages/Transactions/action";
-import { CreateTransactionDto, CreateCardanoTransactionResponseDto, CreateEthTransactionResponseDto, TransactionSubmittedDto, ChainEnum, LayerZeroTransferResponseDto, LayerZeroTransferDto, LayerZeroChainSettingsDtoTxType } from "../swagger/apexBridgeApiService";
+import { CreateTransactionDto, CreateCardanoTransactionResponseDto, CreateEthTransactionResponseDto, TransactionSubmittedDto, ChainEnum, LayerZeroTransferResponseDto, LayerZeroTransferDto, TxTypeEnum } from "../swagger/apexBridgeApiService";
 import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
 import walletHandler from "../features/WalletHandler";
 import evmWalletHandler from "../features/EvmWalletHandler";
@@ -158,7 +158,7 @@ export const signAndSubmitEthTx = async (
 
 export const signAndSubmitLayerZeroTx = async (
     account: string,
-    txType: LayerZeroChainSettingsDtoTxType,
+    txType: TxTypeEnum,
     receiverAddr: string,
     createResponse: LayerZeroTransferResponseDto,
     updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
@@ -245,7 +245,7 @@ export const signAndSubmitLayerZeroTx = async (
 
 export const populateTxDetails = async (
     tx: Transaction, 
-    txType: LayerZeroChainSettingsDtoTxType,
+    txType: TxTypeEnum,
     opts: TxDetailsOptions = defaultTxDetailsOptions,
 ): Promise<Transaction> => {
     if (!evmWalletHandler.checkWallet()) {
@@ -268,7 +268,7 @@ export const populateTxDetails = async (
         }
     }
 
-    if (txType === LayerZeroChainSettingsDtoTxType.London) {
+    if (txType === TxTypeEnum.London) {
       console.log('retrieving fee history for calculating tx fee');
       const feeHistory = await retry(
           () => evmWalletHandler.getFeeHistory(5, 'latest', [90]), // give 90% tip
@@ -303,7 +303,7 @@ export const populateTxDetails = async (
 };
 
 export const estimateEthTxFee = async (
-    tx: Transaction, txType: LayerZeroChainSettingsDtoTxType, opts: TxDetailsOptions = defaultTxDetailsOptions,
+    tx: Transaction, txType: TxTypeEnum, opts: TxDetailsOptions = defaultTxDetailsOptions,
 ): Promise<bigint> => {
     if (!tx.gas || (!tx.gasPrice && !tx.maxFeePerGas)) {
         tx = await populateTxDetails(tx, txType, opts)

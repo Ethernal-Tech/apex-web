@@ -857,6 +857,12 @@ export interface ISettingsResponseDto {
     [key: string]: any;
 }
 
+/** Tx type */
+export enum TxTypeEnum {
+    Legacy = "Legacy",
+    London = "London",
+}
+
 export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
     /** Chain name */
     chain!: LayerZeroChainSettingsDtoChain;
@@ -864,8 +870,7 @@ export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
     oftAddress!: string;
     /** EVM chain ID */
     chainID!: number;
-    /** Tx type */
-    txType!: LayerZeroChainSettingsDtoTxType;
+    txType!: TxTypeEnum;
 
     [key: string]: any;
 
@@ -919,8 +924,7 @@ export interface ILayerZeroChainSettingsDto {
     oftAddress: string;
     /** EVM chain ID */
     chainID: number;
-    /** Tx type */
-    txType: LayerZeroChainSettingsDtoTxType;
+    txType: TxTypeEnum;
 
     [key: string]: any;
 }
@@ -2528,11 +2532,6 @@ export enum LayerZeroChainSettingsDtoChain {
     Cardano = "cardano",
     Base = "base",
     Bsc = "bsc",
-}
-
-export enum LayerZeroChainSettingsDtoTxType {
-    Legacy = "Legacy",
-    London = "London",
 }
 
 export class ApiException extends Error {

@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import { ChainEnum, LayerZeroChainSettingsDtoTxType, TransactionDataDto } from '../../../swagger/apexBridgeApiService';
+import { ChainEnum, TxTypeEnum, TransactionDataDto } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { TokenEnum } from '../../../features/enums';
@@ -102,13 +102,13 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
       if (transactionData.approvalTransaction) {
         approvalTxFee = await estimateEthTxFee(
           { ...transactionData.approvalTransaction, from: account },
-          settings.layerZeroChains[chain]?.txType || LayerZeroChainSettingsDtoTxType.Legacy,
+          settings.layerZeroChains[chain]?.txType || TxTypeEnum.Legacy,
         );
       }
 
       const baseTxFee = await estimateEthTxFee(
         { ...transactionData.populatedTransaction, from: account },
-        settings.layerZeroChains[chain]?.txType || LayerZeroChainSettingsDtoTxType.Legacy,
+        settings.layerZeroChains[chain]?.txType || TxTypeEnum.Legacy,
       )
       const totalTxFee = approvalTxFee + baseTxFee;
 

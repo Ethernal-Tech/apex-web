@@ -109,6 +109,7 @@ export class LayerZeroChainSettingsDto {
 	@ApiProperty({
 		description: 'Tx type',
 		enum: TxTypeEnum,
+		enumName: 'TxTypeEnum',
 	})
 	txType: TxTypeEnum;
 }

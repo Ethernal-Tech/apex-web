@@ -1,13 +1,13 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import appSettings from '../../settings/appSettings'
-import { LayerZeroChainSettingsDtoTxType, SettingsFullResponseDto } from '../../swagger/apexBridgeApiService'
+import { TxTypeEnum, SettingsFullResponseDto } from '../../swagger/apexBridgeApiService'
 
 export type CardanoChainsNativeTokens = {
 	[key: string]: { dstChainID: string; tokenName: string; }[];
 }
 
-export type LayerZeroChains = Record<string, { oftAddress: string; chainID: number, txType: LayerZeroChainSettingsDtoTxType }>;
+export type LayerZeroChains = Record<string, { oftAddress: string; chainID: number, txType: TxTypeEnum }>;
 
 export interface ISettingsState {
 	minUtxoChainValue: { [key: string]: string }

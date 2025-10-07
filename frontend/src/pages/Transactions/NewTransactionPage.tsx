@@ -8,7 +8,7 @@ import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import walletHandler from '../../features/WalletHandler';
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
-import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto, LayerZeroChainSettingsDtoTxType } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto, TxTypeEnum } from "../../swagger/apexBridgeApiService";
 import { getLayerZeroTransferResponse, signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx} from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import appSettings from "../../settings/appSettings";
@@ -209,7 +209,7 @@ function NewTransactionPage() {
 				const lzResponse = await getLayerZeroTransferResponse(settings, chain, destinationChain, account, toAddress, amount);
 				const response = await signAndSubmitLayerZeroTx(
 					account,
-					settings.layerZeroChains[chain]?.txType || LayerZeroChainSettingsDtoTxType.Legacy,
+					settings.layerZeroChains[chain]?.txType || TxTypeEnum.Legacy,
 					toAddress,
 					lzResponse,
 					updateLoadingState,
