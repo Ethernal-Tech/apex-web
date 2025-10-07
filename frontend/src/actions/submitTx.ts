@@ -7,7 +7,7 @@ import { Transaction } from 'web3-types';
 import { toApexBridgeName, toLayerZeroChainName } from "../settings/chain";
 import { isCurrencyBridgingAllowed } from "../settings/token";
 import { ISettingsState } from "../settings/settingsRedux";
-import { longRetryOptions, retry, shortRetryOptions } from "../utils/generalUtils";
+import { longRetryOptions, retry } from "../utils/generalUtils";
 import { SendTransactionOptions } from "web3/lib/commonjs/eth.exports";
 import { UpdateSubmitLoadingState } from "../utils/statusUtils";
 import { validateSubmitTxInputs } from "../utils/validationUtils";
@@ -88,14 +88,14 @@ export const estimateEthGas = async (tx: Transaction, isFallback: boolean) => {
         return BigInt(0);
     }
 
-    const filledTx = await retry(() => fillOutEthTx(tx, isFallback), shortRetryOptions.retryCnt, shortRetryOptions.waitTime)
+    const filledTx = await fillOutEthTx(tx, isFallback);
     const estimateTx = {
         ...filledTx,
     }
 
     let gas = BigInt(estimateTx.gas || 0);
     if (gas === BigInt(0)) {
-        gas = await retry(() => evmWalletHandler.estimateGas(estimateTx), shortRetryOptions.retryCnt, shortRetryOptions.waitTime);
+        gas = await evmWalletHandler.estimateGas(estimateTx);
     }
 
     return gas * filledTx.gasPrice;
@@ -175,9 +175,11 @@ export const signAndSubmitLayerZeroTx = async (
 
     if (transactionData.approvalTransaction) {
         console.log('processing layer zero approval tx...');
-        const tx: Transaction = await populateTxDetails({
-            from: account, ...transactionData.transactionData.approvalTransaction
-        }, txType, defaultTxDetailsOptions);
+        const tx: Transaction = await retry(
+            () => populateTxDetails({
+                from: account, ...transactionData.transactionData.approvalTransaction
+            }, txType, defaultTxDetailsOptions),
+            longRetryOptions.retryCnt, longRetryOptions.waitTime);
 
         updateLoadingState({ content: 'Signing and submitting the approval transaction...' })
 
@@ -191,9 +193,11 @@ export const signAndSubmitLayerZeroTx = async (
     }
 
     console.log('processing layer zero send tx...');
-    const sendTx: Transaction = await populateTxDetails({
-        from: account, ...transactionData.populatedTransaction,
-    }, txType, defaultTxDetailsOptions);
+    const sendTx: Transaction = await retry(() =>
+        populateTxDetails({
+            from: account, ...transactionData.populatedTransaction,
+        }, txType, defaultTxDetailsOptions),
+        longRetryOptions.retryCnt, longRetryOptions.waitTime);
     
     updateLoadingState({ content: 'Signing and submitting the bridging transaction...' })
 
@@ -249,10 +253,6 @@ export const populateTxDetails = async (
     txType: TxTypeEnum,
     opts: TxDetailsOptions = defaultTxDetailsOptions,
 ): Promise<Transaction> => {
-    if (!evmWalletHandler.checkWallet()) {
-        throw new Error('Wallet not connected.');
-    }
-
     const response = { ...tx };
 
     if (!tx.gas) {
@@ -262,7 +262,7 @@ export const populateTxDetails = async (
             console.log('gas for the transaction has been set to default value', opts.fixedLayerZeroGasLimit);
         } else {
             console.log('estimating gas for the transaction');
-            const gasLimit = await retry(() => evmWalletHandler.estimateGas(tx), longRetryOptions.retryCnt, longRetryOptions.waitTime);
+            const gasLimit = await evmWalletHandler.estimateGas(tx);
             console.log('gas for the transaction has been estimated', gasLimit);
             response.gas = gasLimit * opts.gasLimitPercMult / BigInt(100);
             response.gasLimit = response.gas;
@@ -276,7 +276,7 @@ export const populateTxDetails = async (
 
 const populateLegacyTxDetails = async (tx: Transaction, opts: TxDetailsOptions) => {
       console.log('retrieving gas price (legacy tx)');
-      const gasPrice = await retry(evmWalletHandler.getGasPrice, longRetryOptions.retryCnt, longRetryOptions.waitTime);
+      const gasPrice = await evmWalletHandler.getGasPrice();
       console.log('gas price (legacy tx) has been retrieved', gasPrice);
       tx.gasPrice = gasPrice * opts.feePercMult / BigInt(100);
 
@@ -285,10 +285,7 @@ const populateLegacyTxDetails = async (tx: Transaction, opts: TxDetailsOptions) 
 
 const populateLondonTxDetails = async (tx: Transaction, opts: TxDetailsOptions) => {
     console.log('retrieving fee history for calculating tx fee');
-    const feeHistory = await retry(
-        () => evmWalletHandler.getFeeHistory(5, 'latest', [90]), // give 90% tip
-        longRetryOptions.retryCnt, longRetryOptions.waitTime,
-    );
+    const feeHistory = await evmWalletHandler.getFeeHistory(5, 'latest', [90]); // give 90% tip
 
     const baseFeePerGasList = feeHistory.baseFeePerGas as unknown as bigint[];
     if (!baseFeePerGasList) {
@@ -312,6 +309,10 @@ const populateLondonTxDetails = async (tx: Transaction, opts: TxDetailsOptions) 
 export const estimateEthTxFee = async (
     tx: Transaction, txType: TxTypeEnum, opts: TxDetailsOptions = defaultTxDetailsOptions,
 ): Promise<bigint> => {
+    if (!evmWalletHandler.checkWallet()) {
+        throw new Error('Wallet not connected.');
+    }
+
     if (!tx.gas || (!tx.gasPrice && !tx.maxFeePerGas)) {
         tx = await populateTxDetails(tx, txType, opts)
     }
