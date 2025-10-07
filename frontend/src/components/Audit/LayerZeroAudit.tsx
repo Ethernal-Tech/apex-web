@@ -1,12 +1,17 @@
-import React, { useMemo} from "react";
+import React from "react";
 import { Box, Typography } from "@mui/material";
 import { isEvmChain } from "../../settings/chain";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
-import { getLayerZeroWrappedToken } from "../../settings/token";
+import { getLayerZeroWrappedToken, getTokenInfo } from "../../settings/token";
 import { formatBigIntDecimalString } from "../lockedTokens/LockedTokensComponent";
-import "../../audit.css"
+import "../../audit.css";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
+import { layerZeroChain, openAuditExplorer } from "../../utils/chainUtils";
+import ButtonCustom from "../Buttons/ButtonCustom";
+import explorerPng from "@../../../public/explorer.png";
+import { decodeTokenKey } from "../../utils/tokenUtils";
+import { TokenEnum } from "../../features/enums";
 
 type LayerZeroPanelProps = {
   lzPerChainTotals: Record<string, Record<string, bigint>>;
@@ -14,60 +19,82 @@ type LayerZeroPanelProps = {
   lzGrandTotal: bigint;
 };
 
-function decodeTokenKey(tokenKey: string): string {
-  if (tokenKey === "lovelace" || tokenKey === "amount") return "AP3X";
-  return tokenKey;
-}
-
 /* ---------------- Component ---------------- */
 const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
   lzPerChainTotals,
   lzTokenTotalsAllChains,
   lzGrandTotal,
 }) => {
-  const layerZeroLockedTokens = useSelector((state: RootState) => state.layerZeroLockedTokens);
-  const layerZeroSupply = layerZeroLockedTokens.lockedTokens;
+  const layerZeroLockedTokens = useSelector(
+    (state: RootState) => state.layerZeroLockedTokens
+  );
+  const layerZeroLocked = layerZeroLockedTokens.lockedTokens;
+  const { layerZeroChains } = useSelector((state: RootState) => state.settings);
   
-  const totalLayerZero = useMemo(() =>  {
-    let layerZeroSum = BigInt(0);
-    for (const v of layerZeroSupply) {
-      layerZeroSum +=v.raw;
-    }
-
-    return layerZeroSum
-  }, [layerZeroSupply])
-
   return (
     <Box className="audit-layout-2col">
       {/* LEFT — Token Supply (ERC-20) */}
       <Box>
-        <Typography className="audit-h2">Token Supply (ERC-20)</Typography>
+        <Typography className="audit-h2"> Locked Tokens</Typography>
 
         <Box className="audit-mb-8 audit-w-half-md">
           <Box className="audit-card">
             <Box className="audit-card-content audit-row">
-              <Typography>AP3X</Typography>
-              <Typography className="audit-amount">{formatBigIntDecimalString(totalLayerZero, 18)}</Typography>
+              <Typography>{getTokenInfo(TokenEnum.APEX).label}</Typography>
+              <Typography className="audit-amount">
+                {formatBigIntDecimalString(layerZeroLocked, 18)}
+              </Typography>
             </Box>
           </Box>
         </Box>
 
-        {/* By Chain -> two-per-row on md+ */}
-        <Typography className="audit-h2">By Chain</Typography>
-        <Box className="audit-grid-md-2 audit-gap-12">
-          {layerZeroSupply.map((row) => (
-            <Box key={row.chain} className="audit-card">
-              <Box className="audit-card-content">
-                <Typography className="audit-card-subtitle">
-                  {row.chain.toUpperCase()}
-                </Typography>
-                <Box className="audit-row audit-my-4" key={row.symbol}>
-                  <Typography>{row.symbol}</Typography>
-                  <Typography className="audit-amount">{row.formatted}</Typography>
+        <Typography className="audit-h2">
+          Layer Zero Chains Explorers
+        </Typography>
+        <Box className="audit-grid-3">
+          {layerZeroChain().map((chain) => {
+            const addr = layerZeroChains[chain]?.oftAddress;
+            return (
+              <Box key={chain} className="audit-card">
+                <Box className="audit-card-content">
+                  <Typography className="audit-card-subtitle">
+                    {chain.toUpperCase()}
+                  </Typography>
+
+                  {/* token label | explorer button (button fills full row height) */}
+                  <Box className="audit-row audit-row--fill audit-my-4">
+                    <Typography className="audit-token">
+                      {getLayerZeroWrappedToken(chain)}
+                    </Typography>
+
+                    <ButtonCustom
+                      variant="redSkyline"
+                      onClick={() => openAuditExplorer(chain, addr)}
+                      /* keep ButtonCustom as-is; stretch via sx */
+                      sx={{
+                        alignSelf: "stretch",
+                        height: "100%",
+                        minWidth: 36,
+                        p: "10px",
+                        lineHeight: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <img
+                        src={explorerPng}
+                        alt=""
+                        style={{ width: 30, height: 30 }}
+                      />
+                      {/* accessible name without aria-label */}
+                      <span className="sr-only">Open {chain} explorer</span>
+                    </ButtonCustom>
+                  </Box>
                 </Box>
               </Box>
-            </Box>
-          ))}
+            );
+          })}
         </Box>
       </Box>
 
@@ -78,7 +105,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
         <Box className="audit-mb-8 audit-w-half-md">
           <Box className="audit-card">
             <Box className="audit-card-content audit-row">
-              <Typography>AP3X</Typography>
+              <Typography></Typography>
               <Typography className="audit-amount">
                 {formatBigIntDecimalString(lzGrandTotal, 6)}
               </Typography>
@@ -94,7 +121,9 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
             .map(([tk, amt]) => (
               <Box key={tk} className="audit-card">
                 <Box className="audit-card-content audit-row">
-                  <Typography className="fw-700">{decodeTokenKey(tk)}</Typography>
+                  <Typography className="fw-700">
+                    {decodeTokenKey(tk)}
+                  </Typography>
                   <Typography className="audit-amount">
                     {formatBigIntDecimalString(amt, 6)}
                   </Typography>
@@ -125,7 +154,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
                       <Typography className="audit-dim">No data</Typography>
                     )}
                     {rows.map((r) => (
-                      <Box key={r.token} className="audit-row audit-my-4">
+                      <Box className="audit-row audit-my-4">
                         <Typography>
                           {getLayerZeroWrappedToken(ck as ChainEnum)}
                         </Typography>

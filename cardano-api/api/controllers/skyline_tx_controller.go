@@ -492,7 +492,6 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 			return nil, fmt.Errorf("failed to create tx provider. err: %w", err)
 		}
 
-		// Allowed token names (include ADA)
 		tokenNames := map[string]bool{wallet.AdaTokenName: true}
 		for _, nt := range cfg.ChainSpecific.NativeTokens {
 			tokenNames[nt.TokenName] = true

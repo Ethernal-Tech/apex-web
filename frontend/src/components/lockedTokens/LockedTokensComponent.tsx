@@ -51,8 +51,10 @@ export const formatBigIntDecimalString = (value: bigint, decimals: number = 6) =
 const LockedTokensComponent = () => {
   const lockedTokens = useSelector((state: RootState) => state.lockedTokens);
   const layerZeroLockedTokens = useSelector((state: RootState) => state.layerZeroLockedTokens);
-  const settings = useSelector((state: RootState) => state.settings);
+  const {layerZeroChains} = useSelector((state: RootState) => state.settings);
   const dispatch = useDispatch();
+
+  console.log("layerZERO CHAIN COMPONENT", layerZeroChains)
 
   useEffect(() => {
     // Call once immediately on mount
@@ -71,29 +73,27 @@ const LockedTokensComponent = () => {
 
   useEffect(() => {
     // Call once immediately on mount
-    fetchTotalSupplyAction(dispatch, settings.layerZeroChains);
+    fetchTotalSupplyAction(dispatch, layerZeroChains);
 
     // Then call periodically every 30 seconds
     const interval = setInterval(() => {
-      fetchTotalSupplyAction(dispatch, settings.layerZeroChains);
+      fetchTotalSupplyAction(dispatch, layerZeroChains);
     }, 30_000); // 30,000 ms = 30 seconds
 
     // Cleanup on component unmount
     return () => clearInterval(interval);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [layerZeroChains]);
+
+
+  const lockedTokensLZFormatted = useMemo(() => {
+    return to6Round(layerZeroLockedTokens.lockedTokens);
+  }, [layerZeroLockedTokens] )
 
 
   const chainsData = useMemo(() => {
     const chunks: string[] = [];
-
-    let layerZeroSum = BigInt(0);
-    for (const v of layerZeroLockedTokens.lockedTokens) {
-      layerZeroSum +=v.raw;
-    }
-
-    const layerZeroFormatted = to6Round(layerZeroSum);
 
     for (const [chainKey, tokenMap] of Object.entries(lockedTokens.chains)) {
       const chainEnum = toChainEnum(chainKey);
@@ -113,7 +113,7 @@ const LockedTokensComponent = () => {
         // Optional: skip zero amounts
         if (total === BigInt(0)) continue;
 
-        total += layerZeroFormatted;
+        total += lockedTokensLZFormatted;
 
         const formatted = formatBigIntDecimalString(total, 6);
 
@@ -141,7 +141,7 @@ const LockedTokensComponent = () => {
     }
 
     return chunks.join(" | ").trim();
-  }, [lockedTokens.chains, layerZeroLockedTokens.lockedTokens]);
+  }, [lockedTokens.chains, lockedTokensLZFormatted]);
 
   const transferredData = useMemo(() => {
     let outputValue = BigInt(0);

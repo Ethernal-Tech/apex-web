@@ -20,6 +20,8 @@ export const fetchAndUpdateSettingsAction = async (dispatch: Dispatch) => {
 
 		return settingsResp
 	}, RETRY_DELAY_MS)
+
+	console.log("FETCH AND UPDATE SETTINGS", settings)
 	
 	dispatch(setSettingsAction(settings));
 }

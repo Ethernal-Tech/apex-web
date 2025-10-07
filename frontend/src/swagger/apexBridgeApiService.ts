@@ -893,8 +893,6 @@ export enum TxTypeEnum {
 export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
     /** Chain name */
     chain!: LayerZeroChainSettingsDtoChain;
-    /** Chain RPC url */
-    rpcUrl!: string;
     /** Layer Zero OFT smart contract address */
     oftAddress!: string;
     /** EVM chain ID */
@@ -949,8 +947,6 @@ export class LayerZeroChainSettingsDto implements ILayerZeroChainSettingsDto {
 export interface ILayerZeroChainSettingsDto {
     /** Chain name */
     chain: LayerZeroChainSettingsDtoChain;
-    /** Chain RPC url */
-    rpcUrl: string;
     /** Layer Zero OFT smart contract address */
     oftAddress: string;
     /** EVM chain ID */
