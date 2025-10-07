@@ -1,8 +1,8 @@
 import Web3 from 'web3';
-import { Transaction } from 'web3-types';
+import { BlockNumberOrTag, Numbers, Transaction } from 'web3-types';
 import { toHex } from "web3-utils";
 import { ERC20_MIN_ABI } from './ABI';
-import { wait } from '../utils/generalUtils';
+import { shortRetryOptions, wait } from '../utils/generalUtils';
 import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
 
 type Wallet = {
@@ -17,11 +17,9 @@ export const EVM_SUPPORTED_WALLETS = [{
     version: 'N/A', // MetaMask does not provide API version directly
 }]
 
-const MAX_RETRY_COUNT = 5;
-const RETRY_WAIT_TIME = 1000;
-
 class EvmWalletHandler {
     private _enabled: boolean = false;
+    private web3: Web3 | undefined;
     private onAccountsChanged: (accounts: string[]) => Promise<void> = async () => undefined;
     private onChainChanged: (chainId: string) => Promise<void> = async () => undefined;
 
@@ -32,14 +30,16 @@ class EvmWalletHandler {
     };
 
     getWeb3 = (): Web3 | undefined => {
-        if (typeof window.ethereum === 'undefined') {
-            return;
+        if (this.web3 === undefined) {
+            if (typeof window.ethereum === 'undefined') {
+                return;
+            }
+
+            this.web3 = new Web3(window.ethereum);
+            this.web3.transactionBlockTimeout = 200;
         }
 
-        const web3 = new Web3(window.ethereum);
-        web3.transactionBlockTimeout = 200;
-
-        return web3;
+        return this.web3;
     }
 
     accountsChanged = async (accounts: string[]) => await this.onAccountsChanged(accounts);
@@ -99,12 +99,12 @@ class EvmWalletHandler {
 		}
 		catch (enableError: any) {
 			const enableErr = enableError?.data?.originalError ?? enableError;
-			if (retryCount < MAX_RETRY_COUNT && enableErr.code !== 4001) {
+			if (retryCount < shortRetryOptions.retryCnt && enableErr.code !== 4001) {
 				if (enableErr.code === 4902) {
 					wrongChain = true;
 				}
 				else {
-					await wait(RETRY_WAIT_TIME);
+					await wait(shortRetryOptions.waitTime);
 
 					return await this.forceChainWithRetry(expectedChainId, retryCount + 1);
 				}
@@ -126,7 +126,7 @@ class EvmWalletHandler {
                 throw new Error(`Failed to switch to network with ID: ${expectedChainId}. Try adding that network to the wallet first.`);
             }
 
-			await wait(RETRY_WAIT_TIME);
+			await wait(shortRetryOptions.waitTime);
 
 			return await this.forceChainWithRetry(expectedChainId, retryCount + 1);
 		}
@@ -152,14 +152,19 @@ class EvmWalletHandler {
         return await this.getWeb3()!.eth.net.getId();
     };
         
-    submitTx = async (tx:Transaction, opts?: SendTransactionOptions) =>{
+    submitTx = (tx:Transaction, opts?: SendTransactionOptions) =>{
         this._checkWalletAndThrow();
-        return await this.getWeb3()!.eth.sendTransaction(tx, undefined, opts);
+        return this.getWeb3()!.eth.sendTransaction(tx, undefined, opts);
     }
 
     estimateGas = async (tx:Transaction) =>{
         this._checkWalletAndThrow();
         return await this.getWeb3()!.eth.estimateGas(tx);
+    }
+
+    getFeeHistory = async (blockCount: Numbers, newestBlock: BlockNumberOrTag | undefined, rewardPercentiles: Numbers[]) =>{
+        this._checkWalletAndThrow();
+        return await this.getWeb3()!.eth.getFeeHistory(blockCount, newestBlock, rewardPercentiles);
     }
 
     getGasPrice = async () =>{

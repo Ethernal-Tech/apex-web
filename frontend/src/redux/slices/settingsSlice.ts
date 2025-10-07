@@ -1,13 +1,13 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import appSettings from '../../settings/appSettings'
-import { SettingsFullResponseDto } from '../../swagger/apexBridgeApiService'
+import { TxTypeEnum, SettingsFullResponseDto } from '../../swagger/apexBridgeApiService'
 
 export type CardanoChainsNativeTokens = {
 	[key: string]: { dstChainID: string; tokenName: string; }[];
 }
 
-export type LayerZeroChains = Record<string, { oftAddress: string; chainID: number }>;
+export type LayerZeroChains = Record<string, { oftAddress: string; chainID: number, txType: TxTypeEnum }>;
 
 export interface ISettingsState {
 	minUtxoChainValue: { [key: string]: string }
@@ -57,7 +57,7 @@ const settingsSlice = createSlice({
 			state.enabledChains = action.payload.enabledChains;
 			state.layerZeroChains = action.payload.layerZeroChains.reduce<LayerZeroChains>((acc, cfg) => {
 			const key = String(cfg.chain).toLowerCase();
-			acc[key] = { oftAddress: cfg.oftAddress, chainID: cfg.chainID };
+			acc[key] = { oftAddress: cfg.oftAddress, chainID: cfg.chainID, txType: cfg.txType };
 			return acc;
 			}, {});
 		},

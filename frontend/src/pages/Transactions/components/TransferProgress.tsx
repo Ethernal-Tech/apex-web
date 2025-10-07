@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom"
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../../../swagger/apexBridgeApiService"
 import { FunctionComponent, SVGProps, useEffect, useMemo, useState } from "react"
 import { capitalizeWord } from "../../../utils/generalUtils"
-import { openExplorer } from "../../../utils/chainUtils"
+import { getExplorerUrl, openExplorer } from "../../../utils/chainUtils"
 // import {ReactComponent as ErrorIcon} from "../../../assets/bridge-status-icons/error.svg"
 
 import {ReactComponent as DoneIcon} from "../../../assets/bridge-status-icons/step-done1.svg"
@@ -351,6 +351,7 @@ const TransferProgress = ({
                 <ButtonCustom  
                     variant={appSettings.isSkyline ? "whiteSkyline" : "white"} 
                     onClick={onOpenExplorer}
+                    disabled={!getExplorerUrl(tx)}
                     sx={{ gridColumn:'span 1', textTransform:'uppercase'}}>
                     View Explorer
                 </ButtonCustom>

@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import { ChainEnum } from '../../../swagger/apexBridgeApiService';
+import { ChainEnum, TxTypeEnum, TransactionDataDto } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { TokenEnum } from '../../../features/enums';
@@ -15,15 +15,16 @@ import { useSupporedSourceLZTokenOptions } from '../utils';
 import { getChainInfo } from '../../../settings/chain';
 import { getTokenInfo, isCurrencyBridgingAllowed, isWrappedToken } from '../../../settings/token';
 import FeeInformation from './FeeInformation';
-import evmWalletHandler from '../../../features/EvmWalletHandler';
 import { estimateEthTxFee, getLayerZeroTransferResponse } from '../../../actions/submitTx';
+import SubmitLoading from './SubmitLoading';
+import { SubmitLoadingState } from '../../../utils/statusUtils';
 
 type BridgeInputType = {
   bridgeTxFee: string
   setBridgeTxFee: (val: string) => void
   resetBridgeTxFee: () => void
   submit: (address: string, amount: string) => Promise<void>
-  loading?: boolean;
+  loadingState: SubmitLoadingState | undefined;
 }
 
 const calculateMaxAmountToken = (
@@ -51,7 +52,7 @@ const calculateMaxAmountCurrency = (
   return BigInt(totalDfmBalance[sourceToken] || '0');
 }
 
-const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, loading }: BridgeInputType) => {
+const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, loadingState }: BridgeInputType) => {
   const [destinationAddr, setDestinationAddr] = useState('');
   const [amount, setAmount] = useState('')
   const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
@@ -71,24 +72,13 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
       return;
     }
 
+    let transactionData: TransactionDataDto
+
     try {
       const amountDfm = convertApexToDfm(amount || '0', chain);
       const lzResponse = await getLayerZeroTransferResponse(settings, chain, destinationChain, account, destinationAddr, amountDfm);
 
-      const { transactionData } = lzResponse;
-      const from = await evmWalletHandler.getAddress();
-
-      let approvalTxFee: bigint = BigInt(0);
-
-      if (transactionData.approvalTransaction) {
-        approvalTxFee = await estimateEthTxFee({ ...transactionData.approvalTransaction, from });
-      }
-
-      const baseTxFee = await estimateEthTxFee({ ...transactionData.populatedTransaction, from })
-      const totalTxFee = approvalTxFee + baseTxFee;
-
-      // TODO: convert from wei to DFM?
-      setUserWalletFee(totalTxFee.toString(10));
+      transactionData = lzResponse.transactionData;
 
       if (!isCurrencyBridgingAllowed(chain, destinationChain)) {
         setBridgeTxFee(transactionData.populatedTransaction.value)
@@ -97,14 +87,35 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
         const valueBig = BigInt(transactionData.populatedTransaction.value);
         setBridgeTxFee((valueBig - amount).toString(10));
       }
+    }
+    catch (e) {
+      console.log('error while calculating bridging fee', e)
+      setUserWalletFee(undefined);
+      setBridgeTxFee("");
 
       return;
+    }
+
+    try {
+      let approvalTxFee: bigint = BigInt(0);
+
+      if (transactionData.approvalTransaction) {
+        approvalTxFee = await estimateEthTxFee(
+          { ...transactionData.approvalTransaction, from: account },
+          settings.layerZeroChains[chain]?.txType || TxTypeEnum.Legacy,
+        );
+      }
+
+      const baseTxFee = await estimateEthTxFee(
+        { ...transactionData.populatedTransaction, from: account },
+        settings.layerZeroChains[chain]?.txType || TxTypeEnum.Legacy,
+      )
+      const totalTxFee = approvalTxFee + baseTxFee;
+
+      setUserWalletFee(totalTxFee.toString(10));
     } catch (e) {
       console.log('error while calculating wallet fee', e)
     }
-
-    setUserWalletFee(undefined);
-    setBridgeTxFee("");
   }, [destinationAddr, amount, chain, destinationChain, sourceToken, settings, account, setBridgeTxFee]);
 
   const setSourceTokenCallback = useCallback((token: TokenEnum) => {
@@ -165,7 +176,7 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
   const overByBalance = enteredDfm > maxAmount;
 
   const disableMoveFunds =
-    loading ||
+    !!loadingState ||
     maxAmount < 0 ||        // you already had this
     isZero ||               // prevent empty/zero submits
     overByBalance           // entered > wallet balance (minus fees)
@@ -182,7 +193,7 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
             sx={{ width: '100%' }}
             text={destinationAddr}
             setText={setDestinationAddr}
-            disabled={loading}
+            disabled={!!loadingState}
             id="dest-addr"
           />
         </Box>
@@ -216,7 +227,7 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
           currencyMaxAmount={currencyMaxAmount}
           text={amount}
           setAmount={setAmount}
-          disabled={loading}
+          disabled={!!loadingState}
           sx={{
             gridColumn: 'span 1',
             borderBottom: '2px solid',
@@ -240,9 +251,23 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
           }}
         />
 
+        {!!loadingState &&
+            <Box 
+              sx={{
+                gridColumn:'span 2',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+                <SubmitLoading loadingState={loadingState}/>
+            </Box>
+        }
+
         <ButtonCustom
           onClick={onDiscard}
-          disabled={loading}
+          disabled={!!loadingState}
           variant="red"
           sx={{
             gridColumn: 'span 1',
@@ -263,8 +288,6 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
         >
           Move funds
         </ButtonCustom>
-
-
       </Box>
     </Box>
   )
