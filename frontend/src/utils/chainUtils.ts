@@ -152,7 +152,7 @@ export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: Cardano
 }
 
 const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]: string}} = {
-     mainnet: {
+    mainnet: {
         [ChainEnum.Prime]: 'https://apexscan.org/en',
         [ChainEnum.Vector]: '',
         [ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
@@ -161,8 +161,8 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
         [ChainEnum.Bsc]: 'https://bscscan.com',
     },
     testnet: {
-        [ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
-        [ChainEnum.Vector]: '',
+        [ChainEnum.Prime]: 'https://beta-explorer.prime.testnet.apexfusion.org/en',
+        [ChainEnum.Vector]: 'https://explorer.vector.testnet.apexfusion.org',
         [ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
         [ChainEnum.Cardano]: 'https://preview.cardanoscan.io',
     },    
@@ -179,11 +179,12 @@ export const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?
 
     let url
     switch (chain) {
-        case ChainEnum.Vector:
+        case ChainEnum.Vector: {
+            url = `${base}/transaction/hash/${txHash}`;
+            break;
+        }
         case ChainEnum.Prime: {
-            url = appSettings.isMainnet
-                ? `${base}/transaction/${txHash}/summary/`
-                : `${base}/transaction/hash/${txHash}`;
+            url = `${base}/transaction/${txHash}/summary/`;
             break;
         }
         case ChainEnum.Base:

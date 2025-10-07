@@ -119,6 +119,8 @@ export const signAndSubmitEthTx = async (
     updateLoadingState({ content: 'Waiting for transaction receipt...', txHash: txHash.toString() })
   }
 
+  console.log('submitting eth tx...', tx);
+
   const submitPromise = evmWalletHandler.submitTx(tx);
   submitPromise.on('transactionHash', onTxHash)
 
