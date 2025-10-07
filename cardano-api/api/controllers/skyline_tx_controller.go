@@ -505,6 +505,7 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 			if _, ok := perAddr[addr]; !ok {
 				perAddr[addr] = map[string]*big.Int{}
 			}
+
 			if _, ok := perAddr[addr][token]; !ok {
 				perAddr[addr][token] = big.NewInt(0)
 			}
@@ -530,7 +531,9 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 					if !tokenNames[name] {
 						continue
 					}
+
 					ensure(addr, name)
+
 					perAddr[addr][name].Add(perAddr[addr][name], new(big.Int).SetUint64(t.Amount))
 				}
 			}
@@ -538,11 +541,13 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 
 		// Transpose to token → address → string
 		out := map[string]map[string]string{}
+
 		for addr, tokens := range perAddr {
 			for token, amt := range tokens {
 				if _, ok := out[token]; !ok {
 					out[token] = map[string]string{}
 				}
+
 				out[token][addr] = amt.String()
 			}
 		}
