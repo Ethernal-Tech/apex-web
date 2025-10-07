@@ -268,39 +268,45 @@ export const populateTxDetails = async (
         }
     }
 
-    if (txType === TxTypeEnum.London) {
-      console.log('retrieving fee history for calculating tx fee');
-      const feeHistory = await retry(
-          () => evmWalletHandler.getFeeHistory(5, 'latest', [90]), // give 90% tip
-          longRetryOptions.retryCnt, longRetryOptions.waitTime,
-      );
-      const baseFeePerGasList = feeHistory.baseFeePerGas as unknown as bigint[];
-      if (!baseFeePerGasList) {
-        throw new Error('feeHistory.baseFeePerGas not defined')
-      }
+    return txType === TxTypeEnum.London
+        ? populateLondonTxDetails(response, opts)
+        : populateLegacyTxDetails(response, opts);
+};
 
-      const baseFee = baseFeePerGasList.reduce((a, b) => a + b, BigInt(0)) / BigInt(baseFeePerGasList.length);
-      let tipCap = feeHistory.reward.reduce((a, b) => a + BigInt(b[0]), BigInt(0)) / BigInt(feeHistory.reward.length);
-      if (tipCap === BigInt(0)) {
-          tipCap = opts.defaultTipCap;
-      }
-
-      console.log('fee history for calculating tx fee has been retrieved', 'tipCap', tipCap, 'baseFee', baseFee);
-
-      response.maxPriorityFeePerGas = tipCap;
-      response.maxFeePerGas = baseFee * opts.feePercMult / BigInt(100) + tipCap;
-
-      return response
-    } else {
-      // Legacy fallback
+const populateLegacyTxDetails = async (tx: Transaction, opts: TxDetailsOptions) => {
       console.log('retrieving gas price (legacy tx)');
       const gasPrice = await retry(evmWalletHandler.getGasPrice, longRetryOptions.retryCnt, longRetryOptions.waitTime);
       console.log('gas price (legacy tx) has been retrieved', gasPrice);
-      response.gasPrice = gasPrice * opts.feePercMult / BigInt(100);
+      tx.gasPrice = gasPrice * opts.feePercMult / BigInt(100);
+
+      return tx;
+}
+
+const populateLondonTxDetails = async (tx: Transaction, opts: TxDetailsOptions) => {
+    console.log('retrieving fee history for calculating tx fee');
+    const feeHistory = await retry(
+        () => evmWalletHandler.getFeeHistory(5, 'latest', [90]), // give 90% tip
+        longRetryOptions.retryCnt, longRetryOptions.waitTime,
+    );
+
+    const baseFeePerGasList = feeHistory.baseFeePerGas as unknown as bigint[];
+    if (!baseFeePerGasList) {
+        throw new Error('feeHistory.baseFeePerGas not defined')
     }
 
-    return response;
-};
+    const baseFee = baseFeePerGasList.reduce((a, b) => a + b, BigInt(0)) / BigInt(baseFeePerGasList.length);
+    let tipCap = feeHistory.reward.reduce((a, b) => a + BigInt(b[0]), BigInt(0)) / BigInt(feeHistory.reward.length);
+    if (tipCap === BigInt(0)) {
+        tipCap = opts.defaultTipCap;
+    }
+
+    console.log('fee history for calculating tx fee has been retrieved', 'tipCap', tipCap, 'baseFee', baseFee);
+
+    tx.maxPriorityFeePerGas = tipCap;
+    tx.maxFeePerGas = baseFee * opts.feePercMult / BigInt(100) + tipCap;
+
+    return tx;
+}
 
 export const estimateEthTxFee = async (
     tx: Transaction, txType: TxTypeEnum, opts: TxDetailsOptions = defaultTxDetailsOptions,
