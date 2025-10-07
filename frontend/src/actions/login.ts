@@ -18,28 +18,37 @@ import { setChainAction } from '../redux/slices/chainSlice';
 import { NavigateFunction } from 'react-router-dom';
 import { HOME_ROUTE } from '../pages/PageRouter';
 import { setAccountInfoAction } from '../redux/slices/accountInfoSlice';
-import { isEvmChain } from '../settings/chain';
+import { getSrcChains, isEvmChain } from '../settings/chain';
+import { ISettingsState } from '../redux/slices/settingsSlice';
 
 let onLoadCalled = false;
 
 const checkAndSetEvmData = async (
 	selectedWalletName: string,
-	chain: ChainEnum,
+	srcChain: ChainEnum,
+	settings: ISettingsState,
 	dispatch: Dispatch,
 ) => {
 	const networkId = await evmWalletHandler.getNetworkId();
 	const network = fromEvmNetworkIdToNetwork(networkId);
 	if (!network) {
+		const expectedNetworkId = fromChainToNetworkId(srcChain);
 		throw new Error(
-			`Invalid networkId: ${networkId}. Expected networkId: ${fromChainToNetworkId(chain)}. Please select network with networkId: ${fromChainToNetworkId(chain)} in your wallet.`,
+			`Invalid networkId: ${networkId}. Expected networkId: ${expectedNetworkId}. Please select network with networkId: ${expectedNetworkId} in your wallet.`,
 		);
 	}
 
-	if (!checkChainCompatibility(chain, network, networkId)) {
+	if (!checkChainCompatibility(srcChain, network, networkId)) {
+		const expectedNetwork = fromChainToNetworkId(srcChain);
 		throw new Error(
-			`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`,
+			`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`,
 		);
 	}
+
+	if (!getSrcChains(settings).some((x) => x === srcChain)) {
+		throw new Error(`Chain: ${srcChain} not supported.`);
+	}
+
 	const account = await evmWalletHandler.getAddress();
 	if (!account) {
 		throw new Error('No accounts connected');
@@ -58,11 +67,17 @@ const checkAndSetEvmData = async (
 
 const onEvmAccountsChanged = async (
 	selectedWalletName: string,
-	chain: ChainEnum,
+	srcChain: ChainEnum,
+	settings: ISettingsState,
 	dispatch: Dispatch,
 ): Promise<void> => {
 	try {
-		await checkAndSetEvmData(selectedWalletName, chain, dispatch);
+		await checkAndSetEvmData(
+			selectedWalletName,
+			srcChain,
+			settings,
+			dispatch,
+		);
 	} catch (e) {
 		const we = `Error on evm accounts changed. ${e}`;
 		console.log(we);
@@ -74,20 +89,31 @@ const onEvmAccountsChanged = async (
 
 const enableEvmWallet = async (
 	selectedWalletName: string,
-	chain: ChainEnum,
+	srcChain: ChainEnum,
+	settings: ISettingsState,
 	dispatch: Dispatch,
 ) => {
-	const expectedChainId = fromChainToNetworkId(chain);
+	const expectedChainId = fromChainToNetworkId(srcChain);
 	if (!expectedChainId) {
-		throw new Error(`Chain ${chain} not supported.`);
+		throw new Error(`Chain ${srcChain} not supported.`);
 	}
 
 	await evmWalletHandler.enable(
 		BigInt(expectedChainId),
 		(_: string[]) =>
-			onEvmAccountsChanged(selectedWalletName, chain, dispatch),
+			onEvmAccountsChanged(
+				selectedWalletName,
+				srcChain,
+				settings,
+				dispatch,
+			),
 		(_: string) =>
-			onEvmAccountsChanged(selectedWalletName, chain, dispatch),
+			onEvmAccountsChanged(
+				selectedWalletName,
+				srcChain,
+				settings,
+				dispatch,
+			),
 	);
 	const success = evmWalletHandler.checkWallet();
 
@@ -95,14 +121,15 @@ const enableEvmWallet = async (
 		throw new Error('Failed to connect to wallet.');
 	}
 
-	await checkAndSetEvmData(selectedWalletName, chain, dispatch);
+	await checkAndSetEvmData(selectedWalletName, srcChain, settings, dispatch);
 
 	return true;
 };
 
 const enableCardanoWallet = async (
 	selectedWalletName: string,
-	chain: ChainEnum,
+	srcChain: ChainEnum,
+	settings: ISettingsState,
 	dispatch: Dispatch,
 ) => {
 	await walletHandler.enable(selectedWalletName);
@@ -115,15 +142,21 @@ const enableCardanoWallet = async (
 	const networkId = await walletHandler.getNetworkId();
 	const network = await walletHandler.getNetwork();
 	if (!network) {
+		const expectedNetwork = fromChainToNetwork(srcChain);
 		throw new Error(
-			`Invalid network: ${network}. Expected network: ${fromChainToNetwork(chain)}. Please select ${fromChainToNetwork(chain)} network in your wallet.`,
+			`Invalid network: ${network}. Expected network: ${expectedNetwork}. Please select ${expectedNetwork} network in your wallet.`,
 		);
 	}
 
-	if (!checkChainCompatibility(chain, network, networkId)) {
+	if (!checkChainCompatibility(srcChain, network, networkId)) {
+		const expectedNetwork = fromChainToNetwork(srcChain);
 		throw new Error(
-			`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${fromChainToNetwork(chain)}. Please switch your wallet to ${fromChainToNetwork(chain)} and try again.`,
+			`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`,
 		);
+	}
+
+	if (!getSrcChains(settings).some((x) => x === srcChain)) {
+		throw new Error(`Chain: ${srcChain} not supported.`);
 	}
 
 	const account = await walletHandler.getChangeAddress();
@@ -143,13 +176,19 @@ const enableCardanoWallet = async (
 
 const enableWallet = async (
 	selectedWalletName: string,
-	chain: ChainEnum,
+	srcChain: ChainEnum,
+	settings: ISettingsState,
 	dispatch: Dispatch,
 ) => {
 	// 1. nexus (evm metamask) wallet login handling
-	if (isEvmChain(chain)) {
+	if (isEvmChain(srcChain)) {
 		try {
-			return await enableEvmWallet(selectedWalletName, chain, dispatch);
+			return await enableEvmWallet(
+				selectedWalletName,
+				srcChain,
+				settings,
+				dispatch,
+			);
 		} catch (e) {
 			console.log(e);
 			toast.error(`${e}`);
@@ -161,7 +200,12 @@ const enableWallet = async (
 
 	// 2. prime and vector (cardano eternl) wallet login handling
 	try {
-		return await enableCardanoWallet(selectedWalletName, chain, dispatch);
+		return await enableCardanoWallet(
+			selectedWalletName,
+			srcChain,
+			settings,
+			dispatch,
+		);
 	} catch (e) {
 		console.log(e);
 		toast.error(`${e}`);
@@ -173,11 +217,12 @@ const enableWallet = async (
 
 const connectWallet = async (
 	wallet: string,
-	chain: ChainEnum,
+	srcChain: ChainEnum,
+	settings: ISettingsState,
 	dispatch: Dispatch,
 ) => {
 	dispatch(setConnectingAction(true));
-	const success = await enableWallet(wallet, chain, dispatch);
+	const success = await enableWallet(wallet, srcChain, settings, dispatch);
 	dispatch(setConnectingAction(false));
 
 	return success;
@@ -185,7 +230,8 @@ const connectWallet = async (
 
 export const onLoad = async (
 	selectedWalletName: string,
-	chain: ChainEnum,
+	srcChain: ChainEnum,
+	settings: ISettingsState,
 	dispatch: Dispatch,
 ) => {
 	if (onLoadCalled) {
@@ -194,18 +240,24 @@ export const onLoad = async (
 
 	onLoadCalled = true;
 
-	const success = await connectWallet(selectedWalletName, chain, dispatch);
+	const success = await connectWallet(
+		selectedWalletName,
+		srcChain,
+		settings,
+		dispatch,
+	);
 	!success && logout(dispatch);
 };
 
 export const login = async (
-	chain: ChainEnum,
+	srcChain: ChainEnum,
 	navigate: NavigateFunction,
+	settings: ISettingsState,
 	dispatch: Dispatch,
 ) => {
 	let wallet;
 
-	if (isEvmChain(chain)) {
+	if (isEvmChain(srcChain)) {
 		const wallets = evmWalletHandler.getInstalledWallets();
 		wallet = wallets.length > 0 ? wallets[0].name : undefined;
 	} else {
@@ -214,7 +266,7 @@ export const login = async (
 	}
 
 	if (!wallet) {
-		const supportedWallets = isEvmChain(chain)
+		const supportedWallets = isEvmChain(srcChain)
 			? EVM_SUPPORTED_WALLETS
 			: SUPPORTED_WALLETS;
 		toast.error(
@@ -223,10 +275,10 @@ export const login = async (
 		return false;
 	}
 
-	const success = await connectWallet(wallet, chain, dispatch);
+	const success = await connectWallet(wallet, srcChain, settings, dispatch);
 
 	if (success) {
-		dispatch(setChainAction(chain));
+		dispatch(setChainAction(srcChain));
 		navigate(HOME_ROUTE);
 	}
 
