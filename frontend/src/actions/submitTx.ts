@@ -183,7 +183,7 @@ export const signAndSubmitLayerZeroTx = async (
         console.log('submitting layer zero approval tx...', tx);
         const receipt = await evmWalletHandler.submitTx(tx, opts);
         if (receipt.status !== BigInt(1)) {
-            throw new Error('send transaction has failed. receipt status unsuccessful');
+            throw new Error('approval transaction has failed. receipt status unsuccessful');
         }
 
         console.log('layer zero approval tx has been submitted');
