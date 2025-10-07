@@ -112,7 +112,6 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
       )
       const totalTxFee = approvalTxFee + baseTxFee;
 
-      // TODO: convert from wei to DFM?
       setUserWalletFee(totalTxFee.toString(10));
     } catch (e) {
       console.log('error while calculating wallet fee', e)
