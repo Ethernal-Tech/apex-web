@@ -6,7 +6,7 @@ import {
 	LockedTokensResponse,
 	TransferredTokensByDay,
 } from './lockedTokens.dto';
-import { GroupByTimePeriod } from 'src/common/enum';
+import { BridgingModeEnum, GroupByTimePeriod } from 'src/common/enum';
 
 @ApiTags('LockedTokens')
 @Controller('lockedTokens')
@@ -18,6 +18,11 @@ export class LockedTokensController {
 		description:
 			'Provide information to users about the amount of locked tokens',
 	})
+	@ApiQuery({
+		name: 'allowedBridgingModes',
+		required: false,
+		description: 'all suported bridging modes that goes into sum',
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'OK - Get locked tokens amount.',
@@ -25,14 +30,22 @@ export class LockedTokensController {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	async get(): Promise<LockedTokensDto> {
-		const chains = (await this.lockedTokensService.getLockedTokens()).chains;
-		const totalTransfered = (
-			await this.lockedTokensService.sumTransferredTokensPerChain()
-		).chains;
+	async get(
+		@Query('allowedBridgingModes')
+		allowedBridgingModes: BridgingModeEnum[] = [
+			BridgingModeEnum.Skyline,
+			BridgingModeEnum.LayerZero,
+		],
+	): Promise<LockedTokensDto> {
+		const lockedTokens = await this.lockedTokensService.getLockedTokens();
+		const totalTransfered =
+			await this.lockedTokensService.sumTransferredTokensPerChain(
+				allowedBridgingModes,
+			);
+
 		return {
-			chains,
-			totalTransfered,
+			chains: lockedTokens.chains,
+			totalTransfered: totalTransfered.chains,
 		};
 	}
 

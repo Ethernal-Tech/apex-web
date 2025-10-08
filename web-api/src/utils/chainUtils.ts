@@ -5,8 +5,8 @@ import {
 } from 'src/common/enum';
 import { CardanoNetworkType } from './Address/types';
 import {
-	BridgingSettingsDto,
 	SettingsFullResponseDto,
+	SettingsResponseDto,
 } from 'src/settings/settings.dto';
 
 const NEXUS_TESTNET_CHAIN_ID = BigInt(9070);
@@ -75,18 +75,26 @@ export const getBridgingSettings = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
 	fullSettings: SettingsFullResponseDto,
-): BridgingSettingsDto | undefined {
+): SettingsResponseDto | undefined {
 	const settingsReactor =
-		fullSettings.settingsPerMode[BridgingModeEnum.Reactor].bridgingSettings;
+		fullSettings.settingsPerMode[BridgingModeEnum.Reactor];
 	const settingsSkyline =
-		fullSettings.settingsPerMode[BridgingModeEnum.Skyline].bridgingSettings;
+		fullSettings.settingsPerMode[BridgingModeEnum.Skyline];
 
 	if (
-		isAllowedDirection(srcChain, dstChain, settingsReactor.allowedDirections)
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			settingsReactor.bridgingSettings.allowedDirections,
+		)
 	) {
 		return settingsReactor;
 	} else if (
-		isAllowedDirection(srcChain, dstChain, settingsSkyline.allowedDirections)
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			settingsSkyline.bridgingSettings.allowedDirections,
+		)
 	) {
 		return settingsSkyline;
 	}
@@ -97,7 +105,7 @@ export const getBridgingMode = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
 	fullSettings: SettingsFullResponseDto,
-): BridgingModeEnum {
+): BridgingModeEnum | undefined {
 	const settingsReactor =
 		fullSettings.settingsPerMode[BridgingModeEnum.Reactor].bridgingSettings;
 	const settingsSkyline =
@@ -112,5 +120,14 @@ export const getBridgingMode = function (
 	) {
 		return BridgingModeEnum.Skyline;
 	}
-	return BridgingModeEnum.LayerZero;
+
+	if (
+		srcChain != dstChain &&
+		fullSettings.layerZeroChains.some((x) => x.chain == srcChain) &&
+		fullSettings.layerZeroChains.some((x) => x.chain == dstChain)
+	) {
+		return BridgingModeEnum.LayerZero;
+	}
+
+	return undefined;
 };

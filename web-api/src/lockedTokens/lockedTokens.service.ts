@@ -15,13 +15,14 @@ import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entit
 import { Repository } from 'typeorm';
 import {
 	BridgingModeEnum,
-	ChainApexBridgeEnum,
+	ChainEnum,
 	GroupByTimePeriod,
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SettingsService } from 'src/settings/settings.service';
+import { getBridgingMode, getBridgingSettings } from 'src/utils/chainUtils';
 
 @Injectable()
 export class LockedTokensService {
@@ -71,7 +72,9 @@ export class LockedTokensService {
 		}
 	}
 
-	public async sumTransferredTokensPerChain(): Promise<LockedTokensResponse> {
+	public async sumTransferredTokensPerChain(
+		allowedBridgingModes: BridgingModeEnum[],
+	): Promise<LockedTokensResponse> {
 		const cacheKey = 'transferredTokensPerChainNestedMap';
 		const cached = await this.cacheManager.get<LockedTokensResponse>(cacheKey);
 
@@ -79,49 +82,66 @@ export class LockedTokensService {
 			return cached;
 		}
 
-		const chains = Object.values(ChainApexBridgeEnum);
+		const chains = Object.values(ChainEnum);
 		const result = new LockedTokensResponse();
 		result.chains = {};
 
-		for (const chain of chains) {
-			// Always query amountSum
-			const { amountSum } = await this.bridgeTransactionRepository
-				.createQueryBuilder('tx')
-				.select('SUM(tx.amount)', 'amountSum')
-				.where('tx.status = :status', {
-					status: TransactionStatusEnum.ExecutedOnDestination,
-				})
-				.andWhere('tx.originChain = :chain', { chain })
-				.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
-				.getRawOne();
+		for (const srcChain of chains) {
+			const chainResult: Record<string, bigint> = {};
 
-			const tokens =
-				this.settingsService.SettingsResponse.settingsPerMode[
-					BridgingModeEnum.Skyline
-				].cardanoChainsNativeTokens[chain];
+			for (const dstChain of chains) {
+				const bridgingMode = getBridgingMode(
+					srcChain,
+					dstChain,
+					this.settingsService.SettingsResponse,
+				);
+				if (!bridgingMode || !allowedBridgingModes.includes(bridgingMode)) {
+					continue;
+				}
 
-			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
+				const isLayerZero = bridgingMode == BridgingModeEnum.LayerZero;
+				const amount = await this.getAggregatedSum(
+					srcChain,
+					dstChain,
+					'amount',
+					isLayerZero,
+				);
 
-			const chainResult: Record<string, string> = {
-				amount: amountSum,
-			};
+				chainResult['amount'] =
+					(chainResult['amount'] || BigInt(0)) + BigInt(amount || '0');
 
-			// ✅ Only query nativeSum if tokenName exists and is non-empty
-			if (tokenName) {
-				const { nativeSum } = await this.bridgeTransactionRepository
-					.createQueryBuilder('tx')
-					.select('SUM(tx.nativeTokenAmount)', 'nativeSum')
-					.where('tx.status = :status', {
-						status: TransactionStatusEnum.ExecutedOnDestination,
-					})
-					.andWhere('tx.originChain = :chain', { chain })
-					.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
-					.getRawOne();
+				const settings = getBridgingSettings(
+					srcChain,
+					dstChain,
+					this.settingsService.SettingsResponse,
+				);
+				const token = settings?.cardanoChainsNativeTokens[srcChain]?.find(
+					(x) => x.dstChainID === dstChain,
+				);
 
-				chainResult[tokenName] = nativeSum;
+				if (!!token) {
+					const tokenName = token.tokenName.trim();
+					const tokenAmount = await this.getAggregatedSum(
+						srcChain,
+						dstChain,
+						'nativeTokenAmount',
+						isLayerZero,
+					);
+					chainResult[tokenName] =
+						(chainResult[tokenName] || BigInt(0)) + BigInt(tokenAmount || '0');
+				}
 			}
 
-			result.chains[chain] = chainResult;
+			const entries = Object.entries(chainResult);
+			if (entries.length > 0) {
+				result.chains[srcChain] = entries.reduce(
+					(prev, [tokenName, value]) => {
+						prev[tokenName] = value.toString();
+						return prev;
+					},
+					{} as Record<string, string>,
+				);
+			}
 		}
 
 		await this.cacheManager.set(cacheKey, result, 30);
@@ -268,5 +288,23 @@ export class LockedTokensService {
 					),
 				);
 		}
+	}
+
+	private async getAggregatedSum(
+		srcChain: string,
+		dstChain: string,
+		fieldName: string,
+		isLayerZero: boolean,
+		status: TransactionStatusEnum = TransactionStatusEnum.ExecutedOnDestination,
+	): Promise<string> {
+		const query = this.bridgeTransactionRepository
+			.createQueryBuilder('tx')
+			.select(`SUM(tx.${fieldName})`, 'sumAll')
+			.where('tx.status = :status', { status })
+			.andWhere('tx.originChain = :srcChain', { srcChain })
+			.andWhere('tx.destinationChain = :dstChain', { dstChain })
+			.andWhere('tx.isLayerZero = :isLayerZero', { isLayerZero });
+		const { sumAll } = await query.getRawOne();
+		return sumAll;
 	}
 }

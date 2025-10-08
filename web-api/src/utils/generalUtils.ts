@@ -79,7 +79,7 @@ export const convertDfmToWei = (dfm: string | number): string => {
 export type urlAndApiKey = { url: string; apiKey: string };
 
 export const getUrlAndApiKey = (
-	bridgingMode: BridgingModeEnum,
+	bridgingMode: BridgingModeEnum | undefined,
 	isOracle: boolean,
 ): urlAndApiKey => {
 	let url: string | undefined;

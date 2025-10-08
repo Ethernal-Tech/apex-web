@@ -75,7 +75,8 @@ export class TransactionService {
 			);
 		}
 
-		const srcMinFee = settings.minChainFeeForBridging[dto.originChain];
+		const srcMinFee =
+			settings.bridgingSettings.minChainFeeForBridging[dto.originChain];
 		if (!srcMinFee) {
 			throw new InternalServerErrorException(
 				`No minFee for source chain: ${dto.originChain}`,
@@ -90,7 +91,8 @@ export class TransactionService {
 			);
 		}
 
-		const srcMinOperationFee = settings.minOperationFee[dto.originChain];
+		const srcMinOperationFee =
+			settings.bridgingSettings.minOperationFee[dto.originChain];
 
 		const minOperationFee = BigInt(srcMinOperationFee || '0');
 		const operationFee = BigInt(dto.operationFee || '0');
@@ -198,7 +200,7 @@ export class TransactionService {
 			);
 		}
 
-		const tx = await createEthBridgingTx(dto, settings);
+		const tx = await createEthBridgingTx(dto, settings.bridgingSettings);
 		if (!tx) {
 			throw new BadRequestException('error while creating bridging tx');
 		}

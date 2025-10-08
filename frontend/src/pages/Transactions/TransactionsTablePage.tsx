@@ -242,7 +242,7 @@ const TransactionsTablePage = () => {
               </TableCell>
 
               <TableCell sx={tableCellStyle}>
-                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {getTokenInfoBySrcDst(chain, destinationChain, true).label}
+                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {getTokenInfoBySrcDst(chain, destinationChain, false).label}
               </TableCell>
               {
                 appSettings.isSkyline &&
@@ -251,7 +251,7 @@ const TransactionsTablePage = () => {
                     <Box sx={{ ml: 3 }}>-</Box>
                   ) : (
                       <>
-                      {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {getTokenInfoBySrcDst(chain, destinationChain, false).label}
+                      {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {getTokenInfoBySrcDst(chain, destinationChain, true).label}
                       </>
                     )}
                   
