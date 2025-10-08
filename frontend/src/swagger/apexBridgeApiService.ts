@@ -652,6 +652,7 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
     maxTokenAmountAllowedToBridge!: string;
     /** Maximum number of receivers allowed in a bridging request */
     maxReceiversPerBridgingRequest!: number;
+    allowedDirections!: { [key: string]: string[]; };
 
     [key: string]: any;
 
@@ -666,6 +667,7 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
             this.minChainFeeForBridging = {};
             this.minOperationFee = {};
             this.minUtxoChainValue = {};
+            this.allowedDirections = {};
         }
     }
 
@@ -700,6 +702,13 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
             this.maxAmountAllowedToBridge = _data["maxAmountAllowedToBridge"];
             this.maxTokenAmountAllowedToBridge = _data["maxTokenAmountAllowedToBridge"];
             this.maxReceiversPerBridgingRequest = _data["maxReceiversPerBridgingRequest"];
+            if (_data["allowedDirections"]) {
+                this.allowedDirections = {} as any;
+                for (let key in _data["allowedDirections"]) {
+                    if (_data["allowedDirections"].hasOwnProperty(key))
+                        (this.allowedDirections as any)![key] = _data["allowedDirections"][key] !== undefined ? _data["allowedDirections"][key] : [];
+                }
+            }
         }
     }
 
@@ -741,6 +750,13 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
         data["maxAmountAllowedToBridge"] = this.maxAmountAllowedToBridge;
         data["maxTokenAmountAllowedToBridge"] = this.maxTokenAmountAllowedToBridge;
         data["maxReceiversPerBridgingRequest"] = this.maxReceiversPerBridgingRequest;
+        if (this.allowedDirections) {
+            data["allowedDirections"] = {};
+            for (let key in this.allowedDirections) {
+                if (this.allowedDirections.hasOwnProperty(key))
+                    (data["allowedDirections"] as any)[key] = (this.allowedDirections as any)[key];
+            }
+        }
         return data;
     }
 }
@@ -760,6 +776,7 @@ export interface IBridgingSettingsDto {
     maxTokenAmountAllowedToBridge: string;
     /** Maximum number of receivers allowed in a bridging request */
     maxReceiversPerBridgingRequest: number;
+    allowedDirections: { [key: string]: string[]; };
 
     [key: string]: any;
 }
@@ -930,16 +947,14 @@ export interface ILayerZeroChainSettingsDto {
 }
 
 export class SettingsFullResponseDto implements ISettingsFullResponseDto {
-    /** Specifies the current operating mode of the application */
-    runMode!: string;
-    /** For each source chain, defines the native token that will be received on the destination chain */
-    cardanoChainsNativeTokens!: { [key: string]: NativeTokenDto[]; };
-    /** Settings for bridge */
-    bridgingSettings!: BridgingSettingsDto;
-    /** Participating chains in the bridge */
-    enabledChains!: string[];
+    /** Settings per bridging mode (reactor, skyline) */
+    settingsPerMode!: { [key: string]: SettingsResponseDto; };
+    /** All allowed directions */
+    allowedDirections!: { [key: string]: string[]; };
     /** LayerZero chains and their configurations */
     layerZeroChains!: LayerZeroChainSettingsDto[];
+    /** Participating chains in the bridge */
+    enabledChains!: string[];
 
     [key: string]: any;
 
@@ -951,10 +966,10 @@ export class SettingsFullResponseDto implements ISettingsFullResponseDto {
             }
         }
         if (!data) {
-            this.cardanoChainsNativeTokens = {};
-            this.bridgingSettings = new BridgingSettingsDto();
-            this.enabledChains = [];
+            this.settingsPerMode = {};
+            this.allowedDirections = {};
             this.layerZeroChains = [];
+            this.enabledChains = [];
         }
     }
 
@@ -964,24 +979,29 @@ export class SettingsFullResponseDto implements ISettingsFullResponseDto {
                 if (_data.hasOwnProperty(property))
                     this[property] = _data[property];
             }
-            this.runMode = _data["runMode"];
-            if (_data["cardanoChainsNativeTokens"]) {
-                this.cardanoChainsNativeTokens = {} as any;
-                for (let key in _data["cardanoChainsNativeTokens"]) {
-                    if (_data["cardanoChainsNativeTokens"].hasOwnProperty(key))
-                        (this.cardanoChainsNativeTokens as any)![key] = _data["cardanoChainsNativeTokens"][key] ? _data["cardanoChainsNativeTokens"][key].map((i: any) => NativeTokenDto.fromJS(i)) : [];
+            if (_data["settingsPerMode"]) {
+                this.settingsPerMode = {} as any;
+                for (let key in _data["settingsPerMode"]) {
+                    if (_data["settingsPerMode"].hasOwnProperty(key))
+                        (this.settingsPerMode as any)![key] = _data["settingsPerMode"][key] ? SettingsResponseDto.fromJS(_data["settingsPerMode"][key]) : new SettingsResponseDto();
                 }
             }
-            this.bridgingSettings = _data["bridgingSettings"] ? BridgingSettingsDto.fromJS(_data["bridgingSettings"]) : new BridgingSettingsDto();
-            if (Array.isArray(_data["enabledChains"])) {
-                this.enabledChains = [] as any;
-                for (let item of _data["enabledChains"])
-                    this.enabledChains!.push(item);
+            if (_data["allowedDirections"]) {
+                this.allowedDirections = {} as any;
+                for (let key in _data["allowedDirections"]) {
+                    if (_data["allowedDirections"].hasOwnProperty(key))
+                        (this.allowedDirections as any)![key] = _data["allowedDirections"][key] !== undefined ? _data["allowedDirections"][key] : [];
+                }
             }
             if (Array.isArray(_data["layerZeroChains"])) {
                 this.layerZeroChains = [] as any;
                 for (let item of _data["layerZeroChains"])
                     this.layerZeroChains!.push(LayerZeroChainSettingsDto.fromJS(item));
+            }
+            if (Array.isArray(_data["enabledChains"])) {
+                this.enabledChains = [] as any;
+                for (let item of _data["enabledChains"])
+                    this.enabledChains!.push(item);
             }
         }
     }
@@ -999,40 +1019,43 @@ export class SettingsFullResponseDto implements ISettingsFullResponseDto {
             if (this.hasOwnProperty(property))
                 data[property] = this[property];
         }
-        data["runMode"] = this.runMode;
-        if (this.cardanoChainsNativeTokens) {
-            data["cardanoChainsNativeTokens"] = {};
-            for (let key in this.cardanoChainsNativeTokens) {
-                if (this.cardanoChainsNativeTokens.hasOwnProperty(key))
-                    (data["cardanoChainsNativeTokens"] as any)[key] = (this.cardanoChainsNativeTokens as any)[key];
+        if (this.settingsPerMode) {
+            data["settingsPerMode"] = {};
+            for (let key in this.settingsPerMode) {
+                if (this.settingsPerMode.hasOwnProperty(key))
+                    (data["settingsPerMode"] as any)[key] = this.settingsPerMode[key] ? this.settingsPerMode[key].toJSON() : undefined as any;
             }
         }
-        data["bridgingSettings"] = this.bridgingSettings ? this.bridgingSettings.toJSON() : undefined as any;
-        if (Array.isArray(this.enabledChains)) {
-            data["enabledChains"] = [];
-            for (let item of this.enabledChains)
-                data["enabledChains"].push(item);
+        if (this.allowedDirections) {
+            data["allowedDirections"] = {};
+            for (let key in this.allowedDirections) {
+                if (this.allowedDirections.hasOwnProperty(key))
+                    (data["allowedDirections"] as any)[key] = (this.allowedDirections as any)[key];
+            }
         }
         if (Array.isArray(this.layerZeroChains)) {
             data["layerZeroChains"] = [];
             for (let item of this.layerZeroChains)
                 data["layerZeroChains"].push(item ? item.toJSON() : undefined as any);
         }
+        if (Array.isArray(this.enabledChains)) {
+            data["enabledChains"] = [];
+            for (let item of this.enabledChains)
+                data["enabledChains"].push(item);
+        }
         return data;
     }
 }
 
 export interface ISettingsFullResponseDto {
-    /** Specifies the current operating mode of the application */
-    runMode: string;
-    /** For each source chain, defines the native token that will be received on the destination chain */
-    cardanoChainsNativeTokens: { [key: string]: NativeTokenDto[]; };
-    /** Settings for bridge */
-    bridgingSettings: BridgingSettingsDto;
-    /** Participating chains in the bridge */
-    enabledChains: string[];
+    /** Settings per bridging mode (reactor, skyline) */
+    settingsPerMode: { [key: string]: SettingsResponseDto; };
+    /** All allowed directions */
+    allowedDirections: { [key: string]: string[]; };
     /** LayerZero chains and their configurations */
     layerZeroChains: LayerZeroChainSettingsDto[];
+    /** Participating chains in the bridge */
+    enabledChains: string[];
 
     [key: string]: any;
 }
@@ -2138,6 +2161,8 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
     order?: string | undefined;
     /** Receiver address on destination chain */
     receiverAddress?: string | undefined;
+    /** Retrieve transaction which are bridged with Reactor bridge */
+    onlyReactor?: boolean | undefined;
 
     [key: string]: any;
 
@@ -2168,6 +2193,7 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
             this.orderBy = _data["orderBy"];
             this.order = _data["order"];
             this.receiverAddress = _data["receiverAddress"];
+            this.onlyReactor = _data["onlyReactor"];
         }
     }
 
@@ -2196,6 +2222,7 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
         data["orderBy"] = this.orderBy;
         data["order"] = this.order;
         data["receiverAddress"] = this.receiverAddress;
+        data["onlyReactor"] = this.onlyReactor;
         return data;
     }
 }
@@ -2223,6 +2250,8 @@ export interface IBridgeTransactionFilterDto {
     order?: string | undefined;
     /** Receiver address on destination chain */
     receiverAddress?: string | undefined;
+    /** Retrieve transaction which are bridged with Reactor bridge */
+    onlyReactor?: boolean | undefined;
 
     [key: string]: any;
 }

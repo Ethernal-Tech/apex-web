@@ -15,10 +15,17 @@ import {
 import web3, { Web3 } from 'web3';
 import { isAddress } from 'web3-validator';
 import { NewAddress, RewardAddress } from 'src/utils/Address/addreses';
-import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
+import {
+	areChainsEqual,
+	getBridgingMode,
+	toNumChainID,
+} from 'src/utils/chainUtils';
 import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
-import { BridgingSettingsDto } from 'src/settings/settings.dto';
-import { convertDfmToWei } from 'src/utils/generalUtils';
+import {
+	BridgingSettingsDto,
+	SettingsFullResponseDto,
+} from 'src/settings/settings.dto';
+import { convertDfmToWei, getUrlAndApiKey } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
 
 const prepareCreateCardanoBridgingTx = (
@@ -56,10 +63,15 @@ const prepareCreateCardanoBridgingTx = (
 export const createCardanoBridgingTx = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
+	settings: SettingsFullResponseDto,
 ): Promise<CreateCardanoTransactionResponseDto> => {
-	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
-	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
-	const endpointUrl = apiUrl + `/api/CardanoTx/CreateBridgingTx`;
+	const bridgingMode = getBridgingMode(
+		dto.originChain,
+		dto.destinationChain,
+		settings,
+	);
+	const { url, apiKey } = getUrlAndApiKey(bridgingMode, false);
+	const endpointUrl = url + `/api/CardanoTx/CreateBridgingTx`;
 
 	const body = prepareCreateCardanoBridgingTx(dto, skipUtxos);
 
@@ -92,10 +104,15 @@ export const createCardanoBridgingTx = async (
 export const getCardanoBridgingTxFee = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
+	settings: SettingsFullResponseDto,
 ): Promise<CardanoTransactionFeeResponseDto> => {
-	const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
-	const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
-	const endpointUrl = apiUrl + `/api/CardanoTx/GetBridgingTxFee`;
+	const bridgingMode = getBridgingMode(
+		dto.originChain,
+		dto.destinationChain,
+		settings,
+	);
+	const { url, apiKey } = getUrlAndApiKey(bridgingMode, false);
+	const endpointUrl = url + `/api/CardanoTx/GetBridgingTxFee`;
 
 	const body = prepareCreateCardanoBridgingTx(dto, skipUtxos);
 

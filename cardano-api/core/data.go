@@ -14,11 +14,12 @@ type APIEndpoint struct {
 }
 
 type SettingsResponse struct {
-	MinChainFeeForBridging         map[string]uint64 `json:"minChainFeeForBridging"`
-	MinOperationFee                map[string]uint64 `json:"minOperationFee"`
-	MinUtxoChainValue              map[string]uint64 `json:"minUtxoChainValue"`
-	MinValueToBridge               uint64            `json:"minValueToBridge"`
-	MaxAmountAllowedToBridge       string            `json:"maxAmountAllowedToBridge"`
-	MaxTokenAmountAllowedToBridge  string            `json:"maxTokenAmountAllowedToBridge"`
-	MaxReceiversPerBridgingRequest int               `json:"maxReceiversPerBridgingRequest"`
+	MinChainFeeForBridging         map[string]uint64   `json:"minChainFeeForBridging"`
+	MinOperationFee                map[string]uint64   `json:"minOperationFee"`
+	MinUtxoChainValue              map[string]uint64   `json:"minUtxoChainValue"`
+	MinValueToBridge               uint64              `json:"minValueToBridge"`
+	MaxAmountAllowedToBridge       string              `json:"maxAmountAllowedToBridge"`
+	MaxTokenAmountAllowedToBridge  string              `json:"maxTokenAmountAllowedToBridge"`
+	MaxReceiversPerBridgingRequest int                 `json:"maxReceiversPerBridgingRequest"`
+	AllowedDirections              map[string][]string `json:"allowedDirections"`
 }

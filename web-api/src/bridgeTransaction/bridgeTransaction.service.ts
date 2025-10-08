@@ -28,13 +28,20 @@ import {
 	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import {
+	BridgingModeEnum,
+	ChainEnum,
+	TransactionStatusEnum,
+} from 'src/common/enum';
+import { getBridgingMode } from 'src/utils/chainUtils';
+import { SettingsService } from 'src/settings/settings.service';
 
 @Injectable()
 export class BridgeTransactionService {
 	constructor(
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
+		private readonly settingsService: SettingsService,
 		private readonly schedulerRegistry: SchedulerRegistry,
 	) {}
 
@@ -81,6 +88,24 @@ export class BridgeTransactionService {
 			where.receiverAddresses = Like(model.receiverAddress);
 		}
 
+		if (model.onlyReactor) {
+			if (!model.destinationChain) {
+				where.destinationChain = In([
+					ChainEnum.Prime,
+					ChainEnum.Vector,
+					ChainEnum.Nexus,
+				]);
+			}
+
+			if (!model.originChain) {
+				where.originChain = In([
+					ChainEnum.Prime,
+					ChainEnum.Vector,
+					ChainEnum.Nexus,
+				]);
+			}
+		}
+
 		const page = model.page || 0;
 		const take = model.perPage || 10;
 		const skip = page * take;
@@ -111,6 +136,15 @@ export class BridgeTransactionService {
 	// every 10 seconds
 	@Cron('*/10 * * * * *', { name: 'updateStatusesJob' })
 	async updateStatuses(): Promise<void> {
+		if (!process.env.STATUS_UPDATE_MODES_SUPPORTED) {
+			Logger.warn('cronjob CRONJOB_MODES_SUPPORTED not set');
+			return;
+		}
+
+		const modesSupported = new Set<string>(
+			process.env.STATUS_UPDATE_MODES_SUPPORTED.split(','),
+		);
+
 		const job = this.schedulerRegistry.getCronJob('updateStatusesJob');
 		job.stop();
 		try {
@@ -122,16 +156,20 @@ export class BridgeTransactionService {
 					},
 				});
 				if (entities.length > 0) {
-					const models: GetBridgingRequestStatesModel[] = [];
-					const modelsPending: GetBridgingRequestStatesModel[] = [];
+					const modelsReactor: GetBridgingRequestStatesModel[] = [];
+					const modelsPendingReactor: GetBridgingRequestStatesModel[] = [];
+					const modelsSkyline: GetBridgingRequestStatesModel[] = [];
+					const modelsPendingSkyline: GetBridgingRequestStatesModel[] = [];
 					const modelsCentralized: GetBridgingRequestStatesModel[] = [];
 					const modelsLayerZero: GetLayerZeroBridgingRequestStatesModel[] = [];
 					for (const entity of entities) {
 						// handle layer zero
 						if (entity.isLayerZero) {
-							modelsLayerZero.push({
-								txHash: entity.sourceTxHash,
-							});
+							if (modesSupported.has(BridgingModeEnum.LayerZero)) {
+								modelsLayerZero.push({
+									txHash: entity.sourceTxHash,
+								});
+							}
 
 							continue;
 						}
@@ -142,37 +180,94 @@ export class BridgeTransactionService {
 							txRaw: entity.txRaw,
 						};
 
-						const arr = entity.isCentralized ? modelsCentralized : models;
-						arr.push(model);
+						if (entity.isCentralized) {
+							if (modesSupported.has(BridgingModeEnum.Centralized)) {
+								modelsCentralized.push(model);
+							}
+						} else {
+							const bridgingMode = getBridgingMode(
+								entity.originChain,
+								entity.destinationChain,
+								this.settingsService.SettingsResponse,
+							);
+							if (bridgingMode === BridgingModeEnum.Skyline) {
+								if (modesSupported.has(BridgingModeEnum.Skyline)) {
+									modelsSkyline.push(model);
+								}
+							} else {
+								if (modesSupported.has(BridgingModeEnum.Reactor)) {
+									modelsReactor.push(model);
+								}
+							}
 
-						if (
-							entity.status === TransactionStatusEnum.Pending &&
-							!!entity.txRaw &&
-							!entity.isCentralized
-						) {
-							modelsPending.push(model);
+							if (
+								entity.status === TransactionStatusEnum.Pending &&
+								!!entity.txRaw
+							) {
+								if (bridgingMode === BridgingModeEnum.Skyline) {
+									if (modesSupported.has(BridgingModeEnum.Skyline)) {
+										modelsPendingSkyline.push(model);
+									}
+								} else {
+									if (modesSupported.has(BridgingModeEnum.Reactor)) {
+										modelsPendingReactor.push(model);
+									}
+								}
+							}
 						}
 					}
 
-					const [states, statesCentralized, statesTxFailed, stateslayerZero] =
-						await Promise.all([
-							getBridgingRequestStates(chain, models),
-							getCentralizedBridgingRequestStates(chain, modelsCentralized),
-							getHasTxFailedRequestStates(chain, modelsPending),
-							getLayerZeroRequestStates(modelsLayerZero),
-						]);
+					const [
+						statesSkyline,
+						statesReactor,
+						statesCentralized,
+						statesTxFailedSkyline,
+						statesTxFailedReactor,
+						stateslayerZero,
+					] = await Promise.all([
+						getBridgingRequestStates(
+							chain,
+							BridgingModeEnum.Skyline,
+							modelsSkyline,
+						),
+						getBridgingRequestStates(
+							chain,
+							BridgingModeEnum.Reactor,
+							modelsReactor,
+						),
+						getCentralizedBridgingRequestStates(chain, modelsCentralized),
+						getHasTxFailedRequestStates(
+							chain,
+							BridgingModeEnum.Skyline,
+							modelsPendingSkyline,
+						),
+						getHasTxFailedRequestStates(
+							chain,
+							BridgingModeEnum.Reactor,
+							modelsPendingReactor,
+						),
+						getLayerZeroRequestStates(modelsLayerZero),
+					]);
 
-					Object.keys(states).length > 0 &&
+					Object.keys(statesSkyline).length > 0 &&
 						Logger.debug(
-							`updateStatuses - got bridging request states: ${JSON.stringify(states)}`,
+							`updateStatuses - got bridging request states skyline: ${JSON.stringify(statesSkyline)}`,
+						);
+					Object.keys(statesReactor).length > 0 &&
+						Logger.debug(
+							`updateStatuses - got bridging request states reactor: ${JSON.stringify(statesReactor)}`,
 						);
 					Object.keys(statesCentralized).length > 0 &&
 						Logger.debug(
 							`updateStatuses - got centralized bridging request states: ${JSON.stringify(statesCentralized)}`,
 						);
-					Object.keys(statesTxFailed).length > 0 &&
+					Object.keys(statesTxFailedSkyline).length > 0 &&
 						Logger.debug(
-							`updateStatuses - got has tx failed request states: ${JSON.stringify(statesTxFailed)}`,
+							`updateStatuses - got has tx failed request states skyline: ${JSON.stringify(statesTxFailedSkyline)}`,
+						);
+					Object.keys(statesTxFailedReactor).length > 0 &&
+						Logger.debug(
+							`updateStatuses - got has tx failed request states reactor: ${JSON.stringify(statesTxFailedReactor)}`,
 						);
 					Object.keys(stateslayerZero).length > 0 &&
 						Logger.debug(
@@ -181,8 +276,13 @@ export class BridgeTransactionService {
 
 					const updatedBridgeTransactions = updateBridgeTransactionStates(
 						entities,
-						{ ...states, ...statesCentralized, ...stateslayerZero },
-						statesTxFailed,
+						{
+							...statesSkyline,
+							...statesReactor,
+							...statesCentralized,
+							...stateslayerZero,
+						},
+						{ ...statesTxFailedReactor, ...statesTxFailedSkyline },
 					);
 
 					Object.keys(updatedBridgeTransactions).length > 0 &&

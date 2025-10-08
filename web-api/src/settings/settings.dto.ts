@@ -65,6 +65,16 @@ export class BridgingSettingsDto {
 		description: 'Maximum number of receivers allowed in a bridging request',
 	})
 	maxReceiversPerBridgingRequest: number;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		type: Object,
+		additionalProperties: {
+			type: 'array',
+			items: { type: 'string' },
+		},
+	})
+	allowedDirections: { [key: string]: string[] };
 }
 
 export class NativeTokenDto {
@@ -114,7 +124,7 @@ export class LayerZeroChainSettingsDto {
 	txType: TxTypeEnum;
 }
 
-@ApiExtraModels(NativeTokenDto)
+@ApiExtraModels(NativeTokenDto, BridgingSettingsDto)
 export class SettingsResponseDto {
 	@IsNotEmpty()
 	@ApiProperty({
@@ -154,7 +164,26 @@ export class SettingsResponseDto {
 }
 
 @ApiExtraModels(SettingsResponseDto, LayerZeroChainSettingsDto)
-export class SettingsFullResponseDto extends SettingsResponseDto {
+export class SettingsFullResponseDto {
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Settings per bridging mode (reactor, skyline)',
+		type: 'object',
+		additionalProperties: { $ref: getSchemaPath(SettingsResponseDto) },
+	})
+	settingsPerMode: { [key: string]: SettingsResponseDto };
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'All allowed directions',
+		type: 'object',
+		additionalProperties: {
+			type: 'array',
+			items: { type: 'string' },
+		},
+	})
+	allowedDirections: { [key: string]: string[] };
+
 	@IsNotEmpty()
 	@IsArray()
 	@ValidateNested({ each: true })
@@ -164,4 +193,10 @@ export class SettingsFullResponseDto extends SettingsResponseDto {
 		type: () => [LayerZeroChainSettingsDto],
 	})
 	layerZeroChains: LayerZeroChainSettingsDto[];
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Participating chains in the bridge',
+	})
+	enabledChains: string[];
 }

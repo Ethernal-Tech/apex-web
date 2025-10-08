@@ -1,7 +1,7 @@
 import { Dispatch } from '@reduxjs/toolkit';
 import { store } from '../redux/store';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
-import { fromChainToNativeTokenSymbol, fromChainToCurrencySymbol, fromNetworkToChain } from '../utils/chainUtils';
+import { fromNetworkToChain, getTokenNameFromSettings, LovelaceTokenName } from '../utils/chainUtils';
 import { IBalanceState, updateBalanceAction } from '../redux/slices/accountInfoSlice';
 import evmWalletHandler from '../features/EvmWalletHandler';
 import walletHandler from '../features/WalletHandler';
@@ -13,20 +13,20 @@ import { getUtxoRetrieverType } from '../features/utils';
 import { UtxoRetrieverEnum } from '../features/enums';
 import { getChainInfo, isEvmChain } from '../settings/chain';
 import { getBridgingInfo, getToken } from '../settings/token';
-import { LayerZeroChains } from '../redux/slices/settingsSlice';
 import { shouldUseMainnet } from '../utils/generalUtils';
+import { ISettingsState } from '../settings/settingsRedux';
 
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
 
-const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, lzChainsSetting : LayerZeroChains): Promise<IBalanceState> => {
+const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState): Promise<IBalanceState> => {
     const bridgingInfo = getBridgingInfo(srcChain, dstChain);
     const currencyTokenName = getChainInfo(srcChain).currencyToken;
 
     if (isEvmChain(srcChain)) {
         const balances : {[key : string] : string} = {}
         if (srcChain !== ChainEnum.Nexus){
-            const oftAddress = lzChainsSetting[srcChain].oftAddress;
+            const oftAddress = settings.layerZeroChains[srcChain].oftAddress;
             const token = getToken(srcChain, dstChain, true);
             balances[token!] = await evmWalletHandler.getERC20Balance(oftAddress)
         }
@@ -47,18 +47,20 @@ const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, 
         utxoRetriever = new BlockfrostRetriever(
             addr, utxoRetrieverConfig.url, utxoRetrieverConfig.dmtrApiKey);
     } else if (utxoRetrieverType === UtxoRetrieverEnum.Ogmios) {
-        utxoRetriever = new OgmiosRetriever(
-            addr, utxoRetrieverConfig.url);
+        utxoRetriever = new OgmiosRetriever(addr, utxoRetrieverConfig.url);
     }
 
     const utxos = await utxoRetriever.getAllUtxos();
     const balance = await utxoRetriever.getBalance(utxos);
+
     const finalBalance: { [key: string]: string } = {
-        [currencyTokenName]: (balance[fromChainToCurrencySymbol(srcChain)] || BigInt(0)).toString(10)
+        [currencyTokenName]: (balance[LovelaceTokenName] || BigInt(0)).toString(10)
     }
     if (!!bridgingInfo.wrappedToken) {
-        finalBalance[bridgingInfo.wrappedToken!] = (balance[fromChainToNativeTokenSymbol(srcChain)] || BigInt(0)).toString(10);
+        const tokenName = getTokenNameFromSettings(srcChain, dstChain, settings);
+        finalBalance[bridgingInfo.wrappedToken!] = (balance[tokenName] || BigInt(0)).toString(10);
     }
+
     return {
         balance: finalBalance,
         utxos,
@@ -68,7 +70,7 @@ const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, 
 export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
     const srcChain = getCurrentSrcChain();
     const dstChain = store.getState().chain.destinationChain;
-    const lzChainsSettings = store.getState().settings.layerZeroChains;
+    const lzChainsSettings = store.getState().settings;
 
     if (!srcChain) {
         return;

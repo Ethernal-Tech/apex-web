@@ -12,7 +12,7 @@ import appSettings from '../../../settings/appSettings';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { TokenEnum } from '../../../features/enums';
 import { useSupporedSourceLZTokenOptions } from '../utils';
-import { getChainInfo } from '../../../settings/chain';
+import { BridgingModeEnum, getChainInfo } from '../../../settings/chain';
 import { getTokenInfo, isCurrencyBridgingAllowed, isWrappedToken } from '../../../settings/token';
 import FeeInformation from './FeeInformation';
 import { estimateEthTxFee, getLayerZeroTransferResponse } from '../../../actions/submitTx';
@@ -242,7 +242,7 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
           userWalletFee={userWalletFee || '0'}
           bridgeTxFee={bridgeTxFee || '0'}
           chain={chain}
-          isLayerZero={true}
+          bridgingMode={BridgingModeEnum.LayerZero}
           sx={{
             gridColumn: 'span 1',
             border: '1px solid #077368',

@@ -1,8 +1,10 @@
+import Web3 from "web3";
 import { CardanoAddress } from "../features/Address/interfaces";
 import { CardanoNetworkType } from "../features/Address/types";
 import { ApexBridgeNetwork } from "../features/enums";
 import appSettings from "../settings/appSettings";
-import { isEvmChain } from "../settings/chain";
+import { getBridgingMode, isEvmChain } from "../settings/chain";
+import { ISettingsState } from "../settings/settingsRedux";
 import { BridgeTransactionDto, ChainEnum, TransactionStatusEnum } from "../swagger/apexBridgeApiService";
 
 const TESTNET_NEXUS_NETWORK_ID = BigInt(9070) // for Nexus testnet
@@ -32,11 +34,11 @@ const CHAIN_DATA: {[key: string]: ChainData} = {
     },
     [ChainEnum.Vector]:  {
         mainnet: {
-            networkID: CardanoNetworkType.VectorMainNetNetwork,
+            networkID: CardanoNetworkType.MainNetNetwork,
             network: ApexBridgeNetwork.MainnetVector,
         },
         testnet: {
-            networkID: CardanoNetworkType.VectorTestNetNetwork,
+            networkID: CardanoNetworkType.MainNetNetwork,
             network: ApexBridgeNetwork.TestnetVector,
         },
     },
@@ -152,18 +154,18 @@ export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: Cardano
 const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]: string}} = {
     mainnet: {
         [ChainEnum.Prime]: 'https://apexscan.org/en',
-        [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
+        [ChainEnum.Vector]: '',
         [ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
         [ChainEnum.Cardano]: 'https://cardanoscan.io',
         [ChainEnum.Base]: 'https://basescan.org',
         [ChainEnum.Bsc]: 'https://bscscan.com',
     },
     testnet: {
-        [ChainEnum.Prime]: 'https://explorer.prime.testnet.apexfusion.org',
-        [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
+        [ChainEnum.Prime]: 'https://beta-explorer.prime.testnet.apexfusion.org/en',
+        [ChainEnum.Vector]: 'https://explorer.vector.testnet.apexfusion.org',
         [ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
         [ChainEnum.Cardano]: 'https://preview.cardanoscan.io',
-    },
+    },    
 }
 
 export const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boolean, isNativeExplorer?: boolean) => {
@@ -177,11 +179,12 @@ export const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?
 
     let url
     switch (chain) {
-        case ChainEnum.Vector:
+        case ChainEnum.Vector: {
+            url = `${base}/transaction/hash/${txHash}`;
+            break;
+        }
         case ChainEnum.Prime: {
-            url = appSettings.isMainnet
-                ? `${base}/transaction/${txHash}/summary/`
-                : `${base}/transaction/hash/${txHash}`;
+            url = `${base}/transaction/${txHash}/summary/`;
             break;
         }
         case ChainEnum.Base:
@@ -227,13 +230,27 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
     }
 }
 
-export const fromChainToCurrencySymbol = (chain: ChainEnum): string => {
-    switch (chain) {
-        default:
-            return 'lovelace';
-    }
-}
+export const LovelaceTokenName = 'lovelace';
 
-export const fromChainToNativeTokenSymbol = (chain: ChainEnum): string => {
-    return appSettings.wrappedTokenName[chain];
+export const getTokenNameFromSettings = (srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState): string => {
+    const bridgingModeInfo = getBridgingMode(srcChain, dstChain, settings);
+    if (
+        !bridgingModeInfo.settings || !bridgingModeInfo.settings.cardanoChainsNativeTokens || 
+        !(srcChain in bridgingModeInfo.settings.cardanoChainsNativeTokens)
+    ) {
+        return "";
+    }
+
+    for (const item of bridgingModeInfo.settings.cardanoChainsNativeTokens[srcChain]) {
+        if (item.dstChainID === dstChain) {
+            const subs = item.tokenName.split('.');
+            if (subs.length !== 2) {
+                return item.tokenName;
+            }
+
+            return subs[0] + (new Web3()).utils.toHex(subs[1]).substring(2);
+        }
+    }
+
+    return "";
 }

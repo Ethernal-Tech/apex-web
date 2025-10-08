@@ -14,14 +14,16 @@ import { menuDark } from '../../containers/theme';
 import TransferProgress from './components/TransferProgress';
 import NewTransaction from './components/NewTransaction';
 import ButtonCustom from '../../components/Buttons/ButtonCustom';
-import appSettings from '../../settings/appSettings';
-import { getChainInfo } from '../../settings/chain';
+import { BridgingModeEnum, getBridgingMode, getChainInfo } from '../../settings/chain';
 import { getTokenInfoBySrcDst } from '../../settings/token';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
 
 const tabletMediaQuery = '@media (max-width:800px)'
 
 const TransactionDetailPage = () => {
   const { id } = useParams<{ id: string }>();
+  const settings = useSelector((state: RootState) => state.settings);
   const [transaction, setTransaction] = useState<BridgeTransactionDto | undefined>(undefined);
 	const navigate = useNavigate();
 
@@ -52,6 +54,9 @@ const TransactionDetailPage = () => {
     }
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+  const isNotReactor = !!transaction && 
+    getBridgingMode(transaction.originChain, transaction.destinationChain, settings).bridgingMode !== BridgingModeEnum.Reactor;
 
   return (
     <BasePage>
@@ -148,7 +153,7 @@ const TransactionDetailPage = () => {
                       </Typography>
                     </Box>
                     {
-                      appSettings.isSkyline &&
+                      isNotReactor &&
                       <Box sx={{ mb: 1, pb: 1, display:'flex', justifyContent: 'space-between', borderBottom:'1px solid #142E38' }}>
                         <Typography variant="subtitle2">Token Amount:</Typography>
                         <Typography variant="body1" fontSize={'16px'} sx={{ fontWeight: '500' }}>

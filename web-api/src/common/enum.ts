@@ -38,3 +38,10 @@ export enum GroupByTimePeriod {
 	Month = 'month',
 	Year = 'year',
 }
+
+export enum BridgingModeEnum {
+	Reactor = 'reactor',
+	Skyline = 'skyline',
+	LayerZero = 'layerzero',
+	Centralized = 'centralized',
+}

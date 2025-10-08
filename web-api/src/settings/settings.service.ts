@@ -4,12 +4,13 @@ import { retryForever } from 'src/utils/generalUtils';
 import {
 	LayerZeroChainSettingsDto,
 	SettingsFullResponseDto,
+	SettingsResponseDto,
 } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
-import { ChainEnum, TxTypeEnum } from 'src/common/enum';
+import { BridgingModeEnum, ChainEnum, TxTypeEnum } from 'src/common/enum';
 
 const RETRY_DELAY_MS = 5000;
-
+const settingsApiPath = `/api/CardanoTx/GetSettings`;
 @Injectable()
 export class SettingsService {
 	SettingsResponse: SettingsFullResponseDto;
@@ -17,22 +18,33 @@ export class SettingsService {
 	constructor() {}
 
 	async init() {
-		const apiUrl = process.env.CARDANO_API_URL;
-		const apiKey = process.env.CARDANO_API_API_KEY;
+		const skylineUrl = process.env.CARDANO_API_SKYLINE_URL;
+		const skylineApiKey = process.env.CARDANO_API_SKYLINE_API_KEY;
 
-		if (!apiUrl || !apiKey) {
-			throw new Error('cardano api url or api key not defined');
+		if (!skylineUrl || !skylineApiKey) {
+			throw new Error('cardano api url or api key not defined for skyline');
 		}
 
-		const endpointUrl = apiUrl + `/api/CardanoTx/GetSettings`;
+		const reactorUrl = process.env.CARDANO_API_REACTOR_URL;
+		const reactorApiKey = process.env.CARDANO_API_REACTOR_API_KEY;
 
-		this.SettingsResponse = await retryForever(
-			() => this.fetchOnce(endpointUrl, apiKey),
-			RETRY_DELAY_MS,
-		);
+		if (!reactorUrl || !reactorApiKey) {
+			throw new Error('cardano api url or api key not defined for reactor');
+		}
 
-		const chains = (process.env.LAYERZERO_CONFIG || '').split(',');
-		this.SettingsResponse.layerZeroChains = chains
+		const [skylineSettings, reactorSettings] = await Promise.all([
+			retryForever(
+				() => this.fetchOnce(skylineUrl, skylineApiKey),
+				RETRY_DELAY_MS,
+			),
+			retryForever(
+				() => this.fetchOnce(reactorUrl, reactorApiKey),
+				RETRY_DELAY_MS,
+			),
+		]);
+
+		const layerZeroChains = (process.env.LAYERZERO_CONFIG || '')
+			.split(',')
 			.map((x) => {
 				const subItems = x.split('::');
 				if (subItems.length < 4) {
@@ -49,19 +61,62 @@ export class SettingsService {
 			})
 			.filter((x) => !!x);
 
-		this.SettingsResponse.layerZeroChains.forEach((x) => {
-			if (!this.SettingsResponse.enabledChains.includes(x.chain)) {
-				this.SettingsResponse.enabledChains.push(x.chain);
+		const allowedDirections: { [key: string]: string[] } = {};
+		// reactor
+		for (const [srcChain, dstChains] of Object.entries(
+			reactorSettings.bridgingSettings.allowedDirections,
+		)) {
+			if (srcChain in allowedDirections) {
+				allowedDirections[srcChain].push(...dstChains);
+			} else {
+				allowedDirections[srcChain] = [...dstChains];
 			}
-		});
+		}
+		// skyline
+		for (const [srcChain, dstChains] of Object.entries(
+			skylineSettings.bridgingSettings.allowedDirections,
+		)) {
+			if (srcChain in allowedDirections) {
+				allowedDirections[srcChain].push(...dstChains);
+			} else {
+				allowedDirections[srcChain] = [...dstChains];
+			}
+		}
+		// layer zero
+		allowedDirections[ChainEnum.Base] = [ChainEnum.Nexus, ChainEnum.BNB];
+		allowedDirections[ChainEnum.BNB] = [ChainEnum.Nexus, ChainEnum.Base];
+		if (ChainEnum.Nexus in allowedDirections) {
+			allowedDirections[ChainEnum.Nexus].push(ChainEnum.Base, ChainEnum.BNB);
+		} else {
+			allowedDirections[ChainEnum.Nexus] = [ChainEnum.Base, ChainEnum.BNB];
+		}
+
+		const enabledChains = new Set<string>();
+		// reactor
+		reactorSettings.enabledChains.forEach((chain) => enabledChains.add(chain));
+		// skyline
+		skylineSettings.enabledChains.forEach((chain) => enabledChains.add(chain));
+		// layer zero
+		layerZeroChains.forEach((x) => enabledChains.add(x.chain));
+
+		this.SettingsResponse = new SettingsFullResponseDto();
+		this.SettingsResponse.layerZeroChains = layerZeroChains;
+		this.SettingsResponse.settingsPerMode = {
+			[BridgingModeEnum.Reactor]: reactorSettings,
+			[BridgingModeEnum.Skyline]: skylineSettings,
+		};
+		this.SettingsResponse.allowedDirections = allowedDirections;
+		this.SettingsResponse.enabledChains = Array.from(enabledChains);
 
 		Logger.debug(`settings dto ${JSON.stringify(this.SettingsResponse)}`);
 	}
 
 	private async fetchOnce(
-		endpointUrl: string,
+		url: string,
 		apiKey: string,
-	): Promise<SettingsFullResponseDto> {
+	): Promise<SettingsResponseDto> {
+		const endpointUrl = url + settingsApiPath;
+
 		Logger.debug(`axios.get: ${endpointUrl}`);
 
 		try {
@@ -74,7 +129,7 @@ export class SettingsService {
 
 			Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
-			return response.data as SettingsFullResponseDto;
+			return response.data as SettingsResponseDto;
 		} catch (error) {
 			if (error instanceof AxiosError) {
 				if (error.response) {

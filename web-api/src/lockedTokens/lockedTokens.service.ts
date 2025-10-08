@@ -14,6 +14,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { Repository } from 'typeorm';
 import {
+	BridgingModeEnum,
 	ChainApexBridgeEnum,
 	GroupByTimePeriod,
 	TransactionStatusEnum,
@@ -36,11 +37,11 @@ export class LockedTokensService {
 	}
 
 	endpointUrl: string;
-	apiKey = process.env.CARDANO_API_API_KEY;
+	apiKey = process.env.CARDANO_API_SKYLINE_API_KEY;
 
 	async init() {
 		this.endpointUrl =
-			process.env.CARDANO_API_URL + `/api/CardanoTx/GetLockedTokens`;
+			process.env.CARDANO_API_SKYLINE_URL + `/api/CardanoTx/GetLockedTokens`;
 	}
 
 	public async getLockedTokens(): Promise<LockedTokensResponse> {
@@ -95,7 +96,9 @@ export class LockedTokensService {
 				.getRawOne();
 
 			const tokens =
-				this.settingsService.SettingsResponse.cardanoChainsNativeTokens[chain];
+				this.settingsService.SettingsResponse.settingsPerMode[
+					BridgingModeEnum.Skyline
+				].cardanoChainsNativeTokens[chain];
 
 			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
 
@@ -188,9 +191,9 @@ export class LockedTokensService {
 			const nativeSum: string = row.nativeSum;
 
 			const tokens =
-				this.settingsService.SettingsResponse.cardanoChainsNativeTokens?.[
-					chain
-				];
+				this.settingsService.SettingsResponse.settingsPerMode[
+					BridgingModeEnum.Skyline
+				].cardanoChainsNativeTokens?.[chain];
 			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
 
 			if (!groupedByDate[dateKey]) {
