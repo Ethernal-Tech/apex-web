@@ -79,7 +79,7 @@ export class LockedTokensService {
 			return cached;
 		}
 
-		const chains = Object.values(ChainApexBridgeEnum);
+		const chains = [ChainApexBridgeEnum.Prime, ChainApexBridgeEnum.Cardano]; //Object.values(ChainApexBridgeEnum);
 		const result = new LockedTokensResponse();
 		result.chains = {};
 
@@ -92,6 +92,7 @@ export class LockedTokensService {
 					status: TransactionStatusEnum.ExecutedOnDestination,
 				})
 				.andWhere('tx.originChain = :chain', { chain })
+				.andWhere('tx.destinationChain IN (:...chains)', { chains })
 				.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
 				.getRawOne();
 
@@ -115,6 +116,7 @@ export class LockedTokensService {
 						status: TransactionStatusEnum.ExecutedOnDestination,
 					})
 					.andWhere('tx.originChain = :chain', { chain })
+					.andWhere('tx.destinationChain IN (:...chains)', { chains })
 					.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
 					.getRawOne();
 
