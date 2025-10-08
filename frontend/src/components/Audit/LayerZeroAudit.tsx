@@ -7,7 +7,7 @@ import { formatBigIntDecimalString } from "../lockedTokens/LockedTokensComponent
 import "../../audit.css";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { layerZeroChain, openAuditExplorer } from "../../utils/chainUtils";
+import { openAuditExplorer } from "../../utils/chainUtils";
 import ButtonCustom from "../Buttons/ButtonCustom";
 import explorerPng from "@../../../public/explorer.png";
 import { decodeTokenKey } from "../../utils/tokenUtils";
@@ -19,7 +19,6 @@ type LayerZeroPanelProps = {
   lzGrandTotal: bigint;
 };
 
-/* ---------------- Component ---------------- */
 const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
   lzPerChainTotals,
   lzTokenTotalsAllChains,
@@ -29,146 +28,111 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
     (state: RootState) => state.layerZeroLockedTokens
   );
   const layerZeroLocked = layerZeroLockedTokens.lockedTokens;
-  const { layerZeroChains } = useSelector((state: RootState) => state.settings);
-  
-  return (
-    <Box className="audit-layout-2col">
-      {/* LEFT — Token Supply (ERC-20) */}
-      <Box>
-        <Typography className="audit-h2"> Locked Tokens</Typography>
 
-        <Box className="audit-mb-8 audit-w-half-md">
-          <Box className="audit-card">
-            <Box className="audit-card-content audit-row">
-              <Typography>{getTokenInfo(TokenEnum.APEX).label}</Typography>
-              <Typography className="audit-amount">
-                {formatBigIntDecimalString(layerZeroLocked, 18)}
-              </Typography>
+  const { layerZeroChains } = useSelector((state: RootState) => state.settings);
+  const address = layerZeroChains[ChainEnum.Nexus].oftAddress;
+
+  return (
+    <Box className="skyline-bridge-section">
+      <Box className="audit-wrap">
+        {/* ===== Row 1: TVL (left) | LZ transfers (center) | spacer (right) ===== */}
+        <Box className="audit-hero-row audit-mb-16">
+          {/* Left: TVL */}
+          <Box>
+            <Typography className="audit-h2">Locked Tokens</Typography>
+            <Box className="audit-card">
+              <Box className="audit-card-content audit-row">
+                <Box className="audit-left">
+                  <Typography>{getTokenInfo(TokenEnum.APEX).label}</Typography>
+                  <ButtonCustom
+                    variant="redSkyline"
+                    onClick={() => openAuditExplorer(ChainEnum.Nexus, address)}
+                  >
+                    <img className="audit-cta-icon" src={explorerPng} alt="" />
+                  </ButtonCustom>
+                </Box>
+                <Typography className="audit-amount">
+                  {formatBigIntDecimalString(layerZeroLocked, 18)}
+                </Typography>
+              </Box>
             </Box>
           </Box>
+
+          {/* Center: LayerZero transfers */}
+          <Box>
+            <Typography className="audit-h2">LayerZero transfers</Typography>
+            <Box className="audit-card audit-card--center">
+              <Box className="audit-card-content audit-row">
+                <Typography>{getTokenInfo(TokenEnum.APEX).label}</Typography>
+                <Typography className="audit-amount">
+                  {formatBigIntDecimalString(lzGrandTotal, 6)}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Right spacer for visual balance */}
+          <Box />
         </Box>
 
-        <Typography className="audit-h2">
-          Layer Zero Chains Explorers
-        </Typography>
-        <Box className="audit-grid-3">
-          {layerZeroChain().map((chain) => {
-            const addr = layerZeroChains[chain]?.oftAddress;
-            return (
-              <Box key={chain} className="audit-card">
-                <Box className="audit-card-content">
-                  <Typography className="audit-card-subtitle">
-                    {chain.toUpperCase()}
-                  </Typography>
-
-                  {/* token label | explorer button (button fills full row height) */}
-                  <Box className="audit-row audit-row--fill audit-my-4">
-                    <Typography className="audit-token">
-                      {getLayerZeroWrappedToken(chain)}
+        {/* ===== Row 2: Transferred by coin (3 boxes/row) ===== */}
+        <Box className="audit-mb-16">
+          <Typography className="audit-h2">Transferred by coin</Typography>
+          <Box className="audit-grid-3">
+            {Object.entries(lzTokenTotalsAllChains)
+              .sort((a, b) => Number(b[1] - a[1]))
+              .map(([tk, amt]) => (
+                <Box key={tk} className="audit-card">
+                  <Box className="audit-card-content audit-row">
+                    <Typography className="fw-700">{decodeTokenKey(tk)}</Typography>
+                    <Typography className="audit-amount">
+                      {formatBigIntDecimalString(amt, 6)}
                     </Typography>
-
-                    <ButtonCustom
-                      variant="redSkyline"
-                      onClick={() => openAuditExplorer(chain, addr)}
-                      /* keep ButtonCustom as-is; stretch via sx */
-                      sx={{
-                        alignSelf: "stretch",
-                        height: "100%",
-                        minWidth: 36,
-                        p: "10px",
-                        lineHeight: 1,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                      }}
-                    >
-                      <img
-                        src={explorerPng}
-                        alt=""
-                        style={{ width: 30, height: 30 }}
-                      />
-                      {/* accessible name without aria-label */}
-                      <span className="sr-only">Open {chain} explorer</span>
-                    </ButtonCustom>
                   </Box>
                 </Box>
-              </Box>
-            );
-          })}
-        </Box>
-      </Box>
-
-      {/* RIGHT — LayerZero transfers (existing UI) */}
-      <Box>
-        <Typography className="audit-h2">LayerZero transfers</Typography>
-
-        <Box className="audit-mb-8 audit-w-half-md">
-          <Box className="audit-card">
-            <Box className="audit-card-content audit-row">
-              <Typography></Typography>
-              <Typography className="audit-amount">
-                {formatBigIntDecimalString(lzGrandTotal, 6)}
-              </Typography>
-            </Box>
+              ))}
           </Box>
-        </Box>
-
-        {/* By Coin — two-per-row on md+ */}
-        <Typography className="audit-h2">By Coin</Typography>
-        <Box className="audit-grid-md-2 audit-gap-12 audit-mb-16">
-          {Object.entries(lzTokenTotalsAllChains)
-            .sort((a, b) => Number(b[1] - a[1]))
-            .map(([tk, amt]) => (
-              <Box key={tk} className="audit-card">
-                <Box className="audit-card-content audit-row">
-                  <Typography className="fw-700">
-                    {decodeTokenKey(tk)}
-                  </Typography>
-                  <Typography className="audit-amount">
-                    {formatBigIntDecimalString(amt, 6)}
-                  </Typography>
-                </Box>
-              </Box>
-            ))}
           {Object.keys(lzTokenTotalsAllChains).length === 0 && (
-            <Typography className="audit-dim">No transfers yet.</Typography>
+            <Typography className="audit-dim audit-mb-8">No transfers yet.</Typography>
           )}
         </Box>
 
-        {/* By Chain — two-per-row on md+ (only EVM chains per your filter) */}
-        <Typography className="audit-h2">By Chain</Typography>
-        <Box className="audit-grid-md-2 audit-gap-12">
-          {Object.keys(lzPerChainTotals)
-            .filter((ck) => isEvmChain(ck as ChainEnum))
-            .map((ck) => {
-              const rows = Object.entries(lzPerChainTotals[ck] ?? {})
-                .sort((a, b) => Number(b[1] - a[1]))
-                .map(([token, amt]) => ({ token: decodeTokenKey(token), amt }));
-              return (
-                <Box key={ck} className="audit-card">
-                  <Box className="audit-card-content">
-                    <Typography className="audit-card-subtitle">
-                      {ck.toUpperCase()}
-                    </Typography>
-                    {rows.length === 0 && (
-                      <Typography className="audit-dim">No data</Typography>
-                    )}
-                    {rows.map((r) => (
-                      <Box className="audit-row audit-my-4">
-                        <Typography>
-                          {getLayerZeroWrappedToken(ck as ChainEnum)}
-                        </Typography>
-                        <Typography className="audit-amount">
-                          {formatBigIntDecimalString(r.amt, 6)}
-                        </Typography>
-                      </Box>
-                    ))}
+        {/* ===== Row 3: Transferred by chain (3 boxes/row) ===== */}
+        <Box>
+          <Typography className="audit-h2">Transferred by chain</Typography>
+          <Box className="audit-grid-3">
+            {Object.keys(lzPerChainTotals)
+              .filter((ck) => isEvmChain(ck as ChainEnum))
+              .map((ck) => {
+                const rows = Object.entries(lzPerChainTotals[ck] ?? {})
+                  .sort((a, b) => Number(b[1] - a[1]))
+                  .map(([token, amt]) => ({ token: decodeTokenKey(token), amt }));
+                return (
+                  <Box key={ck} className="audit-card">
+                    <Box className="audit-card-content">
+                      <Typography className="audit-card-subtitle">
+                        {ck.toUpperCase()}
+                      </Typography>
+                      {rows.length === 0 && (
+                        <Typography className="audit-dim">No data</Typography>
+                      )}
+                      {rows.map((r, idx) => (
+                        <Box key={idx} className="audit-row audit-my-4">
+                          <Typography>
+                            {getLayerZeroWrappedToken(ck as ChainEnum)}
+                          </Typography>
+                          <Typography className="audit-amount">
+                            {formatBigIntDecimalString(r.amt, 6)}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
                   </Box>
-                </Box>
-              );
-            })}
+                );
+              })}
+          </Box>
           {Object.keys(lzPerChainTotals).length === 0 && (
-            <Typography className="audit-dim">No transfers yet.</Typography>
+            <Typography className="audit-dim audit-mb-8">No transfers yet.</Typography>
           )}
         </Box>
       </Box>
