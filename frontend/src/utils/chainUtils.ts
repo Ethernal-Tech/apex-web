@@ -150,12 +150,14 @@ export const checkCardanoAddressCompatibility = (chain: ChainEnum, addr: Cardano
 }
 
 // TODO: will need to add explorer urls for nexus mainnet
-const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]: string}} = {
+export const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]: string}} = {
     mainnet: {
         [ChainEnum.Prime]: 'https://apexscan.org/en',
         [ChainEnum.Vector]: 'https://vector-apex.ethernal.tech',
         [ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
         [ChainEnum.Cardano]: 'https://cardanoscan.io',
+        [ChainEnum.Base]: 'https://basescan.org',
+        [ChainEnum.Bsc]: 'https://bscscan.com',
     },
     testnet: {
         [ChainEnum.Prime]: 'https://explorer.prime.testnet.apexfusion.org',
