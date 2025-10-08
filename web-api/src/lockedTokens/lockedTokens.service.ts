@@ -202,19 +202,27 @@ export class LockedTokensService {
 
 		query.andWhere(
 			new Brackets((qb) => {
-				let isFirst = true;
+				let id = 0;
 
 				for (const info of availableDirections) {
-					if (isFirst) {
-						isFirst = false;
+					id++;
+					const srcName = `srcChain${id}`;
+					const dstName = `dstChain${id}`;
+					if (id === 1) {
 						qb.where(
-							'(t.originChain = :srcChain AND t.destinationChain = :dstChain)',
-							{ srcChain: info.srcChain, dstChain: info.dstChain },
+							`(tx.originChain = :${srcName} AND tx.destinationChain = :${dstName})`,
+							{
+								[srcName]: info.srcChain,
+								[dstName]: info.dstChain,
+							},
 						);
 					} else {
 						qb.orWhere(
-							'(t.originChain = :srcChain AND t.destinationChain = :dstChain)',
-							{ srcChain: info.srcChain, dstChain: info.dstChain },
+							`(tx.originChain = :${srcName} AND tx.destinationChain = :${dstName})`,
+							{
+								[srcName]: info.srcChain,
+								[dstName]: info.dstChain,
+							},
 						);
 					}
 				}
