@@ -138,7 +138,7 @@ export const getBridgingMode = function (
 	return undefined;
 };
 
-export const getAllSrcDstChainsDirections = function (
+export const getAllChainsDirections = function (
 	allowedBridgingModes: BridgingModeEnum[],
 	settings: SettingsFullResponseDto,
 ): BridgingDirectionInfo[] {

@@ -22,7 +22,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SettingsService } from 'src/settings/settings.service';
 import {
-	getAllSrcDstChainsDirections,
+	getAllChainsDirections,
 	getBridgingSettings,
 } from 'src/utils/chainUtils';
 
@@ -84,14 +84,13 @@ export class LockedTokensService {
 			return cached;
 		}
 
-		const availableDirections = getAllSrcDstChainsDirections(
+		const availableDirections = getAllChainsDirections(
 			allowedBridgingModes,
 			this.settingsService.SettingsResponse,
 		);
 		const tmpChains = {} as { [key: string]: { [innerKey: string]: bigint } };
 
 		for (const info of availableDirections) {
-			const isLayerZero = info.bridgingMode == BridgingModeEnum.LayerZero;
 			const settings = getBridgingSettings(
 				info.srcChain,
 				info.dstChain,
@@ -105,7 +104,6 @@ export class LockedTokensService {
 				info.srcChain,
 				info.dstChain,
 				'amount',
-				isLayerZero,
 			);
 
 			if (!tmpChains[info.srcChain]) {
@@ -123,7 +121,6 @@ export class LockedTokensService {
 					info.srcChain,
 					info.dstChain,
 					'nativeTokenAmount',
-					isLayerZero,
 				);
 
 				if (!tmpChains[info.srcChain][tokenName]) {
@@ -176,7 +173,7 @@ export class LockedTokensService {
 		groupBy: GroupByTimePeriod,
 		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<any[]> {
-		const availableDirections = getAllSrcDstChainsDirections(
+		const availableDirections = getAllChainsDirections(
 			allowedBridgingModes,
 			this.settingsService.SettingsResponse,
 		);
@@ -201,8 +198,7 @@ export class LockedTokensService {
 			.andWhere('tx.finishedAt >= :start AND tx.finishedAt < :end', {
 				start: startDate,
 				end: endDate,
-			})
-			.andWhere('tx.isLayerZero = :isLZ', { isLZ: false });
+			});
 
 		query.andWhere(
 			new Brackets((qb) => {
@@ -335,7 +331,6 @@ export class LockedTokensService {
 		srcChain: string,
 		dstChain: string,
 		fieldName: string,
-		isLayerZero: boolean,
 		status: TransactionStatusEnum = TransactionStatusEnum.ExecutedOnDestination,
 	): Promise<string> {
 		const query = this.bridgeTransactionRepository
@@ -343,8 +338,7 @@ export class LockedTokensService {
 			.select(`SUM(tx.${fieldName})`, 'sumAll')
 			.where('tx.status = :status', { status })
 			.andWhere('tx.originChain = :srcChain', { srcChain })
-			.andWhere('tx.destinationChain = :dstChain', { dstChain })
-			.andWhere('tx.isLayerZero = :isLayerZero', { isLayerZero });
+			.andWhere('tx.destinationChain = :dstChain', { dstChain });
 		const { sumAll } = await query.getRawOne();
 		return sumAll;
 	}
