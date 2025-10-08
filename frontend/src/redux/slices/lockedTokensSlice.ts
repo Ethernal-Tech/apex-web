@@ -1,23 +1,25 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { LockedTokensDto } from "../../swagger/apexBridgeApiService";
+import { LockedTokens } from "../../features/types";
 
 export interface ILockedTokensState {
   chains: { [chain: string]: { [token: string]: { [address: string]: bigint } } };
   totalTransferred: { [chain: string]: { [token: string]: bigint } };
   totalTransferredLayerZero: { [chain: string]: { [token: string]: bigint } };
+  layerZeroLockedTokens: bigint;
 }
 
 const initialState: ILockedTokensState = {
   chains: {},
   totalTransferred: {},
-  totalTransferredLayerZero: {}
+  totalTransferredLayerZero: {},
+  layerZeroLockedTokens: BigInt(0)
 };
 
 const lockedTokensSlice = createSlice({
 name: "lockedTokens",
   initialState,
   reducers: {
-    setLockedTokensAction: (state, action: PayloadAction<LockedTokensDto>) => {
+    setLockedTokensAction: (state, action: PayloadAction<LockedTokens>) => {
       const safeParseBigInt = (val: string | undefined): bigint => {
         try {
           // keep string parsing to avoid Number precision issues
@@ -28,7 +30,7 @@ name: "lockedTokens",
       };
 
 
-      state.chains = Object.entries(action.payload.chains).reduce(
+      state.chains = Object.entries(action.payload.lockedTokens.chains).reduce(
         (chainsAcc, [chainId, tokenMap]) => {
           chainsAcc[chainId] = Object.entries(tokenMap).reduce(
             (tokenAcc, [token, addrMap]) => {
@@ -49,7 +51,7 @@ name: "lockedTokens",
       );
 
       // totalTransferred: chain -> token -> bigint
-      state.totalTransferred = Object.entries(action.payload.totalTransferred).reduce(
+      state.totalTransferred = Object.entries(action.payload.lockedTokens.totalTransferred).reduce(
         (chainsAcc, [chainId, tokenMap]) => {
           chainsAcc[chainId] = Object.entries(tokenMap).reduce(
             (tokenAcc, [token, amountStr]) => {
@@ -64,7 +66,7 @@ name: "lockedTokens",
       );
 
             // totalTransferred: chain -> token -> bigint
-      state.totalTransferredLayerZero = Object.entries(action.payload.totalTransferredLayerZero).reduce(
+      state.totalTransferredLayerZero = Object.entries(action.payload.lockedTokens.totalTransferredLayerZero).reduce(
         (chainsAcc, [chainId, tokenMap]) => {
           chainsAcc[chainId] = Object.entries(tokenMap).reduce(
             (tokenAcc, [token, amountStr]) => {
@@ -77,6 +79,8 @@ name: "lockedTokens",
         },
         {} as { [chain: string]: { [token: string]: bigint } }
       );
+
+      state.layerZeroLockedTokens = action.payload.layerZeroLockedTokens;
     },
   },
 });

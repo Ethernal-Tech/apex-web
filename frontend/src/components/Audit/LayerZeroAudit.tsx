@@ -24,10 +24,9 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
   lzTokenTotalsAllChains,
   lzGrandTotal,
 }) => {
-  const layerZeroLockedTokens = useSelector(
-    (state: RootState) => state.layerZeroLockedTokens
+  const {layerZeroLockedTokens} = useSelector(
+    (state: RootState) => state.lockedTokens
   );
-  const layerZeroLocked = layerZeroLockedTokens.lockedTokens;
 
   const { layerZeroChains } = useSelector((state: RootState) => state.settings);
   const address = layerZeroChains[ChainEnum.Nexus].oftAddress;
@@ -52,7 +51,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
                   </ButtonCustom>
                 </Box>
                 <Typography className="audit-amount">
-                  {formatBigIntDecimalString(layerZeroLocked, 18)}
+                  {formatBigIntDecimalString(layerZeroLockedTokens, 18)}
                 </Typography>
               </Box>
             </Box>

@@ -7,7 +7,6 @@ import './lockedTokens.css';
 import { getCurrencyTokenInfo } from "../../settings/token";
 import { toChainEnum } from "../../settings/chain";
 import { fetchAndUpdateLockedTokensAction } from "../../actions/lockedTokens";
-import { fetchTotalSupplyAction } from "../../actions/layerZeroLocked";
 
 const DIV = BigInt(1_000_000_000_000);
 
@@ -50,7 +49,6 @@ export const formatBigIntDecimalString = (value: bigint, decimals: number = 6) =
 
 const LockedTokensComponent = () => {
   const lockedTokens = useSelector((state: RootState) => state.lockedTokens);
-  const layerZeroLockedTokens = useSelector((state: RootState) => state.layerZeroLockedTokens);
   const {layerZeroChains} = useSelector((state: RootState) => state.settings);
   const dispatch = useDispatch();
 
@@ -58,26 +56,11 @@ const LockedTokensComponent = () => {
 
   useEffect(() => {
     // Call once immediately on mount
-    fetchAndUpdateLockedTokensAction(dispatch);
+    fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
 
     // Then call periodically every 30 seconds
     const interval = setInterval(() => {
-      fetchAndUpdateLockedTokensAction(dispatch);
-    }, 30_000); // 30,000 ms = 30 seconds
-
-    // Cleanup on component unmount
-    return () => clearInterval(interval);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    // Call once immediately on mount
-    fetchTotalSupplyAction(dispatch, layerZeroChains);
-
-    // Then call periodically every 30 seconds
-    const interval = setInterval(() => {
-      fetchTotalSupplyAction(dispatch, layerZeroChains);
+      fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
     }, 30_000); // 30,000 ms = 30 seconds
 
     // Cleanup on component unmount
@@ -86,10 +69,9 @@ const LockedTokensComponent = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layerZeroChains]);
 
-
   const lockedTokensLZFormatted = useMemo(() => {
-    return to6Round(layerZeroLockedTokens.lockedTokens);
-  }, [layerZeroLockedTokens] )
+    return to6Round(lockedTokens.layerZeroLockedTokens);
+  }, [lockedTokens.layerZeroLockedTokens] )
 
 
   const chainsData = useMemo(() => {
