@@ -1,3 +1,4 @@
+import { LockedTokensDto } from "../swagger/apexBridgeApiService"
 import { UTxO } from "./WalletHandler"
 
 export type StepType = {
@@ -16,3 +17,8 @@ export type TotalLockedLZ = {
   symbol: string;
   raw: bigint;
 };
+
+export type LockedTokens={
+  lockedTokens: LockedTokensDto,
+  layerZeroLockedTokens: bigint
+}
