@@ -76,12 +76,19 @@ export class LockedTokensController {
 		description:
 			'Time period to group by: hour, day, week, or month (default is day)',
 	})
+	@ApiQuery({
+		name: 'allowedBridgingModes',
+		required: false,
+		description: 'all suported bridging modes that goes into sum',
+	})
 	@HttpCode(HttpStatus.OK)
 	@Get('transferred')
 	async getTransferredSum(
 		@Query('startDate') startDateStr: string,
 		@Query('endDate') endDateStr: string,
 		@Query('groupBy') groupByStr: GroupByTimePeriod,
+		@Query('allowedBridgingModes')
+		allowedBridgingModes: BridgingModeEnum[] = [BridgingModeEnum.Skyline],
 	): Promise<TransferredTokensByDay[]> {
 		const startDate = new Date(startDateStr);
 		const endDate = new Date(endDateStr);
@@ -104,6 +111,7 @@ export class LockedTokensController {
 			startDate,
 			endDate,
 			groupBy,
+			allowedBridgingModes,
 		);
 	}
 }

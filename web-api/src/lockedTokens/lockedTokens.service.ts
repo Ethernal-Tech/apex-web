@@ -12,7 +12,7 @@ import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import {
 	BridgingModeEnum,
 	ChainEnum,
@@ -153,11 +153,13 @@ export class LockedTokensService {
 		startDate: Date,
 		endDate: Date,
 		groupBy: GroupByTimePeriod,
+		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<TransferredTokensByDay[]> {
 		const rawResults = await this.fetchGroupedTransactionSums(
 			startDate,
 			endDate,
 			groupBy,
+			allowedBridgingModes,
 		);
 		return this.transformRawResultsToDto(rawResults, groupBy);
 	}
@@ -166,10 +168,16 @@ export class LockedTokensService {
 		startDate: Date,
 		endDate: Date,
 		groupBy: GroupByTimePeriod,
-	) {
+		allowedBridgingModes: BridgingModeEnum[],
+	): Promise<any[]> {
+		if (!allowedBridgingModes?.length) {
+			return [];
+		}
+
+		const chains = Object.values(ChainEnum);
 		const dateTruncUnit = groupBy.toLowerCase();
 
-		return this.bridgeTransactionRepository
+		const query = this.bridgeTransactionRepository
 			.createQueryBuilder('tx')
 			.select(
 				`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`,
@@ -185,12 +193,47 @@ export class LockedTokensService {
 				start: startDate,
 				end: endDate,
 			})
-			.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
+			.andWhere('tx.isLayerZero = :isLZ', { isLZ: false });
+
+		query.andWhere(
+			new Brackets((qb) => {
+				let isFirst = true;
+
+				for (const srcChain of chains) {
+					for (const dstChain of chains) {
+						const bridgingMode = getBridgingMode(
+							srcChain,
+							dstChain,
+							this.settingsService.SettingsResponse,
+						);
+						if (!bridgingMode || !allowedBridgingModes.includes(bridgingMode)) {
+							continue;
+						}
+
+						if (isFirst) {
+							isFirst = false;
+							qb.where(
+								'(t.originChain = :srcChain AND t.destinationChain = :dstChain)',
+								{ srcChain, dstChain },
+							);
+						} else {
+							qb.orWhere(
+								'(t.originChain = :srcChain AND t.destinationChain = :dstChain)',
+								{ srcChain, dstChain },
+							);
+						}
+					}
+				}
+			}),
+		);
+
+		query
 			.setParameter('truncUnit', dateTruncUnit)
 			.groupBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`)
 			.addGroupBy('tx.originChain')
-			.orderBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`, 'ASC')
-			.getRawMany();
+			.orderBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`, 'ASC');
+
+		return query.getRawMany();
 	}
 
 	private transformRawResultsToDto(
