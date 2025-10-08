@@ -10,6 +10,8 @@ import explorerPng from "@../../../public/explorer.png"
 import { decodeTokenKey } from "../../utils/tokenUtils";
 import { getTokenInfo } from "../../settings/token";
 import { TokenEnum } from "../../features/enums";
+import { RootState } from "../../redux/store";
+import { useSelector } from "react-redux";
 
 type LockedTvbPanelProps = {
   chains: Record<string, Record<string, Record<string, bigint>>>;
@@ -40,14 +42,16 @@ const LockedTvbPanel: React.FC<LockedTvbPanelProps> = ({
   tvbGrandTotal,
   enabledChains,
 }) => {
+  const settings = useSelector((state: RootState) => state.settings)
+
   // Select options
   const srcChainOptions = useMemo(() => {
     const enabled = new Set<ChainEnum>(enabledChains ?? []);
-    return getSrcChains()
+    return getSrcChains(settings)
       .filter((c) => enabled.has(c))
       .filter((c) => !isEvmChain(c)) // ← skip EVM chains
       .map((c) => getChainInfo(c));
-  }, [enabledChains]);
+  }, [settings]);
 
   // Selection state for per-address table
   const [selChain, setSelChain] = useState<string>(() => ChainEnum.Prime);
