@@ -15,14 +15,16 @@ import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entit
 import { Brackets, Repository } from 'typeorm';
 import {
 	BridgingModeEnum,
-	ChainEnum,
 	GroupByTimePeriod,
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SettingsService } from 'src/settings/settings.service';
-import { getBridgingMode, getBridgingSettings } from 'src/utils/chainUtils';
+import {
+	getAllSrcDstChainsDirections,
+	getBridgingSettings,
+} from 'src/utils/chainUtils';
 
 @Injectable()
 export class LockedTokensService {
@@ -82,67 +84,71 @@ export class LockedTokensService {
 			return cached;
 		}
 
-		const chains = Object.values(ChainEnum);
-		const result = new LockedTokensResponse();
-		result.chains = {};
+		const availableDirections = getAllSrcDstChainsDirections(
+			allowedBridgingModes,
+			this.settingsService.SettingsResponse,
+		);
+		const tmpChains = {} as { [key: string]: { [innerKey: string]: bigint } };
 
-		for (const srcChain of chains) {
-			const chainResult: Record<string, bigint> = {};
+		for (const info of availableDirections) {
+			const isLayerZero = info.bridgingMode == BridgingModeEnum.LayerZero;
+			const settings = getBridgingSettings(
+				info.srcChain,
+				info.dstChain,
+				this.settingsService.SettingsResponse,
+			);
+			const token = settings?.cardanoChainsNativeTokens[info.srcChain]?.find(
+				(x) => x.dstChainID === info.dstChain,
+			);
 
-			for (const dstChain of chains) {
-				const bridgingMode = getBridgingMode(
-					srcChain,
-					dstChain,
-					this.settingsService.SettingsResponse,
-				);
-				if (!bridgingMode || !allowedBridgingModes.includes(bridgingMode)) {
-					continue;
-				}
+			const amount = await this.getAggregatedSum(
+				info.srcChain,
+				info.dstChain,
+				'amount',
+				isLayerZero,
+			);
 
-				const isLayerZero = bridgingMode == BridgingModeEnum.LayerZero;
-				const amount = await this.getAggregatedSum(
-					srcChain,
-					dstChain,
-					'amount',
+			if (!tmpChains[info.srcChain]) {
+				tmpChains[info.srcChain] = {
+					amount: BigInt(0),
+				};
+			}
+
+			tmpChains[info.srcChain]['amount'] =
+				tmpChains[info.srcChain]['amount'] + BigInt(amount || '0');
+
+			if (!!token) {
+				const tokenName = token.tokenName.trim();
+				const tokenAmount = await this.getAggregatedSum(
+					info.srcChain,
+					info.dstChain,
+					'nativeTokenAmount',
 					isLayerZero,
 				);
 
-				chainResult['amount'] =
-					(chainResult['amount'] || BigInt(0)) + BigInt(amount || '0');
-
-				const settings = getBridgingSettings(
-					srcChain,
-					dstChain,
-					this.settingsService.SettingsResponse,
-				);
-				const token = settings?.cardanoChainsNativeTokens[srcChain]?.find(
-					(x) => x.dstChainID === dstChain,
-				);
-
-				if (!!token) {
-					const tokenName = token.tokenName.trim();
-					const tokenAmount = await this.getAggregatedSum(
-						srcChain,
-						dstChain,
-						'nativeTokenAmount',
-						isLayerZero,
-					);
-					chainResult[tokenName] =
-						(chainResult[tokenName] || BigInt(0)) + BigInt(tokenAmount || '0');
+				if (!tmpChains[info.srcChain][tokenName]) {
+					tmpChains[info.srcChain][tokenName] = BigInt(0);
 				}
-			}
 
-			const entries = Object.entries(chainResult);
-			if (entries.length > 0) {
-				result.chains[srcChain] = entries.reduce(
-					(prev, [tokenName, value]) => {
-						prev[tokenName] = value.toString();
-						return prev;
-					},
-					{} as Record<string, string>,
-				);
+				tmpChains[info.srcChain][tokenName] =
+					tmpChains[info.srcChain][tokenName] + BigInt(tokenAmount || '0');
 			}
 		}
+
+		const result = new LockedTokensResponse();
+		result.chains = Object.entries(tmpChains).reduce(
+			(chainsAcc, [chainName, tokens]) => {
+				chainsAcc[chainName] = Object.entries(tokens).reduce(
+					(tokensAcc, [tokenName, value]) => {
+						tokensAcc[tokenName] = value.toString();
+						return tokensAcc;
+					},
+					{} as { [innerKey: string]: string },
+				);
+				return chainsAcc;
+			},
+			{} as { [key: string]: { [innerKey: string]: string } },
+		);
 
 		await this.cacheManager.set(cacheKey, result, 30);
 
@@ -170,11 +176,14 @@ export class LockedTokensService {
 		groupBy: GroupByTimePeriod,
 		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<any[]> {
-		if (!allowedBridgingModes?.length) {
+		const availableDirections = getAllSrcDstChainsDirections(
+			allowedBridgingModes,
+			this.settingsService.SettingsResponse,
+		);
+		if (availableDirections.length == 0) {
 			return [];
 		}
 
-		const chains = Object.values(ChainEnum);
 		const dateTruncUnit = groupBy.toLowerCase();
 
 		const query = this.bridgeTransactionRepository
@@ -199,29 +208,18 @@ export class LockedTokensService {
 			new Brackets((qb) => {
 				let isFirst = true;
 
-				for (const srcChain of chains) {
-					for (const dstChain of chains) {
-						const bridgingMode = getBridgingMode(
-							srcChain,
-							dstChain,
-							this.settingsService.SettingsResponse,
+				for (const info of availableDirections) {
+					if (isFirst) {
+						isFirst = false;
+						qb.where(
+							'(t.originChain = :srcChain AND t.destinationChain = :dstChain)',
+							{ srcChain: info.srcChain, dstChain: info.dstChain },
 						);
-						if (!bridgingMode || !allowedBridgingModes.includes(bridgingMode)) {
-							continue;
-						}
-
-						if (isFirst) {
-							isFirst = false;
-							qb.where(
-								'(t.originChain = :srcChain AND t.destinationChain = :dstChain)',
-								{ srcChain, dstChain },
-							);
-						} else {
-							qb.orWhere(
-								'(t.originChain = :srcChain AND t.destinationChain = :dstChain)',
-								{ srcChain, dstChain },
-							);
-						}
+					} else {
+						qb.orWhere(
+							'(t.originChain = :srcChain AND t.destinationChain = :dstChain)',
+							{ srcChain: info.srcChain, dstChain: info.dstChain },
+						);
 					}
 				}
 			}),

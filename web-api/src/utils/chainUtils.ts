@@ -19,6 +19,12 @@ export const CHAIN_TO_CHAIN_ID = {
 	[ChainApexBridgeEnum.Cardano]: 4,
 };
 
+export type BridgingDirectionInfo = {
+	srcChain: ChainEnum;
+	dstChain: ChainEnum;
+	bridgingMode: BridgingModeEnum;
+};
+
 const fromChainToNetworkId = (
 	chain: ChainApexBridgeEnum,
 	isMainnet: boolean,
@@ -130,4 +136,31 @@ export const getBridgingMode = function (
 	}
 
 	return undefined;
+};
+
+export const getAllSrcDstChainsDirections = function (
+	allowedBridgingModes: BridgingModeEnum[],
+	settings: SettingsFullResponseDto,
+): BridgingDirectionInfo[] {
+	if (allowedBridgingModes.length == 0) {
+		return [];
+	}
+
+	const result: BridgingDirectionInfo[] = [];
+	const chains = Object.values(ChainEnum);
+
+	for (const srcChain of chains) {
+		for (const dstChain of chains) {
+			const bridgingMode = getBridgingMode(srcChain, dstChain, settings);
+			if (!!bridgingMode && allowedBridgingModes.includes(bridgingMode)) {
+				result.push({
+					srcChain,
+					dstChain,
+					bridgingMode,
+				});
+			}
+		}
+	}
+
+	return result;
 };
