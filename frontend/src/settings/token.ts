@@ -5,6 +5,7 @@ import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg'
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg'
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg'
 import { getChainInfo } from "./chain";
+import { Token } from "@mui/icons-material";
 
 export type BridgingInfo = {
   isCurrencyBridgingAllowed: boolean;
@@ -161,3 +162,14 @@ export const getCurrencyTokenInfo = (srcChain: ChainEnum): TokenInfo => getToken
 
 export const isCurrencyBridgingAllowed = (srcChain: ChainEnum, dstChain: ChainEnum): boolean =>
   getBridgingInfo(srcChain, dstChain).isCurrencyBridgingAllowed
+
+export const getLayerZeroWrappedToken = (chain: ChainEnum): TokenEnum => {
+  switch(chain){
+    case ChainEnum.Base:
+      return TokenEnum.BAP3X;
+    case ChainEnum.Bsc:
+      return TokenEnum.BNAP3X;
+    default:
+      return TokenEnum.APEX
+  }
+}

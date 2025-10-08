@@ -29,10 +29,15 @@ export class LockedTokensController {
 		const chains = (await this.lockedTokensService.getLockedTokens()).chains;
 		const totalTransfered = (
 			await this.lockedTokensService.sumTransferredTokensPerChain()
-		).chains;
+		).totalTransferred;
+		const totalTransferredLayerZero = (
+			await this.lockedTokensService.sumLayerZeroTransferredTokensPerChain()
+		).totalTransferred;
+
 		return {
 			chains,
-			totalTransfered,
+			totalTransferred: totalTransfered,
+			totalTransferredLayerZero: totalTransferredLayerZero,
 		};
 	}
 
