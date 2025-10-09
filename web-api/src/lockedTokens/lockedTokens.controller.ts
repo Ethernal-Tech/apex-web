@@ -41,16 +41,27 @@ export class LockedTokensController {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
+	@ApiQuery({
+		name: 'allowedBridgingModes',
+		required: false,
+		isArray: true,
+		enum: BridgingModeEnum,
+		enumName: 'BridgingModeEnum',
+		style: 'form',
+		explode: false,
+	})
 	async get(
 		@Query(
 			'allowedBridgingModes',
-			new ParseArrayPipe({ items: String, separator: ',' }),
+			new ParseArrayPipe({ items: String, separator: ',', optional: true }),
 		)
-		allowedBridgingModes: BridgingModeEnum[] = [
-			BridgingModeEnum.Skyline,
-			BridgingModeEnum.LayerZero,
-		],
+		modes?: string[],
 	): Promise<LockedTokensDto> {
+		const allowedBridgingModes = (
+			modes?.length
+				? modes
+				: [BridgingModeEnum.Skyline, BridgingModeEnum.LayerZero]
+		) as BridgingModeEnum[];
 		const lockedTokens = await this.lockedTokensService.getLockedTokens();
 		const totalTransfered =
 			await this.lockedTokensService.sumTransferredTokensPerChain(
