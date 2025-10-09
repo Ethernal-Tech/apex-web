@@ -2,6 +2,7 @@ import {
 	BridgingModeEnum,
 	ChainApexBridgeEnum,
 	ChainEnum,
+	TokenEnum,
 } from 'src/common/enum';
 import { CardanoNetworkType } from './Address/types';
 import {
@@ -69,7 +70,7 @@ export const isCardanoChain = (chain: ChainEnum) =>
 
 export const isEvmChain = (chain: ChainEnum) => chain === ChainEnum.Nexus;
 
-export const isAllowedDirection = function (
+const isAllowedDirection = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
 	allowedDirections: { [key: string]: string[] },
@@ -82,6 +83,9 @@ export const getBridgingSettings = function (
 	dstChain: ChainEnum,
 	fullSettings: SettingsFullResponseDto,
 ): SettingsResponseDto | undefined {
+	if (!fullSettings) {
+		return undefined;
+	}
 	const settingsReactor =
 		fullSettings.settingsPerMode[BridgingModeEnum.Reactor];
 	const settingsSkyline =
@@ -112,6 +116,9 @@ export const getBridgingMode = function (
 	dstChain: ChainEnum,
 	fullSettings: SettingsFullResponseDto,
 ): BridgingModeEnum | undefined {
+	if (!fullSettings) {
+		return undefined;
+	}
 	const settingsReactor =
 		fullSettings.settingsPerMode[BridgingModeEnum.Reactor].bridgingSettings;
 	const settingsSkyline =
@@ -142,7 +149,7 @@ export const getAllChainsDirections = function (
 	allowedBridgingModes: BridgingModeEnum[],
 	settings: SettingsFullResponseDto,
 ): BridgingDirectionInfo[] {
-	if (allowedBridgingModes.length == 0) {
+	if (allowedBridgingModes.length == 0 || !settings) {
 		return [];
 	}
 
@@ -163,4 +170,28 @@ export const getAllChainsDirections = function (
 	}
 
 	return result;
+};
+
+export const getTokenNameFromSettings = (
+	srcChain: ChainEnum,
+	dstChain: ChainEnum,
+	settings: SettingsFullResponseDto,
+): string | undefined => {
+	switch (getBridgingMode(srcChain, dstChain, settings)) {
+		case BridgingModeEnum.LayerZero:
+			switch (srcChain) {
+				case ChainEnum.BNB:
+					return TokenEnum.BNAP3X;
+				case ChainEnum.Base:
+					return TokenEnum.BAP3X;
+			}
+			return undefined;
+		case BridgingModeEnum.Skyline:
+			const nativeTokens =
+				settings?.settingsPerMode[BridgingModeEnum.Skyline]
+					.cardanoChainsNativeTokens[srcChain];
+			return nativeTokens
+				?.find((x) => x.dstChainID === dstChain)
+				?.tokenName.trim();
+	}
 };

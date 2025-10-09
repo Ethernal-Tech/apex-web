@@ -15,7 +15,9 @@ import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entit
 import { Brackets, Repository } from 'typeorm';
 import {
 	BridgingModeEnum,
+	ChainEnum,
 	GroupByTimePeriod,
+	TokenEnum,
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -23,7 +25,7 @@ import { Cache } from 'cache-manager';
 import { SettingsService } from 'src/settings/settings.service';
 import {
 	getAllChainsDirections,
-	getBridgingSettings,
+	getTokenNameFromSettings,
 } from 'src/utils/chainUtils';
 
 @Injectable()
@@ -91,15 +93,11 @@ export class LockedTokensService {
 		const tmpChains = {} as { [key: string]: { [innerKey: string]: bigint } };
 
 		for (const info of availableDirections) {
-			const settings = getBridgingSettings(
+			const tokenName = getTokenNameFromSettings(
 				info.srcChain,
 				info.dstChain,
 				this.settingsService.SettingsResponse,
 			);
-			const token = settings?.cardanoChainsNativeTokens[info.srcChain]?.find(
-				(x) => x.dstChainID === info.dstChain,
-			);
-
 			const amount = await this.getAggregatedSum(
 				info.srcChain,
 				info.dstChain,
@@ -115,8 +113,7 @@ export class LockedTokensService {
 			tmpChains[info.srcChain]['amount'] =
 				tmpChains[info.srcChain]['amount'] + BigInt(amount || '0');
 
-			if (!!token) {
-				const tokenName = token.tokenName.trim();
+			if (!!tokenName) {
 				const tokenAmount = await this.getAggregatedSum(
 					info.srcChain,
 					info.dstChain,
@@ -251,12 +248,25 @@ export class LockedTokensService {
 			const chain: string = row.chain;
 			const amountSum: string = row.amountSum;
 			const nativeSum: string = row.nativeSum;
-
-			const tokens =
-				this.settingsService.SettingsResponse.settingsPerMode[
-					BridgingModeEnum.Skyline
-				].cardanoChainsNativeTokens?.[chain];
-			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
+			let tokenName: string = '';
+			// hack solution for token names, will work for now
+			switch (chain as ChainEnum) {
+				case ChainEnum.BNB:
+					tokenName = TokenEnum.BNAP3X;
+					break;
+				case ChainEnum.Base:
+					tokenName = TokenEnum.BAP3X;
+					break;
+				case ChainEnum.Cardano:
+				case ChainEnum.Prime:
+					const tokens =
+						this.settingsService.SettingsResponse.settingsPerMode[
+							BridgingModeEnum.Skyline
+						].cardanoChainsNativeTokens[chain as ChainEnum];
+					tokenName =
+						!!tokens && tokens.length > 0 ? tokens[0].tokenName.trim() : '';
+					break;
+			}
 
 			if (!groupedByDate[dateKey]) {
 				groupedByDate[dateKey] = {
@@ -271,7 +281,7 @@ export class LockedTokensService {
 				chainResult.amount = amountSum;
 			}
 
-			if (tokenName && nativeSum !== null) {
+			if (!!tokenName && nativeSum !== null) {
 				chainResult[tokenName] = nativeSum;
 			}
 
