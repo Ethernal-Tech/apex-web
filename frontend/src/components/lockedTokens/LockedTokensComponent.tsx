@@ -100,7 +100,11 @@ const LockedTokensComponent = () => {
 
     const label = getCurrencyTokenInfo(ChainEnum.Prime).label;
 
-    return `${formatBigIntDecimalString(outputValue, 6)} ${label}`;
+    if (outputValue > 0){
+       return `${formatBigIntDecimalString(outputValue, 6)} ${label}`;
+    }
+
+    return ``;
   }, [lockedTokens]);
 
   return (

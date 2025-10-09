@@ -12,12 +12,11 @@ import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
-import { Brackets, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import {
 	BridgingModeEnum,
 	ChainEnum,
 	GroupByTimePeriod,
-	TokenEnum,
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -26,6 +25,7 @@ import { SettingsService } from 'src/settings/settings.service';
 import {
 	getAllChainsDirections,
 	getTokenNameFromSettings,
+	isCardanoChain,
 } from 'src/utils/chainUtils';
 import { amountToBigInt } from 'src/utils/generalUtils';
 
@@ -158,81 +158,31 @@ export class LockedTokensService {
 		groupBy: GroupByTimePeriod,
 		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<TransferredTokensByDay[]> {
-		const rawResults = await this.fetchGroupedTransactionSums(
-			startDate,
-			endDate,
-			groupBy,
-			allowedBridgingModes,
-		);
-		return this.transformRawResultsToDto(rawResults, groupBy);
-	}
-
-	private async fetchGroupedTransactionSums(
-		startDate: Date,
-		endDate: Date,
-		groupBy: GroupByTimePeriod,
-		allowedBridgingModes: BridgingModeEnum[],
-	): Promise<any[]> {
 		const availableDirections = getAllChainsDirections(
 			allowedBridgingModes,
 			this.settingsService.SettingsResponse,
 		);
-		if (availableDirections.length == 0) {
-			return [];
+
+		const fetchResult: {
+			groupedDate: string;
+			amount: string | null;
+			nativeSum: string | null;
+			originChain: ChainEnum;
+			destinationChain: ChainEnum;
+		}[] = [];
+
+		for (const info of availableDirections) {
+			const rows = await this.getGroupByAggregatedSum(
+				startDate,
+				endDate,
+				info.srcChain,
+				info.dstChain,
+				groupBy,
+			);
+			fetchResult.push(...rows);
 		}
 
-		const dateTruncUnit = groupBy.toLowerCase();
-
-		const query = this.bridgeTransactionRepository
-			.createQueryBuilder('tx')
-			.select(
-				`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`,
-				'groupedDate',
-			)
-			.addSelect('tx.originChain', 'chain')
-			.addSelect('SUM(tx.amount)', 'amountSum')
-			.addSelect('SUM(tx.nativeTokenAmount)', 'nativeSum')
-			.where('tx.status = :status', {
-				status: TransactionStatusEnum.ExecutedOnDestination,
-			})
-			.andWhere('tx.finishedAt >= :start AND tx.finishedAt < :end', {
-				start: startDate,
-				end: endDate,
-			});
-
-		query.andWhere(
-			new Brackets((qb) => {
-				for (let id = 0; id < availableDirections.length; id++) {
-					const info = availableDirections[id];
-					const srcName = `srcChain${id}`;
-					const dstName = `dstChain${id}`;
-					if (id === 0) {
-						qb.where(
-							`(tx.originChain = :${srcName} AND tx.destinationChain = :${dstName})`,
-							{
-								[srcName]: info.srcChain,
-								[dstName]: info.dstChain,
-							},
-						);
-					} else {
-						qb.orWhere(
-							`(tx.originChain = :${srcName} AND tx.destinationChain = :${dstName})`,
-							{
-								[srcName]: info.srcChain,
-								[dstName]: info.dstChain,
-							},
-						);
-					}
-				}
-			}),
-		);
-
-		query
-			.setParameter('truncUnit', dateTruncUnit)
-			.groupBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`)
-			.addGroupBy('tx.originChain')
-			.orderBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`, 'ASC');
-		return query.getRawMany();
+		return this.transformRawResultsToDto(fetchResult, groupBy);
 	}
 
 	private transformRawResultsToDto(
@@ -246,31 +196,16 @@ export class LockedTokensService {
 				new Date(row.groupedDate),
 				groupBy,
 			);
+
+			const chain = row.originChain;
 			const dateKey = normalizedDate.toISOString();
-
-			const chain: string = row.chain;
-			const amountSum: string = row.amountSum;
+			const amountSum: string = row.amount;
 			const nativeSum: string = row.nativeSum;
-			let tokenName: string = '';
-			// hack solution for token names, will work for now
-			switch (chain as ChainEnum) {
-				case ChainEnum.BNB:
-					tokenName = TokenEnum.BNAP3X;
-					break;
-				case ChainEnum.Base:
-					tokenName = TokenEnum.BAP3X;
-					break;
-				case ChainEnum.Cardano:
-				case ChainEnum.Prime:
-					const tokens =
-						this.settingsService.SettingsResponse.settingsPerMode[
-							BridgingModeEnum.Skyline
-						].cardanoChainsNativeTokens[chain as ChainEnum];
-					tokenName =
-						!!tokens && tokens.length > 0 ? tokens[0].tokenName.trim() : '';
-					break;
-			}
-
+			const tokenName = getTokenNameFromSettings(
+				chain,
+				row.destinationChain,
+				this.settingsService.SettingsResponse,
+			);
 			if (!groupedByDate[dateKey]) {
 				groupedByDate[dateKey] = {
 					date: normalizedDate,
@@ -280,12 +215,15 @@ export class LockedTokensService {
 
 			const chainResult: Record<string, string> = {};
 
-			if (amountSum !== null) {
-				chainResult.amount = amountSum;
+			if ((!tokenName || isCardanoChain(chain)) && amountSum !== null) {
+				chainResult.amount = amountToBigInt(row.amount, chain).toString();
 			}
 
 			if (!!tokenName && nativeSum !== null) {
-				chainResult[tokenName] = nativeSum;
+				chainResult[tokenName] = amountToBigInt(
+					row.nativeSum,
+					chain,
+				).toString();
 			}
 
 			groupedByDate[dateKey].totalTransferred[chain] = chainResult;
@@ -359,5 +297,50 @@ export class LockedTokensService {
 			.andWhere('tx.destinationChain = :dstChain', { dstChain });
 		const { sumAll } = await query.getRawOne();
 		return sumAll;
+	}
+
+	private async getGroupByAggregatedSum(
+		startDate: Date,
+		endDate: Date,
+		srcChain: ChainEnum,
+		dstChain: ChainEnum,
+		groupBy: GroupByTimePeriod,
+		status: TransactionStatusEnum = TransactionStatusEnum.ExecutedOnDestination,
+	): Promise<
+		Array<{
+			groupedDate: string;
+			amount: string | null;
+			nativeSum: string | null;
+			originChain: ChainEnum;
+			destinationChain: ChainEnum;
+		}>
+	> {
+		const dateExpr =
+			`to_char(DATE_TRUNC(:truncUnit, tx."finishedAt" AT TIME ZONE 'UTC'), ` +
+			`'YYYY-MM-DD"T"HH24:MI:SS"Z"')`;
+
+		const qb = this.bridgeTransactionRepository
+			.createQueryBuilder('tx')
+			.select(dateExpr, 'groupedDate')
+			.addSelect('SUM(tx.amount)', 'amount')
+			.addSelect('SUM(tx.nativeTokenAmount)', 'nativeSum')
+			.addSelect('tx.originChain', 'originChain')
+			.addSelect('tx.destinationChain', 'destinationChain')
+			.where('tx.status = :status', { status })
+			.andWhere('tx."finishedAt" >= :start AND tx."finishedAt" < :end', {
+				start: startDate,
+				end: endDate,
+			})
+			.andWhere(
+				'tx.originChain = :srcChain AND tx.destinationChain = :dstChain',
+				{ srcChain, dstChain },
+			)
+			.setParameter('truncUnit', groupBy.toLowerCase())
+			.groupBy(dateExpr)
+			.addGroupBy('tx.originChain')
+			.addGroupBy('tx.destinationChain')
+			.orderBy(dateExpr, 'ASC');
+
+		return qb.getRawMany();
 	}
 }
