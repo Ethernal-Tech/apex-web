@@ -487,10 +487,10 @@ export class LockedTokensControllerClient extends BaseClient {
 
     /**
      * Get locked tokens amount
-     * @param allowedBridgingModes (optional) all suported bridging modes that goes into sum
+     * @param allowedBridgingModes (optional) 
      * @return OK - Get locked tokens amount.
      */
-    get(allowedBridgingModes: string[] | undefined): Promise<LockedTokensDto> {
+    get(allowedBridgingModes: BridgingModeEnum[] | undefined): Promise<LockedTokensDto> {
         let url_ = this.baseUrl + "/lockedTokens?";
         if (allowedBridgingModes === null)
             throw new globalThis.Error("The parameter 'allowedBridgingModes' cannot be null.");
@@ -2405,6 +2405,13 @@ export interface ICreateContactDto {
     message: string;
 
     [key: string]: any;
+}
+
+export enum BridgingModeEnum {
+    Reactor = "reactor",
+    Skyline = "skyline",
+    Layerzero = "layerzero",
+    Centralized = "centralized",
 }
 
 export class LockedTokensDto implements ILockedTokensDto {

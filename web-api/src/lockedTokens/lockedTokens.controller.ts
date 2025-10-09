@@ -1,4 +1,11 @@
-import { Controller, Get, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import {
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	ParseArrayPipe,
+	Query,
+} from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LockedTokensService } from './lockedTokens.service';
 import {
@@ -21,7 +28,11 @@ export class LockedTokensController {
 	@ApiQuery({
 		name: 'allowedBridgingModes',
 		required: false,
-		description: 'all suported bridging modes that goes into sum',
+		isArray: true,
+		enum: BridgingModeEnum,
+		enumName: 'BridgingModeEnum',
+		style: 'form',
+		explode: false,
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -31,7 +42,10 @@ export class LockedTokensController {
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	async get(
-		@Query('allowedBridgingModes')
+		@Query(
+			'allowedBridgingModes',
+			new ParseArrayPipe({ items: String, separator: ',' }),
+		)
 		allowedBridgingModes: BridgingModeEnum[] = [
 			BridgingModeEnum.Skyline,
 			BridgingModeEnum.LayerZero,
