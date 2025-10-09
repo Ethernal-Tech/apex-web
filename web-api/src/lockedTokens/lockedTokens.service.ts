@@ -27,6 +27,7 @@ import {
 	getAllChainsDirections,
 	getTokenNameFromSettings,
 } from 'src/utils/chainUtils';
+import { amountToBigInt } from 'src/utils/generalUtils';
 
 @Injectable()
 export class LockedTokensService {
@@ -111,7 +112,8 @@ export class LockedTokensService {
 			}
 
 			tmpChains[info.srcChain]['amount'] =
-				tmpChains[info.srcChain]['amount'] + BigInt(amount || '0');
+				tmpChains[info.srcChain]['amount'] +
+				amountToBigInt(amount, info.srcChain);
 
 			if (!!tokenName) {
 				const tokenAmount = await this.getAggregatedSum(
@@ -125,7 +127,8 @@ export class LockedTokensService {
 				}
 
 				tmpChains[info.srcChain][tokenName] =
-					tmpChains[info.srcChain][tokenName] + BigInt(tokenAmount || '0');
+					tmpChains[info.srcChain][tokenName] +
+					amountToBigInt(tokenAmount, info.srcChain);
 			}
 		}
 
