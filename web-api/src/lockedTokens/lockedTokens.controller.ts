@@ -25,15 +25,6 @@ export class LockedTokensController {
 		description:
 			'Provide information to users about the amount of locked tokens',
 	})
-	@ApiQuery({
-		name: 'allowedBridgingModes',
-		required: false,
-		isArray: true,
-		enum: BridgingModeEnum,
-		enumName: 'BridgingModeEnum',
-		style: 'form',
-		explode: false,
-	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'OK - Get locked tokens amount.',
@@ -57,11 +48,8 @@ export class LockedTokensController {
 		)
 		modes?: string[],
 	): Promise<LockedTokensDto> {
-		const allowedBridgingModes = (
-			modes?.length
-				? modes
-				: [BridgingModeEnum.Skyline, BridgingModeEnum.LayerZero]
-		) as BridgingModeEnum[];
+		const allowedBridgingModes = (modes ?? []) as BridgingModeEnum[];
+
 		const lockedTokens = await this.lockedTokensService.getLockedTokens();
 		const totalTransfered =
 			await this.lockedTokensService.sumTransferredTokensPerChain(
@@ -106,17 +94,31 @@ export class LockedTokensController {
 		required: false,
 		description: 'all suported bridging modes that goes into sum',
 	})
+	@ApiQuery({
+		name: 'allowedBridgingModes',
+		required: false,
+		isArray: true,
+		enum: BridgingModeEnum,
+		enumName: 'BridgingModeEnum',
+		style: 'form',
+		explode: false,
+	})
 	@HttpCode(HttpStatus.OK)
 	@Get('transferred')
 	async getTransferredSum(
 		@Query('startDate') startDateStr: string,
 		@Query('endDate') endDateStr: string,
 		@Query('groupBy') groupByStr: GroupByTimePeriod,
-		@Query('allowedBridgingModes')
-		allowedBridgingModes: BridgingModeEnum[] = [BridgingModeEnum.Skyline],
+		@Query(
+			'allowedBridgingModes',
+			new ParseArrayPipe({ items: String, separator: ',', optional: true }),
+		)
+		modes?: string[],
 	): Promise<TransferredTokensByDay[]> {
 		const startDate = new Date(startDateStr);
 		const endDate = new Date(endDateStr);
+
+		const allowedBridgingModes = (modes ?? []) as BridgingModeEnum[];
 
 		if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
 			throw new Error(
