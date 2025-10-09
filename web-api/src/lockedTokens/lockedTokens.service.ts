@@ -25,7 +25,6 @@ import { SettingsService } from 'src/settings/settings.service';
 import {
 	getAllChainsDirections,
 	getTokenNameFromSettings,
-	isCardanoChain,
 } from 'src/utils/chainUtils';
 import { amountToBigInt } from 'src/utils/generalUtils';
 
@@ -91,7 +90,8 @@ export class LockedTokensService {
 			allowedBridgingModes,
 			this.settingsService.SettingsResponse,
 		);
-		const tmpChains = {} as { [key: string]: { [innerKey: string]: bigint } };
+		const result = new LockedTokensResponse();
+		result.chains = {};
 
 		for (const info of availableDirections) {
 			const tokenName = getTokenNameFromSettings(
@@ -105,15 +105,16 @@ export class LockedTokensService {
 				'amount',
 			);
 
-			if (!tmpChains[info.srcChain]) {
-				tmpChains[info.srcChain] = {
-					amount: BigInt(0),
+			if (!result.chains[info.srcChain]) {
+				result.chains[info.srcChain] = {
+					amount: '0',
 				};
 			}
 
-			tmpChains[info.srcChain]['amount'] =
-				tmpChains[info.srcChain]['amount'] +
+			const currencyAmount =
+				BigInt(result.chains[info.srcChain]['amount']) +
 				amountToBigInt(amount, info.srcChain);
+			result.chains[info.srcChain]['amount'] = currencyAmount.toString();
 
 			if (!!tokenName) {
 				const tokenAmount = await this.getAggregatedSum(
@@ -122,30 +123,16 @@ export class LockedTokensService {
 					'nativeTokenAmount',
 				);
 
-				if (!tmpChains[info.srcChain][tokenName]) {
-					tmpChains[info.srcChain][tokenName] = BigInt(0);
+				if (!result.chains[info.srcChain][tokenName]) {
+					result.chains[info.srcChain][tokenName] = '0';
 				}
 
-				tmpChains[info.srcChain][tokenName] =
-					tmpChains[info.srcChain][tokenName] +
+				const sumToken =
+					BigInt(result.chains[info.srcChain][tokenName]) +
 					amountToBigInt(tokenAmount, info.srcChain);
+				result.chains[info.srcChain][tokenName] = sumToken.toString();
 			}
 		}
-
-		const result = new LockedTokensResponse();
-		result.chains = Object.entries(tmpChains).reduce(
-			(chainsAcc, [chainName, tokens]) => {
-				chainsAcc[chainName] = Object.entries(tokens).reduce(
-					(tokensAcc, [tokenName, value]) => {
-						tokensAcc[tokenName] = value.toString();
-						return tokensAcc;
-					},
-					{} as { [innerKey: string]: string },
-				);
-				return chainsAcc;
-			},
-			{} as { [key: string]: { [innerKey: string]: string } },
-		);
 
 		await this.cacheManager.set(cacheKey, result, 30);
 
@@ -199,8 +186,6 @@ export class LockedTokensService {
 
 			const chain = row.originChain;
 			const dateKey = normalizedDate.toISOString();
-			const amountSum: string = row.amount;
-			const nativeSum: string = row.nativeSum;
 			const tokenName = getTokenNameFromSettings(
 				chain,
 				row.destinationChain,
@@ -215,11 +200,11 @@ export class LockedTokensService {
 
 			const chainResult: Record<string, string> = {};
 
-			if ((!tokenName || isCardanoChain(chain)) && amountSum !== null) {
+			if (row.amount !== null) {
 				chainResult.amount = amountToBigInt(row.amount, chain).toString();
 			}
 
-			if (!!tokenName && nativeSum !== null) {
+			if (!!tokenName && row.nativeSum !== null) {
 				chainResult[tokenName] = amountToBigInt(
 					row.nativeSum,
 					chain,
