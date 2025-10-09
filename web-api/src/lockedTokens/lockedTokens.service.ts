@@ -202,13 +202,11 @@ export class LockedTokensService {
 
 		query.andWhere(
 			new Brackets((qb) => {
-				let id = 0;
-
-				for (const info of availableDirections) {
-					id++;
+				for (let id = 0; id < availableDirections.length; id++) {
+					const info = availableDirections[id];
 					const srcName = `srcChain${id}`;
 					const dstName = `dstChain${id}`;
-					if (id === 1) {
+					if (id === 0) {
 						qb.where(
 							`(tx.originChain = :${srcName} AND tx.destinationChain = :${dstName})`,
 							{
@@ -234,7 +232,6 @@ export class LockedTokensService {
 			.groupBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`)
 			.addGroupBy('tx.originChain')
 			.orderBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`, 'ASC');
-
 		return query.getRawMany();
 	}
 
