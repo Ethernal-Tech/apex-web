@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 
 export const getLockedTokensAction = async () => {
   const client = new LockedTokensControllerClient();
-  return client.get();
+  return client.get(undefined);
 };
 
 export const fetchAndUpdateLockedTokensAction = async (dispatch: Dispatch) => {
