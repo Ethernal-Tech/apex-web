@@ -99,21 +99,20 @@ const LockedTokensComponent = () => {
       const chain = chainKey.toLowerCase();
       const o = innerObj as unknown as Record<string, string | number | bigint>;
 
-    if (chain === "prime") {
-      const v = o.amount ?? BigInt(0);
-      outputValue += (typeof v === "bigint") ? v : BigInt(v as any);
-    } else if (chain === "cardano") {
-      outputValue += Object.entries(o)
-        .filter(([k]) => k !== "amount")
-        .reduce<bigint>((acc, [, v]) => acc + (typeof v === "bigint" ? v : BigInt(v as any)), BigInt(0));
-    }
+      if (chain === ChainEnum.Prime || chain === ChainEnum.Nexus || chain === ChainEnum.Vector) {
+        outputValue += BigInt(o.amount || '0');
+      } else {
+        outputValue += BigInt(
+          Object.entries(o).find((x) => x[0] !== 'amount')?.[1] || '0'
+        )
+      }
     });
 
     if (outputValue > BigInt(0)) {
       const label = getCurrencyTokenInfo(ChainEnum.Prime).label;
       return `${formatBigIntDecimalString(outputValue, 6)} ${label}`;
     }
-    
+
     return "";
   }, [lockedTokens]);
 
