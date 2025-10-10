@@ -9,7 +9,7 @@ import { toast } from "react-toastify";
 
 export const getLockedTokensAction = async () => {
   const client = new LockedTokensControllerClient();
-  return client.get([BridgingModeEnum.Skyline, BridgingModeEnum.Layerzero]);
+  return client.get([BridgingModeEnum.Skyline]);
 };
 
 export const fetchAndUpdateLockedTokensAction = async (dispatch: Dispatch) => {
