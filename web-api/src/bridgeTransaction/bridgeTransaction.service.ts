@@ -190,6 +190,10 @@ export class BridgeTransactionService {
 								entity.destinationChain,
 								this.settingsService.SettingsResponse,
 							);
+							if (!bridgingMode) {
+								continue;
+							}
+
 							if (bridgingMode === BridgingModeEnum.Skyline) {
 								if (modesSupported.has(BridgingModeEnum.Skyline)) {
 									modelsSkyline.push(model);

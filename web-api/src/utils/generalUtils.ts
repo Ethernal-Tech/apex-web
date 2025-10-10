@@ -1,8 +1,9 @@
 import { Logger } from '@nestjs/common';
-import { BridgingModeEnum } from 'src/common/enum';
+import { BridgingModeEnum, ChainEnum } from 'src/common/enum';
 import Web3 from 'web3';
 import { Numbers } from 'web3-types';
 import { EtherUnits } from 'web3-utils';
+import { isCardanoChain } from './chainUtils';
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
@@ -79,7 +80,7 @@ export const convertDfmToWei = (dfm: string | number): string => {
 export type urlAndApiKey = { url: string; apiKey: string };
 
 export const getUrlAndApiKey = (
-	bridgingMode: BridgingModeEnum,
+	bridgingMode: BridgingModeEnum | undefined,
 	isOracle: boolean,
 ): urlAndApiKey => {
 	let url: string | undefined;
@@ -108,4 +109,18 @@ export const getUrlAndApiKey = (
 		url: url || 'http://localhost:40000',
 		apiKey: apiKey || 'test_api_key',
 	};
+};
+
+export const amountToBigInt = (amountStr: string, chain: ChainEnum): bigint => {
+	if (isCardanoChain(chain)) {
+		return BigInt(amountStr || '0');
+	}
+
+	const parts = convertWeiToDfm(amountStr || '0').split('.');
+	let increment: bigint = 0n;
+	if (parts.length == 2) {
+		increment = 1n; // fake rounding
+	}
+
+	return BigInt(parts[0]) + increment;
 };

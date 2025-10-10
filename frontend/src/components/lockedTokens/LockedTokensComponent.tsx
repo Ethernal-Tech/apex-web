@@ -93,14 +93,27 @@ const LockedTokensComponent = () => {
   }, [lockedTokens]);
 
   const transferredData = useMemo(() => {
-    let outputValue: bigint = BigInt(0);
-    Object.entries(lockedTokens.totalTransferred).forEach(([_, innerObj]) => {
-        outputValue += Object.entries(innerObj).map(([, num]) => BigInt(num > 0 ? num : 0)).reduce((acc, bi) => acc + bi);        
+    let outputValue = BigInt(0);
+
+    Object.entries(lockedTokens.totalTransferred).forEach(([chainKey, innerObj]) => {
+      const chain = chainKey.toLowerCase();
+      const o = innerObj as unknown as Record<string, string | number | bigint>;
+
+      if (chain === ChainEnum.Prime || chain === ChainEnum.Nexus || chain === ChainEnum.Vector) {
+        outputValue += BigInt(o.amount || '0');
+      } else {
+        outputValue += BigInt(
+          Object.entries(o).find((x) => x[0] !== 'amount')?.[1] || '0'
+        )
+      }
     });
 
-    const label = getCurrencyTokenInfo(ChainEnum.Prime).label;
+    if (outputValue > BigInt(0)) {
+      const label = getCurrencyTokenInfo(ChainEnum.Prime).label;
+      return `${formatBigIntDecimalString(outputValue, 6)} ${label}`;
+    }
 
-    return `${formatBigIntDecimalString(outputValue, 6)} ${label}`;
+    return "";
   }, [lockedTokens]);
 
   return (

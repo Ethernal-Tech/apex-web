@@ -15,13 +15,18 @@ import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entit
 import { Repository } from 'typeorm';
 import {
 	BridgingModeEnum,
-	ChainApexBridgeEnum,
+	ChainEnum,
 	GroupByTimePeriod,
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SettingsService } from 'src/settings/settings.service';
+import {
+	getAllChainsDirections,
+	getTokenNameFromSettings,
+} from 'src/utils/chainUtils';
+import { amountToBigInt } from 'src/utils/generalUtils';
 
 @Injectable()
 export class LockedTokensService {
@@ -71,7 +76,9 @@ export class LockedTokensService {
 		}
 	}
 
-	public async sumTransferredTokensPerChain(): Promise<LockedTokensResponse> {
+	public async sumTransferredTokensPerChain(
+		allowedBridgingModes: BridgingModeEnum[],
+	): Promise<LockedTokensResponse> {
 		const cacheKey = 'transferredTokensPerChainNestedMap';
 		const cached = await this.cacheManager.get<LockedTokensResponse>(cacheKey);
 
@@ -79,49 +86,52 @@ export class LockedTokensService {
 			return cached;
 		}
 
-		const chains = Object.values(ChainApexBridgeEnum);
+		const availableDirections = getAllChainsDirections(
+			allowedBridgingModes,
+			this.settingsService.SettingsResponse,
+		);
 		const result = new LockedTokensResponse();
 		result.chains = {};
 
-		for (const chain of chains) {
-			// Always query amountSum
-			const { amountSum } = await this.bridgeTransactionRepository
-				.createQueryBuilder('tx')
-				.select('SUM(tx.amount)', 'amountSum')
-				.where('tx.status = :status', {
-					status: TransactionStatusEnum.ExecutedOnDestination,
-				})
-				.andWhere('tx.originChain = :chain', { chain })
-				.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
-				.getRawOne();
+		for (const info of availableDirections) {
+			const tokenName = getTokenNameFromSettings(
+				info.srcChain,
+				info.dstChain,
+				this.settingsService.SettingsResponse,
+			);
+			const amount = await this.getAggregatedSum(
+				info.srcChain,
+				info.dstChain,
+				'amount',
+			);
 
-			const tokens =
-				this.settingsService.SettingsResponse.settingsPerMode[
-					BridgingModeEnum.Skyline
-				].cardanoChainsNativeTokens[chain];
-
-			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
-
-			const chainResult: Record<string, string> = {
-				amount: amountSum,
-			};
-
-			// ✅ Only query nativeSum if tokenName exists and is non-empty
-			if (tokenName) {
-				const { nativeSum } = await this.bridgeTransactionRepository
-					.createQueryBuilder('tx')
-					.select('SUM(tx.nativeTokenAmount)', 'nativeSum')
-					.where('tx.status = :status', {
-						status: TransactionStatusEnum.ExecutedOnDestination,
-					})
-					.andWhere('tx.originChain = :chain', { chain })
-					.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
-					.getRawOne();
-
-				chainResult[tokenName] = nativeSum;
+			if (!result.chains[info.srcChain]) {
+				result.chains[info.srcChain] = {
+					amount: '0',
+				};
 			}
 
-			result.chains[chain] = chainResult;
+			const currencyAmount =
+				BigInt(result.chains[info.srcChain]['amount']) +
+				amountToBigInt(amount, info.srcChain);
+			result.chains[info.srcChain]['amount'] = currencyAmount.toString();
+
+			if (!!tokenName) {
+				const tokenAmount = await this.getAggregatedSum(
+					info.srcChain,
+					info.dstChain,
+					'nativeTokenAmount',
+				);
+
+				if (!result.chains[info.srcChain][tokenName]) {
+					result.chains[info.srcChain][tokenName] = '0';
+				}
+
+				const sumToken =
+					BigInt(result.chains[info.srcChain][tokenName]) +
+					amountToBigInt(tokenAmount, info.srcChain);
+				result.chains[info.srcChain][tokenName] = sumToken.toString();
+			}
 		}
 
 		await this.cacheManager.set(cacheKey, result, 30);
@@ -133,44 +143,33 @@ export class LockedTokensService {
 		startDate: Date,
 		endDate: Date,
 		groupBy: GroupByTimePeriod,
+		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<TransferredTokensByDay[]> {
-		const rawResults = await this.fetchGroupedTransactionSums(
-			startDate,
-			endDate,
-			groupBy,
+		const availableDirections = getAllChainsDirections(
+			allowedBridgingModes,
+			this.settingsService.SettingsResponse,
 		);
-		return this.transformRawResultsToDto(rawResults, groupBy);
-	}
 
-	private async fetchGroupedTransactionSums(
-		startDate: Date,
-		endDate: Date,
-		groupBy: GroupByTimePeriod,
-	) {
-		const dateTruncUnit = groupBy.toLowerCase();
+		const fetchResult: {
+			groupedDate: string;
+			amount: string | null;
+			nativeSum: string | null;
+			originChain: ChainEnum;
+			destinationChain: ChainEnum;
+		}[] = [];
 
-		return this.bridgeTransactionRepository
-			.createQueryBuilder('tx')
-			.select(
-				`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`,
-				'groupedDate',
-			)
-			.addSelect('tx.originChain', 'chain')
-			.addSelect('SUM(tx.amount)', 'amountSum')
-			.addSelect('SUM(tx.nativeTokenAmount)', 'nativeSum')
-			.where('tx.status = :status', {
-				status: TransactionStatusEnum.ExecutedOnDestination,
-			})
-			.andWhere('tx.finishedAt >= :start AND tx.finishedAt < :end', {
-				start: startDate,
-				end: endDate,
-			})
-			.andWhere('tx.isLayerZero = :isLZ', { isLZ: false })
-			.setParameter('truncUnit', dateTruncUnit)
-			.groupBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`)
-			.addGroupBy('tx.originChain')
-			.orderBy(`TIMEZONE('UTC', DATE_TRUNC(:truncUnit, tx.finishedAt))`, 'ASC')
-			.getRawMany();
+		for (const info of availableDirections) {
+			const rows = await this.getGroupByAggregatedSum(
+				startDate,
+				endDate,
+				info.srcChain,
+				info.dstChain,
+				groupBy,
+			);
+			fetchResult.push(...rows);
+		}
+
+		return this.transformRawResultsToDto(fetchResult, groupBy);
 	}
 
 	private transformRawResultsToDto(
@@ -184,18 +183,14 @@ export class LockedTokensService {
 				new Date(row.groupedDate),
 				groupBy,
 			);
+
+			const chain = row.originChain;
 			const dateKey = normalizedDate.toISOString();
-
-			const chain: string = row.chain;
-			const amountSum: string = row.amountSum;
-			const nativeSum: string = row.nativeSum;
-
-			const tokens =
-				this.settingsService.SettingsResponse.settingsPerMode[
-					BridgingModeEnum.Skyline
-				].cardanoChainsNativeTokens?.[chain];
-			const tokenName = tokens && Object.values(tokens)[0]?.tokenName?.trim();
-
+			const tokenName = getTokenNameFromSettings(
+				chain,
+				row.destinationChain,
+				this.settingsService.SettingsResponse,
+			);
 			if (!groupedByDate[dateKey]) {
 				groupedByDate[dateKey] = {
 					date: normalizedDate,
@@ -205,12 +200,15 @@ export class LockedTokensService {
 
 			const chainResult: Record<string, string> = {};
 
-			if (amountSum !== null) {
-				chainResult.amount = amountSum;
+			if (row.amount !== null) {
+				chainResult.amount = amountToBigInt(row.amount, chain).toString();
 			}
 
-			if (tokenName && nativeSum !== null) {
-				chainResult[tokenName] = nativeSum;
+			if (!!tokenName && row.nativeSum !== null) {
+				chainResult[tokenName] = amountToBigInt(
+					row.nativeSum,
+					chain,
+				).toString();
 			}
 
 			groupedByDate[dateKey].totalTransferred[chain] = chainResult;
@@ -268,5 +266,66 @@ export class LockedTokensService {
 					),
 				);
 		}
+	}
+
+	private async getAggregatedSum(
+		srcChain: string,
+		dstChain: string,
+		fieldName: string,
+		status: TransactionStatusEnum = TransactionStatusEnum.ExecutedOnDestination,
+	): Promise<string> {
+		const query = this.bridgeTransactionRepository
+			.createQueryBuilder('tx')
+			.select(`SUM(tx.${fieldName})`, 'sumAll')
+			.where('tx.status = :status', { status })
+			.andWhere('tx.originChain = :srcChain', { srcChain })
+			.andWhere('tx.destinationChain = :dstChain', { dstChain });
+		const { sumAll } = await query.getRawOne();
+		return sumAll;
+	}
+
+	private async getGroupByAggregatedSum(
+		startDate: Date,
+		endDate: Date,
+		srcChain: ChainEnum,
+		dstChain: ChainEnum,
+		groupBy: GroupByTimePeriod,
+		status: TransactionStatusEnum = TransactionStatusEnum.ExecutedOnDestination,
+	): Promise<
+		Array<{
+			groupedDate: string;
+			amount: string | null;
+			nativeSum: string | null;
+			originChain: ChainEnum;
+			destinationChain: ChainEnum;
+		}>
+	> {
+		const dateExpr =
+			`to_char(DATE_TRUNC(:truncUnit, tx."finishedAt" AT TIME ZONE 'UTC'), ` +
+			`'YYYY-MM-DD"T"HH24:MI:SS"Z"')`;
+
+		const qb = this.bridgeTransactionRepository
+			.createQueryBuilder('tx')
+			.select(dateExpr, 'groupedDate')
+			.addSelect('SUM(tx.amount)', 'amount')
+			.addSelect('SUM(tx.nativeTokenAmount)', 'nativeSum')
+			.addSelect('tx.originChain', 'originChain')
+			.addSelect('tx.destinationChain', 'destinationChain')
+			.where('tx.status = :status', { status })
+			.andWhere('tx."finishedAt" >= :start AND tx."finishedAt" < :end', {
+				start: startDate,
+				end: endDate,
+			})
+			.andWhere(
+				'tx.originChain = :srcChain AND tx.destinationChain = :dstChain',
+				{ srcChain, dstChain },
+			)
+			.setParameter('truncUnit', groupBy.toLowerCase())
+			.groupBy(dateExpr)
+			.addGroupBy('tx.originChain')
+			.addGroupBy('tx.destinationChain')
+			.orderBy(dateExpr, 'ASC');
+
+		return qb.getRawMany();
 	}
 }

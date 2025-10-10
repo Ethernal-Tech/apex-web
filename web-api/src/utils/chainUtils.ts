@@ -2,11 +2,12 @@ import {
 	BridgingModeEnum,
 	ChainApexBridgeEnum,
 	ChainEnum,
+	TokenEnum,
 } from 'src/common/enum';
 import { CardanoNetworkType } from './Address/types';
 import {
-	BridgingSettingsDto,
 	SettingsFullResponseDto,
+	SettingsResponseDto,
 } from 'src/settings/settings.dto';
 
 const NEXUS_TESTNET_CHAIN_ID = BigInt(9070);
@@ -17,6 +18,12 @@ export const CHAIN_TO_CHAIN_ID = {
 	[ChainApexBridgeEnum.Vector]: 2,
 	[ChainApexBridgeEnum.Nexus]: 3,
 	[ChainApexBridgeEnum.Cardano]: 4,
+};
+
+export type BridgingDirectionInfo = {
+	srcChain: ChainEnum;
+	dstChain: ChainEnum;
+	bridgingMode: BridgingModeEnum;
 };
 
 const fromChainToNetworkId = (
@@ -63,7 +70,7 @@ export const isCardanoChain = (chain: ChainEnum) =>
 
 export const isEvmChain = (chain: ChainEnum) => chain === ChainEnum.Nexus;
 
-export const isAllowedDirection = function (
+const isAllowedDirection = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
 	allowedDirections: { [key: string]: string[] },
@@ -75,18 +82,29 @@ export const getBridgingSettings = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
 	fullSettings: SettingsFullResponseDto,
-): BridgingSettingsDto | undefined {
+): SettingsResponseDto | undefined {
+	if (!fullSettings) {
+		return undefined;
+	}
 	const settingsReactor =
-		fullSettings.settingsPerMode[BridgingModeEnum.Reactor].bridgingSettings;
+		fullSettings.settingsPerMode[BridgingModeEnum.Reactor];
 	const settingsSkyline =
-		fullSettings.settingsPerMode[BridgingModeEnum.Skyline].bridgingSettings;
+		fullSettings.settingsPerMode[BridgingModeEnum.Skyline];
 
 	if (
-		isAllowedDirection(srcChain, dstChain, settingsReactor.allowedDirections)
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			settingsReactor.bridgingSettings.allowedDirections,
+		)
 	) {
 		return settingsReactor;
 	} else if (
-		isAllowedDirection(srcChain, dstChain, settingsSkyline.allowedDirections)
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			settingsSkyline.bridgingSettings.allowedDirections,
+		)
 	) {
 		return settingsSkyline;
 	}
@@ -97,7 +115,10 @@ export const getBridgingMode = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
 	fullSettings: SettingsFullResponseDto,
-): BridgingModeEnum {
+): BridgingModeEnum | undefined {
+	if (!fullSettings) {
+		return undefined;
+	}
 	const settingsReactor =
 		fullSettings.settingsPerMode[BridgingModeEnum.Reactor].bridgingSettings;
 	const settingsSkyline =
@@ -112,5 +133,65 @@ export const getBridgingMode = function (
 	) {
 		return BridgingModeEnum.Skyline;
 	}
-	return BridgingModeEnum.LayerZero;
+
+	if (
+		srcChain != dstChain &&
+		fullSettings.layerZeroChains.some((x) => x.chain == srcChain) &&
+		fullSettings.layerZeroChains.some((x) => x.chain == dstChain)
+	) {
+		return BridgingModeEnum.LayerZero;
+	}
+
+	return undefined;
+};
+
+export const getAllChainsDirections = function (
+	allowedBridgingModes: BridgingModeEnum[],
+	settings: SettingsFullResponseDto,
+): BridgingDirectionInfo[] {
+	if (allowedBridgingModes.length == 0 || !settings) {
+		return [];
+	}
+
+	const result: BridgingDirectionInfo[] = [];
+	const chains = Object.values(ChainEnum);
+
+	for (const srcChain of chains) {
+		for (const dstChain of chains) {
+			const bridgingMode = getBridgingMode(srcChain, dstChain, settings);
+			if (!!bridgingMode && allowedBridgingModes.includes(bridgingMode)) {
+				result.push({
+					srcChain,
+					dstChain,
+					bridgingMode,
+				});
+			}
+		}
+	}
+
+	return result;
+};
+
+export const getTokenNameFromSettings = (
+	srcChain: ChainEnum,
+	dstChain: ChainEnum,
+	settings: SettingsFullResponseDto,
+): string | undefined => {
+	switch (getBridgingMode(srcChain, dstChain, settings)) {
+		case BridgingModeEnum.LayerZero:
+			switch (srcChain) {
+				case ChainEnum.BNB:
+					return TokenEnum.BNAP3X;
+				case ChainEnum.Base:
+					return TokenEnum.BAP3X;
+			}
+			return undefined;
+		case BridgingModeEnum.Skyline:
+			const nativeTokens =
+				settings?.settingsPerMode[BridgingModeEnum.Skyline]
+					.cardanoChainsNativeTokens[srcChain];
+			return nativeTokens
+				?.find((x) => x.dstChainID === dstChain)
+				?.tokenName.trim();
+	}
 };

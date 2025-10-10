@@ -487,10 +487,15 @@ export class LockedTokensControllerClient extends BaseClient {
 
     /**
      * Get locked tokens amount
+     * @param allowedBridgingModes (optional) 
      * @return OK - Get locked tokens amount.
      */
-    get(): Promise<LockedTokensDto> {
-        let url_ = this.baseUrl + "/lockedTokens";
+    get(allowedBridgingModes: BridgingModeEnum[] | undefined): Promise<LockedTokensDto> {
+        let url_ = this.baseUrl + "/lockedTokens?";
+        if (allowedBridgingModes === null)
+            throw new globalThis.Error("The parameter 'allowedBridgingModes' cannot be null.");
+        else if (allowedBridgingModes !== undefined)
+            allowedBridgingModes && allowedBridgingModes.forEach(item => { url_ += "allowedBridgingModes=" + encodeURIComponent("" + item) + "&"; });
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -530,9 +535,10 @@ export class LockedTokensControllerClient extends BaseClient {
      * @param startDate Start date in ISO format (e.g., 2024-01-01)
      * @param endDate End date in ISO format (e.g., 2024-12-31)
      * @param groupBy (optional) Time period to group by: hour, day, week, or month (default is day)
+     * @param allowedBridgingModes (optional) all suported bridging modes that goes into sum
      * @return OK - Returns the sum of transferred tokens per chain.
      */
-    getTransferredSum(startDate: string, endDate: string, groupBy: GroupBy | undefined): Promise<LockedTokensResponse> {
+    getTransferredSum(startDate: string, endDate: string, groupBy: GroupBy | undefined, allowedBridgingModes: string[] | undefined): Promise<LockedTokensResponse> {
         let url_ = this.baseUrl + "/lockedTokens/transferred?";
         if (startDate === undefined || startDate === null)
             throw new globalThis.Error("The parameter 'startDate' must be defined and cannot be null.");
@@ -546,6 +552,10 @@ export class LockedTokensControllerClient extends BaseClient {
             throw new globalThis.Error("The parameter 'groupBy' cannot be null.");
         else if (groupBy !== undefined)
             url_ += "groupBy=" + encodeURIComponent("" + groupBy) + "&";
+        if (allowedBridgingModes === null)
+            throw new globalThis.Error("The parameter 'allowedBridgingModes' cannot be null.");
+        else if (allowedBridgingModes !== undefined)
+            allowedBridgingModes && allowedBridgingModes.forEach(item => { url_ += "allowedBridgingModes=" + encodeURIComponent("" + item) + "&"; });
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -2395,6 +2405,13 @@ export interface ICreateContactDto {
     message: string;
 
     [key: string]: any;
+}
+
+export enum BridgingModeEnum {
+    Reactor = "reactor",
+    Skyline = "skyline",
+    Layerzero = "layerzero",
+    Centralized = "centralized",
 }
 
 export class LockedTokensDto implements ILockedTokensDto {
