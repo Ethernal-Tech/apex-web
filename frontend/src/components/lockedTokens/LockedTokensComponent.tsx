@@ -93,18 +93,28 @@ const LockedTokensComponent = () => {
   }, [lockedTokens]);
 
   const transferredData = useMemo(() => {
-    let outputValue: bigint = BigInt(0);
-    Object.entries(lockedTokens.totalTransferred).forEach(([_, innerObj]) => {
-        outputValue += Object.entries(innerObj).map(([, num]) => BigInt(num > 0 ? num : 0)).reduce((acc, bi) => acc + bi);        
+    let outputValue = BigInt(0);
+
+    Object.entries(lockedTokens.totalTransferred).forEach(([chainKey, innerObj]) => {
+      const chain = chainKey.toLowerCase();
+      const o = innerObj as unknown as Record<string, string | number | bigint>;
+
+    if (chain === "prime") {
+      const v = o.amount ?? BigInt(0);
+      outputValue += (typeof v === "bigint") ? v : BigInt(v as any);
+    } else if (chain === "cardano") {
+      outputValue += Object.entries(o)
+        .filter(([k]) => k !== "amount")
+        .reduce<bigint>((acc, [, v]) => acc + (typeof v === "bigint" ? v : BigInt(v as any)), BigInt(0));
+    }
     });
 
-    const label = getCurrencyTokenInfo(ChainEnum.Prime).label;
-
-    if (outputValue > 0){
-       return `${formatBigIntDecimalString(outputValue, 6)} ${label}`;
+    if (outputValue > BigInt(0)) {
+      const label = getCurrencyTokenInfo(ChainEnum.Prime).label;
+      return `${formatBigIntDecimalString(outputValue, 6)} ${label}`;
     }
-
-    return ``;
+    
+    return "";
   }, [lockedTokens]);
 
   return (
