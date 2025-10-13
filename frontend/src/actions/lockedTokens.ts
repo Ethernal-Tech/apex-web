@@ -48,7 +48,7 @@ export async function getLayerZeroLockedTokens(
 
 export const getLockedTokensAction = async () => {
   const client = new LockedTokensControllerClient();
-  return client.get([BridgingModeEnum.Skyline]);
+  return client.get([BridgingModeEnum.Skyline, BridgingModeEnum.Layerzero]);
 };
 
 export const fetchAndUpdateLockedTokensAction = async (dispatch: Dispatch, lzSettings: LayerZeroChains) => {

@@ -7,18 +7,8 @@ import './lockedTokens.css';
 import { getCurrencyTokenInfo } from "../../settings/token";
 import { toChainEnum } from "../../settings/chain";
 import { fetchAndUpdateLockedTokensAction } from "../../actions/lockedTokens";
-
-const DIV = BigInt(1_000_000_000_000);
-
-const to6Round = (value18: bigint): bigint => (value18 + DIV / BigInt(2)) / DIV;
-
-const decodeHex = (hex: string): string => {
-  try {
-    return decodeURIComponent(hex.replace(/(..)/g, "%$1"));
-  } catch (e) {
-    return "[InvalidHex]";
-  }
-};
+import { decodeHex, isCurrency } from "../../utils/tokenUtils";
+import { convertWeiToDfmBig } from "../../utils/generalUtils";
 
 const powBigInt = (base: bigint, exp: number): bigint => {
   let result = BigInt(1);
@@ -52,8 +42,6 @@ const LockedTokensComponent = () => {
   const {layerZeroChains} = useSelector((state: RootState) => state.settings);
   const dispatch = useDispatch();
 
-  console.log("layerZERO CHAIN COMPONENT", layerZeroChains)
-
   useEffect(() => {
     // Call once immediately on mount
     fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
@@ -70,7 +58,7 @@ const LockedTokensComponent = () => {
   }, [layerZeroChains]);
 
   const lockedTokensLZFormatted = useMemo(() => {
-    return to6Round(lockedTokens.layerZeroLockedTokens);
+    return convertWeiToDfmBig(lockedTokens.layerZeroLockedTokens);
   }, [lockedTokens.layerZeroLockedTokens] )
 
 
@@ -132,7 +120,7 @@ const LockedTokensComponent = () => {
       const chain = chainKey.toLowerCase();
       const o = innerObj as unknown as Record<string, string | number | bigint>;
 
-      if (chain === ChainEnum.Prime || chain === ChainEnum.Nexus || chain === ChainEnum.Vector) {
+      if (isCurrency(chain)) {
         outputValue += BigInt(o.amount || '0');
       } else {
         outputValue += BigInt(
@@ -172,3 +160,4 @@ const LockedTokensComponent = () => {
 };
 
 export default LockedTokensComponent;
+

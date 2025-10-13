@@ -535,10 +535,10 @@ export class LockedTokensControllerClient extends BaseClient {
      * @param startDate Start date in ISO format (e.g., 2024-01-01)
      * @param endDate End date in ISO format (e.g., 2024-12-31)
      * @param groupBy (optional) Time period to group by: hour, day, week, or month (default is day)
-     * @param allowedBridgingModes (optional) all suported bridging modes that goes into sum
+     * @param allowedBridgingModes (optional) 
      * @return OK - Returns the sum of transferred tokens per chain.
      */
-    getTransferredSum(startDate: string, endDate: string, groupBy: GroupBy | undefined, allowedBridgingModes: string[] | undefined): Promise<LockedTokensResponse> {
+    getTransferredSum(startDate: string, endDate: string, groupBy: GroupBy | undefined, allowedBridgingModes: BridgingModeEnum[] | undefined): Promise<LockedTokensResponse> {
         let url_ = this.baseUrl + "/lockedTokens/transferred?";
         if (startDate === undefined || startDate === null)
             throw new globalThis.Error("The parameter 'startDate' must be defined and cannot be null.");
@@ -2419,8 +2419,6 @@ export class LockedTokensDto implements ILockedTokensDto {
     chains!: { [key: string]: { [key: string]: { [key: string]: string; }; }; };
     /** Mapping of total transfered tokens per chain */
     totalTransferred!: { [key: string]: { [key: string]: string; }; };
-    /** Mapping of total transfered tokens per chain */
-    totalTransferredLayerZero!: { [key: string]: { [key: string]: string; }; };
 
     [key: string]: any;
 
@@ -2434,7 +2432,6 @@ export class LockedTokensDto implements ILockedTokensDto {
         if (!data) {
             this.chains = {};
             this.totalTransferred = {};
-            this.totalTransferredLayerZero = {};
         }
     }
 
@@ -2456,13 +2453,6 @@ export class LockedTokensDto implements ILockedTokensDto {
                 for (let key in _data["totalTransferred"]) {
                     if (_data["totalTransferred"].hasOwnProperty(key))
                         (this.totalTransferred as any)![key] = _data["totalTransferred"][key] !== undefined ? _data["totalTransferred"][key] : {};
-                }
-            }
-            if (_data["totalTransferredLayerZero"]) {
-                this.totalTransferredLayerZero = {} as any;
-                for (let key in _data["totalTransferredLayerZero"]) {
-                    if (_data["totalTransferredLayerZero"].hasOwnProperty(key))
-                        (this.totalTransferredLayerZero as any)![key] = _data["totalTransferredLayerZero"][key] !== undefined ? _data["totalTransferredLayerZero"][key] : {};
                 }
             }
         }
@@ -2495,13 +2485,6 @@ export class LockedTokensDto implements ILockedTokensDto {
                     (data["totalTransferred"] as any)[key] = (this.totalTransferred as any)[key];
             }
         }
-        if (this.totalTransferredLayerZero) {
-            data["totalTransferredLayerZero"] = {};
-            for (let key in this.totalTransferredLayerZero) {
-                if (this.totalTransferredLayerZero.hasOwnProperty(key))
-                    (data["totalTransferredLayerZero"] as any)[key] = (this.totalTransferredLayerZero as any)[key];
-            }
-        }
         return data;
     }
 }
@@ -2511,8 +2494,6 @@ export interface ILockedTokensDto {
     chains: { [key: string]: { [key: string]: { [key: string]: string; }; }; };
     /** Mapping of total transfered tokens per chain */
     totalTransferred: { [key: string]: { [key: string]: string; }; };
-    /** Mapping of total transfered tokens per chain */
-    totalTransferredLayerZero: { [key: string]: { [key: string]: string; }; };
 
     [key: string]: any;
 }

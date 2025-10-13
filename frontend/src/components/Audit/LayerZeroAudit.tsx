@@ -1,17 +1,16 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import { isEvmChain } from "../../settings/chain";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
-import { getLayerZeroWrappedToken, getTokenInfo } from "../../settings/token";
+import { getTokenInfo } from "../../settings/token";
 import { formatBigIntDecimalString } from "../lockedTokens/LockedTokensComponent";
 import "../../audit.css";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import { openAuditExplorer } from "../../utils/chainUtils";
 import ButtonCustom from "../Buttons/ButtonCustom";
 import explorerPng from "@../../../public/explorer.png";
 import { decodeTokenKey } from "../../utils/tokenUtils";
 import { TokenEnum } from "../../features/enums";
+import { openAddressExplorer } from "../../utils/chainUtils";
 
 type LayerZeroPanelProps = {
   lzPerChainTotals: Record<string, Record<string, bigint>>;
@@ -34,9 +33,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
   return (
     <Box className="skyline-bridge-section">
       <Box className="audit-wrap">
-        {/* ===== Row 1: TVL (left) | LZ transfers (center) | spacer (right) ===== */}
         <Box className="audit-hero-row audit-mb-16">
-          {/* Left: TVL */}
           <Box>
             <Typography className="audit-h2">Locked Tokens</Typography>
             <Box className="audit-card">
@@ -45,7 +42,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
                   <Typography>{getTokenInfo(TokenEnum.APEX).label}</Typography>
                   <ButtonCustom
                     variant="redSkyline"
-                    onClick={() => openAuditExplorer(ChainEnum.Nexus, address)}
+                    onClick={() => openAddressExplorer(ChainEnum.Nexus, address, true)}
                   >
                     <img className="audit-cta-icon" src={explorerPng} alt="" />
                   </ButtonCustom>
@@ -57,7 +54,6 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
             </Box>
           </Box>
 
-          {/* Center: LayerZero transfers */}
           <Box>
             <Typography className="audit-h2">LayerZero transfers</Typography>
             <Box className="audit-card audit-card--center">
@@ -69,12 +65,9 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
               </Box>
             </Box>
           </Box>
-
-          {/* Right spacer for visual balance */}
           <Box />
         </Box>
 
-        {/* ===== Row 2: Transferred by coin (3 boxes/row) ===== */}
         <Box className="audit-mb-16">
           <Typography className="audit-h2">Transferred by coin</Typography>
           <Box className="audit-grid-3">
@@ -96,12 +89,10 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
           )}
         </Box>
 
-        {/* ===== Row 3: Transferred by chain (3 boxes/row) ===== */}
         <Box>
           <Typography className="audit-h2">Transferred by chain</Typography>
           <Box className="audit-grid-3">
             {Object.keys(lzPerChainTotals)
-              .filter((ck) => isEvmChain(ck as ChainEnum))
               .map((ck) => {
                 const rows = Object.entries(lzPerChainTotals[ck] ?? {})
                   .sort((a, b) => Number(b[1] - a[1]))
@@ -118,7 +109,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
                       {rows.map((r, idx) => (
                         <Box key={idx} className="audit-row audit-my-4">
                           <Typography>
-                            {getLayerZeroWrappedToken(ck as ChainEnum)}
+                            {r.token}
                           </Typography>
                           <Typography className="audit-amount">
                             {formatBigIntDecimalString(r.amt, 6)}

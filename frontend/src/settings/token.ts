@@ -5,7 +5,6 @@ import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg'
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg'
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg'
 import { getChainInfo } from "./chain";
-import { Token } from "@mui/icons-material";
 
 export type BridgingInfo = {
   isCurrencyBridgingAllowed: boolean;

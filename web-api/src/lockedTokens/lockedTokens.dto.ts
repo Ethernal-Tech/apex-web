@@ -26,16 +26,6 @@ export class LockedTokensDto {
 		},
 	})
 	totalTransferred: { [key: string]: { [innerKey: string]: string } };
-
-	@ApiProperty({
-		description: 'Mapping of total transfered tokens per chain',
-		type: 'object',
-		additionalProperties: {
-			type: 'object',
-			additionalProperties: { type: 'string' },
-		},
-	})
-	totalTransferredLayerZero: { [key: string]: { [innerKey: string]: string } };
 }
 
 export class LockedTokensResponse {

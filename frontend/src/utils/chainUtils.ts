@@ -247,6 +247,35 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
     }
 }
 
+
+export const getExplorerAddressUrl = (chain: ChainEnum, address: string, isLzBridging?: boolean) => {
+    const base = appSettings.isMainnet || isLzBridging ? EXPLORER_URLS.mainnet[chain] : EXPLORER_URLS.testnet[chain];
+
+    if (!base || base.trim() === '') return
+    
+    let url
+    switch (chain) {
+        case ChainEnum.Prime:
+        case ChainEnum.Cardano:
+        case ChainEnum.Vector:
+        case ChainEnum.Nexus: {
+            url = `${base}/address/${address}`;
+            break;
+        }
+        default:
+            return;
+    }
+    
+    return url
+}
+
+export const openAddressExplorer = (chain: ChainEnum, address: string, isLzBridging?: boolean) =>{
+    const url = getExplorerAddressUrl(chain, address, isLzBridging);
+    if (url){
+        window.open(url, '_blank');
+    }
+}
+
 export const LovelaceTokenName = 'lovelace';
 
 export const getTokenNameFromSettings = (srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState): string => {

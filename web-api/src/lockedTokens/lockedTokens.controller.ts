@@ -58,7 +58,7 @@ export class LockedTokensController {
 
 		return {
 			chains: lockedTokens.chains,
-			totalTransfered: totalTransfered.chains,
+			totalTransferred: totalTransfered.totalTransferred,
 		};
 	}
 

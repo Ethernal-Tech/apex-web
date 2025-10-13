@@ -79,7 +79,7 @@ export class LockedTokensService {
 
 	public async sumTransferredTokensPerChain(
 		allowedBridgingModes: BridgingModeEnum[],
-	): Promise<LockedTokensResponse> {
+	): Promise<TransferredTokensResponse> {
 		const cacheKey = 'transferredTokensPerChainNestedMap';
 		const cached =
 			await this.cacheManager.get<TransferredTokensResponse>(cacheKey);
@@ -92,8 +92,8 @@ export class LockedTokensService {
 			allowedBridgingModes,
 			this.settingsService.SettingsResponse,
 		);
-		const result = new LockedTokensResponse();
-		result.chains = {};
+		const result = new TransferredTokensResponse();
+		result.totalTransferred = {};
 
 		for (const info of availableDirections) {
 			const tokenName = getTokenNameFromSettings(
@@ -107,16 +107,17 @@ export class LockedTokensService {
 				'amount',
 			);
 
-			if (!result.chains[info.srcChain]) {
-				result.chains[info.srcChain] = {
+			if (!result.totalTransferred[info.srcChain]) {
+				result.totalTransferred[info.srcChain] = {
 					amount: '0',
 				};
 			}
 
 			const currencyAmount =
-				BigInt(result.chains[info.srcChain]['amount']) +
+				BigInt(result.totalTransferred[info.srcChain]['amount']) +
 				amountToBigInt(amount, info.srcChain);
-			result.chains[info.srcChain]['amount'] = currencyAmount.toString();
+			result.totalTransferred[info.srcChain]['amount'] =
+				currencyAmount.toString();
 
 			if (!!tokenName) {
 				const tokenAmount = await this.getAggregatedSum(
@@ -125,14 +126,14 @@ export class LockedTokensService {
 					'nativeTokenAmount',
 				);
 
-				if (!result.chains[info.srcChain][tokenName]) {
-					result.chains[info.srcChain][tokenName] = '0';
+				if (!result.totalTransferred[info.srcChain][tokenName]) {
+					result.totalTransferred[info.srcChain][tokenName] = '0';
 				}
 
 				const sumToken =
-					BigInt(result.chains[info.srcChain][tokenName]) +
+					BigInt(result.totalTransferred[info.srcChain][tokenName]) +
 					amountToBigInt(tokenAmount, info.srcChain);
-				result.chains[info.srcChain][tokenName] = sumToken.toString();
+				result.totalTransferred[info.srcChain][tokenName] = sumToken.toString();
 			}
 		}
 

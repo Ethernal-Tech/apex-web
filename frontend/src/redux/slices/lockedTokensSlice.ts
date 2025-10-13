@@ -4,14 +4,12 @@ import { LockedTokens } from "../../features/types";
 export interface ILockedTokensState {
   chains: { [chain: string]: { [token: string]: { [address: string]: bigint } } };
   totalTransferred: { [chain: string]: { [token: string]: bigint } };
-  totalTransferredLayerZero: { [chain: string]: { [token: string]: bigint } };
   layerZeroLockedTokens: bigint;
 }
 
 const initialState: ILockedTokensState = {
   chains: {},
   totalTransferred: {},
-  totalTransferredLayerZero: {},
   layerZeroLockedTokens: BigInt(0)
 };
 
@@ -52,21 +50,6 @@ name: "lockedTokens",
 
       // totalTransferred: chain -> token -> bigint
       state.totalTransferred = Object.entries(action.payload.lockedTokens.totalTransferred).reduce(
-        (chainsAcc, [chainId, tokenMap]) => {
-          chainsAcc[chainId] = Object.entries(tokenMap).reduce(
-            (tokenAcc, [token, amountStr]) => {
-              tokenAcc[token] = safeParseBigInt(amountStr);
-              return tokenAcc;
-            },
-            {} as { [token: string]: bigint }
-          );
-          return chainsAcc;
-        },
-        {} as { [chain: string]: { [token: string]: bigint } }
-      );
-
-            // totalTransferred: chain -> token -> bigint
-      state.totalTransferredLayerZero = Object.entries(action.payload.lockedTokens.totalTransferredLayerZero).reduce(
         (chainsAcc, [chainId, tokenMap]) => {
           chainsAcc[chainId] = Object.entries(tokenMap).reduce(
             (tokenAcc, [token, amountStr]) => {
