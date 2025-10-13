@@ -130,8 +130,9 @@ const EXPLORER_URLS: {
 		[ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
 	},
 	testnet: {
-		[ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
-		[ChainEnum.Vector]: '',
+		[ChainEnum.Prime]:
+			'https://beta-explorer.prime.testnet.apexfusion.org/en',
+		[ChainEnum.Vector]: 'https://explorer.vector.testnet.apexfusion.org',
 		[ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
 	},
 };
@@ -149,9 +150,7 @@ const getExplorerTxUrl = (chain: ChainEnum, txHash: string) => {
 			url = `${base}/transaction/hash/${txHash}`;
 			break;
 		case ChainEnum.Prime: {
-			url = appSettings.isMainnet
-				? `${base}/transaction/${txHash}/summary/`
-				: `${base}/transaction/hash/${txHash}`;
+			url = `${base}/transaction/${txHash}/summary/`;
 			break;
 		}
 		case ChainEnum.Nexus: {
