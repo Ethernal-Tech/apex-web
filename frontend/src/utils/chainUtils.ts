@@ -131,7 +131,7 @@ const EXPLORER_URLS: {
 	},
 	testnet: {
 		[ChainEnum.Prime]: 'https://prime-apex.ethernal.tech',
-		[ChainEnum.Vector]: '',
+		[ChainEnum.Vector]: 'https://explorer.vector.testnet.apexfusion.org',
 		[ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
 	},
 };
