@@ -130,7 +130,8 @@ const EXPLORER_URLS: {
 		[ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
 	},
 	testnet: {
-		[ChainEnum.Prime]: 'https://beta-explorer.prime.testnet.apexfusion.org/en',
+		[ChainEnum.Prime]:
+			'https://beta-explorer.prime.testnet.apexfusion.org/en',
 		[ChainEnum.Vector]: 'https://explorer.vector.testnet.apexfusion.org',
 		[ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
 	},
