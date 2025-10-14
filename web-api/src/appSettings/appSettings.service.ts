@@ -1,4 +1,3 @@
-// src/config/app-config.service.ts
 import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -53,60 +52,48 @@ export interface AppSettings {
 
 type AnyFn = (...args: unknown[]) => unknown;
 type Primitive = string | number | boolean | bigint | symbol | null | undefined;
-
 type DeepPartial<T> = T extends Primitive
 	? T
 	: T extends AnyFn
-		? T // leave functions as-is
+		? T
 		: T extends readonly (infer U)[]
-			? readonly DeepPartial<U>[] // readonly arrays
+			? readonly DeepPartial<U>[]
 			: T extends (infer U)[]
-				? DeepPartial<U>[] // mutable arrays
+				? DeepPartial<U>[]
 				: T extends object
 					? { [K in keyof T]?: DeepPartial<T[K]> }
 					: T;
 
 const DEFAULTS: Readonly<DeepPartial<AppSettings>> = {
-	app: {
-		port: 3500,
-	},
-	bridge: {
-		recentInputsThresholdMinutes: 5,
-	},
+	app: { port: 3500 },
+	bridge: { recentInputsThresholdMinutes: 5 },
 	services: {
 		oracleUrl: 'http://localhost:40000',
 		cardanoApiUrl: 'http://localhost:40000',
 	},
-	database: {
-		port: 5432,
-	},
-	email: {
-		contactEmail: 'info@ethernal.tech',
-		smtpPort: 465,
-	},
+	database: { port: 5432 },
+	email: { contactEmail: 'info@ethernal.tech', smtpPort: 465 },
 };
 
-function deepMerge<T>(
-	base: DeepPartial<T>,
-	override: DeepPartial<T>,
-): DeepPartial<T> {
-	const out: any = Array.isArray(base)
-		? [...(base as any)]
-		: { ...(base as any) };
-	for (const [k, v] of Object.entries(override ?? {})) {
-		if (v && typeof v === 'object' && !Array.isArray(v)) {
-			out[k] = deepMerge(out[k] ?? {}, v as any);
-		} else {
-			out[k] = v;
+const mergeDeep = <T>(a: DeepPartial<T>, b: DeepPartial<T>): DeepPartial<T> => {
+	if (Array.isArray(a) && Array.isArray(b)) return [...a, ...b] as any;
+	if (a && typeof a === 'object' && b && typeof b === 'object') {
+		const out: any = { ...(a as any) };
+		for (const k of Object.keys(b as any)) {
+			const av: any = (a as any)[k];
+			const bv: any = (b as any)[k];
+			out[k] = mergeDeep(av ?? (Array.isArray(bv) ? [] : {}), bv);
+			if (!(bv && typeof bv === 'object' && !Array.isArray(bv))) out[k] = bv;
 		}
+		return out;
 	}
-	return out;
-}
+	return b ?? a;
+};
 
-function resolveConfigDir(): string {
+const resolveConfigDir = (): string => {
 	const candidates = [
-		path.resolve(process.cwd(), 'dist', 'config'), // prod after build
-		path.resolve(process.cwd(), 'src/appSettings/settings'), // dev
+		path.resolve(process.cwd(), 'dist', 'config'), // prod
+		path.resolve(process.cwd(), 'src', 'appSettings', 'settings'), // dev
 		path.resolve(__dirname, '../config'),
 		path.resolve(__dirname, '../../config'),
 	];
@@ -120,43 +107,149 @@ function resolveConfigDir(): string {
 		);
 	}
 	return hit;
-}
+};
+
+const safeReadJson = <T>(p?: string): DeepPartial<T> =>
+	p && fs.existsSync(p)
+		? (JSON.parse(fs.readFileSync(p, 'utf8')) as DeepPartial<T>)
+		: ({} as DeepPartial<T>);
+
+/* ------------------ tiny env parsing DSL ------------------ */
+
+const has = (k: string) => Object.prototype.hasOwnProperty.call(process.env, k);
+const raw = (k: string) => (has(k) ? String(process.env[k]) : undefined);
+
+const parsers = {
+	str: (k: string) => raw(k),
+	num: (k: string) => {
+		const v = raw(k);
+		if (v === undefined || v === '') return undefined;
+		const n = Number(v);
+		return Number.isNaN(n) ? undefined : n;
+	},
+	bool: (k: string) => {
+		const v = raw(k)?.trim().toLowerCase();
+		if (v === undefined) return undefined;
+		if (['1', 'true', 'yes', 'on'].includes(v)) return true;
+		if (['0', 'false', 'no', 'off'].includes(v)) return false;
+		return undefined;
+	},
+	list: (k: string, sep = ',') => {
+		const v = raw(k);
+		return v
+			? v
+					.split(sep)
+					.map((s) => s.trim())
+					.filter(Boolean)
+			: undefined;
+	},
+} as const;
+
+type ParserKind = keyof typeof parsers;
+
+const setPath = (obj: any, dottedPath: string, value: unknown) => {
+	if (value === undefined) return;
+	const parts = dottedPath.split('.');
+	let cur = obj;
+	for (let i = 0; i < parts.length - 1; i++) {
+		cur[parts[i]] ??= {};
+		cur = cur[parts[i]];
+	}
+	cur[parts[parts.length - 1]] = value;
+};
+
+/** Map of settings paths to [ENV_VAR, parser] */
+const ENV_MAP: Array<[path: string, env: string, parser: ParserKind]> = [
+	// app
+	['app.name', 'APP_NAME', 'str'],
+	['app.logLevel', 'LOG_LEVEL', 'str'],
+	['app.port', 'PORT', 'num'],
+	['app.corsAllowList', 'CORS_ALLOW_LIST', 'list'],
+	['app.isMainnet', 'IS_MAINNET', 'bool'],
+
+	// features
+	['features.useCentralizedBridge', 'USE_CENTRALIZED_BRIDGE', 'bool'],
+
+	// bridge
+	['bridge.ethTxTtlInc', 'ETH_TX_TTL_INC', 'num'],
+	[
+		'bridge.recentInputsThresholdMinutes',
+		'RECENT_INPUTS_THRESHOLD_MINUTES',
+		'num',
+	],
+	['bridge.addresses.nexusBridging', 'NEXUS_BRIDGING_ADDR', 'str'],
+	[
+		'bridge.addresses.nexusCentralizedBridging',
+		'NEXUS_CENTRALIZED_BRIDGING_ADDR',
+		'str',
+	],
+
+	// services
+	['services.oracleUrl', 'ORACLE_URL', 'str'],
+	['services.cardanoApiUrl', 'CARDANO_API_URL', 'str'],
+	['services.centralizedApiUrl', 'CENTRALIZED_API_URL', 'str'],
+
+	// database (non-secret)
+	['database.host', 'DB_HOST', 'str'],
+	['database.port', 'DB_PORT', 'num'],
+	['database.name', 'DB_NAME', 'str'],
+	['database.ssl', 'DB_SSL', 'bool'],
+	['database.migrationsTableName', 'DB_MIGRATIONS_TABLE_NAME', 'str'],
+	['database.entities', 'DB_ENTITIES', 'list'],
+	['database.migrations', 'DB_MIGRATIONS', 'list'],
+
+	// email (non-secret)
+	['email.contactEmail', 'CONTACT_EMAIL', 'str'],
+	['email.smtpHost', 'SMTP_HOST', 'str'],
+	['email.smtpPort', 'SMTP_PORT', 'num'],
+];
+
+/** Build a DeepPartial<AppSettings> only with keys present in ENV. */
+const envOverrides = (): DeepPartial<AppSettings> => {
+	const out: any = {};
+	for (const [p, k, kind] of ENV_MAP) {
+		const parse = parsers[kind] as (key: string) => unknown;
+		const v = parse(k);
+		if (v !== undefined) setPath(out, p, v);
+	}
+	return out;
+};
+
+/* ------------------ service ------------------ */
 
 @Injectable()
 export class AppSettingsService {
 	private readonly settings: AppSettings;
 
 	constructor() {
-		const settingsDir = resolveConfigDir();
-
-		const commonPath = path.join(settingsDir, 'settings.json');
-
+		const dir = resolveConfigDir();
 		const envName = (process.env.NODE_ENV ?? '').toLowerCase().trim();
 
-		const settingsPath = envName ? `settings.${envName}.json` : commonPath;
+		const common = safeReadJson<AppSettings>(path.join(dir, 'settings.json'));
+		const perEnv = safeReadJson<AppSettings>(
+			envName ? path.join(dir, `settings.${envName}.json`) : undefined,
+		);
 
-		const common = JSON.parse(
-			fs.readFileSync(settingsPath, 'utf8'),
-		) as DeepPartial<AppSettings>;
-		const perEnv = fs.existsSync(settingsPath)
-			? (JSON.parse(
-					fs.readFileSync(settingsPath, 'utf8'),
-				) as DeepPartial<AppSettings>)
-			: {};
-
-		// DEFAULTS -> common -> perEnv
-		const merged = deepMerge<AppSettings>(
-			deepMerge<AppSettings>(DEFAULTS, common),
+		// DEFAULTS -> common -> perEnv -> ENV (ENV wins where provided)
+		const jsonMerged = mergeDeep<AppSettings>(
+			mergeDeep<AppSettings>(DEFAULTS, common),
 			perEnv,
+		);
+		const merged = mergeDeep<AppSettings>(
+			jsonMerged,
+			envOverrides(),
 		) as AppSettings;
 
 		this.settings = merged;
 	}
 
+	// getters
 	get all(): AppSettings {
 		return this.settings;
 	}
-
+	get app() {
+		return this.settings.app;
+	}
 	get port() {
 		return this.settings.app.port;
 	}
@@ -166,19 +259,12 @@ export class AppSettingsService {
 	get logLevel() {
 		return this.settings.app.logLevel;
 	}
-
-	get app() {
-		return this.settings.app;
-	}
-
-	get bridge() {
-		return this.settings.bridge;
-	}
-
 	get features() {
 		return this.settings.features;
 	}
-
+	get bridge() {
+		return this.settings.bridge;
+	}
 	get oracleUrl() {
 		return this.settings.services.oracleUrl;
 	}
@@ -188,11 +274,9 @@ export class AppSettingsService {
 	get centralizedApiUrl() {
 		return this.settings.services.centralizedApiUrl;
 	}
-
 	get db() {
 		return this.settings.database;
 	}
-
 	get email() {
 		return this.settings.email;
 	}
