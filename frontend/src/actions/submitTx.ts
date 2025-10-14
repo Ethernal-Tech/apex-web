@@ -16,14 +16,15 @@ type TxDetailsOptions = {
     feePercMult: bigint;
     gasLimitPercMult: bigint
     fixedLayerZeroGasLimit: bigint | undefined;
-    defaultTipCap: bigint;
+    minTipCap: bigint;
 }
 
 const defaultTxDetailsOptions: TxDetailsOptions = {
-    feePercMult: BigInt(180),
+    // Max Fee = (2 * Base Fee) + Max Priority Fee https://www.blocknative.com/blog/eip-1559-fees
+    feePercMult: BigInt(200),
     gasLimitPercMult: BigInt(180),
     fixedLayerZeroGasLimit: undefined,
-    defaultTipCap: BigInt(2000000000), // 2 gwei
+    minTipCap: BigInt(2000000000), // 2 gwei
 };
 
 export const signAndSubmitCardanoTx = async (
@@ -296,8 +297,8 @@ const populateLondonTxDetails = async (tx: Transaction, opts: TxDetailsOptions) 
 
     const baseFee = baseFeePerGasList.reduce((a, b) => a + b, BigInt(0)) / BigInt(baseFeePerGasList.length);
     let tipCap = feeHistory.reward.reduce((a, b) => a + BigInt(b[0]), BigInt(0)) / BigInt(feeHistory.reward.length);
-    if (tipCap === BigInt(0)) {
-        tipCap = opts.defaultTipCap;
+    if (tipCap < opts.minTipCap) {
+        tipCap = opts.minTipCap;
     }
 
     console.log('fee history for calculating tx fee has been retrieved', 'tipCap', tipCap, 'baseFee', baseFee);
