@@ -7,7 +7,7 @@ import './lockedTokens.css';
 import { getCurrencyTokenInfo } from "../../settings/token";
 import { toChainEnum } from "../../settings/chain";
 import { fetchAndUpdateLockedTokensAction } from "../../actions/lockedTokens";
-import { decodeHex, isCurrency } from "../../utils/tokenUtils";
+import { decodeHex, isApexCurrency } from "../../utils/tokenUtils";
 import { convertWeiToDfmBig } from "../../utils/generalUtils";
 
 const powBigInt = (base: bigint, exp: number): bigint => {
@@ -120,7 +120,7 @@ const LockedTokensComponent = () => {
       const chain = chainKey.toLowerCase();
       const o = innerObj as unknown as Record<string, string | number | bigint>;
 
-      if (isCurrency(chain)) {
+      if (isApexCurrency(chain)) {
         outputValue += BigInt(o.amount || '0');
       } else {
         outputValue += BigInt(

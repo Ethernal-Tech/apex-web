@@ -29,7 +29,7 @@ async function readErc20Meta(
   return raw;
 }
 
-export async function getLayerZeroLockedTokens(
+async function getLayerZeroLockedTokens(
   lzChain: LayerZeroChains
 ): Promise<bigint> {
   let out = BigInt(0);

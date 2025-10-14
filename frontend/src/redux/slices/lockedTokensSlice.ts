@@ -20,8 +20,7 @@ name: "lockedTokens",
     setLockedTokensAction: (state, action: PayloadAction<LockedTokens>) => {
       const safeParseBigInt = (val: string | undefined): bigint => {
         try {
-          // keep string parsing to avoid Number precision issues
-          return BigInt(val ?? "0");
+          return BigInt(val || 0);
         } catch {
           return BigInt(0);
         }

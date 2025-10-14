@@ -487,7 +487,7 @@ export class LockedTokensControllerClient extends BaseClient {
 
     /**
      * Get locked tokens amount
-     * @param allowedBridgingModes (optional) 
+     * @param allowedBridgingModes (optional) all suported bridging modes that goes into sum
      * @return OK - Get locked tokens amount.
      */
     get(allowedBridgingModes: BridgingModeEnum[] | undefined): Promise<LockedTokensDto> {

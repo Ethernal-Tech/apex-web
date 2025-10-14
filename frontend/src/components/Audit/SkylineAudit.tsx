@@ -101,7 +101,6 @@ const LockedTvbPanel: React.FC<SkylinePanelProps> = ({
 
   return (
     <Box className="audit-layout">
-      {/* LEFT — LOCKED */}
       <Box>
         <Typography className="audit-h2">Total locked (TVL)</Typography>
         <Box className="audit-grid-3 audit-mb-20">
@@ -186,7 +185,6 @@ const LockedTvbPanel: React.FC<SkylinePanelProps> = ({
         </Box>
       </Box>
 
-      {/* CENTER — TVB */}
       <Box>
         <Typography className="audit-h2">Total Bridged (TVB)</Typography>
 

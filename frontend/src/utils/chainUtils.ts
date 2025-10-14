@@ -174,7 +174,7 @@ export const CHAIN_URLS: {[key:string]: string} ={
     [ChainEnum.Bsc]:    'https://bsc-dataseed.bnbchain.org'
 }
 
-export const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boolean, isNativeExplorer?: boolean, isTx = true) => {
+export const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boolean, isNativeExplorer?: boolean) => {
     if (isLZBridging && !isNativeExplorer) {
         return `https://layerzeroscan.com/tx/${txHash}`
     }
@@ -197,21 +197,10 @@ export const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?
         case ChainEnum.Bsc:
         case ChainEnum.Nexus: {
             url = `${base}/tx/${txHash}`;
-            if (isTx){
-                url = appSettings.isMainnet
-                    ? `${base}/transaction/${txHash}/summary/`
-                    : `${base}/transaction/hash/${txHash}`;
-                break;
-            }else{
-                url = appSettings.isMainnet
-                    ? `${base}/address/${txHash}`
-                    : `${base}/${txHash}`;
-                break;
-            }
+            break;
         }
         case ChainEnum.Cardano: {
-            url = isTx? `${base}/transaction/${txHash}`
-            : `${base}/address/${txHash}`;
+            url = `${base}/transaction/${txHash}`;
             break;
         }
         default:

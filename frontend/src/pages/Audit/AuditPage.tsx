@@ -7,9 +7,9 @@ import BasePage from "../base/BasePage";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import LockedTvbPanel from "../../components/Audit/SkylineAudit";
 import LayerZeroPanel from "../../components/Audit/LayerZeroAudit";
-import { getLayerZeroWrappedToken } from "../../settings/token";
+import { getLayerZeroToken } from "../../settings/token";
 import "../../audit.css";
-import { isCurrency } from "../../utils/tokenUtils";
+import { isApexCurrency } from "../../utils/tokenUtils";
 import { layerZeroChain, skylineChains } from "../../utils/chainUtils";
 
 const sumToken = (m: Record<string, bigint>) =>
@@ -80,7 +80,7 @@ const AuditPage: React.FC = () => {
           .filter(([chain]) => skylineChains().includes(chain as ChainEnum))
           .map(([chain, tokenMap]) => [
             chain,
-            sumChain(tokenMap, isCurrency(chain)),
+            sumChain(tokenMap, isApexCurrency(chain)),
           ])
       );
       const tvbTokenTotalsAllChains = Object.entries(tvbPerChainTotals).reduce(
@@ -103,14 +103,14 @@ const AuditPage: React.FC = () => {
           .filter(([chain]) => layerZeroChain().includes(chain as ChainEnum))
           .map(([chain, tokenMap]) => [
             chain,
-            sumChain(tokenMap, isCurrency(chain)),
+            sumChain(tokenMap, isApexCurrency(chain)),
           ])
       );
 
       const lzTokenTotalsAllChains = Object.entries(lzPerChainTotals).reduce(
         (acc, [chain, totals]) =>
           addAll(acc, totals, (t) =>
-            t === "native" ? getLayerZeroWrappedToken(chain as ChainEnum) : t
+            t === "native" ? getLayerZeroToken(chain as ChainEnum) : t
           ),
         {} as Record<string, bigint>
       );
