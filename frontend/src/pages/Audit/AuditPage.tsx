@@ -4,13 +4,17 @@ import { RootState } from "../../redux/store";
 import { Box, Tabs, Tab } from "@mui/material";
 
 import BasePage from "../base/BasePage";
-import { ChainEnum } from "../../swagger/apexBridgeApiService";
+import {
+  BridgingModeEnum,
+  ChainApexBridgeEnum,
+  ChainEnum,
+} from "../../swagger/apexBridgeApiService";
 import LockedTvbPanel from "../../components/Audit/SkylineAudit";
 import LayerZeroPanel from "../../components/Audit/LayerZeroAudit";
 import { getLayerZeroToken } from "../../settings/token";
 import "../../audit.css";
-import { isApexCurrency } from "../../utils/tokenUtils";
-import { layerZeroChain, skylineChains } from "../../utils/chainUtils";
+import { isApexChain } from "../../utils/tokenUtils";
+import { ISettingsState } from "../../settings/settingsRedux";
 
 const sumToken = (m: Record<string, bigint>) =>
   Object.values(m).reduce((a, b) => a + b, BigInt(0));
@@ -47,8 +51,8 @@ const AuditPage: React.FC = () => {
   const { chains, totalTransferred: tvbChains } = useSelector(
     (s: RootState) => s.lockedTokens
   );
-  const enabledChains = useSelector(
-    (s: RootState) => s.settings.enabledChains as ChainEnum[]
+  const { settingsPerMode } = useSelector(
+    (s: RootState) => s.settings
   );
 
   const chainKeys = useMemo(() => Object.keys(chains), [chains]);
@@ -73,16 +77,33 @@ const AuditPage: React.FC = () => {
     return acc;
   }, [perChainTotals]);
 
+  // Top-level (inside your component, but not inside another hook)
+  const skylineChains = useMemo<ChainEnum[]>(() => {
+ return Object.values(ChainEnum).filter((x) => 
+        x in settingsPerMode[BridgingModeEnum.Skyline].allowedDirections
+    );    
+  }, [settingsPerMode]);
+
+  const layerZeroChains = useMemo<ChainEnum[]>(() => {
+    const set = new Set<string>(Object.values(ChainApexBridgeEnum));
+    return Object.values(ChainEnum).filter(
+      (x) => !set.has(x as unknown as string)
+    ) as ChainEnum[];
+  }, []);
+
+  // Now use those values inside your other memos
   const { tvbPerChainTotals, tvbTokenTotalsAllChains, tvbGrandTotal } =
     useMemo(() => {
+      const skylineSet = new Set(skylineChains);
       const tvbPerChainTotals = Object.fromEntries(
         Object.entries(tvbChains)
-          .filter(([chain]) => skylineChains().includes(chain as ChainEnum))
+          .filter(([chain]) => skylineSet.has(chain as ChainEnum))
           .map(([chain, tokenMap]) => [
             chain,
-            sumChain(tokenMap, isApexCurrency(chain)),
+            sumChain(tokenMap, isApexChain(chain)),
           ])
       );
+
       const tvbTokenTotalsAllChains = Object.entries(tvbPerChainTotals).reduce(
         (acc, [, totals]) => addAll(acc, totals),
         {} as Record<string, bigint>
@@ -94,24 +115,22 @@ const AuditPage: React.FC = () => {
       );
 
       return { tvbPerChainTotals, tvbTokenTotalsAllChains, tvbGrandTotal };
-    }, [tvbChains]);
+    }, [tvbChains, skylineChains]);
 
   const { lzPerChainTotals, lzTokenTotalsAllChains, lzGrandTotal } =
     useMemo(() => {
+      const lzSet = new Set(layerZeroChains);
       const lzPerChainTotals = Object.fromEntries(
         Object.entries(tvbChains)
-          .filter(([chain]) => layerZeroChain().includes(chain as ChainEnum))
+          .filter(([chain]) => lzSet.has(chain as ChainEnum))
           .map(([chain, tokenMap]) => [
             chain,
-            sumChain(tokenMap, isApexCurrency(chain)),
+            sumChain(tokenMap, isApexChain(chain)),
           ])
       );
 
       const lzTokenTotalsAllChains = Object.entries(lzPerChainTotals).reduce(
-        (acc, [chain, totals]) =>
-          addAll(acc, totals, (t) =>
-            t === "native" ? getLayerZeroToken(chain as ChainEnum) : t
-          ),
+        (acc, [, totals]) => addAll(acc, totals),
         {} as Record<string, bigint>
       );
 
@@ -121,7 +140,7 @@ const AuditPage: React.FC = () => {
       );
 
       return { lzPerChainTotals, lzTokenTotalsAllChains, lzGrandTotal };
-    }, [tvbChains]);
+    }, [tvbChains, layerZeroChains]);
 
   const [tab, setTab] = useState(0);
 
@@ -147,7 +166,6 @@ const AuditPage: React.FC = () => {
               tvbPerChainTotals={tvbPerChainTotals}
               tvbTokenTotalsAllChains={tvbTokenTotalsAllChains}
               tvbGrandTotal={tvbGrandTotal}
-              enabledChains={enabledChains}
             />
           )}
 

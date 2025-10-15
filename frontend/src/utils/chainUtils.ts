@@ -168,7 +168,7 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
     },    
 }
 
-export const CHAIN_URLS: {[key:string]: string} ={
+export const CHAIN_RPC_URLS: {[key:string]: string} ={
     [ChainEnum.Nexus]:  'https://partner-rpc-1.nexus.route3.dev',
     [ChainEnum.Base]:   'https://mainnet.base.org',
     [ChainEnum.Bsc]:    'https://bsc-dataseed.bnbchain.org'
@@ -288,27 +288,4 @@ export const getTokenNameFromSettings = (srcChain: ChainEnum, dstChain: ChainEnu
     }
 
     return "";
-}
-
-export const skylineChains = (): ChainEnum[] => {
-	return [ChainEnum.Prime, ChainEnum.Cardano];
-};
-
-
-export function layerZeroChain(): ChainEnum[]{
- return[
-    ChainEnum.Base,
-    ChainEnum.Bsc,
-    ChainEnum.Nexus
- ]
-}
-
-export const openAuditExplorer = (chain: ChainEnum, address: string) => {
-    if (isEvmChain(chain)){
-        const url = getExplorerTxUrl(chain, address, true , false)
-        window.open(url, '_blank')
-    }else{
-        const url = getExplorerTxUrl(chain, address, false, false)
-        window.open(url, "_blank")
-    }
 }

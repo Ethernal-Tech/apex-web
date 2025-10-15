@@ -37,5 +37,5 @@ export function decodeTokenKey(tokenKey: string, chain?: string): string {
   return decoded && !/invalid\s*hex/i.test(decoded) ? decoded : tokenKey;
 }
 
-export const isApexCurrency = (c: string) =>
+export const isApexChain = (c: string) =>
   c === ChainEnum.Prime || c === ChainEnum.Nexus || c === ChainEnum.Vector;

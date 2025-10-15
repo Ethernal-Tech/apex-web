@@ -1,17 +1,17 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import CustomSelect from "../../components/customSelect/CustomSelect";
 import { isEvmChain, getSrcChains, getChainInfo } from "../../settings/chain";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { formatBigIntDecimalString } from "../lockedTokens/LockedTokensComponent";
-import ButtonCustom from "../Buttons/ButtonCustom";
-import { openAddressExplorer} from "../../utils/chainUtils";
+import { openAddressExplorer } from "../../utils/chainUtils";
 import explorerPng from "@../../../public/explorer.png";
 import { decodeTokenKey } from "../../utils/tokenUtils";
 import { getTokenInfo } from "../../settings/token";
 import { TokenEnum } from "../../features/enums";
 import { RootState } from "../../redux/store";
 import { useSelector } from "react-redux";
+import { compareBigInts } from "../../features/utils";
 
 type SkylinePanelProps = {
   chains: Record<string, Record<string, Record<string, bigint>>>;
@@ -21,16 +21,18 @@ type SkylinePanelProps = {
   tvbPerChainTotals: Record<string, Record<string, bigint>>;
   tvbTokenTotalsAllChains: Record<string, bigint>;
   tvbGrandTotal: bigint;
-  enabledChains: ChainEnum[];
 };
 
 const sumToken = (m: Record<string, bigint>) =>
   Object.values(m).reduce((a, v) => a + v, BigInt(0));
 const fmt = (v: bigint) => formatBigIntDecimalString(v, 6);
 const sortEntries = (r: Record<string, bigint>) =>
-  Object.entries(r).sort((a, b) => Number(b[1] - a[1]));
+  Object.entries(r).sort((a, b) => compareBigInts(b[1], a[1]));
 
-const AmountCard: React.FC<{ left: string; right: string }> = ({ left, right }) => (
+const AmountCard: React.FC<{ left: string; right: string }> = ({
+  left,
+  right,
+}) => (
   <Box className="audit-card">
     <Box className="audit-card-content audit-row">
       <Typography>{left}</Typography>
@@ -72,16 +74,12 @@ const LockedTvbPanel: React.FC<SkylinePanelProps> = ({
   tvbPerChainTotals,
   tvbTokenTotalsAllChains,
   tvbGrandTotal,
-  enabledChains,
 }) => {
   const settings = useSelector((s: RootState) => s.settings);
 
   const srcChainOptions = useMemo(() => {
-    const enabled = new Set<ChainEnum>(enabledChains ?? []);
-    return getSrcChains(settings)
-      .filter((c) => enabled.has(c) && !isEvmChain(c))
-      .map(getChainInfo);
-  }, [settings, enabledChains]);
+    return getSrcChains(settings).map(getChainInfo);
+  }, [settings]);
 
   // selection
   const [selChain, setSelChain] = useState<string>(ChainEnum.Prime);
@@ -89,7 +87,10 @@ const LockedTvbPanel: React.FC<SkylinePanelProps> = ({
     if (!chains[selChain]) setSelChain(chainKeys[0] ?? "");
   }, [chains, chainKeys, selChain]);
 
-  const tokensOfSelChain = useMemo(() => Object.keys(chains[selChain] ?? {}), [chains, selChain]);
+  const tokensOfSelChain = useMemo(
+    () => Object.keys(chains[selChain] ?? {}),
+    [chains, selChain]
+  );
   const [selToken, setSelToken] = useState<string>("lovelace");
   useEffect(() => {
     if (tokensOfSelChain.length && !tokensOfSelChain.includes(selToken)) {
@@ -105,17 +106,23 @@ const LockedTvbPanel: React.FC<SkylinePanelProps> = ({
         <Typography className="audit-h2">Total locked (TVL)</Typography>
         <Box className="audit-grid-3 audit-mb-20">
           {sortEntries(tokenTotalsAllChains).map(([tokenKey, amt]) => (
-            <AmountCard key={tokenKey} left={decodeTokenKey(tokenKey)} right={fmt(amt)} />
+            <AmountCard
+              key={tokenKey}
+              left={decodeTokenKey(tokenKey)}
+              right={fmt(amt)}
+            />
           ))}
         </Box>
 
         <Typography className="audit-h2">Total locked per Chain</Typography>
         <Box className="audit-grid-3">
           {chainKeys.map((ck) => {
-            const rows = sortEntries(perChainTotals[ck] ?? {}).map(([t, a]) => ({
-              label: decodeTokenKey(t, ck),
-              amt: a,
-            }));
+            const rows = sortEntries(perChainTotals[ck] ?? {}).map(
+              ([t, a]) => ({
+                label: decodeTokenKey(t, ck),
+                amt: a,
+              })
+            );
             return <ChainTotalsCard key={ck} chain={ck} rows={rows} />;
           })}
         </Box>
@@ -140,10 +147,16 @@ const LockedTvbPanel: React.FC<SkylinePanelProps> = ({
 
             <Box className="audit-grid-3 audit-gap-18">
               <Box>
-                <Typography className="audit-muted">Token Total (sum of all addresses):</Typography>
+                <Typography className="audit-muted">
+                  Token Total (sum of all addresses):
+                </Typography>
                 <Typography className="audit-muted">
                   {fmt(sumToken(addrMap))}{" "}
-                  <Typography component="span" className="audit-dim" style={{ fontSize: 14 }}>
+                  <Typography
+                    component="span"
+                    className="audit-dim"
+                    style={{ fontSize: 14 }}
+                  >
                     {decodeTokenKey(selToken)}
                   </Typography>
                 </Typography>
@@ -163,17 +176,39 @@ const LockedTvbPanel: React.FC<SkylinePanelProps> = ({
                   {sortEntries(addrMap).map(([addr, amt]) => (
                     <tr key={addr}>
                       <td>
-                        <ButtonCustom
-                          variant="redSkyline"
-                          onClick={() => openAddressExplorer(selChain as ChainEnum, addr)}
-                          sx={{ minWidth: 36, p: "6px", lineHeight: 0 }}
-                          aria-label="Open in explorer"
-                        >
-                          <img src={explorerPng} alt="" width={34} height={34} />
-                        </ButtonCustom>
+                        <Tooltip title="Open in explorer">
+                          <IconButton
+                            aria-label="Open in explorer"
+                            onClick={() =>
+                              openAddressExplorer(selChain as ChainEnum, addr, true)
+                            }
+                            size="small"
+                          >
+                            <Box
+                              component="img"
+                              src={explorerPng}
+                              alt=""
+                              sx={{ width: 34, height: 34 }}
+                              className="audit-cta-icon"
+                            />
+                          </IconButton>
+                        </Tooltip>
                       </td>
-                      <td style={{ fontFamily: "monospace", wordBreak: "break-all" }}>{addr}</td>
-                      <td style={{ textAlign: "center", fontSize: 16, fontWeight: 700 }}>
+                      <td
+                        style={{
+                          fontFamily: "monospace",
+                          wordBreak: "break-all",
+                        }}
+                      >
+                        {addr}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: "center",
+                          fontSize: 16,
+                          fontWeight: 700,
+                        }}
+                      >
                         {fmt(amt)}
                       </td>
                     </tr>
@@ -189,7 +224,10 @@ const LockedTvbPanel: React.FC<SkylinePanelProps> = ({
         <Typography className="audit-h2">Total Bridged (TVB)</Typography>
 
         <Box className="audit-mb-8 audit-w-half-md">
-          <AmountCard left={getTokenInfo(TokenEnum.APEX).label} right={fmt(tvbGrandTotal)} />
+          <AmountCard
+            left={getTokenInfo(TokenEnum.APEX).label}
+            right={fmt(tvbGrandTotal)}
+          />
         </Box>
 
         <Typography className="audit-h2">Total Bridged By Coin</Typography>
@@ -207,10 +245,12 @@ const LockedTvbPanel: React.FC<SkylinePanelProps> = ({
           {Object.keys(tvbPerChainTotals)
             .filter((ck) => !isEvmChain(ck as ChainEnum))
             .map((ck) => {
-              const rows = sortEntries(tvbPerChainTotals[ck] ?? {}).map(([t, a]) => ({
-                label: decodeTokenKey(t),
-                amt: a,
-              }));
+              const rows = sortEntries(tvbPerChainTotals[ck] ?? {}).map(
+                ([t, a]) => ({
+                  label: decodeTokenKey(t),
+                  amt: a,
+                })
+              );
               return <ChainTotalsCard key={ck} chain={ck} rows={rows} />;
             })}
           {Object.keys(tvbPerChainTotals).length === 0 && (

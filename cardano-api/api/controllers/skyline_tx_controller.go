@@ -20,6 +20,7 @@ import (
 	utxotransformer "github.com/Ethernal-Tech/cardano-api/api/utxo_transformer"
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/core"
+	infracommon "github.com/Ethernal-Tech/cardano-infrastructure/common"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	cache "github.com/dgraph-io/ristretto"
@@ -511,7 +512,9 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 		}
 
 		for _, addr := range bridgingAddresses.Addresses {
-			utxos, err := txProviderCardano.GetUtxos(r.Context(), addr)
+			utxos, err := infracommon.ExecuteWithRetry(r.Context(), func(ctx context.Context) ([]wallet.Utxo, error) {
+				return txProviderCardano.GetUtxos(ctx, addr)
+			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to get utxos from chain. err: %w", err)
 			}

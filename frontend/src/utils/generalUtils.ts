@@ -18,7 +18,6 @@ import {
 import { isCardanoChain, isEvmChain, isLZBridging } from "../settings/chain";
 import appSettings from "../settings/appSettings";
 
-const DIV = BigInt(1_000_000_000_000);
 
 export const capitalizeWord = (word: string): string => {
     if (!word || word.length === 0) {
@@ -82,7 +81,8 @@ export const convertDfmToWei = (dfm: string | number): string => {
 };
 
 export const convertWeiToDfmBig = (wei: bigint) => {
-	return (wei + DIV / BigInt(2)) / DIV;
+  const DIV = BigInt(1_000_000_000_000);
+	return wei / DIV;
 };
 
 export const shouldUseMainnet = (src: ChainEnum, dst: ChainEnum): boolean =>

@@ -1,16 +1,16 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { getTokenInfo } from "../../settings/token";
 import { formatBigIntDecimalString } from "../lockedTokens/LockedTokensComponent";
 import "../../audit.css";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import ButtonCustom from "../Buttons/ButtonCustom";
 import explorerPng from "@../../../public/explorer.png";
 import { decodeTokenKey } from "../../utils/tokenUtils";
 import { TokenEnum } from "../../features/enums";
 import { openAddressExplorer } from "../../utils/chainUtils";
+import { compareBigInts } from "../../features/utils";
 
 type LayerZeroPanelProps = {
   lzPerChainTotals: Record<string, Record<string, bigint>>;
@@ -23,7 +23,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
   lzTokenTotalsAllChains,
   lzGrandTotal,
 }) => {
-  const {layerZeroLockedTokens} = useSelector(
+  const { layerZeroLockedTokens } = useSelector(
     (state: RootState) => state.lockedTokens
   );
 
@@ -40,12 +40,23 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
               <Box className="audit-card-content audit-row">
                 <Box className="audit-left">
                   <Typography>{getTokenInfo(TokenEnum.APEX).label}</Typography>
-                  <ButtonCustom
-                    variant="redSkyline"
-                    onClick={() => openAddressExplorer(ChainEnum.Nexus, address, true)}
-                  >
-                    <img className="audit-cta-icon" src={explorerPng} alt="" />
-                  </ButtonCustom>
+                  <Tooltip title="Open in explorer">
+                    <IconButton
+                      aria-label="Open in explorer"
+                      onClick={() =>
+                        openAddressExplorer(ChainEnum.Nexus, address, true)
+                      }
+                      size="small"
+                    >
+                      <Box
+                        component="img"
+                        src={explorerPng}
+                        alt=""
+                        sx={{ width: 34, height: 34 }}
+                        className="audit-cta-icon"
+                      />
+                    </IconButton>
+                  </Tooltip>
                 </Box>
                 <Typography className="audit-amount">
                   {formatBigIntDecimalString(layerZeroLockedTokens, 18)}
@@ -72,11 +83,13 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
           <Typography className="audit-h2">Transferred by coin</Typography>
           <Box className="audit-grid-3">
             {Object.entries(lzTokenTotalsAllChains)
-              .sort((a, b) => Number(b[1] - a[1]))
+              .sort((a, b) => compareBigInts(b[1], a[1]))
               .map(([tk, amt]) => (
                 <Box key={tk} className="audit-card">
                   <Box className="audit-card-content audit-row">
-                    <Typography className="fw-700">{decodeTokenKey(tk)}</Typography>
+                    <Typography className="fw-700">
+                      {decodeTokenKey(tk)}
+                    </Typography>
                     <Typography className="audit-amount">
                       {formatBigIntDecimalString(amt, 6)}
                     </Typography>
@@ -85,44 +98,45 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
               ))}
           </Box>
           {Object.keys(lzTokenTotalsAllChains).length === 0 && (
-            <Typography className="audit-dim audit-mb-8">No transfers yet.</Typography>
+            <Typography className="audit-dim audit-mb-8">
+              No transfers yet.
+            </Typography>
           )}
         </Box>
 
         <Box>
           <Typography className="audit-h2">Transferred by chain</Typography>
           <Box className="audit-grid-3">
-            {Object.keys(lzPerChainTotals)
-              .map((ck) => {
-                const rows = Object.entries(lzPerChainTotals[ck] ?? {})
-                  .sort((a, b) => Number(b[1] - a[1]))
-                  .map(([token, amt]) => ({ token: decodeTokenKey(token), amt }));
-                return (
-                  <Box key={ck} className="audit-card">
-                    <Box className="audit-card-content">
-                      <Typography className="audit-card-subtitle">
-                        {ck.toUpperCase()}
-                      </Typography>
-                      {rows.length === 0 && (
-                        <Typography className="audit-dim">No data</Typography>
-                      )}
-                      {rows.map((r, idx) => (
-                        <Box key={idx} className="audit-row audit-my-4">
-                          <Typography>
-                            {r.token}
-                          </Typography>
-                          <Typography className="audit-amount">
-                            {formatBigIntDecimalString(r.amt, 6)}
-                          </Typography>
-                        </Box>
-                      ))}
-                    </Box>
+            {Object.keys(lzPerChainTotals).map((ck) => {
+              const rows = Object.entries(lzPerChainTotals[ck] ?? {})
+                .sort((a, b) => compareBigInts(b[1], a[1]))
+                .map(([token, amt]) => ({ token: decodeTokenKey(token), amt }));
+              return (
+                <Box key={ck} className="audit-card">
+                  <Box className="audit-card-content">
+                    <Typography className="audit-card-subtitle">
+                      {ck.toUpperCase()}
+                    </Typography>
+                    {rows.length === 0 && (
+                      <Typography className="audit-dim">No data</Typography>
+                    )}
+                    {rows.map((r, idx) => (
+                      <Box key={idx} className="audit-row audit-my-4">
+                        <Typography>{r.token}</Typography>
+                        <Typography className="audit-amount">
+                          {formatBigIntDecimalString(r.amt, 6)}
+                        </Typography>
+                      </Box>
+                    ))}
                   </Box>
-                );
-              })}
+                </Box>
+              );
+            })}
           </Box>
           {Object.keys(lzPerChainTotals).length === 0 && (
-            <Typography className="audit-dim audit-mb-8">No transfers yet.</Typography>
+            <Typography className="audit-dim audit-mb-8">
+              No transfers yet.
+            </Typography>
           )}
         </Box>
       </Box>

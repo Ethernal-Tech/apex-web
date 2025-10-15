@@ -7,7 +7,7 @@ import './lockedTokens.css';
 import { getCurrencyTokenInfo } from "../../settings/token";
 import { toChainEnum } from "../../settings/chain";
 import { fetchAndUpdateLockedTokensAction } from "../../actions/lockedTokens";
-import { decodeHex, isApexCurrency } from "../../utils/tokenUtils";
+import { decodeHex, decodeTokenKey, isApexChain } from "../../utils/tokenUtils";
 import { convertWeiToDfmBig } from "../../utils/generalUtils";
 
 const powBigInt = (base: bigint, exp: number): bigint => {
@@ -87,22 +87,8 @@ const LockedTokensComponent = () => {
 
         const formatted = formatBigIntDecimalString(total, 6);
 
-        if (tokenKey === "lovelace") {
-          const tokenLabel = getCurrencyTokenInfo(chainEnum).label;
-          tokenTexts.push(`${formatted} ${tokenLabel}`);
-        } else {
-          // Keep your token-name decoding logic
-          const parts = tokenKey.split(".");
-          let decoded = tokenKey;
-          if (parts[1]) {
-            try {
-              decoded = decodeHex(parts[1]);
-            } catch {
-              decoded = parts[1]; // fallback
-            }
-          }
-          tokenTexts.push(`${formatted} ${decoded}`);
-        }
+    
+        tokenTexts.push(`${formatted} ${decodeTokenKey(tokenKey)}`);
       }
 
       if (tokenTexts.length) {
@@ -120,7 +106,7 @@ const LockedTokensComponent = () => {
       const chain = chainKey.toLowerCase();
       const o = innerObj as unknown as Record<string, string | number | bigint>;
 
-      if (isApexCurrency(chain)) {
+      if (isApexChain(chain)) {
         outputValue += BigInt(o.amount || '0');
       } else {
         outputValue += BigInt(
