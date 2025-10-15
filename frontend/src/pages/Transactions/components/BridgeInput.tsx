@@ -8,9 +8,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { calculateChangeMinUtxo, convertApexToDfm, convertDfmToWei, minBigInt } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto } from '../../../swagger/apexBridgeApiService';
+import { CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, TxTypeEnum } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
-import { estimateEthGas } from '../../../actions/submitTx';
+import { estimateEthTxFee } from '../../../actions/submitTx';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { white } from '../../../containers/theme';
 import { TokenEnum } from '../../../features/enums';
@@ -123,7 +123,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
             const feeResp = await getEthTxFee(destinationAddr, convertApexToDfm(amount || '0', chain));
             const { bridgingFee, isFallback, ...tx } = feeResp;
 
-            const fee = await estimateEthGas(tx, isFallback);
+            const fee = await estimateEthTxFee(tx, TxTypeEnum.London, isFallback);
             setUserWalletFee(fee.toString());
 
             return;

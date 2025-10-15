@@ -103,12 +103,14 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
         approvalTxFee = await estimateEthTxFee(
           { ...transactionData.approvalTransaction, from: account },
           settings.layerZeroChains[chain]?.txType || TxTypeEnum.Legacy,
+          false,
         );
       }
 
       const baseTxFee = await estimateEthTxFee(
         { ...transactionData.populatedTransaction, from: account },
         settings.layerZeroChains[chain]?.txType || TxTypeEnum.Legacy,
+        false,
       )
       const totalTxFee = approvalTxFee + baseTxFee;
 

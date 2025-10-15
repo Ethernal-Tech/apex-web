@@ -15,15 +15,17 @@ import { validateSubmitTxInputs } from "../utils/validationUtils";
 type TxDetailsOptions = {
     feePercMult: bigint;
     gasLimitPercMult: bigint
-    fixedLayerZeroGasLimit: bigint | undefined;
+    fixedGasLimit: bigint | undefined;
     minTipCap: bigint;
 }
+
+const defaultGasLimitEstimation = 30000;
 
 const defaultTxDetailsOptions: TxDetailsOptions = {
     // Max Fee = (2 * Base Fee) + Max Priority Fee https://www.blocknative.com/blog/eip-1559-fees
     feePercMult: BigInt(200),
     gasLimitPercMult: BigInt(180),
-    fixedLayerZeroGasLimit: undefined,
+    fixedGasLimit: undefined,
     minTipCap: BigInt(2000000000), // 2 gwei
 };
 
@@ -69,39 +71,6 @@ export const signAndSubmitCardanoTx = async (
     return response;
 }
 
-const DEFAULT_GAS_PRICE = 1000000000 // TODO - adjust gas price
-
-export const fillOutEthTx = async (tx: Transaction, isFallback: boolean) => {
-    let gasPrice = await evmWalletHandler.getGasPrice();
-    if (gasPrice === BigInt(0)) {
-        gasPrice = BigInt(DEFAULT_GAS_PRICE || 0);
-    }
-
-    return {
-        ...tx,
-        gasPrice,
-        gas: isFallback ? 30000 : undefined,
-    }
-}
-
-export const estimateEthGas = async (tx: Transaction, isFallback: boolean) => {
-    if (!evmWalletHandler.checkWallet()) {
-        return BigInt(0);
-    }
-
-    const filledTx = await fillOutEthTx(tx, isFallback);
-    const estimateTx = {
-        ...filledTx,
-    }
-
-    let gas = BigInt(estimateTx.gas || 0);
-    if (gas === BigInt(0)) {
-        gas = await evmWalletHandler.estimateGas(estimateTx);
-    }
-
-    return gas * filledTx.gasPrice;
-}
-
 export const signAndSubmitEthTx = async (
   values: CreateTransactionDto,
   createResponse: CreateEthTransactionResponseDto,
@@ -112,7 +81,9 @@ export const signAndSubmitEthTx = async (
   }
 
   const {bridgingFee, isFallback, ...txParts} = createResponse;
-  const tx = await retry(() => fillOutEthTx(txParts, isFallback), longRetryOptions.retryCnt, longRetryOptions.waitTime);
+  const tx: Transaction = await retry(
+            () => populateTxDetails(txParts, TxTypeEnum.London, defaultTxDetailsOptions),
+            longRetryOptions.retryCnt, longRetryOptions.waitTime);
 
   updateLoadingState({ content: 'Signing and submitting the transaction...' })
 
@@ -259,10 +230,10 @@ export const populateTxDetails = async (
     const response = { ...tx };
 
     if (!tx.gas) {
-        if (!!opts.fixedLayerZeroGasLimit) {
-            response.gas = opts.fixedLayerZeroGasLimit;
+        if (!!opts.fixedGasLimit) {
+            response.gas = opts.fixedGasLimit;
             response.gasLimit = response.gas;
-            console.log('gas for the transaction has been set to default value', opts.fixedLayerZeroGasLimit);
+            console.log('gas for the transaction has been set to default value', opts.fixedGasLimit);
         } else {
             console.log('estimating gas for the transaction');
             const gasLimit = await evmWalletHandler.estimateGas(tx);
@@ -310,10 +281,15 @@ const populateLondonTxDetails = async (tx: Transaction, opts: TxDetailsOptions) 
 }
 
 export const estimateEthTxFee = async (
-    tx: Transaction, txType: TxTypeEnum, opts: TxDetailsOptions = defaultTxDetailsOptions,
+    tx: Transaction, txType: TxTypeEnum, isFallback: boolean, opts: TxDetailsOptions = defaultTxDetailsOptions,
 ): Promise<bigint> => {
     if (!evmWalletHandler.checkWallet()) {
         throw new Error('Wallet not connected.');
+    }
+
+    if (isFallback && !tx.gas) {
+        tx.gas = defaultGasLimitEstimation;
+        tx.gasLimit = defaultGasLimitEstimation;
     }
 
     if (!tx.gas || (!tx.gasPrice && !tx.maxFeePerGas)) {
