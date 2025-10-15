@@ -11,11 +11,12 @@ import { BalanceResponseDto } from './wallet.dto';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
+import { AppSettingsService } from 'src/appSettings/appSettings.service';
 
 @ApiTags('Wallet')
 @Controller('wallet')
 export class WalletController {
-	constructor() {}
+	constructor(private readonly appSettings: AppSettingsService) {}
 
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -32,7 +33,7 @@ export class WalletController {
 		@Query('chain') chain: string,
 		@Query('address') address: string,
 	): Promise<BalanceResponseDto> {
-		const apiUrl = process.env.CARDANO_API_URL || 'http://localhost:40000';
+		const apiUrl = this.appSettings.cardanoApiUrl;
 		const apiKey = process.env.CARDANO_API_API_KEY || 'test_api_key';
 		const endpointUrl =
 			apiUrl + `/api/CardanoTx/GetBalance?chainId=${chain}&address=${address}`;
