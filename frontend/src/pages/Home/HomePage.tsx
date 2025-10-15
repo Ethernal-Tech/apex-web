@@ -63,11 +63,13 @@ const HomePage: React.FC = () => {
 
   const handleConnectClick = useCallback(
     async() => {
-      if (Object.keys(settings.allowedDirections).length > 0) {
+      if (isLoggedInMemo) {
+         navigate(NEW_TRANSACTION_ROUTE);
+      } else {
         await login(srcChain, dstChain, navigate, settings, dispatch);
       }
     },
-    [srcChain, dstChain, settings, navigate, dispatch]);
+    [srcChain, dstChain, settings, isLoggedInMemo, navigate, dispatch]);
 
   useEffect(() => {
     if ((!srcChain || !srcChainOptions.some(x => x.value === srcChain)) && srcChainOptions.length > 0) {
@@ -135,12 +137,12 @@ const HomePage: React.FC = () => {
         </Box>
       </Box>
       {
-        loginConnecting ? (
+        loginConnecting || Object.keys(settings.allowedDirections).length === 0 ? (
           <ButtonCustom
             variant={color}
             sx={{ textTransform: 'uppercase' }}
           >
-            Connect Wallet
+            {loginConnecting ? 'Connect Wallet' : 'Loading'}
             <CircularProgress sx={{ marginLeft: 1 }} size={20} />
           </ButtonCustom>
         ) : (
@@ -156,7 +158,7 @@ const HomePage: React.FC = () => {
             <ButtonCustom
               variant={color}
               sx={{ textTransform: 'uppercase' }}
-              onClick={() => navigate(NEW_TRANSACTION_ROUTE)}
+              onClick={handleConnectClick}
               id="move-funds">
               Move funds
             </ButtonCustom>
