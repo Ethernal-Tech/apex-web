@@ -31,6 +31,7 @@ import {
 	ChainEnum,
 	TransactionStatusEnum,
 } from 'src/common/enum';
+import { AppSettingsService } from 'src/appSettings/appSettings.service';
 
 @Injectable()
 export class BridgeTransactionService {
@@ -38,6 +39,7 @@ export class BridgeTransactionService {
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly schedulerRegistry: SchedulerRegistry,
+		private readonly appSettings: AppSettingsService,
 	) {}
 
 	async get(id: number): Promise<BridgeTransactionDto> {
@@ -123,7 +125,7 @@ export class BridgeTransactionService {
 		job.stop();
 		try {
 			const modesSupported = new Set<string>(
-				(process.env.STATUS_UPDATE_MODES_SUPPORTED || '').split(','),
+				this.appSettings.statusUpdateModesSupported,
 			);
 
 			for (const chain of Object.values(ChainEnum)) {
