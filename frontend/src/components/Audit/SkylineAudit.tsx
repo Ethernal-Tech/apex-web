@@ -156,7 +156,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
                       className="audit-dim"
                       style={{ fontSize: 14 }}
                     >
-                      {decodeTokenKey(selToken)}
+                      {decodeTokenKey(selToken, selChain)}
                     </Typography>
                   </Typography>
                 </Typography>
