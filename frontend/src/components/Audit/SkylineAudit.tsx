@@ -178,7 +178,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
                           <IconButton
                             aria-label="Open in explorer"
                             onClick={() =>
-                              openAddressExplorer(selChain as ChainEnum, addr, true)
+                              openAddressExplorer(selChain as ChainEnum, addr, false)
                             }
                             size="small"
                           >
