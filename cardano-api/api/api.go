@@ -16,6 +16,13 @@ import (
 	"github.com/hashicorp/go-hclog"
 )
 
+type cardanoApiContextKey string
+
+const (
+	cardanoApiBaseContextKey cardanoApiContextKey = "cardanoApiBaseContextKey"
+	cardanoApiConnContextKey cardanoApiContextKey = "cardanoApiConnContextKey"
+)
+
 type APIImpl struct {
 	ctx       context.Context
 	apiConfig core.APIConfig
@@ -76,14 +83,10 @@ func (api *APIImpl) Start() {
 		Handler:           api.handler,
 		ReadHeaderTimeout: 3 * time.Second,
 		BaseContext: func(l net.Listener) context.Context {
-			cc, _ := context.WithCancel(api.ctx)
-
-			return cc
+			return context.WithValue(api.ctx, cardanoApiBaseContextKey, api.apiConfig.Port)
 		},
 		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
-			cc, _ := context.WithCancel(ctx)
-
-			return cc
+			return context.WithValue(ctx, cardanoApiConnContextKey, c)
 		},
 	}
 
