@@ -57,13 +57,15 @@ func (bts *BridgingTxSender) CreateTx(
 	ctx context.Context,
 	chain string,
 	senderAddr string,
+	senderAddrPolicyScript *cardanowallet.PolicyScript,
 	receivers []cardanowallet.TxOutput,
 	feeBridgeAmount uint64,
 	skipUtxos []cardanowallet.TxInput,
 	minUtxoValue uint64,
 ) ([]byte, string, []cardanowallet.TxInput, error) {
 	outputsSum, inputs, builder, err := bts.getTxBuilderData(
-		ctx, chain, senderAddr, receivers, feeBridgeAmount, skipUtxos, minUtxoValue)
+		ctx, chain, senderAddr, senderAddrPolicyScript,
+		receivers, feeBridgeAmount, skipUtxos, minUtxoValue)
 	if err != nil {
 		return nil, "", nil, err
 	}
@@ -105,13 +107,15 @@ func (bts *BridgingTxSender) GetTxFee(
 	ctx context.Context,
 	chain string,
 	senderAddr string,
+	senderAddrPolicyScript *cardanowallet.PolicyScript,
 	receivers []cardanowallet.TxOutput,
 	feeAmount uint64,
 	skipUtxos []cardanowallet.TxInput,
 	minUtxoValue uint64,
 ) (uint64, error) {
 	_, _, builder, err := bts.getTxBuilderData(
-		ctx, chain, senderAddr, receivers, feeAmount, skipUtxos, minUtxoValue)
+		ctx, chain, senderAddr, senderAddrPolicyScript,
+		receivers, feeAmount, skipUtxos, minUtxoValue)
 	if err != nil {
 		return 0, err
 	}
@@ -167,7 +171,8 @@ func (bts *BridgingTxSender) createMetadata(
 }
 
 func (bts *BridgingTxSender) getTxBuilderData(
-	ctx context.Context, chain string, senderAddr string,
+	ctx context.Context, chain string,
+	senderAddr string, senderAddrPolicyScript *cardanowallet.PolicyScript,
 	receivers []cardanowallet.TxOutput, feeBridgeAmount uint64,
 	skipUtxos []cardanowallet.TxInput, minUtxoValue uint64,
 ) (map[string]uint64, cardanowallet.TxInputs, *cardanowallet.TxBuilder, error) {
@@ -228,7 +233,13 @@ func (bts *BridgingTxSender) getTxBuilderData(
 			fmt.Errorf("failed to create tokens from sum map. err: %w", err)
 	}
 
-	builder.AddInputs(inputs.Inputs...).AddOutputs(cardanowallet.TxOutput{
+	if senderAddrPolicyScript != nil {
+		builder.AddInputsWithScript(senderAddrPolicyScript, inputs.Inputs...)
+	} else {
+		builder.AddInputs(inputs.Inputs...)
+	}
+
+	builder.AddOutputs(cardanowallet.TxOutput{
 		Addr:   bts.MultiSigAddrSrc,
 		Amount: outputsSumLovelace,
 	}, cardanowallet.TxOutput{
