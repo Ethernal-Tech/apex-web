@@ -205,7 +205,6 @@
   background: var(--audit-bg-card-even) !important;
 }
 
-/* ===== Minor bits ===== */
 .audit-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .audit-toolbar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .audit-card-subtitle { font-size: 16px; font-weight: 700; margin-bottom: 8px; }

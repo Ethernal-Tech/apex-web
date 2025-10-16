@@ -6,15 +6,12 @@ import { Box, Tabs, Tab } from "@mui/material";
 import BasePage from "../base/BasePage";
 import {
   BridgingModeEnum,
-  ChainApexBridgeEnum,
   ChainEnum,
 } from "../../swagger/apexBridgeApiService";
-import LockedTvbPanel from "../../components/Audit/SkylineAudit";
+import SkylinePanel from "../../components/Audit/SkylineAudit";
 import LayerZeroPanel from "../../components/Audit/LayerZeroAudit";
-import { getLayerZeroToken } from "../../settings/token";
 import "../../audit.css";
 import { isApexChain } from "../../utils/tokenUtils";
-import { ISettingsState } from "../../settings/settingsRedux";
 
 const sumToken = (m: Record<string, bigint>) =>
   Object.values(m).reduce((a, b) => a + b, BigInt(0));
@@ -47,13 +44,15 @@ const addAll = (
   return into;
 };
 
+const layerZeroChains = ():ChainEnum[] => {
+  return [ChainEnum.Nexus, ChainEnum.Base, ChainEnum.Bsc];
+}
+
 const AuditPage: React.FC = () => {
   const { chains, totalTransferred: tvbChains } = useSelector(
     (s: RootState) => s.lockedTokens
   );
-  const { settingsPerMode } = useSelector(
-    (s: RootState) => s.settings
-  );
+  const settings = useSelector((s: RootState) => s.settings);
 
   const chainKeys = useMemo(() => Object.keys(chains), [chains]);
 
@@ -68,6 +67,13 @@ const AuditPage: React.FC = () => {
     [chains]
   );
 
+  const skylineChains = useMemo<ChainEnum[]>(() => {
+    if (!settings) return [];
+    return Object.keys(
+      settings.settingsPerMode[BridgingModeEnum.Skyline].allowedDirections
+    ) as unknown as ChainEnum[];
+  }, [settings]);
+
   const tokenTotalsAllChains = useMemo(() => {
     const acc: Record<string, bigint> = {};
     for (const [chain, totals] of Object.entries(perChainTotals)) {
@@ -77,24 +83,10 @@ const AuditPage: React.FC = () => {
     return acc;
   }, [perChainTotals]);
 
-  // Top-level (inside your component, but not inside another hook)
-  const skylineChains = useMemo<ChainEnum[]>(() => {
- return Object.values(ChainEnum).filter((x) => 
-        x in settingsPerMode[BridgingModeEnum.Skyline].allowedDirections
-    );    
-  }, [settingsPerMode]);
-
-  const layerZeroChains = useMemo<ChainEnum[]>(() => {
-    const set = new Set<string>(Object.values(ChainApexBridgeEnum));
-    return Object.values(ChainEnum).filter(
-      (x) => !set.has(x as unknown as string)
-    ) as ChainEnum[];
-  }, []);
-
   // Now use those values inside your other memos
-  const { tvbPerChainTotals, tvbTokenTotalsAllChains, tvbGrandTotal } =
+ const { tvbPerChainTotals, tvbTokenTotalsAllChains, tvbGrandTotal } =
     useMemo(() => {
-      const skylineSet = new Set(skylineChains);
+      const skylineSet = new Set(skylineChains); // ⬅️ use memoized value
       const tvbPerChainTotals = Object.fromEntries(
         Object.entries(tvbChains)
           .filter(([chain]) => skylineSet.has(chain as ChainEnum))
@@ -119,7 +111,7 @@ const AuditPage: React.FC = () => {
 
   const { lzPerChainTotals, lzTokenTotalsAllChains, lzGrandTotal } =
     useMemo(() => {
-      const lzSet = new Set(layerZeroChains);
+      const lzSet = new Set(layerZeroChains());
       const lzPerChainTotals = Object.fromEntries(
         Object.entries(tvbChains)
           .filter(([chain]) => lzSet.has(chain as ChainEnum))
@@ -140,7 +132,7 @@ const AuditPage: React.FC = () => {
       );
 
       return { lzPerChainTotals, lzTokenTotalsAllChains, lzGrandTotal };
-    }, [tvbChains, layerZeroChains]);
+    }, [tvbChains]);
 
   const [tab, setTab] = useState(0);
 
@@ -158,7 +150,7 @@ const AuditPage: React.FC = () => {
           </Tabs>
 
           {tab === 0 && (
-            <LockedTvbPanel
+            <SkylinePanel
               chains={chains}
               chainKeys={chainKeys}
               perChainTotals={perChainTotals}
@@ -166,6 +158,7 @@ const AuditPage: React.FC = () => {
               tvbPerChainTotals={tvbPerChainTotals}
               tvbTokenTotalsAllChains={tvbTokenTotalsAllChains}
               tvbGrandTotal={tvbGrandTotal}
+              skylineChains={skylineChains}
             />
           )}
 

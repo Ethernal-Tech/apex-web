@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { Box, IconButton, Tooltip, Typography } from "@mui/material";
 import CustomSelect from "../../components/customSelect/CustomSelect";
-import { isEvmChain, getSrcChains, getChainInfo } from "../../settings/chain";
+import { isEvmChain, getChainInfo } from "../../settings/chain";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { formatBigIntDecimalString } from "../lockedTokens/LockedTokensComponent";
 import { openAddressExplorer } from "../../utils/chainUtils";
@@ -9,8 +9,6 @@ import explorerPng from "@../../../public/explorer.png";
 import { decodeTokenKey } from "../../utils/tokenUtils";
 import { getTokenInfo } from "../../settings/token";
 import { TokenEnum } from "../../features/enums";
-import { RootState } from "../../redux/store";
-import { useSelector } from "react-redux";
 import { compareBigInts } from "../../features/utils";
 
 type SkylinePanelProps = {
@@ -21,6 +19,7 @@ type SkylinePanelProps = {
   tvbPerChainTotals: Record<string, Record<string, bigint>>;
   tvbTokenTotalsAllChains: Record<string, bigint>;
   tvbGrandTotal: bigint;
+  skylineChains: ChainEnum[]
 };
 
 const sumToken = (m: Record<string, bigint>) =>
@@ -66,7 +65,7 @@ const ChainTotalsCard: React.FC<{
   </Box>
 );
 
-const LockedTvbPanel: React.FC<SkylinePanelProps> = ({
+const SkylinePanel: React.FC<SkylinePanelProps> = ({
   chains,
   chainKeys,
   perChainTotals,
@@ -74,12 +73,11 @@ const LockedTvbPanel: React.FC<SkylinePanelProps> = ({
   tvbPerChainTotals,
   tvbTokenTotalsAllChains,
   tvbGrandTotal,
+  skylineChains,
 }) => {
-  const settings = useSelector((s: RootState) => s.settings);
-
   const srcChainOptions = useMemo(() => {
-    return getSrcChains(settings).map(getChainInfo);
-  }, [settings]);
+    return skylineChains.map(getChainInfo);
+  }, [skylineChains]);
 
   // selection
   const [selChain, setSelChain] = useState<string>(ChainEnum.Prime);
@@ -262,4 +260,4 @@ const LockedTvbPanel: React.FC<SkylinePanelProps> = ({
   );
 };
 
-export default LockedTvbPanel;
+export default SkylinePanel;
