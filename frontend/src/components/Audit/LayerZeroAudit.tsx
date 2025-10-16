@@ -8,7 +8,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { decodeTokenKey } from "../../utils/tokenUtils";
 import { TokenEnum } from "../../features/enums";
-import { getExplorerAddressUrl,} from "../../utils/chainUtils";
+import { getExplorerAddressUrl } from "../../utils/chainUtils";
 import { compareBigInts } from "../../features/utils";
 import LaunchIcon from "@mui/icons-material/Launch";
 
@@ -31,7 +31,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
   const address = layerZeroChains[ChainEnum.Nexus].oftAddress;
 
   return (
-    <Box className="skyline-bridge-section">
+    <Box className="skyline-bridge-section layerzero">
       <Box className="audit-wrap">
         <Box className="audit-hero-row audit-mb-16">
           <Box>
@@ -40,25 +40,25 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
               <Box className="audit-card-content audit-row">
                 <Box className="audit-left">
                   <Typography>{getTokenInfo(TokenEnum.APEX).label}</Typography>
-                        <Tooltip title="Open in explorer">
-                          <Link
-                            href={getExplorerAddressUrl(
-                              ChainEnum.Nexus,
-                              address,
-                              true
-                            )}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
-                            <LaunchIcon
-                              sx={{
-                                marginLeft: "6px",
-                                fontSize: "20px",
-                                color: "white",
-                              }}
-                            />
-                          </Link>
-                        </Tooltip>
+                  <Tooltip title="Open in explorer">
+                    <Link
+                      href={getExplorerAddressUrl(
+                        ChainEnum.Nexus,
+                        address,
+                        true
+                      )}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <LaunchIcon
+                        sx={{
+                          marginLeft: "6px",
+                          fontSize: "20px",
+                          color: "white",
+                        }}
+                      />
+                    </Link>
+                  </Tooltip>
                 </Box>
                 <Typography className="audit-amount">
                   {formatBigIntDecimalString(layerZeroLockedTokens, 18)}
