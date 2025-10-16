@@ -258,13 +258,6 @@ export const getExplorerAddressUrl = (chain: ChainEnum, address: string, isLzBri
     return url
 }
 
-export const openAddressExplorer = (chain: ChainEnum, address: string, isLzBridging?: boolean) =>{
-    const url = getExplorerAddressUrl(chain, address, isLzBridging);
-    if (url){
-        window.open(url, '_blank');
-    }
-}
-
 export const LovelaceTokenName = 'lovelace';
 
 export const getTokenNameFromSettings = (srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState): string => {

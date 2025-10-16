@@ -1,16 +1,16 @@
 import React from "react";
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import { Box, Link, Tooltip, Typography } from "@mui/material";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { getTokenInfo } from "../../settings/token";
 import { formatBigIntDecimalString } from "../lockedTokens/LockedTokensComponent";
 import "../../audit.css";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import explorerPng from "@../../../public/explorer.png";
 import { decodeTokenKey } from "../../utils/tokenUtils";
 import { TokenEnum } from "../../features/enums";
-import { openAddressExplorer } from "../../utils/chainUtils";
+import { getExplorerAddressUrl,} from "../../utils/chainUtils";
 import { compareBigInts } from "../../features/utils";
+import LaunchIcon from "@mui/icons-material/Launch";
 
 type LayerZeroPanelProps = {
   lzPerChainTotals: Record<string, Record<string, bigint>>;
@@ -40,23 +40,25 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
               <Box className="audit-card-content audit-row">
                 <Box className="audit-left">
                   <Typography>{getTokenInfo(TokenEnum.APEX).label}</Typography>
-                  <Tooltip title="Open in explorer">
-                    <IconButton
-                      aria-label="Open in explorer"
-                      onClick={() =>
-                        openAddressExplorer(ChainEnum.Nexus, address, true)
-                      }
-                      size="small"
-                    >
-                      <Box
-                        component="img"
-                        src={explorerPng}
-                        alt=""
-                        sx={{ width: 34, height: 34 }}
-                        className="audit-cta-icon"
-                      />
-                    </IconButton>
-                  </Tooltip>
+                        <Tooltip title="Open in explorer">
+                          <Link
+                            href={getExplorerAddressUrl(
+                              ChainEnum.Nexus,
+                              address,
+                              true
+                            )}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <LaunchIcon
+                              sx={{
+                                marginLeft: "6px",
+                                fontSize: "20px",
+                                color: "white",
+                              }}
+                            />
+                          </Link>
+                        </Tooltip>
                 </Box>
                 <Typography className="audit-amount">
                   {formatBigIntDecimalString(layerZeroLockedTokens, 18)}

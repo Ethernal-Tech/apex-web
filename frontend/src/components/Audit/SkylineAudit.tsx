@@ -1,15 +1,17 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import { Box, Link, Tooltip, Typography } from "@mui/material";
 import CustomSelect from "../../components/customSelect/CustomSelect";
 import { isEvmChain, getChainInfo } from "../../settings/chain";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { formatBigIntDecimalString } from "../lockedTokens/LockedTokensComponent";
-import { openAddressExplorer } from "../../utils/chainUtils";
-import explorerPng from "@../../../public/explorer.png";
+import {
+  getExplorerAddressUrl,
+} from "../../utils/chainUtils";
 import { decodeTokenKey } from "../../utils/tokenUtils";
 import { getTokenInfo } from "../../settings/token";
 import { TokenEnum } from "../../features/enums";
 import { compareBigInts } from "../../features/utils";
+import LaunchIcon from "@mui/icons-material/Launch";
 
 type SkylinePanelProps = {
   chains: Record<string, Record<string, Record<string, bigint>>>;
@@ -19,7 +21,7 @@ type SkylinePanelProps = {
   tvbPerChainTotals: Record<string, Record<string, bigint>>;
   tvbTokenTotalsAllChains: Record<string, bigint>;
   tvbGrandTotal: bigint;
-  skylineChains: ChainEnum[]
+  skylineChains: ChainEnum[];
 };
 
 const sumToken = (m: Record<string, bigint>) =>
@@ -143,19 +145,19 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
               </Box>
             </Box>
 
-            <Box className="audit-grid-3 audit-gap-18">
+            <Box>
               <Box>
-                <Typography className="audit-muted">
-                  Token Total (sum of all addresses):
-                </Typography>
-                <Typography className="audit-muted">
-                  {fmt(sumToken(addrMap))}{" "}
-                  <Typography
-                    component="span"
-                    className="audit-dim"
-                    style={{ fontSize: 14 }}
-                  >
-                    {decodeTokenKey(selToken)}
+                <Typography>
+                  {`Token Total (sum of all addresses): `}
+                  <Typography component="span">
+                    {fmt(sumToken(addrMap))}{" "}
+                    <Typography
+                      component="span"
+                      className="audit-dim"
+                      style={{ fontSize: 14 }}
+                    >
+                      {decodeTokenKey(selToken)}
+                    </Typography>
                   </Typography>
                 </Typography>
               </Box>
@@ -175,21 +177,23 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
                     <tr key={addr}>
                       <td>
                         <Tooltip title="Open in explorer">
-                          <IconButton
-                            aria-label="Open in explorer"
-                            onClick={() =>
-                              openAddressExplorer(selChain as ChainEnum, addr, false)
-                            }
-                            size="small"
+                          <Link
+                            href={getExplorerAddressUrl(
+                              selChain as ChainEnum,
+                              addr,
+                              false
+                            )}
+                            target="_blank"
+                            rel="noreferrer"
                           >
-                            <Box
-                              component="img"
-                              src={explorerPng}
-                              alt=""
-                              sx={{ width: 34, height: 34 }}
-                              className="audit-cta-icon"
+                            <LaunchIcon
+                              sx={{
+                                marginLeft: "6px",
+                                fontSize: "20px",
+                                color: "white",
+                              }}
                             />
-                          </IconButton>
+                          </Link>
                         </Tooltip>
                       </td>
                       <td

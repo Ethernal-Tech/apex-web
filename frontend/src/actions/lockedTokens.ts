@@ -53,7 +53,7 @@ export const fetchAndUpdateLockedTokensAction = async (
   );
 
   if (lockedTokensResp instanceof ErrorResponse) {
-    console.log(`Error while fetching settings: ${lockedTokensResp.err}`);
+    console.log(`Error while fetching locked tokens: ${lockedTokensResp.err}`);
     return;
   }
 

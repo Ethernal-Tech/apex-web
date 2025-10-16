@@ -44,9 +44,7 @@ const addAll = (
   return into;
 };
 
-const layerZeroChains = ():ChainEnum[] => {
-  return [ChainEnum.Nexus, ChainEnum.Base, ChainEnum.Bsc];
-}
+const layerZeroChains =[ChainEnum.Nexus, ChainEnum.Base, ChainEnum.Bsc]
 
 const AuditPage: React.FC = () => {
   const { chains, totalTransferred: tvbChains } = useSelector(
@@ -111,7 +109,7 @@ const AuditPage: React.FC = () => {
 
   const { lzPerChainTotals, lzTokenTotalsAllChains, lzGrandTotal } =
     useMemo(() => {
-      const lzSet = new Set(layerZeroChains());
+      const lzSet = new Set(layerZeroChains);
       const lzPerChainTotals = Object.fromEntries(
         Object.entries(tvbChains)
           .filter(([chain]) => lzSet.has(chain as ChainEnum))
