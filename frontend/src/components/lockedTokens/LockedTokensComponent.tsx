@@ -7,7 +7,7 @@ import './lockedTokens.css';
 import { getCurrencyTokenInfo } from "../../settings/token";
 import { toChainEnum } from "../../settings/chain";
 import { fetchAndUpdateLockedTokensAction } from "../../actions/lockedTokens";
-import { decodeHex, decodeTokenKey, isApexChain } from "../../utils/tokenUtils";
+import { decodeTokenKey, isApexChain } from "../../utils/tokenUtils";
 import { convertWeiToDfmBig } from "../../utils/generalUtils";
 
 const powBigInt = (base: bigint, exp: number): bigint => {
