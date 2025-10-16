@@ -76,7 +76,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
   skylineChains,
 }) => {
   const srcChainOptions = useMemo(() => {
-    return skylineChains.map(getChainInfo);
+    return skylineChains.map(getChainInfo).reverse();
   }, [skylineChains]);
 
   // selection
