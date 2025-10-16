@@ -356,14 +356,15 @@ func (c *SkylineTxControllerImpl) createTx(ctx context.Context, requestBody comm
 
 	txInfo, metadata, err := txSender.CreateBridgingTx(
 		ctx,
-		sendtx.BridgingTxInput{
-			SrcChainID:      requestBody.SourceChainID,
-			DstChainID:      requestBody.DestinationChainID,
-			SenderAddr:      requestBody.SenderAddr,
-			Receivers:       receivers,
-			BridgingAddress: bridgingAddress.Address,
-			BridgingFee:     requestBody.BridgingFee,
-			OperationFee:    0,
+		sendtx.BridgingTxDto{
+			SrcChainID:             requestBody.SourceChainID,
+			DstChainID:             requestBody.DestinationChainID,
+			SenderAddr:             requestBody.SenderAddr,
+			SenderAddrPolicyScript: requestBody.SenderAddrPolicyScript,
+			Receivers:              receivers,
+			BridgingAddress:        bridgingAddress.Address,
+			BridgingFee:            requestBody.BridgingFee,
+			OperationFee:           0,
 		},
 	)
 	if err != nil {
@@ -412,14 +413,15 @@ func (c *SkylineTxControllerImpl) calculateTxFee(
 	// Calculate transaction fee
 	txFeeInfo, metadata, err := txSender.CalculateBridgingTxFee(
 		ctx,
-		sendtx.BridgingTxInput{
-			SrcChainID:      requestBody.SourceChainID,
-			DstChainID:      requestBody.DestinationChainID,
-			SenderAddr:      requestBody.SenderAddr,
-			Receivers:       receivers,
-			BridgingAddress: bridgingAddress.Address,
-			BridgingFee:     requestBody.BridgingFee,
-			OperationFee:    0,
+		sendtx.BridgingTxDto{
+			SrcChainID:             requestBody.SourceChainID,
+			DstChainID:             requestBody.DestinationChainID,
+			SenderAddr:             requestBody.SenderAddr,
+			SenderAddrPolicyScript: requestBody.SenderAddrPolicyScript,
+			Receivers:              receivers,
+			BridgingAddress:        bridgingAddress.Address,
+			BridgingFee:            requestBody.BridgingFee,
+			OperationFee:           0,
 		},
 	)
 	if err != nil {

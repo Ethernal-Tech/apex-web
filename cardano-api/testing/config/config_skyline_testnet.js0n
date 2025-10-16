@@ -1,0 +1,94 @@
+{
+    "runMode": "skyline",
+    "cardanoChains": {
+        "cardano": {
+            "networkMagic": 2,
+            "networkID": 0,
+            "bridgingAddresses": {
+                "address": "",
+                "feeAddress": "addr_test1xz429ta7d8akqvk6rtkavja8kshy4m3dplm2sgx60rp0fk3pmuk902u7lh609tzz54f32s49s5uf6sphu2zer00a2k4qkq40f9",
+                "fallbackAddress": "addr_test1xp3g6ayyt3e0m9w3jtxr84mf877nhqh4snt2g7ww43yf6lx4w8kmdszpx27e3wpawvkcqcrhrl9ra09stpe8ahtznzesm8x8rk"
+            },
+            "chainSpecific": {
+                "ogmiosUrl": "https://preview-ogmios.onprem.ethernal.work",
+                "useDemeter": true,
+                "potentialFee": 500000,
+                "ttlSlotNumberIncrement": 2100,
+                "nativeTokens": [
+                    {
+                        "dstChainID": "prime",
+                        "tokenName": "64c6ea243c3133d44f2022299e74b027f02b1c13397324819e8465c7.WAPEX"
+                    }
+                ]
+            },
+            "isEnabled": true
+        },
+        "prime": {
+            "networkMagic": 3311,
+            "networkID": 0,
+            "bridgingAddresses": {
+                "address": "",
+                "feeAddress": "addr_test1xr06xce9aq6atg0hwuucxe7eu5g6nx8mmnvw2d2e848cz4y93epqj6zxan4pykvt4ux34uzwcwnts4akrfrus070ntss82juq8",
+                "fallbackAddress": "addr_test1xzg90aa683qrmp7nplcpvjrh33wj0l77wmuzl9fyeljzjwnu8600uw5fkfran3y3knsvvaleyf0u73xdn5gytsqmu9gqjjclpu"
+            },
+            "chainSpecific": {
+                "ogmiosUrl": "http://ogmios.prime.testnet.apexfusion.org:1337",
+                "potentialFee": 500000,
+                "ttlSlotNumberIncrement": 2100,
+                "nativeTokens": null
+            },
+            "isEnabled": true
+        }
+    },
+    "ethChains": {
+        "nexus": {
+            "isEnabled": false
+        }
+    },
+    "utxoCacheTimeout": 90000000000,
+    "oracleApi": {
+        "url": "http://validator-1-skyline-partner.testnet.ethernal.work:10003",
+        "apiKey": "ae9cf0ea-2ab8-1337-9841-7b443e59aee5"
+    },
+    "appSettings": {
+        "logger": {
+            "rotatingLogsEnabled": false,
+            "rotatingLogerConfig": {
+                "maxSizeInMB": 100,
+                "maxBackups": 30,
+                "maxAgeInDays": 30,
+                "compress": false
+            },
+            "logLevel": 2,
+            "jsonLogFormat": false,
+            "appendFile": true,
+            "logFilePath": "logs/cardano-api.log",
+            "name": ""
+        }
+    },
+    "api": {
+        "port": 41003,
+        "pathPrefix": "api",
+        "allowedHeaders": [
+            "Content-Type"
+        ],
+        "allowedOrigins": [
+            "*"
+        ],
+        "allowedMethods": [
+            "GET",
+            "HEAD",
+            "POST",
+            "PUT",
+            "OPTIONS",
+            "DELETE"
+        ],
+        "apiKeyHeader": "x-api-key",
+        "apiKeys": [
+            "test-cardano-api-key-4"
+        ],
+        "utxoCacheKeys": [
+            "daa48807-1be3-4839-l331-c719992cba2a"
+        ]
+    }
+}
