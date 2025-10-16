@@ -1,10 +1,6 @@
-/* Audit.css — widened + parent cap override */
-
-/* ===== Theme tokens ===== */
 .skyline-bridge-section {
   padding-top: 0;
   background: transparent !important;
-
   --audit-fg: #eaf7f6;
   --audit-bg-card: rgba(6, 34, 37, 0.92);
   --audit-bg-card-odd: rgba(6, 34, 37, 0.75);
@@ -14,7 +10,6 @@
   --audit-glow: rgba(255, 255, 255, 0.05);
 }
 
-/* ===== Global tint (incl. MUI text/icons) ===== */
 .skyline-bridge-section,
 .skyline-bridge-section * {
   color: var(--audit-fg) !important;
@@ -30,78 +25,61 @@
   fill: var(--audit-fg) !important;
 }
 
-/* ===== Override any old 80vw cap on the page wrapper ===== */
 .skyline-bridge-section .audit-section {
   background: transparent !important;
   max-width: none !important;
-  width: 70vw !important; /* was 80vw */
+  width: 70vw !important;
   margin-left: calc(50% - 35vw) !important;
   margin-right: calc(50% - 35vw) !important;
   padding: 24px 16px 40px;
 }
-/* ===== Wrapper (make everything ~30% wider) ===== */
+
 .skyline-bridge-section .audit-wrap {
   width: 100%;
-  max-width: 1430px; /* was 1100px (~+30%) */
+  max-width: 1430px;
   margin: 0 auto;
   padding: 0 8px;
 }
 
-/* Tabs area on the page */
 .skyline-bridge-section .audit-section .MuiTabs-root { margin-bottom: 16px; }
 .skyline-bridge-section .audit-section .MuiTab-root { text-transform: none; font-weight: 700; margin-right: 8px; }
 .skyline-bridge-section .audit-section .MuiTabs-indicator { background-color: var(--audit-border); }
 
-/* ===== Cards ===== */
 .skyline-bridge-section .audit-card {
   background: var(--audit-bg-card) !important;
   border: 1px solid var(--audit-border) !important;
   border-radius: 12px !important;
   box-shadow: inset 0 0 0 1px var(--audit-glow) !important;
+  overflow: hidden;
 }
 .skyline-bridge-section .audit-card-content { padding: 18px !important; }
 
-/* Centered/narrow TVB card — widen by ~30% as well */
 .skyline-bridge-section .audit-card--center {
-  width: min(100%, 676px); /* was 520px (~+30%) */
+  width: min(100%, 676px);
   margin-left: auto;
   margin-right: auto;
 }
 
-/* ===== Type scale ===== */
-.skyline-bridge-section .audit-h2 {
-  font-size: 22px;
-  font-weight: 700;
-  margin: 20px 0 8px;
-}
-@media (min-width: 900px) {
-  .skyline-bridge-section .audit-h2 { font-size: 28px; }
-}
-.skyline-bridge-section .audit-amount {
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-@media (min-width: 900px) {
-  .skyline-bridge-section .audit-amount { font-size: 18px; }
-}
+.skyline-bridge-section .audit-h2 { font-size: 22px; font-weight: 700; margin: 20px 0 8px; }
+@media (min-width: 900px) { .skyline-bridge-section .audit-h2 { font-size: 28px; } }
+
+.skyline-bridge-section .audit-amount { font-size: 16px; font-weight: 700; line-height: 1.2; }
+@media (min-width: 900px) { .skyline-bridge-section .audit-amount { font-size: 18px; } }
+
 .fw-700 { font-weight: 700; }
 .font-14 { font-size: 14px; }
 .audit-dim { opacity: 0.65; }
 .audit-muted { opacity: 0.85; }
 
-/* ===== Layout utilities ===== */
 .audit-row { display: flex; align-items: center; justify-content: space-between; }
 
 .skyline-bridge-section .audit-hero-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr; /* left | center | right */
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
   align-items: start;
 }
-@media (max-width: 1024px) {
-  .skyline-bridge-section .audit-hero-row { grid-template-columns: 1fr; }
-}
+@media (max-width: 1024px) { .skyline-bridge-section .audit-hero-row { grid-template-columns: 1fr; } }
 
 .skyline-bridge-section .audit-grid-3 {
   display: grid !important;
@@ -110,101 +88,88 @@
   align-items: start;
 }
 .skyline-bridge-section .audit-grid-3.audit-gap-18 { gap: 18px; }
-@media (max-width: 1024px) {
-  .skyline-bridge-section .audit-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (max-width: 768px) {
-  .skyline-bridge-section .audit-grid-3 { grid-template-columns: 1fr; }
-}
+@media (max-width: 1024px) { .skyline-bridge-section .audit-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 768px) { .skyline-bridge-section .audit-grid-3 { grid-template-columns: 1fr; } }
 
-/* Small space between the two boxes */
-.skyline-bridge-section .audit-grid-md-2 {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;           /* <-- add gap on mobile too */
-}
+.skyline-bridge-section .audit-grid-md-2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 900px) { .skyline-bridge-section .audit-grid-md-2 { grid-template-columns: 1fr 1fr; gap: 16px; } }
 
-@media (min-width: 900px) {
-  .skyline-bridge-section .audit-grid-md-2 {
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;         /* a touch more room on desktop */
-  }
-}
+.skyline-bridge-section .audit-layout { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
+@media (min-width: 1200px) { .skyline-bridge-section .audit-layout { grid-template-columns: 1.5fr 1fr; } }
 
-
-/* Two-column page layout used by LockedTvbPanel */
-.skyline-bridge-section .audit-layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-  align-items: start;
-}
-@media (min-width: 1200px) {
-  .skyline-bridge-section .audit-layout { grid-template-columns: 1.5fr 1fr; }
-}
-
-/* Width helper */
 .audit-w-half-md { width: 100%; }
 @media (min-width: 900px) { .audit-w-half-md { width: 50%; } }
 
-/* Spacing helpers */
 .audit-mb-20 { margin-bottom: 20px; }
 .audit-mb-16 { margin-bottom: 16px; }
 .audit-mb-10 { margin-bottom: 10px; }
 .audit-mb-8  { margin-bottom: 8px; }
 .audit-my-6  { margin-top: 6px; margin-bottom: 6px; }
 
-/* ===== Inline AP3X icon button (borderless, tight) ===== */
-.skyline-bridge-section .audit-left {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
+.skyline-bridge-section .audit-left { display: inline-flex; align-items: center; gap: 4px; }
 .skyline-bridge-section .audit-left > button,
 .skyline-bridge-section .audit-left > a,
 .skyline-bridge-section .audit-left .MuiButton-root {
-  padding: 4px !important;
-  margin: 0 !important;
-  min-width: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  line-height: 0 !important;
+  padding: 4px !important; margin: 0 !important; min-width: 0 !important;
+  background: transparent !important; border: none !important; box-shadow: none !important; line-height: 0 !important;
 }
-.skyline-bridge-section .audit-left .audit-cta-icon {
-  width: 22px;
-  height: 22px;
-  display: block;
-  opacity: 0.95;
-  transform: translateY(1px);
-}
-.skyline-bridge-section .audit-left > button:hover .audit-cta-icon {
-  transform: translateY(1px) scale(1.06);
-}
+.skyline-bridge-section .audit-left .audit-cta-icon { width: 22px; height: 22px; display: block; opacity: 0.95; transform: translateY(1px); }
+.skyline-bridge-section .audit-left > button:hover .audit-cta-icon { transform: translateY(1px) scale(1.06); }
 
-/* ===== Tables (Per-address breakdown) ===== */
 .audit-scroll-x { margin-top: 16px; overflow-x: auto; }
-
-.skyline-bridge-section .audit-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 14px;
-}
-.skyline-bridge-section .audit-table thead tr {
-  background: rgba(8, 40, 42, 0.95) !important;
-}
+.skyline-bridge-section .audit-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.skyline-bridge-section .audit-table thead tr { background: rgba(8, 40, 42, 0.95) !important; }
 .skyline-bridge-section .audit-table th,
-.skyline-bridge-section .audit-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--audit-border-soft) !important;
-}
-.skyline-bridge-section .audit-table tbody tr:nth-of-type(odd) {
-  background: var(--audit-bg-card-odd) !important;
-}
-.skyline-bridge-section .audit-table tbody tr:nth-of-type(even) {
-  background: var(--audit-bg-card-even) !important;
-}
+.skyline-bridge-section .audit-table td { padding: 10px 14px; border-bottom: 1px solid var(--audit-border-soft) !important; }
+.skyline-bridge-section .audit-table tbody tr:nth-of-type(odd) { background: var(--audit-bg-card-odd) !important; }
+.skyline-bridge-section .audit-table tbody tr:nth-of-type(even) { background: var(--audit-bg-card-even) !important; }
 
 .audit-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .audit-toolbar-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .audit-card-subtitle { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+
+/* amount row layout (label | amount) */
+.skyline-bridge-section .audit-card .audit-card-content.audit-row {
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  align-items: center !important;
+  column-gap: 14px !important;
+  padding: 20px 22px !important;
+}
+.skyline-bridge-section .audit-card .audit-card-content.audit-row > :first-child { min-width: max-content !important; }
+.skyline-bridge-section .audit-card .audit-card-content.audit-row .audit-amount {
+  justify-self: end !important;
+  text-align: right !important;
+  padding-left: 14px !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.15 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* total locked per chain rows */
+.skyline-bridge-section .audit-grid-3 .audit-card .audit-row.font-14 {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  align-items: center !important;
+  column-gap: 16px !important;
+  padding-right: 1px !important;
+}
+.skyline-bridge-section .audit-grid-3 .audit-card .audit-row.font-14 > :first-child { min-width: max-content !important; }
+.skyline-bridge-section .audit-grid-3 .audit-card .audit-row.font-14 .audit-amount {
+  justify-self: end !important;
+  text-align: right !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  line-height: 1 !important;
+  padding-left: 12px !important;
+  margin-right: 1px !important;
+  font-variant-numeric: tabular-nums;
+  max-width: 9.5ch;
+}
+@media (min-width: 900px) {
+  .skyline-bridge-section .audit-grid-3 .audit-card .audit-row.font-14 .audit-amount { max-width: 11ch; }
+}
