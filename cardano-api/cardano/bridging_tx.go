@@ -72,7 +72,12 @@ func (bts *BridgingTxSender) CreateTx(
 
 	defer builder.Dispose()
 
-	fee, err := builder.CalculateFee(1)
+	witnessCount := 1
+	if senderAddrPolicyScript != nil {
+		witnessCount = senderAddrPolicyScript.GetCount()
+	}
+
+	fee, err := builder.CalculateFee(witnessCount)
 	if err != nil {
 		return nil, "", nil, err
 	}
