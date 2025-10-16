@@ -161,3 +161,14 @@ export const getCurrencyTokenInfo = (srcChain: ChainEnum): TokenInfo => getToken
 
 export const isCurrencyBridgingAllowed = (srcChain: ChainEnum, dstChain: ChainEnum): boolean =>
   getBridgingInfo(srcChain, dstChain).isCurrencyBridgingAllowed
+
+export const getLayerZeroToken = (chain: ChainEnum): TokenEnum => {
+  switch(chain){
+    case ChainEnum.Base:
+      return TokenEnum.BAP3X;
+    case ChainEnum.Bsc:
+      return TokenEnum.BNAP3X;
+    default:
+      return TokenEnum.APEX
+  }
+}

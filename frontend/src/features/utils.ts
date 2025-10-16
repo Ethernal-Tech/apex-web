@@ -48,3 +48,12 @@ const walletSupported = (walletVersion: any): boolean => {
         (walletVersion.major === major && walletVersion.minor === minor && walletVersion.patch === patch && walletVersion.build >= build)
     )
 }
+
+export function compareBigInts(a: bigint, b: bigint): number {
+    if (a < b) {
+      return -1; // a comes before b
+   } else if (a > b) {
+      return 1; // b comes before a
+   }
+   return 0;
+}

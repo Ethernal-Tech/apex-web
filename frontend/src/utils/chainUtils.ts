@@ -168,6 +168,12 @@ const EXPLORER_URLS: {mainnet: {[key: string]: string}, testnet: {[key: string]:
     },    
 }
 
+export const CHAIN_RPC_URLS: {[key:string]: string} ={
+    [ChainEnum.Nexus]:  'https://partner-rpc-1.nexus.route3.dev',
+    [ChainEnum.Base]:   'https://mainnet.base.org',
+    [ChainEnum.Bsc]:    'https://bsc-dataseed.bnbchain.org'
+}
+
 export const getExplorerTxUrl = (chain: ChainEnum, txHash: string, isLZBridging?: boolean, isNativeExplorer?: boolean) => {
     if (isLZBridging && !isNativeExplorer) {
         return `https://layerzeroscan.com/tx/${txHash}`
@@ -228,6 +234,28 @@ export const openExplorer = (tx: BridgeTransactionDto | undefined) => {
     if (url) {
         window.open(url, '_blank');
     }
+}
+
+
+export const getExplorerAddressUrl = (chain: ChainEnum, address: string, isLzBridging?: boolean) => {
+    const base = appSettings.isMainnet || isLzBridging ? EXPLORER_URLS.mainnet[chain] : EXPLORER_URLS.testnet[chain];
+
+    if (!base || base.trim() === '') return
+    
+    let url
+    switch (chain) {
+        case ChainEnum.Prime:
+        case ChainEnum.Cardano:
+        case ChainEnum.Vector:
+        case ChainEnum.Nexus: {
+            url = `${base}/address/${address}`;
+            break;
+        }
+        default:
+            return;
+    }
+    
+    return url
 }
 
 export const LovelaceTokenName = 'lovelace';

@@ -1,21 +1,23 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { LockedTokensDto } from "../../swagger/apexBridgeApiService";
+import { LockedTokens } from "../../features/types";
 
 export interface ILockedTokensState {
-  chains: { [key: string]: { [innerKey: string]: bigint } };
-  totalTransferred: { [key: string]: { [innerKey: string]: bigint } };
+  chains: { [chain: string]: { [token: string]: { [address: string]: bigint } } };
+  totalTransferred: { [chain: string]: { [token: string]: bigint } };
+  layerZeroLockedTokens: bigint;
 }
 
 const initialState: ILockedTokensState = {
   chains: {},
   totalTransferred: {},
+  layerZeroLockedTokens: BigInt(0)
 };
 
 const lockedTokensSlice = createSlice({
-  name: "lockedTokens",
+name: "lockedTokens",
   initialState,
   reducers: {
-    setLockedTokensAction: (state, action: PayloadAction<LockedTokensDto>) => {
+    setLockedTokensAction: (state, action: PayloadAction<LockedTokens>) => {
       const safeParseBigInt = (val: string | undefined): bigint => {
         try {
           return BigInt(val || 0);
@@ -24,32 +26,43 @@ const lockedTokensSlice = createSlice({
         }
       };
 
-      state.chains = Object.entries(action.payload.chains).reduce(
-        (acc, [key, tokens]) => {
-          acc[key] = Object.entries(tokens).reduce(
-            (tokenAcc, [innerKey, value]) => {
-              tokenAcc[innerKey] = safeParseBigInt(value);
+
+      state.chains = Object.entries(action.payload.lockedTokens.chains).reduce(
+        (chainsAcc, [chainId, tokenMap]) => {
+          chainsAcc[chainId] = Object.entries(tokenMap).reduce(
+            (tokenAcc, [token, addrMap]) => {
+              tokenAcc[token] = Object.entries(addrMap).reduce(
+                (addrAcc, [address, amountStr]) => {
+                  addrAcc[address] = safeParseBigInt(amountStr);
+                  return addrAcc;
+                },
+                {} as { [address: string]: bigint }
+              );
               return tokenAcc;
             },
-            {} as { [innerKey: string]: bigint }
+            {} as { [token: string]: { [address: string]: bigint } }
           );
-          return acc;
+          return chainsAcc;
         },
-        {} as { [key: string]: { [tokenKey: string]: bigint } }
+        {} as { [chain: string]: { [token: string]: { [address: string]: bigint } } }
       );
 
-      state.totalTransferred = Object.entries(
-        action.payload.totalTransfered
-      ).reduce((acc, [key, tokens]) => {
-        acc[key] = Object.entries(tokens).reduce(
-          (tokenAcc, [innerKey, value]) => {
-            tokenAcc[innerKey] = safeParseBigInt(value);
-            return tokenAcc;
-          },
-          {} as { [innerKey: string]: bigint }
-        );
-        return acc;
-      }, {} as { [key: string]: { [tokenKey: string]: bigint } });
+      // totalTransferred: chain -> token -> bigint
+      state.totalTransferred = Object.entries(action.payload.lockedTokens.totalTransferred).reduce(
+        (chainsAcc, [chainId, tokenMap]) => {
+          chainsAcc[chainId] = Object.entries(tokenMap).reduce(
+            (tokenAcc, [token, amountStr]) => {
+              tokenAcc[token] = safeParseBigInt(amountStr);
+              return tokenAcc;
+            },
+            {} as { [token: string]: bigint }
+          );
+          return chainsAcc;
+        },
+        {} as { [chain: string]: { [token: string]: bigint } }
+      );
+
+      state.layerZeroLockedTokens = action.payload.layerZeroLockedTokens;
     },
   },
 });

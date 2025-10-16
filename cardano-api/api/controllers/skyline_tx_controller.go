@@ -20,6 +20,7 @@ import (
 	utxotransformer "github.com/Ethernal-Tech/cardano-api/api/utxo_transformer"
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/core"
+	infracommon "github.com/Ethernal-Tech/cardano-infrastructure/common"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	cache "github.com/dgraph-io/ristretto"
@@ -475,71 +476,89 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 		}
 	}
 
-	calculateLockedTokens := func(cfg *core.CardanoChainConfig) (map[string]string, error) {
+	calculateLockedTokens := func(cfg *core.CardanoChainConfig) (map[string]map[string]string, error) {
 		// Get all bridging addresses
 		bridgingAddresses, err := utils.GetAllBridgingAddress(
 			r.Context(),
 			c.appConfig.OracleAPI.URL,
 			c.appConfig.OracleAPI.APIKey,
-			cfg.ChainID)
+			cfg.ChainID,
+		)
 		if err != nil {
 			return nil, err
 		}
-
-		tokensSum := map[string]*big.Int{}
 
 		txProviderCardano, err := cfg.ChainSpecific.CreateTxProvider()
 		if err != nil {
 			return nil, fmt.Errorf("failed to create tx provider. err: %w", err)
 		}
 
-		// Build token names map for lookup
-		tokenNames := map[string]bool{}
+		tokenNames := map[string]bool{wallet.AdaTokenName: true}
 		for _, nt := range cfg.ChainSpecific.NativeTokens {
 			tokenNames[nt.TokenName] = true
 		}
 
-		// Process each bridging address
-		for _, bridgeAddress := range bridgingAddresses.Addresses {
-			utxos, err := txProviderCardano.GetUtxos(r.Context(), bridgeAddress)
+		// First accumulate per-address → token → big.Int
+		perAddr := map[string]map[string]*big.Int{}
+
+		ensure := func(addr, token string) {
+			if _, ok := perAddr[addr]; !ok {
+				perAddr[addr] = map[string]*big.Int{}
+			}
+
+			if _, ok := perAddr[addr][token]; !ok {
+				perAddr[addr][token] = big.NewInt(0)
+			}
+		}
+
+		for _, addr := range bridgingAddresses.Addresses {
+			utxos, err := infracommon.ExecuteWithRetry(r.Context(), func(ctx context.Context) ([]wallet.Utxo, error) {
+				return txProviderCardano.GetUtxos(ctx, addr)
+			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to get utxos from chain. err: %w", err)
 			}
 
-			// Sum tokens from all UTXOs
 			for _, utxo := range utxos {
-				// Add ADA amount
-				if _, exists := tokensSum[wallet.AdaTokenName]; !exists {
-					tokensSum[wallet.AdaTokenName] = big.NewInt(0)
-				}
+				// ADA
+				ensure(addr, wallet.AdaTokenName)
+				perAddr[addr][wallet.AdaTokenName].Add(
+					perAddr[addr][wallet.AdaTokenName],
+					new(big.Int).SetUint64(utxo.Amount),
+				)
 
-				tokensSum[wallet.AdaTokenName].Add(tokensSum[wallet.AdaTokenName], new(big.Int).SetUint64(utxo.Amount))
-
-				// Add native tokens
-				for _, nativeToken := range utxo.Tokens {
-					name := nativeToken.TokenName()
-					if _, exists := tokenNames[name]; exists {
-						if _, exists := tokensSum[name]; !exists {
-							tokensSum[name] = big.NewInt(0)
-						}
-
-						tokensSum[name].Add(tokensSum[name], new(big.Int).SetUint64(nativeToken.Amount))
+				// Native tokens
+				for _, t := range utxo.Tokens {
+					name := t.TokenName()
+					if !tokenNames[name] {
+						continue
 					}
+
+					ensure(addr, name)
+
+					perAddr[addr][name].Add(perAddr[addr][name], new(big.Int).SetUint64(t.Amount))
 				}
 			}
 		}
 
-		// Convert to string map
-		result := map[string]string{}
-		for k, v := range tokensSum {
-			result[k] = v.String()
+		// Transpose to token → address → string
+		out := map[string]map[string]string{}
+
+		for addr, tokens := range perAddr {
+			for token, amt := range tokens {
+				if _, ok := out[token]; !ok {
+					out[token] = map[string]string{}
+				}
+
+				out[token][addr] = amt.String()
+			}
 		}
 
-		return result, nil
+		return out, nil
 	}
 
 	// Calculate locked tokens for all chains
-	response := commonResponse.NewLockedTokensResponse(map[string]map[string]string{})
+	response := commonResponse.NewLockedTokensResponse(map[string]map[string]map[string]string{})
 
 	for chainID, chainCfg := range c.appConfig.CardanoChains {
 		subResponse, err := calculateLockedTokens(chainCfg)

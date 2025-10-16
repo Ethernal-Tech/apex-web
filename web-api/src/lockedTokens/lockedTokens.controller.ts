@@ -40,6 +40,7 @@ export class LockedTokensController {
 		enumName: 'BridgingModeEnum',
 		style: 'form',
 		explode: false,
+		description: 'all suported bridging modes that goes into sum',
 	})
 	async get(
 		@Query(
@@ -58,7 +59,7 @@ export class LockedTokensController {
 
 		return {
 			chains: lockedTokens.chains,
-			totalTransfered: totalTransfered.chains,
+			totalTransferred: totalTransfered.totalTransferred,
 		};
 	}
 

@@ -2,7 +2,7 @@ import { AppBar, Button, CircularProgress, ListItemIcon, ListItemText, Menu, Men
 import { useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
-import { TRANSACTIONS_ROUTE, NEW_TRANSACTION_ROUTE, HOME_ROUTE } from "../../pages/PageRouter";
+import { TRANSACTIONS_ROUTE, NEW_TRANSACTION_ROUTE, HOME_ROUTE, AUDIT_ROUTE } from "../../pages/PageRouter";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ApexFusionLogo from "../../assets/apex-fusion-logo.svg";
@@ -75,6 +75,23 @@ const AppBarComponent = () => {
                     </Button>
 
                     <div>
+                        {
+                            isActiveNavLink(AUDIT_ROUTE) && !isLoggedInMemo &&
+                            <ButtonCustom
+                                variant="navigation"
+                                onClick={() => handleOptionClick(HOME_ROUTE)}
+                            >
+                                Exit
+                            </ButtonCustom>
+                        }
+
+                        <ButtonCustom 
+                            variant={isActiveNavLink(AUDIT_ROUTE) ? "navigationActive" : "navigation"}
+                            sx={appSettings.isSkyline && isActiveNavLink(AUDIT_ROUTE) ? { color: "#1ea29d" } : {}}
+                            onClick={() => handleOptionClick(AUDIT_ROUTE)}
+                        >
+                            Audit Page
+                        </ButtonCustom>
                         {
                             isLoggedInMemo &&
                             <>

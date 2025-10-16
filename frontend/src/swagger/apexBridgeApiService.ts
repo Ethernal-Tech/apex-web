@@ -487,7 +487,7 @@ export class LockedTokensControllerClient extends BaseClient {
 
     /**
      * Get locked tokens amount
-     * @param allowedBridgingModes (optional) 
+     * @param allowedBridgingModes (optional) all suported bridging modes that goes into sum
      * @return OK - Get locked tokens amount.
      */
     get(allowedBridgingModes: BridgingModeEnum[] | undefined): Promise<LockedTokensDto> {
@@ -535,10 +535,10 @@ export class LockedTokensControllerClient extends BaseClient {
      * @param startDate Start date in ISO format (e.g., 2024-01-01)
      * @param endDate End date in ISO format (e.g., 2024-12-31)
      * @param groupBy (optional) Time period to group by: hour, day, week, or month (default is day)
-     * @param allowedBridgingModes (optional) all suported bridging modes that goes into sum
+     * @param allowedBridgingModes (optional) 
      * @return OK - Returns the sum of transferred tokens per chain.
      */
-    getTransferredSum(startDate: string, endDate: string, groupBy: GroupBy | undefined, allowedBridgingModes: string[] | undefined): Promise<LockedTokensResponse> {
+    getTransferredSum(startDate: string, endDate: string, groupBy: GroupBy | undefined, allowedBridgingModes: BridgingModeEnum[] | undefined): Promise<LockedTokensResponse> {
         let url_ = this.baseUrl + "/lockedTokens/transferred?";
         if (startDate === undefined || startDate === null)
             throw new globalThis.Error("The parameter 'startDate' must be defined and cannot be null.");
@@ -2415,10 +2415,10 @@ export enum BridgingModeEnum {
 }
 
 export class LockedTokensDto implements ILockedTokensDto {
-    /** Mapping of chains to their locked tokens by token type */
-    chains!: { [key: string]: { [key: string]: string; }; };
+    /** Per chain → token → address → amoumt. */
+    chains!: { [key: string]: { [key: string]: { [key: string]: string; }; }; };
     /** Mapping of total transfered tokens per chain */
-    totalTransfered!: { [key: string]: { [key: string]: string; }; };
+    totalTransferred!: { [key: string]: { [key: string]: string; }; };
 
     [key: string]: any;
 
@@ -2431,7 +2431,7 @@ export class LockedTokensDto implements ILockedTokensDto {
         }
         if (!data) {
             this.chains = {};
-            this.totalTransfered = {};
+            this.totalTransferred = {};
         }
     }
 
@@ -2448,11 +2448,11 @@ export class LockedTokensDto implements ILockedTokensDto {
                         (this.chains as any)![key] = _data["chains"][key] !== undefined ? _data["chains"][key] : {};
                 }
             }
-            if (_data["totalTransfered"]) {
-                this.totalTransfered = {} as any;
-                for (let key in _data["totalTransfered"]) {
-                    if (_data["totalTransfered"].hasOwnProperty(key))
-                        (this.totalTransfered as any)![key] = _data["totalTransfered"][key] !== undefined ? _data["totalTransfered"][key] : {};
+            if (_data["totalTransferred"]) {
+                this.totalTransferred = {} as any;
+                for (let key in _data["totalTransferred"]) {
+                    if (_data["totalTransferred"].hasOwnProperty(key))
+                        (this.totalTransferred as any)![key] = _data["totalTransferred"][key] !== undefined ? _data["totalTransferred"][key] : {};
                 }
             }
         }
@@ -2478,11 +2478,11 @@ export class LockedTokensDto implements ILockedTokensDto {
                     (data["chains"] as any)[key] = (this.chains as any)[key];
             }
         }
-        if (this.totalTransfered) {
-            data["totalTransfered"] = {};
-            for (let key in this.totalTransfered) {
-                if (this.totalTransfered.hasOwnProperty(key))
-                    (data["totalTransfered"] as any)[key] = (this.totalTransfered as any)[key];
+        if (this.totalTransferred) {
+            data["totalTransferred"] = {};
+            for (let key in this.totalTransferred) {
+                if (this.totalTransferred.hasOwnProperty(key))
+                    (data["totalTransferred"] as any)[key] = (this.totalTransferred as any)[key];
             }
         }
         return data;
@@ -2490,17 +2490,17 @@ export class LockedTokensDto implements ILockedTokensDto {
 }
 
 export interface ILockedTokensDto {
-    /** Mapping of chains to their locked tokens by token type */
-    chains: { [key: string]: { [key: string]: string; }; };
+    /** Per chain → token → address → amoumt. */
+    chains: { [key: string]: { [key: string]: { [key: string]: string; }; }; };
     /** Mapping of total transfered tokens per chain */
-    totalTransfered: { [key: string]: { [key: string]: string; }; };
+    totalTransferred: { [key: string]: { [key: string]: string; }; };
 
     [key: string]: any;
 }
 
 export class LockedTokensResponse implements ILockedTokensResponse {
-    /** For each chain, the number of locked tokens */
-    chains!: { [key: string]: string; };
+    /** Per chain → token → address → amoumt. */
+    chains!: { [key: string]: { [key: string]: { [key: string]: string; }; }; };
 
     [key: string]: any;
 
@@ -2526,7 +2526,7 @@ export class LockedTokensResponse implements ILockedTokensResponse {
                 this.chains = {} as any;
                 for (let key in _data["chains"]) {
                     if (_data["chains"].hasOwnProperty(key))
-                        (this.chains as any)![key] = _data["chains"][key];
+                        (this.chains as any)![key] = _data["chains"][key] !== undefined ? _data["chains"][key] : {};
                 }
             }
         }
@@ -2557,8 +2557,8 @@ export class LockedTokensResponse implements ILockedTokensResponse {
 }
 
 export interface ILockedTokensResponse {
-    /** For each chain, the number of locked tokens */
-    chains: { [key: string]: string; };
+    /** Per chain → token → address → amoumt. */
+    chains: { [key: string]: { [key: string]: { [key: string]: string; }; }; };
 
     [key: string]: any;
 }

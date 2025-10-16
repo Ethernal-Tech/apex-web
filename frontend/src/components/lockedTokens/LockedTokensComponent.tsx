@@ -2,20 +2,13 @@ import { Box, Typography } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { useEffect, useMemo } from "react";
-import { fetchAndUpdateLockedTokensAction } from "../../actions/lockedTokens";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import './lockedTokens.css';
 import { getCurrencyTokenInfo } from "../../settings/token";
 import { toChainEnum } from "../../settings/chain";
-
-
-const decodeHex = (hex: string): string => {
-  try {
-    return decodeURIComponent(hex.replace(/(..)/g, "%$1"));
-  } catch (e) {
-    return "[InvalidHex]";
-  }
-};
+import { fetchAndUpdateLockedTokensAction } from "../../actions/lockedTokens";
+import { decodeTokenKey, isApexChain } from "../../utils/tokenUtils";
+import { convertWeiToDfmBig } from "../../utils/generalUtils";
 
 const powBigInt = (base: bigint, exp: number): bigint => {
   let result = BigInt(1);
@@ -25,7 +18,7 @@ const powBigInt = (base: bigint, exp: number): bigint => {
   return result;
 };
 
-const formatBigIntDecimalString = (value: bigint, decimals: number = 6) => {
+export const formatBigIntDecimalString = (value: bigint, decimals: number = 6) => {
   const divisor = powBigInt(BigInt(10), decimals);
   const whole = value / divisor;
   const fraction = value % divisor;
@@ -46,51 +39,65 @@ const formatBigIntDecimalString = (value: bigint, decimals: number = 6) => {
 
 const LockedTokensComponent = () => {
   const lockedTokens = useSelector((state: RootState) => state.lockedTokens);
+  const {layerZeroChains} = useSelector((state: RootState) => state.settings);
   const dispatch = useDispatch();
 
   useEffect(() => {
     // Call once immediately on mount
-    fetchAndUpdateLockedTokensAction(dispatch);
+    fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
 
     // Then call periodically every 30 seconds
     const interval = setInterval(() => {
-      fetchAndUpdateLockedTokensAction(dispatch);
+      fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
     }, 30_000); // 30,000 ms = 30 seconds
 
     // Cleanup on component unmount
     return () => clearInterval(interval);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [layerZeroChains]);
+
+  const lockedTokensLZFormatted = useMemo(() => {
+    return convertWeiToDfmBig(lockedTokens.layerZeroLockedTokens);
+  }, [lockedTokens.layerZeroLockedTokens] )
+
 
   const chainsData = useMemo(() => {
-    return Object.entries(lockedTokens.chains)
-      .map(([key, innerObj]) => {
-        const innerText = Object.entries(innerObj)
-          .map(([innerKey, num]) => {
-            // ❌ Skip: cardano
-            if (key.toLowerCase() === ChainEnum.Cardano) return null;
+    const chunks: string[] = [];
 
-            const formattedNum = formatBigIntDecimalString(num, 6);
+    for (const [chainKey, tokenMap] of Object.entries(lockedTokens.chains)) {
+      const chainEnum = toChainEnum(chainKey);
 
-            if (innerKey === "lovelace") {
-              const tokenLabel = getCurrencyTokenInfo(toChainEnum(key)).label;
-              return `${formattedNum} ${tokenLabel}`;
-            } else {
-              const parts = innerKey.split(".");
-              const decoded = parts[1] ? decodeHex(parts[1]) : innerKey;
-              return `${formattedNum} ${decoded}`;
-            }
-          })
-          .filter(Boolean)
-          .join(", ");
+      // ❌ Skip Cardano chains entirely
+      if (chainEnum === ChainEnum.Cardano) continue;
 
-        return innerText || null;
-      })
-      .filter(Boolean)
-      .join(" | ")
-      .trim();
-  }, [lockedTokens]);
+      const tokenTexts: string[] = [];
+
+      for (const [tokenKey, addrMap] of Object.entries(tokenMap)) {
+        // Sum all addresses for this token
+        let total = Object.values(addrMap).reduce<bigint>(
+          (acc, v) => acc + (typeof v === "bigint" ? v : BigInt(v ?? 0)),
+          BigInt(0)
+        );
+
+        // Optional: skip zero amounts
+        if (total === BigInt(0)) continue;
+
+        total += lockedTokensLZFormatted;
+
+        const formatted = formatBigIntDecimalString(total, 6);
+
+    
+        tokenTexts.push(`${formatted} ${decodeTokenKey(tokenKey)}`);
+      }
+
+      if (tokenTexts.length) {
+        chunks.push(tokenTexts.join(", "));
+      }
+    }
+
+    return chunks.join(" | ").trim();
+  }, [lockedTokens.chains, lockedTokensLZFormatted]);
 
   const transferredData = useMemo(() => {
     let outputValue = BigInt(0);
@@ -99,7 +106,7 @@ const LockedTokensComponent = () => {
       const chain = chainKey.toLowerCase();
       const o = innerObj as unknown as Record<string, string | number | bigint>;
 
-      if (chain === ChainEnum.Prime || chain === ChainEnum.Nexus || chain === ChainEnum.Vector) {
+      if (isApexChain(chain)) {
         outputValue += BigInt(o.amount || '0');
       } else {
         outputValue += BigInt(
@@ -139,3 +146,4 @@ const LockedTokensComponent = () => {
 };
 
 export default LockedTokensComponent;
+
