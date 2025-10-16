@@ -1,16 +1,40 @@
 import { useState, useRef, ChangeEvent, useEffect, useCallback } from 'react';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TablePagination, Box, TableSortLabel, SortDirection, Typography } from '@mui/material';
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableContainer,
+	TableHead,
+	TableRow,
+	Paper,
+	TablePagination,
+	Box,
+	TableSortLabel,
+	SortDirection,
+	Typography,
+} from '@mui/material';
 import BasePage from '../base/BasePage';
 import { Link } from 'react-router-dom';
 import FullPageSpinner from '../../components/spinner/Spinner';
-import { BridgeTransactionFilterDto, BridgeTransactionResponseDto, ChainEnum } from '../../swagger/apexBridgeApiService';
+import {
+	BridgeTransactionFilterDto,
+	BridgeTransactionResponseDto,
+	ChainEnum,
+} from '../../swagger/apexBridgeApiService';
 import Filters from '../../components/filters/Filters';
 import { visuallyHidden } from '@mui/utils';
 import { reactorHeadCells, skylineHeadCells } from './tableConfig';
 import { getAllFilteredAction } from './action';
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
-import { capitalizeWord, convertApexToDfm, convertDfmToApex, formatAddress, formatTxDetailUrl, toFixed } from '../../utils/generalUtils';
+import {
+	capitalizeWord,
+	convertApexToDfm,
+	convertDfmToApex,
+	formatAddress,
+	formatTxDetailUrl,
+	toFixed,
+} from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import appSettings from '../../settings/appSettings';
@@ -18,308 +42,440 @@ import { getChainInfo } from '../../settings/chain';
 import { getTokenInfoBySrcDst } from '../../settings/token';
 
 const TransactionsTablePage = () => {
-	const [transactions, setTransactions] = useState<BridgeTransactionResponseDto | undefined>(undefined);
+	const [transactions, setTransactions] = useState<
+		BridgeTransactionResponseDto | undefined
+	>(undefined);
 	const [isLoading, setIsLoading] = useState(false);
 	const tableRef = useRef(null);
-	
-  const {chain, destinationChain} = useSelector((state: RootState) => state.chain);
-  const account = useSelector((state: RootState) => state.accountInfo.account);
 
-  const headCells = appSettings.isSkyline ? skylineHeadCells : reactorHeadCells;
+	const { chain, destinationChain } = useSelector(
+		(state: RootState) => state.chain,
+	);
+	const account = useSelector(
+		(state: RootState) => state.accountInfo.account,
+	);
 
-	const [filters, setFilters] = useState(new BridgeTransactionFilterDto({
-    originChain: chain as ChainEnum,
-    senderAddress: account,
-  }));
+	const headCells = appSettings.isSkyline
+		? skylineHeadCells
+		: reactorHeadCells;
 
-  const fetchDataCallback = useCallback(
-		async (hideLoading: boolean = false) => {
-      if (!filters.senderAddress) {
-        return;
-      }
+	const [filters, setFilters] = useState(
+		new BridgeTransactionFilterDto({
+			originChain: chain as ChainEnum,
+			senderAddress: account,
+		}),
+	);
 
-      const filtersCorrected = new BridgeTransactionFilterDto({ ...filters });
-      
-      if (!appSettings.isSkyline) {
-        filtersCorrected.onlyReactor = true;
-      }
+	const fetchDataCallback = useCallback(
+		async (hideLoading = false) => {
+			if (!filters.senderAddress) {
+				return;
+			}
 
-      if (filtersCorrected.amountFrom) {
-        filtersCorrected.amountFrom = convertApexToDfm(filtersCorrected.amountFrom, chain)
-      }
+			const filtersCorrected = new BridgeTransactionFilterDto({
+				...filters,
+			});
 
-      if (filtersCorrected.amountTo) {
-        filtersCorrected.amountTo = convertApexToDfm(filtersCorrected.amountTo, chain)
-      }
+			if (!appSettings.isSkyline) {
+				filtersCorrected.onlyReactor = true;
+			}
 
-      if (filtersCorrected.nativeTokenAmountFrom) {
-        filtersCorrected.nativeTokenAmountFrom = convertApexToDfm(filtersCorrected.nativeTokenAmountFrom, chain)
-      }
+			if (filtersCorrected.amountFrom) {
+				filtersCorrected.amountFrom = convertApexToDfm(
+					filtersCorrected.amountFrom,
+					chain,
+				);
+			}
 
-      if (filtersCorrected.nativeTokenAmountTo) {
-        filtersCorrected.nativeTokenAmountTo = convertApexToDfm(filtersCorrected.nativeTokenAmountTo, chain)
-      }
+			if (filtersCorrected.amountTo) {
+				filtersCorrected.amountTo = convertApexToDfm(
+					filtersCorrected.amountTo,
+					chain,
+				);
+			}
+
+			if (filtersCorrected.nativeTokenAmountFrom) {
+				filtersCorrected.nativeTokenAmountFrom = convertApexToDfm(
+					filtersCorrected.nativeTokenAmountFrom,
+					chain,
+				);
+			}
+
+			if (filtersCorrected.nativeTokenAmountTo) {
+				filtersCorrected.nativeTokenAmountTo = convertApexToDfm(
+					filtersCorrected.nativeTokenAmountTo,
+					chain,
+				);
+			}
 
 			!hideLoading && setIsLoading(true);
-			const bindedAction = getAllFilteredAction.bind(null, filtersCorrected);
+			const bindedAction = getAllFilteredAction.bind(
+				null,
+				filtersCorrected,
+			);
 
-      const response = await tryCatchJsonByAction(bindedAction)
+			const response = await tryCatchJsonByAction(bindedAction);
 
-      if (!(response instanceof ErrorResponse)) {
-        setTransactions(response);
-        !hideLoading && setIsLoading(false);
+			if (!(response instanceof ErrorResponse)) {
+				setTransactions(response);
+				!hideLoading && setIsLoading(false);
 
-        return response
-      }
-      
-      !hideLoading && setIsLoading(false);
+				return response;
+			}
+
+			!hideLoading && setIsLoading(false);
 		},
-		[chain, filters]
-	)
+		[chain, filters],
+	);
 
-  useEffect(() => {
-    setFilters((state) => new BridgeTransactionFilterDto({
-        ...state,
-        senderAddress: account,
-    }))
-  }, [account])
+	useEffect(() => {
+		setFilters(
+			(state) =>
+				new BridgeTransactionFilterDto({
+					...state,
+					senderAddress: account,
+				}),
+		);
+	}, [account]);
 
-	useEffect(
-		() => {
-      fetchDataCallback();
-		},
-		[fetchDataCallback]
-	)
+	useEffect(() => {
+		fetchDataCallback();
+	}, [fetchDataCallback]);
 
-  useEffect(
-    () => {
-      const handle = setInterval(async () => {
-        const resp = await fetchDataCallback(true);
-        if (resp && resp.items.every(x => isStatusFinal(x.status))) {
-          clearInterval(handle);
-        }
-      }, 5000);
+	useEffect(() => {
+		const handle = setInterval(async () => {
+			const resp = await fetchDataCallback(true);
+			if (resp && resp.items.every((x) => isStatusFinal(x.status))) {
+				clearInterval(handle);
+			}
+		}, 5000);
 
-      return () => {
-        clearInterval(handle);
-      }
-    },
-    [fetchDataCallback]
-  )
+		return () => {
+			clearInterval(handle);
+		};
+	}, [fetchDataCallback]);
 
-	const handleChangePage = (
-		_: any,
-		page: number,
-	) => {
-		setFilters(state => new BridgeTransactionFilterDto({
-			...state,
-			page
-		}));
-			
-	};
-		
-	const handleChangeRowsPerPage = (
-		event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-	) => {
-		setFilters(state => new BridgeTransactionFilterDto({
-			...state,
-			page: 0,
-			perPage: parseInt(event.target.value)
-		}));
-	}; 
-
-	const createSortHandler =
-		(property: string) => (event: React.MouseEvent<unknown>) => {
-			const isAsc = filters.orderBy === property && filters.order === 'asc';
-			setFilters(new BridgeTransactionFilterDto({
-				...filters,
-				page: 0,
-				order: isAsc ? 'desc' : 'asc',
-				orderBy: property
-			})
+	const handleChangePage = (_: any, page: number) => {
+		setFilters(
+			(state) =>
+				new BridgeTransactionFilterDto({
+					...state,
+					page,
+				}),
 		);
 	};
 
-	
+	const handleChangeRowsPerPage = (
+		event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+	) => {
+		setFilters(
+			(state) =>
+				new BridgeTransactionFilterDto({
+					...state,
+					page: 0,
+					perPage: parseInt(event.target.value),
+				}),
+		);
+	};
 
-  return (
-    <BasePage>
-    {isLoading && <FullPageSpinner />}
-      <Box sx={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
-        <Filters
-          filters={filters}
-          onFilterChange={setFilters}
-        />
-      </Box>
-    <TableContainer component={Paper}  ref={tableRef} sx={{
-      background: 'linear-gradient(180deg, #052531 0%, rgba(5, 37, 49, 0.1) 100%)',
-      border: '1px solid #435F69',
-      borderRadius:'4px'
-      }}>
-      <Table>
-        <TableHead>
-          <TableRow>
-          {headCells.map((headCell) => (
-          <TableCell
-            key={headCell.id}
-            padding='normal'
-            sortDirection={filters.orderBy === headCell.id ? filters.order as SortDirection : false}
-            sx={{ ...tableCellStyle, cursor: 'default' }}
-          >
-              {
-                headCell.id === 'actions' ?
-                  headCell.label :
-                  <TableSortLabel
-                    active={filters.orderBy === headCell.id}
-                    direction={filters.orderBy === headCell.id ? filters.order as "desc" | "asc" : 'asc'}
-                    onClick={createSortHandler(headCell.id)}
-                    sx={{
-                      '&:hover':{
-                        color:'#a6a6a6',
-                        '& .MuiSvgIcon-root':{
-                          color:'#a6a6a6'
-                        }
-                      },
-                      '&.Mui-active':{
-                        color:'#a6a6a6',
-                        '& .MuiSvgIcon-root':{
-                          color:'#a6a6a6'
-                        }
-                      }
-                    }}
-                  >
-                    {headCell.label}
-                    {filters.orderBy === headCell.id ? (
-                      <Box 
-                        component="span" 
-                        sx={{
-                          ...visuallyHidden,
-                          }}>
-                        {filters.order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-                      </Box>
-                    ) : null}
-                  </TableSortLabel>
-              }
-          </TableCell>
-        ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {transactions?.items.map((transaction) => (
-            <TableRow key={`tx-${transaction.id}`}>
-              <TableCell sx={tableCellStyle}>
-                <Box component="span" sx={{
-                  display: 'inline-block',
-                  color: 'white',
-                  bgcolor: getChainInfo(transaction.originChain).mainColor,
-                  borderRadius: '50%',
-                  width: 24,
-                  height: 24,
-                  textAlign: 'center',
-                  lineHeight: '24px',
-                  marginRight: 1,
-                }}>
-                  {getChainInfo(transaction.originChain).letter}
-                </Box>
-                {capitalizeWord(transaction.originChain)}
-              </TableCell>
+	const createSortHandler = (property: string) => () => {
+		const isAsc = filters.orderBy === property && filters.order === 'asc';
+		setFilters(
+			new BridgeTransactionFilterDto({
+				...filters,
+				page: 0,
+				order: isAsc ? 'desc' : 'asc',
+				orderBy: property,
+			}),
+		);
+	};
 
-              <TableCell sx={tableCellStyle}>
-                <Box component="span" sx={{
-                  display: 'inline-block',
-                  color: 'white',
-                  bgcolor: getChainInfo(transaction.destinationChain).mainColor,
-                  borderRadius: '50%',
-                  width: 24,
-                  height: 24,
-                  textAlign: 'center',
-                  lineHeight: '24px',
-                  marginRight: 1,
-                }}>
-                  {getChainInfo(transaction.destinationChain).letter}
-                </Box>
-                {capitalizeWord(transaction.destinationChain)}
-              </TableCell>
+	return (
+		<BasePage>
+			{isLoading && <FullPageSpinner />}
+			<Box sx={{ width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+				<Filters filters={filters} onFilterChange={setFilters} />
+			</Box>
+			<TableContainer
+				component={Paper}
+				ref={tableRef}
+				sx={{
+					background:
+						'linear-gradient(180deg, #052531 0%, rgba(5, 37, 49, 0.1) 100%)',
+					border: '1px solid #435F69',
+					borderRadius: '4px',
+				}}
+			>
+				<Table>
+					<TableHead>
+						<TableRow>
+							{headCells.map((headCell) => (
+								<TableCell
+									key={headCell.id}
+									padding="normal"
+									sortDirection={
+										filters.orderBy === headCell.id
+											? (filters.order as SortDirection)
+											: false
+									}
+									sx={{
+										...tableCellStyle,
+										cursor: 'default',
+									}}
+								>
+									{headCell.id === 'actions' ? (
+										headCell.label
+									) : (
+										<TableSortLabel
+											active={
+												filters.orderBy === headCell.id
+											}
+											direction={
+												filters.orderBy === headCell.id
+													? (filters.order as
+															| 'desc'
+															| 'asc')
+													: 'asc'
+											}
+											onClick={createSortHandler(
+												headCell.id,
+											)}
+											sx={{
+												'&:hover': {
+													color: '#a6a6a6',
+													'& .MuiSvgIcon-root': {
+														color: '#a6a6a6',
+													},
+												},
+												'&.Mui-active': {
+													color: '#a6a6a6',
+													'& .MuiSvgIcon-root': {
+														color: '#a6a6a6',
+													},
+												},
+											}}
+										>
+											{headCell.label}
+											{filters.orderBy === headCell.id ? (
+												<Box
+													component="span"
+													sx={{
+														...visuallyHidden,
+													}}
+												>
+													{filters.order === 'desc'
+														? 'sorted descending'
+														: 'sorted ascending'}
+												</Box>
+											) : null}
+										</TableSortLabel>
+									)}
+								</TableCell>
+							))}
+						</TableRow>
+					</TableHead>
+					<TableBody>
+						{transactions?.items.map((transaction) => (
+							<TableRow key={`tx-${transaction.id}`}>
+								<TableCell sx={tableCellStyle}>
+									<Box
+										component="span"
+										sx={{
+											display: 'inline-block',
+											color: 'white',
+											bgcolor: getChainInfo(
+												transaction.originChain,
+											).mainColor,
+											borderRadius: '50%',
+											width: 24,
+											height: 24,
+											textAlign: 'center',
+											lineHeight: '24px',
+											marginRight: 1,
+										}}
+									>
+										{
+											getChainInfo(
+												transaction.originChain,
+											).letter
+										}
+									</Box>
+									{capitalizeWord(transaction.originChain)}
+								</TableCell>
 
-              <TableCell sx={tableCellStyle}>
-                {toFixed(convertDfmToApex(transaction.amount, transaction.originChain), 6)} {getTokenInfoBySrcDst(chain, destinationChain, false).label}
-              </TableCell>
-              {
-                appSettings.isSkyline &&
-                <TableCell sx={tableCellStyle}>
-                  {!transaction.nativeTokenAmount || BigInt(transaction.nativeTokenAmount) === BigInt(0) ? (
-                    <Box sx={{ ml: 3 }}>-</Box>
-                  ) : (
-                      <>
-                      {toFixed(convertDfmToApex(transaction.nativeTokenAmount, transaction.originChain), 6)} {getTokenInfoBySrcDst(chain, destinationChain, true).label}
-                      </>
-                    )}
-                  
-                </TableCell>
-              }
-              
-              <TableCell sx={tableCellStyle}>
-                {formatAddress(transaction.receiverAddresses)}
-              </TableCell>
+								<TableCell sx={tableCellStyle}>
+									<Box
+										component="span"
+										sx={{
+											display: 'inline-block',
+											color: 'white',
+											bgcolor: getChainInfo(
+												transaction.destinationChain,
+											).mainColor,
+											borderRadius: '50%',
+											width: 24,
+											height: 24,
+											textAlign: 'center',
+											lineHeight: '24px',
+											marginRight: 1,
+										}}
+									>
+										{
+											getChainInfo(
+												transaction.destinationChain,
+											).letter
+										}
+									</Box>
+									{capitalizeWord(
+										transaction.destinationChain,
+									)}
+								</TableCell>
 
-              <TableCell sx={tableCellStyle}>
-                {transaction.createdAt.toLocaleString()}
-              </TableCell>
+								<TableCell sx={tableCellStyle}>
+									{toFixed(
+										convertDfmToApex(
+											transaction.amount,
+											transaction.originChain,
+										),
+										6,
+									)}{' '}
+									{
+										getTokenInfoBySrcDst(
+											chain,
+											destinationChain,
+											false,
+										).label
+									}
+								</TableCell>
+								{appSettings.isSkyline && (
+									<TableCell sx={tableCellStyle}>
+										{!transaction.nativeTokenAmount ||
+										BigInt(
+											transaction.nativeTokenAmount,
+										) === BigInt(0) ? (
+											<Box sx={{ ml: 3 }}>-</Box>
+										) : (
+											<>
+												{toFixed(
+													convertDfmToApex(
+														transaction.nativeTokenAmount,
+														transaction.originChain,
+													),
+													6,
+												)}{' '}
+												{
+													getTokenInfoBySrcDst(
+														chain,
+														destinationChain,
+														true,
+													).label
+												}
+											</>
+										)}
+									</TableCell>
+								)}
 
-              <TableCell sx={{ ...tableCellStyle, textAlign: transaction.finishedAt ? 'left' : 'center'}}>
-                {transaction.finishedAt?.toLocaleString() || "/"}
-              </TableCell>
+								<TableCell sx={tableCellStyle}>
+									{formatAddress(
+										transaction.receiverAddresses,
+									)}
+								</TableCell>
 
-              <TableCell sx={tableCellStyle}>
-                <Box sx={{display:'flex'}}>
-                  <Box sx={{marginRight:1}} component='img' src={getStatusIconAndLabel(transaction.status, transaction.isRefund).icon || ''} alt=''/>
-                  <Typography sx={{textTransform:'capitalize', display:'inline-block'}}>
-                    {getStatusIconAndLabel(transaction.status, transaction.isRefund).label}
-                  </Typography>
-                </Box>
-              </TableCell>
+								<TableCell sx={tableCellStyle}>
+									{transaction.createdAt.toLocaleString()}
+								</TableCell>
 
-              <TableCell sx={tableCellStyle}>
-                <Link style={{color:'red', background:'none',textDecoration:'none'}} to={formatTxDetailUrl(transaction)}>
-                  View Details
-                </Link>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-    {!!transactions?.total &&<TablePagination
-          component="div"
-          count={transactions.total}
-          page={transactions.page}
-          rowsPerPage={transactions.perPage}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          sx={{
-            color:'white',
-            '& .MuiSelect-icon':{
-              color:'white',
-              '&.Mui-disabled':{
-                color:'#435F694D'
-              }
-            },
-            '& .MuiTablePagination-actions .MuiButtonBase-root ':{
-              color:'white',
-              '&.Mui-disabled':{
-                color:'#435F694D'
-              }
-            }
-          }}
-    />}
-    </BasePage>
-  );
+								<TableCell
+									sx={{
+										...tableCellStyle,
+										textAlign: transaction.finishedAt
+											? 'left'
+											: 'center',
+									}}
+								>
+									{transaction.finishedAt?.toLocaleString() ||
+										'/'}
+								</TableCell>
+
+								<TableCell sx={tableCellStyle}>
+									<Box sx={{ display: 'flex' }}>
+										<Box
+											sx={{ marginRight: 1 }}
+											component="img"
+											src={
+												getStatusIconAndLabel(
+													transaction.status,
+													transaction.isRefund,
+												).icon || ''
+											}
+											alt=""
+										/>
+										<Typography
+											sx={{
+												textTransform: 'capitalize',
+												display: 'inline-block',
+											}}
+										>
+											{
+												getStatusIconAndLabel(
+													transaction.status,
+													transaction.isRefund,
+												).label
+											}
+										</Typography>
+									</Box>
+								</TableCell>
+
+								<TableCell sx={tableCellStyle}>
+									<Link
+										style={{
+											color: 'red',
+											background: 'none',
+											textDecoration: 'none',
+										}}
+										to={formatTxDetailUrl(transaction)}
+									>
+										View Details
+									</Link>
+								</TableCell>
+							</TableRow>
+						))}
+					</TableBody>
+				</Table>
+			</TableContainer>
+			{!!transactions?.total && (
+				<TablePagination
+					component="div"
+					count={transactions.total}
+					page={transactions.page}
+					rowsPerPage={transactions.perPage}
+					onPageChange={handleChangePage}
+					onRowsPerPageChange={handleChangeRowsPerPage}
+					sx={{
+						color: 'white',
+						'& .MuiSelect-icon': {
+							color: 'white',
+							'&.Mui-disabled': {
+								color: '#435F694D',
+							},
+						},
+						'& .MuiTablePagination-actions .MuiButtonBase-root ': {
+							color: 'white',
+							'&.Mui-disabled': {
+								color: '#435F694D',
+							},
+						},
+					}}
+				/>
+			)}
+		</BasePage>
+	);
 };
 
 const tableCellStyle = {
-  color:'white',
-  borderBottom:'1px solid #435F694D',
-  padding: '16px 12px',
-}
+	color: 'white',
+	borderBottom: '1px solid #435F694D',
+	padding: '16px 12px',
+};
 
 export default TransactionsTablePage;

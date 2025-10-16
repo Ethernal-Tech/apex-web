@@ -1,45 +1,51 @@
 export class AppSettings {
-	private _apiUrl: string = 'https://localhost:30000';
+	private _apiUrl = 'https://localhost:30000';
 
-    private _minUtxoChainValue: { [key: string]: string } = {
-		prime: "0",
-		vector: "0",
-		cardano: "0",
+	private _minUtxoChainValue: { [key: string]: string } = {
+		prime: '0',
+		vector: '0',
+		cardano: '0',
 	};
 
 	private _minChainFeeForBridging: { [key: string]: string } = {
-		nexus: "0",
-		prime: "0",
-		vector: "0",
-		cardano: "0",
+		nexus: '0',
+		prime: '0',
+		vector: '0',
+		cardano: '0',
 	};
 
 	private _minOperationFee: { [key: string]: string } = {
-		nexus: "0",
-		prime: "0",
-		vector: "0",
-		cardano: "0",
+		nexus: '0',
+		prime: '0',
+		vector: '0',
+		cardano: '0',
 	};
 
-	private _utxoRetriever: UtxoRetrieverConfig = {}
-    private _maxAmountAllowedToBridge: string = "0";
-	private _maxTokenAmountAllowedToBridge: string = "0";
-    private _minValueToBridge: string = "0";
-	private _potentialWalletFee: number = 0;
-    private _isMainnet: boolean = false;
-    private _isSkyline: boolean = false;
+	private _utxoRetriever: UtxoRetrieverConfig = {};
+	private _maxAmountAllowedToBridge = '0';
+	private _maxTokenAmountAllowedToBridge = '0';
+	private _minValueToBridge = '0';
+	private _potentialWalletFee = 0;
+	private _isMainnet = false;
+	private _isSkyline = false;
 
 	private _enabledChains: string[] = [];
 
-    public constructor() {
-		const settingsJson = require(process.env.NODE_ENV === 'development' ? './appSettings_development.json' : './appSettings_production.json');
+	public constructor() {
+		// eslint-disable-next-line @typescript-eslint/no-var-requires
+		const settingsJson = require(
+			process.env.NODE_ENV === 'development'
+				? './appSettings_development.json'
+				: './appSettings_production.json',
+		);
 		this._apiUrl = settingsJson.apiUrl;
 		this._minUtxoChainValue = settingsJson.minUtxoChainValue;
 		this._minChainFeeForBridging = settingsJson.minChainFeeForBridging;
 		this._minOperationFee = settingsJson.minOperationFee;
 		this._utxoRetriever = settingsJson.utxoRetriever;
 		this._maxAmountAllowedToBridge = settingsJson.maxAmountAllowedToBridge;
-		this._maxTokenAmountAllowedToBridge = settingsJson.maxTokenAmountAllowedToBridge;
+		this._maxTokenAmountAllowedToBridge =
+			settingsJson.maxTokenAmountAllowedToBridge;
 		this._minValueToBridge = settingsJson.minValueToBridge;
 		this._potentialWalletFee = settingsJson.potentialWalletFee;
 		this._isMainnet = settingsJson.isMainnet;
@@ -98,4 +104,11 @@ export class AppSettings {
 const appSettings = new AppSettings();
 export default appSettings;
 
-type UtxoRetrieverConfig = { [key: string]: { type: string, url: string, dmtrApiKey: string | undefined, force: boolean }};
+type UtxoRetrieverConfig = {
+	[key: string]: {
+		type: string;
+		url: string;
+		dmtrApiKey: string | undefined;
+		force: boolean;
+	};
+};

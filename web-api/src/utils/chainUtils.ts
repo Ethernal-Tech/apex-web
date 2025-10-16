@@ -186,12 +186,13 @@ export const getTokenNameFromSettings = (
 					return TokenEnum.BAP3X;
 			}
 			return undefined;
-		case BridgingModeEnum.Skyline:
+		case BridgingModeEnum.Skyline: {
 			const nativeTokens =
 				settings?.settingsPerMode[BridgingModeEnum.Skyline]
 					.cardanoChainsNativeTokens[srcChain];
 			return nativeTokens
 				?.find((x) => x.dstChainID === dstChain)
 				?.tokenName.trim();
+		}
 	}
 };

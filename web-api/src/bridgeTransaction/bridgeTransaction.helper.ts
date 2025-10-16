@@ -218,7 +218,6 @@ export const getLayerZeroRequestState = async (
 			case 'FAILED':
 			case 'BLOCKED':
 			case 'UNRESOLVABLE_COMMAND':
-			case 'UNRESOLVABLE_COMMAND':
 				status = TransactionStatusEnum.InvalidRequest;
 
 				break;
