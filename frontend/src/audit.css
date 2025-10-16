@@ -52,7 +52,7 @@
 }
 .skyline-bridge-section .audit-card-content { padding: 18px !important; }
 .skyline-bridge-section .audit-card--center {
-  width: min(100%, 676px);
+  width: 100%;
   margin-left: auto;
   margin-right: auto;
 }
