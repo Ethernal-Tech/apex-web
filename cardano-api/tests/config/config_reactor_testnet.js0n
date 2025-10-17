@@ -1,0 +1,86 @@
+{
+    "cardanoChains": {
+        "prime": {
+            "networkMagic": 3311,
+            "networkID": 0,
+            "bridgingAddresses": {
+                "address": "addr_test1wr44r7qudqwrpsgfs3m4t47x7xmw55dk4k96faak0w4aeqqxxwlvt",
+                "feeAddress": "addr_test1wzct9v2gj9j9rmwx6atkjhcesglf3zcpz6c4y99u3nvg9ksfjj3zd",
+                "fallbackAddress": "addr_test1vqfuetznnmngqzquslwcu0ygn2hq29vjlpytlpwss762vcgun5vvw"
+            },
+            "chainSpecific": {
+                "ogmiosUrl": "http://ogmios.prime.testnet.apexfusion.org:1337",
+                "useDemeter": true,
+                "potentialFee": 500000,
+                "ttlSlotNumberIncrement": 1900
+            },
+            "isEnabled": true
+        },
+        "vector": {
+            "networkMagic": 764824073,
+            "networkID": 1,
+            "bridgingAddresses": {
+                "address": "addr1w8nv7cp7revdt70yuc96z4ke9pasa70grc5clhyf7q70f4spev3dn",
+                "feeAddress": "addr1w8r7nnz8xg2hmudtfgp9u77uwttkuwef6g26dl6zppmwmsqknwcek",
+                "fallbackAddress": "addr1w8nv7cp7revdt70yuc96z4ke9pasa70grc5clhyf7q70f4spev3dn"
+            },
+            "chainSpecific": {
+                "ogmiosUrl": "https://vector-ogmios.onprem.ethernal.work",
+                "potentialFee": 500000,
+                "ttlSlotNumberIncrement": 1900
+            },
+            "isEnabled": true
+        }
+    },
+    "ethChains": {
+        "nexus": {
+            "isEnabled": true
+        }
+    },
+    "utxoCacheTimeout": 90000000000,
+    "oracleApi": {
+        "url": "http://bridge-api-testnet.apexfusion.org:10003",
+        "apiKey": "PUT_HERE_KEY_FROM_ENV"
+    },
+    "appSettings": {
+        "logger": {
+            "rotatingLogsEnabled": false,
+            "rotatingLogerConfig": {
+                "maxSizeInMB": 100,
+                "maxBackups": 30,
+                "maxAgeInDays": 30,
+                "compress": false
+            },
+            "logLevel": 2,
+            "jsonLogFormat": false,
+            "appendFile": true,
+            "logFilePath": "logs/cardano-api.log",
+            "name": ""
+        }
+    },
+    "api": {
+        "port": 41009,
+        "pathPrefix": "api",
+        "allowedHeaders": [
+            "Content-Type"
+        ],
+        "allowedOrigins": [
+            "*"
+        ],
+        "allowedMethods": [
+            "GET",
+            "HEAD",
+            "POST",
+            "PUT",
+            "OPTIONS",
+            "DELETE"
+        ],
+        "apiKeyHeader": "x-api-key",
+        "apiKeys": [
+            "test-jogurt-burek-sveto-dvojstvo"
+        ],
+        "utxoCacheKeys": [
+            "daa48807-2222-9999-l331-F2319992cba2a"
+        ]
+    }
+}

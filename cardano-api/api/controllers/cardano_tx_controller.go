@@ -156,7 +156,8 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 
 	fee, err := bridgingTxSender.GetTxFee(
 		r.Context(), requestBody.DestinationChainID,
-		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
+		requestBody.SenderAddr, requestBody.SenderAddrPolicyScript,
+		outputs, requestBody.BridgingFee,
 		skipUtxos, minUtxoValue,
 	)
 	if err != nil {
@@ -207,7 +208,8 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	txRawBytes, txHash, txInputs, err := bridgingTxSender.CreateTx(
 		r.Context(), requestBody.DestinationChainID,
-		requestBody.SenderAddr, outputs, requestBody.BridgingFee,
+		requestBody.SenderAddr, requestBody.SenderAddrPolicyScript,
+		outputs, requestBody.BridgingFee,
 		skipUtxos, minUtxoValue,
 	)
 	if err != nil {
