@@ -14,6 +14,7 @@ export const retryForever = async <T>(
 	callback: () => Promise<T> | T,
 	retryDelayMs: number = DEFAULT_RETRY_DELAY_MS,
 ): Promise<T> => {
+	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		try {
 			return await callback();

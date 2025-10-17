@@ -1,9 +1,9 @@
-import { CardanoNetworkType, StakeCredential } from "./types"
+import { CardanoNetworkType, StakeCredential } from './types';
 
 export interface CardanoAddress {
-	GetPayment(): StakeCredential
-	GetStake(): StakeCredential
-	GetNetwork(): CardanoNetworkType
-	Bytes(): Uint8Array
-	String(network?: number): string | undefined
+	GetPayment(): StakeCredential;
+	GetStake(): StakeCredential;
+	GetNetwork(): CardanoNetworkType;
+	Bytes(): Uint8Array;
+	String(network?: number): string | undefined;
 }

@@ -1,149 +1,151 @@
-import { Box, Typography } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "../../redux/store";
-import { useEffect, useMemo } from "react";
-import { ChainEnum } from "../../swagger/apexBridgeApiService";
+import { Box, Typography } from '@mui/material';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
+import { useEffect, useMemo } from 'react';
+import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import './lockedTokens.css';
-import { getCurrencyTokenInfo } from "../../settings/token";
-import { toChainEnum } from "../../settings/chain";
-import { fetchAndUpdateLockedTokensAction } from "../../actions/lockedTokens";
-import { decodeTokenKey, isApexChain } from "../../utils/tokenUtils";
-import { convertWeiToDfmBig } from "../../utils/generalUtils";
+import { getCurrencyTokenInfo } from '../../settings/token';
+import { toChainEnum } from '../../settings/chain';
+import { fetchAndUpdateLockedTokensAction } from '../../actions/lockedTokens';
+import { decodeTokenKey, isApexChain } from '../../utils/tokenUtils';
+import { convertWeiToDfmBig } from '../../utils/generalUtils';
 
 const powBigInt = (base: bigint, exp: number): bigint => {
-  let result = BigInt(1);
-  for (let i = 0; i < exp; i++) {
-    result = result * base;
-  }
-  return result;
+	let result = BigInt(1);
+	for (let i = 0; i < exp; i++) {
+		result = result * base;
+	}
+	return result;
 };
 
-export const formatBigIntDecimalString = (value: bigint, decimals: number = 6) => {
-  const divisor = powBigInt(BigInt(10), decimals);
-  const whole = value / divisor;
-  const fraction = value % divisor;
+export const formatBigIntDecimalString = (value: bigint, decimals = 6) => {
+	const divisor = powBigInt(BigInt(10), decimals);
+	const whole = value / divisor;
+	const fraction = value % divisor;
 
-  // Format whole part (e.g., "1.000.000")
-  const formattedWhole = whole
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	// Format whole part (e.g., "1.000.000")
+	const formattedWhole = whole
+		.toString()
+		.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-  // Pad fractional part to correct length (e.g., "01")
-  const paddedFraction = fraction
-    .toString()
-    .padStart(decimals, "0")
-    .slice(0, 2); // show only 2 decimals
+	// Pad fractional part to correct length (e.g., "01")
+	const paddedFraction = fraction
+		.toString()
+		.padStart(decimals, '0')
+		.slice(0, 2); // show only 2 decimals
 
-  return `${formattedWhole}.${paddedFraction}`;
+	return `${formattedWhole}.${paddedFraction}`;
 };
 
 const LockedTokensComponent = () => {
-  const lockedTokens = useSelector((state: RootState) => state.lockedTokens);
-  const {layerZeroChains} = useSelector((state: RootState) => state.settings);
-  const dispatch = useDispatch();
+	const lockedTokens = useSelector((state: RootState) => state.lockedTokens);
+	const { layerZeroChains } = useSelector(
+		(state: RootState) => state.settings,
+	);
+	const dispatch = useDispatch();
 
-  useEffect(() => {
-    // Call once immediately on mount
-    fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
+	useEffect(() => {
+		// Call once immediately on mount
+		fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
 
-    // Then call periodically every 30 seconds
-    const interval = setInterval(() => {
-      fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
-    }, 30_000); // 30,000 ms = 30 seconds
+		// Then call periodically every 30 seconds
+		const interval = setInterval(() => {
+			fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
+		}, 30_000); // 30,000 ms = 30 seconds
 
-    // Cleanup on component unmount
-    return () => clearInterval(interval);
+		// Cleanup on component unmount
+		return () => clearInterval(interval);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layerZeroChains]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [layerZeroChains]);
 
-  const lockedTokensLZFormatted = useMemo(() => {
-    return convertWeiToDfmBig(lockedTokens.layerZeroLockedTokens);
-  }, [lockedTokens.layerZeroLockedTokens] )
+	const lockedTokensLZFormatted = useMemo(() => {
+		return convertWeiToDfmBig(lockedTokens.layerZeroLockedTokens);
+	}, [lockedTokens.layerZeroLockedTokens]);
 
+	const chainsData = useMemo(() => {
+		const chunks: string[] = [];
 
-  const chainsData = useMemo(() => {
-    const chunks: string[] = [];
+		for (const [chainKey, tokenMap] of Object.entries(
+			lockedTokens.chains,
+		)) {
+			const chainEnum = toChainEnum(chainKey);
 
-    for (const [chainKey, tokenMap] of Object.entries(lockedTokens.chains)) {
-      const chainEnum = toChainEnum(chainKey);
+			// ❌ Skip Cardano chains entirely
+			if (chainEnum === ChainEnum.Cardano) continue;
 
-      // ❌ Skip Cardano chains entirely
-      if (chainEnum === ChainEnum.Cardano) continue;
+			const tokenTexts: string[] = [];
 
-      const tokenTexts: string[] = [];
+			for (const [tokenKey, addrMap] of Object.entries(tokenMap)) {
+				// Sum all addresses for this token
+				let total = Object.values(addrMap).reduce<bigint>(
+					(acc, v) =>
+						acc + (typeof v === 'bigint' ? v : BigInt(v ?? 0)),
+					BigInt(0),
+				);
 
-      for (const [tokenKey, addrMap] of Object.entries(tokenMap)) {
-        // Sum all addresses for this token
-        let total = Object.values(addrMap).reduce<bigint>(
-          (acc, v) => acc + (typeof v === "bigint" ? v : BigInt(v ?? 0)),
-          BigInt(0)
-        );
+				// Optional: skip zero amounts
+				if (total === BigInt(0)) continue;
 
-        // Optional: skip zero amounts
-        if (total === BigInt(0)) continue;
+				total += lockedTokensLZFormatted;
 
-        total += lockedTokensLZFormatted;
+				const formatted = formatBigIntDecimalString(total, 6);
 
-        const formatted = formatBigIntDecimalString(total, 6);
+				tokenTexts.push(`${formatted} ${decodeTokenKey(tokenKey)}`);
+			}
 
-    
-        tokenTexts.push(`${formatted} ${decodeTokenKey(tokenKey)}`);
-      }
+			if (tokenTexts.length) {
+				chunks.push(tokenTexts.join(', '));
+			}
+		}
 
-      if (tokenTexts.length) {
-        chunks.push(tokenTexts.join(", "));
-      }
-    }
+		return chunks.join(' | ').trim();
+	}, [lockedTokens.chains, lockedTokensLZFormatted]);
 
-    return chunks.join(" | ").trim();
-  }, [lockedTokens.chains, lockedTokensLZFormatted]);
+	const transferredData = useMemo(() => {
+		let outputValue = BigInt(0);
 
-  const transferredData = useMemo(() => {
-    let outputValue = BigInt(0);
+		Object.entries(lockedTokens.totalTransferred).forEach(
+			([chainKey, innerObj]) => {
+				const chain = chainKey.toLowerCase();
+				const o = innerObj as unknown as Record<
+					string,
+					string | number | bigint
+				>;
 
-    Object.entries(lockedTokens.totalTransferred).forEach(([chainKey, innerObj]) => {
-      const chain = chainKey.toLowerCase();
-      const o = innerObj as unknown as Record<string, string | number | bigint>;
+				if (isApexChain(chain)) {
+					outputValue += BigInt(o.amount || '0');
+				} else {
+					outputValue += BigInt(
+						Object.entries(o).find((x) => x[0] !== 'amount')?.[1] ||
+							'0',
+					);
+				}
+			},
+		);
 
-      if (isApexChain(chain)) {
-        outputValue += BigInt(o.amount || '0');
-      } else {
-        outputValue += BigInt(
-          Object.entries(o).find((x) => x[0] !== 'amount')?.[1] || '0'
-        )
-      }
-    });
+		if (outputValue > BigInt(0)) {
+			const label = getCurrencyTokenInfo(ChainEnum.Prime).label;
+			return `${formatBigIntDecimalString(outputValue, 6)} ${label}`;
+		}
 
-    if (outputValue > BigInt(0)) {
-      const label = getCurrencyTokenInfo(ChainEnum.Prime).label;
-      return `${formatBigIntDecimalString(outputValue, 6)} ${label}`;
-    }
+		return '';
+	}, [lockedTokens]);
 
-    return "";
-  }, [lockedTokens]);
-
-  return (
-    <Box className="banner-container">
-      {
-        chainsData.length > 0 &&
-        <Typography
-          className="banner-text"
-        >
-          TVL | {chainsData}
-        </Typography>
-      }
-      {
-        transferredData.length > 0 &&
-        <Typography
-          className="banner-text"
-        >
-          TVB | {transferredData}
-        </Typography>
-      }
-    </Box>
-  );
+	return (
+		<Box className="banner-container">
+			{chainsData.length > 0 && (
+				<Typography className="banner-text">
+					TVL | {chainsData}
+				</Typography>
+			)}
+			{transferredData.length > 0 && (
+				<Typography className="banner-text">
+					TVB | {transferredData}
+				</Typography>
+			)}
+		</Box>
+	);
 };
 
 export default LockedTokensComponent;
-

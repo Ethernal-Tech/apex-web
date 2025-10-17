@@ -126,7 +126,7 @@ body.landing-page {
 }
 
 /* SkylineBridgeSection styling */
-.skyline-bridge-section {
+.skyline-bridge-section-land {
     display: flex;
     flex-direction: column;
     background-color: #191919;
@@ -465,7 +465,7 @@ body.landing-page {
         display: block;
     }
 
-    .skyline-bridge-section {
+    .skyline-bridge-section-land {
         padding: 40px 20px;
     }
 

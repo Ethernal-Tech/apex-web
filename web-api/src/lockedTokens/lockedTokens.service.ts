@@ -119,7 +119,7 @@ export class LockedTokensService {
 			result.totalTransferred[info.srcChain]['amount'] =
 				currencyAmount.toString();
 
-			if (!!tokenName) {
+			if (tokenName) {
 				const tokenAmount = await this.getAggregatedSum(
 					info.srcChain,
 					info.dstChain,

@@ -7,14 +7,17 @@ import appSettings from '../settings/appSettings';
 import { skylineTheme, theme } from './theme';
 import { useEffect } from 'react';
 
-
 const AppContainer = () => {
-	
 	useEffect(() => {
-		document.title = appSettings.isSkyline ? "Skyline Bridge" : "Reactor Bridge | Apex Fusion";
-		const favicon = document.querySelector<HTMLLinkElement>("link[rel='icon']");
+		document.title = appSettings.isSkyline
+			? 'Skyline Bridge'
+			: 'Reactor Bridge | Apex Fusion';
+		const favicon =
+			document.querySelector<HTMLLinkElement>("link[rel='icon']");
 		if (favicon) {
-			favicon.href = appSettings.isSkyline ? "/favicon.ico" : "/favicon-reactor.ico";
+			favicon.href = appSettings.isSkyline
+				? '/favicon.ico'
+				: '/favicon-reactor.ico';
 		}
 	}, []);
 
@@ -27,7 +30,7 @@ const AppContainer = () => {
 				</BrowserRouter>
 			</ThemeProvider>
 		</Provider>
-	)
-}
+	);
+};
 
 export default AppContainer;

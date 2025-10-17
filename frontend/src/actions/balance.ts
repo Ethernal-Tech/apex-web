@@ -1,8 +1,15 @@
 import { Dispatch } from '@reduxjs/toolkit';
 import { store } from '../redux/store';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
-import { fromNetworkToChain, getTokenNameFromSettings, LovelaceTokenName } from '../utils/chainUtils';
-import { IBalanceState, updateBalanceAction } from '../redux/slices/accountInfoSlice';
+import {
+	fromNetworkToChain,
+	getTokenNameFromSettings,
+	LovelaceTokenName,
+} from '../utils/chainUtils';
+import {
+	IBalanceState,
+	updateBalanceAction,
+} from '../redux/slices/accountInfoSlice';
 import evmWalletHandler from '../features/EvmWalletHandler';
 import walletHandler from '../features/WalletHandler';
 import appSettings from '../settings/appSettings';
@@ -19,99 +26,120 @@ import { ISettingsState } from '../settings/settingsRedux';
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
 
-const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState): Promise<IBalanceState> => {
-    const bridgingInfo = getBridgingInfo(srcChain, dstChain);
-    const currencyTokenName = getChainInfo(srcChain).currencyToken;
+const getWalletBalanceAction = async (
+	srcChain: ChainEnum,
+	dstChain: ChainEnum,
+	settings: ISettingsState,
+): Promise<IBalanceState> => {
+	const bridgingInfo = getBridgingInfo(srcChain, dstChain);
+	const currencyTokenName = getChainInfo(srcChain).currencyToken;
 
-    if (isEvmChain(srcChain)) {
-        const balances : {[key : string] : string} = {}
-        if (srcChain !== ChainEnum.Nexus){
-            const oftAddress = settings.layerZeroChains[srcChain].oftAddress;
-            const token = getToken(srcChain, dstChain, true);
-            balances[token!] = await evmWalletHandler.getERC20Balance(oftAddress)
-        }
+	if (isEvmChain(srcChain)) {
+		const balances: { [key: string]: string } = {};
+		if (srcChain !== ChainEnum.Nexus) {
+			const oftAddress = settings.layerZeroChains[srcChain].oftAddress;
+			const token = getToken(srcChain, dstChain, true);
+			balances[token!] =
+				await evmWalletHandler.getERC20Balance(oftAddress);
+		}
 
-        const balance = await evmWalletHandler.getBalance();
-        balances[currencyTokenName] = balance
+		const balance = await evmWalletHandler.getBalance();
+		balances[currencyTokenName] = balance;
 
-        return { balance: balances};
-    }
+		return { balance: balances };
+	}
 
-    let utxoRetriever: UtxoRetriever = walletHandler;
-    const addr = await walletHandler.getChangeAddress();
-    const utxoRetrieverConfig = !!appSettings.utxoRetriever && appSettings.utxoRetriever[srcChain];
-    
-    const utxoRetrieverType = getUtxoRetrieverType(srcChain);
+	let utxoRetriever: UtxoRetriever = walletHandler;
+	const addr = await walletHandler.getChangeAddress();
+	const utxoRetrieverConfig =
+		!!appSettings.utxoRetriever && appSettings.utxoRetriever[srcChain];
 
-    if (utxoRetrieverType === UtxoRetrieverEnum.Blockfrost) {
-        utxoRetriever = new BlockfrostRetriever(
-            addr, utxoRetrieverConfig.url, utxoRetrieverConfig.dmtrApiKey);
-    } else if (utxoRetrieverType === UtxoRetrieverEnum.Ogmios) {
-        utxoRetriever = new OgmiosRetriever(addr, utxoRetrieverConfig.url);
-    }
+	const utxoRetrieverType = getUtxoRetrieverType(srcChain);
 
-    const utxos = await utxoRetriever.getAllUtxos();
-    const balance = await utxoRetriever.getBalance(utxos);
+	if (utxoRetrieverType === UtxoRetrieverEnum.Blockfrost) {
+		utxoRetriever = new BlockfrostRetriever(
+			addr,
+			utxoRetrieverConfig.url,
+			utxoRetrieverConfig.dmtrApiKey,
+		);
+	} else if (utxoRetrieverType === UtxoRetrieverEnum.Ogmios) {
+		utxoRetriever = new OgmiosRetriever(addr, utxoRetrieverConfig.url);
+	}
 
-    const finalBalance: { [key: string]: string } = {
-        [currencyTokenName]: (balance[LovelaceTokenName] || BigInt(0)).toString(10)
-    }
-    if (!!bridgingInfo.wrappedToken) {
-        const tokenName = getTokenNameFromSettings(srcChain, dstChain, settings);
-        finalBalance[bridgingInfo.wrappedToken!] = (balance[tokenName] || BigInt(0)).toString(10);
-    }
+	const utxos = await utxoRetriever.getAllUtxos();
+	const balance = await utxoRetriever.getBalance(utxos);
 
-    return {
-        balance: finalBalance,
-        utxos,
-    };
-}
+	const finalBalance: { [key: string]: string } = {
+		[currencyTokenName]: (balance[LovelaceTokenName] || BigInt(0)).toString(
+			10,
+		),
+	};
+	if (bridgingInfo.wrappedToken) {
+		const tokenName = getTokenNameFromSettings(
+			srcChain,
+			dstChain,
+			settings,
+		);
+		finalBalance[bridgingInfo.wrappedToken!] = (
+			balance[tokenName] || BigInt(0)
+		).toString(10);
+	}
+
+	return {
+		balance: finalBalance,
+		utxos,
+	};
+};
 
 export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
-    const srcChain = getCurrentSrcChain();
-    const dstChain = store.getState().chain.destinationChain;
-    const lzChainsSettings = store.getState().settings;
+	const srcChain = getCurrentSrcChain();
+	const dstChain = store.getState().chain.destinationChain;
+	const lzChainsSettings = store.getState().settings;
 
-    if (!srcChain) {
-        return;
-    }
+	if (!srcChain) {
+		return;
+	}
 
-    try {
-        const balanceState = await getWalletBalanceAction(srcChain, dstChain, lzChainsSettings);
-        if (balanceState.balance) {
-            dispatch(updateBalanceAction(balanceState));
-        }
-
-    } catch (e) {
-        console.log(`Error while fetching wallet balance: ${e}`);
-    }
-}
+	try {
+		const balanceState = await getWalletBalanceAction(
+			srcChain,
+			dstChain,
+			lzChainsSettings,
+		);
+		if (balanceState.balance) {
+			dispatch(updateBalanceAction(balanceState));
+		}
+	} catch (e) {
+		console.log(`Error while fetching wallet balance: ${e}`);
+	}
+};
 
 export const getUpdateBalanceInterval = (): number => {
-    const srcChain = getCurrentSrcChain();
-    if (!srcChain) {
-        return DEFAULT_UPDATE_BALANCE_INTERVAL;
-    }
+	const srcChain = getCurrentSrcChain();
+	if (!srcChain) {
+		return DEFAULT_UPDATE_BALANCE_INTERVAL;
+	}
 
-    return getUtxoRetrieverType(srcChain) === UtxoRetrieverEnum.Wallet
-        ? WALLET_UPDATE_BALANCE_INTERVAL
-        : DEFAULT_UPDATE_BALANCE_INTERVAL;
-}
+	return getUtxoRetrieverType(srcChain) === UtxoRetrieverEnum.Wallet
+		? WALLET_UPDATE_BALANCE_INTERVAL
+		: DEFAULT_UPDATE_BALANCE_INTERVAL;
+};
 
 const getCurrentSrcChain = (): ChainEnum | undefined => {
-    const accountInfo = store.getState().accountInfo;
-    const chainInfo = store.getState().chain;
-    if (!accountInfo.account || !chainInfo.destinationChain) {
-        return;
-    }
-    
-    const {
-        network,
-    } = accountInfo;
+	const accountInfo = store.getState().accountInfo;
+	const chainInfo = store.getState().chain;
+	if (!accountInfo.account || !chainInfo.destinationChain) {
+		return;
+	}
 
-    if (!network) {
-        return;
-    }
-    
-    return fromNetworkToChain(network, shouldUseMainnet(chainInfo.chain, chainInfo.destinationChain));
-}
+	const { network } = accountInfo;
+
+	if (!network) {
+		return;
+	}
+
+	return fromNetworkToChain(
+		network,
+		shouldUseMainnet(chainInfo.chain, chainInfo.destinationChain),
+	);
+};
