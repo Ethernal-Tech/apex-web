@@ -164,18 +164,18 @@ func MustHashToBytes32(hash string) (res [32]byte) {
 	return indexer.NewHashFromHexString(hash)
 }
 
-func HTTPGet[T any](ctx context.Context, requestURL string, apiKey string) (t T, err error) {
+func HTTPGet[TResponse any](ctx context.Context, requestURL string, apiKey string) (t TResponse, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		return t, err
 	}
 
-	return executeHttpCall[T](req, apiKey)
+	return executeHTTPCall[TResponse](req, apiKey)
 }
 
-func HTTPPost[K any, T any](
-	ctx context.Context, requestURL string, payload K, apiKey string,
-) (t T, err error) {
+func HTTPPost[TBody any, TResponse any](
+	ctx context.Context, requestURL string, payload TBody, apiKey string,
+) (t TResponse, err error) {
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return t, err
@@ -186,7 +186,7 @@ func HTTPPost[K any, T any](
 		return t, err
 	}
 
-	return executeHttpCall[T](req, apiKey)
+	return executeHTTPCall[TResponse](req, apiKey)
 }
 
 func Map[T, V any](items []T, fn func(T) V) []V {
@@ -211,7 +211,7 @@ func WeiToDfm(wei *big.Int) *big.Int {
 	return dfm
 }
 
-func executeHttpCall[T any](req *http.Request, apiKey string) (t T, err error) {
+func executeHTTPCall[TResponse any](req *http.Request, apiKey string) (t TResponse, err error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-KEY", apiKey)
 
@@ -227,7 +227,7 @@ func executeHttpCall[T any](req *http.Request, apiKey string) (t T, err error) {
 		return t, err
 	}
 
-	var responseModel T
+	var responseModel TResponse
 
 	err = json.Unmarshal(resBody, &responseModel)
 	if err != nil {
