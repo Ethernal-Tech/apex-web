@@ -1,15 +1,12 @@
 package tests
 
 import (
-	"bytes"
 	"context"
 	"embed"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand/v2"
-	"net/http"
 	"testing"
 	"time"
 
@@ -112,7 +109,7 @@ func TestCardanoAPI(t *testing.T) {
 
 		fmt.Printf("addr: %s\n", addr.String())
 
-		result := createBridgingTx(t, config, &request.CreateBridgingTxRequest{
+		result := createBridgingTx(t, ctx, config, &request.CreateBridgingTxRequest{
 			SenderAddr:         addr.String(),
 			SourceChainID:      srcChainConfig.ChainID,
 			DestinationChainID: dstChainConfig.ChainID,
@@ -145,7 +142,7 @@ func TestCardanoAPI(t *testing.T) {
 
 		fmt.Printf("multsig addr: %s\n", multisigAddr)
 
-		result := createBridgingTx(t, config, &request.CreateBridgingTxRequest{
+		result := createBridgingTx(t, ctx, config, &request.CreateBridgingTxRequest{
 			SenderAddr:             multisigAddr,
 			SenderAddrPolicyScript: policyScript,
 			SourceChainID:          srcChainConfig.ChainID,
@@ -249,36 +246,16 @@ func signAndSubmitTx(
 }
 
 func createBridgingTx(
-	t *testing.T, config *core.AppConfig, payload *request.CreateBridgingTxRequest,
-) (result *response.BridgingTxResponse) {
+	t *testing.T, ctx context.Context, config *core.AppConfig, payload *request.CreateBridgingTxRequest,
+) *response.BridgingTxResponse {
 	t.Helper()
 
 	url := fmt.Sprintf("http://localhost:%d/%s/CardanoTx/CreateBridgingTx",
 		config.APIConfig.Port, config.APIConfig.PathPrefix)
 
-	body, err := json.Marshal(payload)
+	result, err := common.HTTPPost[*request.CreateBridgingTxRequest, *response.BridgingTxResponse](
+		ctx, url, payload, config.APIConfig.APIKeys[0])
 	require.NoError(t, err)
-
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
-	require.NoError(t, err)
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set(config.APIConfig.APIKeyHeader, config.APIConfig.APIKeys[0])
-
-	resp, err := client.Do(req)
-	require.NoError(t, err)
-
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	require.NoError(t, err)
-
-	require.Equal(t, 200, resp.StatusCode)
-	require.NoError(t, json.Unmarshal(respBody, &result))
 
 	return result
 }

@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
@@ -169,28 +170,23 @@ func HTTPGet[T any](ctx context.Context, requestURL string, apiKey string) (t T,
 		return t, err
 	}
 
-	req.Header.Set("X-API-KEY", apiKey)
+	return executeHttpCall[T](req, apiKey)
+}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return t, err
-	} else if resp.StatusCode != http.StatusOK {
-		return t, fmt.Errorf("http status for %s code is %d", requestURL, resp.StatusCode)
-	}
-
-	resBody, err := io.ReadAll(resp.Body)
+func HTTPPost[K any, T any](
+	ctx context.Context, requestURL string, payload K, apiKey string,
+) (t T, err error) {
+	body, err := json.Marshal(payload)
 	if err != nil {
 		return t, err
 	}
 
-	var responseModel T
-
-	err = json.Unmarshal(resBody, &responseModel)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, requestURL, bytes.NewBuffer(body))
 	if err != nil {
 		return t, err
 	}
 
-	return responseModel, nil
+	return executeHttpCall[T](req, apiKey)
 }
 
 func Map[T, V any](items []T, fn func(T) V) []V {
@@ -213,4 +209,30 @@ func WeiToDfm(wei *big.Int) *big.Int {
 	dfm.Div(dfm, base.Exp(base, big.NewInt(WeiDecimals-DfmDecimals), nil))
 
 	return dfm
+}
+
+func executeHttpCall[T any](req *http.Request, apiKey string) (t T, err error) {
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-KEY", apiKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return t, err
+	} else if resp.StatusCode != http.StatusOK {
+		return t, fmt.Errorf("http status for %s code is %d", req.URL.String(), resp.StatusCode)
+	}
+
+	resBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return t, err
+	}
+
+	var responseModel T
+
+	err = json.Unmarshal(resBody, &responseModel)
+	if err != nil {
+		return t, err
+	}
+
+	return responseModel, nil
 }
