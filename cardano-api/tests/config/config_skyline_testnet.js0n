@@ -48,7 +48,7 @@
     "utxoCacheTimeout": 90000000000,
     "oracleApi": {
         "url": "http://validator-1-skyline-partner.testnet.ethernal.work:10003",
-        "apiKey": "ae9cf0ea-2ab8-1337-9841-7b443e59aee5"
+        "apiKey": "PUT_HERE_FROM_ENV_API_KEY"
     },
     "appSettings": {
         "logger": {
@@ -85,10 +85,10 @@
         ],
         "apiKeyHeader": "x-api-key",
         "apiKeys": [
-            "test-cardano-api-key-4"
+            "test-jogurt-burek-sveto-dvojstvo"
         ],
         "utxoCacheKeys": [
-            "daa48807-1be3-4839-l331-c719992cba2a"
+            "daa48807-2222-9999-l331-F2319992cba2a"
         ]
     }
 }
