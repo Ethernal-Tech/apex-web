@@ -16,8 +16,14 @@ import (
 	"github.com/hashicorp/go-hclog"
 )
 
+type cardanoAPIContextKey string
+
+const (
+	cardanoAPIBaseContextKey cardanoAPIContextKey = "cardanoApiBaseContextKey"
+	cardanoAPIConnContextKey cardanoAPIContextKey = "cardanoApiConnContextKey"
+)
+
 type APIImpl struct {
-	ctx       context.Context
 	apiConfig core.APIConfig
 	handler   http.Handler
 	server    *http.Server
@@ -29,7 +35,7 @@ type APIImpl struct {
 var _ core.API = (*APIImpl)(nil)
 
 func NewAPI(
-	ctx context.Context, apiConfig core.APIConfig,
+	apiConfig core.APIConfig,
 	controllers []core.APIController, logger hclog.Logger,
 ) (
 	*APIImpl, error,
@@ -63,33 +69,28 @@ func NewAPI(
 	handler := handlers.CORS(originsOk, headersOk, methodsOk)(router)
 
 	return &APIImpl{
-		ctx:       ctx,
 		apiConfig: apiConfig,
 		handler:   handler,
 		logger:    logger,
 	}, nil
 }
 
-func (api *APIImpl) Start() {
+func (api *APIImpl) Start(ctx context.Context) {
 	api.server = &http.Server{
 		Addr:              fmt.Sprintf(":%d", api.apiConfig.Port),
 		Handler:           api.handler,
 		ReadHeaderTimeout: 3 * time.Second,
 		BaseContext: func(l net.Listener) context.Context {
-			cc, _ := context.WithCancel(api.ctx)
-
-			return cc
+			return context.WithValue(ctx, cardanoAPIBaseContextKey, api.apiConfig.Port)
 		},
 		ConnContext: func(ctx context.Context, c net.Conn) context.Context {
-			cc, _ := context.WithCancel(ctx)
-
-			return cc
+			return context.WithValue(ctx, cardanoAPIConnContextKey, c)
 		},
 	}
 
 	api.serverClosedCh = make(chan bool)
 
-	err := common.RetryForever(api.ctx, 2*time.Second, func(context.Context) error {
+	err := common.RetryForever(ctx, 2*time.Second, func(context.Context) error {
 		api.logger.Debug("Trying to start api")
 
 		err := api.server.ListenAndServe()
