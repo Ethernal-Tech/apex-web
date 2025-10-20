@@ -496,6 +496,7 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 		}
 
 		tokenNames := map[string]bool{}
+
 		for _, nt := range cfg.ChainSpecific.NativeTokens {
 			token, err := wallet.NewTokenWithFullNameTry(nt.TokenName)
 			if err != nil {

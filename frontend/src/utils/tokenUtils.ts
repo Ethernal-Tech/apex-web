@@ -21,7 +21,7 @@ export function decodeTokenKey(tokenKey: string, chain?: string): string {
 	try {
 		const decoded = Web3.utils.hexToAscii(parts[1]);
 
-    return decoded;
+		return decoded;
 	} catch (_) {
 		return parts[1];
 	}
