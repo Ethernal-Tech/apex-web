@@ -232,13 +232,14 @@ func (c *ReactorTxControllerImpl) createTx(ctx context.Context, requestBody comm
 	// Create the bridging transaction
 	txInfo, _, err := txSender.CreateBridgingTx(
 		ctx,
-		sendtx.BridgingTxInput{
-			SrcChainID:   requestBody.SourceChainID,
-			DstChainID:   requestBody.DestinationChainID,
-			SenderAddr:   requestBody.SenderAddr,
-			Receivers:    receivers,
-			BridgingFee:  requestBody.BridgingFee,
-			OperationFee: 0,
+		sendtx.BridgingTxDto{
+			SrcChainID:             requestBody.SourceChainID,
+			DstChainID:             requestBody.DestinationChainID,
+			SenderAddr:             requestBody.SenderAddr,
+			SenderAddrPolicyScript: requestBody.SenderAddrPolicyScript,
+			Receivers:              receivers,
+			BridgingFee:            requestBody.BridgingFee,
+			OperationFee:           0,
 		},
 	)
 	if err != nil {
@@ -271,13 +272,14 @@ func (c *ReactorTxControllerImpl) calculateTxFee(
 
 	txFeeInfo, metadata, err := txSender.CalculateBridgingTxFee(
 		ctx,
-		sendtx.BridgingTxInput{
-			SrcChainID:   requestBody.SourceChainID,
-			DstChainID:   requestBody.DestinationChainID,
-			SenderAddr:   requestBody.SenderAddr,
-			Receivers:    receivers,
-			BridgingFee:  requestBody.BridgingFee,
-			OperationFee: 0,
+		sendtx.BridgingTxDto{
+			SrcChainID:             requestBody.SourceChainID,
+			DstChainID:             requestBody.DestinationChainID,
+			SenderAddr:             requestBody.SenderAddr,
+			SenderAddrPolicyScript: requestBody.SenderAddrPolicyScript,
+			Receivers:              receivers,
+			BridgingFee:            requestBody.BridgingFee,
+			OperationFee:           0,
 		},
 	)
 	if err != nil {

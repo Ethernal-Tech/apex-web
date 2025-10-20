@@ -89,7 +89,7 @@ func runCommand(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	apiObj, err := api.NewAPI(ctx, config.APIConfig, apiControllers, logger.Named("api"))
+	apiObj, err := api.NewAPI(config.APIConfig, apiControllers, logger.Named("api"))
 	if err != nil {
 		logger.Error("cardano api creation failed", "err", err)
 		outputter.SetError(err)
@@ -97,7 +97,7 @@ func runCommand(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	go apiObj.Start()
+	go apiObj.Start(ctx)
 
 	_, _ = outputter.Write([]byte("Server has been started..."))
 

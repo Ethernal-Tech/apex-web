@@ -1,5 +1,9 @@
 package request
 
+import (
+	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
+)
+
 type CreateBridgingTxTransactionRequest struct {
 	// Receiver address
 	Addr string `json:"addr" validate:"required"`
@@ -19,6 +23,8 @@ type UtxoRequest struct {
 type CreateBridgingTxRequest struct {
 	// Address that initiates the bridging request on the source chain
 	SenderAddr string `json:"senderAddr" validate:"required"`
+	// Policy Script for address that initiates the bridging request on the source chain (multisig support)
+	SenderAddrPolicyScript *cardanowallet.PolicyScript `json:"senderAddrPolicyScript"`
 	// Source chain ID
 	SourceChainID string `json:"sourceChainId" validate:"required"`
 	// Destination chain ID
