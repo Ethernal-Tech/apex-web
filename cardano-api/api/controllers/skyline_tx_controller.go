@@ -528,22 +528,23 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 
 			for _, utxo := range utxos {
 				// ADA
-				ensure(addr, wallet.AdaTokenName)
-				perAddr[addr][wallet.AdaTokenName].Add(
-					perAddr[addr][wallet.AdaTokenName],
-					new(big.Int).SetUint64(utxo.Amount),
-				)
+				if len(tokenNames) == 0 {
+					ensure(addr, wallet.AdaTokenName)
+					perAddr[addr][wallet.AdaTokenName].Add(
+						perAddr[addr][wallet.AdaTokenName],
+						new(big.Int).SetUint64(utxo.Amount),
+					)
+				} else {
+					for _, tkn := range utxo.Tokens {
+						name := tkn.TokenName()
+						if !tokenNames[name] {
+							continue
+						}
 
-				// Native tokens
-				for _, tkn := range utxo.Tokens {
-					name := tkn.TokenName()
-					if !tokenNames[name] {
-						continue
+						ensure(addr, name)
+
+						perAddr[addr][name].Add(perAddr[addr][name], new(big.Int).SetUint64(tkn.Amount))
 					}
-
-					ensure(addr, name)
-
-					perAddr[addr][name].Add(perAddr[addr][name], new(big.Int).SetUint64(tkn.Amount))
 				}
 			}
 		}

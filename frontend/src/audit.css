@@ -87,6 +87,9 @@
 .skyline-bridge-section .audit-grid-md-2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
 @media (min-width: 900px) { .skyline-bridge-section .audit-grid-md-2 { grid-template-columns: 1fr 1fr; gap: 16px; } }
 
+.skyline-bridge-section .audit-grid-md-3 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 900px) { .skyline-bridge-section .audit-grid-md-3 { grid-template-columns: 1fr 1fr 1fr; gap: 16px; } }
+
 .skyline-bridge-section .audit-layout { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
 @media (min-width: 1400px) { .skyline-bridge-section .audit-layout { grid-template-columns: 1.5fr 1fr; } }
 

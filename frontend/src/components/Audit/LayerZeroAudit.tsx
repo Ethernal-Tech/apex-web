@@ -78,7 +78,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 
 					<Box>
 						<Typography className="audit-h2">
-							LayerZero transfers
+							LayerZero Transfers
 						</Typography>
 						<Box className="audit-card audit-card--center">
 							<Box className="audit-card-content audit-row">

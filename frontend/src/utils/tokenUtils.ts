@@ -3,17 +3,6 @@ import { TokenEnum } from '../features/enums';
 import { getTokenInfo } from '../settings/token';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
 
-const wapexInfo = getTokenInfo(TokenEnum.WAPEX);
-const labelToEnumDict = Object.values(TokenEnum).reduce(
-	(acc, token) => {
-		acc[token as string] = getTokenInfo(token).label;
-		return acc;
-	},
-	{
-		[wapexInfo.label]: wapexInfo.label,
-	},
-);
-
 export function decodeTokenKey(tokenKey: string, chain?: string): string {
 	if (tokenKey === 'lovelace' || tokenKey === 'amount') {
 		switch (chain) {
@@ -29,23 +18,13 @@ export function decodeTokenKey(tokenKey: string, chain?: string): string {
 		return tokenKey;
 	}
 
-	const candidates = [parts[1]];
-
 	try {
 		const decoded = Web3.utils.hexToAscii(parts[1]);
-		candidates.push(decoded);
+
+    return decoded;
 	} catch (_) {
-		// do not need anything
+		return parts[1];
 	}
-
-	for (const c of candidates) {
-		const title = labelToEnumDict[c];
-		if (title) {
-			return title;
-		}
-	}
-
-	return parts[1];
 }
 
 export const isApexChain = (c: string) =>
