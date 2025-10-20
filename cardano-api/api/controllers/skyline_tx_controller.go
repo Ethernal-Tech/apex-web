@@ -495,9 +495,14 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 			return nil, fmt.Errorf("failed to create tx provider. err: %w", err)
 		}
 
-		tokenNames := map[string]bool{wallet.AdaTokenName: true}
+		tokenNames := map[string]bool{}
 		for _, nt := range cfg.ChainSpecific.NativeTokens {
-			tokenNames[nt.TokenName] = true
+			token, err := wallet.NewTokenWithFullNameTry(nt.TokenName)
+			if err != nil {
+				continue
+			}
+
+			tokenNames[token.String()] = true
 		}
 
 		// First accumulate per-address → token → big.Int
@@ -530,15 +535,15 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 				)
 
 				// Native tokens
-				for _, t := range utxo.Tokens {
-					name := t.TokenName()
+				for _, tkn := range utxo.Tokens {
+					name := tkn.TokenName()
 					if !tokenNames[name] {
 						continue
 					}
 
 					ensure(addr, name)
 
-					perAddr[addr][name].Add(perAddr[addr][name], new(big.Int).SetUint64(t.Amount))
+					perAddr[addr][name].Add(perAddr[addr][name], new(big.Int).SetUint64(tkn.Amount))
 				}
 			}
 		}

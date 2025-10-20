@@ -1,37 +1,51 @@
+import Web3 from 'web3';
 import { TokenEnum } from '../features/enums';
 import { getTokenInfo } from '../settings/token';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
 
-export const decodeHex = (hex: string) => {
-	try {
-		return decodeURIComponent(hex.replace(/(..)/g, '%$1'));
-	} catch (e) {
-		return '[InvalidHex]';
-	}
-};
-
-const asTokenEnum = (s: string): TokenEnum | undefined => {
-	const vals = Object.values(TokenEnum) as string[];
-	return vals.includes(s) ? (s as TokenEnum) : undefined;
-};
+const wapexInfo = getTokenInfo(TokenEnum.WAPEX);
+const labelToEnumDict = Object.values(TokenEnum).reduce(
+	(acc, token) => {
+		acc[token as string] = getTokenInfo(token).label;
+		return acc;
+	},
+	{
+		[wapexInfo.label]: wapexInfo.label,
+	},
+);
 
 export function decodeTokenKey(tokenKey: string, chain?: string): string {
-	if (chain === ChainEnum.Cardano) return getTokenInfo(TokenEnum.WAPEX).label;
-	if (tokenKey === 'lovelace' || tokenKey === 'amount')
-		return getTokenInfo(TokenEnum.APEX).label;
-
-	const hex = tokenKey.split('.')[1];
-	if (!hex) return tokenKey;
-
-	const decoded = decodeHex(hex);
-	const candidates = [decoded, hex];
-
-	for (const c of candidates) {
-		const t = asTokenEnum(c);
-		if (t) return getTokenInfo(t).label;
+	if (tokenKey === 'lovelace' || tokenKey === 'amount') {
+		switch (chain) {
+			case ChainEnum.Cardano:
+				return getTokenInfo(TokenEnum.Ada).label;
+			default:
+				return getTokenInfo(TokenEnum.APEX).label;
+		}
 	}
 
-	return decoded && !/invalid\s*hex/i.test(decoded) ? decoded : tokenKey;
+	const parts = tokenKey.split('.');
+	if (parts.length < 2) {
+		return tokenKey;
+	}
+
+	const candidates = [parts[1]];
+
+	try {
+		const decoded = Web3.utils.hexToAscii(parts[1]);
+		candidates.push(decoded);
+	} catch (_) {
+		// do not need anything
+	}
+
+	for (const c of candidates) {
+		const title = labelToEnumDict[c];
+		if (title) {
+			return title;
+		}
+	}
+
+	return parts[1];
 }
 
 export const isApexChain = (c: string) =>
