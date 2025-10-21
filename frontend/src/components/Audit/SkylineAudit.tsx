@@ -102,7 +102,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 		<Box className="audit-layout">
 			<Box>
 				<Typography className="audit-h2">Total Locked (TVL)</Typography>
-				<Box className="audit-grid-3 audit-mb-20">
+				<Box className="audit-mb-8 audit-w-third-md">
 					{sortEntries(tokenTotalsAllChains).map(
 						([tokenKey, amt]) => (
 							<AmountCard
@@ -122,7 +122,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 						.filter((ck) => !isEvmChain(ck as ChainEnum))
 						.map((ck) => {
 							const rows = sortEntries(
-							perChainTotals[ck] ?? {},
+								perChainTotals[ck] ?? {},
 							).map(([t, a]) => ({
 								label: decodeTokenKey(t),
 								amt: a,
