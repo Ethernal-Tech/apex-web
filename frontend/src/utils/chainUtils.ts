@@ -294,7 +294,6 @@ export const getExplorerAddressUrl = (
 	chain: ChainEnum,
 	address: string,
 	isLzBridging?: boolean,
-	token?: string,
 ) => {
 	const base =
 		appSettings.isMainnet || isLzBridging
@@ -305,14 +304,7 @@ export const getExplorerAddressUrl = (
 
 	let url;
 	switch (chain) {
-		case ChainEnum.Cardano: {
-			const tokensSplitted = token!.split('.');
-			if (tokensSplitted.length < 2) {
-				return;
-			} else {
-				return `${base}/token/${tokensSplitted[0]}${tokensSplitted[1]}?${address}`;
-			}
-		}
+		case ChainEnum.Cardano:
 		case ChainEnum.Prime:
 		case ChainEnum.Vector:
 		case ChainEnum.Nexus: {

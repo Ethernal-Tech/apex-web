@@ -205,7 +205,6 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 															selChain as ChainEnum,
 															addr,
 															false,
-															selToken,
 														)}
 														target="_blank"
 														rel="noreferrer"
