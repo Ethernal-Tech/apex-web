@@ -3,14 +3,6 @@ import { TokenEnum } from '../features/enums';
 import { getTokenInfo } from '../settings/token';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
 
-const labelToEnumDict = Object.values(TokenEnum).reduce(
-	(acc, token) => {
-		acc[token as string] = getTokenInfo(token).label;
-		return acc;
-	},
-	{} as { [key: string]: string },
-);
-
 export function decodeTokenKey(tokenKey: string, chain?: string): string {
 	if (tokenKey === 'lovelace' || tokenKey === 'amount') {
 		switch (chain) {
@@ -28,16 +20,17 @@ export function decodeTokenKey(tokenKey: string, chain?: string): string {
 	// first try to find label for (already decoded) token name ...
 	const tokenName = parts[1];
 
-	const title = labelToEnumDict[tokenName];
-	if (title) {
-		return title;
+	const tokenInfo = getTokenInfo(tokenName as TokenEnum);
+	if (tokenInfo) {
+		return tokenInfo.label;
 	}
 
 	try {
 		// ... then try to decode the name ...
 		// ... if decoding succeeds and a label exists, return the label; otherwise, return the decoded name
 		const decodedTokenName = Web3.utils.hexToAscii(tokenName);
-		return labelToEnumDict[decodedTokenName] || decodedTokenName;
+		const tokenInfo = getTokenInfo(decodedTokenName as TokenEnum);
+		return tokenInfo?.label || decodedTokenName;
 	} catch (_) {
 		// ... if decoding fails, return the original token name
 		return tokenName;
