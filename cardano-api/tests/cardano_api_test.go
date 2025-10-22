@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand/v2"
+	"os"
 	"testing"
 	"time"
 
@@ -34,6 +35,7 @@ func TestCardanoAPI(t *testing.T) {
 	const (
 		serverStartupTimeWait = time.Second
 		configFileName        = "config/config_skyline_testnet.js0n"
+		bridgingApiKey        = "TESTNET_SKYLINE_BRIDGING_API_KEY"
 	)
 
 	var (
@@ -58,6 +60,9 @@ func TestCardanoAPI(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, json.Unmarshal(bytesContent, &config))
+	// fill api key from env
+	config.OracleAPI.APIKey = os.Getenv(bridgingApiKey)
+	// fill out other settings
 	require.NoError(t, config.FillOut(ctx, logger))
 
 	srcChainConfig := config.CardanoChains["prime"]
