@@ -1,37 +1,40 @@
+import Web3 from 'web3';
 import { TokenEnum } from '../features/enums';
 import { getTokenInfo } from '../settings/token';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
 
-export const decodeHex = (hex: string) => {
-	try {
-		return decodeURIComponent(hex.replace(/(..)/g, '%$1'));
-	} catch (e) {
-		return '[InvalidHex]';
-	}
-};
-
-const asTokenEnum = (s: string): TokenEnum | undefined => {
-	const vals = Object.values(TokenEnum) as string[];
-	return vals.includes(s) ? (s as TokenEnum) : undefined;
-};
-
 export function decodeTokenKey(tokenKey: string, chain?: string): string {
-	if (chain === ChainEnum.Cardano) return getTokenInfo(TokenEnum.WAPEX).label;
-	if (tokenKey === 'lovelace' || tokenKey === 'amount')
-		return getTokenInfo(TokenEnum.APEX).label;
-
-	const hex = tokenKey.split('.')[1];
-	if (!hex) return tokenKey;
-
-	const decoded = decodeHex(hex);
-	const candidates = [decoded, hex];
-
-	for (const c of candidates) {
-		const t = asTokenEnum(c);
-		if (t) return getTokenInfo(t).label;
+	if (tokenKey === 'lovelace' || tokenKey === 'amount') {
+		switch (chain) {
+			case ChainEnum.Cardano:
+				return getTokenInfo(TokenEnum.Ada).label;
+			default:
+				return getTokenInfo(TokenEnum.APEX).label;
+		}
 	}
 
-	return decoded && !/invalid\s*hex/i.test(decoded) ? decoded : tokenKey;
+	const parts = tokenKey.split('.');
+	if (parts.length < 2) {
+		return tokenKey;
+	}
+	// first try to find label for (already decoded) token name ...
+	const tokenName = parts[1];
+
+	const tokenInfo = getTokenInfo(tokenName as TokenEnum);
+	if (tokenInfo.label) {
+		return tokenInfo.label;
+	}
+
+	try {
+		// ... then try to decode the name ...
+		// ... if decoding succeeds and a label exists, return the label; otherwise, return the decoded name
+		const decodedTokenName = Web3.utils.hexToAscii(tokenName);
+		const tokenInfo = getTokenInfo(decodedTokenName as TokenEnum);
+		return tokenInfo?.label || decodedTokenName;
+	} catch (_) {
+		// ... if decoding fails, return the original token name
+		return tokenName;
+	}
 }
 
 export const isApexChain = (c: string) =>

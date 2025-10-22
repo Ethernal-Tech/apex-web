@@ -304,8 +304,8 @@ export const getExplorerAddressUrl = (
 
 	let url;
 	switch (chain) {
-		case ChainEnum.Prime:
 		case ChainEnum.Cardano:
+		case ChainEnum.Prime:
 		case ChainEnum.Vector:
 		case ChainEnum.Nexus: {
 			url = `${base}/address/${address}`;

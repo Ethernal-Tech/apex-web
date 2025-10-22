@@ -88,7 +88,7 @@
             "test-jogurt-burek-sveto-dvojstvo"
         ],
         "utxoCacheKeys": [
-            "daa48807-2222-9999-l331-F2319992cba2a"
+            "some-key-does-not-matter"
         ]
     }
 }

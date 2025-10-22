@@ -101,8 +101,8 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 	return (
 		<Box className="audit-layout">
 			<Box>
-				<Typography className="audit-h2">Total locked (TVL)</Typography>
-				<Box className="audit-grid-3 audit-mb-20">
+				<Typography className="audit-h2">Total Locked (TVL)</Typography>
+				<Box className="audit-mb-8 audit-w-third-md">
 					{sortEntries(tokenTotalsAllChains).map(
 						([tokenKey, amt]) => (
 							<AmountCard
@@ -115,20 +115,31 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 				</Box>
 
 				<Typography className="audit-h2">
-					Total locked per Chain
+					Total Locked Per Chain
 				</Typography>
-				<Box className="audit-grid-3">
-					{chainKeys.map((ck) => {
-						const rows = sortEntries(perChainTotals[ck] ?? {}).map(
-							([t, a]) => ({
-								label: decodeTokenKey(t, ck),
+				<Box className="audit-grid-md-3 audit-gap-12">
+					{Object.keys(perChainTotals)
+						.filter((ck) => !isEvmChain(ck as ChainEnum))
+						.map((ck) => {
+							const rows = sortEntries(
+								perChainTotals[ck] ?? {},
+							).map(([t, a]) => ({
+								label: decodeTokenKey(t),
 								amt: a,
-							}),
-						);
-						return (
-							<ChainTotalsCard key={ck} chain={ck} rows={rows} />
-						);
-					})}
+							}));
+							return (
+								<ChainTotalsCard
+									key={ck}
+									chain={ck}
+									rows={rows}
+								/>
+							);
+						})}
+					{Object.keys(perChainTotals).length === 0 && (
+						<Typography className="audit-dim">
+							No transfers yet.
+						</Typography>
+					)}
 				</Box>
 
 				<Typography className="audit-h2">
