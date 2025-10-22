@@ -21,7 +21,7 @@ export function decodeTokenKey(tokenKey: string, chain?: string): string {
 	const tokenName = parts[1];
 
 	const tokenInfo = getTokenInfo(tokenName as TokenEnum);
-	if (tokenInfo) {
+	if (tokenInfo.label) {
 		return tokenInfo.label;
 	}
 
