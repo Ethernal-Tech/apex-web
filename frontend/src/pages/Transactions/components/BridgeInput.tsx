@@ -15,7 +15,7 @@ import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { white } from '../../../containers/theme';
 import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
-import { BridgingModeEnum, getBridgingMode, getChainInfo, isCardanoChain, isEvmChain } from '../../../settings/chain';
+import { BridgingModeEnum, getBridgingMode, getChainInfo, isCardanoChain, isEvmChain, isSolanaBridging } from '../../../settings/chain';
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
@@ -64,7 +64,7 @@ const calculateMaxAmountCurrency = (
 
   const maxAmountAllowedToBridgeDfm = BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
     ? (
-        isEvmChain(chain)
+        isEvmChain(chain) || isSolanaBridging(chain)
           ? BigInt(convertDfmToWei(maxAmountAllowedToBridge))
           : BigInt(maxAmountAllowedToBridge)
     )
@@ -75,7 +75,7 @@ const calculateMaxAmountCurrency = (
       ? maxAmountAllowedToBridgeDfm : BigInt(totalDfmBalance[sourceToken] || '0')
 
   let maxByBalance
-  if (isEvmChain(chain)) {
+  if (isEvmChain(chain) || isSolanaBridging(chain)) {
     maxByBalance = BigInt(totalDfmBalance[sourceToken] || '0') - BigInt(bridgeTxFee) -
       BigInt(minDfmValue) - BigInt(operationFee)
   } else {
@@ -182,7 +182,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
 
   // either for nexus(wei dfm), or prime&vector (lovelace dfm) units
   let minDfmValue: string;
-  if (isEvmChain(chain)) {
+  if (isEvmChain(chain) || isSolanaBridging(chain)) {
     minDfmValue = convertDfmToWei(minValueToBridge);
   } else if (bridgingModeInfo.bridgingMode === BridgingModeEnum.Skyline) {
     minDfmValue = appSettings.minUtxoChainValue[chain];

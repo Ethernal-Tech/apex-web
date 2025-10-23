@@ -538,7 +538,7 @@ export class LockedTokensControllerClient extends BaseClient {
      * @param allowedBridgingModes (optional) all suported bridging modes that goes into sum
      * @return OK - Returns the sum of transferred tokens per chain.
      */
-    getTransferredSum(startDate: string, endDate: string, groupBy: GroupBy | undefined, allowedBridgingModes: string[] | undefined): Promise<LockedTokensResponse> {
+    getTransferredSum(startDate: string, endDate: string, groupBy: GroupBy | undefined, allowedBridgingModes: BridgingModeEnum[] | undefined): Promise<LockedTokensResponse> {
         let url_ = this.baseUrl + "/lockedTokens/transferred?";
         if (startDate === undefined || startDate === null)
             throw new globalThis.Error("The parameter 'startDate' must be defined and cannot be null.");
@@ -1384,6 +1384,7 @@ export enum ChainEnum {
     Cardano = "cardano",
     Base = "base",
     Bsc = "bsc",
+    Solana = "solana",
 }
 
 export class TransactionSubmittedDto implements ITransactionSubmittedDto {
@@ -2578,6 +2579,7 @@ export enum LayerZeroChainSettingsDtoChain {
     Cardano = "cardano",
     Base = "base",
     Bsc = "bsc",
+    Solana = "solana",
 }
 
 export class ApiException extends Error {

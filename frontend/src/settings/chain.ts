@@ -6,6 +6,7 @@ import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
 import { ReactComponent as BaseIcon } from '../assets/chain-icons/base.svg'
 import { ReactComponent as BNBIcon } from '../assets/chain-icons/bsc.svg'
+import {ReactComponent as SolanaIcon} from '../assets/chain-icons/solana.svg'
 import { TokenEnum } from "../features/enums";
 import { ISettingsState, SettingsPerMode } from "./settingsRedux";
 import appSettings from "./appSettings";
@@ -105,6 +106,17 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
         mainColor: '#F3BA2F',
         order: 6,
     },
+    [ChainEnum.Solana]: {
+        value: ChainEnum.Solana,
+        currencyToken: TokenEnum.SOL,
+        label: "Solana",
+        icon: SolanaIcon,
+        borderColor: '#00FFA3',
+        letter: 'S',
+        mainColor: '#00FFA3',
+        order: 7,
+
+    }
 }
 
 const getChainDirections = function (settings: ISettingsState): Partial<Record<ChainEnum, ChainEnum[]>> {
@@ -141,11 +153,15 @@ export const isEvmChain = function (chain: ChainEnum): boolean {
     return chain === ChainEnum.Nexus || chain === ChainEnum.Base || chain === ChainEnum.Bsc;
 }
 
+export const isSolanaBridging = function (chain: ChainEnum, dstChain?: ChainEnum): boolean{
+    return chain === ChainEnum.Solana || (chain === ChainEnum.Nexus && dstChain === ChainEnum.Solana)
+}
+
 export const isLZBridging = function (originChain: ChainEnum, destinationChain: ChainEnum): boolean {
     const apexChains = new Set<string>(Object.values(ChainApexBridgeEnum));
 
-    return !apexChains.has(originChain as unknown as string) ||
-        !apexChains.has(destinationChain as unknown as string);
+    return (!apexChains.has(originChain as unknown as string) && !(originChain === ChainEnum.Solana))  ||
+        (!apexChains.has(destinationChain as unknown as string) && !(destinationChain === ChainEnum.Solana));
 };
 
 export const isCardanoChain = function (chain: ChainEnum): boolean {

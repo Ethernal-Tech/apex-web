@@ -3,12 +3,13 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 import {ReactComponent as WalletIcon} from "../../../assets/icons/moneyWallet.svg";
 import {ReactComponent as ApexIcon} from "../../../assets/icons/apexTransferIcon.svg";
-import { convertDfmToApex, toFixed } from "../../../utils/generalUtils";
+import { convertDfmToApex, lamportsToSolExact, toFixed } from "../../../utils/generalUtils";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../redux/store";
 import appSettings from "../../../settings/appSettings";
 import { getBridgingInfo, getTokenInfo } from "../../../settings/token";
-import { BridgingModeEnum, getBridgingMode, getChainInfo } from "../../../settings/chain";
+import { BridgingModeEnum, getBridgingMode, getChainInfo, isSolanaBridging } from "../../../settings/chain";
+
 
 const TotalBalance = () => {
 	const totalDfmBalance = useSelector((state: RootState) => state.accountInfo.balance);
@@ -23,10 +24,20 @@ const TotalBalance = () => {
     const chainNativeToken = bridgingInfo.wrappedToken
     const showChainNativeToken = !!chainNativeToken
 
-    const totalBalanceInApex = totalDfmBalance[chainCurrency] ? toFixed(convertDfmToApex(totalDfmBalance[chainCurrency], chain), 6) : null;
-    const totalBalanceInNativeToken = (isSkylineMode || isLayerZeroMode) && totalDfmBalance[chainNativeToken!] ? toFixed(convertDfmToApex(totalDfmBalance[chainNativeToken!], chain), 6) : null;
+    let totalBalanceInApex: string|null
+    let totalBalanceInNativeToken: string|null
 
-    if (isSkylineMode || isLayerZeroMode) {
+    if (isSolanaBridging(chain)){
+        totalBalanceInApex = totalDfmBalance[chainCurrency] ? toFixed(lamportsToSolExact(BigInt(totalDfmBalance[chainCurrency])).toString(), 6) : null;
+        totalBalanceInNativeToken = totalDfmBalance[chainNativeToken!] ? toFixed(lamportsToSolExact(BigInt(totalDfmBalance[chainNativeToken!])).toString(), 6) : null;
+    }
+    else{
+    totalBalanceInApex = totalDfmBalance[chainCurrency] ? toFixed(convertDfmToApex(totalDfmBalance[chainCurrency], chain), 6) : null;
+    totalBalanceInNativeToken = (isSkylineMode || isLayerZeroMode) && totalDfmBalance[chainNativeToken!] ? toFixed(convertDfmToApex(totalDfmBalance[chainNativeToken!], chain), 6) : null;
+    }
+    
+
+    if (isSkylineMode || isLayerZeroMode || isSolanaBridging(chain, destinationChain)) { 
         return (
             <Box px={'17px'} py='20px' sx={{border:'1px solid #077368',color:'#A1B3A0', background:'transparent',borderRadius:'4px', fontWeight:'500'}}>
                 <Typography textTransform={'uppercase'} color={'white'} sx={{display:'flex',alignItems:'center'}}>

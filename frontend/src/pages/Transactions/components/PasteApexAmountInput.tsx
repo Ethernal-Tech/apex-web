@@ -1,10 +1,12 @@
 import React from 'react';
 import { TextField, Button, Box, styled, SxProps, Theme, Typography } from '@mui/material';
-import { convertApexToDfm, convertDfmToApex, minBigInt, toFixedFloor } from '../../../utils/generalUtils';
+import { convertApexToDfm, convertDfmToApex, minBigInt, solToLamportsExact, toFixedFloor } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import appSettings from '../../../settings/appSettings';
 import { getCurrencyTokenInfo } from '../../../settings/token';
+import { ChainEnum } from '../../../swagger/apexBridgeApiService';
+import { isSolanaBridging } from '../../../settings/chain';
 // import './CustomStyles.css'; // Import the CSS file
 
 // const apexPriceInDollars = NaN // fiat price doesn't exist for apex
@@ -94,8 +96,15 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
     if(right && right.length >6) {
       return e.preventDefault()
     }
-    
-    const dfmValueInput = convertApexToDfm(apexInput,chain)
+
+    let dfmValueInput: string = ''
+
+    if (chain === ChainEnum.Solana){
+      dfmValueInput = solToLamportsExact(apexInput).toString();
+    }else{
+      dfmValueInput = convertApexToDfm(apexInput,chain)
+    }
+
     if (BigInt(dfmValueInput) < 0) {
       e.preventDefault()
       return setAmount('')
@@ -127,8 +136,8 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({ sx, maxAmou
   const isMaxAmountEntered = maxSendable && BigInt(maxSendable) > 0 && convertApexToDfm(text, chain) !== maxSendable.toString();
   
   // Returns true if entered value to send exceedes the maximum amount a user can send (balance - fees)
-  const hasInsufficientBalance = BigInt(convertApexToDfm(text, chain)) > maxAmounts.maxByBalance;
-  const overMaxAllowed = BigInt(convertApexToDfm(text, chain)) > maxAmounts.maxByAllowed && maxAmounts.maxByAllowed > 0;
+  const hasInsufficientBalance = (isSolanaBridging(chain) ? solToLamportsExact(text) : BigInt(convertApexToDfm(text, chain))) > maxAmounts.maxByBalance;
+  const overMaxAllowed = (isSolanaBridging(chain) ? solToLamportsExact(text) : BigInt(convertApexToDfm(text, chain))) > maxAmounts.maxByAllowed && maxAmounts.maxByAllowed > 0;
 
   const currencyToken = getCurrencyTokenInfo(chain);
 

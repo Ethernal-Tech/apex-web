@@ -23,6 +23,8 @@ export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.FailedToExecuteOnDestination,
 ];
 
+const solanaStatesMap: Record<string, number> = {};
+
 export const BridgingRequestNotFinalStatesMap: { [key: string]: boolean } =
 	BridgingRequestNotFinalStates.reduce(
 		(acc: { [key: string]: boolean }, cv: TransactionStatusEnum) => ({
@@ -46,6 +48,10 @@ export type GetBridgingRequestStatesModel = {
 };
 
 export type GetLayerZeroBridgingRequestStatesModel = {
+	txHash: string;
+};
+
+export type GetSolanaBridgingRequestStatesModel = {
 	txHash: string;
 };
 
@@ -365,6 +371,47 @@ export const getCentralizedBridgingRequestState = async (
 			Logger.error(`Error while getBridgingRequestState: ${e}`, e.stack);
 		}
 	}
+};
+
+export const getBridgingSolanaStates = async (
+	models: GetSolanaBridgingRequestStatesModel[],
+) => {
+	const statesMap: { [key: string]: BridgingRequestState } = {};
+
+	for (const model of models) {
+		if (solanaStatesMap[model.txHash]) {
+			solanaStatesMap[model.txHash]++;
+		} else {
+			solanaStatesMap[model.txHash] = 1;
+		}
+
+		switch (solanaStatesMap[model.txHash]) {
+			case 1:
+				statesMap[model.txHash] = {
+					sourceTxHash: model.txHash,
+					status: TransactionStatusEnum.DiscoveredOnSource,
+					isRefund: false,
+				};
+
+				break;
+			case 2:
+				statesMap[model.txHash] = {
+					sourceTxHash: model.txHash,
+					status: TransactionStatusEnum.SubmittedToDestination,
+					isRefund: false,
+				};
+
+				break;
+			default:
+				statesMap[model.txHash] = {
+					sourceTxHash: model.txHash,
+					status: TransactionStatusEnum.ExecutedOnDestination,
+					isRefund: false,
+				};
+		}
+	}
+
+	return statesMap;
 };
 
 export const updateBridgeTransactionStates = (

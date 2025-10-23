@@ -20,6 +20,7 @@ export const ChainEnum = {
 	...ChainApexBridgeEnum,
 	Base: 'base',
 	BNB: 'bsc',
+	Solana: 'solana',
 } as const;
 
 export type ChainEnum = (typeof ChainEnum)[keyof typeof ChainEnum];

@@ -21,10 +21,12 @@ import {
 	BridgingRequestNotFinalStates,
 	getBridgingRequestStates,
 	GetBridgingRequestStatesModel,
+	getBridgingSolanaStates,
 	getCentralizedBridgingRequestStates,
 	getHasTxFailedRequestStates,
 	GetLayerZeroBridgingRequestStatesModel,
 	getLayerZeroRequestStates,
+	GetSolanaBridgingRequestStatesModel,
 	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
@@ -162,9 +164,24 @@ export class BridgeTransactionService {
 					const modelsPendingSkyline: GetBridgingRequestStatesModel[] = [];
 					const modelsCentralized: GetBridgingRequestStatesModel[] = [];
 					const modelsLayerZero: GetLayerZeroBridgingRequestStatesModel[] = [];
+					const modelsSolana: GetSolanaBridgingRequestStatesModel[] = [];
 					for (const entity of entities) {
-						// handle layer zero
+						// handle solana
+						if (
+							(entity.originChain === ChainEnum.Solana &&
+								entity.destinationChain === ChainEnum.Nexus) ||
+							(entity.originChain === ChainEnum.Nexus &&
+								entity.destinationChain === ChainEnum.Solana)
+						) {
+							modelsSolana.push({
+								txHash: entity.sourceTxHash,
+							});
+
+							continue;
+						}
+
 						if (entity.isLayerZero) {
+							// handle layer zero
 							if (modesSupported.has(BridgingModeEnum.LayerZero)) {
 								modelsLayerZero.push({
 									txHash: entity.sourceTxHash,
@@ -228,6 +245,7 @@ export class BridgeTransactionService {
 						statesTxFailedSkyline,
 						statesTxFailedReactor,
 						stateslayerZero,
+						statesSolana,
 					] = await Promise.all([
 						getBridgingRequestStates(
 							chain,
@@ -251,6 +269,7 @@ export class BridgeTransactionService {
 							modelsPendingReactor,
 						),
 						getLayerZeroRequestStates(modelsLayerZero),
+						getBridgingSolanaStates(modelsSolana),
 					]);
 
 					Object.keys(statesSkyline).length > 0 &&
@@ -285,6 +304,7 @@ export class BridgeTransactionService {
 							...statesReactor,
 							...statesCentralized,
 							...stateslayerZero,
+							...statesSolana,
 						},
 						{ ...statesTxFailedReactor, ...statesTxFailedSkyline },
 					);

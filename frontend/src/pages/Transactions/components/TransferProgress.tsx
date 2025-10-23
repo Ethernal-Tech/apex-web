@@ -117,6 +117,11 @@ const chainStatusIcons: {
       done: NexusSuccessIcon,
       error: NexusErrorIcon,
     },
+    [ChainEnum.Solana]:{
+        inProgress: PrimeInProgressIcon,
+        done: PrimeSuccessIcon,
+        error: PrimeErrorIcon,
+    }
   };
 
 const getDefaultSteps = (sourceChain:ChainEnum, destinationChain:ChainEnum, isRefund: boolean):StepType[] =>{

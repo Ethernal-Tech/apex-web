@@ -79,6 +79,21 @@ export const convertDfmToWei = (dfm: string | number): string => {
 	return toWei(dfm, 12);
 };
 
+const LPS = BigInt(1_000_000_000);
+
+export const lamportsToSolExact = (lamports: bigint, decimals = 9): string => {
+  const whole = lamports / LPS;
+  const frac = (lamports % LPS).toString().padStart(9, "0");
+  const trimmed = frac.slice(0, decimals).replace(/0+$/, "");
+  return trimmed ? `${whole}.${trimmed}` : whole.toString();
+};
+
+export const solToLamportsExact = (sol: string): bigint => {
+  const [w = "0", f = ""] = sol.split(".");
+  const frac = (f + "0".repeat(9)).slice(0, 9); // pad/truncate to 9
+  return BigInt(w) * LPS + BigInt(frac);
+};
+
 export const shouldUseMainnet = (src: ChainEnum, dst: ChainEnum): boolean =>
   appSettings.isMainnet || isLZBridging(src, dst);
 

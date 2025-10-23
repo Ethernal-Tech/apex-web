@@ -18,7 +18,9 @@ export enum TokenEnum {
     ETH = 'ETH',
     BAP3X = 'bAP3X',
     BNAP3X = 'bnAP3X',
-    BNB = 'BNB'
+    BNB = 'BNB',
+    SOL = 'SOL',
+    SAPEX = 'sAP3X'
 }
 
 export enum ApexBridgeNetwork {
@@ -28,12 +30,15 @@ export enum ApexBridgeNetwork {
     MainnetCardano = 'MainnetCardano',
     MainnetBase = "MainnetBase",
     MainnetBsc = "MainnetBsc",
+    MainnetSolana = "MainnetSolana",
     TestnetPrime = 'TestnetPrime',
     TestnetVector = 'TestnetVector',
     TestnetNexus = 'TestnetNexus',
     PreviewCardano = 'PreviewCardano',
     TestnetBase = "TestnetBase",
-    TestnetBsc = 'TestnetBsc'
+    TestnetBsc = 'TestnetBsc',
+    TestnetSolana = 'TestnetSolana',
+
 }
 
 export enum UtxoRetrieverEnum {

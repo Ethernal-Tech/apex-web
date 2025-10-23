@@ -16,6 +16,9 @@ const TESTNET_BASE_NETWORK_ID = BigInt(84532) // for Base testnet
 const MAINNET_BSC_NETWORK_ID = BigInt(56) // for BNB Smart Chain mainnet
 const TESTNET_BSC_NETWORK_ID = BigInt(97) // for BNB Smart Chain testnet(check for this)
 
+const MAINNET_SOLANA_NETWORK_ID = BigInt(101) // for SOLANA mainnet
+const TESTNET_SOLANA_NETWORK_ID = BigInt(103) // for SOLANA testnet
+
 type ChainData = {
     mainnet: { networkID: number|bigint, network: ApexBridgeNetwork },
     testnet: { networkID: number|bigint, network: ApexBridgeNetwork },
@@ -81,6 +84,16 @@ const CHAIN_DATA: {[key: string]: ChainData} = {
             networkID: TESTNET_BSC_NETWORK_ID,
             network: ApexBridgeNetwork.TestnetBsc
         }
+    },
+    [ChainEnum.Solana]:{
+        mainnet:{
+            networkID:  MAINNET_SOLANA_NETWORK_ID,
+            network: ApexBridgeNetwork.MainnetSolana,
+        },
+        testnet: {
+            networkID: TESTNET_SOLANA_NETWORK_ID,
+            network: ApexBridgeNetwork.TestnetSolana
+        }
     }
 }
 
@@ -91,7 +104,8 @@ const NETWORK_TO_CHAIN: {mainnet: {[key: string]: ChainEnum}, testnet: {[key: st
         [ApexBridgeNetwork.MainnetNexus]: ChainEnum.Nexus,
         [ApexBridgeNetwork.MainnetCardano]: ChainEnum.Cardano,
         [ApexBridgeNetwork.MainnetBase]: ChainEnum.Base,
-        [ApexBridgeNetwork.MainnetBsc]: ChainEnum.Bsc
+        [ApexBridgeNetwork.MainnetBsc]: ChainEnum.Bsc,
+        [ApexBridgeNetwork.MainnetSolana]: ChainEnum.Solana
 
     },
     testnet: {
@@ -100,7 +114,8 @@ const NETWORK_TO_CHAIN: {mainnet: {[key: string]: ChainEnum}, testnet: {[key: st
         [ApexBridgeNetwork.TestnetNexus]: ChainEnum.Nexus,
         [ApexBridgeNetwork.PreviewCardano]: ChainEnum.Cardano,
         [ApexBridgeNetwork.TestnetBase]: ChainEnum.Base,
-        [ApexBridgeNetwork.TestnetBsc]: ChainEnum.Bsc
+        [ApexBridgeNetwork.TestnetBsc]: ChainEnum.Bsc,
+        [ApexBridgeNetwork.TestnetSolana]: ChainEnum.Solana
     }
 }
 
@@ -129,6 +144,9 @@ export const fromEvmNetworkIdToNetwork = (
     if (networkId === MAINNET_BSC_NETWORK_ID) {
         return ApexBridgeNetwork.MainnetBsc
     }
+    if (networkId === MAINNET_SOLANA_NETWORK_ID){
+        return ApexBridgeNetwork.MainnetSolana
+    }
   } else {
     if (networkId === TESTNET_NEXUS_NETWORK_ID) {
       return ApexBridgeNetwork.TestnetNexus;
@@ -139,11 +157,17 @@ export const fromEvmNetworkIdToNetwork = (
     if (networkId === TESTNET_BSC_NETWORK_ID) {
         return ApexBridgeNetwork.TestnetBsc
     }
+    if (networkId === TESTNET_SOLANA_NETWORK_ID){
+        return ApexBridgeNetwork.TestnetSolana
+    }
   }
   return undefined;
 };
 
 export const checkChainCompatibility = (chain: ChainEnum, network: string, networkId: number|bigint, useMainnet: boolean): boolean => {
+    console.log("FROM CHAIN NETWORK ID", fromChainToNetworkId(chain, useMainnet), "NETWORK ID" ,  networkId);
+    console.log("FROM NETWORK TO CHAIN", fromNetworkToChain(network, useMainnet),"CHAIN", chain)
+
     return fromChainToNetworkId(chain, useMainnet) === networkId && fromNetworkToChain(network, useMainnet) === chain;
 }
 

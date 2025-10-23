@@ -1,0 +1,451 @@
+{
+  "address": "9r3WeS5AWMXnnt1vepkq8RkaTsR5RYtv7cgBRZ3fs6q3",
+  "metadata": {
+    "name": "skyline_program",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "bridge_request",
+      "discriminator": [
+        174,
+        128,
+        16,
+        189,
+        59,
+        127,
+        134,
+        232
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "signers_ata",
+          "writable": true
+        },
+        {
+          "name": "bridging_request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  114,
+                  105,
+                  100,
+                  103,
+                  105,
+                  110,
+                  103,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "signer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "receiver",
+          "type": {
+            "array": [
+              "u8",
+              57
+            ]
+          }
+        },
+        {
+          "name": "destination_chain",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "bridge_tokens",
+      "discriminator": [
+        70,
+        65,
+        99,
+        110,
+        122,
+        192,
+        214,
+        147
+      ],
+      "accounts": [
+        {
+          "name": "mint",
+          "writable": true
+        },
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "validator_set",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  108,
+                  105,
+                  100,
+                  97,
+                  116,
+                  111,
+                  114,
+                  45,
+                  115,
+                  101,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient"
+        },
+        {
+          "name": "recipient_ata",
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "close_request",
+      "discriminator": [
+        170,
+        46,
+        165,
+        120,
+        223,
+        102,
+        115,
+        2
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "bridging_request",
+          "writable": true
+        },
+        {
+          "name": "validator_set",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  108,
+                  105,
+                  100,
+                  97,
+                  116,
+                  111,
+                  114,
+                  45,
+                  115,
+                  101,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "validator_set",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  108,
+                  105,
+                  100,
+                  97,
+                  116,
+                  111,
+                  114,
+                  45,
+                  115,
+                  101,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "validators",
+          "type": {
+            "vec": "pubkey"
+          }
+        }
+      ]
+    },
+    {
+      "name": "validator_set_change",
+      "discriminator": [
+        48,
+        238,
+        45,
+        206,
+        203,
+        126,
+        180,
+        239
+      ],
+      "accounts": [
+        {
+          "name": "validator_set",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  108,
+                  105,
+                  100,
+                  97,
+                  116,
+                  111,
+                  114,
+                  45,
+                  115,
+                  101,
+                  116
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_validator_set",
+          "type": {
+            "vec": "pubkey"
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "BridgingRequest",
+      "discriminator": [
+        15,
+        162,
+        57,
+        90,
+        131,
+        236,
+        93,
+        38
+      ]
+    },
+    {
+      "name": "ValidatorSet",
+      "discriminator": [
+        35,
+        206,
+        97,
+        202,
+        43,
+        11,
+        11,
+        127
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "MaxValidatorsExceeded",
+      "msg": "Maximum number of validators exceeded"
+    },
+    {
+      "code": 6001,
+      "name": "MinValidatorsNotMet",
+      "msg": "Minimum number of validators not met"
+    },
+    {
+      "code": 6002,
+      "name": "ValidatorsNotUnique",
+      "msg": "Validators need to be unique"
+    },
+    {
+      "code": 6003,
+      "name": "NotEnoughSigners",
+      "msg": "Not enough signers provided"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidSigner",
+      "msg": "Invalid signer provided"
+    },
+    {
+      "code": 6005,
+      "name": "InsufficientFunds",
+      "msg": "Insufficient funds in the account"
+    }
+  ],
+  "types": [
+    {
+      "name": "BridgingRequest",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "sender",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "receiver",
+            "type": {
+              "array": [
+                "u8",
+                57
+              ]
+            }
+          },
+          {
+            "name": "destination_chain",
+            "type": "u8"
+          },
+          {
+            "name": "mint_token",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ValidatorSet",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "signers",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "threshold",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -11,10 +11,11 @@ import BlockfrostRetriever from '../features/BlockfrostRetriever';
 import OgmiosRetriever from '../features/OgmiosRetriever';
 import { getUtxoRetrieverType } from '../features/utils';
 import { UtxoRetrieverEnum } from '../features/enums';
-import { getChainInfo, isEvmChain } from '../settings/chain';
+import { getChainInfo, isEvmChain, isSolanaBridging } from '../settings/chain';
 import { getBridgingInfo, getToken } from '../settings/token';
 import { shouldUseMainnet } from '../utils/generalUtils';
-import { ISettingsState } from '../settings/settingsRedux';
+import { ISettingsState } from '../settings/settingsRedux';import solanaWalletHandler from '../features/SolanaWalletHandler';
+;
 
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
@@ -36,6 +37,23 @@ const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, 
 
         return { balance: balances};
     }
+
+    if (isSolanaBridging(srcChain)){
+        const balances : {[key : string] : string} = {}
+
+        const splBalance = await solanaWalletHandler.getSPLTokenBalance('DfgZKtDcKFWNUTC7rifS4c8GdMKqV76adiyusTnEqz7m');
+
+        const token = getToken(ChainEnum.Solana, ChainEnum.Nexus, true);
+
+        balances[token!] = splBalance;
+
+        const balance = await solanaWalletHandler.getBalance()
+
+        balances[currencyTokenName] = balance;
+
+        return {balance: balances}
+    }
+
 
     let utxoRetriever: UtxoRetriever = walletHandler;
     const addr = await walletHandler.getChangeAddress();

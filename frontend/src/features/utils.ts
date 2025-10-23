@@ -1,5 +1,5 @@
 import appSettings from "../settings/appSettings";
-import { isEvmChain } from "../settings/chain";
+import { isEvmChain, isSolanaBridging } from "../settings/chain";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { UtxoRetrieverEnum } from "./enums";
 import walletHandler from "./WalletHandler";
@@ -7,7 +7,7 @@ import walletHandler from "./WalletHandler";
 const supportedWalletVersion = { major: 2, minor: 0, patch: 9, build: 14 };
 
 export const getUtxoRetrieverType = (chain: ChainEnum): UtxoRetrieverEnum => {
-    if (isEvmChain(chain)) {
+    if (isEvmChain(chain) || isSolanaBridging(chain)) {
 	    return UtxoRetrieverEnum.Wallet;
     }
 

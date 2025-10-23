@@ -8,15 +8,17 @@ import { ErrorResponse, tryCatchJsonByAction } from "../../utils/fetchUtils";
 import { toast } from "react-toastify";
 import walletHandler from '../../features/WalletHandler';
 import { createCardanoTransactionAction, createEthTransactionAction, getCardanoTransactionFeeAction } from "./action";
-import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, CreateEthTransactionResponseDto, CreateTransactionDto, TxTypeEnum } from "../../swagger/apexBridgeApiService";
+import { BridgeTransactionDto, CardanoTransactionFeeResponseDto, ChainEnum, CreateEthTransactionResponseDto, CreateTransactionDto, TxTypeEnum } from "../../swagger/apexBridgeApiService";
 import { getLayerZeroTransferResponse, signAndSubmitCardanoTx, signAndSubmitEthTx, signAndSubmitLayerZeroTx} from "../../actions/submitTx";
 import { CreateCardanoTxResponse, CreateEthTxResponse } from "./components/types";
 import NewTransaction from "./components/NewTransaction";
 import { useNavigate } from "react-router-dom";
-import { BridgingModeEnum, getBridgingMode, isCardanoChain, isEvmChain, toApexBridge } from "../../settings/chain";
+import { BridgingModeEnum, getBridgingMode, isCardanoChain, isEvmChain, isSolanaBridging, toApexBridge } from "../../settings/chain";
 import BridgeInputLZ from "./components/LayerZeroBridgeInput";
 import { validateSubmitTxInputs } from "../../utils/validationUtils";
 import { SubmitLoadingState, UpdateSubmitLoadingState } from "../../utils/statusUtils";
+import { getSolanaTransaction, signAndSubmitSolanaTx } from "../../actions/submitSolanaTx";
+import { sendEthSolanaTransaction } from "../../actions/submitEthSolana";
 
 function NewTransactionPage() {	
 	const [loadingState, setLoadingState] = useState<SubmitLoadingState | undefined>();
@@ -128,6 +130,7 @@ function NewTransactionPage() {
 		})
 	}, [account, chain, destinationChain])
 
+
 	const getEthTxFee = useCallback(async (address: string, amount: string): Promise<CreateEthTransactionResponseDto> => {
 		const createTxDto = prepareCreateEthTx(address, amount);
 		const bindedCreateAction = createEthTransactionAction.bind(null, createTxDto);
@@ -201,6 +204,7 @@ function NewTransactionPage() {
 		[chain, createCardanoTx, createEthTx, goToDetails, updateLoadingState],
 	);
 
+
 	const handleLZSubmitCallback = useCallback(
 		async(toAddress: string, amount: string) =>{
 			setLoadingState({
@@ -209,16 +213,31 @@ function NewTransactionPage() {
 			});
 			
 			try{
-				const lzResponse = await getLayerZeroTransferResponse(settings, chain, destinationChain, account, toAddress, amount);
-				const response = await signAndSubmitLayerZeroTx(
-					account,
-					settings.layerZeroChains[chain]?.txType || TxTypeEnum.Legacy,
-					toAddress,
-					lzResponse,
-					updateLoadingState,
-				);
+				if ((isSolanaBridging(chain, destinationChain))){
+					if (chain === ChainEnum.Solana){
+						const solanaTx = await getSolanaTransaction(settings, chain, destinationChain, account, toAddress, amount);
+						
+						const response = await signAndSubmitSolanaTx(solanaTx, updateLoadingState)
 
-				response && goToDetails(response);
+						response && goToDetails(response);
+					}else{
+						const response = await sendEthSolanaTransaction(settings, chain, destinationChain, account, toAddress, amount, updateLoadingState);
+						
+						response && goToDetails(response);
+					}
+					
+				} else{
+					const lzResponse = await getLayerZeroTransferResponse(settings, chain, destinationChain, account, toAddress, amount);
+					const response = await signAndSubmitLayerZeroTx(
+						account,
+						settings.layerZeroChains[chain]?.txType || TxTypeEnum.Legacy,
+						toAddress,
+						lzResponse,
+						updateLoadingState,
+					);
+
+					response && goToDetails(response);
+				}
 			}
 			catch(err){
 				console.log(err);
@@ -236,7 +255,7 @@ function NewTransactionPage() {
 	return (
 <BasePage>
   <NewTransaction txInProgress={false}>
-    {bridgingModeInfo.bridgingMode === BridgingModeEnum.LayerZero ? (
+    {bridgingModeInfo.bridgingMode === BridgingModeEnum.LayerZero || isSolanaBridging(chain, destinationChain) ? (
       <BridgeInputLZ
 		bridgeTxFee={bridgeTxFee}
         setBridgeTxFee={setBridgeTxFee}

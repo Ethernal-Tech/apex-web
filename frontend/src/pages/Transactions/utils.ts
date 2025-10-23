@@ -1,10 +1,11 @@
 import { TokenEnum } from "../../features/enums";
 import { ChainEnum } from "../../swagger/apexBridgeApiService";
 import { useMemo } from "react";
-import { getBridgingInfo, getCurrencyTokenInfo, getTokenInfo, TokenInfo } from "../../settings/token";
+import { getBridgingInfo, getCurrencyTokenInfo, getToken, getTokenInfo, TokenInfo } from "../../settings/token";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { getBridgingMode } from "../../settings/chain";
+import { chainSchema } from "web3/lib/commonjs/eth.exports";
 
 export interface TokenOption {
   value: TokenEnum;
@@ -61,3 +62,11 @@ export const useSupporedSourceLZTokenOptions = (srcChain: ChainEnum, dstChain: C
   }, [srcChain, dstChain]);
 }
 
+export const useSupportedSolanaTokenOption = (): TokenOption[] =>{
+  const bridgingInfo = getBridgingInfo(ChainEnum.Solana, ChainEnum.Nexus);
+  const options: TokenOption[] = [];
+
+  options.push(tokenInfoToTokenOption(getTokenInfo(bridgingInfo.wrappedToken!)));
+    
+  return options 
+}

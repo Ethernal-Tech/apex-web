@@ -91,6 +91,9 @@ export class SettingsService {
 			allowedDirections[ChainEnum.Nexus] = [ChainEnum.Base, ChainEnum.BNB];
 		}
 
+		allowedDirections[ChainEnum.Solana] = [ChainEnum.Nexus]; // TODO: Hack for hackaton
+		allowedDirections[ChainEnum.Nexus].push(ChainEnum.Solana); // TODO: Hack for hackaton
+
 		const enabledChains = new Set<string>();
 		// reactor
 		reactorSettings.enabledChains.forEach((chain) => enabledChains.add(chain));
@@ -98,6 +101,8 @@ export class SettingsService {
 		skylineSettings.enabledChains.forEach((chain) => enabledChains.add(chain));
 		// layer zero
 		layerZeroChains.forEach((x) => enabledChains.add(x.chain));
+
+		enabledChains.add(ChainEnum.Solana); // TODO: hack for hackaton
 
 		this.SettingsResponse = new SettingsFullResponseDto();
 		this.SettingsResponse.layerZeroChains = layerZeroChains;

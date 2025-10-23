@@ -1,5 +1,5 @@
 import { isAddress } from "web3-validator";
-import { BridgingModeEnum, getBridgingMode, isCardanoChain, isEvmChain } from "../settings/chain";
+import { BridgingModeEnum, getBridgingMode, isCardanoChain, isEvmChain, isSolanaBridging } from "../settings/chain";
 import { ChainEnum } from "../swagger/apexBridgeApiService";
 import { getTokenInfoBySrcDst } from "../settings/token";
 import { NewAddress, RewardAddress } from "../features/Address/addreses";
@@ -12,6 +12,11 @@ export const validateSubmitTxInputs = (
     isNativeToken: boolean, settings?: ISettingsState,
 ): string | undefined => {
     const subSettings = getBridgingMode(srcChain, dstChain, settings);
+
+    if (isSolanaBridging(srcChain, dstChain)){
+        return solanaValidation(BigInt(amount))
+    }
+
     switch (subSettings.bridgingMode) {
     case BridgingModeEnum.LayerZero:
         return layerZeroValidation(BigInt(amount), dstAddr);
@@ -30,6 +35,12 @@ function layerZeroValidation(amount: bigint, dstAddr: string): string | undefine
     }
     if (!isAddress(dstAddr)) {
         return `Invalid destination address: ${dstAddr}`;
+    }
+}
+
+function solanaValidation(amount: bigint){
+    if (amount === BigInt(0)){
+        return 'Amount cant be zero'
     }
 }
 

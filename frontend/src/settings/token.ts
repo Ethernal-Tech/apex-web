@@ -74,6 +74,18 @@ const tokenInfos: Partial<Record<TokenEnum, TokenInfo>> = {
     label: 'BNB',
     borderColor: '#F3BA2F',
   },
+  [TokenEnum.SOL]: {
+    token: TokenEnum.SOL,
+    icon: ApexIcon,
+    label: 'SOL',
+    borderColor: '#00FFA3'
+  },
+  [TokenEnum.SAPEX]: {
+    token: TokenEnum.SAPEX,
+    icon: ApexIcon,
+    label: 'sAP3X',
+    borderColor: '#00FFA3'
+  }
 }
 
 const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, BridgingInfo>>>> = {
@@ -115,6 +127,9 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
     },
     [ChainEnum.Bsc]: {
       isCurrencyBridgingAllowed: true
+    },
+    [ChainEnum.Solana]: {
+      isCurrencyBridgingAllowed: true
     }
   },
   [ChainEnum.Base]: {
@@ -135,6 +150,12 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
     [ChainEnum.Base]: {
       isCurrencyBridgingAllowed: false,
       wrappedToken: TokenEnum.BNAP3X
+    }
+  },
+  [ChainEnum.Solana]: {
+    [ChainEnum.Nexus]:{
+      isCurrencyBridgingAllowed: false,
+      wrappedToken: TokenEnum.SAPEX
     }
   }
 }

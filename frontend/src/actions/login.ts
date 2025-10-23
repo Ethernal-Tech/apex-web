@@ -11,9 +11,10 @@ import { setChainAction } from "../redux/slices/chainSlice";
 import { NavigateFunction } from "react-router-dom";
 import { HOME_ROUTE } from "../pages/PageRouter";
 import { setAccountInfoAction } from "../redux/slices/accountInfoSlice";
-import { getSrcChains, isEvmChain } from "../settings/chain";
+import { getSrcChains, isEvmChain, isSolanaBridging } from "../settings/chain";
 import { ISettingsState } from "../settings/settingsRedux";
 import { retry, shortRetryOptions, shouldUseMainnet } from "../utils/generalUtils";
+import solanaWalletHandler from "../features/SolanaWalletHandler";
 
 let onLoadCalled = false
 
@@ -27,6 +28,8 @@ const checkAndSetEvmData = async (
         const expectedNetworkId = fromChainToNetworkId(srcChain, useMainnet);
         throw new Error(`Invalid networkId: ${networkId}. Expected networkId: ${expectedNetworkId}. Please select network with networkId: ${expectedNetworkId} in your wallet.`);
     }
+
+    console.log("NETWORK IS", )
 
     if (!checkChainCompatibility(srcChain, network, networkId, useMainnet)) {
         const expectedNetwork = fromChainToNetworkId(srcChain, useMainnet);
@@ -48,6 +51,40 @@ const checkAndSetEvmData = async (
     }))
 }
 
+const checkAndSetSolanaData = async (
+    selectedWalletName: string, srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState, dispatch: Dispatch
+) => {
+    const useMainnet = shouldUseMainnet(srcChain, dstChain);
+    const networkId = await solanaWalletHandler.getNetworkId();
+    const network = fromEvmNetworkIdToNetwork(BigInt(networkId), useMainnet);
+    if (!network) {
+        const expectedNetworkId = fromChainToNetworkId(srcChain, useMainnet);
+        throw new Error(`Invalid networkId: ${networkId}. Expected networkId: ${expectedNetworkId}. Please select network with networkId: ${expectedNetworkId} in your wallet.`);
+    }
+
+    console.log("NETWORK", network);
+
+    if (!checkChainCompatibility(srcChain, network, BigInt(networkId), useMainnet)) {
+        const expectedNetwork = fromChainToNetworkId(srcChain, useMainnet);
+        throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`);
+    }
+
+    if (!getSrcChains(settings).some(x => x === srcChain)) {
+        throw new Error(`Chain: ${srcChain} not supported.`);
+    }
+
+    const account = await retry(solanaWalletHandler.getAddress, shortRetryOptions.retryCnt, shortRetryOptions.waitTime);
+    if (!account) {
+        throw new Error('No accounts connected')
+    }
+
+    dispatch(setWalletAction(selectedWalletName));
+    dispatch(setAccountInfoAction({
+        account, networkId, network, balance: {},
+    }))
+}
+
+
 const onEvmAccountsChanged = async (
     selectedWalletName: string, srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState, dispatch: Dispatch,
 ): Promise<void> => {
@@ -61,6 +98,21 @@ const onEvmAccountsChanged = async (
         logout(dispatch)
     }
 }
+
+const onSolanaAccountsChanged = async (
+    selectedWalletName: string, srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState, dispatch: Dispatch,
+): Promise<void> => {
+    try {
+        await checkAndSetSolanaData(selectedWalletName, srcChain, dstChain, settings, dispatch)
+    } catch (e) {
+        const we = `Error on solana accounts changed. ${e}`
+        console.log(we)
+        toast.error(we);
+
+        logout(dispatch)
+    }
+}
+
 
 const enableEvmWallet = async (
     selectedWalletName: string, srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState, dispatch: Dispatch,
@@ -123,6 +175,29 @@ const enableCardanoWallet = async (
     return true;
 }
 
+const enableSolanaWallet = async(
+    selectedWalletName: string, srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState, dispatch: Dispatch,
+) => {
+    const expectedChainId = fromChainToNetworkId(srcChain, shouldUseMainnet(srcChain, dstChain));
+    if (!expectedChainId) {
+        throw new Error(`Chain ${srcChain} not supported.`);
+    }
+
+    await solanaWalletHandler.enable(
+        (address?: string) => onSolanaAccountsChanged(selectedWalletName, srcChain, dstChain, settings, dispatch),
+    );
+    let success = solanaWalletHandler.checkWallet()
+
+    if (!success) {
+        throw new Error('Failed to connect to wallet.');
+    }
+
+    await checkAndSetSolanaData(selectedWalletName, srcChain, dstChain, settings, dispatch)
+    
+    return true
+}
+
+
 const enableWallet = async (
     selectedWalletName: string, srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState, dispatch: Dispatch,
 ) => {// 1. nexus (evm metamask) wallet login handling
@@ -136,6 +211,18 @@ const enableWallet = async (
 
         evmWalletHandler.clearEnabledWallet()
         return false;
+    }
+
+    if (isSolanaBridging(srcChain)){
+        try {
+            return await enableSolanaWallet(selectedWalletName, srcChain, dstChain, settings, dispatch)
+        } catch(e) {
+            console.log(e)
+            toast.error(`${e}`);
+        }
+
+        solanaWalletHandler.clearEnabledWallet()
+        return false
     }
 
     // 2. prime and vector (cardano eternl) wallet login handling
@@ -181,6 +268,10 @@ export const login = async (
 
     if (isEvmChain(srcChain)) {
         const wallets = evmWalletHandler.getInstalledWallets();
+        wallet = wallets.length > 0 ? wallets[0].name : undefined;
+    } else if (isSolanaBridging(srcChain))
+    {
+        const wallets = solanaWalletHandler.getInstalledWallets();
         wallet = wallets.length > 0 ? wallets[0].name : undefined;
     } else {
         const wallets = walletHandler.getInstalledWallets();
