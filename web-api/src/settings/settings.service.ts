@@ -91,8 +91,8 @@ export class SettingsService {
 			allowedDirections[ChainEnum.Nexus] = [ChainEnum.Base, ChainEnum.BNB];
 		}
 
-		allowedDirections[ChainEnum.Solana] = [ChainEnum.Nexus]; // TODO: Hack for hackaton
-		allowedDirections[ChainEnum.Nexus].push(ChainEnum.Solana); // TODO: Hack for hackaton
+		allowedDirections[ChainEnum.Solana] = [ChainEnum.Prime]; // TODO: Hack for hackaton
+		allowedDirections[ChainEnum.Prime].push(ChainEnum.Solana); // TODO: Hack for hackaton
 
 		const enabledChains = new Set<string>();
 		// reactor

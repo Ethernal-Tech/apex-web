@@ -4,7 +4,7 @@ import PasteTextInput from "../components/PasteTextInput";
 import PasteApexAmountInput from "./PasteApexAmountInput";
 import ButtonCustom from "../../../components/Buttons/ButtonCustom";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { convertApexToDfm, convertDfmToApex, convertDfmToWei, solToLamportsExact } from '../../../utils/generalUtils';
+import { convertApexToDfm, solToLamportsExact } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import { ChainEnum, TxTypeEnum, TransactionDataDto } from '../../../swagger/apexBridgeApiService';
@@ -18,7 +18,8 @@ import FeeInformation from './FeeInformation';
 import { estimateEthTxFee, getLayerZeroTransferResponse } from '../../../actions/submitTx';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
-import { populateTx } from '../../../actions/submitEthSolana';
+import { getSolanaTransaction } from '../../../actions/submitSolanaTx';
+import solanaWalletHandler from '../../../features/SolanaWalletHandler';
 
 type BridgeInputType = {
   bridgeTxFee: string
@@ -80,20 +81,15 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
 
     if (isSolanaBridging(chain, destinationChain)){
 
-      if (chain === ChainEnum.Nexus){
-        const tx = populateTx(amountDfm);
-
-        const baseTxFee = await estimateEthTxFee(
-          { ...tx, from: account },
-          TxTypeEnum.Legacy,
-        )
-
-        setUserWalletFee(baseTxFee.toString(10));
-        setBridgeTxFee('1000000000000000000');
-      }
-
       if (chain === ChainEnum.Solana){
-        
+
+        const tx = await getSolanaTransaction(settings, chain, destinationChain, account, destinationAddr , amount)
+
+          const estimatedFeeLamports = await solanaWalletHandler.getFeeForTransaction(tx.tx); // TO DO FIX THIS
+
+          setUserWalletFee(estimatedFeeLamports);
+
+          setBridgeTxFee('123000');
       }
 
       return 
@@ -190,11 +186,11 @@ const BridgeInputLZ = ({ bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, submit, 
 
   const onSubmit = useCallback(async () => {
     if (!sourceToken) return;
-    await submit(destinationAddr, isSolanaBridging(chain) ? solToLamportsExact(amount || '0').toString() : convertApexToDfm(amount || '0', chain))
+    await submit(destinationAddr, chain === ChainEnum.Solana ? solToLamportsExact(amount || '0').toString() : convertApexToDfm(amount || '0', chain))
   }, [amount, destinationAddr, submit, chain, sourceToken])
 
   // compute entered amount in DFM/wei (same unit as your balances)
-  const enteredDfm = isSolanaBridging(chain)? solToLamportsExact(amount || '0') : BigInt(convertApexToDfm(amount || '0', chain));
+  const enteredDfm = chain === ChainEnum.Solana ? solToLamportsExact(amount || '0') : BigInt(convertApexToDfm(amount || '0', chain));
 
   // validations
   const isZero = enteredDfm === BigInt(0);

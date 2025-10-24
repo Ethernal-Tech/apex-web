@@ -9,6 +9,7 @@ import { RootState } from "../../../redux/store";
 import appSettings from "../../../settings/appSettings";
 import { getBridgingInfo, getTokenInfo } from "../../../settings/token";
 import { BridgingModeEnum, getBridgingMode, getChainInfo, isSolanaBridging } from "../../../settings/chain";
+import { ChainEnum } from "../../../swagger/apexBridgeApiService";
 
 
 const TotalBalance = () => {
@@ -27,7 +28,7 @@ const TotalBalance = () => {
     let totalBalanceInApex: string|null
     let totalBalanceInNativeToken: string|null
 
-    if (isSolanaBridging(chain)){
+    if (chain === ChainEnum.Solana){
         totalBalanceInApex = totalDfmBalance[chainCurrency] ? toFixed(lamportsToSolExact(BigInt(totalDfmBalance[chainCurrency])).toString(), 6) : null;
         totalBalanceInNativeToken = totalDfmBalance[chainNativeToken!] ? toFixed(lamportsToSolExact(BigInt(totalDfmBalance[chainNativeToken!])).toString(), 6) : null;
     }

@@ -29,8 +29,6 @@ const checkAndSetEvmData = async (
         throw new Error(`Invalid networkId: ${networkId}. Expected networkId: ${expectedNetworkId}. Please select network with networkId: ${expectedNetworkId} in your wallet.`);
     }
 
-    console.log("NETWORK IS", )
-
     if (!checkChainCompatibility(srcChain, network, networkId, useMainnet)) {
         const expectedNetwork = fromChainToNetworkId(srcChain, useMainnet);
         throw new Error(`Oops! You're connected to the wrong network. You're currently on ${network}, but this feature only works with ${expectedNetwork}. Please switch your wallet to ${expectedNetwork} and try again.`);
@@ -213,7 +211,7 @@ const enableWallet = async (
         return false;
     }
 
-    if (isSolanaBridging(srcChain)){
+    if (srcChain === ChainEnum.Solana){
         try {
             return await enableSolanaWallet(selectedWalletName, srcChain, dstChain, settings, dispatch)
         } catch(e) {

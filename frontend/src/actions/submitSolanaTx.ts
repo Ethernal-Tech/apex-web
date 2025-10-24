@@ -32,7 +32,7 @@ export const signAndSubmitSolanaTx = async (
       throw new Error('Wallet not connected.');
   }
 
-  updateLoadingState({ content: 'Signing and submitting the transaction...' })
+  updateLoadingState({ content: 'Signing and submitting the transaction...' });
 
 
   console.log('submitting solana tx...', data.tx);
@@ -40,6 +40,8 @@ export const signAndSubmitSolanaTx = async (
   const walletResponse = await solanaWalletHandler.submitTx(data.tx);
 
   updateLoadingState({ content: 'Recording the transaction...', txHash: walletResponse })
+
+  
 
   const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
       originChain: data.srcChain,
@@ -51,7 +53,7 @@ export const signAndSubmitSolanaTx = async (
         { ...data.tx, block: walletResponse.blockHash },
         (_: string, value: any) => typeof value === 'bigint' ? `bigint:${value.toString()}` : value,
       ),
-      amount: data.amount,
+      amount: '123000',
       isFallback: false,
       nativeTokenAmount: data.amount,
       isLayerZero: false,
@@ -105,7 +107,6 @@ export const getSolanaTransaction = async function (
         mint: mint
     }).transaction();
 
-    console.log("SOLANA TRANSACTION", tx);
 
     return {srcChain: srcChain, dstChain: dstChain, fromAddr: fromAddr, toAddr: toAddr, amount: amount, tx: tx};
 }

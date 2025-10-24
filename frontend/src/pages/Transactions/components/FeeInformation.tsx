@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, styled, SxProps, Theme, Tooltip, Typography } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import { capitalizeWord, convertDfmToApex, toFixed } from '../../../utils/generalUtils';
+import { capitalizeWord, convertDfmToApex, lamportsToSolExact, toFixed } from '../../../utils/generalUtils';
 import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 import { getCurrencyTokenInfo } from '../../../settings/token';
 import { BridgingModeEnum } from '../../../settings/chain';
@@ -32,7 +32,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
       justifyContent:'space-between',
       ...sx
       }}>
-        {userWalletFee && <Typography sx={{
+        {userWalletFee && chain !== ChainEnum.Solana && <Typography sx={{
           display:'flex',
           justifyContent:'space-between'
         }}>
@@ -83,7 +83,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({ sx, userWalletFee, brid
                   <HelpOutlineIcon sx={{ marginLeft: '6px', fontSize: '16px' }}/>
               </Tooltip>
           </Box>
-          <Box component="span">{BigInt(bridgeTxFee) > 0 ? toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'} {currencyToken.label}
+          <Box component="span">{BigInt(bridgeTxFee) > 0 ? chain === ChainEnum.Solana ? toFixed(lamportsToSolExact(BigInt(bridgeTxFee)), 6) : toFixed(convertDfmToApex(bridgeTxFee, chain), 6): '0'} {currencyToken.label}
           </Box>
         </Typography>
         }

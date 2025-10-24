@@ -5,6 +5,9 @@ import {
   Transaction,
   clusterApiUrl,
   LAMPORTS_PER_SOL,
+  ComputeBudgetProgram,
+  TransactionMessage,
+  VersionedTransaction,
 } from "@solana/web3.js";
 import Solflare from "@solflare-wallet/sdk";
 // If you don't want the SDK, you can swap to `const wallet = (window as any).solflare` in getWallet()
@@ -221,6 +224,35 @@ class SolanaWalletHandler {
   getNetworkId = async (): Promise<number> => {
     return CLUSTER_IDS[this._cluster];
   };
+
+    getFeeForTransaction = async (tx: Transaction): Promise<string> => {
+    this._checkWalletAndThrow();
+    const connection = this.getConnection();
+    const feePayer = this.getWallet().publicKey;
+
+    if (!feePayer) {
+      console.warn("No fee payer available to estimate transaction fee.");
+      return "0";
+    }
+
+    tx.feePayer = feePayer;
+    const { blockhash } = await connection.getLatestBlockhash("finalized");
+    tx.recentBlockhash = blockhash;
+
+    const message = tx.compileMessage();
+
+    const feeInLamports = await connection.getFeeForMessage(
+      message,
+      "finalized"
+    );
+
+    if (feeInLamports.value === null) {
+      throw new Error("Could not estimate fee for transaction. It might be too large or invalid.");
+    }
+
+    return feeInLamports.value.toString();
+  };
+
 }
 
 const solanaWalletHandler = new SolanaWalletHandler(/* default devnet */);

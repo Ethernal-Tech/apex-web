@@ -18,10 +18,13 @@ import BridgeInputLZ from "./components/LayerZeroBridgeInput";
 import { validateSubmitTxInputs } from "../../utils/validationUtils";
 import { SubmitLoadingState, UpdateSubmitLoadingState } from "../../utils/statusUtils";
 import { getSolanaTransaction, signAndSubmitSolanaTx } from "../../actions/submitSolanaTx";
-import { sendEthSolanaTransaction } from "../../actions/submitEthSolana";
+import { signAndSubmitSolanaCardanoTx } from "../../submitPrimeSolana";
 
 function NewTransactionPage() {	
 	const [loadingState, setLoadingState] = useState<SubmitLoadingState | undefined>();
+
+	const addr = 'addr_test1qrg47erg46k52jk6alkw385du44r2nt852tz442wvsmvdjsr48zeh0wh00pjzeedm239zr6ax88nkg43eel96f66t4aquld338'; // TODO: fix this
+
 	
 	const navigate = useNavigate();
 	const chain = useSelector((state: RootState)=> state.chain.chain);
@@ -70,6 +73,23 @@ function NewTransactionPage() {
 	const prepareCreateCardanoTx = useCallback(async(address: string, amount: string, isNativeToken: boolean = false): Promise<CreateTransactionDto> => {
     	await walletHandler.getChangeAddress(); // this line triggers an error if the wallet account has been changed by the user in the meantime
 
+		if (chain === ChainEnum.Prime && ChainEnum.Solana){
+			const destChain = toApexBridge(ChainEnum.Cardano)
+			const originChain = toApexBridge(chain)
+
+			return new CreateTransactionDto({
+			bridgingFee: '0', // will be set on backend
+			operationFee: '0', // will be set on backend
+			destinationChain: destChain!, 
+			originChain: originChain!,
+			senderAddress: account,
+			destinationAddress: addr,
+			amount,
+			utxoCacheKey: undefined,
+			isNativeToken,
+		})
+		}
+
 		const destChain = toApexBridge(destinationChain)
 		const originChain = toApexBridge(chain)
 
@@ -87,6 +107,7 @@ function NewTransactionPage() {
 	}, [account, chain, destinationChain])
 
 	const getCardanoTxFee = useCallback(async (address: string, amount: string, isNativeToken: boolean): Promise<CardanoTransactionFeeResponseDto> => {
+
 		const createTxDto = await prepareCreateCardanoTx(address, amount, isNativeToken);
 		const bindedCreateAction = getCardanoTransactionFeeAction.bind(null, createTxDto);
 		const feeResponse = await tryCatchJsonByAction(bindedCreateAction, false);
@@ -98,19 +119,39 @@ function NewTransactionPage() {
 	}, [prepareCreateCardanoTx])
 
 	const createCardanoTx = useCallback(async (address: string, amount: string, isNativeToken: boolean): Promise<CreateCardanoTxResponse> => {
-		const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount, isNativeToken, settings);
-		if (validationErr) {
-			throw new Error(validationErr);
-		}
+		if (chain === ChainEnum.Prime && destinationChain === ChainEnum.Solana){
+			const addr = 'addr_test1qrg47erg46k52jk6alkw385du44r2nt852tz442wvsmvdjsr48zeh0wh00pjzeedm239zr6ax88nkg43eel96f66t4aquld338'; // TODO: fix this
 
-		const createTxDto =  await prepareCreateCardanoTx(address, amount, isNativeToken);
-		const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
-		const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
-		if (createResponse instanceof ErrorResponse) {
-			throw new Error(createResponse.err)
-		}
+			const validationErr = validateSubmitTxInputs(chain, ChainEnum.Cardano, addr, amount, isNativeToken, settings);
+			if (validationErr) {
+				throw new Error(validationErr);
+			}
 
-		return { createTxDto, createResponse };
+			const createTxDto =  await prepareCreateCardanoTx(addr, amount, isNativeToken);
+			const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
+			const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
+			if (createResponse instanceof ErrorResponse) {
+				throw new Error(createResponse.err)
+			}
+
+			return { createTxDto, createResponse };
+		}else{
+			console.log("WRONG IF")
+
+			const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount, isNativeToken, settings);
+			if (validationErr) {
+				throw new Error(validationErr);
+			}
+
+			const createTxDto =  await prepareCreateCardanoTx(address, amount, isNativeToken);
+			const bindedCreateAction = createCardanoTransactionAction.bind(null, createTxDto);
+			const createResponse = await tryCatchJsonByAction(bindedCreateAction, false);
+			if (createResponse instanceof ErrorResponse) {
+				throw new Error(createResponse.err)
+			}
+
+			return { createTxDto, createResponse };
+		}	
 	}, [chain, destinationChain, prepareCreateCardanoTx, settings])
 
 	const prepareCreateEthTx = useCallback((address: string, amount: string): CreateTransactionDto => {
@@ -167,16 +208,26 @@ function NewTransactionPage() {
 			try {
 				if (isCardanoChain(chain)) {
 					const createTxResp = await createCardanoTx(address, amount, isNativeToken);
-					
-					const response = await signAndSubmitCardanoTx(
-						createTxResp.createTxDto,
-						createTxResp.createResponse,
-						updateLoadingState,
-					);
+					if (chain === ChainEnum.Prime && destinationChain === ChainEnum.Solana){
+						const response = await signAndSubmitSolanaCardanoTx(
+							createTxResp.createTxDto,
+							createTxResp.createResponse,
+							address,
+							updateLoadingState,
+						)
 
-					console.log("signed transaction");
-					
-					response && goToDetails(response);
+						response && goToDetails(response);
+					}else{
+						const response = await signAndSubmitCardanoTx(
+							createTxResp.createTxDto,
+							createTxResp.createResponse,
+							updateLoadingState,
+						);
+
+						console.log("signed transaction");
+						
+						response && goToDetails(response);
+					}
 				} else if (isEvmChain(chain)) {
 					const createTxResp = await createEthTx(address, amount);
 					
@@ -201,7 +252,7 @@ function NewTransactionPage() {
 				setLoadingState(undefined);
 			}
 		},
-		[chain, createCardanoTx, createEthTx, goToDetails, updateLoadingState],
+		[chain, createCardanoTx, createEthTx, goToDetails, updateLoadingState, destinationChain],
 	);
 
 
@@ -213,19 +264,12 @@ function NewTransactionPage() {
 			});
 			
 			try{
-				if ((isSolanaBridging(chain, destinationChain))){
-					if (chain === ChainEnum.Solana){
-						const solanaTx = await getSolanaTransaction(settings, chain, destinationChain, account, toAddress, amount);
+				if (chain === ChainEnum.Solana){
+					const solanaTx = await getSolanaTransaction(settings, chain, destinationChain, account, toAddress, amount);
 						
-						const response = await signAndSubmitSolanaTx(solanaTx, updateLoadingState)
+					const response = await signAndSubmitSolanaTx(solanaTx, updateLoadingState)
 
-						response && goToDetails(response);
-					}else{
-						const response = await sendEthSolanaTransaction(settings, chain, destinationChain, account, toAddress, amount, updateLoadingState);
-						
-						response && goToDetails(response);
-					}
-					
+					response && goToDetails(response);
 				} else{
 					const lzResponse = await getLayerZeroTransferResponse(settings, chain, destinationChain, account, toAddress, amount);
 					const response = await signAndSubmitLayerZeroTx(
@@ -255,7 +299,7 @@ function NewTransactionPage() {
 	return (
 <BasePage>
   <NewTransaction txInProgress={false}>
-    {bridgingModeInfo.bridgingMode === BridgingModeEnum.LayerZero || isSolanaBridging(chain, destinationChain) ? (
+    {bridgingModeInfo.bridgingMode === BridgingModeEnum.LayerZero || chain === ChainEnum.Solana ? (
       <BridgeInputLZ
 		bridgeTxFee={bridgeTxFee}
         setBridgeTxFee={setBridgeTxFee}

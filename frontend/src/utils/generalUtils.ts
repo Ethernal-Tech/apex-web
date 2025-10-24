@@ -84,8 +84,14 @@ const LPS = BigInt(1_000_000_000);
 export const lamportsToSolExact = (lamports: bigint, decimals = 9): string => {
   const whole = lamports / LPS;
   const frac = (lamports % LPS).toString().padStart(9, "0");
-  const trimmed = frac.slice(0, decimals).replace(/0+$/, "");
-  return trimmed ? `${whole}.${trimmed}` : whole.toString();
+  let trimmedFrac = frac.slice(0, decimals);
+  if (trimmedFrac.match(/[1-9]/)) {
+    trimmedFrac = trimmedFrac.replace(/0+$/, "");
+  } else {
+    trimmedFrac = "";
+  }
+  
+  return trimmedFrac ? `${whole}.${trimmedFrac}` : whole.toString();
 };
 
 export const solToLamportsExact = (sol: string): bigint => {

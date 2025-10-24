@@ -17,7 +17,7 @@ import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
 
     //const weiAmount = convertDfmToWei(amount)
 
-    const tx = await populateTx(amount)
+    const tx = await createNexusSolanaTx(amount)
 
     const onTxHash = (txHash: any) => {
     updateLoadingState({ content: 'Waiting for transaction receipt...', txHash: txHash.toString() })
@@ -55,7 +55,7 @@ import { ErrorResponse, tryCatchJsonByAction } from "../utils/fetchUtils";
   }
 
 
-export async function populateTx(
+export async function createNexusSolanaTx(
   amountWei: string | bigint,
   gasLimitOverride?: number
 ): Promise<Transaction> {

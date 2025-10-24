@@ -31,6 +31,8 @@ type BridgeInputType = {
     loadingState: SubmitLoadingState | undefined;
 }
 
+ const addr = 'addr_test1qrg47erg46k52jk6alkw385du44r2nt852tz442wvsmvdjsr48zeh0wh00pjzeedm239zr6ax88nkg43eel96f66t4aquld338' // TODO: fix this 
+
 
 const calculateMaxAmountToken = (
   totalDfmBalance: {[key: string]: string},
@@ -114,9 +116,15 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
 
     try {
         if (isCardanoChain(chain)) {
-            const feeResp = await getCardanoTxFee(destinationAddr, convertApexToDfm(amount || '0', chain), isWrappedToken(sourceToken));
-            setUserWalletFee((feeResp?.fee || 0).toString());
-            setBridgeTxFee((feeResp?.bridgingFee || 0).toString());
+            if (chain === ChainEnum.Prime && destinationChain === ChainEnum.Solana){
+              const feeResp = await getCardanoTxFee(addr, convertApexToDfm(amount || '0', chain), isWrappedToken(sourceToken));
+              setUserWalletFee((feeResp?.fee || 0).toString());
+              setBridgeTxFee((feeResp?.bridgingFee || 0).toString());
+            }else{
+              const feeResp = await getCardanoTxFee(destinationAddr, convertApexToDfm(amount || '0', chain), isWrappedToken(sourceToken));
+              setUserWalletFee((feeResp?.fee || 0).toString());
+              setBridgeTxFee((feeResp?.bridgingFee || 0).toString());
+            }
 
             return;
         } else if (isEvmChain(chain)) {
@@ -134,7 +142,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
 
     setUserWalletFee(undefined);
     
-  }, [destinationAddr, amount, chain, getCardanoTxFee, sourceToken, setBridgeTxFee, getEthTxFee])
+  }, [destinationAddr, amount, chain, getCardanoTxFee, sourceToken, setBridgeTxFee, getEthTxFee, destinationChain])
 
   const setSourceTokenCallback = useCallback((token: TokenEnum) => {
     setSourceToken(token);
@@ -199,8 +207,12 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
 
   const onSubmit = useCallback(async () => {
     if (!sourceToken) return;
-    await submit(destinationAddr, convertApexToDfm(amount || '0', chain), isWrappedToken(sourceToken))
-  }, [amount, destinationAddr, submit, chain, sourceToken]) 
+    if (chain === ChainEnum.Prime || destinationChain === ChainEnum.Solana){
+            await submit(addr, convertApexToDfm(amount || '0', chain), isWrappedToken(sourceToken))
+    }else{
+          await submit(destinationAddr, convertApexToDfm(amount || '0', chain), isWrappedToken(sourceToken))
+    }
+  }, [amount, destinationAddr, submit, chain, sourceToken, destinationChain]) 
 
   return (
     <Box sx={{width:'100%'}}>

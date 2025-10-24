@@ -165,9 +165,6 @@ export const fromEvmNetworkIdToNetwork = (
 };
 
 export const checkChainCompatibility = (chain: ChainEnum, network: string, networkId: number|bigint, useMainnet: boolean): boolean => {
-    console.log("FROM CHAIN NETWORK ID", fromChainToNetworkId(chain, useMainnet), "NETWORK ID" ,  networkId);
-    console.log("FROM NETWORK TO CHAIN", fromNetworkToChain(network, useMainnet),"CHAIN", chain)
-
     return fromChainToNetworkId(chain, useMainnet) === networkId && fromNetworkToChain(network, useMainnet) === chain;
 }
 
