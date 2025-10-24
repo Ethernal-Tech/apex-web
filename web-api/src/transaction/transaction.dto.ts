@@ -83,7 +83,7 @@ export class CreateCardanoTransactionResponseDto {
 	@IsNotEmpty()
 	@IsPositive()
 	@ApiProperty()
-	bridgingFee: number;
+	bridgingFee: string;
 
 	@ApiProperty()
 	isFallback: boolean;
@@ -92,7 +92,7 @@ export class CreateCardanoTransactionResponseDto {
 export class CardanoTransactionFeeResponseDto {
 	@IsPositive()
 	@ApiProperty()
-	fee: number;
+	fee: string;
 }
 
 export class CreateEthTransactionResponseDto {
