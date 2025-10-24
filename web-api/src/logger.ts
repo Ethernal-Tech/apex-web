@@ -1,6 +1,9 @@
 import { utilities, WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import 'winston-daily-rotate-file';
+import { getAppSettings } from './appSettings/appSettings';
+
+const appSettings = getAppSettings();
 
 export const drfTransport = new winston.transports.DailyRotateFile({
 	format: winston.format.combine(
@@ -20,7 +23,7 @@ export const winstonLogger = WinstonModule.createLogger({
 	handleExceptions: true,
 	handleRejections: true,
 	exitOnError: false,
-	level: process.env.LOG_LEVEL,
+	level: appSettings.logLevel,
 	format: winston.format.errors({ stack: true }),
 	transports: [
 		new winston.transports.Console({

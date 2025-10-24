@@ -8,6 +8,7 @@ import { WalletModule } from './wallet/wallet.module';
 import { SettingsModule } from './settings/settings.module';
 import { MailerConfigModule } from './mailer/mailer.module';
 import { ContactModule } from './contact/contact.module';
+import { AppSettingsModule } from './appSettings/appSettings.module';
 
 @Module({
 	imports: [
@@ -21,6 +22,7 @@ import { ContactModule } from './contact/contact.module';
 		BridgeTransactionModule,
 		WalletModule,
 		ContactModule,
+		AppSettingsModule,
 	],
 	controllers: [],
 	providers: [],
