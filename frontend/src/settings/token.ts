@@ -44,8 +44,8 @@ const tokenInfos: Partial<Record<TokenEnum, TokenInfo>> = {
 		label: 'ADA',
 		borderColor: '#077368',
 	},
-	[TokenEnum.WAda]: {
-		token: TokenEnum.WAda,
+	[TokenEnum.wADA]: {
+		token: TokenEnum.wADA,
 		icon: AdaIcon,
 		label: 'wADA',
 		borderColor: '#0538AF',
@@ -96,6 +96,9 @@ const tokensDirection: Partial<
 			isCurrencyBridgingAllowed: false,
 			wrappedToken: TokenEnum.WAPEX,
 		},
+		[ChainEnum.Vector]: {
+			isCurrencyBridgingAllowed: true,
+		},
 	},
 	[ChainEnum.Vector]: {
 		[ChainEnum.Prime]: {
@@ -103,6 +106,10 @@ const tokensDirection: Partial<
 		},
 		[ChainEnum.Nexus]: {
 			isCurrencyBridgingAllowed: true,
+		},
+		[ChainEnum.Cardano]: {
+			isCurrencyBridgingAllowed: false,
+			wrappedToken: TokenEnum.wADA,
 		},
 	},
 	[ChainEnum.Nexus]: {
@@ -176,7 +183,7 @@ export const getTokenInfoBySrcDst = (
 
 export const isWrappedToken = (token: TokenEnum | undefined): boolean =>
 	token === TokenEnum.WAPEX ||
-	token === TokenEnum.WAda ||
+	token === TokenEnum.wADA ||
 	token === TokenEnum.BAP3X ||
 	token === TokenEnum.BNAP3X;
 
