@@ -546,6 +546,12 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 
 						perAddr[addr][name].Add(perAddr[addr][name], new(big.Int).SetUint64(tkn.Amount))
 					}
+
+					ensure(addr, wallet.AdaTokenName)
+					perAddr[addr][wallet.AdaTokenName].Add(
+						perAddr[addr][wallet.AdaTokenName],
+						new(big.Int).SetUint64(utxo.Amount),
+					)
 				}
 			}
 		}

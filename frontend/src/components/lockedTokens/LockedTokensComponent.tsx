@@ -9,6 +9,7 @@ import { toChainEnum } from '../../settings/chain';
 import { fetchAndUpdateLockedTokensAction } from '../../actions/lockedTokens';
 import { decodeTokenKey, isApexChain } from '../../utils/tokenUtils';
 import { convertWeiToDfmBig } from '../../utils/generalUtils';
+import { TokenEnum } from '../../features/enums';
 
 const powBigInt = (base: bigint, exp: number): bigint => {
 	let result = BigInt(1);
@@ -65,6 +66,9 @@ const LockedTokensComponent = () => {
 
 	const chainsData = useMemo(() => {
 		const chunks: string[] = [];
+		const tokenAmountsTVL: Record<string, bigint> = {};
+		tokenAmountsTVL[TokenEnum.Ada] = BigInt(0);
+		tokenAmountsTVL[TokenEnum.APEX] = BigInt(0);
 
 		for (const [chainKey, tokenMap] of Object.entries(
 			lockedTokens.chains,
@@ -73,8 +77,6 @@ const LockedTokensComponent = () => {
 
 			// ❌ Skip Cardano chains entirely
 			if (chainEnum === ChainEnum.Cardano) continue;
-
-			const tokenTexts: string[] = [];
 
 			for (const [tokenKey, addrMap] of Object.entries(tokenMap)) {
 				// Sum all addresses for this token
@@ -89,21 +91,30 @@ const LockedTokensComponent = () => {
 
 				total += lockedTokensLZFormatted;
 
-				const formatted = formatBigIntDecimalString(total, 6);
-
-				tokenTexts.push(`${formatted} ${decodeTokenKey(tokenKey)}`);
+				if (
+					decodeTokenKey(tokenKey) === TokenEnum.Ada ||
+					decodeTokenKey(tokenKey) === TokenEnum.wADA
+				) {
+					tokenAmountsTVL[TokenEnum.Ada] += total;
+				} else {
+					tokenAmountsTVL[TokenEnum.APEX] += total;
+				}
 			}
+		}
 
-			if (tokenTexts.length) {
-				chunks.push(tokenTexts.join(', '));
-			}
+		for (const [token, value] of Object.entries(tokenAmountsTVL)) {
+			const tokenTexts = `${formatBigIntDecimalString(value, 6)} ${decodeTokenKey(token).toUpperCase()}`;
+			chunks.push(tokenTexts);
 		}
 
 		return chunks.join(' | ').trim();
 	}, [lockedTokens.chains, lockedTokensLZFormatted]);
 
 	const transferredData = useMemo(() => {
-		let outputValue = BigInt(0);
+		let outValueApex = BigInt(0);
+		let outValueAda = BigInt(0);
+
+		const chunks: string[] = [];
 
 		Object.entries(lockedTokens.totalTransferred).forEach(
 			([chainKey, innerObj]) => {
@@ -114,9 +125,18 @@ const LockedTokensComponent = () => {
 				>;
 
 				if (isApexChain(chain)) {
-					outputValue += BigInt(o.amount || '0');
-				} else {
-					outputValue += BigInt(
+					outValueApex += BigInt(o.amount || '0');
+					outValueAda += BigInt(
+						Object.entries(o).find(
+							(x) =>
+								x[0] !== 'lovelace' &&
+								x[0] !== 'amount' &&
+								x[0] !== 'Ada',
+						)?.[1] || '0',
+					);
+				} else if ((chain as ChainEnum) === ChainEnum.Cardano) {
+					outValueAda += BigInt(o.amount || '0');
+					outValueApex += BigInt(
 						Object.entries(o).find((x) => x[0] !== 'amount')?.[1] ||
 							'0',
 					);
@@ -124,12 +144,21 @@ const LockedTokensComponent = () => {
 			},
 		);
 
-		if (outputValue > BigInt(0)) {
-			const label = getCurrencyTokenInfo(ChainEnum.Prime).label;
-			return `${formatBigIntDecimalString(outputValue, 6)} ${label}`;
+		if (outValueAda > BigInt(0)) {
+			const label = getCurrencyTokenInfo(ChainEnum.Cardano).label;
+			chunks.push(
+				`${formatBigIntDecimalString(outValueAda, 6)} ${label}`,
+			);
 		}
 
-		return '';
+		if (outValueApex > BigInt(0)) {
+			const label = getCurrencyTokenInfo(ChainEnum.Prime).label;
+			chunks.push(
+				`${formatBigIntDecimalString(outValueApex, 6)} ${label}`,
+			);
+		}
+
+		return chunks.join(' | ').trim();
 	}, [lockedTokens]);
 
 	return (
