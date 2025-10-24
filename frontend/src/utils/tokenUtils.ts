@@ -14,6 +14,10 @@ export function decodeTokenKey(tokenKey: string, chain?: string): string {
 		}
 	}
 
+	if (tokenKey === 'Ada') {
+		return tokenKey;
+	}
+
 	const parts = tokenKey.split('.');
 	if (parts.length < 2) {
 		return tokenKey;
