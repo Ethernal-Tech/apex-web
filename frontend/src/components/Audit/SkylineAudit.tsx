@@ -6,7 +6,7 @@ import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import { formatBigIntDecimalString } from '../lockedTokens/LockedTokensComponent';
 import { getExplorerAddressUrl } from '../../utils/chainUtils';
 import { decodeTokenKey } from '../../utils/tokenUtils';
-import { getTokenInfo } from '../../settings/token';
+import { getTokenInfo, isWrappedToken } from '../../settings/token';
 import { TokenEnum } from '../../features/enums';
 import { compareBigInts } from '../../features/utils';
 import LaunchIcon from '@mui/icons-material/Launch';
@@ -18,7 +18,7 @@ type SkylinePanelProps = {
 	tokenTotalsAllChains: Record<string, bigint>;
 	tvbPerChainTotals: Record<string, Record<string, bigint>>;
 	tvbTokenTotalsAllChains: Record<string, bigint>;
-	tvbGrandTotal: bigint;
+	tvbGrandTotal: Record<string, bigint>;
 	skylineChains: ChainEnum[];
 };
 
@@ -91,7 +91,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 	);
 	const [selToken, setSelToken] = useState<string>('lovelace');
 	useEffect(() => {
-		if (tokensOfSelChain.length && !tokensOfSelChain.includes(selToken)) {
+		if (tokensOfSelChain.length) {
 			setSelToken(tokensOfSelChain[0]);
 		}
 	}, [tokensOfSelChain, selToken]);
@@ -102,16 +102,21 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 		<Box className="audit-layout">
 			<Box>
 				<Typography className="audit-h2">Total Locked (TVL)</Typography>
-				<Box className="audit-mb-8 audit-w-third-md">
-					{sortEntries(tokenTotalsAllChains).map(
-						([tokenKey, amt]) => (
+				<Box className="audit-grid-md-2 audit-gap-12 audit-mb-16">
+					{sortEntries(tokenTotalsAllChains)
+						.filter(
+							([tokenKey]) =>
+								!isWrappedToken(
+									decodeTokenKey(tokenKey) as TokenEnum,
+								),
+						)
+						.map(([tokenKey, amt]) => (
 							<AmountCard
 								key={tokenKey}
 								left={decodeTokenKey(tokenKey)}
 								right={fmt(amt)}
 							/>
-						),
-					)}
+						))}
 				</Box>
 
 				<Typography className="audit-h2">
@@ -124,7 +129,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 							const rows = sortEntries(
 								perChainTotals[ck] ?? {},
 							).map(([t, a]) => ({
-								label: decodeTokenKey(t),
+								label: decodeTokenKey(t, ck as ChainEnum),
 								amt: a,
 							}));
 							return (
@@ -252,10 +257,14 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 					Total Bridged (TVB)
 				</Typography>
 
-				<Box className="audit-mb-8 audit-w-half-md">
+				<Box className="audit-grid-md-2 audit-gap-12 audit-mb-16">
 					<AmountCard
 						left={getTokenInfo(TokenEnum.APEX).label}
-						right={fmt(tvbGrandTotal)}
+						right={fmt(tvbGrandTotal[TokenEnum.APEX])}
+					/>
+					<AmountCard
+						left={getTokenInfo(TokenEnum.Ada).label}
+						right={fmt(tvbGrandTotal[TokenEnum.Ada])}
 					/>
 				</Box>
 
@@ -287,7 +296,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 							const rows = sortEntries(
 								tvbPerChainTotals[ck] ?? {},
 							).map(([t, a]) => ({
-								label: decodeTokenKey(t),
+								label: decodeTokenKey(t, ck as ChainEnum),
 								amt: a,
 							}));
 							return (
