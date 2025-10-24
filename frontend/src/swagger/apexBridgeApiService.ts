@@ -365,69 +365,6 @@ export class BridgeTransactionControllerClient extends BaseClient {
     }
 }
 
-export class WalletControllerClient extends BaseClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        super();
-        this.http = http ? http : window as any;
-        this.baseUrl = this.getBaseUrl("", baseUrl);
-    }
-
-    /**
-     * @return Success
-     */
-    getBalance(chain: string, address: string): Promise<BalanceResponseDto> {
-        let url_ = this.baseUrl + "/wallet/getBalance?";
-        if (chain === undefined || chain === null)
-            throw new globalThis.Error("The parameter 'chain' must be defined and cannot be null.");
-        else
-            url_ += "chain=" + encodeURIComponent("" + chain) + "&";
-        if (address === undefined || address === null)
-            throw new globalThis.Error("The parameter 'address' must be defined and cannot be null.");
-        else
-            url_ += "address=" + encodeURIComponent("" + address) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.transformOptions(options_).then(transformedOptions_ => {
-            return this.http.fetch(url_, transformedOptions_);
-        }).then((_response: Response) => {
-            return this.processGetBalance(_response);
-        });
-    }
-
-    protected processGetBalance(response: Response): Promise<BalanceResponseDto> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = BalanceResponseDto.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status === 404) {
-            return response.text().then((_responseText) => {
-            return throwException("Not Found", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<BalanceResponseDto>(null as any);
-    }
-}
-
 export class ContactControllerClient extends BaseClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -1247,54 +1184,6 @@ export interface IBridgeTransactionResponseDto {
     page: number;
     perPage: number;
     total: number;
-
-    [key: string]: any;
-}
-
-export class BalanceResponseDto implements IBalanceResponseDto {
-    balance!: string;
-
-    [key: string]: any;
-
-    constructor(data?: IBalanceResponseDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            for (var property in _data) {
-                if (_data.hasOwnProperty(property))
-                    this[property] = _data[property];
-            }
-            this.balance = _data["balance"];
-        }
-    }
-
-    static fromJS(data: any): BalanceResponseDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new BalanceResponseDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        for (var property in this) {
-            if (this.hasOwnProperty(property))
-                data[property] = this[property];
-        }
-        data["balance"] = this.balance;
-        return data;
-    }
-}
-
-export interface IBalanceResponseDto {
-    balance: string;
 
     [key: string]: any;
 }
