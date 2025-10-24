@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -29,7 +30,10 @@ import (
 var embededConfigFiles embed.FS
 
 func TestCardanoAPI(t *testing.T) {
-	t.Skip()
+	if strings.ToLower(os.Getenv("TEST_CARDANO_API_E2E")) != "true" {
+		t.Skip()
+	}
+
 	t.Parallel()
 
 	const (
@@ -147,7 +151,7 @@ func TestCardanoAPI(t *testing.T) {
 
 		fmt.Printf("multsig addr: %s\n", multisigAddr)
 
-		result := createBridgingTx(t, ctx, config, &request.CreateBridgingTxRequest{
+		requestDto := &request.CreateBridgingTxRequest{
 			SenderAddr:             multisigAddr,
 			SenderAddrPolicyScript: policyScript,
 			SourceChainID:          srcChainConfig.ChainID,
@@ -159,7 +163,13 @@ func TestCardanoAPI(t *testing.T) {
 				},
 			},
 			BridgingFee: config.BridgingSettings.MinChainFeeForBridging[dstChainConfig.ChainID],
-		})
+		}
+
+		bridgingTxFeeResult := getBridgingTxFee(t, ctx, config, requestDto)
+
+		fmt.Printf("bridging fee: %d, fee: %d\n", bridgingTxFeeResult.BridgingFee, bridgingTxFeeResult.Fee)
+
+		result := createBridgingTx(t, ctx, config, requestDto)
 
 		// chose random n/m wallets
 		quorumWallets := make([]infra.ITxSigner, quorumCount)
@@ -259,6 +269,21 @@ func createBridgingTx(
 		config.APIConfig.Port, config.APIConfig.PathPrefix)
 
 	result, err := common.HTTPPost[*request.CreateBridgingTxRequest, *response.BridgingTxResponse](
+		ctx, url, payload, config.APIConfig.APIKeys[0])
+	require.NoError(t, err)
+
+	return result
+}
+
+func getBridgingTxFee(
+	t *testing.T, ctx context.Context, config *core.AppConfig, payload *request.CreateBridgingTxRequest,
+) *response.BridgingTxFeeResponse {
+	t.Helper()
+
+	url := fmt.Sprintf("http://localhost:%d/%s/CardanoTx/GetBridgingTxFee",
+		config.APIConfig.Port, config.APIConfig.PathPrefix)
+
+	result, err := common.HTTPPost[*request.CreateBridgingTxRequest, *response.BridgingTxFeeResponse](
 		ctx, url, payload, config.APIConfig.APIKeys[0])
 	require.NoError(t, err)
 
