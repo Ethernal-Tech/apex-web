@@ -1,6 +1,9 @@
 package response
 
-import "encoding/hex"
+import (
+	"encoding/hex"
+	"strconv"
+)
 
 type BridgingTxResponse struct {
 	// Raw transaction data, encoded as a hexadecimal string
@@ -8,11 +11,11 @@ type BridgingTxResponse struct {
 	// Transaction hash
 	TxHash string `json:"txHash"`
 	// Bridging fee for covering submission on the destination chain, expressed in Lovelace
-	BridgingFee uint64 `json:"bridgingFee"`
+	BridgingFee string `json:"bridgingFee"`
 	// Amount of currency to be bridged, expressed in Lovelace
-	Amount uint64 `json:"amount"`
+	Amount string `json:"amount"`
 	// Amount of native token to be bridged
-	NativeTokenAmount uint64 `json:"nativeTokenAmount"`
+	NativeTokenAmount string `json:"nativeTokenAmount"`
 } // @name BridgingTxResponse
 
 func NewBridgingTxResponse(
@@ -21,22 +24,22 @@ func NewBridgingTxResponse(
 	return &BridgingTxResponse{
 		TxRaw:             hex.EncodeToString(txRaw),
 		TxHash:            txHash,
-		BridgingFee:       bridgingFee,
-		Amount:            amount,
-		NativeTokenAmount: nativeTokenAmount,
+		BridgingFee:       strconv.FormatUint(bridgingFee, 10),
+		Amount:            strconv.FormatUint(amount, 10),
+		NativeTokenAmount: strconv.FormatUint(nativeTokenAmount, 10),
 	}
 }
 
 type BridgingTxFeeResponse struct {
 	// Transaction fee on the source chain, expressed in Lovelace
-	Fee uint64 `json:"fee"`
+	Fee string `json:"fee"`
 	// Bridging fee for covering submission on the destination chain, expressed in Lovelace
-	BridgingFee uint64 `json:"bridgingFee"`
+	BridgingFee string `json:"bridgingFee"`
 } // @name BridgingTxFeeResponse
 
 func NewBridgingTxFeeResponse(fee uint64, bridgingFee uint64) *BridgingTxFeeResponse {
 	return &BridgingTxFeeResponse{
-		Fee:         fee,
-		BridgingFee: bridgingFee,
+		Fee:         strconv.FormatUint(fee, 10),
+		BridgingFee: strconv.FormatUint(bridgingFee, 10),
 	}
 }

@@ -139,10 +139,10 @@ export const getCardanoBridgingTxFee = async (
 	}
 };
 
-export const createEthBridgingTx = async (
+export const createEthBridgingTx = (
 	dto: CreateTransactionDto,
 	bridgingSettings: BridgingSettingsDto,
-): Promise<CreateEthTransactionResponseDto> => {
+): CreateEthTransactionResponseDto => {
 	if (!isAddress(dto.senderAddress)) {
 		throw new BadRequestException('Invalid sender address');
 	}
@@ -218,14 +218,14 @@ export const createEthBridgingTx = async (
 	const isCentralized = process.env.USE_CENTRALIZED_BRIDGE === 'true';
 
 	const createFunc = isCentralized ? ethCentralizedBridgingTx : ethBridgingTx;
-	return await createFunc(dto, BigInt(dto.amount) + bridgingFee, bridgingFee);
+	return createFunc(dto, BigInt(dto.amount) + bridgingFee, bridgingFee);
 };
 
-const ethBridgingTx = async (
+const ethBridgingTx = (
 	dto: CreateTransactionDto,
 	value: bigint,
 	bridgingFee: bigint,
-): Promise<CreateEthTransactionResponseDto> => {
+): CreateEthTransactionResponseDto => {
 	const to = process.env.NEXUS_BRIDGING_ADDR;
 	if (!to) {
 		throw new BadRequestException('Empty to address');
@@ -255,11 +255,11 @@ const ethBridgingTx = async (
 	};
 };
 
-const ethCentralizedBridgingTx = async (
+const ethCentralizedBridgingTx = (
 	dto: CreateTransactionDto,
 	value: bigint,
 	bridgingFee: bigint,
-): Promise<CreateEthTransactionResponseDto> => {
+): CreateEthTransactionResponseDto => {
 	const to = process.env.NEXUS_CENTRALIZED_BRIDGING_ADDR;
 	if (!to) {
 		throw new BadRequestException('Empty to address');

@@ -186,8 +186,8 @@ const BridgeInput = ({
 					convertApexToDfm(amount || '0', chain),
 					isWrappedToken(sourceToken),
 				);
-				setUserWalletFee((feeResp?.fee || 0).toString());
-				setBridgeTxFee((feeResp?.bridgingFee || 0).toString());
+				setUserWalletFee(BigInt(feeResp?.fee || '0').toString(10));
+				setBridgeTxFee(BigInt(feeResp?.bridgingFee || '0').toString(10));
 
 				return;
 			} else if (isEvmChain(chain)) {

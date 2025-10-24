@@ -38,14 +38,14 @@ export class LockedTokensService {
 		private readonly settingsService: SettingsService,
 	) {}
 
-	async onModuleInit() {
-		await this.init();
+	onModuleInit() {
+		this.init();
 	}
 
 	endpointUrl: string;
 	apiKey = process.env.CARDANO_API_SKYLINE_API_KEY;
 
-	async init() {
+	init() {
 		this.endpointUrl =
 			process.env.CARDANO_API_SKYLINE_URL + `/api/CardanoTx/GetLockedTokens`;
 	}
@@ -204,14 +204,13 @@ export class LockedTokensService {
 			const chainResult: Record<string, string> = {};
 
 			if (row.amount !== null) {
-				chainResult.amount = amountToBigInt(row.amount, chain).toString();
+				chainResult.amount = amountToBigInt(row.amount, chain).toString(10);
 			}
 
 			if (!!tokenName && row.nativeSum !== null) {
-				chainResult[tokenName] = amountToBigInt(
-					row.nativeSum,
-					chain,
-				).toString();
+				chainResult[tokenName] = amountToBigInt(row.nativeSum, chain).toString(
+					10,
+				);
 			}
 
 			groupedByDate[dateKey].totalTransferred[chain] = chainResult;

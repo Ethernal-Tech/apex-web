@@ -101,7 +101,7 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({
 	const maxSendable = minBigInt(
 		maxAmounts.maxByAllowed,
 		maxAmounts.maxByBalance,
-	).toString();
+	).toString(10);
 
 	const chain = useSelector((state: RootState) => state.chain.chain);
 

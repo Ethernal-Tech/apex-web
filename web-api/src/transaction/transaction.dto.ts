@@ -161,7 +161,7 @@ export class CreateCardanoTransactionResponseDto {
 		description:
 			'Bridging fee for covering submission on the destination chain, expressed in Lovelace',
 	})
-	bridgingFee: number;
+	bridgingFee: string;
 
 	@ApiProperty({
 		description: 'Indicates is fallback mechanism used',
@@ -172,14 +172,14 @@ export class CreateCardanoTransactionResponseDto {
 	@ApiProperty({
 		description: 'Amount of currency to be bridged, expressed in Lovelace',
 	})
-	amount: number;
+	amount: string;
 
 	@ApiProperty({
 		description: 'Amount of native token to be bridged',
 		nullable: true,
 		required: false,
 	})
-	nativeTokenAmount?: number;
+	nativeTokenAmount?: string;
 }
 
 export class CardanoTransactionFeeResponseDto {
@@ -187,14 +187,14 @@ export class CardanoTransactionFeeResponseDto {
 	@ApiProperty({
 		description: 'Transaction fee on the source chain, expressed in Lovelace',
 	})
-	fee: number;
+	fee: string;
 
 	@IsPositive()
 	@ApiProperty({
 		description:
 			'Bridging fee for covering submission on the destination chain, expressed in Lovelace',
 	})
-	bridgingFee: number;
+	bridgingFee: string;
 }
 
 export class CreateEthTransactionResponseDto {
