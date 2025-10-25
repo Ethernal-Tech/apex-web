@@ -41,7 +41,7 @@ export class TransactionService {
 		private readonly settingsService: SettingsService,
 	) {}
 
-	private async validateCreateCardanoTx(dto: CreateTransactionDto) {
+	private validateCreateCardanoTx(dto: CreateTransactionDto) {
 		if (
 			!this.settingsService.SettingsResponse.enabledChains.includes(
 				dto.originChain,
@@ -146,9 +146,7 @@ export class TransactionService {
 		return feeResp;
 	}
 
-	async createEth(
-		dto: CreateTransactionDto,
-	): Promise<CreateEthTransactionResponseDto> {
+	createEth(dto: CreateTransactionDto): CreateEthTransactionResponseDto {
 		if (
 			!this.settingsService.SettingsResponse.enabledChains.includes(
 				dto.originChain,
@@ -177,7 +175,7 @@ export class TransactionService {
 			);
 		}
 
-		const tx = await createEthBridgingTx(
+		const tx = createEthBridgingTx(
 			dto,
 			this.settingsService.SettingsResponse.bridgingSettings,
 		);

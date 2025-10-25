@@ -151,7 +151,7 @@ export const validateSubmitTxInputs = (
 // format it differently depending on network (nexus is 18 decimals, prime and vector are 6)
 export const convertDfmToApex = (dfm: string | number, network: ChainEnum) => {
 	// avoiding rounding errors
-	if (typeof dfm === 'number') dfm = BigInt(dfm).toString();
+	if (typeof dfm === 'number') dfm = BigInt(dfm).toString(10);
 
 	if (isEvmChain(network)) {
 		return convertEvmDfmToApex(dfm);

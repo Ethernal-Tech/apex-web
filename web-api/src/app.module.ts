@@ -4,7 +4,6 @@ import { TransactionModule } from './transaction/transaction.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { dbdatasource } from './database/data.source';
 import { BridgeTransactionModule } from './bridgeTransaction/bridgeTransaction.module';
-import { WalletModule } from './wallet/wallet.module';
 import { SettingsModule } from './settings/settings.module';
 import { MailerConfigModule } from './mailer/mailer.module';
 import { ContactModule } from './contact/contact.module';
@@ -19,7 +18,6 @@ import { ContactModule } from './contact/contact.module';
 		SettingsModule,
 		TransactionModule,
 		BridgeTransactionModule,
-		WalletModule,
 		ContactModule,
 	],
 	controllers: [],

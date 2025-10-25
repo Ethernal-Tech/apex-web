@@ -21,7 +21,8 @@ export const signAndSubmitCardanoTx = async (
 	const signedTxRaw = await walletHandler.signTx(createResponse.txRaw);
 	await walletHandler.submitTx(signedTxRaw);
 
-	const amount = BigInt(createResponse.bridgingFee) + BigInt(values.amount);
+	const amount =
+		BigInt(createResponse.bridgingFee || '0') + BigInt(values.amount);
 
 	const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
 		null,
@@ -30,7 +31,7 @@ export const signAndSubmitCardanoTx = async (
 			senderAddress: values.senderAddress,
 			destinationChain: values.destinationChain,
 			receiverAddrs: [values.destinationAddress],
-			amount: amount.toString(),
+			amount: amount.toString(10),
 			originTxHash: createResponse.txHash,
 			txRaw: createResponse.txRaw,
 			isFallback: createResponse.isFallback,
@@ -105,10 +106,10 @@ export const signAndSubmitEthTx = async (
 				{ ...tx, block: receipt.blockNumber.toString() },
 				(_: string, value: any) =>
 					typeof value === 'bigint'
-						? `bigint:${value.toString()}`
+						? `bigint:${value.toString(10)}`
 						: value,
 			),
-			amount: amount.toString(),
+			amount: amount.toString(10),
 			isFallback: createResponse.isFallback,
 		}),
 	);

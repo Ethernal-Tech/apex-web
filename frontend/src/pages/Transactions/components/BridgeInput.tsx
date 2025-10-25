@@ -116,7 +116,7 @@ const BridgeInput = ({
 					destinationAddr,
 					convertApexToDfm(amount || '0', chain),
 				);
-				setUserWalletFee((feeResp?.fee || 0).toString());
+				setUserWalletFee(BigInt(feeResp?.fee || '0').toString(10));
 
 				return;
 			} else if (isEvmChain(chain)) {
@@ -128,7 +128,7 @@ const BridgeInput = ({
 				const { bridgingFee, isFallback, ...tx } = feeResp;
 
 				const fee = await estimateEthGas(tx, isFallback);
-				setUserWalletFee(fee.toString());
+				setUserWalletFee(fee.toString(10));
 
 				return;
 			}

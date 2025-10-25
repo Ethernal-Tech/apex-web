@@ -19,7 +19,7 @@ export class SettingsController {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	async get(): Promise<SettingsResponseDto> {
+	get(): SettingsResponseDto {
 		return this.settingsService.SettingsResponse;
 	}
 }
