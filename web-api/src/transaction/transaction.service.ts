@@ -46,7 +46,7 @@ export class TransactionService {
 		private readonly settingsService: SettingsService,
 	) {}
 
-	private async validateCreateCardanoTx(dto: CreateTransactionDto) {
+	private validateCreateCardanoTx(dto: CreateTransactionDto) {
 		if (
 			!this.settingsService.SettingsResponse.enabledChains.includes(
 				dto.originChain,
@@ -92,6 +92,7 @@ export class TransactionService {
 		}
 
 		const srcMinOperationFee =
+			settings.bridgingSettings.minOperationFee &&
 			settings.bridgingSettings.minOperationFee[dto.originChain];
 
 		const minOperationFee = BigInt(srcMinOperationFee || '0');
@@ -169,9 +170,7 @@ export class TransactionService {
 		return feeResp;
 	}
 
-	async createEth(
-		dto: CreateTransactionDto,
-	): Promise<CreateEthTransactionResponseDto> {
+	createEth(dto: CreateTransactionDto): CreateEthTransactionResponseDto {
 		if (
 			!this.settingsService.SettingsResponse.enabledChains.includes(
 				dto.originChain,
@@ -200,7 +199,7 @@ export class TransactionService {
 			);
 		}
 
-		const tx = await createEthBridgingTx(dto, settings.bridgingSettings);
+		const tx = createEthBridgingTx(dto, settings.bridgingSettings);
 		if (!tx) {
 			throw new BadRequestException('error while creating bridging tx');
 		}

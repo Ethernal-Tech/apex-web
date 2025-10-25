@@ -64,7 +64,8 @@ export const signAndSubmitCardanoTx = async (
 	updateLoadingState({ content: 'Recording the transaction...' });
 
 	const amount =
-		BigInt(createResponse.bridgingFee) + BigInt(createResponse.amount);
+		BigInt(createResponse.bridgingFee || '0') +
+		BigInt(createResponse.amount || '0');
 
 	const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
 		null,
@@ -77,9 +78,9 @@ export const signAndSubmitCardanoTx = async (
 			originTxHash: createResponse.txHash,
 			txRaw: createResponse.txRaw,
 			isFallback: createResponse.isFallback,
-			nativeTokenAmount: (
-				createResponse.nativeTokenAmount || 0
-			).toString(),
+			nativeTokenAmount: BigInt(
+				createResponse.nativeTokenAmount || '0',
+			).toString(10),
 			isLayerZero: false,
 		}),
 	);
