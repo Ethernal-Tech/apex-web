@@ -62,7 +62,7 @@ export const normalizeNativeTokenKey = (k: string) => {
 export const isApexChain = (c: string) =>
 	c === ChainEnum.Prime || c === ChainEnum.Nexus || c === ChainEnum.Vector;
 
-const normalizeNativeTokenKey = (k: string) => {
+export const normalizeNativeTokenKey = (k: string) => {
 	if (!k.includes('.')) return k;
 
 	const kParts = k.split('.');
@@ -70,7 +70,7 @@ const normalizeNativeTokenKey = (k: string) => {
 
 	let name = kParts[1];
 	try {
-		name = Web3.utils.hexToAscii(name);
+		name = Web3.utils.asciiToHex(name).substring(2);
 	} catch {
 		/* empty */
 	}
