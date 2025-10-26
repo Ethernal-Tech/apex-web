@@ -6,7 +6,8 @@ import FeeInformation from '../components/FeeInformation';
 import ButtonCustom from '../../../components/Buttons/ButtonCustom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-	calculateChangeMinUtxo,
+	calculateChangeUtxoMinValue,
+	calculateTokenUtxoMinValue,
 	convertApexToDfm,
 	convertDfmToWei,
 	minBigInt,
@@ -35,9 +36,14 @@ import {
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
+import {
+	decodeTokenKey,
+	normalizeNativeTokenKey,
+} from '../../../utils/tokenUtils';
 
 type BridgeInputType = {
 	bridgeTxFee: string;
+	defaultBridgeTxFee: string;
 	setBridgeTxFee: (val: string) => void;
 	resetBridgeTxFee: () => void;
 	operationFee: string;
@@ -135,6 +141,7 @@ const calculateMaxAmountCurrency = (
 
 const BridgeInput = ({
 	bridgeTxFee,
+	defaultBridgeTxFee,
 	setBridgeTxFee,
 	resetBridgeTxFee,
 	operationFee,
@@ -148,6 +155,9 @@ const BridgeInput = ({
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
 	const [sourceToken, setSourceToken] = useState<TokenEnum | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
+	const account = useSelector(
+		(state: RootState) => state.accountInfo.account,
+	);
 
 	const walletUTxOs = useSelector(
 		(state: RootState) => state.accountInfo.utxos,
@@ -171,6 +181,11 @@ const BridgeInput = ({
 		chain,
 		destinationChain,
 	);
+
+	const minUtxoValue =
+		(bridgingModeInfo?.settings?.minUtxoChainValue &&
+			bridgingModeInfo?.settings?.minUtxoChainValue[chain]) ||
+		appSettings.minUtxoChainValue[chain];
 
 	const fetchWalletFee = useCallback(async () => {
 		if (!destinationAddr || !amount || !sourceToken) {
@@ -264,12 +279,8 @@ const BridgeInput = ({
 	};
 
 	const changeMinUtxo = useMemo(
-		() =>
-			calculateChangeMinUtxo(
-				walletUTxOs,
-				+appSettings.minUtxoChainValue[chain],
-			),
-		[walletUTxOs, chain],
+		() => calculateChangeUtxoMinValue(walletUTxOs, +minUtxoValue),
+		[walletUTxOs, minUtxoValue],
 	);
 
 	const handleSourceTokenChange = useCallback(
@@ -289,10 +300,70 @@ const BridgeInput = ({
 	if (isEvmChain(chain)) {
 		minDfmValue = convertDfmToWei(minValueToBridge);
 	} else if (bridgingModeInfo.bridgingMode === BridgingModeEnum.Skyline) {
-		minDfmValue = appSettings.minUtxoChainValue[chain];
+		minDfmValue = minUtxoValue;
 	} else {
 		minDfmValue = minValueToBridge;
 	}
+
+	// when bridging native tokens, the lovelace that must also be given to the bridge for carrying native tokens
+	// is calculated later. in case for example insufficient lovelace balance, the call where the calculation
+	// takes place fails, bridgingFee never gets updated, and the `Insufficient ADA` is never shown
+	const adjustedBridgeTxFee = useMemo(() => {
+		if (
+			!amount ||
+			isEvmChain(chain) ||
+			!sourceToken ||
+			!isWrappedToken(sourceToken) ||
+			bridgeTxFee !== defaultBridgeTxFee
+		) {
+			return bridgeTxFee;
+		}
+
+		const chosenTokenInput = getTokenInfo(sourceToken);
+		const settingsToken = settings.settingsPerMode[
+			BridgingModeEnum.Skyline
+		].cardanoChainsNativeTokens[chain].find(
+			(x) =>
+				chosenTokenInput.label === decodeTokenKey(x.tokenName, chain),
+		);
+		if (!settingsToken) {
+			return bridgeTxFee;
+		}
+
+		const approxAdditionToBridgingFee = calculateTokenUtxoMinValue(
+			{
+				output: {
+					// this doesn't have to accurate, just valid
+					address: account,
+					amount: [
+						{
+							quantity:
+								convertApexToDfm(amount || '0', chain) ||
+								'1000000',
+							unit: normalizeNativeTokenKey(
+								settingsToken.tokenName,
+							),
+						},
+					],
+				},
+				input: { outputIndex: 0, txHash: '' },
+			},
+			+minUtxoValue,
+		);
+
+		return (
+			BigInt(bridgeTxFee) + BigInt(approxAdditionToBridgingFee)
+		).toString(10);
+	}, [
+		account,
+		amount,
+		bridgeTxFee,
+		chain,
+		defaultBridgeTxFee,
+		minUtxoValue,
+		settings.settingsPerMode,
+		sourceToken,
+	]);
 
 	const currencyMaxAmounts = calculateMaxAmountCurrency(
 		totalDfmBalance,
@@ -300,7 +371,7 @@ const BridgeInput = ({
 		chain,
 		changeMinUtxo,
 		minDfmValue,
-		bridgeTxFee,
+		adjustedBridgeTxFee,
 		operationFee,
 	);
 	const tokenMaxAmounts = calculateMaxAmountToken(
@@ -390,7 +461,7 @@ const BridgeInput = ({
 
 				<FeeInformation
 					userWalletFee={userWalletFee || '0'}
-					bridgeTxFee={bridgeTxFee || '0'}
+					bridgeTxFee={adjustedBridgeTxFee || '0'}
 					operationFee={operationFee || '0'}
 					chain={chain}
 					bridgingMode={bridgingModeInfo.bridgingMode}

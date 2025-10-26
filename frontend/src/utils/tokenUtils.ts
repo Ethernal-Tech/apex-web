@@ -37,5 +37,21 @@ export function decodeTokenKey(tokenKey: string, chain?: string): string {
 	}
 }
 
+export const normalizeNativeTokenKey = (k: string) => {
+	if (!k.includes('.')) return k;
+
+	const kParts = k.split('.');
+	if (kParts.length > 2) throw new Error(`invalid native token key: ${k}`);
+
+	let name = kParts[1];
+	try {
+		name = Web3.utils.asciiToHex(name).substring(2);
+	} catch {
+		/* empty */
+	}
+
+	return `${kParts[0]}${name}`;
+};
+
 export const isApexChain = (c: string) =>
 	c === ChainEnum.Prime || c === ChainEnum.Nexus || c === ChainEnum.Vector;

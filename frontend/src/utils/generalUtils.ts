@@ -229,7 +229,19 @@ export const getAssetsSumMap = (utxos: UTxO[]) => {
 const COINS_PER_UTXO_BYTE = 4310;
 const TX_OUT_SIZE_ADDITIONAL = 160;
 
-const calculateMinUtxo = (utxos: UTxO[]) => {
+const minUtxoValueMultiplier = 1.1;
+
+const calculateMinUtxo = (txOut: TransactionOutput) => {
+	const txOutSize = txOut.to_bytes().length;
+
+	return (
+		minUtxoValueMultiplier *
+		COINS_PER_UTXO_BYTE *
+		(txOutSize + TX_OUT_SIZE_ADDITIONAL)
+	);
+};
+
+const calculateMinValueOfAggregatedUtxo = (utxos: UTxO[]) => {
 	if (utxos.length === 0) {
 		throw new Error('UTxO array is empty');
 	}
@@ -272,12 +284,26 @@ const calculateMinUtxo = (utxos: UTxO[]) => {
 	}
 
 	const address = Address.from_bech32(utxos[0].output.address);
-	const txOutSize = TransactionOutput.new(address, value).to_bytes().length;
-
-	return COINS_PER_UTXO_BYTE * (txOutSize + TX_OUT_SIZE_ADDITIONAL);
+	return calculateMinUtxo(TransactionOutput.new(address, value));
 };
 
-export const calculateChangeMinUtxo = (
+export const calculateTokenUtxoMinValue = (
+	utxo: UTxO,
+	defaultMinUtxo: number,
+) => {
+	try {
+		return Math.max(
+			calculateMinValueOfAggregatedUtxo([utxo]),
+			defaultMinUtxo,
+		);
+	} catch (e) {
+		console.log('error while calculating change minUtxo', e);
+	}
+
+	return 2 * defaultMinUtxo;
+};
+
+export const calculateChangeUtxoMinValue = (
 	utxos: UTxO[] | undefined,
 	defaultMinUtxo: number,
 ): number => {
@@ -286,9 +312,12 @@ export const calculateChangeMinUtxo = (
 	}
 
 	try {
-		return Math.max(calculateMinUtxo(utxos), defaultMinUtxo);
+		return Math.max(
+			calculateMinValueOfAggregatedUtxo(utxos),
+			defaultMinUtxo,
+		);
 	} catch (e) {
-		console.log('error while calculating change minUtxo', e);
+		console.log('error while calculating change utxo min value', e);
 	}
 
 	// if the calculation failed and we have native tokens, take changeMinUtxo to be 2*defaultMinUtxo
