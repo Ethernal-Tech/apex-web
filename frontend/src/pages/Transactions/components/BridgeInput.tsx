@@ -10,6 +10,7 @@ import {
 	calculateTokenUtxoMinValue,
 	convertApexToDfm,
 	convertDfmToWei,
+	createUtxo,
 	minBigInt,
 } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
@@ -36,10 +37,7 @@ import {
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
-import {
-	decodeTokenKey,
-	normalizeNativeTokenKey,
-} from '../../../utils/tokenUtils';
+import { decodeTokenKey } from '../../../utils/tokenUtils';
 
 type BridgeInputType = {
 	bridgeTxFee: string;
@@ -310,7 +308,6 @@ const BridgeInput = ({
 	// takes place fails, bridgingFee never gets updated, and the `Insufficient ADA` is never shown
 	const adjustedBridgeTxFee = useMemo(() => {
 		if (
-			!amount ||
 			isEvmChain(chain) ||
 			!sourceToken ||
 			!isWrappedToken(sourceToken) ||
@@ -331,23 +328,12 @@ const BridgeInput = ({
 		}
 
 		const approxAdditionToBridgingFee = calculateTokenUtxoMinValue(
-			{
-				output: {
-					// this doesn't have to accurate, just valid
-					address: account,
-					amount: [
-						{
-							quantity:
-								convertApexToDfm(amount || '0', chain) ||
-								'1000000',
-							unit: normalizeNativeTokenKey(
-								settingsToken.tokenName,
-							),
-						},
-					],
-				},
-				input: { outputIndex: 0, txHash: '' },
-			},
+			createUtxo(account, '0', {
+				[settingsToken.tokenName]: convertApexToDfm(
+					amount || '1',
+					chain,
+				),
+			}),
 			+minUtxoValue,
 		);
 

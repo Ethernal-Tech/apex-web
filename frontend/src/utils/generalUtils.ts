@@ -17,9 +17,12 @@ import {
 	ScriptHash,
 	TransactionOutput,
 	Address,
+	min_ada_for_output,
+	DataCost,
 } from '@emurgo/cardano-serialization-lib-browser';
 import { isCardanoChain, isEvmChain, isLZBridging } from '../settings/chain';
 import appSettings from '../settings/appSettings';
+import { normalizeNativeTokenKey } from './tokenUtils';
 
 export const capitalizeWord = (word: string): string => {
 	if (!word || word.length === 0) {
@@ -227,18 +230,12 @@ export const getAssetsSumMap = (utxos: UTxO[]) => {
 };
 
 const COINS_PER_UTXO_BYTE = 4310;
-const TX_OUT_SIZE_ADDITIONAL = 160;
-
-const minUtxoValueMultiplier = 1.1;
 
 const calculateMinUtxo = (txOut: TransactionOutput) => {
-	const txOutSize = txOut.to_bytes().length;
-
-	return (
-		minUtxoValueMultiplier *
-		COINS_PER_UTXO_BYTE *
-		(txOutSize + TX_OUT_SIZE_ADDITIONAL)
-	);
+	return +min_ada_for_output(
+		txOut,
+		DataCost.new_coins_per_byte(BigNum.from_str('' + COINS_PER_UTXO_BYTE)),
+	).to_str();
 };
 
 const calculateMinValueOfAggregatedUtxo = (utxos: UTxO[]) => {
@@ -287,6 +284,29 @@ const calculateMinValueOfAggregatedUtxo = (utxos: UTxO[]) => {
 	return calculateMinUtxo(TransactionOutput.new(address, value));
 };
 
+export const createUtxo = (
+	outputAddr: string,
+	outputLovelace: string,
+	outputTokens: { [key: string]: string },
+	inputTxHash = '',
+	inputOutputIndex = 0,
+): UTxO => ({
+	output: {
+		address: outputAddr,
+		amount: [
+			{
+				unit: 'lovelace',
+				quantity: outputLovelace,
+			},
+			...Object.keys(outputTokens).map((unit) => ({
+				unit: normalizeNativeTokenKey(unit),
+				quantity: outputTokens[unit],
+			})),
+		],
+	},
+	input: { outputIndex: inputOutputIndex, txHash: inputTxHash },
+});
+
 export const calculateTokenUtxoMinValue = (
 	utxo: UTxO,
 	defaultMinUtxo: number,
@@ -297,7 +317,7 @@ export const calculateTokenUtxoMinValue = (
 			defaultMinUtxo,
 		);
 	} catch (e) {
-		console.log('error while calculating change minUtxo', e);
+		console.log('error while calculating minUtxo value', e);
 	}
 
 	return 2 * defaultMinUtxo;
