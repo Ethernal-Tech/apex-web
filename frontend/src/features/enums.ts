@@ -11,10 +11,10 @@ export enum WalletErrors {
 }
 
 export enum TokenEnum {
-	Ada = 'Ada',
-	wADA = 'wADA',
+	ADA = 'ADA',
+	WADA = 'wADA',
 	APEX = 'APEX',
-	WAPEX = 'WAPEX',
+	WAPEX = 'wAPEX',
 	ETH = 'ETH',
 	BAP3X = 'bAP3X',
 	BNAP3X = 'bnAP3X',

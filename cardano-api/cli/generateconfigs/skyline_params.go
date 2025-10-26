@@ -162,17 +162,17 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 		return err
 	}
 
+	if p.vectorBlockfrostURL == "" && p.vectorSocketPath == "" && p.vectorOgmiosURL == "" {
+		return fmt.Errorf("specify at least one of: %s, %s, %s",
+			vectorBlockfrostURLFlag, vectorSocketPathFlag, vectorOgmiosURLFlag)
+	}
+
 	if p.vectorBlockfrostURL != "" && !common.IsValidHTTPURL(p.vectorBlockfrostURL) {
 		return fmt.Errorf("invalid vector blockfrost url: %s", p.vectorBlockfrostURL)
 	}
 
 	if p.vectorOgmiosURL != "" && !common.IsValidHTTPURL(p.vectorOgmiosURL) {
 		return fmt.Errorf("invalid vector ogmios url: %s", p.vectorOgmiosURL)
-	}
-
-	if p.vectorBlockfrostURL == "" && p.vectorSocketPath == "" && p.vectorOgmiosURL == "" {
-		return fmt.Errorf("specify at least one of: %s, %s, %s",
-			vectorBlockfrostURLFlag, vectorSocketPathFlag, vectorOgmiosURLFlag)
 	}
 
 	if !common.IsValidHTTPURL(p.oracleAPIURL) {
@@ -484,7 +484,6 @@ func (p *skylineGenerateConfigsParams) Execute(
 					SocketPath:       p.primeSocketPath,
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.primeTTLSlotInc,
-					NativeTokens:     nil,
 				},
 				IsEnabled: true,
 			},
@@ -518,6 +517,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 					OgmiosURL:        p.vectorOgmiosURL,
 					BlockfrostURL:    p.vectorBlockfrostURL,
 					BlockfrostAPIKey: p.vectorBlockfrostAPIKey,
+					UseDemeter:       defaultUseDemeter,
 					SocketPath:       p.vectorSocketPath,
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.vectorTTLSlotInc,

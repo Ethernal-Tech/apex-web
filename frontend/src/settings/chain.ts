@@ -80,7 +80,7 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 	},
 	[ChainEnum.Cardano]: {
 		value: ChainEnum.Cardano,
-		currencyToken: TokenEnum.Ada,
+		currencyToken: TokenEnum.ADA,
 		label: 'Cardano',
 		icon: CardanoIcon,
 		borderColor: '#0538AF',

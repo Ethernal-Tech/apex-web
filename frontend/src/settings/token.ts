@@ -38,14 +38,14 @@ const tokenInfos: Partial<Record<TokenEnum, TokenInfo>> = {
 		label: 'cAP3X',
 		borderColor: '#0538AF',
 	},
-	[TokenEnum.Ada]: {
-		token: TokenEnum.Ada,
+	[TokenEnum.ADA]: {
+		token: TokenEnum.ADA,
 		icon: AdaIcon,
 		label: 'ADA',
 		borderColor: '#077368',
 	},
-	[TokenEnum.wADA]: {
-		token: TokenEnum.wADA,
+	[TokenEnum.WADA]: {
+		token: TokenEnum.WADA,
 		icon: AdaIcon,
 		label: 'wADA',
 		borderColor: '#0538AF',
@@ -109,7 +109,7 @@ const tokensDirection: Partial<
 		},
 		[ChainEnum.Cardano]: {
 			isCurrencyBridgingAllowed: false,
-			wrappedToken: TokenEnum.wADA,
+			wrappedToken: TokenEnum.WADA,
 		},
 	},
 	[ChainEnum.Nexus]: {
@@ -170,8 +170,15 @@ export const getToken = (
 		: getChainInfo(srcChain).currencyToken;
 };
 
-export const getTokenInfo = (token: TokenEnum | undefined): TokenInfo =>
-	(token && tokenInfos[token]) || unknownTokenInfo;
+export const getTokenInfo = (token: TokenEnum | undefined): TokenInfo => {
+	if (!token) return unknownTokenInfo;
+
+	const tokenKey = Object.keys(tokenInfos).find(
+		(tk) => tk.toLowerCase() === token.toLowerCase(),
+	) as TokenEnum;
+
+	return (tokenKey && tokenInfos[tokenKey]) || unknownTokenInfo;
+};
 
 export const getTokenInfoBySrcDst = (
 	srcChain: ChainEnum,
@@ -183,7 +190,7 @@ export const getTokenInfoBySrcDst = (
 
 export const isWrappedToken = (token: TokenEnum | undefined): boolean =>
 	token === TokenEnum.WAPEX ||
-	token === TokenEnum.wADA ||
+	token === TokenEnum.WADA ||
 	token === TokenEnum.BAP3X ||
 	token === TokenEnum.BNAP3X;
 

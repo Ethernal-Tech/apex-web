@@ -111,6 +111,16 @@ $ go run ./main.go generate-configs skyline \
 		--cardano-blockfrost-api-key "<blockfrost API key for cardano network>" \
 		--cardano-socket-path "<socket path for cardano network>" \
 		--cardano-ttl-slot-inc <ttl slot increment for cardano> \
+		--vector-network-id <network id of vector network> \
+		--vector-network-magic <network magic of vector network> \
+		--vector-bridging-address "<bridging address for vector network>" \
+		--vector-bridging-fee-address "<bridging fee address for vector network>" \
+		--vector-bridging-fallback-address "<bridging fallback address for vector network>" \
+		--vector-ogmios-url "<ogmios URL for vector network>" \
+		--vector-blockfrost-url "<blockfrost URL for vector network>" \
+		--vector-blockfrost-api-key "<blockfrost API key for vector network>" \
+		--vector-socket-path "<socket path for vector network>" \
+		--vector-ttl-slot-inc <ttl slot increment for vector> \
 		--logs-path "<path to where logs will be stored>" \
 		--utxo-cache-timeout <how long should utxos be locked> \
 		--oracle-api-url <URL of Oracle API> \
@@ -137,6 +147,11 @@ $ go run ./main.go generate-configs skyline \
 		--cardano-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv" \
 		--cardano-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq" \
 		--cardano-blockfrost-url "https://cardano-preview.blockfrost.io/api/v0" \
+		--vector-network-id 0\
+		--vector-network-magic 3311 \
+		--vector-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv" \
+		--vector-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq" \
+		--vector-blockfrost-url "https://cardano-preview.blockfrost.io/api/v0" \
 		--oracle-api-url "http://bridge-api-testnet.apexfusion.org:10003" \
 		--oracle-api-key "oracle_api_key_1" \
 		--api-keys "cardano_api_key_1"\
@@ -152,17 +167,20 @@ $ go run main.go generate-configs skyline \
 		--output-file-name "config.json"\
 		--prime-network-id 0\
 		--prime-network-magic 3311\
-		--prime-bridging-address "addr_test1wr943cc3l8hxhjcnh8mjrh67yshksw2ugydx0r9a4k7xrfqsp4p7y"\
 		--prime-bridging-fee-address "addr_test1wpp9wrzm5249ksfucal6f9rdth9y0rlwecu0r608gysjmcsf764mj"\
 		--prime-bridging-fallback-address "addr_test1wr943cc3l8hxhjcnh8mjrh67yshksw2ugydx0r9a4k7xrfqsp4p7y"\
 		--prime-blockfrost-url "https://blockfrost-m1.demeter.run"\
 		--prime-blockfrost-api-key "test_demeter_api_key_1"\
 		--cardano-network-id 0\
 		--cardano-network-magic 2\
-		--cardano-bridging-address "addr_test1wrntyxdelrw98ps0vrpuf4rr2mmknem83y9ywxfn0a3jeasxtsjz5"\
 		--cardano-bridging-fee-address "addr_test1wz3q8gnjsuyf7etplmcuw8rfusckmn5dmjwnhwdsap6savqcx8xg3"\
 		--cardano-bridging-fallback-address "addr_test1wrntyxdelrw98ps0vrpuf4rr2mmknem83y9ywxfn0a3jeasxtsjz5"\
 		--cardano-ogmios-url "http://preview-services-skyline.testnet.ethernal.work:1733"\
+		--vector-network-id 0\
+		--vector-network-magic 2\
+		--vector-bridging-fee-address "addr_test1wz3q8gnjsuyf7etplmcuw8rfusckmn5dmjwnhwdsap6savqcx8xg3"\
+		--vector-bridging-fallback-address "addr_test1wrntyxdelrw98ps0vrpuf4rr2mmknem83y9ywxfn0a3jeasxtsjz5"\
+		--vector-ogmios-url "http://preview-services-skyline.testnet.ethernal.work:1733"\
 		--logs-path "./logs"\
 		--utxo-cache-timeout 1m30s\
 		--oracle-api-url "http://validators-oracle-api-skyline.testnet.ethernal.work" \
@@ -170,7 +188,7 @@ $ go run main.go generate-configs skyline \
 		--api-port 41002\
 		--api-keys "cardano_api_key_1"\
 		--utxo-cache-keys "utxo_cache_api_key_1" \
-		--prime-cardano-token-name a59a8df821056ddcaeae4eb16f272565a0b3581c61e04a9bd18d4b32.WADA \
+		--vector-cardano-token-name a59a8df821056ddcaeae4eb16f272565a0b3581c61e04a9bd18d4b32.WADA \
 		--cardano-prime-token-name 64c6ea243c3133d44f2022299e74b027f02b1c13397324819e8465c7.WAPEX
 ```
 

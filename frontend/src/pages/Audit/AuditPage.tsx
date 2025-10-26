@@ -11,29 +11,36 @@ import {
 import SkylinePanel from '../../components/Audit/SkylineAudit';
 import LayerZeroPanel from '../../components/Audit/LayerZeroAudit';
 import '../../audit.css';
-import { decodeTokenKey, isApexChain } from '../../utils/tokenUtils';
+import {
+	correlateTokenToACurrency,
+	decodeTokenKey,
+	isApexChain,
+} from '../../utils/tokenUtils';
+import { LovelaceTokenName } from '../../utils/chainUtils';
+import { getTokenInfo } from '../../settings/token';
 import { TokenEnum } from '../../features/enums';
+import { toChainEnum } from '../../settings/chain';
 
 const sumToken = (m: Record<string, bigint>) =>
 	Object.values(m).reduce((a, b) => a + b, BigInt(0));
 
 const sumChain = (
-	chain: string,
 	tokenMap: Record<string, Record<string, bigint>> | Record<string, bigint>,
-	_blank: boolean,
+	filter?: (tokenKey: string) => boolean,
 ): Record<string, bigint> => {
 	return Object.fromEntries(
-		Object.entries(tokenMap).map(([k, v]) => [
-			chain !== ChainEnum.Cardano || !(k === 'amount' || k === 'lovelace')
-				? k
-				: 'Ada',
-			typeof v === 'bigint' ? v : sumToken(v as Record<string, bigint>),
-		]),
+		Object.entries(tokenMap)
+			.filter(([k]) => !filter || filter(k))
+			.map(([k, v]) => [
+				k,
+				typeof v === 'bigint'
+					? v
+					: sumToken(v as Record<string, bigint>),
+			]),
 	);
 };
 
 const addAll = (
-	_: string,
 	into: Record<string, bigint>,
 	totals: Record<string, bigint>,
 	mapKey?: (k: string) => string,
@@ -41,23 +48,6 @@ const addAll = (
 	for (const [t, v] of Object.entries(totals)) {
 		const key = mapKey ? mapKey(t) : t;
 		into[key] = (into[key] ?? BigInt(0)) + v;
-	}
-	return into;
-};
-
-const addAllTVL = (
-	_: string,
-	into: Record<string, bigint>,
-	totals: Record<string, bigint>,
-	mapKey?: (k: string) => string,
-) => {
-	for (const [t, v] of Object.entries(totals)) {
-		const key = mapKey ? mapKey(t) : t;
-		if (key === TokenEnum.Ada || key === TokenEnum.wADA) {
-			into[TokenEnum.Ada] = (into[key] ?? BigInt(0)) + v;
-		} else {
-			into[TokenEnum.APEX] = (into[key] ?? BigInt(0)) + v;
-		}
 	}
 	return into;
 };
@@ -72,14 +62,16 @@ const AuditPage: React.FC = () => {
 
 	const chainKeys = useMemo(() => Object.keys(chains), [chains]);
 
-	const perChainTotals = useMemo(() => {
-		return Object.fromEntries(
-			Object.entries(chains).map(([chain, tokenMap]) => [
-				chain,
-				sumChain(chain, tokenMap, false),
-			]),
-		);
-	}, [chains]);
+	const perChainTotals = useMemo(
+		() =>
+			Object.fromEntries(
+				Object.entries(chains).map(([chain, tokenMap]) => [
+					chain,
+					sumChain(tokenMap),
+				]),
+			),
+		[chains],
+	);
 
 	const skylineChains = useMemo<ChainEnum[]>(() => {
 		if (!settings) return [];
@@ -92,10 +84,19 @@ const AuditPage: React.FC = () => {
 	const tokenTotalsAllChains = useMemo(() => {
 		const acc: Record<string, bigint> = {};
 		for (const [chain, totals] of Object.entries(perChainTotals)) {
-			addAllTVL(chain, acc, totals);
+			addAll(
+				acc,
+				{ [LovelaceTokenName]: totals[LovelaceTokenName] || BigInt(0) },
+				(tk: string) => decodeTokenKey(tk, chain),
+			);
 		}
 		return acc;
 	}, [perChainTotals]);
+
+	const skylineSettings = useMemo(
+		() => settings.settingsPerMode[BridgingModeEnum.Skyline],
+		[settings.settingsPerMode],
+	);
 
 	// Now use those values inside your other memos
 	const { tvbPerChainTotals, tvbTokenTotalsAllChains, tvbGrandTotal } =
@@ -104,46 +105,54 @@ const AuditPage: React.FC = () => {
 			const tvbPerChainTotals = Object.fromEntries(
 				Object.entries(tvbChains)
 					.filter(([chain]) => skylineSet.has(chain as ChainEnum))
-					.map(([chain, tokenMap]) => [
-						chain,
-						sumChain(
-							chain,
-							tokenMap,
-							isApexChain(chain) || chain === ChainEnum.Cardano,
-						),
-					]),
+					.map(([chain, tokenMap]) => [chain, sumChain(tokenMap)]),
 			);
 
 			const tvbTokenTotalsAllChains = Object.entries(
 				tvbPerChainTotals,
 			).reduce(
-				(acc, [chain, totals]) => addAll(chain, acc, totals),
+				(acc, [chain, totals]) =>
+					addAll(acc, totals, (tk: string) =>
+						decodeTokenKey(tk, chain),
+					),
 				{} as Record<string, bigint>,
 			);
 
-			const tvbGrandTotal: Record<string, bigint> = {};
-			tvbGrandTotal[TokenEnum.Ada] = BigInt(0);
-			tvbGrandTotal[TokenEnum.APEX] = BigInt(0);
+			const tvbGrandTotal = {
+				[getTokenInfo(TokenEnum.APEX).label]: BigInt(0),
+				[getTokenInfo(TokenEnum.ADA).label]: BigInt(0),
+			};
 
-			for (const [key, value] of Object.entries(
-				tvbTokenTotalsAllChains,
-			)) {
-				if (
-					key === TokenEnum.Ada ||
-					decodeTokenKey(key) === TokenEnum.wADA
-				) {
-					tvbGrandTotal[TokenEnum.Ada] += value;
-				} else {
-					tvbGrandTotal[TokenEnum.APEX] += value;
-				}
-			}
+			Object.entries(tvbPerChainTotals).forEach(
+				([chainKey, perToken]) => {
+					const chain = toChainEnum(chainKey);
+
+					Object.entries(perToken).forEach(([tokenKey, value]) => {
+						const currencyInfo = correlateTokenToACurrency(
+							skylineSettings.cardanoChainsNativeTokens,
+							chain,
+							tokenKey,
+						);
+
+						if (currencyInfo) {
+							tvbGrandTotal[currencyInfo.label] += BigInt(
+								value || '0',
+							);
+						}
+					});
+				},
+			);
 
 			return {
 				tvbPerChainTotals,
 				tvbTokenTotalsAllChains,
 				tvbGrandTotal,
 			};
-		}, [tvbChains, skylineChains]);
+		}, [
+			skylineChains,
+			tvbChains,
+			skylineSettings.cardanoChainsNativeTokens,
+		]);
 
 	const { lzPerChainTotals, lzTokenTotalsAllChains, lzGrandTotal } =
 		useMemo(() => {
@@ -153,14 +162,21 @@ const AuditPage: React.FC = () => {
 					.filter(([chain]) => lzSet.has(chain as ChainEnum))
 					.map(([chain, tokenMap]) => [
 						chain,
-						sumChain(chain, tokenMap, isApexChain(chain)),
+						sumChain(tokenMap, (k: string) =>
+							isApexChain(chain)
+								? k === 'amount'
+								: k !== 'amount',
+						),
 					]),
 			);
 
 			const lzTokenTotalsAllChains = Object.entries(
 				lzPerChainTotals,
 			).reduce(
-				(acc, [chain, totals]) => addAll(chain, acc, totals),
+				(acc, [chain, totals]) =>
+					addAll(acc, totals, (tk: string) =>
+						decodeTokenKey(tk, chain),
+					),
 				{} as Record<string, bigint>,
 			);
 

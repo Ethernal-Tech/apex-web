@@ -1,21 +1,20 @@
 import Web3 from 'web3';
 import { isHex } from 'web3-validator';
 import { TokenEnum } from '../features/enums';
-import { getTokenInfo } from '../settings/token';
+import { getCurrencyTokenInfo, getTokenInfo } from '../settings/token';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
+import { LovelaceTokenName } from './chainUtils';
+import { toChainEnum } from '../settings/chain';
+import { CardanoChainsNativeTokens } from '../settings/settingsRedux';
 
 export function decodeTokenKey(tokenKey: string, chain?: string): string {
-	if (tokenKey === 'lovelace' || tokenKey === 'amount') {
+	if (tokenKey === LovelaceTokenName || tokenKey === 'amount') {
 		switch (chain) {
 			case ChainEnum.Cardano:
-				return getTokenInfo(TokenEnum.Ada).label;
+				return getTokenInfo(TokenEnum.ADA).label;
 			default:
 				return getTokenInfo(TokenEnum.APEX).label;
 		}
-	}
-
-	if (tokenKey === 'Ada') {
-		return tokenKey;
 	}
 
 	const parts = tokenKey.split('.');
@@ -62,3 +61,45 @@ export const normalizeNativeTokenKey = (k: string) => {
 
 export const isApexChain = (c: string) =>
 	c === ChainEnum.Prime || c === ChainEnum.Nexus || c === ChainEnum.Vector;
+
+const normalizeNativeTokenKey = (k: string) => {
+	if (!k.includes('.')) return k;
+
+	const kParts = k.split('.');
+	if (kParts.length > 2) throw new Error(`invalid native token key: ${k}`);
+
+	let name = kParts[1];
+	try {
+		name = Web3.utils.hexToAscii(name);
+	} catch {
+		/* empty */
+	}
+
+	return `${kParts[0]}${name}`;
+};
+
+export const correlateTokenToACurrency = (
+	cardanoChainsNativeTokens: CardanoChainsNativeTokens,
+	chain: ChainEnum,
+	tokenKey: string,
+) => {
+	if (tokenKey === LovelaceTokenName || tokenKey === 'amount') {
+		return getCurrencyTokenInfo(chain);
+	}
+
+	const chainSettingsTokens = cardanoChainsNativeTokens[chain];
+	if (!chainSettingsTokens) return;
+
+	const tokenSettings = chainSettingsTokens.find(
+		(x) =>
+			normalizeNativeTokenKey(x.tokenName) ===
+			normalizeNativeTokenKey(tokenKey),
+	);
+
+	if (!tokenSettings) return;
+
+	const currencyChain = toChainEnum(tokenSettings.dstChainID);
+	if (currencyChain) {
+		return getCurrencyTokenInfo(currencyChain);
+	}
+};
