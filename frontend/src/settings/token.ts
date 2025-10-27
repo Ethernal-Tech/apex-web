@@ -25,56 +25,56 @@ const unknownTokenInfo: TokenInfo = {
 	borderColor: 'transparent',
 };
 
-const tokenInfos: Partial<Record<TokenEnum, TokenInfo>> = {
-	[TokenEnum.APEX]: {
+const tokenInfos: TokenInfo[] = [
+	{
 		token: TokenEnum.APEX,
 		icon: ApexIcon,
 		label: 'AP3X',
 		borderColor: '#077368',
 	},
-	[TokenEnum.WAPEX]: {
+	{
 		token: TokenEnum.WAPEX,
 		icon: ApexIcon,
 		label: 'cAP3X',
 		borderColor: '#0538AF',
 	},
-	[TokenEnum.ADA]: {
+	{
 		token: TokenEnum.ADA,
 		icon: AdaIcon,
 		label: 'ADA',
 		borderColor: '#077368',
 	},
-	[TokenEnum.WADA]: {
+	{
 		token: TokenEnum.WADA,
 		icon: AdaIcon,
 		label: 'wADA',
 		borderColor: '#0538AF',
 	},
-	[TokenEnum.ETH]: {
+	{
 		token: TokenEnum.ETH,
 		icon: EthIcon,
 		label: 'ETH',
 		borderColor: '#8A92B2',
 	},
-	[TokenEnum.BAP3X]: {
+	{
 		token: TokenEnum.BAP3X,
 		icon: ApexIcon,
 		label: 'bAP3X',
 		borderColor: '#077368',
 	},
-	[TokenEnum.BNAP3X]: {
+	{
 		token: TokenEnum.BNAP3X,
 		icon: ApexIcon,
 		label: 'bnAP3X',
 		borderColor: '#F3BA2F',
 	},
-	[TokenEnum.BNB]: {
+	{
 		token: TokenEnum.BNB,
 		icon: ApexIcon,
 		label: 'BNB',
 		borderColor: '#F3BA2F',
 	},
-};
+];
 
 const tokensDirection: Partial<
 	Record<ChainEnum, Partial<Record<ChainEnum, BridgingInfo>>>
@@ -173,11 +173,11 @@ export const getToken = (
 export const getTokenInfo = (token: TokenEnum | undefined): TokenInfo => {
 	if (!token) return unknownTokenInfo;
 
-	const tokenKey = Object.keys(tokenInfos).find(
-		(tk) => tk.toLowerCase() === token.toLowerCase(),
-	) as TokenEnum;
+	const tokenInfo = tokenInfos.find(
+		(ti) => ti.token.toLowerCase() === token.toLowerCase(),
+	);
 
-	return (tokenKey && tokenInfos[tokenKey]) || unknownTokenInfo;
+	return tokenInfo || unknownTokenInfo;
 };
 
 export const getTokenInfoBySrcDst = (
