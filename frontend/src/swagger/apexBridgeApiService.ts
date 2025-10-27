@@ -1114,71 +1114,9 @@ export interface ISettingsFullResponseDto {
     [key: string]: any;
 }
 
-export class BridgingAddressDto implements IBridgingAddressDto {
-    /** chain ID */
-    chainID!: string;
-    /** bridging address index */
-    addressIndex!: number;
-    /** bridging address */
-    address!: string;
-
-    [key: string]: any;
-
-    constructor(data?: IBridgingAddressDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            for (var property in _data) {
-                if (_data.hasOwnProperty(property))
-                    this[property] = _data[property];
-            }
-            this.chainID = _data["chainID"];
-            this.addressIndex = _data["addressIndex"];
-            this.address = _data["address"];
-        }
-    }
-
-    static fromJS(data: any): BridgingAddressDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new BridgingAddressDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        for (var property in this) {
-            if (this.hasOwnProperty(property))
-                data[property] = this[property];
-        }
-        data["chainID"] = this.chainID;
-        data["addressIndex"] = this.addressIndex;
-        data["address"] = this.address;
-        return data;
-    }
-}
-
-export interface IBridgingAddressDto {
-    /** chain ID */
-    chainID: string;
-    /** bridging address index */
-    addressIndex: number;
-    /** bridging address */
-    address: string;
-
-    [key: string]: any;
-}
-
 export class AllBridgingAddressesDto implements IAllBridgingAddressesDto {
-    /** Bridging address info */
-    addresses!: BridgingAddressDto[];
+    /** Bridging address */
+    addresses!: string[];
 
     [key: string]: any;
 
@@ -1203,7 +1141,7 @@ export class AllBridgingAddressesDto implements IAllBridgingAddressesDto {
             if (Array.isArray(_data["addresses"])) {
                 this.addresses = [] as any;
                 for (let item of _data["addresses"])
-                    this.addresses!.push(BridgingAddressDto.fromJS(item));
+                    this.addresses!.push(item);
             }
         }
     }
@@ -1224,15 +1162,15 @@ export class AllBridgingAddressesDto implements IAllBridgingAddressesDto {
         if (Array.isArray(this.addresses)) {
             data["addresses"] = [];
             for (let item of this.addresses)
-                data["addresses"].push(item ? item.toJSON() : undefined as any);
+                data["addresses"].push(item);
         }
         return data;
     }
 }
 
 export interface IAllBridgingAddressesDto {
-    /** Bridging address info */
-    addresses: BridgingAddressDto[];
+    /** Bridging address */
+    addresses: string[];
 
     [key: string]: any;
 }
