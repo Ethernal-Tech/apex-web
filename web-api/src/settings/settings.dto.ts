@@ -200,3 +200,36 @@ export class SettingsFullResponseDto {
 	})
 	enabledChains: string[];
 }
+
+export class BridgingAddressDto {
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'chain ID',
+	})
+	chainID: string;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'bridging address index',
+	})
+	addressIndex: number;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'bridging address',
+	})
+	address: string;
+}
+
+@ApiExtraModels(BridgingAddressDto)
+export class AllBridgingAddressesDto {
+	@IsNotEmpty()
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => BridgingAddressDto)
+	@ApiProperty({
+		description: 'Bridging address info',
+		type: () => [BridgingAddressDto],
+	})
+	addresses: BridgingAddressDto[];
+}

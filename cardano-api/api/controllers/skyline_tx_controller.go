@@ -72,6 +72,7 @@ func (c *SkylineTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
 		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
 		{Path: "GetLockedTokens", Method: http.MethodGet, Handler: c.getLockedAmountOfTokens},
+		{Path: "GetBridgingAddresses", Method: http.MethodGet, Handler: c.getBridgingAddresses},
 	}
 }
 
@@ -588,4 +589,49 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 	}
 
 	utils.WriteResponse(w, r, http.StatusOK, response, c.logger)
+}
+
+// @Summary Get bridging addresses  specific chain
+// @Description Returns all bridging addresses for the given chain ID
+// @Tags CardanoTx
+// @Produce json
+// @Param chainId query string true "Chain ID"
+// @Success 200 {object} response.AllBridgingAddressesResponse "OK - Returns bridging addresses."
+// @Failure 400 {object} response.ErrorResponse "Bad Request – chainId is missing from the query or invalid, or the bridging addresses could not be retrieved."
+// @Failure 401 {object} response.ErrorResponse "Unauthorized – API key missing or invalid."
+// @Security ApiKeyAuth
+// @Router /CardanoTx/GetBridgingAddresses [get]
+func (c *SkylineTxControllerImpl) getBridgingAddresses(w http.ResponseWriter, r *http.Request) {
+	c.logger.Debug("getBridgingAddresses request", "url", r.URL)
+
+	queryValues := r.URL.Query()
+
+	chainIDArr, exists := queryValues["chainId"]
+	if !exists || len(chainIDArr) == 0 {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			errors.New("chainId missing from query"), c.logger)
+
+		return
+	}
+
+	chainID := chainIDArr[0]
+
+	bridgingAddresses, err := utils.GetAllBridgingAddress(
+		r.Context(),
+		c.appConfig.OracleAPI.URL,
+		c.appConfig.OracleAPI.APIKey,
+		chainID,
+	)
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("get all bridging addresses: %w", err), c.logger)
+
+		return
+	}
+
+	utils.WriteResponse(
+		w, r, http.StatusOK,
+		bridgingAddresses, c.logger)
 }
