@@ -69,10 +69,12 @@ export const normalizeNativeTokenKey = (k: string) => {
 	if (kParts.length > 2) throw new Error(`invalid native token key: ${k}`);
 
 	let name = kParts[1];
-	try {
-		name = Web3.utils.asciiToHex(name).substring(2);
-	} catch {
-		/* empty */
+	if (!isHex(name)) {
+		try {
+			name = Web3.utils.asciiToHex(name).substring(2);
+		} catch {
+			/* empty */
+		}
 	}
 
 	return `${kParts[0]}${name}`;
