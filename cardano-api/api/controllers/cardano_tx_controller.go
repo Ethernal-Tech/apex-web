@@ -1,12 +1,9 @@
 package controllers
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"net/http"
-	"time"
 
 	"github.com/Ethernal-Tech/cardano-api/api/model/request"
 	"github.com/Ethernal-Tech/cardano-api/api/model/response"
@@ -14,7 +11,6 @@ import (
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
-	infracom "github.com/Ethernal-Tech/cardano-infrastructure/common"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	goEthCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/hashicorp/go-hclog"
@@ -47,74 +43,8 @@ func (c *CardanoTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	return []*core.APIEndpoint{
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
-		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance},
 		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
 	}
-}
-
-func (c *CardanoTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Request) {
-	queryValues := r.URL.Query()
-	c.logger.Debug("getBalance request", "query values", queryValues, "url", r.URL)
-
-	chainIDArr, exists := queryValues["chainId"]
-	if !exists || len(chainIDArr) == 0 {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			errors.New("chainId missing from query"), c.logger)
-
-		return
-	}
-
-	addressArr, exists := queryValues["address"]
-	if !exists || len(addressArr) == 0 {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			errors.New("address missing from query"), c.logger)
-
-		return
-	}
-
-	chainID := chainIDArr[0]
-	address := addressArr[0]
-
-	chainConfig, _ := core.GetChainConfig(c.appConfig, chainID)
-	if chainConfig == nil {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			errors.New("chainID not registered"), c.logger)
-
-		return
-	}
-
-	txProvider, err := chainConfig.ChainSpecific.CreateTxProvider()
-	if err != nil {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			fmt.Errorf("failed to create tx provider. err: %w", err), c.logger)
-
-		return
-	}
-
-	utxos, err := infracom.ExecuteWithRetry(r.Context(),
-		func(ctx context.Context) ([]wallet.Utxo, error) {
-			return txProvider.GetUtxos(ctx, address)
-		}, infracom.WithRetryCount(10), infracom.WithRetryWaitTime(time.Second))
-
-	if err != nil {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest,
-			fmt.Errorf("failed to get utxos. err: %w", err), c.logger)
-
-		return
-	}
-
-	balance := big.NewInt(0)
-
-	for _, utxo := range utxos {
-		balance.Add(balance, new(big.Int).SetUint64(utxo.Amount))
-	}
-
-	utils.WriteResponse(w, r, http.StatusOK, response.NewBalanceResponse(balance), c.logger)
 }
 
 func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {

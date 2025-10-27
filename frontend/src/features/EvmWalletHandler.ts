@@ -24,10 +24,10 @@ const RETRY_WAIT_TIME = 1000;
 class EvmWalletHandler {
 	private _enabled = false;
 	private web3: Web3 | undefined;
-	private onAccountsChanged: (accounts: string[]) => Promise<void> =
-		async () => undefined;
-	private onChainChanged: (chainId: string) => Promise<void> = async () =>
-		undefined;
+	private onAccountsChanged: (accounts: string[]) => Promise<void> = () =>
+		new Promise<void>(() => undefined);
+	private onChainChanged: (chainId: string) => Promise<void> = () =>
+		new Promise<void>(() => undefined);
 
 	getInstalledWallets = (): Wallet[] => {
 		if (typeof window.ethereum === 'undefined') return [];
