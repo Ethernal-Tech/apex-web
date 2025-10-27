@@ -25,4 +25,5 @@ export interface ISettingsState {
 	enabledChains: string[];
 	allowedDirections: { [key: string]: string[] };
 	layerZeroChains: LayerZeroChains;
+	bridgingAddresses: string[];
 }

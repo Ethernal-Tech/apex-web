@@ -1,8 +1,14 @@
 import { Dispatch } from '@reduxjs/toolkit';
-import { SettingsControllerClient } from '../swagger/apexBridgeApiService';
+import {
+	ChainEnum,
+	SettingsControllerClient,
+} from '../swagger/apexBridgeApiService';
 import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
 import { retryForever } from '../utils/generalUtils';
-import { setSettingsAction } from '../redux/slices/settingsSlice';
+import {
+	setBridgingAddressesAction,
+	setSettingsAction,
+} from '../redux/slices/settingsSlice';
 
 const RETRY_DELAY_MS = 5000;
 
@@ -27,4 +33,30 @@ export const fetchAndUpdateSettingsAction = async (dispatch: Dispatch) => {
 	}, RETRY_DELAY_MS);
 
 	dispatch(setSettingsAction(settings));
+};
+
+export const getBridgingAddressesAction = async (chainID: ChainEnum) => {
+	const client = new SettingsControllerClient();
+	return client.getBridgingAddresses(chainID);
+};
+
+export const fetchAndUpdateBridgingAddressesAction = async (
+	chainID: ChainEnum,
+	dispatch: Dispatch,
+) => {
+	const bridgingAddresses = await retryForever(async () => {
+		const bridgingAddressesResp = await tryCatchJsonByAction(
+			() => getBridgingAddressesAction(chainID),
+			false,
+		);
+		if (bridgingAddressesResp instanceof ErrorResponse) {
+			throw new Error(
+				`Error while fetching bridging addresses: ${bridgingAddressesResp.err}`,
+			);
+		}
+
+		return bridgingAddressesResp;
+	}, RETRY_DELAY_MS);
+
+	dispatch(setBridgingAddressesAction(bridgingAddresses));
 };
