@@ -58,6 +58,50 @@ export class SettingsControllerClient extends BaseClient {
         }
         return Promise.resolve<SettingsFullResponseDto>(null as any);
     }
+
+    /**
+     * Get all bridging addresses
+     * @return OK - Get bridging addresses.
+     */
+    getBridgingAddresses(chainId: string): Promise<AllBridgingAddressesDto> {
+        let url_ = this.baseUrl + "/settings/getBridgingAddresses?";
+        if (chainId === undefined || chainId === null)
+            throw new globalThis.Error("The parameter 'chainId' must be defined and cannot be null.");
+        else
+            url_ += "chainId=" + encodeURIComponent("" + chainId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGetBridgingAddresses(_response);
+        });
+    }
+
+    protected processGetBridgingAddresses(response: Response): Promise<AllBridgingAddressesDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = AllBridgingAddressesDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<AllBridgingAddressesDto>(null as any);
+    }
 }
 
 export class TransactionControllerClient extends BaseClient {
@@ -1066,6 +1110,129 @@ export interface ISettingsFullResponseDto {
     layerZeroChains: LayerZeroChainSettingsDto[];
     /** Participating chains in the bridge */
     enabledChains: string[];
+
+    [key: string]: any;
+}
+
+export class BridgingAddressDto implements IBridgingAddressDto {
+    /** chain ID */
+    chainID!: string;
+    /** bridging address index */
+    addressIndex!: number;
+    /** bridging address */
+    address!: string;
+
+    [key: string]: any;
+
+    constructor(data?: IBridgingAddressDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.chainID = _data["chainID"];
+            this.addressIndex = _data["addressIndex"];
+            this.address = _data["address"];
+        }
+    }
+
+    static fromJS(data: any): BridgingAddressDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new BridgingAddressDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["chainID"] = this.chainID;
+        data["addressIndex"] = this.addressIndex;
+        data["address"] = this.address;
+        return data;
+    }
+}
+
+export interface IBridgingAddressDto {
+    /** chain ID */
+    chainID: string;
+    /** bridging address index */
+    addressIndex: number;
+    /** bridging address */
+    address: string;
+
+    [key: string]: any;
+}
+
+export class AllBridgingAddressesDto implements IAllBridgingAddressesDto {
+    /** Bridging address info */
+    addresses!: BridgingAddressDto[];
+
+    [key: string]: any;
+
+    constructor(data?: IAllBridgingAddressesDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+        if (!data) {
+            this.addresses = [];
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            if (Array.isArray(_data["addresses"])) {
+                this.addresses = [] as any;
+                for (let item of _data["addresses"])
+                    this.addresses!.push(BridgingAddressDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): AllBridgingAddressesDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new AllBridgingAddressesDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        if (Array.isArray(this.addresses)) {
+            data["addresses"] = [];
+            for (let item of this.addresses)
+                data["addresses"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IAllBridgingAddressesDto {
+    /** Bridging address info */
+    addresses: BridgingAddressDto[];
 
     [key: string]: any;
 }
