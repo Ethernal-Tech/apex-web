@@ -200,3 +200,13 @@ export class SettingsFullResponseDto {
 	})
 	enabledChains: string[];
 }
+
+export class AllBridgingAddressesDto {
+	@IsNotEmpty()
+	@IsArray()
+	@ValidateNested({ each: true })
+	@ApiProperty({
+		description: 'Bridging address',
+	})
+	addresses: string[];
+}

@@ -1,7 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import appSettings from '../../settings/appSettings';
-import { SettingsFullResponseDto } from '../../swagger/apexBridgeApiService';
+import {
+	AllBridgingAddressesDto,
+	SettingsFullResponseDto,
+} from '../../swagger/apexBridgeApiService';
 import {
 	ISettingsState,
 	LayerZeroChains,
@@ -37,6 +40,7 @@ const initialState: ISettingsState = {
 	enabledChains: appSettings.enabledChains,
 	allowedDirections: {},
 	layerZeroChains: {},
+	bridgingAddresses: [],
 };
 
 const settingsSlice = createSlice({
@@ -114,10 +118,23 @@ const settingsSlice = createSlice({
 				{} as { [key: string]: SettingsPerMode },
 			);
 		},
+		setBridgingAddressesAction: (
+			state,
+			action: PayloadAction<AllBridgingAddressesDto>,
+		) => {
+			state.bridgingAddresses = action.payload.addresses;
+		},
+		clearBridgingAddressesAction: (state) => {
+			state.bridgingAddresses = [];
+		},
 	},
 });
 
 // Action creators are generated for each case reducer function
-export const { setSettingsAction } = settingsSlice.actions;
+export const {
+	setSettingsAction,
+	setBridgingAddressesAction,
+	clearBridgingAddressesAction,
+} = settingsSlice.actions;
 
 export default settingsSlice.reducer;

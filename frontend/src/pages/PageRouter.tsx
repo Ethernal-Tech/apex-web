@@ -13,12 +13,16 @@ import {
 	fetchAndUpdateBalanceAction,
 	getUpdateBalanceInterval,
 } from '../actions/balance';
-import { fetchAndUpdateSettingsAction } from '../actions/settings';
+import {
+	fetchAndUpdateBridgingAddressesAction,
+	fetchAndUpdateSettingsAction,
+} from '../actions/settings';
 import LandingPage from './Landing/LandingPage';
 import appSettings from '../settings/appSettings';
 import TermsOfServicePage from './TermsOfServicePage/TermsOfServicePage';
 import PrivacyPolicyPage from './PrivacyPolicyPage/PrivacyPolicyPage';
 import AuditPage from './Audit/AuditPage';
+import { clearBridgingAddressesAction } from '../redux/slices/settingsSlice';
 
 export const HOME_ROUTE = appSettings.isSkyline ? '/app' : '/';
 export const TRANSACTIONS_ROUTE = '/transactions';
@@ -60,6 +64,14 @@ const PageRouter: React.FC = () => {
 		fetchAndUpdateSettingsAction(dispatch);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
+
+	useEffect(() => {
+		if (isLoggedInMemo) {
+			fetchAndUpdateBridgingAddressesAction(chain, dispatch);
+		} else {
+			dispatch(clearBridgingAddressesAction());
+		}
+	}, [chain, dispatch, isLoggedInMemo]);
 
 	useEffect(() => {
 		if (balanceIntervalHandle.current) {

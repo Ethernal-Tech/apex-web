@@ -36,10 +36,10 @@ const (
 	cardanoSocketPathFlagDesc              = "socket path for cardano network"
 	cardanoTTLSlotIncFlagDesc              = "TTL slot increment for cardano"
 
-	primeCardanoWrappedTokenNameFlag     = "prime-cardano-token-name"
-	primeCardanoWrappedTokenNameFlagDesc = "wrapped token name for Cardano Ada"
-	cardanoPrimeWrappedTokenNameFlag     = "cardano-prime-token-name"
-	cardanoPrimeWrappedTokenNameFlagDesc = "wrapped token name for Prime Apex"
+	vectorCardanoWrappedTokenNameFlag     = "vector-cardano-token-name"
+	vectorCardanoWrappedTokenNameFlagDesc = "wrapped token name for Cardano Ada"
+	cardanoPrimeWrappedTokenNameFlag      = "cardano-prime-token-name"
+	cardanoPrimeWrappedTokenNameFlagDesc  = "wrapped token name for Prime Apex"
 
 	defaultCardanoBlockConfirmationCount = 10
 	defaultCardanoTTLSlotNumberInc       = 1800 + defaultCardanoBlockConfirmationCount*10 // BlockTimeSeconds
@@ -66,6 +66,16 @@ type skylineGenerateConfigsParams struct {
 	cardanoSocketPath              string
 	cardanoTTLSlotInc              uint64
 
+	vectorNetworkID               uint32
+	vectorNetworkMagic            uint32
+	vectorBridgingFeeAddress      string
+	vectorBridgingFallbackAddress string
+	vectorOgmiosURL               string
+	vectorBlockfrostURL           string
+	vectorBlockfrostAPIKey        string
+	vectorSocketPath              string
+	vectorTTLSlotInc              uint64
+
 	logsPath         string
 	utxoCacheTimeout time.Duration
 	utxoCacheKeys    []string
@@ -79,8 +89,8 @@ type skylineGenerateConfigsParams struct {
 	outputDir      string
 	outputFileName string
 
-	primeCardanoWrappedTokenName string
-	cardanoPrimeWrappedTokenName string
+	vectorCardanoWrappedTokenName string
+	cardanoPrimeWrappedTokenName  string
 }
 
 func (p *skylineGenerateConfigsParams) validateFlags() error {
@@ -138,6 +148,33 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 		return fmt.Errorf("invalid cardano ogmios url: %s", p.cardanoOgmiosURL)
 	}
 
+	err = validateAddress(
+		true, p.vectorBridgingFeeAddress, vectorBridgingFeeAddressFlag,
+		wallet.CardanoNetworkType(p.vectorNetworkID))
+	if err != nil {
+		return err
+	}
+
+	err = validateAddress(
+		false, p.vectorBridgingFallbackAddress, vectorBridgingFallbackAddressFlag,
+		wallet.CardanoNetworkType(p.vectorNetworkID))
+	if err != nil {
+		return err
+	}
+
+	if p.vectorBlockfrostURL == "" && p.vectorSocketPath == "" && p.vectorOgmiosURL == "" {
+		return fmt.Errorf("specify at least one of: %s, %s, %s",
+			vectorBlockfrostURLFlag, vectorSocketPathFlag, vectorOgmiosURLFlag)
+	}
+
+	if p.vectorBlockfrostURL != "" && !common.IsValidHTTPURL(p.vectorBlockfrostURL) {
+		return fmt.Errorf("invalid vector blockfrost url: %s", p.vectorBlockfrostURL)
+	}
+
+	if p.vectorOgmiosURL != "" && !common.IsValidHTTPURL(p.vectorOgmiosURL) {
+		return fmt.Errorf("invalid vector ogmios url: %s", p.vectorOgmiosURL)
+	}
+
 	if !common.IsValidHTTPURL(p.oracleAPIURL) {
 		return fmt.Errorf("invalid oracle API url: %s", p.oracleAPIURL)
 	}
@@ -150,9 +187,9 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 		return fmt.Errorf("specify at least one %s", apiKeysFlag)
 	}
 
-	if p.primeCardanoWrappedTokenName != "" {
-		if _, err := wallet.NewTokenWithFullNameTry(p.primeCardanoWrappedTokenName); err != nil {
-			return fmt.Errorf("invalid token name %s", primeCardanoWrappedTokenNameFlag)
+	if p.vectorCardanoWrappedTokenName != "" {
+		if _, err := wallet.NewTokenWithFullNameTry(p.vectorCardanoWrappedTokenName); err != nil {
+			return fmt.Errorf("invalid token name %s", vectorCardanoWrappedTokenNameFlag)
 		}
 	}
 
@@ -276,6 +313,61 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		cardanoTTLSlotIncFlagDesc,
 	)
 
+	cmd.Flags().Uint32Var(
+		&p.vectorNetworkID,
+		vectorNetworkIDFlag,
+		uint32(wallet.MainNetNetwork),
+		vectorNetworkIDFlagDesc,
+	)
+	cmd.Flags().Uint32Var(
+		&p.vectorNetworkMagic,
+		vectorNetworkMagicFlag,
+		defaultNetworkMagic,
+		vectorNetworkMagicFlagDesc,
+	)
+	cmd.Flags().StringVar(
+		&p.vectorBridgingFeeAddress,
+		vectorBridgingFeeAddressFlag,
+		"",
+		vectorBridgingFeeAddressFlagDesc,
+	)
+	cmd.Flags().StringVar(
+		&p.vectorBridgingFallbackAddress,
+		vectorBridgingFallbackAddressFlag,
+		"",
+		vectorBridgingFallbackAddressFlagDesc,
+	)
+	cmd.Flags().StringVar(
+		&p.vectorOgmiosURL,
+		vectorOgmiosURLFlag,
+		"",
+		vectorOgmiosURLFlagDesc,
+	)
+	cmd.Flags().StringVar(
+		&p.vectorBlockfrostURL,
+		vectorBlockfrostURLFlag,
+		"",
+		vectorBlockfrostURLFlagDesc,
+	)
+	cmd.Flags().StringVar(
+		&p.vectorBlockfrostAPIKey,
+		vectorBlockfrostAPIKeyFlag,
+		"",
+		vectorBlockfrostAPIKeyFlagDesc,
+	)
+	cmd.Flags().StringVar(
+		&p.vectorSocketPath,
+		vectorSocketPathFlag,
+		"",
+		vectorSocketPathFlagDesc,
+	)
+	cmd.Flags().Uint64Var(
+		&p.vectorTTLSlotInc,
+		vectorTTLSlotIncFlag,
+		defaultVectorTTLSlotNumberInc,
+		vectorTTLSlotIncFlagDesc,
+	)
+
 	cmd.Flags().StringVar(
 		&p.logsPath,
 		logsPathFlag,
@@ -335,10 +427,10 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 	)
 
 	cmd.Flags().StringVar(
-		&p.primeCardanoWrappedTokenName,
-		primeCardanoWrappedTokenNameFlag,
+		&p.vectorCardanoWrappedTokenName,
+		vectorCardanoWrappedTokenNameFlag,
 		"",
-		primeCardanoWrappedTokenNameFlagDesc,
+		vectorCardanoWrappedTokenNameFlagDesc,
 	)
 	cmd.Flags().StringVar(
 		&p.cardanoPrimeWrappedTokenName,
@@ -349,18 +441,19 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 
 	cmd.MarkFlagsMutuallyExclusive(primeBlockfrostAPIKeyFlag, primeSocketPathFlag, primeOgmiosURLFlag)
 	cmd.MarkFlagsMutuallyExclusive(cardanoBlockfrostURLFlag, cardanoSocketPathFlag, cardanoOgmiosURLFlag)
+	cmd.MarkFlagsMutuallyExclusive(vectorBlockfrostURLFlag, vectorSocketPathFlag, vectorOgmiosURLFlag)
 }
 
 func (p *skylineGenerateConfigsParams) Execute(
 	_ common.OutputFormatter,
 ) (common.ICommandResult, error) {
-	var nativeTokensPrime, nativeTokensCardano []sendtx.TokenExchangeConfig
+	var nativeTokensVector, nativeTokensCardano []sendtx.TokenExchangeConfig
 
-	if p.primeCardanoWrappedTokenName != "" {
-		nativeTokensPrime = []sendtx.TokenExchangeConfig{
+	if p.vectorCardanoWrappedTokenName != "" {
+		nativeTokensVector = []sendtx.TokenExchangeConfig{
 			{
 				DstChainID: common.ChainIDStrCardano,
-				TokenName:  p.primeCardanoWrappedTokenName,
+				TokenName:  p.vectorCardanoWrappedTokenName,
 			},
 		}
 	}
@@ -391,7 +484,6 @@ func (p *skylineGenerateConfigsParams) Execute(
 					SocketPath:       p.primeSocketPath,
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.primeTTLSlotInc,
-					NativeTokens:     nativeTokensPrime,
 				},
 				IsEnabled: true,
 			},
@@ -411,6 +503,25 @@ func (p *skylineGenerateConfigsParams) Execute(
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.cardanoTTLSlotInc,
 					NativeTokens:     nativeTokensCardano,
+				},
+				IsEnabled: true,
+			},
+			common.ChainIDStrVector: {
+				NetworkID:    wallet.CardanoNetworkType(p.vectorNetworkID),
+				NetworkMagic: p.vectorNetworkMagic,
+				BridgingAddresses: core.BridgingAddresses{
+					FeeAddress:      p.vectorBridgingFeeAddress,
+					FallbackAddress: p.vectorBridgingFallbackAddress,
+				},
+				ChainSpecific: &cardanotx.CardanoChainConfig{
+					OgmiosURL:        p.vectorOgmiosURL,
+					BlockfrostURL:    p.vectorBlockfrostURL,
+					BlockfrostAPIKey: p.vectorBlockfrostAPIKey,
+					UseDemeter:       defaultUseDemeter,
+					SocketPath:       p.vectorSocketPath,
+					PotentialFee:     500000,
+					TTLSlotNumberInc: p.vectorTTLSlotInc,
+					NativeTokens:     nativeTokensVector,
 				},
 				IsEnabled: true,
 			},

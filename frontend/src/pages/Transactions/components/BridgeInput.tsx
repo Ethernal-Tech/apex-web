@@ -153,9 +153,6 @@ const BridgeInput = ({
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
 	const [sourceToken, setSourceToken] = useState<TokenEnum | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
-	const account = useSelector(
-		(state: RootState) => state.accountInfo.account,
-	);
 
 	const walletUTxOs = useSelector(
 		(state: RootState) => state.accountInfo.utxos,
@@ -308,6 +305,7 @@ const BridgeInput = ({
 	// takes place fails, bridgingFee never gets updated, and the `Insufficient ADA` is never shown
 	const adjustedBridgeTxFee = useMemo(() => {
 		if (
+			settings.bridgingAddresses.length === 0 ||
 			isEvmChain(chain) ||
 			!sourceToken ||
 			!isWrappedToken(sourceToken) ||
@@ -328,7 +326,7 @@ const BridgeInput = ({
 		}
 
 		const approxAdditionToBridgingFee = calculateTokenUtxoMinValue(
-			createUtxo(account, '0', {
+			createUtxo(settings.bridgingAddresses[0], '0', {
 				[settingsToken.tokenName]: convertApexToDfm(
 					amount || '1',
 					chain,
@@ -341,12 +339,12 @@ const BridgeInput = ({
 			BigInt(bridgeTxFee) + BigInt(approxAdditionToBridgingFee)
 		).toString(10);
 	}, [
-		account,
 		amount,
 		bridgeTxFee,
 		chain,
 		defaultBridgeTxFee,
 		minUtxoValue,
+		settings.bridgingAddresses,
 		settings.settingsPerMode,
 		sourceToken,
 	]);

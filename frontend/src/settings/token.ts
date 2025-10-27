@@ -25,56 +25,56 @@ const unknownTokenInfo: TokenInfo = {
 	borderColor: 'transparent',
 };
 
-const tokenInfos: Partial<Record<TokenEnum, TokenInfo>> = {
-	[TokenEnum.APEX]: {
+const tokenInfos: TokenInfo[] = [
+	{
 		token: TokenEnum.APEX,
 		icon: ApexIcon,
 		label: 'AP3X',
 		borderColor: '#077368',
 	},
-	[TokenEnum.WAPEX]: {
+	{
 		token: TokenEnum.WAPEX,
 		icon: ApexIcon,
 		label: 'cAP3X',
 		borderColor: '#0538AF',
 	},
-	[TokenEnum.Ada]: {
-		token: TokenEnum.Ada,
+	{
+		token: TokenEnum.ADA,
 		icon: AdaIcon,
 		label: 'ADA',
 		borderColor: '#077368',
 	},
-	[TokenEnum.WAda]: {
-		token: TokenEnum.WAda,
+	{
+		token: TokenEnum.WADA,
 		icon: AdaIcon,
 		label: 'wADA',
 		borderColor: '#0538AF',
 	},
-	[TokenEnum.ETH]: {
+	{
 		token: TokenEnum.ETH,
 		icon: EthIcon,
 		label: 'ETH',
 		borderColor: '#8A92B2',
 	},
-	[TokenEnum.BAP3X]: {
+	{
 		token: TokenEnum.BAP3X,
 		icon: ApexIcon,
 		label: 'bAP3X',
 		borderColor: '#077368',
 	},
-	[TokenEnum.BNAP3X]: {
+	{
 		token: TokenEnum.BNAP3X,
 		icon: ApexIcon,
 		label: 'bnAP3X',
 		borderColor: '#F3BA2F',
 	},
-	[TokenEnum.BNB]: {
+	{
 		token: TokenEnum.BNB,
 		icon: ApexIcon,
 		label: 'BNB',
 		borderColor: '#F3BA2F',
 	},
-};
+];
 
 const tokensDirection: Partial<
 	Record<ChainEnum, Partial<Record<ChainEnum, BridgingInfo>>>
@@ -96,6 +96,9 @@ const tokensDirection: Partial<
 			isCurrencyBridgingAllowed: false,
 			wrappedToken: TokenEnum.WAPEX,
 		},
+		[ChainEnum.Vector]: {
+			isCurrencyBridgingAllowed: true,
+		},
 	},
 	[ChainEnum.Vector]: {
 		[ChainEnum.Prime]: {
@@ -103,6 +106,10 @@ const tokensDirection: Partial<
 		},
 		[ChainEnum.Nexus]: {
 			isCurrencyBridgingAllowed: true,
+		},
+		[ChainEnum.Cardano]: {
+			isCurrencyBridgingAllowed: false,
+			wrappedToken: TokenEnum.WADA,
 		},
 	},
 	[ChainEnum.Nexus]: {
@@ -163,8 +170,15 @@ export const getToken = (
 		: getChainInfo(srcChain).currencyToken;
 };
 
-export const getTokenInfo = (token: TokenEnum | undefined): TokenInfo =>
-	(token && tokenInfos[token]) || unknownTokenInfo;
+export const getTokenInfo = (token: TokenEnum | undefined): TokenInfo => {
+	if (!token) return unknownTokenInfo;
+
+	const tokenInfo = tokenInfos.find(
+		(ti) => ti.token.toLowerCase() === token.toLowerCase(),
+	);
+
+	return tokenInfo || unknownTokenInfo;
+};
 
 export const getTokenInfoBySrcDst = (
 	srcChain: ChainEnum,
@@ -176,7 +190,7 @@ export const getTokenInfoBySrcDst = (
 
 export const isWrappedToken = (token: TokenEnum | undefined): boolean =>
 	token === TokenEnum.WAPEX ||
-	token === TokenEnum.WAda ||
+	token === TokenEnum.WADA ||
 	token === TokenEnum.BAP3X ||
 	token === TokenEnum.BNAP3X;
 

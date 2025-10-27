@@ -1,6 +1,7 @@
 import { UtxoRetriever } from './types';
 import { getAssetsSumMap } from '../utils/generalUtils';
 import { UTxO } from './WalletHandler';
+import { LovelaceTokenName } from '../utils/chainUtils';
 
 type JsonRpcRequest = {
 	jsonrpc: '2.0';
@@ -103,7 +104,7 @@ const toMeshSdkUtxo = (utxo: OgmiosUtxo): UTxO => ({
 
 			if (key === 'ada') {
 				return {
-					unit: 'lovelace',
+					unit: LovelaceTokenName,
 					quantity: innerValue.toString(),
 				};
 			}

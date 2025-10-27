@@ -4,7 +4,10 @@ import CustomSelect from '../../components/customSelect/CustomSelect';
 import { isEvmChain, getChainInfo } from '../../settings/chain';
 import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import { formatBigIntDecimalString } from '../lockedTokens/LockedTokensComponent';
-import { getExplorerAddressUrl } from '../../utils/chainUtils';
+import {
+	getExplorerAddressUrl,
+	LovelaceTokenName,
+} from '../../utils/chainUtils';
 import { decodeTokenKey } from '../../utils/tokenUtils';
 import { getTokenInfo } from '../../settings/token';
 import { TokenEnum } from '../../features/enums';
@@ -18,7 +21,7 @@ type SkylinePanelProps = {
 	tokenTotalsAllChains: Record<string, bigint>;
 	tvbPerChainTotals: Record<string, Record<string, bigint>>;
 	tvbTokenTotalsAllChains: Record<string, bigint>;
-	tvbGrandTotal: bigint;
+	tvbGrandTotal: { [key: string]: bigint };
 	skylineChains: ChainEnum[];
 };
 
@@ -76,7 +79,10 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 	skylineChains,
 }) => {
 	const srcChainOptions = useMemo(() => {
-		return skylineChains.map(getChainInfo).reverse();
+		const chainInfos = skylineChains.map(getChainInfo);
+		chainInfos.sort((a, b) => (a.order < b.order ? -1 : 1));
+
+		return chainInfos;
 	}, [skylineChains]);
 
 	// selection
@@ -89,12 +95,15 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 		() => Object.keys(chains[selChain] ?? {}),
 		[chains, selChain],
 	);
-	const [selToken, setSelToken] = useState<string>('lovelace');
-	useEffect(() => {
-		if (tokensOfSelChain.length && !tokensOfSelChain.includes(selToken)) {
-			setSelToken(tokensOfSelChain[0]);
-		}
-	}, [tokensOfSelChain, selToken]);
+
+	const selToken: string = useMemo(
+		(): string =>
+			tokensOfSelChain.length > 0 &&
+			!tokensOfSelChain.includes(LovelaceTokenName)
+				? tokensOfSelChain[0]
+				: LovelaceTokenName,
+		[tokensOfSelChain],
+	);
 
 	const addrMap = chains[selChain]?.[selToken] ?? {};
 
@@ -102,12 +111,12 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 		<Box className="audit-layout">
 			<Box>
 				<Typography className="audit-h2">Total Locked (TVL)</Typography>
-				<Box className="audit-mb-8 audit-w-third-md">
+				<Box className="audit-mb-8 audit-grid-md-3 audit-gap-12">
 					{sortEntries(tokenTotalsAllChains).map(
 						([tokenKey, amt]) => (
 							<AmountCard
 								key={tokenKey}
-								left={decodeTokenKey(tokenKey)}
+								left={tokenKey}
 								right={fmt(amt)}
 							/>
 						),
@@ -124,7 +133,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 							const rows = sortEntries(
 								perChainTotals[ck] ?? {},
 							).map(([t, a]) => ({
-								label: decodeTokenKey(t),
+								label: decodeTokenKey(t, ck),
 								amt: a,
 							}));
 							return (
@@ -252,10 +261,19 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 					Total Bridged (TVB)
 				</Typography>
 
-				<Box className="audit-mb-8 audit-w-half-md">
+				<Box className="audit-grid-md-2 audit-gap-12 audit-mb-16">
 					<AmountCard
 						left={getTokenInfo(TokenEnum.APEX).label}
-						right={fmt(tvbGrandTotal)}
+						right={fmt(
+							tvbGrandTotal[getTokenInfo(TokenEnum.APEX).label],
+						)}
+					/>
+
+					<AmountCard
+						left={getTokenInfo(TokenEnum.ADA).label}
+						right={fmt(
+							tvbGrandTotal[getTokenInfo(TokenEnum.ADA).label],
+						)}
 					/>
 				</Box>
 
@@ -264,11 +282,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 				</Typography>
 				<Box className="audit-grid-md-2 audit-gap-12 audit-mb-16">
 					{sortEntries(tvbTokenTotalsAllChains).map(([tk, amt]) => (
-						<AmountCard
-							key={tk}
-							left={decodeTokenKey(tk)}
-							right={fmt(amt)}
-						/>
+						<AmountCard key={tk} left={tk} right={fmt(amt)} />
 					))}
 					{Object.keys(tvbTokenTotalsAllChains).length === 0 && (
 						<Typography className="audit-dim">
@@ -287,7 +301,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 							const rows = sortEntries(
 								tvbPerChainTotals[ck] ?? {},
 							).map(([t, a]) => ({
-								label: decodeTokenKey(t),
+								label: decodeTokenKey(t, ck),
 								amt: a,
 							}));
 							return (
