@@ -19,9 +19,7 @@ export class ContactController {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post()
-	async submitContactForm(
-		@Body() contactData: CreateContactDto,
-	): Promise<void> {
+	submitContactForm(@Body() contactData: CreateContactDto): void {
 		this.contactService.submitContactForm(contactData);
 	}
 }

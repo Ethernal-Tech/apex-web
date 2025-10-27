@@ -57,4 +57,4 @@ jobs:
       - name: Run ESLint
         run: |
           cd frontend
-          npx eslint ./src --ext .ts --config .eslintrc.js
+          npx eslint ./src --ext .ts --ext .tsx --config .eslintrc.js

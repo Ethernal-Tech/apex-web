@@ -17,9 +17,12 @@ import {
 	ScriptHash,
 	TransactionOutput,
 	Address,
+	min_ada_for_output,
+	DataCost,
 } from '@emurgo/cardano-serialization-lib-browser';
 import { isCardanoChain, isEvmChain, isLZBridging } from '../settings/chain';
 import appSettings from '../settings/appSettings';
+import { normalizeNativeTokenKey } from './tokenUtils';
 
 export const capitalizeWord = (word: string): string => {
 	if (!word || word.length === 0) {
@@ -93,7 +96,7 @@ export const shouldUseMainnet = (src: ChainEnum, dst: ChainEnum): boolean =>
 // format it differently depending on network (nexus is 18 decimals, prime and vector are 6)
 export const convertDfmToApex = (dfm: string | number, network: ChainEnum) => {
 	// avoiding rounding errors
-	if (typeof dfm === 'number') dfm = BigInt(dfm).toString();
+	if (typeof dfm === 'number') dfm = BigInt(dfm).toString(10);
 
 	if (isEvmChain(network)) {
 		return convertEvmDfmToApex(dfm);
@@ -227,9 +230,15 @@ export const getAssetsSumMap = (utxos: UTxO[]) => {
 };
 
 const COINS_PER_UTXO_BYTE = 4310;
-const TX_OUT_SIZE_ADDITIONAL = 160;
 
-const calculateMinUtxo = (utxos: UTxO[]) => {
+const calculateMinUtxo = (txOut: TransactionOutput) => {
+	return +min_ada_for_output(
+		txOut,
+		DataCost.new_coins_per_byte(BigNum.from_str('' + COINS_PER_UTXO_BYTE)),
+	).to_str();
+};
+
+const calculateMinValueOfAggregatedUtxo = (utxos: UTxO[]) => {
 	if (utxos.length === 0) {
 		throw new Error('UTxO array is empty');
 	}
@@ -272,12 +281,49 @@ const calculateMinUtxo = (utxos: UTxO[]) => {
 	}
 
 	const address = Address.from_bech32(utxos[0].output.address);
-	const txOutSize = TransactionOutput.new(address, value).to_bytes().length;
-
-	return COINS_PER_UTXO_BYTE * (txOutSize + TX_OUT_SIZE_ADDITIONAL);
+	return calculateMinUtxo(TransactionOutput.new(address, value));
 };
 
-export const calculateChangeMinUtxo = (
+export const createUtxo = (
+	outputAddr: string,
+	outputLovelace: string,
+	outputTokens: { [key: string]: string },
+	inputTxHash = '',
+	inputOutputIndex = 0,
+): UTxO => ({
+	output: {
+		address: outputAddr,
+		amount: [
+			{
+				unit: 'lovelace',
+				quantity: outputLovelace,
+			},
+			...Object.keys(outputTokens).map((unit) => ({
+				unit: normalizeNativeTokenKey(unit),
+				quantity: outputTokens[unit],
+			})),
+		],
+	},
+	input: { outputIndex: inputOutputIndex, txHash: inputTxHash },
+});
+
+export const calculateTokenUtxoMinValue = (
+	utxo: UTxO,
+	defaultMinUtxo: number,
+) => {
+	try {
+		return Math.max(
+			calculateMinValueOfAggregatedUtxo([utxo]),
+			defaultMinUtxo,
+		);
+	} catch (e) {
+		console.log('error while calculating minUtxo value', e);
+	}
+
+	return 2 * defaultMinUtxo;
+};
+
+export const calculateChangeUtxoMinValue = (
 	utxos: UTxO[] | undefined,
 	defaultMinUtxo: number,
 ): number => {
@@ -286,9 +332,12 @@ export const calculateChangeMinUtxo = (
 	}
 
 	try {
-		return Math.max(calculateMinUtxo(utxos), defaultMinUtxo);
+		return Math.max(
+			calculateMinValueOfAggregatedUtxo(utxos),
+			defaultMinUtxo,
+		);
 	} catch (e) {
-		console.log('error while calculating change minUtxo', e);
+		console.log('error while calculating change utxo min value', e);
 	}
 
 	// if the calculation failed and we have native tokens, take changeMinUtxo to be 2*defaultMinUtxo

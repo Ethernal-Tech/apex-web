@@ -407,6 +407,7 @@ function NewTransactionPage() {
 				) : (
 					<BridgeInput
 						bridgeTxFee={bridgeTxFee}
+						defaultBridgeTxFee={defaultBridgeTxFee}
 						setBridgeTxFee={setBridgeTxFee}
 						resetBridgeTxFee={resetBridgeTxFee}
 						operationFee={operationFee}

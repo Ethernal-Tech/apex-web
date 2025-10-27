@@ -48,9 +48,7 @@ const TransactionsTablePage = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const tableRef = useRef(null);
 
-	const { chain, destinationChain } = useSelector(
-		(state: RootState) => state.chain,
-	);
+	const { chain } = useSelector((state: RootState) => state.chain);
 	const account = useSelector(
 		(state: RootState) => state.accountInfo.account,
 	);
@@ -341,8 +339,8 @@ const TransactionsTablePage = () => {
 									)}{' '}
 									{
 										getTokenInfoBySrcDst(
-											chain,
-											destinationChain,
+											transaction.originChain,
+											transaction.destinationChain,
 											false,
 										).label
 									}
@@ -365,8 +363,8 @@ const TransactionsTablePage = () => {
 												)}{' '}
 												{
 													getTokenInfoBySrcDst(
-														chain,
-														destinationChain,
+														transaction.originChain,
+														transaction.destinationChain,
 														true,
 													).label
 												}

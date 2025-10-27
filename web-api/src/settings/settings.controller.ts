@@ -20,7 +20,7 @@ export class SettingsController {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	async get(): Promise<SettingsFullResponseDto> {
+	get(): SettingsFullResponseDto {
 		return this.settingsService.SettingsResponse;
 	}
 }

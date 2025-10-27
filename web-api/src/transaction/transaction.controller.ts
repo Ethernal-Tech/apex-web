@@ -83,10 +83,10 @@ export class TransactionController {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post('createEth')
-	async createEth(
+	createEth(
 		@Body() model: CreateTransactionDto,
-	): Promise<CreateEthTransactionResponseDto> {
-		return await this.transactionService.createEth(model);
+	): CreateEthTransactionResponseDto {
+		return this.transactionService.createEth(model);
 	}
 
 	@ApiOperation({
