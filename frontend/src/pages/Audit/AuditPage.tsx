@@ -199,8 +199,8 @@ const AuditPage: React.FC = () => {
 						onChange={(_, v) => setTab(v)}
 						aria-label="Audit tabs"
 					>
-						<Tab label="Skyline" />
-						<Tab label="LayerZero" />
+						<Tab label="UTxO World" />
+						<Tab label="EVM World" />
 					</Tabs>
 
 					{tab === 0 && (
