@@ -31,7 +31,7 @@ import {
 	ChainEnum,
 	TransactionStatusEnum,
 } from 'src/common/enum';
-import { AppSettingsService } from 'src/appSettings/appSettings.service';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
 
 @Injectable()
 export class BridgeTransactionService {
@@ -39,7 +39,7 @@ export class BridgeTransactionService {
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly schedulerRegistry: SchedulerRegistry,
-		private readonly appSettings: AppSettingsService,
+		private readonly appSettings: AppConfigService,
 	) {}
 
 	async get(id: number): Promise<BridgeTransactionDto> {

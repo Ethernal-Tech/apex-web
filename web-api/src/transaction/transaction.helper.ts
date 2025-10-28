@@ -20,7 +20,7 @@ import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
 import { BridgingSettingsDto } from 'src/settings/settings.dto';
 import { convertDfmToWei } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
-import { getAppSettings } from 'src/appSettings/appSettings';
+import { getAppSettings } from 'src/appConfig/appConfig';
 
 const appSettings = getAppSettings();
 

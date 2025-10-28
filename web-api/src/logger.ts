@@ -1,7 +1,7 @@
 import { utilities, WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import 'winston-daily-rotate-file';
-import { getAppSettings } from './appSettings/appSettings';
+import { getAppSettings } from './appConfig/appConfig';
 
 const appSettings = getAppSettings();
 

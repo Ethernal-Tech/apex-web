@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import * as path from 'path';
 import mergeWith from 'lodash.merge';
-import { AppSettings, DeepPartial } from './appSettings.interface';
+import { AppConfig, DeepPartial } from './appConfig.interface';
 import {
 	envOverrides,
 	resolveConfigDir,
 	safeReadJson,
-} from './appSettings.helper';
+} from './appConfig.helper';
 
-const DEFAULTS: Readonly<DeepPartial<AppSettings>> = {
+const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
 	app: { port: 3500 },
 	bridge: { recentInputsThresholdMinutes: 5 },
 	services: {
@@ -23,16 +23,16 @@ const DEFAULTS: Readonly<DeepPartial<AppSettings>> = {
 };
 
 @Injectable()
-export class AppSettingsService {
-	private readonly settings: AppSettings;
+export class AppConfigService {
+	private readonly config: AppConfig;
 
 	constructor() {
 		const dir = resolveConfigDir();
 		const envName = (process.env.NODE_ENV ?? '').toLowerCase().trim();
 
-		const common = safeReadJson<AppSettings>(path.join(dir, 'settings.json'));
-		const perEnv = safeReadJson<AppSettings>(
-			envName ? path.join(dir, `settings.${envName}.json`) : undefined,
+		const common = safeReadJson<AppConfig>(path.join(dir, 'config.json'));
+		const perEnv = safeReadJson<AppConfig>(
+			envName ? path.join(dir, `config.${envName}.json`) : undefined,
 		);
 
 		// DEFAULTS -> common -> perEnv -> ENV, with arrays replaced by later sources
@@ -42,48 +42,48 @@ export class AppSettingsService {
 			common,
 			perEnv,
 			envOverrides(),
-		) as AppSettings;
+		) as AppConfig;
 
-		this.settings = merged;
+		this.config = merged;
 	}
 
-	get all(): AppSettings {
-		return this.settings;
+	get all(): AppConfig {
+		return this.config;
 	}
 	get app() {
-		return this.settings.app;
+		return this.config.app;
 	}
 	get port() {
-		return this.settings.app.port;
+		return this.config.app.port;
 	}
 	get corsAllowList() {
-		return this.settings.app.corsAllowList;
+		return this.config.app.corsAllowList;
 	}
 	get logLevel() {
-		return this.settings.app.logLevel;
+		return this.config.app.logLevel;
 	}
 	get features() {
-		return this.settings.features;
+		return this.config.features;
 	}
 	get statusUpdateModesSupported() {
-		return this.settings.features.statusUpdateModesSupported;
+		return this.config.features.statusUpdateModesSupported;
 	}
 	get bridge() {
-		return this.settings.bridge;
+		return this.config.bridge;
 	}
 	get oracleUrl() {
-		return this.settings.services.oracleUrl;
+		return this.config.services.oracleUrl;
 	}
 	get cardanoApiUrl() {
-		return this.settings.services.cardanoApiUrl;
+		return this.config.services.cardanoApiUrl;
 	}
 	get centralizedApiUrl() {
-		return this.settings.services.centralizedApiUrl;
+		return this.config.services.centralizedApiUrl;
 	}
 	get db() {
-		return this.settings.database;
+		return this.config.database;
 	}
 	get email() {
-		return this.settings.email;
+		return this.config.email;
 	}
 }

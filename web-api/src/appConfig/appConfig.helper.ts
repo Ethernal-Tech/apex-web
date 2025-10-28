@@ -1,24 +1,27 @@
 import * as fs from 'fs';
 import path from 'path';
-import { AppSettings, DeepPartial, LogLevel } from './appSettings.interface';
+import { AppConfig, DeepPartial, LogLevel } from './appConfig.interface';
 import { bool, cleanEnv, makeValidator, num, str } from 'envalid';
+import { Logger } from '@nestjs/common';
 
 export const resolveConfigDir = (): string => {
 	const candidates = [
-		path.resolve(process.cwd(), 'dist', 'config'),
-		path.resolve(process.cwd(), 'src', 'appSettings', 'settings'),
+		path.resolve(process.cwd(), 'dist', 'appConfig', 'config'),
+		path.resolve(process.cwd(), 'src', 'appConfig', 'config'),
 		path.resolve(__dirname, '../config'),
 		path.resolve(__dirname, '../../config'),
 	];
 	const hit = candidates.find((p) =>
-		fs.existsSync(path.join(p, 'settings.json')),
+		fs.existsSync(path.join(p, 'config.json')),
 	);
 	if (!hit) {
-		throw new Error(
+		Logger.warn(
 			`Config folder not found. Looked in: ${candidates.join(' , ')}. ` +
-				`Ensure nest-cli.json copies appSettings/settings/*.json to dist.`,
+				`Ensure nest-cli.json copies appConfig/settings/*.json to dist.`,
 		);
+		return '';
 	}
+
 	return hit;
 };
 
@@ -37,7 +40,7 @@ export const list = makeValidator((x) => {
 		.filter(Boolean);
 });
 
-export const envOverrides = (): DeepPartial<AppSettings> => {
+export const envOverrides = (): DeepPartial<AppConfig> => {
 	const env = cleanEnv(process.env, {
 		APP_NAME: str({ default: undefined }),
 		LOG_LEVEL: str({ default: undefined }),

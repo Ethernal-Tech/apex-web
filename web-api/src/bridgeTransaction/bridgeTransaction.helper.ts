@@ -8,7 +8,7 @@ import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
 import { isCardanoChain, isEvmChain } from 'src/utils/chainUtils';
-import { getAppSettings } from 'src/appSettings/appSettings';
+import { getAppSettings } from 'src/appConfig/appConfig';
 
 const appSettings = getAppSettings();
 

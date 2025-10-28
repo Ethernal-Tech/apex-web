@@ -8,7 +8,7 @@ export type LogLevel =
 	| 'info'
 	| 'debug';
 
-export interface AppSettings {
+export interface AppConfig {
 	app: {
 		name: string;
 		logLevel: LogLevel;

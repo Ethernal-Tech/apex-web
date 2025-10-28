@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { CreateContactDto } from './contact.dto';
 import { MailerService } from '@nestjs-modules/mailer';
-import { AppSettingsService } from 'src/appSettings/appSettings.service';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
 
 @Injectable()
 export class ContactService {
 	constructor(
 		private readonly mailerService: MailerService,
-		private readonly appSettings: AppSettingsService,
+		private readonly appSettings: AppConfigService,
 	) {}
 
 	async submitContactForm(contactData: CreateContactDto): Promise<void> {

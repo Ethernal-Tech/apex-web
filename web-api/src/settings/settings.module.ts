@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { SettingsController } from './settings.controller';
-import { AppSettingsService } from 'src/appSettings/appSettings.service';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
 
 const providers = [
 	{
 		provide: SettingsService,
-		inject: [AppSettingsService],
+		inject: [AppConfigService],
 		useFactory: async (
-			appSettings: AppSettingsService,
+			appSettings: AppConfigService,
 		): Promise<SettingsService> => {
 			const s = new SettingsService(appSettings);
 			await s.init();

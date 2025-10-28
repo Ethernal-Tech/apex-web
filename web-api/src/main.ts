@@ -5,7 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { winstonLogger } from './logger';
 import { HttpExceptionFilter } from './utils/httpException.filter';
 import { LoggingInterceptor } from './utils/logging.interceptor';
-import { AppSettingsService } from './appSettings/appSettings.service';
+import { AppConfigService } from './appConfig/appConfig.service';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
@@ -13,7 +13,7 @@ async function bootstrap() {
 		logger: winstonLogger,
 	});
 
-	const appSettings = app.get(AppSettingsService);
+	const appSettings = app.get(AppConfigService);
 
 	if (
 		process.env.NODE_ENV === 'production' &&

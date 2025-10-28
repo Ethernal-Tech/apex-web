@@ -3,15 +3,15 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { Module } from '@nestjs/common';
 import { join } from 'path';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
-import { AppSettingsService } from 'src/appSettings/appSettings.service';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
 
 dotenv.config({ path: '.env' });
 
 @Module({
 	imports: [
 		MailerModule.forRootAsync({
-			inject: [AppSettingsService],
-			useFactory: (appSettings: AppSettingsService) => ({
+			inject: [AppConfigService],
+			useFactory: (appSettings: AppConfigService) => ({
 				transport: {
 					host: appSettings.email.smtpHost,
 					port: appSettings.email.smtpPort,
