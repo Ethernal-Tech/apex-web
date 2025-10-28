@@ -31,7 +31,7 @@ type BridgeInputType = {
     loadingState: SubmitLoadingState | undefined;
 }
 
- const addr = 'addr_test1qrg47erg46k52jk6alkw385du44r2nt852tz442wvsmvdjsr48zeh0wh00pjzeedm239zr6ax88nkg43eel96f66t4aquld338' // TODO: fix this 
+ const addr = 'addr_test1qpvppkxafv9gzpudg9e5q30tt3duyxngeed89zp4m9xqll4ndzwv6qkx9vmtj0828cwzgw80hgxjw6jwy95gr0e03mqsk5kefh' // TODO: fix this 
 
 
 const calculateMaxAmountToken = (
@@ -101,11 +101,11 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
   const {chain, destinationChain} = useSelector((state: RootState)=> state.chain);
   const settings = useSelector((state: RootState) => state.settings);
 
-  const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
+  const bridgingModeInfo = getBridgingMode(chain, ChainEnum.Prime, settings);
   const minValueToBridge = bridgingModeInfo?.settings?.minValueToBridge || '0';
   const maxAmountAllowedToBridge = bridgingModeInfo?.settings?.maxAmountAllowedToBridge || '0';
   const maxTokenAmountAllowedToBridge = bridgingModeInfo?.settings?.maxTokenAmountAllowedToBridge || '0';
-  const supportedSourceTokenOptions = useSupportedSourceTokenOptions(chain, destinationChain);
+  const supportedSourceTokenOptions = useSupportedSourceTokenOptions(chain, ChainEnum.Prime);
 
   const fetchWalletFee = useCallback(async () => {
     if (!destinationAddr || !amount || !sourceToken) {
@@ -116,7 +116,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
 
     try {
         if (isCardanoChain(chain)) {
-            if (chain === ChainEnum.Prime && destinationChain === ChainEnum.Solana){
+            if (chain === ChainEnum.Cardano && destinationChain === ChainEnum.Solana){
               const feeResp = await getCardanoTxFee(addr, convertApexToDfm(amount || '0', chain), isWrappedToken(sourceToken));
               setUserWalletFee((feeResp?.fee || 0).toString());
               setBridgeTxFee((feeResp?.bridgingFee || 0).toString());
@@ -207,7 +207,7 @@ const BridgeInput = ({bridgeTxFee, setBridgeTxFee, resetBridgeTxFee, operationFe
 
   const onSubmit = useCallback(async () => {
     if (!sourceToken) return;
-    if (chain === ChainEnum.Prime || destinationChain === ChainEnum.Solana){
+    if (chain === ChainEnum.Cardano || destinationChain === ChainEnum.Solana){
             await submit(addr, convertApexToDfm(amount || '0', chain), isWrappedToken(sourceToken))
     }else{
           await submit(destinationAddr, convertApexToDfm(amount || '0', chain), isWrappedToken(sourceToken))

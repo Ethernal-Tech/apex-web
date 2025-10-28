@@ -169,8 +169,8 @@ export class BridgeTransactionService {
 						// handle solana
 						if (
 							(entity.originChain === ChainEnum.Solana &&
-								entity.destinationChain === ChainEnum.Prime) ||
-							(entity.originChain === ChainEnum.Prime &&
+								entity.destinationChain === ChainEnum.Cardano) ||
+							(entity.originChain === ChainEnum.Cardano &&
 								entity.destinationChain === ChainEnum.Solana)
 						) {
 							modelsSolana.push({

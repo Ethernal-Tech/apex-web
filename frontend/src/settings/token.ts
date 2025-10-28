@@ -100,15 +100,16 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
     [ChainEnum.Nexus]: {
       isCurrencyBridgingAllowed: true,
     },
-    [ChainEnum.Solana]: {
-      isCurrencyBridgingAllowed: true
-    }
   },
   [ChainEnum.Cardano]: {
     [ChainEnum.Prime]: {
       isCurrencyBridgingAllowed: false,
       wrappedToken: TokenEnum.WAPEX,
     },
+    [ChainEnum.Solana]:{
+      isCurrencyBridgingAllowed: false,
+      wrappedToken: TokenEnum.WAPEX,
+    }
   },
   [ChainEnum.Vector]: {
     [ChainEnum.Prime]: {
@@ -153,7 +154,7 @@ const tokensDirection: Partial<Record<ChainEnum, Partial<Record<ChainEnum, Bridg
     }
   },
   [ChainEnum.Solana]: {
-    [ChainEnum.Prime]:{
+    [ChainEnum.Cardano]:{
       isCurrencyBridgingAllowed: false,
       wrappedToken: TokenEnum.SAPEX
     }

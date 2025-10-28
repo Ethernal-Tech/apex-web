@@ -34,7 +34,7 @@ const TotalBalance = () => {
     }
     else{
     totalBalanceInApex = totalDfmBalance[chainCurrency] ? toFixed(convertDfmToApex(totalDfmBalance[chainCurrency], chain), 6) : null;
-    totalBalanceInNativeToken = (isSkylineMode || isLayerZeroMode) && totalDfmBalance[chainNativeToken!] ? toFixed(convertDfmToApex(totalDfmBalance[chainNativeToken!], chain), 6) : null;
+    totalBalanceInNativeToken = (isSkylineMode || isLayerZeroMode || (chain === ChainEnum.Cardano && destinationChain === ChainEnum.Solana)) && totalDfmBalance[chainNativeToken!] ? toFixed(convertDfmToApex(totalDfmBalance[chainNativeToken!], chain), 6) : null;
     }
     
 

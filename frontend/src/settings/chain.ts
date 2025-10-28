@@ -154,7 +154,7 @@ export const isEvmChain = function (chain: ChainEnum): boolean {
 }
 
 export const isSolanaBridging = function (chain: ChainEnum, dstChain?: ChainEnum): boolean{
-    return (chain === ChainEnum.Solana && dstChain === ChainEnum.Prime) || (chain === ChainEnum.Prime && dstChain === ChainEnum.Solana)
+    return (chain === ChainEnum.Solana && dstChain === ChainEnum.Cardano) || (chain === ChainEnum.Cardano && dstChain === ChainEnum.Solana)
 }
 
 export const isLZBridging = function (originChain: ChainEnum, destinationChain: ChainEnum): boolean {

@@ -33,7 +33,7 @@ export const signAndSubmitSolanaCardanoTx = async (
     const amount = BigInt(createResponse.bridgingFee) + BigInt(createResponse.amount);
 
     const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(null, new TransactionSubmittedDto({
-        originChain: ChainEnum.Prime,
+        originChain: ChainEnum.Cardano,
         senderAddress: values.senderAddress,
         destinationChain: ChainEnum.Solana,
         receiverAddrs: [address],

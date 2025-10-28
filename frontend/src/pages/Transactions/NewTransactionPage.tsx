@@ -73,8 +73,8 @@ function NewTransactionPage() {
 	const prepareCreateCardanoTx = useCallback(async(address: string, amount: string, isNativeToken: boolean = false): Promise<CreateTransactionDto> => {
     	await walletHandler.getChangeAddress(); // this line triggers an error if the wallet account has been changed by the user in the meantime
 
-		if (chain === ChainEnum.Prime && ChainEnum.Solana){
-			const destChain = toApexBridge(ChainEnum.Cardano)
+		if (chain === ChainEnum.Cardano && ChainEnum.Solana){
+			const destChain = toApexBridge(ChainEnum.Prime)
 			const originChain = toApexBridge(chain)
 
 			return new CreateTransactionDto({
@@ -119,10 +119,10 @@ function NewTransactionPage() {
 	}, [prepareCreateCardanoTx])
 
 	const createCardanoTx = useCallback(async (address: string, amount: string, isNativeToken: boolean): Promise<CreateCardanoTxResponse> => {
-		if (chain === ChainEnum.Prime && destinationChain === ChainEnum.Solana){
-			const addr = 'addr_test1qrg47erg46k52jk6alkw385du44r2nt852tz442wvsmvdjsr48zeh0wh00pjzeedm239zr6ax88nkg43eel96f66t4aquld338'; // TODO: fix this
+		if (chain === ChainEnum.Cardano && destinationChain === ChainEnum.Solana){
+			const addr = 'addr_test1qpvppkxafv9gzpudg9e5q30tt3duyxngeed89zp4m9xqll4ndzwv6qkx9vmtj0828cwzgw80hgxjw6jwy95gr0e03mqsk5kefh'; // TODO: fix this
 
-			const validationErr = validateSubmitTxInputs(chain, ChainEnum.Cardano, addr, amount, isNativeToken, settings);
+			const validationErr = validateSubmitTxInputs(chain, ChainEnum.Prime, addr, amount, isNativeToken, settings);
 			if (validationErr) {
 				throw new Error(validationErr);
 			}
@@ -136,8 +136,6 @@ function NewTransactionPage() {
 
 			return { createTxDto, createResponse };
 		}else{
-			console.log("WRONG IF")
-
 			const validationErr = validateSubmitTxInputs(chain, destinationChain, address, amount, isNativeToken, settings);
 			if (validationErr) {
 				throw new Error(validationErr);
@@ -208,7 +206,7 @@ function NewTransactionPage() {
 			try {
 				if (isCardanoChain(chain)) {
 					const createTxResp = await createCardanoTx(address, amount, isNativeToken);
-					if (chain === ChainEnum.Prime && destinationChain === ChainEnum.Solana){
+					if (chain === ChainEnum.Cardano && destinationChain === ChainEnum.Solana){
 						const response = await signAndSubmitSolanaCardanoTx(
 							createTxResp.createTxDto,
 							createTxResp.createResponse,

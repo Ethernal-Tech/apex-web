@@ -10,9 +10,9 @@ import { UtxoRetriever } from '../features/types';
 import BlockfrostRetriever from '../features/BlockfrostRetriever';
 import OgmiosRetriever from '../features/OgmiosRetriever';
 import { getUtxoRetrieverType } from '../features/utils';
-import { UtxoRetrieverEnum } from '../features/enums';
+import { TokenEnum, UtxoRetrieverEnum } from '../features/enums';
 import { getChainInfo, isEvmChain } from '../settings/chain';
-import { getBridgingInfo, getToken } from '../settings/token';
+import { BridgingInfo, getBridgingInfo, getToken } from '../settings/token';
 import { shouldUseMainnet } from '../utils/generalUtils';
 import { ISettingsState } from '../settings/settingsRedux';import solanaWalletHandler from '../features/SolanaWalletHandler';
 ;
@@ -21,8 +21,15 @@ const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
 
 const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, settings: ISettingsState): Promise<IBalanceState> => {
-    const bridgingInfo = getBridgingInfo(srcChain, dstChain);
-    const currencyTokenName = getChainInfo(srcChain).currencyToken;
+    let bridgingInfo: BridgingInfo
+    let currencyTokenName: TokenEnum
+    if (srcChain === ChainEnum.Solana){
+        bridgingInfo = getBridgingInfo(srcChain, dstChain);
+        currencyTokenName = getChainInfo(srcChain).currencyToken;
+    } else{
+        bridgingInfo = getBridgingInfo(srcChain, ChainEnum.Prime);
+        currencyTokenName = getChainInfo(srcChain).currencyToken;
+    } 
 
     if (isEvmChain(srcChain)) {
         const balances : {[key : string] : string} = {}
@@ -43,7 +50,7 @@ const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, 
 
         const splBalance = await solanaWalletHandler.getSPLTokenBalance('DfgZKtDcKFWNUTC7rifS4c8GdMKqV76adiyusTnEqz7m');
 
-        const token = getToken(ChainEnum.Solana, ChainEnum.Prime, true);
+        const token = getToken(ChainEnum.Solana, ChainEnum.Cardano, true);
 
         balances[token!] = splBalance;
 
@@ -74,7 +81,7 @@ const getWalletBalanceAction = async (srcChain: ChainEnum, dstChain: ChainEnum, 
         [currencyTokenName]: (balance[LovelaceTokenName] || BigInt(0)).toString(10)
     }
     if (!!bridgingInfo.wrappedToken) {
-        const tokenName = getTokenNameFromSettings(srcChain, dstChain, settings);
+        const tokenName = getTokenNameFromSettings(srcChain, ChainEnum.Prime, settings);
         finalBalance[bridgingInfo.wrappedToken!] = (balance[tokenName] || BigInt(0)).toString(10);
     }
 
