@@ -9,13 +9,19 @@ import {
 } from './appConfig.helper';
 
 const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
-	app: { port: 3500 },
+	app: { port: 3500, isMainnet: false },
 	bridge: { recentInputsThresholdMinutes: 5 },
 	services: {
 		oracleUrl: 'http://localhost:40000',
 		cardanoApiUrl: 'http://localhost:40000',
 	},
-	database: { port: 5432 },
+	database: {
+		port: 5432,
+		name: 'apex',
+		migrations: ['dist/database/migrations/*.js'],
+		migrationsTableName: '__apex_migrations',
+		entities: ['dist/**/*.entity.js'],
+	},
 	email: { contactEmail: 'info@ethernal.tech', smtpPort: 465 },
 	features: {
 		statusUpdateModesSupported: [],

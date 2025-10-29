@@ -1,11 +1,12 @@
 import dotenv from 'dotenv';
-import { getAppSettings } from 'src/appConfig/appConfig';
+import { getAppConfig } from 'src/appConfig/appConfig';
 
 import { DataSource, DataSourceOptions } from 'typeorm';
 
-const appSettings = getAppSettings();
 // Load env file
 dotenv.config({ path: '.env' });
+
+const appSettings = getAppConfig();
 
 export const dbdatasource: DataSourceOptions = {
 	type: 'postgres',

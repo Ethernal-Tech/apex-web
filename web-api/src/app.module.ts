@@ -11,10 +11,10 @@ import { AppConfigModule } from './appConfig/appConfig.module';
 
 @Module({
 	imports: [
+		TypeOrmModule.forRoot(dbdatasource),
 		ConfigModule.forRoot({
 			isGlobal: true,
 		}),
-		TypeOrmModule.forRoot(dbdatasource),
 		MailerConfigModule,
 		SettingsModule,
 		TransactionModule,

@@ -2,9 +2,10 @@
 
 import { AppConfigService as AppConfigService } from './appConfig.service';
 
-let appSettings: AppConfigService | null = null;
+let appConfig: AppConfigService | null = null;
 
-export function getAppSettings(): AppConfigService {
-	if (!appSettings) appSettings = new AppConfigService();
-	return appSettings;
+export function getAppConfig(): AppConfigService {
+	if (!appConfig) appConfig = new AppConfigService();
+
+	return appConfig;
 }
