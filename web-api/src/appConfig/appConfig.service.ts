@@ -33,22 +33,15 @@ export class AppConfigService {
 	private readonly config: AppConfig;
 
 	constructor() {
-		const dir = resolveConfigDir();
 		const envName = (process.env.NODE_ENV ?? '').toLowerCase().trim();
+		const fileName = envName ? `config.${envName}.json` : 'config.json';
 
-		const common = safeReadJson<AppConfig>(path.join(dir, 'config.json'));
-		const perEnv = safeReadJson<AppConfig>(
-			envName ? path.join(dir, `config.${envName}.json`) : undefined,
-		);
+		const dir = resolveConfigDir(fileName);
+
+		const common = safeReadJson<AppConfig>(path.join(dir, fileName));
 
 		// DEFAULTS -> common -> perEnv -> ENV, with arrays replaced by later sources
-		const merged = mergeWith(
-			{},
-			DEFAULTS,
-			common,
-			perEnv,
-			envOverrides(),
-		) as AppConfig;
+		const merged = mergeWith({}, DEFAULTS, common, envOverrides()) as AppConfig;
 
 		this.config = merged;
 	}

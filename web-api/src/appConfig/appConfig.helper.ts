@@ -4,16 +4,14 @@ import { AppConfig, DeepPartial, LogLevel } from './appConfig.interface';
 import { bool, cleanEnv, makeValidator, num, str } from 'envalid';
 import { Logger } from '@nestjs/common';
 
-export const resolveConfigDir = (): string => {
+export const resolveConfigDir = (configName: string): string => {
 	const candidates = [
 		path.resolve(process.cwd(), 'dist', 'appConfig', 'config'),
 		path.resolve(process.cwd(), 'src', 'appConfig', 'config'),
 		path.resolve(__dirname, '../config'),
 		path.resolve(__dirname, '../../config'),
 	];
-	const hit = candidates.find((p) =>
-		fs.existsSync(path.join(p, 'config.json')),
-	);
+	const hit = candidates.find((p) => fs.existsSync(path.join(p, configName)));
 	if (!hit) {
 		Logger.warn(
 			`Config folder not found. Looked in: ${candidates.join(' , ')}. ` +
