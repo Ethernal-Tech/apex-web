@@ -2,19 +2,19 @@ const dotenv = require('dotenv');
 const path = require('path');
 const pg = require('pg');
 const { setCWDToScriptsDir } = require('./utils');
-const { getAppSettings } = require('../dist/appSettings/appSettings');
+const { getAppConfig } = require('../dist/appConfig/appConfig');
 
 setCWDToScriptsDir();
 
 dotenv.config({ path: path.join(process.cwd(), '../.env') });
 
-const appSettings = getAppSettings()
+const appConfig = getAppConfig()
 
 const dbConfig = {
 	user: process.env.DB_USERNAME,
-	host: appSettings.db.host,
-	port: appSettings.db.port,
-	database: appSettings.db.name,
+	host: appConfig.db.host,
+	port: appConfig.db.port,
+	database: appConfig.db.name,
 	password: process.env.DB_PASSWORD,
 };
 

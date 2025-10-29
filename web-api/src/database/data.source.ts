@@ -6,20 +6,20 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 // Load env file
 dotenv.config({ path: '.env' });
 
-const appSettings = getAppConfig();
+const appConfig = getAppConfig();
 
 export const dbdatasource: DataSourceOptions = {
 	type: 'postgres',
-	host: appSettings.db.host,
-	port: appSettings.db.port,
+	host: appConfig.db.host,
+	port: appConfig.db.port,
 	username: process.env.DB_USERNAME,
 	password: process.env.DB_PASSWORD,
-	database: appSettings.db.name,
+	database: appConfig.db.name,
 	synchronize: process.env.NODE_ENV === 'development',
-	entities: appSettings.db.entities,
-	ssl: appSettings.db.ssl,
-	migrations: appSettings.db.migrations,
-	migrationsTableName: appSettings.db.migrationsTableName,
+	entities: appConfig.db.entities,
+	ssl: appConfig.db.ssl,
+	migrations: appConfig.db.migrations,
+	migrationsTableName: appConfig.db.migrationsTableName,
 };
 
 const dataSource = new DataSource(dbdatasource);

@@ -13,13 +13,13 @@ async function bootstrap() {
 		logger: winstonLogger,
 	});
 
-	const appSettings = app.get(AppConfigService);
+	const appConfig = app.get(AppConfigService);
 
 	if (
 		process.env.NODE_ENV === 'production' &&
-		appSettings.corsAllowList !== undefined
+		appConfig.corsAllowList !== undefined
 	) {
-		app.enableCors({ origin: appSettings.corsAllowList });
+		app.enableCors({ origin: appConfig.corsAllowList });
 	} else {
 		app.enableCors(); // Use default CORS settings
 	}
@@ -36,7 +36,7 @@ async function bootstrap() {
 	app.useGlobalFilters(new HttpExceptionFilter());
 	app.useGlobalInterceptors(new LoggingInterceptor());
 
-	const port = appSettings.port;
+	const port = appConfig.port;
 
 	await app.listen(port);
 }

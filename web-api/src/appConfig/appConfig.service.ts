@@ -10,7 +10,7 @@ import {
 
 const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
 	app: { port: 3500, isMainnet: false },
-	bridge: { recentInputsThresholdMinutes: 5 },
+	bridge: { recentInputsThresholdMinutes: 5, ethTxTtlInc: 50 },
 	services: {
 		oracleUrl: 'http://localhost:40000',
 		cardanoApiUrl: 'http://localhost:40000',

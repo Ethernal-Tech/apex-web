@@ -40,7 +40,7 @@ export class TransactionService {
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly settingsService: SettingsService,
-		private readonly appSettings: AppConfigService,
+		private readonly appConfig: AppConfigService,
 	) {}
 
 	private validateCreateCardanoTx(dto: CreateTransactionDto) {
@@ -92,7 +92,7 @@ export class TransactionService {
 
 	async getRecentInputs(dto: CreateTransactionDto): Promise<Utxo[]> {
 		const recentInputsThresholdMinutes =
-			this.appSettings.bridge.recentInputsThresholdMinutes;
+			this.appConfig.bridge.recentInputsThresholdMinutes;
 		const threshold = new Date(
 			Date.now() - recentInputsThresholdMinutes * 60 * 1000,
 		);

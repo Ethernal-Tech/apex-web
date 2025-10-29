@@ -179,7 +179,7 @@ export const getCentralizedBridgingRequestState = async (
 	chainId: string,
 	model: GetBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
-	const centralizedApiUrl = process.env.CENTRALIZED_API_URL;
+	const centralizedApiUrl = getAppConfig().centralizedApiUrl;
 
 	const direction = `${chainId}To${capitalizeWord(model.destinationChainId)}`;
 	const statusApiUrl = `${centralizedApiUrl}/api/txStatus/${direction}/${model.txHash}`;
@@ -330,12 +330,13 @@ type TxWithBlockNumber = EthTransaction & {
 
 export const getEthTTL = (txRaw: string): bigint | undefined => {
 	try {
+		const appConfig = getAppConfig();
 		const tx: TxWithBlockNumber = JSON.parse(txRaw, (_: string, value: any) =>
 			typeof value === 'string' && value.startsWith('bigint:')
 				? BigInt(value.substring('bigint:'.length))
 				: value,
 		);
-		return BigInt(tx.block) + BigInt(process.env.ETH_TX_TTL_INC || 50);
+		return BigInt(tx.block) + BigInt(appConfig.bridge.ethTxTtlInc);
 	} catch (e) {
 		Logger.warn(`Error while getEthTTL: ${e}`, e.stack);
 	}

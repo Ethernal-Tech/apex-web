@@ -7,13 +7,13 @@ import { AppConfigService } from 'src/appConfig/appConfig.service';
 export class ContactService {
 	constructor(
 		private readonly mailerService: MailerService,
-		private readonly appSettings: AppConfigService,
+		private readonly appConfig: AppConfigService,
 	) {}
 
 	async submitContactForm(contactData: CreateContactDto): Promise<void> {
 		const { name, email, message } = contactData;
 		await this.mailerService.sendMail({
-			to: this.appSettings.email.contactEmail,
+			to: this.appConfig.email.contactEmail,
 			subject: `Reactor from ${name}`,
 			template: 'contact',
 			context: {

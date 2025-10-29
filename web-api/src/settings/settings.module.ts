@@ -8,9 +8,9 @@ const providers = [
 		provide: SettingsService,
 		inject: [AppConfigService],
 		useFactory: async (
-			appSettings: AppConfigService,
+			appConfig: AppConfigService,
 		): Promise<SettingsService> => {
-			const s = new SettingsService(appSettings);
+			const s = new SettingsService(appConfig);
 			await s.init();
 			return s;
 		},

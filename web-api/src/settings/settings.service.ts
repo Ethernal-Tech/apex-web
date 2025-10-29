@@ -11,10 +11,10 @@ const RETRY_DELAY_MS = 5000;
 export class SettingsService {
 	SettingsResponse: SettingsResponseDto;
 
-	constructor(private readonly appSettings: AppConfigService) {}
+	constructor(private readonly appConfig: AppConfigService) {}
 
 	async init() {
-		const apiUrl = this.appSettings.cardanoApiUrl;
+		const apiUrl = this.appConfig.cardanoApiUrl;
 		const apiKey = process.env.CARDANO_API_API_KEY;
 
 		if (!apiUrl || !apiKey) {

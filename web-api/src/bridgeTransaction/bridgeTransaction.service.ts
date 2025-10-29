@@ -39,7 +39,7 @@ export class BridgeTransactionService {
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly schedulerRegistry: SchedulerRegistry,
-		private readonly appSettings: AppConfigService,
+		private readonly appConfig: AppConfigService,
 	) {}
 
 	async get(id: number): Promise<BridgeTransactionDto> {
@@ -125,7 +125,7 @@ export class BridgeTransactionService {
 		job.stop();
 		try {
 			const modesSupported = new Set<string>(
-				this.appSettings.statusUpdateModesSupported,
+				this.appConfig.statusUpdateModesSupported,
 			);
 
 			for (const chain of Object.values(ChainEnum)) {

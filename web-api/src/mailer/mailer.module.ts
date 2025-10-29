@@ -11,10 +11,10 @@ dotenv.config({ path: '.env' });
 	imports: [
 		MailerModule.forRootAsync({
 			inject: [AppConfigService],
-			useFactory: (appSettings: AppConfigService) => ({
+			useFactory: (appConfig: AppConfigService) => ({
 				transport: {
-					host: appSettings.email.smtpHost,
-					port: appSettings.email.smtpPort,
+					host: appConfig.email.smtpHost,
+					port: appConfig.email.smtpPort,
 					secure: true,
 					auth: {
 						user: process.env.SMTP_USER,

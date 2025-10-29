@@ -10,11 +10,7 @@
   },
   "bridge": {
     "ethTxTtlInc": 50,
-    "recentInputsThresholdMinutes": 5,
-    "addresses": {
-      "nexusBridging": "0xc68221AD72397d85084f2D5C7089e4e9487c118c",
-      "nexusCentralizedBridging": "0xEe639cDA5D46Bd32D0013bB75f60F3E691D9839f"
-    }
+    "recentInputsThresholdMinutes": 5
   },
   "services": {
     "oracleUrl": "http://localhost:40000",
