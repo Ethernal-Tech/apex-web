@@ -305,8 +305,7 @@ const BridgeInput = ({
 	// takes place fails, bridgingFee never gets updated, and the `Insufficient ADA` is never shown
 	const adjustedBridgeTxFee = useMemo(() => {
 		if (
-			!settings.bridgingAddresses ||
-			settings.bridgingAddresses.length === 0 ||
+			(settings.bridgingAddresses || []).length === 0 ||
 			isEvmChain(chain) ||
 			!sourceToken ||
 			!isWrappedToken(sourceToken) ||
