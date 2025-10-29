@@ -1,21 +1,25 @@
 import dotenv from 'dotenv';
+import { getAppConfig } from 'src/appConfig/appConfig';
+
 import { DataSource, DataSourceOptions } from 'typeorm';
 
 // Load env file
 dotenv.config({ path: '.env' });
 
+const appConfig = getAppConfig();
+
 export const dbdatasource: DataSourceOptions = {
 	type: 'postgres',
-	host: process.env.DB_HOST,
-	port: parseInt(process.env.DB_PORT || '5432'),
+	host: appConfig.db.host,
+	port: appConfig.db.port,
 	username: process.env.DB_USERNAME,
 	password: process.env.DB_PASSWORD,
-	database: process.env.DB_NAME,
+	database: appConfig.db.name,
 	synchronize: process.env.NODE_ENV === 'development',
-	entities: ['dist/**/*.entity.js'],
-	ssl: process.env.DB_SSL === 'true',
-	migrations: ['dist/database/migrations/*.js'],
-	migrationsTableName: '__apex_migrations',
+	entities: appConfig.db.entities,
+	ssl: appConfig.db.ssl,
+	migrations: appConfig.db.migrations,
+	migrationsTableName: appConfig.db.migrationsTableName,
 };
 
 const dataSource = new DataSource(dbdatasource);

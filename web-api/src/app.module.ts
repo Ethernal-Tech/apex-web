@@ -7,18 +7,20 @@ import { BridgeTransactionModule } from './bridgeTransaction/bridgeTransaction.m
 import { SettingsModule } from './settings/settings.module';
 import { MailerConfigModule } from './mailer/mailer.module';
 import { ContactModule } from './contact/contact.module';
+import { AppConfigModule } from './appConfig/appConfig.module';
 
 @Module({
 	imports: [
+		TypeOrmModule.forRoot(dbdatasource),
 		ConfigModule.forRoot({
 			isGlobal: true,
 		}),
-		TypeOrmModule.forRoot(dbdatasource),
 		MailerConfigModule,
 		SettingsModule,
 		TransactionModule,
 		BridgeTransactionModule,
 		ContactModule,
+		AppConfigModule,
 	],
 	controllers: [],
 	providers: [],

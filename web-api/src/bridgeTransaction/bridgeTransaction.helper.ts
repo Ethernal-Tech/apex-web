@@ -8,6 +8,7 @@ import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
 import { isCardanoChain, isEvmChain } from 'src/utils/chainUtils';
+import { getAppConfig } from 'src/appConfig/appConfig';
 
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
@@ -48,7 +49,7 @@ export const getBridgingRequestStates = async (
 		return {};
 	}
 
-	const oracleUrl = process.env.ORACLE_URL || 'http://localhost:40000';
+	const oracleUrl = getAppConfig().oracleUrl;
 	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
 	let endpointUrl =
 		oracleUrl + `/api/BridgingRequestState/GetMultiple?chainId=${chainId}`;
@@ -120,7 +121,7 @@ export const getHasTxFailedRequestState = async (
 		return;
 	}
 
-	const oracleUrl = process.env.ORACLE_URL || 'http://localhost:40000';
+	const oracleUrl = getAppConfig().oracleUrl;
 	const oracleApiKey = process.env.ORACLE_API_KEY || 'test_api_key';
 	const endpointUrl =
 		oracleUrl +
@@ -178,8 +179,7 @@ export const getCentralizedBridgingRequestState = async (
 	chainId: string,
 	model: GetBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
-	const centralizedApiUrl =
-		process.env.CENTRALIZED_API_URL || 'http://localhost:40000';
+	const centralizedApiUrl = getAppConfig().centralizedApiUrl;
 
 	const direction = `${chainId}To${capitalizeWord(model.destinationChainId)}`;
 	const statusApiUrl = `${centralizedApiUrl}/api/txStatus/${direction}/${model.txHash}`;
@@ -330,12 +330,13 @@ type TxWithBlockNumber = EthTransaction & {
 
 export const getEthTTL = (txRaw: string): bigint | undefined => {
 	try {
+		const appConfig = getAppConfig();
 		const tx: TxWithBlockNumber = JSON.parse(txRaw, (_: string, value: any) =>
 			typeof value === 'string' && value.startsWith('bigint:')
 				? BigInt(value.substring('bigint:'.length))
 				: value,
 		);
-		return BigInt(tx.block) + BigInt(process.env.ETH_TX_TTL_INC || 50);
+		return BigInt(tx.block) + BigInt(appConfig.bridge.ethTxTtlInc);
 	} catch (e) {
 		Logger.warn(`Error while getEthTTL: ${e}`, e.stack);
 	}

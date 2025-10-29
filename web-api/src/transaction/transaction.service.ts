@@ -32,6 +32,7 @@ import {
 	isCardanoChain,
 	isEvmChain,
 } from 'src/utils/chainUtils';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
 
 @Injectable()
 export class TransactionService {
@@ -39,6 +40,7 @@ export class TransactionService {
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly settingsService: SettingsService,
+		private readonly appConfig: AppConfigService,
 	) {}
 
 	private validateCreateCardanoTx(dto: CreateTransactionDto) {
@@ -90,9 +92,9 @@ export class TransactionService {
 
 	async getRecentInputs(dto: CreateTransactionDto): Promise<Utxo[]> {
 		const recentInputsThresholdMinutes =
-			process.env.RECENT_INPUTS_THRESHOLD_MINUTES || '5';
+			this.appConfig.bridge.recentInputsThresholdMinutes;
 		const threshold = new Date(
-			Date.now() - parseInt(recentInputsThresholdMinutes) * 60 * 1000,
+			Date.now() - recentInputsThresholdMinutes * 60 * 1000,
 		);
 		const previousTxs = await this.bridgeTransactionRepository.find({
 			where: {
