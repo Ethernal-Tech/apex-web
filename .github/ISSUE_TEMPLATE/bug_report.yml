@@ -1,0 +1,185 @@
+name: 🧩 Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ### Basic Info
+
+  - type: dropdown
+    id: bridge_type
+    attributes:
+      label: Bridging application
+      options:
+        - Reactor
+        - Skyline
+    validations:
+      required: true
+
+  - type: dropdown
+    id: network
+    attributes:
+      label: Network used
+      options:
+        - Mainnet
+        - Testnet
+    validations:
+      required: true
+
+  - type: dropdown
+    id: source_chain
+    attributes:
+      label: Source chain
+      options:
+        - Prime
+        - Vector
+        - Nexus
+        - Cardano
+        - Base
+        - BnB
+    validations:
+      required: true
+
+  - type: input
+    id: source_wallet_address
+    attributes:
+      label: Source wallet address
+      placeholder: e.g. addr1q93k6rgprz5fxw...3cc3k8
+    validations:
+      required: true
+
+  - type: input
+    id: contact_info
+    attributes:
+      label: Contact info
+      description: Email / Telegram / Discord
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ### 🧰 Browser & Environment Info
+
+  - type: dropdown
+    id: destination_chain
+    attributes:
+      label: Destination chain
+      options:
+        - Prime
+        - Vector
+        - Nexus
+        - Cardano
+        - Base
+        - BnB
+
+  - type: input
+    id: destination_wallet_address
+    attributes:
+      label: Destination wallet address
+      placeholder: e.g. addr1q93k6rgprz5fxw...3cc3k8
+
+  - type: input
+    id: wallet_extension
+    attributes:
+      label: Eternl wallet version
+      placeholder: e.g. Eternl 1.10.0
+
+  - type: input
+    id: browser_name
+    attributes:
+      label: Browser name
+      placeholder: e.g. Chrome, Brave
+
+  - type: input
+    id: browser_version
+    attributes:
+      label: Browser version
+      placeholder: Settings → About
+
+  - type: input
+    id: operating_system
+    attributes:
+      label: Operating system
+      placeholder: e.g. Windows 11, macOS 14, Ubuntu 22.04
+
+  - type: input
+    id: other_extensions
+    attributes:
+      label: Other wallet extensions installed
+      placeholder: e.g. Lace, Flint, etc.
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ### 📝 Detailed Description
+        _Start simple, for example: “Bridging fails after clicking the Move Funds button.”_  
+        _Then explain what the problem is, when it happens, and any context you think is relevant (such as frequency, when it started, etc.)._
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Detailed description
+      placeholder: Explain the problem in detail...
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ### 🪲 Steps to Reproduce
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1. Go to: [link or page name]
+        2. Click on: [...]
+        3. Perform: [...]
+        4. Expected result: [...]
+        5. Actual result: [...]
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ### 📸 Attachments
+        Please add all relevant **screenshots, logs, or other files** into the comment box below:
+        - 📸 Screenshots
+        - 🎥 Video recordings
+        - 🧾 Raw unsigned transaction JSON (very helpful)
+          Some wallets allow you to download the unsigned raw transaction when the dialog to sign the transaction is opened
+          Example: '{"type": "TxBody", "inputs": [...]}'
+        - 🧰 Console logs (very helpful)
+          To include browser logs:
+          1. Open Developer Tools (F12 or Ctrl+Shift+I)
+          2. Go to the Console tab
+          3. Reproduce the issue
+          4. Right-click → “Save as…” or copy logs
+          5. Paste or attach them here
+
+  - type: textarea
+    id: attachments_ta
+    attributes:
+      label: Attachments
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ### 🔐 Sensitive Data Notice
+        ⚠️ **Do NOT include:**
+        - Private keys, seed phrases, or passwords  
+        - Full transaction metadata containing private data
+
+  - type: textarea
+    id: additional_notes
+    attributes:
+      label: 💬 Additional Notes
+      description: Any other information, observations, or patterns (e.g. only happens after reconnecting wallet, etc.)
+      placeholder: Add any additional info here...
