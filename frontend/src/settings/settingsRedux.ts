@@ -12,6 +12,7 @@ export type LayerZeroChains = Record<
 export interface SettingsPerMode {
 	minUtxoChainValue: { [key: string]: string };
 	minChainFeeForBridging: { [key: string]: string };
+	minChainFeeForBridgingTokens: { [key: string]: string };
 	minOperationFee: { [key: string]: string };
 	maxAmountAllowedToBridge: string;
 	maxTokenAmountAllowedToBridge: string;

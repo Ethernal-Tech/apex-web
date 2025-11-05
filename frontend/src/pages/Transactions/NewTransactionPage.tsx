@@ -3,7 +3,7 @@ import BridgeInput from './components/BridgeInput';
 import { convertDfmToWei, formatTxDetailUrl } from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { toast } from 'react-toastify';
 import walletHandler from '../../features/WalletHandler';
@@ -61,29 +61,14 @@ function NewTransactionPage() {
 	const settings = useSelector((state: RootState) => state.settings);
 
 	const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
-	const { minOperationFee, minChainFeeForBridging } =
-		bridgingModeInfo.settings || {
-			minOperationFee: {} as { [key: string]: string },
-			minChainFeeForBridging: {} as { [key: string]: string },
-		};
 
-	const defaultBridgeTxFee = useMemo(
-		() =>
-			isEvmChain(chain)
-				? convertDfmToWei(minChainFeeForBridging[chain] || '0')
-				: minChainFeeForBridging[chain] || '0',
-		[chain, minChainFeeForBridging],
-	);
+	const { minOperationFee } = bridgingModeInfo.settings || {
+		minOperationFee: {} as { [key: string]: string },
+	};
 
-	const [bridgeTxFee, setBridgeTxFee] = useState<string>(defaultBridgeTxFee);
+	const [bridgeTxFee, setBridgeTxFee] = useState<string>('0');
 
-	useEffect(() => {
-		setBridgeTxFee(defaultBridgeTxFee);
-	}, [defaultBridgeTxFee]);
-
-	const resetBridgeTxFee = useCallback(() => {
-		setBridgeTxFee(defaultBridgeTxFee);
-	}, [defaultBridgeTxFee]);
+	const resetBridgeTxFee = useCallback(() => setBridgeTxFee('0'), []);
 
 	const operationFee = useMemo(
 		() =>
@@ -407,7 +392,6 @@ function NewTransactionPage() {
 				) : (
 					<BridgeInput
 						bridgeTxFee={bridgeTxFee}
-						defaultBridgeTxFee={defaultBridgeTxFee}
 						setBridgeTxFee={setBridgeTxFee}
 						resetBridgeTxFee={resetBridgeTxFee}
 						operationFee={operationFee}
