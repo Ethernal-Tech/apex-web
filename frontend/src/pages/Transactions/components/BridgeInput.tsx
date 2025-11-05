@@ -21,6 +21,8 @@ import {
 import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
 import { isCardanoChain, isEvmChain } from '../../../settings/chain';
+import SubmitLoading from './SubmitLoading';
+import { SubmitLoadingState } from '../../../utils/statusUtils';
 
 type BridgeInputType = {
 	bridgeTxFee: string;
@@ -33,7 +35,7 @@ type BridgeInputType = {
 		amount: string,
 	) => Promise<CreateEthTransactionResponseDto>;
 	submit: (address: string, amount: string) => Promise<void>;
-	loading?: boolean;
+	loadingState: SubmitLoadingState | undefined;
 };
 
 const calculateMaxAmount = (
@@ -83,7 +85,7 @@ const BridgeInput = ({
 	getCardanoTxFee,
 	getEthTxFee,
 	submit,
-	loading,
+	loadingState,
 }: BridgeInputType) => {
 	const [destinationAddr, setDestinationAddr] = useState('');
 	const [amount, setAmount] = useState('');
@@ -203,7 +205,7 @@ const BridgeInput = ({
 				sx={{ width: '50%' }}
 				text={destinationAddr}
 				setText={setDestinationAddr}
-				disabled={loading}
+				disabled={!!loadingState}
 				id="dest-addr"
 			/>
 
@@ -222,7 +224,7 @@ const BridgeInput = ({
 					maxAmounts={maxAmounts}
 					text={amount}
 					setAmount={setAmount}
-					disabled={loading}
+					disabled={!!loadingState}
 					id="bridge-amount"
 					sx={{
 						gridColumn: 'span 1',
@@ -247,9 +249,23 @@ const BridgeInput = ({
 					}}
 				/>
 
+				{!!loadingState && (
+					<Box
+						sx={{
+							gridColumn: 'span 2',
+							display: 'flex',
+							flexDirection: 'column',
+							justifyContent: 'center',
+							alignItems: 'center',
+						}}
+					>
+						<SubmitLoading loadingState={loadingState} />
+					</Box>
+				)}
+
 				<ButtonCustom
 					onClick={onDiscard}
-					disabled={loading}
+					disabled={!!loadingState}
 					variant="red"
 					sx={{
 						gridColumn: 'span 1',
@@ -262,7 +278,7 @@ const BridgeInput = ({
 				<ButtonCustom
 					onClick={onSubmit}
 					variant="white"
-					disabled={loading || BigInt(maxAmount) <= 0}
+					disabled={!!loadingState || BigInt(maxAmount) <= 0}
 					sx={{
 						gridColumn: 'span 1',
 						textTransform: 'uppercase',
