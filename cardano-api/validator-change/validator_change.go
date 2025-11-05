@@ -74,5 +74,6 @@ func (v *validatorChange) getMultiSigAddr(ctx context.Context) error {
 	}
 
 	v.appConfig.UpdateCardanoBridgingAddresses(v.logger, multiSigAddrReponse.CardanoChains)
+
 	return nil
 }
