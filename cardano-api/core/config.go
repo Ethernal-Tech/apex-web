@@ -55,8 +55,12 @@ type AppSettings struct {
 }
 
 type BridgingSettings struct {
-	// For each chain, the minimum fee required to cover the submission of the transaction on the destination chain
+	// For each chain, the minimum fee required to cover the submission of the currency transaction
+	// on the destination chain
 	MinChainFeeForBridging map[string]uint64 `json:"minChainFeeForBridging"`
+	// For each chain, the minimum fee required to cover the submission of the native token transaction
+	// on the destination chain
+	MinChainFeeForBridgingTokens map[string]uint64 `json:"minChainFeeForBridgingTokens"`
 	// For each chain, the minimum fee required to cover operational costs
 	MinOperationFee map[string]uint64 `json:"minOperationFee"`
 	// For each chain, the minimum allowed UTXO value
@@ -126,6 +130,7 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 
 		appConfig.BridgingSettings = BridgingSettings{
 			MinChainFeeForBridging:         settingsResponse.MinChainFeeForBridging,
+			MinChainFeeForBridgingTokens:   settingsResponse.MinChainFeeForBridgingTokens,
 			MinOperationFee:                settingsResponse.MinOperationFee,
 			MinUtxoChainValue:              settingsResponse.MinUtxoChainValue,
 			MinValueToBridge:               settingsResponse.MinValueToBridge,
@@ -133,6 +138,12 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 			MaxTokenAmountAllowedToBridge:  maxTokenAmountAllowedToBridge,
 			MaxReceiversPerBridgingRequest: settingsResponse.MaxReceiversPerBridgingRequest,
 			AllowedDirections:              settingsResponse.AllowedDirections,
+		}
+
+		for chainID, cardanoChainConfig := range appConfig.CardanoChains {
+			if tokens, ok := settingsResponse.NativeTokens[chainID]; ok {
+				cardanoChainConfig.ChainSpecific.NativeTokens = tokens
+			}
 		}
 
 		logger.Debug("applied settings from oracle API", "settings", settingsResponse)
@@ -188,17 +199,18 @@ func (config CardanoChainConfig) ToSendTxChainConfig(
 	}
 
 	return sendtx.ChainConfig{
-		CardanoCliBinary:      cardanowallet.ResolveCardanoCliBinary(config.NetworkID),
-		TxProvider:            txProvider,
-		MultiSigAddr:          bridgingAddress,
-		TestNetMagic:          uint(config.NetworkMagic),
-		TTLSlotNumberInc:      config.ChainSpecific.TTLSlotNumberInc,
-		MinUtxoValue:          appConfig.BridgingSettings.MinUtxoChainValue[config.ChainID],
-		NativeTokens:          config.ChainSpecific.NativeTokens,
-		MinBridgingFeeAmount:  appConfig.BridgingSettings.MinChainFeeForBridging[config.ChainID],
-		MinOperationFeeAmount: appConfig.BridgingSettings.MinOperationFee[config.ChainID],
-		PotentialFee:          config.ChainSpecific.PotentialFee,
-		ProtocolParameters:    nil,
+		CardanoCliBinary:         cardanowallet.ResolveCardanoCliBinary(config.NetworkID),
+		TxProvider:               txProvider,
+		MultiSigAddr:             bridgingAddress,
+		TestNetMagic:             uint(config.NetworkMagic),
+		TTLSlotNumberInc:         config.ChainSpecific.TTLSlotNumberInc,
+		MinUtxoValue:             appConfig.BridgingSettings.MinUtxoChainValue[config.ChainID],
+		NativeTokens:             config.ChainSpecific.NativeTokens,
+		DefaultMinFeeForBridging: appConfig.BridgingSettings.MinChainFeeForBridging[config.ChainID],
+		MinFeeForBridgingTokens:  appConfig.BridgingSettings.MinChainFeeForBridgingTokens[config.ChainID],
+		MinOperationFeeAmount:    appConfig.BridgingSettings.MinOperationFee[config.ChainID],
+		PotentialFee:             config.ChainSpecific.PotentialFee,
+		ProtocolParameters:       nil,
 	}, nil
 }
 
@@ -212,6 +224,18 @@ func (config EthChainConfig) ToSendTxChainConfig(
 	}
 
 	return sendtx.ChainConfig{
-		MinBridgingFeeAmount: feeValue.Uint64(),
+		DefaultMinFeeForBridging: feeValue.Uint64(),
 	}
+}
+
+func (settings BridgingSettings) GetMinBridgingFee(chainID string, isNativeToken bool) (
+	fee uint64, found bool,
+) {
+	if isNativeToken {
+		fee, found = settings.MinChainFeeForBridgingTokens[chainID]
+	} else {
+		fee, found = settings.MinChainFeeForBridging[chainID]
+	}
+
+	return fee, found
 }

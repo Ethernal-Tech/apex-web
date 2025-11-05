@@ -19,7 +19,7 @@ type CardanoChainConfig struct {
 	SocketPath       string                           `json:"socketPath,omitempty"`
 	PotentialFee     uint64                           `json:"potentialFee"`
 	TTLSlotNumberInc uint64                           `json:"ttlSlotNumberIncrement"`
-	NativeTokens     []sendtx.TokenExchangeConfig     `json:"nativeTokens"`
+	NativeTokens     []sendtx.TokenExchangeConfig     `json:"-"`
 }
 
 func NewCardanoChainConfig(rawMessage json.RawMessage) (*CardanoChainConfig, error) {

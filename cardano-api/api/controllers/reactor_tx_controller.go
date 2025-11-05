@@ -192,7 +192,7 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody.BridgingFee += feeSum
 	requestBody.Transactions = transactions
 
-	minFee, found := c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.SourceChainID]
+	minFee, found := c.appConfig.BridgingSettings.GetMinBridgingFee(requestBody.SourceChainID, false)
 	if !found {
 		return fmt.Errorf("no minimal fee for chain: %s", requestBody.SourceChainID)
 	}
