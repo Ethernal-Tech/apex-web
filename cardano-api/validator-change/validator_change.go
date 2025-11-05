@@ -11,6 +11,8 @@ import (
 	"github.com/hashicorp/go-hclog"
 )
 
+const vsStatusPollTime = 30 * time.Second // 30 seconds poll time for validator change status
+
 type validatorChange struct {
 	logger                 hclog.Logger
 	appConfig              *core.AppConfig
@@ -34,8 +36,8 @@ func (v *validatorChange) Start(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(30000 * time.Millisecond):
-			err := v.getValidatorChangeStatus(ctx)
+		case <-time.After(vsStatusPollTime):
+			err := v.setValidatorChangeStatus(ctx)
 			if err != nil {
 				v.logger.Error("error while fetching validator change status", "err", err)
 			}
@@ -43,7 +45,7 @@ func (v *validatorChange) Start(ctx context.Context) {
 	}
 }
 
-func (v *validatorChange) getValidatorChangeStatus(ctx context.Context) error {
+func (v *validatorChange) setValidatorChangeStatus(ctx context.Context) error {
 	validatorChangeStatusRequestURL := fmt.Sprintf("%s/api/Settings/GetValidatorChangeStatus", v.appConfig.OracleAPI.URL)
 
 	validatorChangeStatusReponse, err := common.HTTPGet[*response.ValidatorChangeStatusReponse](
@@ -54,7 +56,7 @@ func (v *validatorChange) getValidatorChangeStatus(ctx context.Context) error {
 
 	if !validatorChangeStatusReponse.InProgress &&
 		v.validatorChangeTracker.IsValidatorChangeInProgress() != validatorChangeStatusReponse.InProgress {
-		if err := v.getMultiSigAddr(ctx); err != nil {
+		if err := v.setMultiSigAddr(ctx); err != nil {
 			return err
 		}
 	}
@@ -64,7 +66,7 @@ func (v *validatorChange) getValidatorChangeStatus(ctx context.Context) error {
 	return nil
 }
 
-func (v *validatorChange) getMultiSigAddr(ctx context.Context) error {
+func (v *validatorChange) setMultiSigAddr(ctx context.Context) error {
 	multiSigAddrRequestURL := fmt.Sprintf("%s/api/Settings/GetMultiSigBridgingAddr", v.appConfig.OracleAPI.URL)
 
 	multiSigAddrReponse, err := common.HTTPGet[*response.MultiSigAddressesResponse](
