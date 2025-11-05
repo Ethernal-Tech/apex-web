@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"sync"
 	"time"
 
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
@@ -63,16 +64,21 @@ type BridgingSettings struct {
 }
 
 type AppConfig struct {
-	CardanoChains    map[string]*CardanoChainConfig `json:"cardanoChains"`
-	EthChains        map[string]*EthChainConfig     `json:"ethChains"`
-	UtxoCacheTimeout time.Duration                  `json:"utxoCacheTimeout"`
-	OracleAPI        OracleAPISettings              `json:"oracleApi"`
-	Settings         AppSettings                    `json:"appSettings"`
-	BridgingSettings BridgingSettings               `json:"-"`
-	APIConfig        APIConfig                      `json:"api"`
+	cardanoChainsMu sync.RWMutex
+	CardanoChains   map[string]*CardanoChainConfig `json:"cardanoChains"`
+
+	EthChains        map[string]*EthChainConfig `json:"ethChains"`
+	UtxoCacheTimeout time.Duration              `json:"utxoCacheTimeout"`
+	OracleAPI        OracleAPISettings          `json:"oracleApi"`
+	Settings         AppSettings                `json:"appSettings"`
+	BridgingSettings BridgingSettings           `json:"-"`
+	APIConfig        APIConfig                  `json:"api"`
 }
 
 func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) error {
+	appConfig.cardanoChainsMu.Lock()
+	defer appConfig.cardanoChainsMu.Unlock()
+
 	for chainID, cardanoChainConfig := range appConfig.CardanoChains {
 		cardanoChainConfig.ChainID = chainID
 		cardanoChainConfig.ChainSpecific.NetworkID = cardanoChainConfig.NetworkID
@@ -119,7 +125,45 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 	return err
 }
 
+func (appConfig *AppConfig) UpdateCardanoBridgingAddresses(logger hclog.Logger, addresses map[string]*BridgingAddresses) {
+	appConfig.cardanoChainsMu.Lock()
+	defer appConfig.cardanoChainsMu.Unlock()
+
+	for chainID, multiSigAddr := range addresses {
+		if chainConfig, ok := appConfig.CardanoChains[chainID]; ok {
+			chainConfig.BridgingAddresses.BridgingAddress = multiSigAddr.BridgingAddress
+			chainConfig.BridgingAddresses.FeeAddress = multiSigAddr.FeeAddress
+
+			logger.Info("successfully updated bridge address", "chainID", chainID)
+		}
+	}
+}
+
+func (appConfig *AppConfig) CreateEnabledChains() []string {
+	var enabledChains []string
+
+	appConfig.cardanoChainsMu.RLock()
+	for chainID, cfg := range appConfig.CardanoChains {
+		if cfg.IsEnabled {
+			enabledChains = append(enabledChains, chainID)
+		}
+	}
+
+	appConfig.cardanoChainsMu.RUnlock()
+
+	for chainID, cfg := range appConfig.EthChains {
+		if cfg.IsEnabled {
+			enabledChains = append(enabledChains, chainID)
+		}
+	}
+
+	return enabledChains
+}
+
 func GetChainConfig(appConfig *AppConfig, chainID string) (*CardanoChainConfig, *EthChainConfig) {
+	appConfig.cardanoChainsMu.RLock()
+	defer appConfig.cardanoChainsMu.RUnlock()
+
 	if cardanoChainConfig, exists := appConfig.CardanoChains[chainID]; exists && cardanoChainConfig.IsEnabled {
 		return cardanoChainConfig, nil
 	}

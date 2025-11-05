@@ -17,9 +17,10 @@ import (
 )
 
 type CardanoTxControllerImpl struct {
-	appConfig      *core.AppConfig
-	usedUtxoCacher *utils.UsedUtxoCacher
-	logger         hclog.Logger
+	appConfig              *core.AppConfig
+	usedUtxoCacher         *utils.UsedUtxoCacher
+	logger                 hclog.Logger
+	validatorChangeTracker common.ValidatorChangeTracker
 }
 
 var _ core.APIController = (*CardanoTxControllerImpl)(nil)
@@ -27,11 +28,13 @@ var _ core.APIController = (*CardanoTxControllerImpl)(nil)
 func NewCardanoTxController(
 	appConfig *core.AppConfig,
 	logger hclog.Logger,
+	validatorChange common.ValidatorChangeTracker,
 ) *CardanoTxControllerImpl {
 	return &CardanoTxControllerImpl{
-		appConfig:      appConfig,
-		usedUtxoCacher: utils.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
-		logger:         logger,
+		appConfig:              appConfig,
+		usedUtxoCacher:         utils.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
+		logger:                 logger,
+		validatorChangeTracker: validatorChange,
 	}
 }
 
@@ -48,6 +51,14 @@ func (c *CardanoTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 }
 
 func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
+	if c.validatorChangeTracker.IsValidatorChangeInProgress() {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("validator change is in progress, getting the bridging transaction fee is not possible at the moment"), c.logger)
+
+		return
+	}
+
 	requestBody, ok := utils.DecodeModel[request.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
@@ -100,6 +111,14 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 }
 
 func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
+	if c.validatorChangeTracker.IsValidatorChangeInProgress() {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("validator change is in progress, creating a bridge tx is not possible at the moment"), c.logger)
+
+		return
+	}
+
 	requestBody, ok := utils.DecodeModel[request.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
