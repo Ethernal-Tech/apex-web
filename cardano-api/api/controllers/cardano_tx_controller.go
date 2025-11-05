@@ -54,7 +54,9 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 	if c.validatorChangeTracker.IsValidatorChangeInProgress() {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
-			fmt.Errorf("validator change is in progress, getting the bridging transaction fee is not possible at the moment"), c.logger)
+			fmt.Errorf(
+				"validator change is in progress, getting the bridging tx fee is not possible at the moment"),
+			c.logger)
 
 		return
 	}

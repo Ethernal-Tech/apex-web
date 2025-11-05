@@ -125,7 +125,9 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 	return err
 }
 
-func (appConfig *AppConfig) UpdateCardanoBridgingAddresses(logger hclog.Logger, addresses map[string]*BridgingAddresses) {
+func (appConfig *AppConfig) UpdateCardanoBridgingAddresses(
+	logger hclog.Logger,
+	addresses map[string]*BridgingAddresses) {
 	appConfig.cardanoChainsMu.Lock()
 	defer appConfig.cardanoChainsMu.Unlock()
 
