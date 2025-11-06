@@ -187,9 +187,7 @@ $ go run main.go generate-configs skyline \
 		--oracle-api-key "oracle_api_key_1" \
 		--api-port 41002\
 		--api-keys "cardano_api_key_1"\
-		--utxo-cache-keys "utxo_cache_api_key_1" \
-		--vector-cardano-token-name a59a8df821056ddcaeae4eb16f272565a0b3581c61e04a9bd18d4b32.WADA \
-		--cardano-prime-token-name 64c6ea243c3133d44f2022299e74b027f02b1c13397324819e8465c7.WAPEX
+		--utxo-cache-keys "utxo_cache_api_key_1"
 ```
 
 # How to start cardano api
