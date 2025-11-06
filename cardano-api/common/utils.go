@@ -25,6 +25,9 @@ const (
 	EthZeroAddr = "0x0000000000000000000000000000000000000000"
 
 	MinUTxODefaultValue = uint64(1_000_000)
+
+	DfmDecimals = 6
+	WeiDecimals = 18
 )
 
 func IsValidHTTPURL(input string) bool {
@@ -181,6 +184,14 @@ func Map[T, V any](items []T, fn func(T) V) []V {
 	}
 
 	return result
+}
+
+func WeiToDfm(wei *big.Int) *big.Int {
+	dfm := new(big.Int).Set(wei)
+	base := big.NewInt(10)
+	dfm.Div(dfm, base.Exp(base, big.NewInt(WeiDecimals-DfmDecimals), nil))
+
+	return dfm
 }
 
 func executeHTTPCall[TResponse any](req *http.Request, apiKey string) (t TResponse, err error) {

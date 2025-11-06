@@ -215,7 +215,7 @@ func (bts *BridgingTxSender) getTxBuilderData(
 		SetTimeToLive(qtd.Slot + bts.TTLSlotNumberInc).
 		SetTestNetMagic(bts.TestNetMagicSrc)
 
-	potentialTokenCost, err := cardanowallet.GetTokenCostSum(builder, senderAddr, allUtxos)
+	potentialTokenCost, err := cardanowallet.GetTokenCostSum(builder, senderAddr, cardanowallet.GetUtxosSum(allUtxos))
 	if err != nil {
 		return nil, cardanowallet.TxInputs{}, nil, fmt.Errorf("failed to retrieve token cost sum. err: %w", err)
 	}
