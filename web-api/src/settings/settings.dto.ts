@@ -15,11 +15,21 @@ export class BridgingSettingsDto {
 	@IsPositive()
 	@ApiProperty({
 		description:
-			'For each chain, the minimum fee required to cover the submission of the transaction on the destination chain',
+			'For each chain, the minimum fee required to cover the submission of the currency transaction on the destination chain',
 		type: Object,
 		additionalProperties: { type: 'number' },
 	})
 	minChainFeeForBridging: { [key: string]: number };
+
+	@IsNotEmpty()
+	@IsPositive()
+	@ApiProperty({
+		description:
+			'For each chain, the minimum fee required to cover the submission of the native token transaction on the destination chain',
+		type: Object,
+		additionalProperties: { type: 'number' },
+	})
+	minChainFeeForBridgingTokens: { [key: string]: number };
 
 	@IsNotEmpty()
 	@IsPositive()

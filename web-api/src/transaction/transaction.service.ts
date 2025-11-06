@@ -75,8 +75,9 @@ export class TransactionService {
 			);
 		}
 
-		const srcMinFee =
-			settings.bridgingSettings.minChainFeeForBridging[dto.originChain];
+		const srcMinFee = dto.isNativeToken
+			? settings.bridgingSettings.minChainFeeForBridgingTokens[dto.originChain]
+			: settings.bridgingSettings.minChainFeeForBridging[dto.originChain];
 		if (!srcMinFee) {
 			throw new InternalServerErrorException(
 				`No minFee for source chain: ${dto.originChain}`,

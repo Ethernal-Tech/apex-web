@@ -1,9 +1,9 @@
 import BasePage from '../base/BasePage';
 import BridgeInput from './components/BridgeInput';
-import { convertDfmToWei, formatTxDetailUrl } from '../../utils/generalUtils';
+import { formatTxDetailUrl } from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { toast } from 'react-toastify';
 import walletHandler from '../../features/WalletHandler';
@@ -61,37 +61,6 @@ function NewTransactionPage() {
 	const settings = useSelector((state: RootState) => state.settings);
 
 	const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
-	const { minOperationFee, minChainFeeForBridging } =
-		bridgingModeInfo.settings || {
-			minOperationFee: {} as { [key: string]: string },
-			minChainFeeForBridging: {} as { [key: string]: string },
-		};
-
-	const defaultBridgeTxFee = useMemo(
-		() =>
-			isEvmChain(chain)
-				? convertDfmToWei(minChainFeeForBridging[chain] || '0')
-				: minChainFeeForBridging[chain] || '0',
-		[chain, minChainFeeForBridging],
-	);
-
-	const [bridgeTxFee, setBridgeTxFee] = useState<string>(defaultBridgeTxFee);
-
-	useEffect(() => {
-		setBridgeTxFee(defaultBridgeTxFee);
-	}, [defaultBridgeTxFee]);
-
-	const resetBridgeTxFee = useCallback(() => {
-		setBridgeTxFee(defaultBridgeTxFee);
-	}, [defaultBridgeTxFee]);
-
-	const operationFee = useMemo(
-		() =>
-			isEvmChain(chain)
-				? convertDfmToWei(minOperationFee[chain] || '0')
-				: minOperationFee[chain] || '0',
-		[chain, minOperationFee],
-	);
 
 	const updateLoadingState = useCallback(
 		(newState: UpdateSubmitLoadingState) => {
@@ -398,19 +367,11 @@ function NewTransactionPage() {
 				{bridgingModeInfo.bridgingMode ===
 				BridgingModeEnum.LayerZero ? (
 					<BridgeInputLZ
-						bridgeTxFee={bridgeTxFee}
-						setBridgeTxFee={setBridgeTxFee}
-						resetBridgeTxFee={resetBridgeTxFee}
 						submit={handleLZSubmitCallback}
 						loadingState={loadingState}
 					/>
 				) : (
 					<BridgeInput
-						bridgeTxFee={bridgeTxFee}
-						defaultBridgeTxFee={defaultBridgeTxFee}
-						setBridgeTxFee={setBridgeTxFee}
-						resetBridgeTxFee={resetBridgeTxFee}
-						operationFee={operationFee}
 						getCardanoTxFee={getCardanoTxFee}
 						getEthTxFee={getEthTxFee}
 						submit={handleSubmitCallback}

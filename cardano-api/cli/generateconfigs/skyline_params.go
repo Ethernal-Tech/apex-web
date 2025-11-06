@@ -9,7 +9,6 @@ import (
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
 	"github.com/Ethernal-Tech/cardano-infrastructure/logger"
-	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	"github.com/hashicorp/go-hclog"
 	"github.com/spf13/cobra"
@@ -35,11 +34,6 @@ const (
 	cardanoBlockfrostAPIKeyFlagDesc        = "blockfrost API key for cardano network" //nolint:gosec
 	cardanoSocketPathFlagDesc              = "socket path for cardano network"
 	cardanoTTLSlotIncFlagDesc              = "TTL slot increment for cardano"
-
-	vectorCardanoWrappedTokenNameFlag     = "vector-cardano-token-name"
-	vectorCardanoWrappedTokenNameFlagDesc = "wrapped token name for Cardano Ada"
-	cardanoPrimeWrappedTokenNameFlag      = "cardano-prime-token-name"
-	cardanoPrimeWrappedTokenNameFlagDesc  = "wrapped token name for Prime Apex"
 
 	defaultCardanoBlockConfirmationCount = 10
 	defaultCardanoTTLSlotNumberInc       = 1800 + defaultCardanoBlockConfirmationCount*10 // BlockTimeSeconds
@@ -88,9 +82,6 @@ type skylineGenerateConfigsParams struct {
 
 	outputDir      string
 	outputFileName string
-
-	vectorCardanoWrappedTokenName string
-	cardanoPrimeWrappedTokenName  string
 }
 
 func (p *skylineGenerateConfigsParams) validateFlags() error {
@@ -185,18 +176,6 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 
 	if len(p.apiKeys) == 0 {
 		return fmt.Errorf("specify at least one %s", apiKeysFlag)
-	}
-
-	if p.vectorCardanoWrappedTokenName != "" {
-		if _, err := wallet.NewTokenWithFullNameTry(p.vectorCardanoWrappedTokenName); err != nil {
-			return fmt.Errorf("invalid token name %s", vectorCardanoWrappedTokenNameFlag)
-		}
-	}
-
-	if p.cardanoPrimeWrappedTokenName != "" {
-		if _, err := wallet.NewTokenWithFullNameTry(p.cardanoPrimeWrappedTokenName); err != nil {
-			return fmt.Errorf("invalid token name %s", cardanoPrimeWrappedTokenNameFlag)
-		}
 	}
 
 	return nil
@@ -426,19 +405,6 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		outputFileNameFlagDesc,
 	)
 
-	cmd.Flags().StringVar(
-		&p.vectorCardanoWrappedTokenName,
-		vectorCardanoWrappedTokenNameFlag,
-		"",
-		vectorCardanoWrappedTokenNameFlagDesc,
-	)
-	cmd.Flags().StringVar(
-		&p.cardanoPrimeWrappedTokenName,
-		cardanoPrimeWrappedTokenNameFlag,
-		"",
-		cardanoPrimeWrappedTokenNameFlagDesc,
-	)
-
 	cmd.MarkFlagsMutuallyExclusive(primeBlockfrostAPIKeyFlag, primeSocketPathFlag, primeOgmiosURLFlag)
 	cmd.MarkFlagsMutuallyExclusive(cardanoBlockfrostURLFlag, cardanoSocketPathFlag, cardanoOgmiosURLFlag)
 	cmd.MarkFlagsMutuallyExclusive(vectorBlockfrostURLFlag, vectorSocketPathFlag, vectorOgmiosURLFlag)
@@ -447,26 +413,6 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 func (p *skylineGenerateConfigsParams) Execute(
 	_ common.OutputFormatter,
 ) (common.ICommandResult, error) {
-	var nativeTokensVector, nativeTokensCardano []sendtx.TokenExchangeConfig
-
-	if p.vectorCardanoWrappedTokenName != "" {
-		nativeTokensVector = []sendtx.TokenExchangeConfig{
-			{
-				DstChainID: common.ChainIDStrCardano,
-				TokenName:  p.vectorCardanoWrappedTokenName,
-			},
-		}
-	}
-
-	if p.cardanoPrimeWrappedTokenName != "" {
-		nativeTokensCardano = []sendtx.TokenExchangeConfig{
-			{
-				DstChainID: common.ChainIDStrPrime,
-				TokenName:  p.cardanoPrimeWrappedTokenName,
-			},
-		}
-	}
-
 	config := &core.AppConfig{
 		RunMode: common.SkylineMode,
 		CardanoChains: map[string]*core.CardanoChainConfig{
@@ -502,7 +448,6 @@ func (p *skylineGenerateConfigsParams) Execute(
 					SocketPath:       p.cardanoSocketPath,
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.cardanoTTLSlotInc,
-					NativeTokens:     nativeTokensCardano,
 				},
 				IsEnabled: true,
 			},
@@ -521,7 +466,6 @@ func (p *skylineGenerateConfigsParams) Execute(
 					SocketPath:       p.vectorSocketPath,
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.vectorTTLSlotInc,
-					NativeTokens:     nativeTokensVector,
 				},
 				IsEnabled: true,
 			},

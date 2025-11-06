@@ -285,7 +285,7 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody.BridgingFee += feeSum
 	requestBody.Transactions = transactions
 
-	minFee, found := c.appConfig.BridgingSettings.MinChainFeeForBridging[requestBody.SourceChainID]
+	minFee, found := c.appConfig.BridgingSettings.GetMinBridgingFee(requestBody.SourceChainID, hasNativeTokenOnSource)
 	if !found {
 		return fmt.Errorf("no minimal fee for chain: %s", requestBody.SourceChainID)
 	}

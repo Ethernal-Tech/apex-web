@@ -17,6 +17,7 @@ const initialState: ISettingsState = {
 		[BridgingModeEnum.Skyline]: {
 			minUtxoChainValue: appSettings.minUtxoChainValue,
 			minChainFeeForBridging: appSettings.minChainFeeForBridging,
+			minChainFeeForBridgingTokens: appSettings.minChainFeeForBridging,
 			minOperationFee: appSettings.minOperationFee,
 			maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,
 			maxTokenAmountAllowedToBridge:
@@ -28,6 +29,7 @@ const initialState: ISettingsState = {
 		[BridgingModeEnum.Reactor]: {
 			minUtxoChainValue: appSettings.minUtxoChainValue,
 			minChainFeeForBridging: appSettings.minChainFeeForBridging,
+			minChainFeeForBridgingTokens: appSettings.minChainFeeForBridging,
 			minOperationFee: appSettings.minOperationFee,
 			maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,
 			maxTokenAmountAllowedToBridge:
@@ -83,6 +85,16 @@ const settingsSlice = createSlice({
 						minChainFeeForBridging: Object.entries(
 							modeSettings.bridgingSettings
 								.minChainFeeForBridging,
+						).reduce(
+							(acc, [key, value]) => {
+								acc[key] = value.toString();
+								return acc;
+							},
+							{} as { [key: string]: string },
+						),
+						minChainFeeForBridgingTokens: Object.entries(
+							modeSettings.bridgingSettings
+								.minChainFeeForBridgingTokens || [],
 						).reduce(
 							(acc, [key, value]) => {
 								acc[key] = value.toString();
