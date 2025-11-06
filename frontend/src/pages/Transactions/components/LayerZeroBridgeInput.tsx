@@ -31,9 +31,6 @@ import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
 
 type BridgeInputType = {
-	bridgeTxFee: string;
-	setBridgeTxFee: (val: string) => void;
-	resetBridgeTxFee: () => void;
 	submit: (address: string, amount: string) => Promise<void>;
 	loadingState: SubmitLoadingState | undefined;
 };
@@ -67,13 +64,7 @@ const calculateMaxAmountCurrency = (
 	return BigInt(totalDfmBalance[sourceToken] || '0');
 };
 
-const BridgeInputLZ = ({
-	bridgeTxFee,
-	setBridgeTxFee,
-	resetBridgeTxFee,
-	submit,
-	loadingState,
-}: BridgeInputType) => {
+const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 	const [destinationAddr, setDestinationAddr] = useState('');
 	const [amount, setAmount] = useState('');
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
@@ -94,10 +85,14 @@ const BridgeInputLZ = ({
 		destinationChain,
 	);
 
+	const [bridgeTxFee, setBridgeTxFee] = useState<string>('0');
+
+	const resetBridgeTxFee = useCallback(() => setBridgeTxFee('0'), []);
+
 	const fetchWalletFee = useCallback(async () => {
 		if (!destinationAddr || !amount || !sourceToken) {
 			setUserWalletFee(undefined);
-			setBridgeTxFee('');
+			resetBridgeTxFee();
 
 			return;
 		}
@@ -129,7 +124,7 @@ const BridgeInputLZ = ({
 		} catch (e) {
 			console.log('error while calculating bridging fee', e);
 			setUserWalletFee(undefined);
-			setBridgeTxFee('');
+			resetBridgeTxFee();
 
 			return;
 		}
@@ -160,12 +155,12 @@ const BridgeInputLZ = ({
 	}, [
 		destinationAddr,
 		amount,
-		chain,
-		destinationChain,
 		sourceToken,
+		resetBridgeTxFee,
+		chain,
 		settings,
+		destinationChain,
 		account,
-		setBridgeTxFee,
 	]);
 
 	const setSourceTokenCallback = useCallback(

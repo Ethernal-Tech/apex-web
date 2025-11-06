@@ -1,9 +1,9 @@
 import BasePage from '../base/BasePage';
 import BridgeInput from './components/BridgeInput';
-import { convertDfmToWei, formatTxDetailUrl } from '../../utils/generalUtils';
+import { formatTxDetailUrl } from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { toast } from 'react-toastify';
 import walletHandler from '../../features/WalletHandler';
@@ -61,22 +61,6 @@ function NewTransactionPage() {
 	const settings = useSelector((state: RootState) => state.settings);
 
 	const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
-
-	const { minOperationFee } = bridgingModeInfo.settings || {
-		minOperationFee: {} as { [key: string]: string },
-	};
-
-	const [bridgeTxFee, setBridgeTxFee] = useState<string>('0');
-
-	const resetBridgeTxFee = useCallback(() => setBridgeTxFee('0'), []);
-
-	const operationFee = useMemo(
-		() =>
-			isEvmChain(chain)
-				? convertDfmToWei(minOperationFee[chain] || '0')
-				: minOperationFee[chain] || '0',
-		[chain, minOperationFee],
-	);
 
 	const updateLoadingState = useCallback(
 		(newState: UpdateSubmitLoadingState) => {
@@ -383,18 +367,11 @@ function NewTransactionPage() {
 				{bridgingModeInfo.bridgingMode ===
 				BridgingModeEnum.LayerZero ? (
 					<BridgeInputLZ
-						bridgeTxFee={bridgeTxFee}
-						setBridgeTxFee={setBridgeTxFee}
-						resetBridgeTxFee={resetBridgeTxFee}
 						submit={handleLZSubmitCallback}
 						loadingState={loadingState}
 					/>
 				) : (
 					<BridgeInput
-						bridgeTxFee={bridgeTxFee}
-						setBridgeTxFee={setBridgeTxFee}
-						resetBridgeTxFee={resetBridgeTxFee}
-						operationFee={operationFee}
 						getCardanoTxFee={getCardanoTxFee}
 						getEthTxFee={getEthTxFee}
 						submit={handleSubmitCallback}

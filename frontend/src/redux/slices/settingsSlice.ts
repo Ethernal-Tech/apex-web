@@ -94,7 +94,7 @@ const settingsSlice = createSlice({
 						),
 						minChainFeeForBridgingTokens: Object.entries(
 							modeSettings.bridgingSettings
-								.minChainFeeForBridgingTokens,
+								.minChainFeeForBridgingTokens || [],
 						).reduce(
 							(acc, [key, value]) => {
 								acc[key] = value.toString();
