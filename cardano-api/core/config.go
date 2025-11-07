@@ -162,7 +162,7 @@ func (appConfig *AppConfig) CreateEnabledChains() []string {
 	return enabledChains
 }
 
-func GetChainConfig(appConfig *AppConfig, chainID string) (*CardanoChainConfig, *EthChainConfig) {
+func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig, *EthChainConfig) {
 	appConfig.cardanoChainsMu.RLock()
 	defer appConfig.cardanoChainsMu.RUnlock()
 

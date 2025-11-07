@@ -16,7 +16,7 @@ export const getValidatorChangeStatus = async () => {
 		});
 
 		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
-		return response.data as boolean;
+		return response.data as { inProgress: boolean };
 	} catch (e) {
 		if (e instanceof AxiosError) {
 			Logger.error(

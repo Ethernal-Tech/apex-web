@@ -23,6 +23,8 @@ import { isCardanoChain, isEvmChain } from '../../../settings/chain';
 import { fetchAndUpdateValidatorStatusAction } from '../../../actions/validatorSetChange';
 import InfoBox from './InfoBox';
 
+const REFETCH_VSU_STATUS_MS = 30000;
+
 type BridgeInputType = {
 	bridgeTxFee: string;
 	getCardanoTxFee: (
@@ -170,7 +172,10 @@ const BridgeInput = ({
 	useEffect(() => {
 		getValidatorChangeStatus();
 
-		const intervalId = setInterval(getValidatorChangeStatus, 5000);
+		const intervalId = setInterval(
+			getValidatorChangeStatus,
+			REFETCH_VSU_STATUS_MS,
+		);
 
 		return () => {
 			clearInterval(intervalId);

@@ -187,12 +187,12 @@ func (c *CardanoTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Req
 func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody *request.CreateBridgingTxRequest,
 ) error {
-	cardanoSrcConfig, _ := core.GetChainConfig(c.appConfig, requestBody.SourceChainID)
+	cardanoSrcConfig, _ := c.appConfig.GetChainConfig(requestBody.SourceChainID)
 	if cardanoSrcConfig == nil {
 		return fmt.Errorf("origin chain not registered: %v", requestBody.SourceChainID)
 	}
 
-	cardanoDestConfig, ethDestConfig := core.GetChainConfig(c.appConfig, requestBody.DestinationChainID)
+	cardanoDestConfig, ethDestConfig := c.appConfig.GetChainConfig(requestBody.DestinationChainID)
 	if cardanoDestConfig == nil && ethDestConfig == nil {
 		return fmt.Errorf("destination chain not registered: %v", requestBody.DestinationChainID)
 	}
@@ -286,7 +286,7 @@ func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 func (c *CardanoTxControllerImpl) getBridgingTxSenderAndOutputs(
 	requestBody request.CreateBridgingTxRequest,
 ) (*cardanotx.BridgingTxSender, []wallet.TxOutput, error) {
-	sourceChainConfig, _ := core.GetChainConfig(c.appConfig, requestBody.SourceChainID)
+	sourceChainConfig, _ := c.appConfig.GetChainConfig(requestBody.SourceChainID)
 	if sourceChainConfig == nil {
 		return nil, nil, fmt.Errorf("chain does not exists: %s", requestBody.SourceChainID)
 	}
