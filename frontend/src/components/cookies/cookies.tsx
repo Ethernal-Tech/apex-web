@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Box, Button, Link } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
-import { captureAndThrowError } from '../../utils/generalUtils';
 
 const fullConfig = {
 	dsn: 'https://bf7c682b341edcc67fbec7597e25791f@o4510034117722112.ingest.de.sentry.io/4510046234345552',
@@ -86,17 +85,6 @@ export default function CookieConsent() {
 				</Button>
 				<Button onClick={rejectCookies} style={styles.buttonReject}>
 					Reject
-				</Button>
-				<Button
-					onClick={() => {
-						captureAndThrowError(
-							`Cookies Test error`,
-							'LandingPage.ts',
-							'LendingPage',
-						);
-					}}
-				>
-					Break the world
 				</Button>
 			</Box>
 		</Box>

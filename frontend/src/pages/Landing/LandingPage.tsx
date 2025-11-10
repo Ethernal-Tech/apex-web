@@ -10,8 +10,6 @@ import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HOME_ROUTE } from '../PageRouter';
 import CookieConsent from '../../components/cookies/cookies';
-import { Button } from '@mui/material';
-import { captureAndThrowError } from '../../utils/generalUtils';
 
 const LandingPage = () => {
 	const navigate = useNavigate();
@@ -46,17 +44,6 @@ const LandingPage = () => {
 			<UsersSection />
 			<InnovatorsSection />
 			<ConnectSection ref={sectionRef} />
-			<Button
-				onClick={() => {
-					captureAndThrowError(
-						`Other Test error`,
-						'LandingPage.ts',
-						'LendingPage',
-					);
-				}}
-			>
-				Break the world
-			</Button>
 			<FooterSection />
 			<CookieConsent />
 		</Box>
