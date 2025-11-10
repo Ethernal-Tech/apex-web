@@ -2,6 +2,7 @@ import {
 	bridgingTransactionSubmittedAction,
 	layerZeroTransferAction,
 } from '../pages/Transactions/action';
+import { captureAndThrowError } from '../utils/generalUtils';
 import {
 	CreateTransactionDto,
 	CreateCardanoTransactionResponseDto,
@@ -47,7 +48,11 @@ export const signAndSubmitCardanoTx = async (
 	updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
 ) => {
 	if (!walletHandler.checkWallet()) {
-		throw new Error('Wallet not connected.');
+		captureAndThrowError(
+			'Wallet not connected.',
+			'submitTx.ts',
+			'signAndSubmitCardanoTx',
+		);
 	}
 
 	updateLoadingState({ content: 'Signing the transaction...' });
@@ -87,7 +92,11 @@ export const signAndSubmitCardanoTx = async (
 
 	const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
 	if (response instanceof ErrorResponse) {
-		throw new Error(response.err);
+		captureAndThrowError(
+			response.err,
+			'submitTx.ts',
+			'signAndSubmitCardanoTx',
+		);
 	}
 
 	return response;
@@ -99,7 +108,11 @@ export const signAndSubmitEthTx = async (
 	updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
 ) => {
 	if (!evmWalletHandler.checkWallet()) {
-		throw new Error('Wallet not connected.');
+		captureAndThrowError(
+			'Wallet not connected.',
+			'submitTx.ts',
+			'signAndSubmitEthTx',
+		);
 	}
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -135,8 +148,10 @@ export const signAndSubmitEthTx = async (
 	submitPromise.off('transactionHash', onTxHash);
 
 	if (receipt.status !== BigInt(1)) {
-		throw new Error(
+		captureAndThrowError(
 			'send transaction has failed. receipt status unsuccessful',
+			'submitTx.ts',
+			'signAndSubmitEthTx',
 		);
 	}
 
@@ -171,7 +186,7 @@ export const signAndSubmitEthTx = async (
 
 	const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
 	if (response instanceof ErrorResponse) {
-		throw new Error(response.err);
+		captureAndThrowError(response.err, 'submitTx.ts', 'signAndSubmitEthTx');
 	}
 
 	return response;
@@ -185,7 +200,11 @@ export const signAndSubmitLayerZeroTx = async (
 	updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
 ) => {
 	if (!evmWalletHandler.checkWallet()) {
-		throw new Error('Wallet not connected.');
+		captureAndThrowError(
+			'Wallet not connected.',
+			'submitTx.ts',
+			'signAndSubmitLayerZeroTx',
+		);
 	}
 
 	const { transactionData } = createResponse;
@@ -216,8 +235,10 @@ export const signAndSubmitLayerZeroTx = async (
 		console.log('submitting layer zero approval tx...', tx);
 		const receipt = await evmWalletHandler.submitTx(tx, opts);
 		if (receipt.status !== BigInt(1)) {
-			throw new Error(
+			captureAndThrowError(
 				'approval transaction has failed. receipt status unsuccessful',
+				'submitTx.ts',
+				'signAndSubmitLayerZeroTx',
 			);
 		}
 
@@ -258,8 +279,10 @@ export const signAndSubmitLayerZeroTx = async (
 	const receipt = await submitPromise;
 	submitPromise.off('transactionHash', onTxHash);
 	if (receipt.status !== BigInt(1)) {
-		throw new Error(
+		captureAndThrowError(
 			'send transaction has failed. receipt status unsuccessful',
+			'submitTx.ts',
+			'signAndSubmitLayerZeroTx',
 		);
 	}
 
@@ -305,7 +328,11 @@ export const signAndSubmitLayerZeroTx = async (
 
 	const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
 	if (response instanceof ErrorResponse) {
-		throw new Error(response.err);
+		captureAndThrowError(
+			response.err,
+			'submitTx.ts',
+			'submitBridgingTransaction',
+		);
 	}
 
 	return response;
@@ -361,7 +388,11 @@ const populateLondonTxDetails = async (
 
 	const baseFeePerGasList = feeHistory.baseFeePerGas as unknown as bigint[];
 	if (!baseFeePerGasList) {
-		throw new Error('feeHistory.baseFeePerGas not defined');
+		captureAndThrowError(
+			'feeHistory.baseFeePerGas not defined',
+			'submitTx.ts',
+			'populateLondonTxDetails',
+		);
 	}
 
 	const baseFee =
@@ -395,7 +426,11 @@ export const estimateEthTxFee = async (
 	opts: TxDetailsOptions = defaultTxDetailsOptions,
 ): Promise<bigint> => {
 	if (!evmWalletHandler.checkWallet()) {
-		throw new Error('Wallet not connected.');
+		captureAndThrowError(
+			'Wallet not connected.',
+			'submitTx.ts',
+			'estimateEthTxFee',
+		);
 	}
 
 	if (isFallback && !tx.gas) {
@@ -432,13 +467,21 @@ export const getLayerZeroTransferResponse = async function (
 		settings,
 	);
 	if (validationErr) {
-		throw new Error(validationErr);
+		captureAndThrowError(
+			validationErr,
+			'submitTx.ts',
+			'getLayerZeroTransferResponse',
+		);
 	}
 
 	const originChainSetting = settings.layerZeroChains[srcChain];
 
 	if (!originChainSetting)
-		throw new Error(`No LayerZero config for ${srcChain}`);
+		captureAndThrowError(
+			`No LayerZero config for ${srcChain}`,
+			'submitTx.ts',
+			'getLayerZeroTransferResponse',
+		);
 
 	const createTxDto = new LayerZeroTransferDto({
 		srcChainName: toLayerZeroChainName(srcChain),
@@ -456,7 +499,11 @@ export const getLayerZeroTransferResponse = async function (
 		false,
 	);
 	if (createResponse instanceof ErrorResponse) {
-		throw new Error(createResponse.err);
+		captureAndThrowError(
+			createResponse.err,
+			'submitTx.ts',
+			'getLayerZeroTransferResponse',
+		);
 	}
 
 	console.log('layer zero transfer response', createResponse);

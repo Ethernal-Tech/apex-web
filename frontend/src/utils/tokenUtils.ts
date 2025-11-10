@@ -6,6 +6,7 @@ import { ChainEnum } from '../swagger/apexBridgeApiService';
 import { LovelaceTokenName } from './chainUtils';
 import { toChainEnum } from '../settings/chain';
 import { CardanoChainsNativeTokens } from '../settings/settingsRedux';
+import { captureAndThrowError } from './generalUtils';
 
 export function decodeTokenKey(tokenKey: string, chain?: string): string {
 	if (tokenKey === LovelaceTokenName || tokenKey === 'amount') {
@@ -45,7 +46,12 @@ export const normalizeNativeTokenKey = (k: string) => {
 	if (!k.includes('.')) return k;
 
 	const kParts = k.split('.');
-	if (kParts.length > 2) throw new Error(`invalid native token key: ${k}`);
+	if (kParts.length > 2)
+		captureAndThrowError(
+			`invalid native token key: ${k}`,
+			'tokenUtils.ts',
+			'normalizeNativeTokenKey',
+		);
 
 	let name = kParts[1];
 	if (!isHex(name)) {

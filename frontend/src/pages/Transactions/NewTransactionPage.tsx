@@ -1,6 +1,9 @@
 import BasePage from '../base/BasePage';
 import BridgeInput from './components/BridgeInput';
-import { formatTxDetailUrl } from '../../utils/generalUtils';
+import {
+	formatTxDetailUrl,
+	captureAndThrowError,
+} from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { useCallback, useState } from 'react';
@@ -128,7 +131,11 @@ function NewTransactionPage() {
 				false,
 			);
 			if (feeResponse instanceof ErrorResponse) {
-				throw new Error(feeResponse.err);
+				captureAndThrowError(
+					feeResponse.err,
+					'NewTransactionPage.tsx',
+					'getCardanoTxFee',
+				);
 			}
 
 			return feeResponse;
@@ -151,7 +158,11 @@ function NewTransactionPage() {
 				settings,
 			);
 			if (validationErr) {
-				throw new Error(validationErr);
+				captureAndThrowError(
+					validationErr,
+					'NewTransactionPage.tsx',
+					'createCardanoTx',
+				);
 			}
 
 			const createTxDto = await prepareCreateCardanoTx(
@@ -168,7 +179,11 @@ function NewTransactionPage() {
 				false,
 			);
 			if (createResponse instanceof ErrorResponse) {
-				throw new Error(createResponse.err);
+				captureAndThrowError(
+					createResponse.err,
+					'NewTransactionPage.tsx',
+					'createCardanoTx',
+				);
 			}
 
 			return { createTxDto, createResponse };
@@ -211,7 +226,11 @@ function NewTransactionPage() {
 				false,
 			);
 			if (feeResponse instanceof ErrorResponse) {
-				throw new Error(feeResponse.err);
+				captureAndThrowError(
+					feeResponse.err,
+					'NewTransactionPage.tsx',
+					'getEthTxFee',
+				);
 			}
 
 			return feeResponse;
@@ -233,7 +252,11 @@ function NewTransactionPage() {
 				settings,
 			);
 			if (validationErr) {
-				throw new Error(validationErr);
+				captureAndThrowError(
+					validationErr,
+					'NewTransactionPage.tsx',
+					'createEthTx',
+				);
 			}
 
 			const createTxDto = prepareCreateEthTx(address, amount);
@@ -246,7 +269,11 @@ function NewTransactionPage() {
 				false,
 			);
 			if (createResponse instanceof ErrorResponse) {
-				throw new Error(createResponse.err);
+				captureAndThrowError(
+					createResponse.err,
+					'NewTransactionPage.tsx',
+					'createEthTx',
+				);
 			}
 
 			return { createTxDto, createResponse };
@@ -288,7 +315,11 @@ function NewTransactionPage() {
 
 					response && goToDetails(response);
 				} else {
-					throw new Error(`Unsupported source chain: ${chain}`);
+					captureAndThrowError(
+						`Unsupported source chain: ${chain}`,
+						'NewTransactionPage.tsx',
+						'handleSubmitCallback',
+					);
 				}
 			} catch (err) {
 				console.log(err);

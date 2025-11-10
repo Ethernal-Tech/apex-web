@@ -1,5 +1,6 @@
 import { bech32 } from 'bech32';
 import { CardanoNetworkType } from './types';
+import { captureAndThrowError } from '../../utils/generalUtils';
 
 export type Bech32DecodeData = {
 	prefix: string;
@@ -57,8 +58,10 @@ const convertBits = (
 			result.push((value << (outBits - bits)) & maxV);
 		}
 	} else {
-		if (bits >= inBits) throw Error('Excess padding');
-		if ((value << (outBits - bits)) & maxV) throw Error('Non-zero padding');
+		if (bits >= inBits)
+			captureAndThrowError('Excess padding', 'utils.ts', 'convertBits');
+		if ((value << (outBits - bits)) & maxV)
+			captureAndThrowError('Non-zero padding', 'utils.ts', 'convertBits');
 	}
 
 	return result;
