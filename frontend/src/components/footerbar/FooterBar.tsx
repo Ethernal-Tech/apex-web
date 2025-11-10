@@ -6,6 +6,7 @@ import { ReactComponent as DiscordIcon } from '../../assets/external-links/Disco
 import { ReactComponent as EmailIcon } from '../../assets/external-links/Email.svg';
 import appSettings from '../../settings/appSettings';
 import { Link as RouterLink } from 'react-router-dom';
+import CookieConsent from '../cookies/cookies';
 
 const containerStyles = {
 	width: '100%',
@@ -45,42 +46,42 @@ const childStyles = {
 const FooterBar = () => {
 	return (
 		<Box sx={containerStyles}>
-			{appSettings.isSkyline ? (
-				<Box sx={childStyles}>
-					&copy; Skyline Bridge {new Date().getFullYear()}. All Rights
-					Reserved.
-				</Box>
-			) : (
-				<Box sx={childStyles}>
+			<Box sx={childStyles}>
+				{appSettings.isSkyline ? (
+					<Box>
+						&copy; Skyline Bridge {new Date().getFullYear()}. All
+						Rights Reserved.
+					</Box>
+				) : (
 					<Box>
 						&copy;{new Date().getFullYear()} Apex Fusion. All Rights
 						Reserved.
 					</Box>
-					<Box
-						sx={{
-							display: 'flex',
-							gap: '10px',
-							marginTop: '10px',
-							fontSize: '14px',
-						}}
+				)}
+				<Box
+					sx={{
+						display: 'flex',
+						gap: '10px',
+						marginTop: '10px',
+						fontSize: '14px',
+					}}
+				>
+					<Link
+						component={RouterLink}
+						to="/terms-of-service"
+						sx={{ color: 'inherit', textDecoration: 'none' }}
 					>
-						<Link
-							component={RouterLink}
-							to="/terms-of-service"
-							sx={{ color: 'inherit', textDecoration: 'none' }}
-						>
-							Terms of Service
-						</Link>
-						<Link
-							component={RouterLink}
-							to="/privacy-policy"
-							sx={{ color: 'inherit', textDecoration: 'none' }}
-						>
-							Privacy Policy
-						</Link>
-					</Box>
+						Terms of Service
+					</Link>
+					<Link
+						component={RouterLink}
+						to="/privacy-policy"
+						sx={{ color: 'inherit', textDecoration: 'none' }}
+					>
+						Privacy Policy
+					</Link>
 				</Box>
-			)}
+			</Box>
 
 			<Box
 				sx={{
@@ -167,6 +168,7 @@ const FooterBar = () => {
 					{appSettings.isMainnet ? 'Mainnet' : 'Testnet'}
 				</Box>
 			</Box>
+			<CookieConsent />
 		</Box>
 	);
 };

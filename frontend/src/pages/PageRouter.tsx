@@ -172,18 +172,14 @@ const PageRouter: React.FC = () => {
 			{appSettings.isSkyline && (
 				<Route path={LANDING_ROUTE} element={renderLandingPage} />
 			)}
-			{!appSettings.isSkyline && (
-				<Route
-					path={TERMS_OF_SERVICE_ROUTE}
-					element={withMiddleware(() => <TermsOfServicePage />)({})}
-				/>
-			)}
-			{!appSettings.isSkyline && (
-				<Route
-					path={PRIVACY_POLICY_ROUTE}
-					element={withMiddleware(() => <PrivacyPolicyPage />)({})}
-				/>
-			)}
+			<Route
+				path={TERMS_OF_SERVICE_ROUTE}
+				element={withMiddleware(() => <TermsOfServicePage />)({})}
+			/>
+			<Route
+				path={PRIVACY_POLICY_ROUTE}
+				element={withMiddleware(() => <PrivacyPolicyPage />)({})}
+			/>
 			<Route
 				path="*"
 				element={

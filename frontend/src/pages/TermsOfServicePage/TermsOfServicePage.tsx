@@ -7,7 +7,10 @@ const TermsOfServicePage: React.FC = () => {
 	return (
 		<BasePage>
 			<Box
-				sx={{ color: 'white' }}
+				sx={{
+					color: 'white',
+					paddingBottom: '20px',
+				}}
 				dangerouslySetInnerHTML={{ __html: termsOfServiceHtml }}
 			/>
 		</BasePage>
