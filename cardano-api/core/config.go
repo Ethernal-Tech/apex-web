@@ -77,13 +77,14 @@ type AppConfig struct {
 
 func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) error {
 	appConfig.cardanoChainsMu.Lock()
-	defer appConfig.cardanoChainsMu.Unlock()
 
 	for chainID, cardanoChainConfig := range appConfig.CardanoChains {
 		cardanoChainConfig.ChainID = chainID
 		cardanoChainConfig.ChainSpecific.NetworkID = cardanoChainConfig.NetworkID
 		cardanoChainConfig.ChainSpecific.NetworkMagic = cardanoChainConfig.NetworkMagic
 	}
+
+	appConfig.cardanoChainsMu.Unlock()
 
 	for chainID, ethChainConfig := range appConfig.EthChains {
 		ethChainConfig.ChainID = chainID
