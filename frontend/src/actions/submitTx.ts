@@ -107,7 +107,26 @@ export const signAndSubmitEthTx = async (
 		content: 'Signing and submitting the transaction...',
 	});
 
-	const receipt = await evmWalletHandler.submitTx(tx);
+	const onTxHash = (txHash: any) => {
+		updateLoadingState({
+			content: 'Waiting for transaction receipt...',
+			txHash: txHash.toString(),
+		});
+	};
+
+	console.log('submitting eth tx...', tx);
+
+	const submitPromise = evmWalletHandler.submitTx(tx);
+	submitPromise.on('transactionHash', onTxHash);
+
+	const receipt = await submitPromise;
+	submitPromise.off('transactionHash', onTxHash);
+
+	if (receipt.status !== BigInt(1)) {
+		throw new Error(
+			'send transaction has failed. receipt status unsuccessful',
+		);
+	}
 
 	updateLoadingState({
 		content: 'Recording the transaction...',
