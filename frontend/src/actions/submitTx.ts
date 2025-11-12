@@ -9,17 +9,29 @@ import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
 import walletHandler from '../features/WalletHandler';
 import evmWalletHandler from '../features/EvmWalletHandler';
 import { Transaction } from 'web3-types';
+import { UpdateSubmitLoadingState } from '../utils/statusUtils';
 
 export const signAndSubmitCardanoTx = async (
 	values: CreateTransactionDto,
 	createResponse: CreateCardanoTransactionResponseDto,
+	updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
 ) => {
 	if (!walletHandler.checkWallet()) {
 		throw new Error('Wallet not connected.');
 	}
 
+	updateLoadingState({ content: 'Signing the transaction...' });
+
 	const signedTxRaw = await walletHandler.signTx(createResponse.txRaw);
+
+	updateLoadingState({
+		content: 'Submitting the transaction...',
+		txHash: createResponse.txHash,
+	});
+
 	await walletHandler.submitTx(signedTxRaw);
+
+	updateLoadingState({ content: 'Recording the transaction...' });
 
 	const amount =
 		BigInt(createResponse.bridgingFee || '0') + BigInt(values.amount);
@@ -82,6 +94,7 @@ export const estimateEthGas = async (tx: Transaction, isFallback: boolean) => {
 export const signAndSubmitEthTx = async (
 	values: CreateTransactionDto,
 	createResponse: CreateEthTransactionResponseDto,
+	updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
 ) => {
 	if (!evmWalletHandler.checkWallet()) {
 		throw new Error('Wallet not connected.');
@@ -90,7 +103,35 @@ export const signAndSubmitEthTx = async (
 	const { bridgingFee, isFallback, ...txParts } = createResponse;
 	const tx = await fillOutEthTx(txParts, isFallback);
 
-	const receipt = await evmWalletHandler.submitTx(tx);
+	updateLoadingState({
+		content: 'Signing and submitting the transaction...',
+	});
+
+	const onTxHash = (txHash: any) => {
+		updateLoadingState({
+			content: 'Waiting for transaction receipt...',
+			txHash: txHash.toString(),
+		});
+	};
+
+	console.log('submitting eth tx...', tx);
+
+	const submitPromise = evmWalletHandler.submitTx(tx);
+	submitPromise.on('transactionHash', onTxHash);
+
+	const receipt = await submitPromise;
+	submitPromise.off('transactionHash', onTxHash);
+
+	if (receipt.status !== BigInt(1)) {
+		throw new Error(
+			'send transaction has failed. receipt status unsuccessful',
+		);
+	}
+
+	updateLoadingState({
+		content: 'Recording the transaction...',
+		txHash: receipt.transactionHash.toString(),
+	});
 
 	const amount = BigInt(bridgingFee) + BigInt(values.amount);
 

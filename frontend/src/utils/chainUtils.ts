@@ -137,7 +137,7 @@ const EXPLORER_URLS: {
 	},
 };
 
-const getExplorerTxUrl = (chain: ChainEnum, txHash: string) => {
+export const getExplorerTxUrl = (chain: ChainEnum, txHash: string) => {
 	const base = appSettings.isMainnet
 		? EXPLORER_URLS.mainnet[chain]
 		: EXPLORER_URLS.testnet[chain];

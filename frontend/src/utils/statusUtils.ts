@@ -80,3 +80,13 @@ export function getStatusText(status: TransactionStatusEnum | string) {
 export function isStatusFinal(status: TransactionStatusEnum) {
 	return !NOT_FINAL_STATES[status];
 }
+
+export type SubmitLoadingState = {
+	content: string;
+	txHash: string | undefined;
+};
+
+export type UpdateSubmitLoadingState = {
+	content?: string;
+	txHash?: string;
+};
