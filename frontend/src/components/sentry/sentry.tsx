@@ -31,8 +31,6 @@ const restrictedConfig = {
 	enableLogs: false,
 };
 
-// let client: Client | undefined = undefined;
-
 export function InitSentry() {
 	const cookies = document.cookie.split(';').map((c) => c.trim());
 	if (cookies && cookies.some((c) => c.startsWith('cookieConsent=true'))) {
