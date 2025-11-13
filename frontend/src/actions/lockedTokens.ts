@@ -9,7 +9,7 @@ import { setLockedTokensAction } from '../redux/slices/lockedTokensSlice';
 import { CHAIN_RPC_URLS } from '../utils/chainUtils';
 import Web3 from 'web3';
 import { LayerZeroChains } from '../settings/settingsRedux';
-import * as Sentry from '@sentry/react';
+import { captureException } from '../components/sentry/sentry';
 
 async function readErc20Meta(
 	rpcUrl: string,
@@ -25,7 +25,7 @@ async function readErc20Meta(
 		console.log('Locked tokens LayerZero Token on Nexus: ', totalRaw);
 	} catch (e) {
 		console.log(`Failed to get eth balance for: ${tokenAddress}. e: ${e}`);
-		Sentry.captureException(e, {
+		captureException(e, {
 			tags: {
 				component: 'lockedTokens.ts',
 				action: 'readErc20Meta',
@@ -65,7 +65,7 @@ export const fetchAndUpdateLockedTokensAction = async (
 		console.log(
 			`Error while fetching locked tokens: ${lockedTokensResp.err}`,
 		);
-		Sentry.captureException(lockedTokensResp.err, {
+		captureException(lockedTokensResp.err, {
 			tags: {
 				component: 'lockedTokens.ts',
 				action: 'fetchAndUpdateLockedTokensAction',

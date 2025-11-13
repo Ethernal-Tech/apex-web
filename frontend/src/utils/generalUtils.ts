@@ -23,7 +23,7 @@ import {
 import { isCardanoChain, isEvmChain, isLZBridging } from '../settings/chain';
 import appSettings from '../settings/appSettings';
 import { normalizeNativeTokenKey } from './tokenUtils';
-import * as Sentry from '@sentry/react';
+import { captureException } from '../components/sentry/sentry';
 
 export const capitalizeWord = (word: string): string => {
 	if (!word || word.length === 0) {
@@ -362,7 +362,7 @@ export function captureAndThrowError(
 ): never {
 	const err = message instanceof Error ? message : new Error(String(message));
 
-	Sentry.captureException(err, {
+	captureException(err, {
 		tags: {
 			component: component,
 			action: action,

@@ -1,36 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Link } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import * as Sentry from '@sentry/react';
-
-const fullConfig = {
-	dsn: 'https://bf7c682b341edcc67fbec7597e25791f@o4510034117722112.ingest.de.sentry.io/4510046234345552',
-	sendDefaultPii: true,
-	integrations: [
-		Sentry.browserTracingIntegration(),
-		Sentry.replayIntegration(),
-	],
-	enableLogs: true,
-	tracesSampleRate: 1.0,
-	tracePropagationTargets: ['localhost', /^\/\//],
-	replaysSessionSampleRate: 0.1,
-	replaysOnErrorSampleRate: 1.0,
-};
-
-const initSentryFull = () => {
-	console.log('Sentry Full Init');
-	const hub = (Sentry as any).getCurrentHub?.();
-	const oldClient = hub?.getClient?.();
-
-	if (oldClient) {
-		// Close the old client cleanly
-		oldClient.close();
-		console.log('Closing');
-	}
-
-	// Now re-init with new options
-	Sentry.init(fullConfig);
-};
+import { initSentryFull } from '../sentry/sentry';
 
 export default function CookieConsent() {
 	const [visible, setVisible] = useState(false);
@@ -46,7 +17,7 @@ export default function CookieConsent() {
 		// Set a cookie that expires in 1 year
 		const expiry = new Date();
 		expiry.setFullYear(expiry.getFullYear() + 1);
-		document.cookie = `cookieConsent=true; expires=${expiry.toUTCString()}; path=/`;
+		document.cookie = `cookieConsent=true; path=/`;
 		setVisible(false);
 
 		initSentryFull();
@@ -56,7 +27,7 @@ export default function CookieConsent() {
 		// Set a cookie that expires in 1 year
 		const expiry = new Date();
 		expiry.setFullYear(expiry.getFullYear() + 1);
-		document.cookie = `cookieConsent=false; expires=${expiry.toUTCString()}; path=/`;
+		document.cookie = `cookieConsent=false; path=/`;
 		setVisible(false);
 	};
 
@@ -115,7 +86,7 @@ const styles = {
 		backgroundColor: '#4caf50',
 		border: 'none',
 		color: 'white',
-		padding: '8px 16px',
+		padding: '12px 48px',
 		borderRadius: '4px',
 		cursor: 'pointer',
 	},
@@ -123,7 +94,7 @@ const styles = {
 		backgroundColor: '#424442ff',
 		border: 'none',
 		color: 'white',
-		padding: '8px 16px',
+		padding: '12px 48px',
 		borderRadius: '4px',
 		cursor: 'pointer',
 	},
