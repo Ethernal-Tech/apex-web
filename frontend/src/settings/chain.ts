@@ -8,6 +8,7 @@ import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
 import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
 import { ReactComponent as BaseIcon } from '../assets/chain-icons/base.svg';
+import { captureAndThrowError } from '../utils/generalUtils';
 import { ReactComponent as BNBIcon } from '../assets/chain-icons/bsc.svg';
 import { TokenEnum } from '../features/enums';
 import { ISettingsState, SettingsPerMode } from './settingsRedux';
@@ -186,7 +187,7 @@ export const toChainEnum = function (value: string): ChainEnum {
 		return lower as ChainEnum;
 	}
 
-	throw new Error(`Invalid chain: ${value}`);
+	captureAndThrowError(`Invalid chain: ${value}`, 'chain.ts', 'toChainEnum');
 };
 
 export function isApexBridgeChain(chain: ChainEnum): boolean {

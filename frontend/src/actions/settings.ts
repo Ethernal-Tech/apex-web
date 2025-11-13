@@ -4,7 +4,7 @@ import {
 	SettingsControllerClient,
 } from '../swagger/apexBridgeApiService';
 import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
-import { retryForever } from '../utils/generalUtils';
+import { captureAndThrowError, retryForever } from '../utils/generalUtils';
 import {
 	setBridgingAddressesAction,
 	setSettingsAction,
@@ -24,8 +24,10 @@ export const fetchAndUpdateSettingsAction = async (dispatch: Dispatch) => {
 			false,
 		);
 		if (settingsResp instanceof ErrorResponse) {
-			throw new Error(
+			captureAndThrowError(
 				`Error while fetching settings: ${settingsResp.err}`,
+				'settings.ts',
+				'fetchAndUpdateSettingsAction',
 			);
 		}
 
@@ -50,8 +52,10 @@ export const fetchAndUpdateBridgingAddressesAction = async (
 			false,
 		);
 		if (bridgingAddressesResp instanceof ErrorResponse) {
-			throw new Error(
+			captureAndThrowError(
 				`Error while fetching bridging addresses: ${bridgingAddressesResp.err}`,
+				'settings.ts',
+				'fetchAndUpdateBridgingAddressesAction',
 			);
 		}
 
