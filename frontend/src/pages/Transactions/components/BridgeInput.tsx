@@ -2,7 +2,6 @@ import { Box, Typography } from '@mui/material';
 import TotalBalance from '../components/TotalBalance';
 import PasteTextInput from '../components/PasteTextInput';
 import PasteApexAmountInput from './PasteApexAmountInput';
-import FeeInformation from '../components/FeeInformation';
 import ButtonCustom from '../../../components/Buttons/ButtonCustom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -21,6 +20,10 @@ import {
 import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
 import { isCardanoChain, isEvmChain } from '../../../settings/chain';
+import { fetchAndUpdateValidatorStatusAction } from '../../../actions/validatorSetChange';
+import InfoBox from './InfoBox';
+
+const REFETCH_VSU_STATUS_MS = 30000;
 
 type BridgeInputType = {
 	bridgeTxFee: string;
@@ -89,6 +92,8 @@ const BridgeInput = ({
 	const [amount, setAmount] = useState('');
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
+	const [validatorChangeInProgress, setValidatorChangeInProgress] =
+		useState(true);
 
 	const walletUTxOs = useSelector(
 		(state: RootState) => state.accountInfo.utxos,
@@ -154,6 +159,28 @@ const BridgeInput = ({
 			}
 		};
 	}, [fetchWalletFee]);
+
+	const getValidatorChangeStatus = useCallback(async () => {
+		try {
+			const isInProgress = await fetchAndUpdateValidatorStatusAction();
+			setValidatorChangeInProgress(isInProgress);
+		} catch (err) {
+			console.error('Failed to fetch validator set change status:', err);
+		}
+	}, []);
+
+	useEffect(() => {
+		getValidatorChangeStatus();
+
+		const intervalId = setInterval(
+			getValidatorChangeStatus,
+			REFETCH_VSU_STATUS_MS,
+		);
+
+		return () => {
+			clearInterval(intervalId);
+		};
+	}, [getValidatorChangeStatus]);
 
 	const onDiscard = () => {
 		setDestinationAddr('');
@@ -235,7 +262,7 @@ const BridgeInput = ({
 					}}
 				/>
 
-				<FeeInformation
+				<InfoBox
 					userWalletFee={userWalletFee || '0'}
 					bridgeTxFee={bridgeTxFee}
 					chain={chain}
@@ -245,6 +272,7 @@ const BridgeInput = ({
 						borderRadius: '8px',
 						padding: 2,
 					}}
+					isFeeInformation={validatorChangeInProgress}
 				/>
 
 				<ButtonCustom
@@ -262,7 +290,11 @@ const BridgeInput = ({
 				<ButtonCustom
 					onClick={onSubmit}
 					variant="white"
-					disabled={loading || BigInt(maxAmount) <= 0}
+					disabled={
+						validatorChangeInProgress ||
+						loading ||
+						BigInt(maxAmount) <= 0
+					}
 					sx={{
 						gridColumn: 'span 1',
 						textTransform: 'uppercase',

@@ -2,15 +2,17 @@ import { Module } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { SettingsController } from './settings.controller';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
+import { SchedulerRegistry } from '@nestjs/schedule';
 
 const providers = [
 	{
 		provide: SettingsService,
-		inject: [AppConfigService],
+		inject: [AppConfigService, SchedulerRegistry],
 		useFactory: async (
 			appConfig: AppConfigService,
+			schedulerRegistry: SchedulerRegistry,
 		): Promise<SettingsService> => {
-			const s = new SettingsService(appConfig);
+			const s = new SettingsService(appConfig, schedulerRegistry);
 			await s.init();
 			return s;
 		},

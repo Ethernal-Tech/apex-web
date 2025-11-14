@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-	Box,
-	styled,
-	SxProps,
-	Theme,
-	Tooltip,
-	Typography,
-} from '@mui/material';
+import { Box, Tooltip, Typography } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import {
 	capitalizeWord,
@@ -15,37 +8,24 @@ import {
 } from '../../../utils/generalUtils';
 import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 
-const CustomBox = styled(Box)({
-	background: '#075159',
-});
-
 interface FeeInformationProps {
-	sx?: SxProps<Theme>;
 	userWalletFee: string;
 	bridgeTxFee: string;
 	chain: ChainEnum;
 }
 
 const FeeInformation: React.FC<FeeInformationProps> = ({
-	sx,
 	userWalletFee,
 	bridgeTxFee,
 	chain,
 }) => {
 	return (
-		<CustomBox
-			sx={{
-				color: 'white',
-				display: 'flex',
-				flexDirection: 'column',
-				justifyContent: 'space-between',
-				...sx,
-			}}
-		>
+		<>
 			<Typography
 				sx={{
 					display: 'flex',
 					justifyContent: 'space-between',
+					gap: '16px', // Add some gap for better spacing
 				}}
 			>
 				<Box
@@ -75,8 +55,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 						/>
 					</Tooltip>
 				</Box>
-				{/* TODO AF - check this conversion is correct */}
-				<Box component="span">
+				<Box component="span" sx={{ whiteSpace: 'nowrap' }}>
 					{BigInt(userWalletFee) > 0
 						? toFixed(convertDfmToApex(userWalletFee, chain), 6)
 						: '0'}{' '}
@@ -88,6 +67,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 				sx={{
 					display: 'flex',
 					justifyContent: 'space-between',
+					marginTop: '8px', // Add some margin between rows
 				}}
 			>
 				<Box
@@ -117,8 +97,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 						/>
 					</Tooltip>
 				</Box>
-				{/* TODO AF - check this conversion is correct */}
-				<Box component="span">
+				<Box component="span" sx={{ whiteSpace: 'nowrap' }}>
 					{BigInt(bridgeTxFee) > 0
 						? toFixed(convertDfmToApex(bridgeTxFee, chain), 6)
 						: '0'}{' '}
@@ -130,6 +109,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 				sx={{
 					display: 'flex',
 					justifyContent: 'space-between',
+					marginTop: '8px',
 				}}
 			>
 				<Box
@@ -142,7 +122,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 				</Box>
 				<Box component="span">16-20 minutes</Box>
 			</Typography>
-		</CustomBox>
+		</>
 	);
 };
 

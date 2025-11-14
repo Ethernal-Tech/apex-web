@@ -121,6 +121,12 @@ export class TransactionService {
 	async createCardano(
 		dto: CreateTransactionDto,
 	): Promise<CreateCardanoTransactionResponseDto> {
+		if (this.settingsService.validatorChangeStatus) {
+			throw new BadRequestException(
+				'validator set change in progress, cant create transactions',
+			);
+		}
+
 		this.validateCreateCardanoTx(dto);
 
 		const recentInputs = await this.getRecentInputs(dto);
@@ -136,6 +142,11 @@ export class TransactionService {
 	async getCardanoTxFee(
 		dto: CreateTransactionDto,
 	): Promise<CardanoTransactionFeeResponseDto> {
+		if (this.settingsService.validatorChangeStatus) {
+			throw new BadRequestException(
+				'validator set change in progress, cant get cardano tx fee',
+			);
+		}
 		this.validateCreateCardanoTx(dto);
 
 		const recentInputs = await this.getRecentInputs(dto);
@@ -149,6 +160,11 @@ export class TransactionService {
 	}
 
 	createEth(dto: CreateTransactionDto): CreateEthTransactionResponseDto {
+		if (this.settingsService.validatorChangeStatus) {
+			throw new BadRequestException(
+				'validator set change in progress, cant create eth transaction',
+			);
+		}
 		if (
 			!this.settingsService.SettingsResponse.enabledChains.includes(
 				dto.originChain,

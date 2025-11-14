@@ -4,16 +4,24 @@ import { retryForever } from 'src/utils/generalUtils';
 import { SettingsResponseDto } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
+import { Cron, SchedulerRegistry } from '@nestjs/schedule';
+import { getValidatorChangeStatus } from './settings.helper';
 
 const RETRY_DELAY_MS = 5000;
 
 @Injectable()
 export class SettingsService {
 	SettingsResponse: SettingsResponseDto;
+	validatorChangeStatus: boolean;
 
-	constructor(private readonly appConfig: AppConfigService) {}
+	constructor(
+		private readonly appConfig: AppConfigService,
+		private readonly schedulerRegistry: SchedulerRegistry,
+	) {}
 
 	async init() {
+		this.validatorChangeStatus = true;
+
 		const apiUrl = this.appConfig.cardanoApiUrl;
 		const apiKey = process.env.CARDANO_API_API_KEY;
 
@@ -56,6 +64,23 @@ export class SettingsService {
 			}
 
 			throw new BadRequestException();
+		}
+	}
+
+	@Cron('*/30 * * * * *', { name: 'updateValidatorChangeStatus' })
+	async updateValidatorChangeStatus(): Promise<void> {
+		const job = this.schedulerRegistry.getCronJob(
+			'updateValidatorChangeStatus',
+		);
+		job.stop();
+		try {
+			this.validatorChangeStatus = await getValidatorChangeStatus();
+		} catch (error) {
+			Logger.error('Failed to update validator set change status.', error);
+		} finally {
+			job.start();
+
+			Logger.debug('Job updateValidatorChangeStatus executed');
 		}
 	}
 }

@@ -50,6 +50,8 @@ func TestCardanoAPI(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	validatorChangeTracker := core.NewValidatorChangeTracker()
+
 	bytesContent, err := embededConfigFiles.ReadFile("config/config_reactor_testnet.js0n")
 	require.NoError(t, err)
 
@@ -61,7 +63,7 @@ func TestCardanoAPI(t *testing.T) {
 
 	apiControllers := []core.APIController{
 		controllers.NewCardanoTxController(
-			config, logger.Named("cardano_tx_controller")),
+			config, logger.Named("cardano_tx_controller"), validatorChangeTracker),
 	}
 
 	apiObj, err := api.NewAPI(config.APIConfig, apiControllers, logger.Named("api"))

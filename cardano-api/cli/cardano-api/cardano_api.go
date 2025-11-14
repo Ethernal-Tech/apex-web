@@ -11,6 +11,7 @@ import (
 	"github.com/Ethernal-Tech/cardano-api/api/controllers"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
+	validatorchange "github.com/Ethernal-Tech/cardano-api/validator-change"
 	loggerInfra "github.com/Ethernal-Tech/cardano-infrastructure/logger"
 	"github.com/spf13/cobra"
 )
@@ -55,6 +56,8 @@ func runCommand(cmd *cobra.Command, _ []string) {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
+	validatorChangeTracker := core.NewValidatorChangeTracker()
+
 	err = config.FillOut(ctx, logger)
 	if err != nil {
 		outputter.SetError(err)
@@ -71,7 +74,8 @@ func runCommand(cmd *cobra.Command, _ []string) {
 
 	apiControllers := []core.APIController{
 		controllers.NewCardanoTxController(
-			config, logger.Named("cardano_tx_controller")),
+			config, logger.Named("cardano_tx_controller"),
+			validatorChangeTracker),
 	}
 
 	apiObj, err := api.NewAPI(config.APIConfig, apiControllers, logger.Named("api"))
@@ -82,7 +86,11 @@ func runCommand(cmd *cobra.Command, _ []string) {
 		return
 	}
 
+	validatorChange := validatorchange.NewValidatorChange(ctx, logger, config, validatorChangeTracker)
+
 	go apiObj.Start(ctx)
+
+	go validatorChange.Start(ctx)
 
 	defer func() {
 		err := apiObj.Dispose()
