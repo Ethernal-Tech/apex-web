@@ -52,7 +52,7 @@ Full example
 ``` shell
 $ go run main.go generate-configs\
 		--output-dir "."\
-		--output-file-name "config-test.json"\
+		--output-file-name "config.json"\
 		--prime-network-id 0\
 		--prime-network-magic 3311\
 		--prime-bridging-fallback-address "addr_test1vqfuetznnmngqzquslwcu0ygn2hq29vjlpytlpwss762vcgun5vvw"\
