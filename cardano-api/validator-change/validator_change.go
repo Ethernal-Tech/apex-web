@@ -32,6 +32,11 @@ func NewValidatorChange(
 }
 
 func (v *validatorChange) Start(ctx context.Context) {
+	err := v.setValidatorChangeStatus(ctx)
+	if err != nil {
+		v.logger.Error("error while fetching validator change status", "err", err)
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -56,26 +61,12 @@ func (v *validatorChange) setValidatorChangeStatus(ctx context.Context) error {
 
 	if !validatorChangeStatusReponse.InProgress &&
 		v.validatorChangeTracker.IsValidatorChangeInProgress() != validatorChangeStatusReponse.InProgress {
-		if err := v.setMultiSigAddr(ctx); err != nil {
+		if err := v.appConfig.FetchAndUpdateMultiSigAddresses(ctx, v.logger); err != nil {
 			return err
 		}
 	}
 
 	v.validatorChangeTracker.SetValidatorChangeStatus(validatorChangeStatusReponse.InProgress)
-
-	return nil
-}
-
-func (v *validatorChange) setMultiSigAddr(ctx context.Context) error {
-	multiSigAddrRequestURL := fmt.Sprintf("%s/api/Settings/GetMultiSigBridgingAddr", v.appConfig.OracleAPI.URL)
-
-	multiSigAddrReponse, err := common.HTTPGet[*response.MultiSigAddressesResponse](
-		ctx, multiSigAddrRequestURL, v.appConfig.OracleAPI.APIKey)
-	if err != nil {
-		return err
-	}
-
-	v.appConfig.UpdateCardanoBridgingAddresses(v.logger, multiSigAddrReponse.CardanoChains)
 
 	return nil
 }

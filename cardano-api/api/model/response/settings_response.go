@@ -19,7 +19,3 @@ func NewSettingsResponse(
 type ValidatorChangeStatusReponse struct {
 	InProgress bool `json:"inProgress"`
 }
-
-type MultiSigAddressesResponse struct {
-	CardanoChains map[string]*core.BridgingAddresses `json:"bridgingAddress"`
-}

@@ -8,8 +8,6 @@ $ go run ./main.go generate-configs \
         --output-file-name "<config json output file name>.json" \
         --prime-network-id <network id of prime network> \
         --prime-network-magic <network magic of prime network> \
-        --prime-bridging-address "<bridging address for prime network>" \
-        --prime-bridging-fee-address "<bridging fee address for prime network>" \
         --prime-bridging-fallback-address "<bridging fallback address for prime network>" \
         --prime-ogmios-url "<ogmios URL for prime network>" \
         --prime-blockfrost-url "<blockfrost URL for prime network>" \
@@ -18,8 +16,6 @@ $ go run ./main.go generate-configs \
         --prime-ttl-slot-inc <ttl slot increment for prime> \
         --vector-network-id <network id of vector network> \
         --vector-network-magic <network magic of vector network> \
-        --vector-bridging-address "<bridging address for vector network>" \
-        --vector-bridging-fee-address "<bridging fee address for vector network>" \
         --vector-bridging-fallback-address "<bridging fallback address for vector network>" \
         --vector-ogmios-url "<ogmios URL for vector network>" \
         --vector-blockfrost-url "<blockfrost URL for vector network>" \
@@ -43,12 +39,8 @@ Minimal example
 ``` shell
 $ go run ./main.go generate-configs \
         --prime-network-magic 142 \
-        --prime-bridging-address "addr_example" \
-        --prime-bridging-fee-address "addr_example" \
         --prime-blockfrost-url "https://cardano-preview.blockfrost.io/api/v0" \
         --vector-network-magic 242 \
-        --vector-bridging-address "addr_example" \
-        --vector-bridging-fee-address "addr_example" \
         --vector-blockfrost-url "https://cardano-preview.blockfrost.io/api/v0" \
         --oracle-api-url "http://bridge-api-testnet.apexfusion.org:10003" \
         --oracle-api-key "test-api-key-001" \
@@ -60,19 +52,15 @@ Full example
 ``` shell
 $ go run main.go generate-configs\
 		--output-dir "."\
-		--output-file-name "config.json"\
+		--output-file-name "config-test.json"\
 		--prime-network-id 0\
 		--prime-network-magic 3311\
-		--prime-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv"\
-		--prime-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq"\
 		--prime-bridging-fallback-address "addr_test1vqfuetznnmngqzquslwcu0ygn2hq29vjlpytlpwss762vcgun5vvw"\
 		--prime-blockfrost-url "https://blockfrost-m1.demeter.run"\
                 --prime-blockfrost-api-key "test_demeter_api_key_1"\
-		--vector-network-id 2\
-		--vector-network-magic 1127\
-		--vector-bridging-address "vector_test1w2h482rf4gf44ek0rekamxksulazkr64yf2fhmm7f5gxjpsdm4zsg"\
-		--vector-bridging-fee-address "vector_test1wtyslvqxffyppmzhs7ecwunsnpq6g2p6kf9r4aa8ntfzc4qj925fr"\
-		--vector-bridging-fallback-address "vector_test1w2h482rf4gf44ek0rekamxksulazkr64yf2fhmm7f5gxjpsdm4zsg"\
+		--vector-network-id 1\
+		--vector-network-magic 764824073\
+		--vector-bridging-fallback-address "addr1w8nv7cp7revdt70yuc96z4ke9pasa70grc5clhyf7q70f4spev3dn"\
 		--vector-ogmios-url "http://ogmios.vector.testnet.apexfusion.org:1337"\
                 --vector-is-enabled \
                 --nexus-is-enabled \

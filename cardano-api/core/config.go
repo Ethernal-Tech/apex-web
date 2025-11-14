@@ -94,7 +94,7 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 
 	logger.Debug("fetching settings from oracle API", "url", settingsRequestURL)
 
-	err := common.RetryForever(ctx, 5*time.Second, func(ctx context.Context) error {
+	return common.RetryForever(ctx, 5*time.Second, func(ctx context.Context) error {
 		settingsResponse, err := common.HTTPGet[*SettingsResponse](
 			ctx, settingsRequestURL, appConfig.OracleAPI.APIKey)
 		if err != nil {
@@ -122,13 +122,31 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 
 		return nil
 	})
-
-	return err
 }
 
-func (appConfig *AppConfig) UpdateCardanoBridgingAddresses(
+func (appConfig *AppConfig) FetchAndUpdateMultiSigAddresses(ctx context.Context, logger hclog.Logger) error {
+	multiSigAddrRequestURL := fmt.Sprintf("%s/api/Settings/GetMultiSigBridgingAddr", appConfig.OracleAPI.URL)
+
+	logger.Debug("fetching multisig addresses from oracle API", "url", multiSigAddrRequestURL)
+
+	return common.RetryForever(ctx, 5*time.Second, func(ctx context.Context) error {
+		multiSigAddrResponse, err := common.HTTPGet[*MultiSigAddressesResponse](
+			ctx, multiSigAddrRequestURL, appConfig.OracleAPI.APIKey)
+		if err != nil {
+			return err
+		}
+
+		appConfig.updateMultisigAddresses(logger, multiSigAddrResponse.CardanoChains)
+
+		logger.Debug("applied multisig addresses from oracle API", "multiSigAddr", multiSigAddrResponse)
+
+		return nil
+	})
+}
+
+func (appConfig *AppConfig) updateMultisigAddresses(
 	logger hclog.Logger,
-	addresses map[string]*BridgingAddresses) {
+	addresses map[string]BridgingAddresses) {
 	appConfig.cardanoChainsMu.Lock()
 	defer appConfig.cardanoChainsMu.Unlock()
 
