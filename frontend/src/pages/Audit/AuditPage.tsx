@@ -12,8 +12,8 @@ import {
 import SkylinePanel from '../../components/Audit/SkylineAudit';
 import LayerZeroPanel from '../../components/Audit/LayerZeroAudit';
 import '../../audit.css';
-import { isApexChain } from '../../utils/tokenUtils';
-const sumToken = (m: Record<string, bigint>) =>
+import { isAdaToken, isApexToken } from '../../settings/token';
+const sumToken = (m: Record<string, bigint>): bigint =>
 	Object.values(m).reduce((a, b) => a + b, BigInt(0));
 
 const sumChain = (
@@ -36,7 +36,7 @@ const addAll = (
 	into: Record<string, bigint>,
 	totals: Record<string, bigint>,
 	mapKey?: (k: string) => string,
-) => {
+): Record<string, bigint> => {
 	for (const [t, v] of Object.entries(totals)) {
 		const key = mapKey ? mapKey(t) : t;
 		into[key] = (into[key] ?? BigInt(0)) + v;
@@ -65,6 +65,15 @@ const AuditPage: React.FC = () => {
 		[chains],
 	);
 
+	const tokenTotalsAllChains = useMemo(
+		() =>
+			Object.values(perChainTotals).reduce(
+				(acc, totals) => addAll(acc, totals),
+				{} as Record<string, bigint>,
+			),
+		[perChainTotals],
+	);
+
 	const skylineChains = useMemo<ChainEnum[]>(() => {
 		if (!settings) return [];
 		return Object.keys(
@@ -73,89 +82,67 @@ const AuditPage: React.FC = () => {
 		) as unknown as ChainEnum[];
 	}, [settings]);
 
-	const tokenTotalsAllChains = useMemo(() => {
-		const acc: Record<string, bigint> = {};
-		for (const [chain, totals] of Object.entries(perChainTotals)) {
-			for (const [key, values] of Object.entries(totals)) {
-				addAll(acc, { values }, (tk: string) => tk);
-			}
-		}
-		return acc;
-	}, [perChainTotals]);
-
-	const skylineSettings = useMemo(
-		() => settings.settingsPerMode[BridgingModeEnum.Skyline],
-		[settings.settingsPerMode],
-	);
-
-	// Now use those values inside your other memos
 	const { tvbPerChainTotals, tvbTokenTotalsAllChains, tvbGrandTotal } =
 		useMemo(() => {
-			const skylineSet = new Set(skylineChains); // ⬅️ use memoized value
+			const skylineSet = new Set(skylineChains);
+
 			const tvbPerChainTotals = Object.fromEntries(
 				Object.entries(tvbChains)
 					.filter(([chain]) => skylineSet.has(chain as ChainEnum))
 					.map(([chain, tokenMap]) => [chain, sumChain(tokenMap)]),
 			);
 
-			const tvbTokenTotalsAllChains = Object.entries(
+			const tvbTokenTotalsAllChains = Object.values(
 				tvbPerChainTotals,
 			).reduce(
-				(acc, [chain, totals]) => addAll(acc, totals),
+				(acc, totals) => addAll(acc, totals),
 				{} as Record<string, bigint>,
 			);
 
-			const tvbGrandTotal = {
-				[TokenEnum.APEX as string]: BigInt(0),
-				[TokenEnum.ADA as string]: BigInt(0),
-			};
+			const tvbGrandTotal = Object.values(tvbPerChainTotals).reduce(
+				(accumulator, perTokenMap) => {
+					for (const [tokenKey, value] of Object.entries(
+						perTokenMap,
+					)) {
+						if (value === BigInt(0)) {
+							continue;
+						}
 
-			Object.entries(tvbPerChainTotals).forEach(
-				([chainKey, perToken]) => {
-					Object.entries(perToken).forEach(([tokenKey, value]) => {
-						console.log('key is ', tokenKey);
-						console.log('VALUE IS', value);
-						tvbGrandTotal[tokenKey] =
-							(tvbGrandTotal[tokenKey] ?? BigInt(0)) +
-							(value ?? BigInt(0));
-					});
+						if (isApexToken(tokenKey as TokenEnum)) {
+							accumulator[TokenEnum.APEX] =
+								(accumulator[TokenEnum.APEX] ?? BigInt(0)) +
+								value;
+						} else if (isAdaToken(tokenKey as TokenEnum)) {
+							accumulator[TokenEnum.ADA] =
+								(accumulator[TokenEnum.ADA] ?? BigInt(0)) +
+								value;
+						}
+					}
+					return accumulator;
 				},
+				{} as Record<string, bigint>,
 			);
-
-			console.log(tvbGrandTotal);
-
 			return {
 				tvbPerChainTotals,
 				tvbTokenTotalsAllChains,
 				tvbGrandTotal,
 			};
-		}, [
-			skylineChains,
-			tvbChains,
-			skylineSettings.cardanoChainsNativeTokens,
-		]);
+		}, [skylineChains, tvbChains]);
 
 	const { lzPerChainTotals, lzTokenTotalsAllChains, lzGrandTotal } =
 		useMemo(() => {
 			const lzSet = new Set(layerZeroChains);
+
 			const lzPerChainTotals = Object.fromEntries(
 				Object.entries(tvbChains)
 					.filter(([chain]) => lzSet.has(chain as ChainEnum))
-					.map(([chain, tokenMap]) => [
-						chain,
-						sumChain(tokenMap, (k: string) =>
-							isApexChain(chain)
-								? k === 'amount'
-								: k !== 'amount',
-						),
-					]),
+					.map(([chain, tokenMap]) => [chain, sumChain(tokenMap)]),
 			);
 
-			const lzTokenTotalsAllChains = Object.entries(
+			const lzTokenTotalsAllChains = Object.values(
 				lzPerChainTotals,
 			).reduce(
-				(acc, [chain, totals]) =>
-					addAll(acc, totals, (tk: string) => tk),
+				(acc, totals) => addAll(acc, totals),
 				{} as Record<string, bigint>,
 			);
 

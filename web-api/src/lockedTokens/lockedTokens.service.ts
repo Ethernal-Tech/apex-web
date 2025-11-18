@@ -70,10 +70,6 @@ export class LockedTokensService {
 			this.settingsService.SettingsResponse,
 		);
 
-		console.log("AVAILABLE DIRECTIONs", availableDirections);
-
-		console.log("LOCKED TOKENS", lockedTokens);
-
 		for (const chainName in lockedTokens.chains) {
 			if (
 				Object.prototype.hasOwnProperty.call(lockedTokens.chains, chainName)
@@ -83,9 +79,9 @@ export class LockedTokensService {
 					[tokenName: string]: { [address: string]: string };
 				} = {};
 
-				for (const tokenAddress in tokens) {
-					if (Object.prototype.hasOwnProperty.call(tokens, tokenAddress)) {
-						const addresses = tokens[tokenAddress];
+				for (const token in tokens) {
+					if (Object.prototype.hasOwnProperty.call(tokens, token)) {
+						const addresses = tokens[token];
 
 						const matchingDstChain = availableDirections.find(
 							(d) => d.srcChain === (chainName as ChainEnum),
@@ -99,6 +95,7 @@ export class LockedTokensService {
 							chainName as ChainEnum,
 							matchingDstChain?.dstChain,
 							this.settingsService.SettingsResponse,
+							token,
 						);
 
 						if (tokenName) {

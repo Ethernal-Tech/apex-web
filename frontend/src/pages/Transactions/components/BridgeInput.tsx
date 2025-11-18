@@ -355,8 +355,7 @@ const BridgeInput = ({
 		const settingsToken = settings.settingsPerMode[
 			BridgingModeEnum.Skyline
 		].cardanoChainsNativeTokens[chain].find(
-			(x) =>
-				chosenTokenInput.label === getTokenInfo(x.tokenName).label,
+			(x) => chosenTokenInput.label === getTokenInfo(x.tokenName).label,
 		);
 		if (!settingsToken) {
 			return bridgeTxFee;

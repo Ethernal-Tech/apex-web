@@ -78,6 +78,16 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 		mainColor: '#F27B50',
 		order: 4,
 	},
+	[ChainEnum.Cardano]: {
+		value: ChainEnum.Cardano,
+		currencyToken: TokenEnum.ADA,
+		label: 'Cardano',
+		icon: CardanoIcon,
+		borderColor: '#0538AF',
+		letter: 'C',
+		mainColor: '#0538AF',
+		order: 2,
+	},
 	[ChainEnum.Base]: {
 		value: ChainEnum.Base,
 		currencyToken: TokenEnum.ETH,
