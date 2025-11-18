@@ -2,6 +2,7 @@ import { SVGProps } from 'react';
 import {
 	ChainApexBridgeEnum,
 	ChainEnum,
+	TokenEnum,
 } from '../swagger/apexBridgeApiService';
 import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
 import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
@@ -9,7 +10,6 @@ import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
 import { ReactComponent as BaseIcon } from '../assets/chain-icons/base.svg';
 import { ReactComponent as BNBIcon } from '../assets/chain-icons/bsc.svg';
-import { TokenEnum } from '../features/enums';
 import { ISettingsState, SettingsPerMode } from './settingsRedux';
 import appSettings from './appSettings';
 
@@ -77,16 +77,6 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 		letter: 'N',
 		mainColor: '#F27B50',
 		order: 4,
-	},
-	[ChainEnum.Cardano]: {
-		value: ChainEnum.Cardano,
-		currencyToken: TokenEnum.ADA,
-		label: 'Cardano',
-		icon: CardanoIcon,
-		borderColor: '#0538AF',
-		letter: 'C',
-		mainColor: '#0538AF',
-		order: 2,
 	},
 	[ChainEnum.Base]: {
 		value: ChainEnum.Base,

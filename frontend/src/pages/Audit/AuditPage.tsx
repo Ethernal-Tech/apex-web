@@ -7,20 +7,12 @@ import BasePage from '../base/BasePage';
 import {
 	BridgingModeEnum,
 	ChainEnum,
+	TokenEnum,
 } from '../../swagger/apexBridgeApiService';
 import SkylinePanel from '../../components/Audit/SkylineAudit';
 import LayerZeroPanel from '../../components/Audit/LayerZeroAudit';
 import '../../audit.css';
-import {
-	correlateTokenToACurrency,
-	decodeTokenKey,
-	isApexChain,
-} from '../../utils/tokenUtils';
-import { LovelaceTokenName } from '../../utils/chainUtils';
-import { getTokenInfo } from '../../settings/token';
-import { TokenEnum } from '../../features/enums';
-import { toChainEnum } from '../../settings/chain';
-
+import { isApexChain } from '../../utils/tokenUtils';
 const sumToken = (m: Record<string, bigint>) =>
 	Object.values(m).reduce((a, b) => a + b, BigInt(0));
 
@@ -84,11 +76,9 @@ const AuditPage: React.FC = () => {
 	const tokenTotalsAllChains = useMemo(() => {
 		const acc: Record<string, bigint> = {};
 		for (const [chain, totals] of Object.entries(perChainTotals)) {
-			addAll(
-				acc,
-				{ [LovelaceTokenName]: totals[LovelaceTokenName] || BigInt(0) },
-				(tk: string) => decodeTokenKey(tk, chain),
-			);
+			for (const [key, values] of Object.entries(totals)) {
+				addAll(acc, { values }, (tk: string) => tk);
+			}
 		}
 		return acc;
 	}, [perChainTotals]);
@@ -111,37 +101,28 @@ const AuditPage: React.FC = () => {
 			const tvbTokenTotalsAllChains = Object.entries(
 				tvbPerChainTotals,
 			).reduce(
-				(acc, [chain, totals]) =>
-					addAll(acc, totals, (tk: string) =>
-						decodeTokenKey(tk, chain),
-					),
+				(acc, [chain, totals]) => addAll(acc, totals),
 				{} as Record<string, bigint>,
 			);
 
 			const tvbGrandTotal = {
-				[getTokenInfo(TokenEnum.APEX).label]: BigInt(0),
-				[getTokenInfo(TokenEnum.ADA).label]: BigInt(0),
+				[TokenEnum.APEX as string]: BigInt(0),
+				[TokenEnum.ADA as string]: BigInt(0),
 			};
 
 			Object.entries(tvbPerChainTotals).forEach(
 				([chainKey, perToken]) => {
-					const chain = toChainEnum(chainKey);
-
 					Object.entries(perToken).forEach(([tokenKey, value]) => {
-						const currencyInfo = correlateTokenToACurrency(
-							skylineSettings.cardanoChainsNativeTokens,
-							chain,
-							tokenKey,
-						);
-
-						if (currencyInfo) {
-							tvbGrandTotal[currencyInfo.label] += BigInt(
-								value || '0',
-							);
-						}
+						console.log('key is ', tokenKey);
+						console.log('VALUE IS', value);
+						tvbGrandTotal[tokenKey] =
+							(tvbGrandTotal[tokenKey] ?? BigInt(0)) +
+							(value ?? BigInt(0));
 					});
 				},
 			);
+
+			console.log(tvbGrandTotal);
 
 			return {
 				tvbPerChainTotals,
@@ -174,9 +155,7 @@ const AuditPage: React.FC = () => {
 				lzPerChainTotals,
 			).reduce(
 				(acc, [chain, totals]) =>
-					addAll(acc, totals, (tk: string) =>
-						decodeTokenKey(tk, chain),
-					),
+					addAll(acc, totals, (tk: string) => tk),
 				{} as Record<string, bigint>,
 			);
 
