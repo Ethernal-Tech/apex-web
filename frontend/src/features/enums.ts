@@ -10,7 +10,7 @@ export enum WalletErrors {
 	WalletNotEnabled = 2,
 }
 
-export enum TokenEnum {
+/* export enum TokenEnum {
 	ADA = 'ADA',
 	WADA = 'wADA',
 	APEX = 'APEX',
@@ -19,7 +19,7 @@ export enum TokenEnum {
 	BAP3X = 'bAP3X',
 	BNAP3X = 'bnAP3X',
 	BNB = 'BNB',
-}
+} */
 
 export enum ApexBridgeNetwork {
 	MainnetPrime = 'MainnetPrime',

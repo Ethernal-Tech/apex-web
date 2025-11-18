@@ -1,13 +1,11 @@
 import React from 'react';
 import { Box, Link, Tooltip, Typography } from '@mui/material';
-import { ChainEnum } from '../../swagger/apexBridgeApiService';
+import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
 import { getTokenInfo } from '../../settings/token';
 import { formatBigIntDecimalString } from '../lockedTokens/LockedTokensComponent';
 import '../../audit.css';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
-import { decodeTokenKey } from '../../utils/tokenUtils';
-import { TokenEnum } from '../../features/enums';
 import { getExplorerAddressUrl } from '../../utils/chainUtils';
 import { compareBigInts } from '../../features/utils';
 import LaunchIcon from '@mui/icons-material/Launch';
@@ -105,7 +103,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 								<Box key={tk} className="audit-card">
 									<Box className="audit-card-content audit-row">
 										<Typography className="fw-700">
-											{decodeTokenKey(tk)}
+											{getTokenInfo(tk).label}
 										</Typography>
 										<Typography className="audit-amount">
 											{formatBigIntDecimalString(amt, 6)}
@@ -132,7 +130,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 							)
 								.sort((a, b) => compareBigInts(b[1], a[1]))
 								.map(([token, amt]) => ({
-									token: decodeTokenKey(token),
+									token: getTokenInfo(token as ChainEnum).label,
 									amt,
 								}));
 							return (

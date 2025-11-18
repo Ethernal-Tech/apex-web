@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmptyObject, IsObject } from 'class-validator';
+import { TokenEnum } from 'src/common/enum';
 
 export class LockedTokensDto {
 	@ApiProperty({
@@ -77,4 +78,15 @@ export class TransferredTokensByDay {
 		},
 	})
 	totalTransferred: { [key: string]: { [innerKey: string]: string } };
+}
+
+export class TokenEnumSchemaHolderDto {
+	@ApiProperty({
+		description:
+			'A sample property to hold the TokenEnum type for schema generation.',
+		enum: TokenEnum,
+		enumName: 'TokenEnum',
+		example: TokenEnum.APEX,
+	})
+	token: TokenEnum;
 }

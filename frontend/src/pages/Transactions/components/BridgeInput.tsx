@@ -19,13 +19,13 @@ import {
 	CardanoTransactionFeeResponseDto,
 	ChainEnum,
 	CreateEthTransactionResponseDto,
+	TokenEnum,
 	TxTypeEnum,
 } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import { estimateEthTxFee } from '../../../actions/submitTx';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { white } from '../../../containers/theme';
-import { TokenEnum } from '../../../features/enums';
 import { useSupportedSourceTokenOptions } from '../utils';
 import {
 	BridgingModeEnum,
@@ -37,7 +37,6 @@ import {
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
-import { decodeTokenKey } from '../../../utils/tokenUtils';
 
 type BridgeInputType = {
 	getCardanoTxFee: (
@@ -357,7 +356,7 @@ const BridgeInput = ({
 			BridgingModeEnum.Skyline
 		].cardanoChainsNativeTokens[chain].find(
 			(x) =>
-				chosenTokenInput.label === decodeTokenKey(x.tokenName, chain),
+				chosenTokenInput.label === getTokenInfo(x.tokenName).label,
 		);
 		if (!settingsToken) {
 			return bridgeTxFee;

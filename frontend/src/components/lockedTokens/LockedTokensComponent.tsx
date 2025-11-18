@@ -2,20 +2,14 @@ import { Box, Typography } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { useEffect, useMemo } from 'react';
-import { ChainEnum } from '../../swagger/apexBridgeApiService';
+import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
 import './lockedTokens.css';
 import { getTokenInfo } from '../../settings/token';
 import { toChainEnum } from '../../settings/chain';
 import { fetchAndUpdateLockedTokensAction } from '../../actions/lockedTokens';
-import {
-	correlateTokenToACurrency,
-	decodeTokenKey,
-	isApexChain,
-} from '../../utils/tokenUtils';
+import { correlateTokenToACurrency, isApexChain } from '../../utils/tokenUtils';
 import { convertWeiToDfmBig } from '../../utils/generalUtils';
-import { LovelaceTokenName } from '../../utils/chainUtils';
 import { BridgingModeEnum } from '../../settings/chain';
-import { TokenEnum } from '../../features/enums';
 
 const powBigInt = (base: bigint, exp: number): bigint => {
 	let result = BigInt(1);
@@ -107,19 +101,19 @@ const LockedTokensComponent = () => {
 		};
 
 		const apexTotal =
-			getBalanceSafe(ChainEnum.Prime, LovelaceTokenName) +
-			getBalanceSafe(ChainEnum.Vector, LovelaceTokenName) +
+			getBalanceSafe(ChainEnum.Prime, TokenEnum.APEX) +
+			getBalanceSafe(ChainEnum.Vector, TokenEnum.APEX) +
 			lockedTokensLZFormatted;
 		if (apexTotal > BigInt(0)) {
 			chunks.push(
-				`${formatBigIntDecimalString(apexTotal, 6)} ${decodeTokenKey(LovelaceTokenName)}`,
+				`${formatBigIntDecimalString(apexTotal, 6)} ${getTokenInfo(TokenEnum.APEX).label}`,
 			);
 		}
 
-		const adaTotal = getBalanceSafe(ChainEnum.Cardano, LovelaceTokenName);
+		const adaTotal = getBalanceSafe(ChainEnum.Cardano, TokenEnum.ADA);
 		if (adaTotal > BigInt(0)) {
 			chunks.push(
-				`${formatBigIntDecimalString(adaTotal, 6)} ${decodeTokenKey(LovelaceTokenName, ChainEnum.Cardano)}`,
+				`${formatBigIntDecimalString(adaTotal, 6)} ${getTokenInfo(TokenEnum.ADA).label}`,
 			);
 		}
 

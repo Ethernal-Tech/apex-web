@@ -2,15 +2,13 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Box, Link, Tooltip, Typography } from '@mui/material';
 import CustomSelect from '../../components/customSelect/CustomSelect';
 import { isEvmChain, getChainInfo } from '../../settings/chain';
-import { ChainEnum } from '../../swagger/apexBridgeApiService';
+import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
 import { formatBigIntDecimalString } from '../lockedTokens/LockedTokensComponent';
 import {
 	getExplorerAddressUrl,
 	LovelaceTokenName,
 } from '../../utils/chainUtils';
-import { decodeTokenKey } from '../../utils/tokenUtils';
 import { getTokenInfo } from '../../settings/token';
-import { TokenEnum } from '../../features/enums';
 import { compareBigInts } from '../../features/utils';
 import LaunchIcon from '@mui/icons-material/Launch';
 
@@ -27,7 +25,7 @@ type SkylinePanelProps = {
 
 const sumToken = (m: Record<string, bigint>) =>
 	Object.values(m).reduce((a, v) => a + v, BigInt(0));
-const fmt = (v: bigint) => formatBigIntDecimalString(v, 6);
+const fmt = (v: bigint) => formatBigIntDecimalString(v ?? BigInt(0), 6);
 const sortEntries = (r: Record<string, bigint>) =>
 	Object.entries(r).sort((a, b) => compareBigInts(b[1], a[1]));
 
@@ -133,7 +131,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 							const rows = sortEntries(
 								perChainTotals[ck] ?? {},
 							).map(([t, a]) => ({
-								label: decodeTokenKey(t, ck),
+								label: getTokenInfo(t).label,
 								amt: a,
 							}));
 							return (
@@ -186,7 +184,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 											className="audit-dim"
 											style={{ fontSize: 14 }}
 										>
-											{decodeTokenKey(selToken, selChain)}
+											{getTokenInfo(selToken).label}
 										</Typography>
 									</Typography>
 								</Typography>
@@ -264,16 +262,12 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 				<Box className="audit-grid-md-2 audit-gap-12 audit-mb-16">
 					<AmountCard
 						left={getTokenInfo(TokenEnum.APEX).label}
-						right={fmt(
-							tvbGrandTotal[getTokenInfo(TokenEnum.APEX).label],
-						)}
+						right={fmt(tvbGrandTotal[TokenEnum.APEX])}
 					/>
 
 					<AmountCard
 						left={getTokenInfo(TokenEnum.ADA).label}
-						right={fmt(
-							tvbGrandTotal[getTokenInfo(TokenEnum.ADA).label],
-						)}
+						right={fmt(tvbGrandTotal[TokenEnum.WADA])}
 					/>
 				</Box>
 
@@ -282,7 +276,11 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 				</Typography>
 				<Box className="audit-grid-md-2 audit-gap-12 audit-mb-16">
 					{sortEntries(tvbTokenTotalsAllChains).map(([tk, amt]) => (
-						<AmountCard key={tk} left={tk} right={fmt(amt)} />
+						<AmountCard
+							key={tk}
+							left={getTokenInfo(tk).label}
+							right={fmt(amt)}
+						/>
 					))}
 					{Object.keys(tvbTokenTotalsAllChains).length === 0 && (
 						<Typography className="audit-dim">
@@ -301,7 +299,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 							const rows = sortEntries(
 								tvbPerChainTotals[ck] ?? {},
 							).map(([t, a]) => ({
-								label: decodeTokenKey(t, ck),
+								label: getTokenInfo(t).label,
 								amt: a,
 							}));
 							return (

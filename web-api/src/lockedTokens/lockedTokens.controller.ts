@@ -10,7 +10,7 @@ import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LockedTokensService } from './lockedTokens.service';
 import {
 	LockedTokensDto,
-	LockedTokensResponse,
+	TokenEnumSchemaHolderDto,
 	TransferredTokensByDay,
 } from './lockedTokens.dto';
 import { BridgingModeEnum, GroupByTimePeriod } from 'src/common/enum';
@@ -51,16 +51,7 @@ export class LockedTokensController {
 	): Promise<LockedTokensDto> {
 		const allowedBridgingModes = (modes ?? []) as BridgingModeEnum[];
 
-		const lockedTokens = await this.lockedTokensService.getLockedTokens();
-		const totalTransfered =
-			await this.lockedTokensService.sumTransferredTokensPerChain(
-				allowedBridgingModes,
-			);
-
-		return {
-			chains: lockedTokens.chains,
-			totalTransferred: totalTransfered.totalTransferred,
-		};
+		return await this.lockedTokensService.fillTokensData(allowedBridgingModes);
 	}
 
 	@ApiOperation({
@@ -70,7 +61,7 @@ export class LockedTokensController {
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: LockedTokensResponse,
+		type: TransferredTokensByDay,
 		description: 'OK - Returns the sum of transferred tokens per chain.',
 	})
 	@ApiQuery({
@@ -135,11 +126,30 @@ export class LockedTokensController {
 			);
 		}
 
-		return this.lockedTokensService.sumOfTransferredTokenByDate(
+		return await this.lockedTokensService.sumOfTransferredTokenByDate(
 			startDate,
 			endDate,
 			groupBy,
 			allowedBridgingModes,
 		);
+	}
+
+	@Get('health')
+	@ApiOperation({ summary: 'Get application health status' })
+	@ApiResponse({
+		description: 'Returns a simple health status message.',
+		type: String, // The endpoint actually returns a string
+	})
+	// ---- THIS IS THE MAGIC LINE ----
+	// We add an extra, unused response definition just so Swagger sees the DTO.
+	// We use a non-standard status code like 299 to avoid conflicts.
+	@ApiResponse({
+		status: 299, // Use a non-standard or unused status code
+		description:
+			'FOR OPENAPI SCHEMA GENERATION ONLY: Contains enum definitions.',
+		type: TokenEnumSchemaHolderDto, // <-- Reference the DTO here
+	})
+	getHealth(): string {
+		return 'alive';
 	}
 }
