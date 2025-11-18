@@ -212,10 +212,10 @@ export const getLayerZeroToken = (chain: ChainEnum): TokenEnum => {
 	}
 };
 
-export const adaTokens = (token: TokenEnum): boolean => {
+export const isAdaToken = (token: TokenEnum): boolean => {
 	return TokenEnum.ADA === token || TokenEnum.WADA === token;
 };
 
-export const apexTokens = (token: TokenEnum): boolean => {
+export const isApexToken = (token: TokenEnum): boolean => {
 	return TokenEnum.APEX === token || TokenEnum.WAPEX === token;
 };

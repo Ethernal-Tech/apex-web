@@ -4,12 +4,10 @@ import { RootState } from '../../redux/store';
 import { useEffect, useMemo } from 'react';
 import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
 import './lockedTokens.css';
-import { getTokenInfo } from '../../settings/token';
+import { isAdaToken, isApexToken, getTokenInfo } from '../../settings/token';
 import { toChainEnum } from '../../settings/chain';
 import { fetchAndUpdateLockedTokensAction } from '../../actions/lockedTokens';
-import { correlateTokenToACurrency, isApexChain } from '../../utils/tokenUtils';
 import { convertWeiToDfmBig } from '../../utils/generalUtils';
-import { BridgingModeEnum } from '../../settings/chain';
 
 const powBigInt = (base: bigint, exp: number): bigint => {
 	let result = BigInt(1);
@@ -40,7 +38,7 @@ export const formatBigIntDecimalString = (value: bigint, decimals = 6) => {
 
 const LockedTokensComponent = () => {
 	const lockedTokens = useSelector((state: RootState) => state.lockedTokens);
-	const { layerZeroChains, settingsPerMode } = useSelector(
+	const { layerZeroChains } = useSelector(
 		(state: RootState) => state.settings,
 	);
 	const dispatch = useDispatch();
@@ -120,71 +118,42 @@ const LockedTokensComponent = () => {
 		return chunks.join(' | ').trim();
 	}, [lockedTokens.chains, lockedTokensLZFormatted]);
 
-	const skylineSettings = useMemo(
-		() => settingsPerMode[BridgingModeEnum.Skyline],
-		[settingsPerMode],
-	);
-
 	const transferredData = useMemo(() => {
-		const tvb: { [key: string]: bigint } = {};
+		const grandTotals = Object.values(lockedTokens.totalTransferred).reduce(
+			(accumulator, perTokenMap) => {
+				for (const [tokenKey, value] of Object.entries(perTokenMap)) {
+					const amount = BigInt(value || '0');
 
-		const addToTvbSafe = (tokenLabel: string, value: bigint) => {
-			if (!tvb[tokenLabel]) {
-				tvb[tokenLabel] = BigInt(0);
-			}
-
-			tvb[tokenLabel] += value;
-		};
-
-		Object.entries(lockedTokens.totalTransferred).forEach(
-			([chainKey, innerObj]) => {
-				const chain = toChainEnum(chainKey);
-				const perToken = innerObj as unknown as Record<
-					string,
-					string | number | bigint
-				>;
-
-				if (layerZeroChains[chain] && !isApexChain(chain)) {
-					addToTvbSafe(
-						getTokenInfo(TokenEnum.APEX).label,
-						BigInt(
-							Object.entries(perToken).find(
-								(x) => x[0] !== 'amount',
-							)?.[1] || '0',
-						),
-					);
-
-					return;
-				}
-
-				Object.entries(perToken).forEach(([tokenKey, value]) => {
-					const currencyInfo = correlateTokenToACurrency(
-						skylineSettings.cardanoChainsNativeTokens,
-						chain,
-						tokenKey,
-					);
-
-					if (currencyInfo) {
-						addToTvbSafe(currencyInfo.label, BigInt(value || '0'));
+					if (isApexToken(tokenKey as TokenEnum)) {
+						accumulator[TokenEnum.APEX] += amount;
+					} else if (isAdaToken(tokenKey as TokenEnum)) {
+						accumulator[TokenEnum.ADA] += amount;
 					}
-				});
+				}
+				return accumulator;
+			},
+			{
+				[TokenEnum.APEX]: BigInt(0),
+				[TokenEnum.ADA]: BigInt(0),
 			},
 		);
 
-		const chunks: string[] = Object.entries(tvb)
-			.map(([tokenLabel, value]) =>
-				value > BigInt(0)
-					? `${formatBigIntDecimalString(value, 6)} ${tokenLabel}`
-					: '',
-			)
-			.filter((x) => !!x);
+		const chunks = Object.entries(grandTotals)
+			.map(([tokenKey, totalValue]) => {
+				if (totalValue > BigInt(0)) {
+					const label = getTokenInfo(tokenKey as TokenEnum).label;
+					const formattedAmount = formatBigIntDecimalString(
+						totalValue,
+						6,
+					);
+					return `${formattedAmount} ${label}`;
+				}
+				return null; // Return null for zero-value entries
+			})
+			.filter((chunk): chunk is string => !!chunk); // Filter out the null entries
 
-		return chunks.join(' | ').trim();
-	}, [
-		layerZeroChains,
-		lockedTokens.totalTransferred,
-		skylineSettings.cardanoChainsNativeTokens,
-	]);
+		return chunks.join(' | ');
+	}, [lockedTokens.totalTransferred]);
 
 	return (
 		<Box className="banner-container">

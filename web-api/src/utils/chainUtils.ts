@@ -177,6 +177,7 @@ export const getTokenNameFromSettings = (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
 	settings: SettingsFullResponseDto,
+	token?: string,
 ): TokenEnum | undefined => {
 	switch (getBridgingMode(srcChain, dstChain, settings)) {
 		case BridgingModeEnum.LayerZero:
@@ -196,6 +197,9 @@ export const getTokenNameFromSettings = (
 
 			switch (srcChain) {
 				case ChainEnum.Cardano: {
+					if (token?.toLocaleLowerCase() === 'lovelace') {
+						return TokenEnum.ADA;
+					}
 					const idx =
 						nativeTokens?.findIndex((x) => x.dstChainID === dstChain) ?? -1;
 					if (idx === -1) return undefined;
@@ -218,6 +222,9 @@ export const getTokenNameFromSettings = (
 
 			switch (srcChain) {
 				case ChainEnum.Vector: {
+					if (token?.toLowerCase() === 'lovelace') {
+						return TokenEnum.APEX;
+					}
 					const idx =
 						nativeTokens?.findIndex((x) => x.dstChainID === dstChain) ?? -1;
 					if (idx === -1) return undefined;
