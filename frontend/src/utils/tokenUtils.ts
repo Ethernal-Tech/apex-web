@@ -1,6 +1,5 @@
 import Web3 from 'web3';
 import { isHex } from 'web3-validator';
-import { ChainEnum } from '../swagger/apexBridgeApiService';
 
 export const normalizeNativeTokenKey = (k: string) => {
 	if (!k.includes('.')) return k;
@@ -19,6 +18,3 @@ export const normalizeNativeTokenKey = (k: string) => {
 
 	return `${kParts[0]}${name}`;
 };
-
-export const isApexChain = (c: string) =>
-	c === ChainEnum.Prime || c === ChainEnum.Nexus || c === ChainEnum.Vector;
