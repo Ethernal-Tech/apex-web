@@ -249,8 +249,8 @@ export const toTokenEnum = (s?: string): TokenEnum | undefined => {
 
 	const cleaned = s.split('\u0000').join('').trim();
 
-	const enumValues = Object.values(TokenEnum) as string[]; // ['ADA','wADA',...]
-	const enumKeys = Object.keys(TokenEnum); // ['Ada','WAda',...]
+	const enumValues = Object.values(TokenEnum) as string[];
+	const enumKeys = Object.keys(TokenEnum);
 
 	let found = enumValues.find((v) => v === cleaned);
 	if (found) return found as TokenEnum;

@@ -168,29 +168,33 @@ export class LockedTokensService {
 			if (!tokenName) {
 				continue;
 			}
-			const amount = await this.getAggregatedSum(
-				info.srcChain,
-				info.dstChain,
-				'amount',
-			);
 
-			result.totalTransferred[info.srcChain] ??= {};
-			result.totalTransferred[info.srcChain][tokenName] = (
-				BigInt(result.totalTransferred[info.srcChain][tokenName] ?? '0') +
-				amountToBigInt(amount, info.srcChain)
-			).toString();
+			if (!isWrapped(tokenName)) {
+				const amount = await this.getAggregatedSum(
+					info.srcChain,
+					info.dstChain,
+					'amount',
+				);
 
-			if (isWrapped(tokenName)) {
+				result.totalTransferred[info.srcChain] ??= {};
+				result.totalTransferred[info.srcChain][tokenName] = (
+					BigInt(result.totalTransferred[info.srcChain][tokenName] ?? '0') +
+					amountToBigInt(amount, info.srcChain)
+				).toString();
+			} else {
 				const tokenAmount = await this.getAggregatedSum(
 					info.srcChain,
 					info.dstChain,
 					'nativeTokenAmount',
 				);
 
+				if (!result.totalTransferred[info.srcChain]) {
+					result.totalTransferred[info.srcChain] = {};
+				}
+
 				if (!result.totalTransferred[info.srcChain][tokenName]) {
 					result.totalTransferred[info.srcChain][tokenName] = '0';
 				}
-
 				result.totalTransferred[info.srcChain] ??= {};
 				result.totalTransferred[info.srcChain][tokenName as TokenEnum] = (
 					BigInt(
