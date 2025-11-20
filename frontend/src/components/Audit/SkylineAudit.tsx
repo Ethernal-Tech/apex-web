@@ -5,7 +5,7 @@ import { isEvmChain, getChainInfo } from '../../settings/chain';
 import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
 import { formatBigIntDecimalString } from '../lockedTokens/LockedTokensComponent';
 import { getExplorerAddressUrl } from '../../utils/chainUtils';
-import { getTokenInfo } from '../../settings/token';
+import { getCurrencyTokenInfo, getTokenInfo } from '../../settings/token';
 import { compareBigInts } from '../../features/utils';
 import LaunchIcon from '@mui/icons-material/Launch';
 
@@ -87,12 +87,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 	}, [chains, chainKeys, selChain]);
 
 	const selToken: string = useMemo((): string => {
-		switch (selChain) {
-			case ChainEnum.Cardano:
-				return TokenEnum.ADA;
-			default:
-				return TokenEnum.APEX;
-		}
+		return getCurrencyTokenInfo(selChain as ChainEnum).token;
 	}, [selChain]);
 
 	const addrMap = chains[selChain]?.[selToken] ?? {};
