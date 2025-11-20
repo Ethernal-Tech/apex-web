@@ -130,8 +130,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 							)
 								.sort((a, b) => compareBigInts(b[1], a[1]))
 								.map(([token, amt]) => ({
-									token: getTokenInfo(token as ChainEnum)
-										.label,
+									token: getTokenInfo(token).label,
 									amt,
 								}));
 							return (
