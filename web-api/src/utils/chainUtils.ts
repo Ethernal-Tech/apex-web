@@ -209,22 +209,11 @@ export const getTokenNameFromSettings = (
 					const tokenName = nativeTokens[idx].tokenName?.trim();
 					return decodeNativeTokenName(tokenName);
 				}
-				case ChainEnum.Prime: {
-					return TokenEnum.APEX;
-				}
-			}
-			return undefined;
-		}
-		case BridgingModeEnum.Reactor: {
-			const nativeTokens =
-				settings?.settingsPerMode[BridgingModeEnum.Reactor]
-					.cardanoChainsNativeTokens[srcChain];
-
-			switch (srcChain) {
 				case ChainEnum.Vector: {
-					if (token?.toLowerCase() === 'lovelace') {
+					if (token?.toLocaleLowerCase() === 'lovelace') {
 						return TokenEnum.APEX;
 					}
+
 					const idx =
 						nativeTokens?.findIndex((x) => x.dstChainID === dstChain) ?? -1;
 					if (idx === -1) return undefined;
@@ -234,12 +223,14 @@ export const getTokenNameFromSettings = (
 					const tokenName = nativeTokens[idx].tokenName?.trim();
 					return decodeNativeTokenName(tokenName);
 				}
-				case ChainEnum.Nexus:
 				case ChainEnum.Prime: {
 					return TokenEnum.APEX;
 				}
 			}
 			return undefined;
+		}
+		case BridgingModeEnum.Reactor: {
+			return TokenEnum.APEX;
 		}
 	}
 };
