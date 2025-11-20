@@ -85,11 +85,9 @@
 .skyline-bridge-section .audit-grid-md-2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
 @media (min-width: 1100px) { .skyline-bridge-section .audit-grid-md-2 { grid-template-columns: 1fr 1fr; gap: 16px; } }
 
-.skyline-bridge-section .audit-grid-md-3 { display: grid; grid-template-columns: 1fr; gap: 12px; }
-@media (min-width: 1100px) { .skyline-bridge-section .audit-grid-md-3 { grid-template-columns: 1fr 1fr 1fr; gap: 16px; } }
 
 .skyline-bridge-section .audit-layout { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
-@media (min-width: 1400px) { .skyline-bridge-section .audit-layout { grid-template-columns: 1.5fr 1fr; } }
+@media (min-width: 1400px) { .skyline-bridge-section .audit-layout { grid-template-columns: 1.1fr 1fr; } }
 
 .audit-w-half-md { width: 100%; }
 @media (min-width: 1100px) { .audit-w-half-md { width: 49%; } }
@@ -131,7 +129,7 @@
 .skyline-bridge-section .audit-card .audit-card-content.audit-row,
 .skyline-bridge-section .audit-grid-3 .audit-card .audit-row.font-14 {
   display: grid !important;
-  grid-template-columns: 1fr max-content !important; /* token | amount */
+  grid-template-columns: max-content 1fr !important; /* token | amount */
   align-items: center !important;
   column-gap: 12px !important;
   container-type: inline-size;
@@ -157,8 +155,8 @@
 
 /* “Total locked per chain” rows */
 .skyline-bridge-section .audit-grid-3 .audit-card .audit-row.font-14 { padding-right: 1px !important; column-gap: 16px !important; }
-.skyline-bridge-section .audit-grid-3 .audit-card .audit-row.font-14 .audit-amount { line-height: 1 !important; margin-right: 1px !important; max-width: 11ch; }
-@media (max-width: 1100px) { .skyline-bridge-section .audit-grid-3 .audit-card .audit-row.font-14 .audit-amount { max-width: 9.5ch; } }
+.skyline-bridge-section .audit-grid-3 .audit-card .audit-row.font-14 .audit-amount { line-height: 1 !important; margin-right: 1px !important;}
+@media (max-width: 1100px) { .skyline-bridge-section .audit-grid-3 .audit-card .audit-row.font-14 .audit-amount {}}
 
 /* Stack when narrow (keep order: token on top, amount below right) */
 @media (max-width: 560px) {
@@ -276,4 +274,3 @@
   .skyline-bridge-section:not(.layerzero) .audit-grid-3 .audit-card .audit-row.font-14 > :first-child { padding-right: 6px !important; }
   .skyline-bridge-section:not(.layerzero) .audit-grid-3 .audit-card .audit-row.font-14 .audit-amount { padding-left: 10px !important; }
 }
-
