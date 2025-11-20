@@ -4,7 +4,12 @@ import { RootState } from '../../redux/store';
 import { useEffect, useMemo } from 'react';
 import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
 import './lockedTokens.css';
-import { isAdaToken, isApexToken, getTokenInfo } from '../../settings/token';
+import {
+	isAdaToken,
+	isApexToken,
+	getTokenInfo,
+	getCurrencyTokenInfo,
+} from '../../settings/token';
 import { toChainEnum } from '../../settings/chain';
 import { fetchAndUpdateLockedTokensAction } from '../../actions/lockedTokens';
 import { convertWeiToDfmBig } from '../../utils/generalUtils';
@@ -108,10 +113,11 @@ const LockedTokensComponent = () => {
 			);
 		}
 
-		const adaTotal = getBalanceSafe(ChainEnum.Cardano, TokenEnum.ADA);
+		const cardanoCurrency = getCurrencyTokenInfo(ChainEnum.Cardano).token;
+		const adaTotal = getBalanceSafe(ChainEnum.Cardano, cardanoCurrency);
 		if (adaTotal > BigInt(0)) {
 			chunks.push(
-				`${formatBigIntDecimalString(adaTotal, 6)} ${getTokenInfo(TokenEnum.ADA).label}`,
+				`${formatBigIntDecimalString(adaTotal, 6)} ${getTokenInfo(cardanoCurrency).label}`,
 			);
 		}
 

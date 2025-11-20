@@ -140,7 +140,6 @@ export class LockedTokensController {
 		description: 'Returns a simple health status message.',
 		type: String, // The endpoint actually returns a string
 	})
-	// ---- THIS IS THE MAGIC LINE ----
 	// We add an extra, unused response definition just so Swagger sees the DTO.
 	// We use a non-standard status code like 299 to avoid conflicts.
 	@ApiResponse({
