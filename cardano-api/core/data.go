@@ -27,3 +27,7 @@ type SettingsResponse struct {
 	AllowedDirections              map[string][]string                     `json:"allowedDirections"`
 	NativeTokens                   map[string][]sendtx.TokenExchangeConfig `json:"nativeTokens"`
 }
+
+type MultiSigAddressesResponse struct {
+	CardanoChains map[string]BridgingAddresses `json:"bridgingAddress"`
+}

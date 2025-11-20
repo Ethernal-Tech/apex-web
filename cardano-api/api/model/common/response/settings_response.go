@@ -20,22 +20,7 @@ type SettingsResponse struct {
 func NewSettingsResponse(
 	config *core.AppConfig,
 ) *SettingsResponse {
-	var enabledChains []string
-
-	nativeTokens := map[string][]sendtx.TokenExchangeConfig{}
-	for chainID, cfg := range config.CardanoChains {
-		nativeTokens[chainID] = cfg.ChainSpecific.NativeTokens
-
-		if cfg.IsEnabled {
-			enabledChains = append(enabledChains, chainID)
-		}
-	}
-
-	for chainID, cfg := range config.EthChains {
-		if cfg.IsEnabled {
-			enabledChains = append(enabledChains, chainID)
-		}
-	}
+	enabledChains, nativeTokens := config.CreateEnabledChainsAndNativeTokens()
 
 	return &SettingsResponse{
 		RunMode:                   config.RunMode,
@@ -43,4 +28,8 @@ func NewSettingsResponse(
 		BridgingSettings:          config.BridgingSettings,
 		EnabledChains:             enabledChains,
 	}
+}
+
+type ValidatorChangeStatusReponse struct {
+	InProgress bool `json:"inProgress"`
 }
