@@ -12,6 +12,7 @@ import (
 	"github.com/Ethernal-Tech/cardano-api/api/controllers"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
+	validatorchange "github.com/Ethernal-Tech/cardano-api/validator-change"
 	loggerInfra "github.com/Ethernal-Tech/cardano-infrastructure/logger"
 	"github.com/spf13/cobra"
 )
@@ -74,10 +75,16 @@ func runCommand(cmd *cobra.Command, _ []string) {
 
 	switch config.RunMode {
 	case common.ReactorMode:
+		validatorChangeTracker := core.NewValidatorChangeTracker()
+
 		apiControllers = append(
 			apiControllers,
-			controllers.NewReactorTxController(config, logger.Named("reactor_tx_controller")),
+			controllers.NewReactorTxController(config, logger.Named("reactor_tx_controller"), validatorChangeTracker),
 		)
+
+		validatorChange := validatorchange.NewValidatorChange(ctx, logger, config, validatorChangeTracker)
+
+		go validatorChange.Start(ctx)
 	case common.SkylineMode:
 		apiControllers = append(
 			apiControllers, controllers.NewSkylineTxController(config, logger.Named("skyline_tx_controller")),

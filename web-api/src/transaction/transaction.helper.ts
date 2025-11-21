@@ -1,4 +1,4 @@
-import { ChainApexBridgeEnum } from 'src/common/enum';
+import { BridgingModeEnum, ChainApexBridgeEnum } from 'src/common/enum';
 import {
 	CreateCardanoTransactionResponseDto,
 	ErrorResponseDto,
@@ -15,16 +15,9 @@ import {
 import web3, { Web3 } from 'web3';
 import { isAddress } from 'web3-validator';
 import { NewAddress, RewardAddress } from 'src/utils/Address/addreses';
-import {
-	areChainsEqual,
-	getBridgingMode,
-	toNumChainID,
-} from 'src/utils/chainUtils';
+import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
 import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
-import {
-	BridgingSettingsDto,
-	SettingsFullResponseDto,
-} from 'src/settings/settings.dto';
+import { BridgingSettingsDto } from 'src/settings/settings.dto';
 import { convertDfmToWei, getUrlAndApiKey } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
 
@@ -63,13 +56,8 @@ const prepareCreateCardanoBridgingTx = (
 export const createCardanoBridgingTx = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
-	settings: SettingsFullResponseDto,
+	bridgingMode: BridgingModeEnum,
 ): Promise<CreateCardanoTransactionResponseDto> => {
-	const bridgingMode = getBridgingMode(
-		dto.originChain,
-		dto.destinationChain,
-		settings,
-	);
 	const { url, apiKey } = getUrlAndApiKey(bridgingMode, false);
 	const endpointUrl = url + `/api/CardanoTx/CreateBridgingTx`;
 
@@ -104,13 +92,8 @@ export const createCardanoBridgingTx = async (
 export const getCardanoBridgingTxFee = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
-	settings: SettingsFullResponseDto,
+	bridgingMode: BridgingModeEnum,
 ): Promise<CardanoTransactionFeeResponseDto> => {
-	const bridgingMode = getBridgingMode(
-		dto.originChain,
-		dto.destinationChain,
-		settings,
-	);
 	const { url, apiKey } = getUrlAndApiKey(bridgingMode, false);
 	const endpointUrl = url + `/api/CardanoTx/GetBridgingTxFee`;
 

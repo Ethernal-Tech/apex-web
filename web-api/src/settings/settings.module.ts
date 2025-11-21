@@ -1,12 +1,16 @@
 import { Module } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { SettingsController } from './settings.controller';
+import { SchedulerRegistry } from '@nestjs/schedule';
 
 const providers = [
 	{
 		provide: SettingsService,
-		useFactory: async (): Promise<SettingsService> => {
-			const s = new SettingsService();
+		inject: [SchedulerRegistry],
+		useFactory: async (
+			schedulerRegistry: SchedulerRegistry,
+		): Promise<SettingsService> => {
+			const s = new SettingsService(schedulerRegistry);
 			await s.init();
 			return s;
 		},
