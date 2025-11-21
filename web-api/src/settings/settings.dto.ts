@@ -1,6 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsPositive, ValidateNested } from 'class-validator';
+import {
+	IsBoolean,
+	IsNotEmpty,
+	IsPositive,
+	ValidateNested,
+} from 'class-validator';
 
 export class BridgingSettingsDto {
 	@IsNotEmpty()
@@ -54,4 +59,14 @@ export class SettingsResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	enabledChains: string[];
+}
+
+export class ValidatorChangeDto {
+	@IsNotEmpty()
+	@IsBoolean()
+	@ApiProperty({
+		description:
+			'Indicates whether the validator set change is currently in progress.',
+	})
+	inProgress: boolean;
 }
