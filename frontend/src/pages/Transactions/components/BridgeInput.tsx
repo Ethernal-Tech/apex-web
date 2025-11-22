@@ -37,6 +37,9 @@ import {
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
+import { fetchAndUpdateValidatorStatusAction } from '../../../actions/validatorSetChange';
+
+const REFETCH_VSU_STATUS_MS = 30000;
 
 type BridgeInputType = {
 	getCardanoTxFee: (
@@ -140,6 +143,8 @@ const BridgeInput = ({
 	const [amount, setAmount] = useState('');
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
+	const [validatorChangeInProgress, setValidatorChangeInProgress] =
+		useState(true);
 
 	const walletUTxOs = useSelector(
 		(state: RootState) => state.accountInfo.utxos,
@@ -337,6 +342,28 @@ const BridgeInput = ({
 		minDfmValue = minValueToBridge;
 	}
 
+	const getValidatorChangeStatus = useCallback(async () => {
+		try {
+			const isInProgress = await fetchAndUpdateValidatorStatusAction();
+			setValidatorChangeInProgress(isInProgress);
+		} catch (err) {
+			console.error('Failed to fetch validator set change status:', err);
+		}
+	}, []);
+
+	useEffect(() => {
+		getValidatorChangeStatus();
+
+		const intervalId = setInterval(
+			getValidatorChangeStatus,
+			REFETCH_VSU_STATUS_MS,
+		);
+
+		return () => {
+			clearInterval(intervalId);
+		};
+	}, [getValidatorChangeStatus]);
+
 	// when bridging native tokens, the lovelace that must also be given to the bridge for carrying native tokens
 	// is calculated later. in case for example insufficient lovelace balance, the call where the calculation
 	// takes place fails, bridgingFee never gets updated, and the `Insufficient ADA` is never shown
@@ -490,6 +517,7 @@ const BridgeInput = ({
 						borderRadius: '8px',
 						padding: 2,
 					}}
+					isFeeInformation={!validatorChangeInProgress}
 				/>
 
 				{!!loadingState && (
@@ -521,7 +549,13 @@ const BridgeInput = ({
 				<ButtonCustom
 					onClick={onSubmit}
 					variant={appSettings.isSkyline ? 'whiteSkyline' : 'white'}
-					disabled={!!loadingState || currencyMaxAmount < 0}
+					disabled={
+						!!loadingState ||
+						currencyMaxAmount < 0 ||
+						(bridgingModeInfo.bridgingMode ===
+							BridgingModeEnum.Reactor &&
+							validatorChangeInProgress)
+					}
 					sx={{
 						gridColumn: 'span 1',
 						textTransform: 'uppercase',

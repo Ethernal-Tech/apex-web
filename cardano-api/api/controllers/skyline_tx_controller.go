@@ -181,12 +181,12 @@ func (c *SkylineTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Req
 func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody *commonRequest.CreateBridgingTxRequest,
 ) error {
-	cardanoSrcConfig, _ := core.GetChainConfig(c.appConfig, requestBody.SourceChainID)
+	cardanoSrcConfig, _ := c.appConfig.GetChainConfig(requestBody.SourceChainID)
 	if cardanoSrcConfig == nil {
 		return fmt.Errorf("origin chain not registered: %v", requestBody.SourceChainID)
 	}
 
-	cardanoDestConfig, _ := core.GetChainConfig(c.appConfig, requestBody.DestinationChainID)
+	cardanoDestConfig, _ := c.appConfig.GetChainConfig(requestBody.DestinationChainID)
 	if cardanoDestConfig == nil {
 		return fmt.Errorf("destination chain not registered: %v", requestBody.DestinationChainID)
 	}
