@@ -161,11 +161,12 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 
 func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig, *EthChainConfig) {
 	appConfig.cardanoChainsMu.RLock()
-	defer appConfig.cardanoChainsMu.RUnlock()
 
 	if cardanoChainConfig, exists := appConfig.CardanoChains[chainID]; exists && cardanoChainConfig.IsEnabled {
 		return cardanoChainConfig, nil
 	}
+
+	appConfig.cardanoChainsMu.RUnlock()
 
 	if ethChainConfig, exists := appConfig.EthChains[chainID]; exists && ethChainConfig.IsEnabled {
 		return nil, ethChainConfig
@@ -175,6 +176,8 @@ func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig,
 }
 
 func (appConfig *AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]sendtx.ChainConfig, error) {
+	appConfig.cardanoChainsMu.RLock()
+
 	result := make(map[string]sendtx.ChainConfig, len(appConfig.CardanoChains)+len(appConfig.EthChains))
 
 	for chainID, cardanoConfig := range appConfig.CardanoChains {
@@ -185,6 +188,8 @@ func (appConfig *AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]s
 
 		result[chainID] = cfg
 	}
+
+	appConfig.cardanoChainsMu.RUnlock()
 
 	for chainID, config := range appConfig.EthChains {
 		result[chainID] = config.ToSendTxChainConfig(appConfig)
