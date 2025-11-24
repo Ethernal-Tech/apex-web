@@ -4,3 +4,8 @@ package common
 type ChainSpecificConfig interface {
 	GetChainType() string
 }
+
+type ValidatorChangeTracker interface {
+	SetValidatorChangeStatus(inProgress bool)
+	IsValidatorChangeInProgress() bool
+}
