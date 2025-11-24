@@ -21,3 +21,7 @@ type SettingsResponse struct {
 	MaxReceiversPerBridgingRequest int                 `json:"maxReceiversPerBridgingRequest"`
 	AllowedDirections              map[string][]string `json:"allowedDirections"`
 }
+
+type MultiSigAddressesResponse struct {
+	CardanoChains map[string]BridgingAddresses `json:"bridgingAddress"`
+}

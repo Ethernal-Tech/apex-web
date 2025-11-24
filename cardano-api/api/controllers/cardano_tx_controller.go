@@ -21,9 +21,10 @@ import (
 )
 
 type CardanoTxControllerImpl struct {
-	appConfig      *core.AppConfig
-	usedUtxoCacher *utxotransformer.UsedUtxoCacher
-	logger         hclog.Logger
+	appConfig              *core.AppConfig
+	usedUtxoCacher         *utxotransformer.UsedUtxoCacher
+	logger                 hclog.Logger
+	validatorChangeTracker common.ValidatorChangeTracker
 }
 
 var _ core.APIController = (*CardanoTxControllerImpl)(nil)
@@ -31,11 +32,13 @@ var _ core.APIController = (*CardanoTxControllerImpl)(nil)
 func NewCardanoTxController(
 	appConfig *core.AppConfig,
 	logger hclog.Logger,
+	validatorChange common.ValidatorChangeTracker,
 ) *CardanoTxControllerImpl {
 	return &CardanoTxControllerImpl{
-		appConfig:      appConfig,
-		usedUtxoCacher: utxotransformer.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
-		logger:         logger,
+		appConfig:              appConfig,
+		usedUtxoCacher:         utxotransformer.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
+		logger:                 logger,
+		validatorChangeTracker: validatorChange,
 	}
 }
 
@@ -52,6 +55,16 @@ func (c *CardanoTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 }
 
 func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
+	if c.validatorChangeTracker.IsValidatorChangeInProgress() {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf(
+				"validator change is in progress, getting the bridging tx fee is not possible at the moment"),
+			c.logger)
+
+		return
+	}
+
 	requestBody, ok := utils.DecodeModel[request.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
@@ -79,6 +92,14 @@ func (c *CardanoTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 }
 
 func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
+	if c.validatorChangeTracker.IsValidatorChangeInProgress() {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("validator change is in progress, creating a bridge tx is not possible at the moment"), c.logger)
+
+		return
+	}
+
 	requestBody, ok := utils.DecodeModel[request.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
@@ -121,12 +142,12 @@ func (c *CardanoTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Req
 func (c *CardanoTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody *request.CreateBridgingTxRequest,
 ) error {
-	cardanoSrcConfig, _ := core.GetChainConfig(c.appConfig, requestBody.SourceChainID)
+	cardanoSrcConfig, _ := c.appConfig.GetChainConfig(requestBody.SourceChainID)
 	if cardanoSrcConfig == nil {
 		return fmt.Errorf("origin chain not registered: %v", requestBody.SourceChainID)
 	}
 
-	cardanoDestConfig, ethDestConfig := core.GetChainConfig(c.appConfig, requestBody.DestinationChainID)
+	cardanoDestConfig, ethDestConfig := c.appConfig.GetChainConfig(requestBody.DestinationChainID)
 	if cardanoDestConfig == nil && ethDestConfig == nil {
 		return fmt.Errorf("destination chain not registered: %v", requestBody.DestinationChainID)
 	}
