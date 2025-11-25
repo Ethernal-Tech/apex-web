@@ -365,7 +365,7 @@ func (c *SkylineTxControllerImpl) createTx(ctx context.Context, requestBody comm
 			Receivers:              receivers,
 			BridgingAddress:        bridgingAddress.Address,
 			BridgingFee:            requestBody.BridgingFee,
-			OperationFee:           0,
+			OperationFee:           requestBody.OperationFee,
 		},
 	)
 	if err != nil {
@@ -422,7 +422,7 @@ func (c *SkylineTxControllerImpl) calculateTxFee(
 			Receivers:              receivers,
 			BridgingAddress:        bridgingAddress.Address,
 			BridgingFee:            requestBody.BridgingFee,
-			OperationFee:           0,
+			OperationFee:           requestBody.OperationFee,
 		},
 	)
 	if err != nil {
