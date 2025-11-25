@@ -47,7 +47,7 @@ const tokenInfos: TokenInfo[] = [
 	{
 		token: TokenEnum.WADA,
 		icon: AdaIcon,
-		label: 'vADA',
+		label: 'xADA',
 		borderColor: '#0538AF',
 	},
 	{
