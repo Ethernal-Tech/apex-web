@@ -11,10 +11,10 @@ import {
 	ChainEnum,
 	TxTypeEnum,
 	TransactionDataDto,
+	TokenEnum,
 } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
-import { TokenEnum } from '../../../features/enums';
 import { useSupporedSourceLZTokenOptions } from '../utils';
 import { BridgingModeEnum, getChainInfo } from '../../../settings/chain';
 import {

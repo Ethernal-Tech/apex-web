@@ -47,12 +47,12 @@ export enum BridgingModeEnum {
 }
 
 export enum TokenEnum {
-	Ada = 'Ada',
-	WAda = 'WAda',
+	ADA = 'ADA',
+	WADA = 'WADA',
 	APEX = 'APEX',
-	WAPEX = 'WAPEX',
+	WAPEX = 'wAPEX',
 	ETH = 'ETH',
-	BAP3X = 'bAP3X',
-	BNAP3X = 'bnAP3X',
+	BAP3X = 'BAP3X',
+	BNAP3X = 'BNAP3X',
 	BNB = 'BNB',
 }

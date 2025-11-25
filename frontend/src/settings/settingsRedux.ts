@@ -1,7 +1,11 @@
-import { TxTypeEnum } from '../swagger/apexBridgeApiService';
+import { TokenEnum, TxTypeEnum } from '../swagger/apexBridgeApiService';
 
 export type CardanoChainsNativeTokens = {
-	[key: string]: { dstChainID: string; tokenName: string }[];
+	[key: string]: {
+		dstChainID: string;
+		tokenName: string;
+		token: TokenEnum;
+	}[];
 };
 
 export type LayerZeroChains = Record<

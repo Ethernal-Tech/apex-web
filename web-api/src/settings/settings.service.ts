@@ -8,6 +8,7 @@ import {
 } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { BridgingModeEnum, ChainEnum, TxTypeEnum } from 'src/common/enum';
+import { getTokenNameFromSettings } from 'src/utils/chainUtils';
 
 const RETRY_DELAY_MS = 5000;
 const settingsApiPath = `/api/CardanoTx/GetSettings`;
@@ -107,6 +108,26 @@ export class SettingsService {
 		};
 		this.SettingsResponse.allowedDirections = allowedDirections;
 		this.SettingsResponse.enabledChains = Array.from(enabledChains);
+
+		for (const [srcChain, tokens] of Object.entries(
+			this.SettingsResponse.settingsPerMode[BridgingModeEnum.Skyline]
+				.cardanoChainsNativeTokens,
+		)) {
+			if (tokens && tokens.length > 0) {
+				const token = getTokenNameFromSettings(
+					srcChain as ChainEnum,
+					tokens[0].dstChainID as ChainEnum,
+					this.SettingsResponse,
+					false,
+				);
+
+				if (token) {
+					this.SettingsResponse.settingsPerMode[
+						BridgingModeEnum.Skyline
+					].cardanoChainsNativeTokens[srcChain][0].token = token;
+				}
+			}
+		}
 
 		Logger.debug(`settings dto ${JSON.stringify(this.SettingsResponse)}`);
 	}

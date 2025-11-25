@@ -9,6 +9,7 @@ import {
 	SettingsFullResponseDto,
 	SettingsResponseDto,
 } from 'src/settings/settings.dto';
+import Web3 from 'web3';
 
 const NEXUS_TESTNET_CHAIN_ID = BigInt(9070);
 const NEXUS_MAINNET_CHAIN_ID = BigInt(9069);
@@ -176,7 +177,8 @@ export const getTokenNameFromSettings = (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
 	settings: SettingsFullResponseDto,
-): string | undefined => {
+	isCurrency = false,
+): TokenEnum | undefined => {
 	switch (getBridgingMode(srcChain, dstChain, settings)) {
 		case BridgingModeEnum.LayerZero:
 			switch (srcChain) {
@@ -184,15 +186,95 @@ export const getTokenNameFromSettings = (
 					return TokenEnum.BNAP3X;
 				case ChainEnum.Base:
 					return TokenEnum.BAP3X;
+				case ChainEnum.Nexus:
+					return TokenEnum.APEX;
 			}
 			return undefined;
 		case BridgingModeEnum.Skyline: {
 			const nativeTokens =
 				settings?.settingsPerMode[BridgingModeEnum.Skyline]
 					.cardanoChainsNativeTokens[srcChain];
-			return nativeTokens
-				?.find((x) => x.dstChainID === dstChain)
-				?.tokenName.trim();
+
+			switch (srcChain) {
+				case ChainEnum.Cardano: {
+					if (isCurrency || dstChain === ChainEnum.Vector) {
+						return TokenEnum.ADA;
+					}
+
+					const idx =
+						nativeTokens?.findIndex((x) => x.dstChainID === dstChain) ?? -1;
+					if (idx === -1) return undefined;
+
+					if (idx === 0) return TokenEnum.WAPEX;
+
+					const tokenName = nativeTokens[idx].tokenName?.trim();
+					return decodeNativeTokenName(tokenName);
+				}
+				case ChainEnum.Vector: {
+					if (
+						isCurrency ||
+						dstChain === ChainEnum.Prime ||
+						dstChain === ChainEnum.Nexus
+					) {
+						return TokenEnum.APEX;
+					}
+
+					const idx =
+						nativeTokens?.findIndex((x) => x.dstChainID === dstChain) ?? -1;
+					if (idx === -1) return undefined;
+
+					if (idx === 0) return TokenEnum.WADA;
+
+					const tokenName = nativeTokens[idx].tokenName?.trim();
+					return decodeNativeTokenName(tokenName);
+				}
+				case ChainEnum.Prime: {
+					return TokenEnum.APEX;
+				}
+			}
+			return undefined;
 		}
+		case BridgingModeEnum.Reactor: {
+			return TokenEnum.APEX;
+		}
+	}
+};
+
+export const toTokenEnum = (s?: string): TokenEnum | undefined => {
+	if (!s) return undefined;
+
+	const cleaned = s.split('\u0000').join('').trim();
+
+	const enumValues = Object.values(TokenEnum) as string[];
+	const enumKeys = Object.keys(TokenEnum);
+
+	let found = enumValues.find((v) => v === cleaned);
+	if (found) return found as TokenEnum;
+
+	found = enumValues.find((v) => v.toLowerCase() === cleaned.toLowerCase());
+	if (found) return found as TokenEnum;
+
+	const keyMatch = enumKeys.find(
+		(k) => k.toLowerCase() === cleaned.toLowerCase(),
+	);
+	if (keyMatch) return (TokenEnum as any)[keyMatch] as TokenEnum;
+
+	return undefined;
+};
+
+export const decodeNativeTokenName = (
+	nativeTokenName: string,
+): TokenEnum | undefined => {
+	const parts = nativeTokenName.split('.');
+	if (parts.length < 2) {
+		return toTokenEnum(nativeTokenName);
+	}
+	const tokenName = parts[1];
+
+	try {
+		const decodedTokenName = Web3.utils.hexToAscii(tokenName);
+		return toTokenEnum(decodedTokenName);
+	} catch (_) {
+		return toTokenEnum(tokenName);
 	}
 };
