@@ -126,7 +126,7 @@ const EXPLORER_URLS: {
 } = {
 	mainnet: {
 		[ChainEnum.Prime]: 'https://apexscan.org/en',
-		[ChainEnum.Vector]: '',
+		[ChainEnum.Vector]: 'https://vector.apexscan.org/en',
 		[ChainEnum.Nexus]: 'https://explorer.nexus.mainnet.apexfusion.org',
 	},
 	testnet: {
@@ -147,7 +147,9 @@ export const getExplorerTxUrl = (chain: ChainEnum, txHash: string) => {
 	let url;
 	switch (chain) {
 		case ChainEnum.Vector:
-			url = `${base}/transaction/hash/${txHash}`;
+			url = appSettings.isMainnet
+				? `${base}/transaction/${txHash}/summary/`
+				: `${base}/transaction/hash/${txHash}`;
 			break;
 		case ChainEnum.Prime: {
 			url = `${base}/transaction/${txHash}/summary/`;
