@@ -197,9 +197,13 @@ export const getTokenNameFromSettings = (
 
 			switch (srcChain) {
 				case ChainEnum.Cardano: {
-					if (token?.toLocaleLowerCase() === 'lovelace') {
+					if (
+						token?.toLocaleLowerCase() === 'lovelace' ||
+						dstChain === ChainEnum.Vector
+					) {
 						return TokenEnum.ADA;
 					}
+
 					const idx =
 						nativeTokens?.findIndex((x) => x.dstChainID === dstChain) ?? -1;
 					if (idx === -1) return undefined;
@@ -210,7 +214,11 @@ export const getTokenNameFromSettings = (
 					return decodeNativeTokenName(tokenName);
 				}
 				case ChainEnum.Vector: {
-					if (token?.toLocaleLowerCase() === 'lovelace') {
+					if (
+						token?.toLocaleLowerCase() === 'lovelace' ||
+						dstChain === ChainEnum.Prime ||
+						dstChain === ChainEnum.Nexus
+					) {
 						return TokenEnum.APEX;
 					}
 
