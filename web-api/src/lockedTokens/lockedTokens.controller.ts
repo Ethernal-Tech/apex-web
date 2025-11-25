@@ -8,11 +8,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LockedTokensService } from './lockedTokens.service';
-import {
-	LockedTokensDto,
-	TokenEnumSchemaHolderDto,
-	TransferredTokensByDay,
-} from './lockedTokens.dto';
+import { LockedTokensDto, TransferredTokensByDay } from './lockedTokens.dto';
 import { BridgingModeEnum, GroupByTimePeriod } from 'src/common/enum';
 
 @ApiTags('LockedTokens')
@@ -132,23 +128,5 @@ export class LockedTokensController {
 			groupBy,
 			allowedBridgingModes,
 		);
-	}
-
-	@Get('health')
-	@ApiOperation({ summary: 'Get application health status' })
-	@ApiResponse({
-		description: 'Returns a simple health status message.',
-		type: String, // The endpoint actually returns a string
-	})
-	// We add an extra, unused response definition just so Swagger sees the DTO.
-	// We use a non-standard status code like 299 to avoid conflicts.
-	@ApiResponse({
-		status: 299, // Use a non-standard or unused status code
-		description:
-			'FOR OPENAPI SCHEMA GENERATION ONLY: Contains enum definitions.',
-		type: TokenEnumSchemaHolderDto, // <-- Reference the DTO here
-	})
-	getHealth(): string {
-		return 'alive';
 	}
 }

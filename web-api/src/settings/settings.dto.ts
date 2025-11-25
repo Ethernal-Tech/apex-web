@@ -8,7 +8,7 @@ import {
 	IsPositive,
 	ValidateNested,
 } from 'class-validator';
-import { ChainEnum, TxTypeEnum } from 'src/common/enum';
+import { ChainEnum, TokenEnum, TxTypeEnum } from 'src/common/enum';
 
 export class BridgingSettingsDto {
 	@IsNotEmpty()
@@ -99,6 +99,13 @@ export class NativeTokenDto {
 		description: 'Native token name',
 	})
 	tokenName: string;
+
+	@ApiProperty({
+		description: 'Native token identifier',
+		enum: TokenEnum,
+		enumName: 'TokenEnum',
+	})
+	token: TokenEnum;
 }
 
 export class LayerZeroChainSettingsDto {
