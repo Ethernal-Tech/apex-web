@@ -109,7 +109,7 @@ class WalletHandler implements UtxoRetriever {
 		return await this._enabledWallet!.getChangeAddress();
 	};
 
-	getAllUtxos = async (includeCollateral = false): Promise<UTxO[]> => {
+	getAllUtxos = async (includeCollateral = true): Promise<UTxO[]> => {
 		this._checkWalletAndThrow();
 
 		const address = await this.getChangeAddress();
