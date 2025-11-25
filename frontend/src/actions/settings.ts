@@ -46,7 +46,7 @@ export const fetchAndUpdateBridgingAddressesAction = async (
 ) => {
 	const bridgingAddresses = await retryForever(async () => {
 		const bridgingAddressesResp = await tryCatchJsonByAction(
-			() => getBridgingAddressesAction(chainID),
+			async () => await getBridgingAddressesAction(chainID),
 			false,
 		);
 		if (bridgingAddressesResp instanceof ErrorResponse) {
