@@ -173,9 +173,9 @@ class EvmWalletHandler {
 		return await this.getWeb3()!.eth.net.getId();
 	};
 
-	submitTx = async (tx: Transaction, opts?: SendTransactionOptions) => {
+	submitTx = (tx: Transaction, opts?: SendTransactionOptions) => {
 		this._checkWalletAndThrow();
-		return await this.getWeb3()!.eth.sendTransaction(tx, undefined, opts);
+		return this.getWeb3()!.eth.sendTransaction(tx, undefined, opts);
 	};
 
 	estimateGas = async (tx: Transaction) => {
