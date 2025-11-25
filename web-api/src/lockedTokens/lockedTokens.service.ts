@@ -28,7 +28,6 @@ import { SettingsService } from 'src/settings/settings.service';
 import {
 	getAllChainsDirections,
 	getTokenNameFromSettings,
-	isWrapped,
 } from 'src/utils/chainUtils';
 import { amountToBigInt } from 'src/utils/generalUtils';
 
@@ -95,7 +94,7 @@ export class LockedTokensService {
 							chainName as ChainEnum,
 							matchingDstChain?.dstChain,
 							this.settingsService.SettingsResponse,
-							token,
+							token.toLowerCase() === 'lovelace',
 						);
 
 						if (tokenName) {
@@ -163,25 +162,37 @@ export class LockedTokensService {
 				info.srcChain,
 				info.dstChain,
 				this.settingsService.SettingsResponse,
+				true,
 			);
 
 			if (!tokenName) {
 				continue;
 			}
 
-			if (!isWrapped(tokenName)) {
-				const amount = await this.getAggregatedSum(
-					info.srcChain,
-					info.dstChain,
-					'amount',
-				);
+			const amount = await this.getAggregatedSum(
+				info.srcChain,
+				info.dstChain,
+				'amount',
+			);
 
-				result.totalTransferred[info.srcChain] ??= {};
-				result.totalTransferred[info.srcChain][tokenName] = (
-					BigInt(result.totalTransferred[info.srcChain][tokenName] ?? '0') +
-					amountToBigInt(amount, info.srcChain)
-				).toString();
-			} else {
+			result.totalTransferred[info.srcChain] ??= {};
+			result.totalTransferred[info.srcChain][tokenName] = (
+				BigInt(result.totalTransferred[info.srcChain][tokenName] ?? '0') +
+				amountToBigInt(amount, info.srcChain)
+			).toString();
+
+			const wrappedTokenName = getTokenNameFromSettings(
+				info.srcChain,
+				info.dstChain,
+				this.settingsService.SettingsResponse,
+			);
+
+			if (!wrappedTokenName) {
+				continue;
+			}
+
+			if (wrappedTokenName !== tokenName) {
+				// check for wrapped token because in some
 				const tokenAmount = await this.getAggregatedSum(
 					info.srcChain,
 					info.dstChain,
@@ -192,16 +203,18 @@ export class LockedTokensService {
 					result.totalTransferred[info.srcChain] = {};
 				}
 
-				if (!result.totalTransferred[info.srcChain][tokenName]) {
-					result.totalTransferred[info.srcChain][tokenName] = '0';
+				if (!result.totalTransferred[info.srcChain][wrappedTokenName]) {
+					result.totalTransferred[info.srcChain][wrappedTokenName] = '0';
 				}
 				result.totalTransferred[info.srcChain] ??= {};
-				result.totalTransferred[info.srcChain][tokenName as TokenEnum] = (
-					BigInt(
-						result.totalTransferred[info.srcChain][tokenName as TokenEnum] ??
-							'0',
-					) + amountToBigInt(tokenAmount, info.srcChain)
-				).toString();
+				result.totalTransferred[info.srcChain][wrappedTokenName as TokenEnum] =
+					(
+						BigInt(
+							result.totalTransferred[info.srcChain][
+								wrappedTokenName as TokenEnum
+							] ?? '0',
+						) + amountToBigInt(tokenAmount, info.srcChain)
+					).toString();
 			}
 		}
 

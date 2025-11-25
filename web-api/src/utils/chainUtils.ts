@@ -177,7 +177,7 @@ export const getTokenNameFromSettings = (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
 	settings: SettingsFullResponseDto,
-	token?: string,
+	isCurrency = false,
 ): TokenEnum | undefined => {
 	switch (getBridgingMode(srcChain, dstChain, settings)) {
 		case BridgingModeEnum.LayerZero:
@@ -197,10 +197,7 @@ export const getTokenNameFromSettings = (
 
 			switch (srcChain) {
 				case ChainEnum.Cardano: {
-					if (
-						token?.toLocaleLowerCase() === 'lovelace' ||
-						dstChain === ChainEnum.Vector
-					) {
+					if (isCurrency || dstChain === ChainEnum.Vector) {
 						return TokenEnum.ADA;
 					}
 
@@ -215,7 +212,7 @@ export const getTokenNameFromSettings = (
 				}
 				case ChainEnum.Vector: {
 					if (
-						token?.toLocaleLowerCase() === 'lovelace' ||
+						isCurrency ||
 						dstChain === ChainEnum.Prime ||
 						dstChain === ChainEnum.Nexus
 					) {
@@ -280,13 +277,4 @@ export const decodeNativeTokenName = (
 	} catch (_) {
 		return toTokenEnum(tokenName);
 	}
-};
-
-export const isWrapped = (token: TokenEnum): boolean => {
-	return (
-		token === TokenEnum.BAP3X ||
-		token === TokenEnum.BNAP3X ||
-		token === TokenEnum.WAPEX ||
-		token === TokenEnum.WADA
-	);
 };
