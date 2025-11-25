@@ -155,6 +155,8 @@ $ go run main.go generate-configs skyline \
 		--output-file-name "config.json"\
 		--prime-network-id 0\
 		--prime-network-magic 3311\
+		--prime-bridging-fee-address "addr_test1wpp9wrzm5249ksfucal6f9rdth9y0rlwecu0r608gysjmcsf764mj"\
+		--prime-bridging-fallback-address "addr_test1wr943cc3l8hxhjcnh8mjrh67yshksw2ugydx0r9a4k7xrfqsp4p7y"\
 		--prime-blockfrost-url "https://blockfrost-m1.demeter.run"\
 		--prime-blockfrost-api-key "test_demeter_api_key_1"\
 		--cardano-network-id 0\
@@ -164,6 +166,8 @@ $ go run main.go generate-configs skyline \
 		--cardano-ogmios-url "http://preview-services-skyline.testnet.ethernal.work:1733"\
 		--vector-network-id 0\
 		--vector-network-magic 2\
+		--vector-bridging-fee-address "addr_test1wz3q8gnjsuyf7etplmcuw8rfusckmn5dmjwnhwdsap6savqcx8xg3"\
+		--vector-bridging-fallback-address "addr_test1wrntyxdelrw98ps0vrpuf4rr2mmknem83y9ywxfn0a3jeasxtsjz5"\
 		--vector-ogmios-url "http://preview-services-skyline.testnet.ethernal.work:1733"\
 		--logs-path "./logs"\
 		--utxo-cache-timeout 1m30s\
