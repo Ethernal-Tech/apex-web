@@ -101,7 +101,7 @@ export class NativeTokenDto {
 	tokenName: string;
 
 	@ApiProperty({
-		description: 'Native token identifier',
+		description: 'Token identifier',
 		enum: TokenEnum,
 		enumName: 'TokenEnum',
 	})

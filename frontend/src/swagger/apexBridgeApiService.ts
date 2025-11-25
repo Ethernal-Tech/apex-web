@@ -635,7 +635,7 @@ export class LockedTokensControllerClient extends BaseClient {
     }
 }
 
-/** Native token identifier */
+/** Token identifier */
 export enum TokenEnum {
     ADA = "ADA",
     WADA = "WADA",
