@@ -8,14 +8,16 @@ import {
 	safeReadJson,
 } from './appConfig.helper';
 
+const defaultUrl = 'http://localhost:40000';
+
 const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
 	app: { port: 3500, isMainnet: false },
 	bridge: { recentInputsThresholdMinutes: 5, ethTxTtlInc: 50 },
 	services: {
-		oracleSkylineUrl: 'http://localhost:40000',
-		oracleReactorUrl: 'http://localhost:40000',
-		cardanoSkylineApiUrl: 'http://localhost:40000',
-		cardanoReactorApiUrl: 'http://localhost:40000',
+		oracleSkylineUrl: defaultUrl,
+		oracleReactorUrl: defaultUrl,
+		cardanoSkylineApiUrl: defaultUrl,
+		cardanoReactorApiUrl: defaultUrl,
 	},
 	database: {
 		port: 5432,
