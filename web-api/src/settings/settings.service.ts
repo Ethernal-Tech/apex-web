@@ -9,6 +9,7 @@ import {
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { BridgingModeEnum, ChainEnum, TxTypeEnum } from 'src/common/enum';
 import { getTokenNameFromSettings } from 'src/utils/chainUtils';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
 
 const RETRY_DELAY_MS = 5000;
 const settingsApiPath = `/api/CardanoTx/GetSettings`;
@@ -16,17 +17,17 @@ const settingsApiPath = `/api/CardanoTx/GetSettings`;
 export class SettingsService {
 	SettingsResponse: SettingsFullResponseDto;
 
-	constructor() {}
+	constructor(private readonly appConfig: AppConfigService) {}
 
 	async init() {
-		const skylineUrl = process.env.CARDANO_API_SKYLINE_URL;
+		const skylineUrl = this.appConfig.cardanoSkylineApiUrl;
 		const skylineApiKey = process.env.CARDANO_API_SKYLINE_API_KEY;
 
 		if (!skylineUrl || !skylineApiKey) {
 			throw new Error('cardano api url or api key not defined for skyline');
 		}
 
-		const reactorUrl = process.env.CARDANO_API_REACTOR_URL;
+		const reactorUrl = this.appConfig.cardanoReactorApiUrl;
 		const reactorApiKey = process.env.CARDANO_API_REACTOR_API_KEY;
 
 		if (!reactorUrl || !reactorApiKey) {
@@ -44,19 +45,19 @@ export class SettingsService {
 			),
 		]);
 
-		const layerZeroChains = (process.env.LAYERZERO_CONFIG || '')
-			.split(',')
-			.map((x) => {
-				const subItems = x.split('::');
-				if (subItems.length < 4) {
-					return;
+		console.log('APP CONFIG', this.appConfig);
+
+		const layerZeroChains = this.appConfig.layerZero.networks
+			.map((network) => {
+				if (!network.name || !network.address) {
+					return undefined;
 				}
 
 				const item = new LayerZeroChainSettingsDto();
-				item.chain = subItems[0].trim() as ChainEnum;
-				item.oftAddress = subItems[1].trim();
-				item.chainID = parseInt(subItems[2].trim(), 10);
-				item.txType = subItems[3].trim() as TxTypeEnum;
+				item.chain = network.name as ChainEnum;
+				item.oftAddress = network.address;
+				item.chainID = network.lzChainId;
+				item.txType = network.type as TxTypeEnum;
 
 				return item;
 			})
@@ -98,8 +99,6 @@ export class SettingsService {
 		// skyline
 		skylineSettings.enabledChains.forEach((chain) => enabledChains.add(chain));
 		// layer zero
-		layerZeroChains.forEach((x) => enabledChains.add(x.chain));
-
 		this.SettingsResponse = new SettingsFullResponseDto();
 		this.SettingsResponse.layerZeroChains = layerZeroChains;
 		this.SettingsResponse.settingsPerMode = {

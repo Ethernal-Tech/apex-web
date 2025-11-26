@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "envalid": "^8.1.1",
+    "lodash": "^4.17.21",
+    "lodash.merge": "^4.6.2"
+  },
+  "devDependencies": {
+    "@types/lodash.merge": "^4.6.9"
+  }
+}

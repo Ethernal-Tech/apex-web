@@ -30,6 +30,7 @@ import {
 	getTokenNameFromSettings,
 } from 'src/utils/chainUtils';
 import { amountToBigInt } from 'src/utils/generalUtils';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
 
 @Injectable()
 export class LockedTokensService {
@@ -38,6 +39,7 @@ export class LockedTokensService {
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly settingsService: SettingsService,
+		private readonly appConfig: AppConfigService,
 	) {}
 
 	onModuleInit() {
@@ -49,7 +51,7 @@ export class LockedTokensService {
 
 	init() {
 		this.endpointUrl =
-			process.env.CARDANO_API_SKYLINE_URL + `/api/CardanoTx/GetLockedTokens`;
+			this.appConfig.cardanoSkylineApiUrl + `/api/CardanoTx/GetLockedTokens`;
 	}
 
 	public async fillTokensData(

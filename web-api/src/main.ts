@@ -5,8 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { winstonLogger } from './logger';
 import { HttpExceptionFilter } from './utils/httpException.filter';
 import { LoggingInterceptor } from './utils/logging.interceptor';
-
-const port = process.env.PORT || 3500;
+import { getAppConfig } from './appConfig/appConfig';
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule, {
@@ -14,12 +13,13 @@ async function bootstrap() {
 		logger: winstonLogger,
 	});
 
+	const appConfig = getAppConfig();
+
 	if (
 		process.env.NODE_ENV === 'production' &&
-		process.env.CORS_ALLOW_LIST !== undefined
+		appConfig.corsAllowList !== undefined
 	) {
-		const corsAllowList = process.env.CORS_ALLOW_LIST;
-		const corsOptions = { origin: corsAllowList.split(',') };
+		const corsOptions = { origin: appConfig.corsAllowList };
 		app.enableCors(corsOptions);
 	} else {
 		app.enableCors(); // Use default CORS settings
@@ -41,6 +41,6 @@ async function bootstrap() {
 	app.useGlobalFilters(new HttpExceptionFilter());
 	app.useGlobalInterceptors(new LoggingInterceptor());
 
-	await app.listen(port);
+	await app.listen(appConfig.port);
 }
 bootstrap();

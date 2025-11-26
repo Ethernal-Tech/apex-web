@@ -13,6 +13,7 @@ import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
 import { isCardanoChain } from 'src/utils/chainUtils';
 import { getUrlAndApiKey } from 'src/utils/generalUtils';
+import { getAppConfig } from 'src/appConfig/appConfig';
 
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
@@ -132,7 +133,9 @@ export const getHasTxFailedRequestStates = async (
 export const getLayerZeroRequestState = async (
 	model: GetLayerZeroBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
-	const layerZeroUrl = process.env.LAYERZERO_SCAN_URL;
+	const appConfig = getAppConfig();
+
+	const layerZeroUrl = appConfig.layerZero.scanUrl;
 	if (!layerZeroUrl) {
 		Logger.error('layer zero scan url not set');
 

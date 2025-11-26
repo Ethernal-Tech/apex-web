@@ -4,6 +4,7 @@ import Web3 from 'web3';
 import { Numbers } from 'web3-types';
 import { EtherUnits } from 'web3-utils';
 import { isCardanoChain } from './chainUtils';
+import { getAppConfig } from 'src/appConfig/appConfig';
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
@@ -87,19 +88,21 @@ export const getUrlAndApiKey = (
 	let url: string | undefined;
 	let apiKey: string | undefined;
 
+	const appConfig = getAppConfig();
+
 	switch (bridgingMode) {
 		case BridgingModeEnum.Reactor:
 			url = isOracle
-				? process.env.ORACLE_REACTOR_URL
-				: process.env.CARDANO_API_REACTOR_URL;
+				? appConfig.oracleReactorUrl
+				: appConfig.cardanoReactorApiUrl;
 			apiKey = isOracle
 				? process.env.ORACLE_REACTOR_API_KEY
 				: process.env.CARDANO_API_REACTOR_API_KEY;
 			break;
 		case BridgingModeEnum.Skyline:
 			url = isOracle
-				? process.env.ORACLE_SKYLINE_URL
-				: process.env.CARDANO_API_SKYLINE_URL;
+				? appConfig.oracleSkylineUrl
+				: appConfig.cardanoSkylineApiUrl;
 			apiKey = isOracle
 				? process.env.ORACLE_SKYLINE_API_KEY
 				: process.env.CARDANO_API_SKYLINE_API_KEY;
@@ -107,7 +110,7 @@ export const getUrlAndApiKey = (
 	}
 
 	return {
-		url: url || 'http://localhost:40000',
+		url: url!,
 		apiKey: apiKey || 'test_api_key',
 	};
 };
