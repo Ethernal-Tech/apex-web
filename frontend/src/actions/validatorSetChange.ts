@@ -3,7 +3,7 @@ import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
 
 export const getValidatorChangeStatusAction = async () => {
 	const client = new SettingsControllerClient();
-	return client.getValidatorChange();
+	return client.getReactorValidatorChange();
 };
 
 export const fetchAndUpdateValidatorStatusAction = async () => {

@@ -334,6 +334,7 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 						borderRadius: '8px',
 						padding: 2,
 					}}
+					isFeeInformation={true}
 				/>
 
 				{!!loadingState && (
