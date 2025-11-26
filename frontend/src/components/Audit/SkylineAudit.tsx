@@ -96,7 +96,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 		<Box className="audit-layout">
 			<Box>
 				<Typography className="audit-h2">Total Locked (TVL)</Typography>
-				<Box className="audit-mb-8 audit-grid-md-3 audit-gap-12">
+				<Box className="audit-mb-8 audit-grid-md-2 audit-gap-12">
 					{sortEntries(tokenTotalsAllChains)
 						.filter(
 							([tokenKey]) =>
