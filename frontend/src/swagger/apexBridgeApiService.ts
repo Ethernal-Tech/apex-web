@@ -103,8 +103,8 @@ export class SettingsControllerClient extends BaseClient {
         return Promise.resolve<AllBridgingAddressesDto>(null as any);
     }
 
-    getValidatorChange(): Promise<ValidatorChangeDto> {
-        let url_ = this.baseUrl + "/settings/validatorChangeStatus";
+    getReactorValidatorChange(): Promise<ValidatorChangeDto> {
+        let url_ = this.baseUrl + "/settings/reactorValidatorChangeStatus";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -117,11 +117,11 @@ export class SettingsControllerClient extends BaseClient {
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.processGetValidatorChange(_response);
+            return this.processGetReactorValidatorChange(_response);
         });
     }
 
-    protected processGetValidatorChange(response: Response): Promise<ValidatorChangeDto> {
+    protected processGetReactorValidatorChange(response: Response): Promise<ValidatorChangeDto> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {

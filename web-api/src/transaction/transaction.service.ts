@@ -151,7 +151,7 @@ export class TransactionService {
 
 		if (
 			bridgingMode === BridgingModeEnum.Reactor &&
-			this.settingsService.validatorChangeStatus
+			this.settingsService.reactorValidatorChangeStatus
 		) {
 			throw new BadRequestException(
 				'validator set change in progress, cant create transactions',
@@ -181,7 +181,7 @@ export class TransactionService {
 
 		if (
 			bridgingMode === BridgingModeEnum.Reactor &&
-			this.settingsService.validatorChangeStatus
+			this.settingsService.reactorValidatorChangeStatus
 		) {
 			throw new BadRequestException(
 				'validator set change in progress, cant create transactions',
@@ -202,7 +202,7 @@ export class TransactionService {
 	}
 
 	createEth(dto: CreateTransactionDto): CreateEthTransactionResponseDto {
-		if (this.settingsService.validatorChangeStatus) {
+		if (this.settingsService.reactorValidatorChangeStatus) {
 			throw new BadRequestException(
 				'validator set change in progress, cant create transactions',
 			);

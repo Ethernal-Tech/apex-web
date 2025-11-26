@@ -1,14 +1,14 @@
 import { Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 
-export const getValidatorChangeStatus = async () => {
-	const reactorUrl = process.env.CARDANO_API_REACTOR_URL;
-	const reactorApiKey =
-		process.env.CARDANO_API_REACTOR_API_KEY || 'test_api_key';
+export const getReactorValidatorChangeStatus = async () => {
+	const endpointUrl =
+		process.env.ORACLE_REACTOR_URL + `/api/Settings/GetValidatorChangeStatus`;
+	const reactorApiKey = process.env.ORACLE_REACTOR_API_KEY || 'test_api_key';
 
-	Logger.debug(`axios.get: ${reactorUrl}`);
+	Logger.debug(`axios.get: ${endpointUrl}`);
 	try {
-		const response = await axios.get(reactorUrl!, {
+		const response = await axios.get(endpointUrl!, {
 			headers: {
 				'X-API-KEY': reactorApiKey,
 			},

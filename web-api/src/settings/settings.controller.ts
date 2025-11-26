@@ -88,8 +88,8 @@ export class SettingsController {
 		type: ValidatorChangeDto,
 	})
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Not Found' })
-	@Get('validatorChangeStatus')
-	getValidatorChange(): ValidatorChangeDto {
-		return { inProgress: this.settingsService.validatorChangeStatus };
+	@Get('reactorValidatorChangeStatus')
+	getReactorValidatorChange(): ValidatorChangeDto {
+		return { inProgress: this.settingsService.reactorValidatorChangeStatus };
 	}
 }

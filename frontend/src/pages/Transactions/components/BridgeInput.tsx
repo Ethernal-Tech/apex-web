@@ -143,7 +143,7 @@ const BridgeInput = ({
 	const [amount, setAmount] = useState('');
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
-	const [validatorChangeInProgress, setValidatorChangeInProgress] =
+	const [reactorValidatorChangeInProgress, setValidatorChangeInProgress] =
 		useState(true);
 
 	const walletUTxOs = useSelector(
@@ -342,7 +342,7 @@ const BridgeInput = ({
 		minDfmValue = minValueToBridge;
 	}
 
-	const getValidatorChangeStatus = useCallback(async () => {
+	const getReactorValidatorChangeStatus = useCallback(async () => {
 		try {
 			const isInProgress = await fetchAndUpdateValidatorStatusAction();
 			setValidatorChangeInProgress(isInProgress);
@@ -352,17 +352,17 @@ const BridgeInput = ({
 	}, []);
 
 	useEffect(() => {
-		getValidatorChangeStatus();
+		getReactorValidatorChangeStatus();
 
 		const intervalId = setInterval(
-			getValidatorChangeStatus,
+			getReactorValidatorChangeStatus,
 			REFETCH_VSU_STATUS_MS,
 		);
 
 		return () => {
 			clearInterval(intervalId);
 		};
-	}, [getValidatorChangeStatus]);
+	}, [getReactorValidatorChangeStatus]);
 
 	// when bridging native tokens, the lovelace that must also be given to the bridge for carrying native tokens
 	// is calculated later. in case for example insufficient lovelace balance, the call where the calculation
@@ -517,7 +517,7 @@ const BridgeInput = ({
 						borderRadius: '8px',
 						padding: 2,
 					}}
-					isFeeInformation={!validatorChangeInProgress}
+					isFeeInformation={!reactorValidatorChangeInProgress}
 				/>
 
 				{!!loadingState && (
@@ -554,7 +554,7 @@ const BridgeInput = ({
 						currencyMaxAmount < 0 ||
 						(bridgingModeInfo.bridgingMode ===
 							BridgingModeEnum.Reactor &&
-							validatorChangeInProgress)
+							reactorValidatorChangeInProgress)
 					}
 					sx={{
 						gridColumn: 'span 1',
