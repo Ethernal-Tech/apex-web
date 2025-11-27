@@ -1,21 +1,27 @@
+import { Dispatch } from '@reduxjs/toolkit';
+import { setReactorValidatorStatus } from '../redux/slices/settingsSlice';
 import { SettingsControllerClient } from '../swagger/apexBridgeApiService';
 import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
 
-export const getReactorValidatorChangeStatusAction = async () => {
+export const getReactorValidatorChangeStatusAction = () => {
 	const client = new SettingsControllerClient();
 	return client.getReactorValidatorChange();
 };
 
-export const fetchAndUpdateReactorValidatorStatusAction = async () => {
+export const fetchAndUpdateReactorValidatorStatusAction = async (
+	dispatch: Dispatch,
+) => {
 	const validatorChangeStatusResp = await tryCatchJsonByAction(
 		() => getReactorValidatorChangeStatusAction(),
 		false,
 	);
 	if (validatorChangeStatusResp instanceof ErrorResponse) {
-		throw new Error(
-			`Error while fetching settings: ${validatorChangeStatusResp.err}`,
+		console.log(
+			`Error while fetching reactor validator status: ${validatorChangeStatusResp}`,
 		);
+
+		return;
 	}
 
-	return validatorChangeStatusResp.inProgress;
+	dispatch(setReactorValidatorStatus(validatorChangeStatusResp.inProgress));
 };

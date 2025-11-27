@@ -37,9 +37,6 @@ import {
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
-import { fetchAndUpdateReactorValidatorStatusAction } from '../../../actions/validatorSetChange';
-
-const REFETCH_VSU_STATUS_MS = 30000;
 
 type BridgeInputType = {
 	getCardanoTxFee: (
@@ -143,10 +140,6 @@ const BridgeInput = ({
 	const [amount, setAmount] = useState('');
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
-	const [
-		reactorValidatorChangeInProgress,
-		setReactorValidatorChangeInProgress,
-	] = useState(true);
 
 	const walletUTxOs = useSelector(
 		(state: RootState) => state.accountInfo.utxos,
@@ -169,6 +162,9 @@ const BridgeInput = ({
 	const supportedSourceTokenOptions = useSupportedSourceTokenOptions(
 		chain,
 		destinationChain,
+	);
+	const reactorValidatorChangeInProgress = useSelector(
+		(state: RootState) => state.settings.reactorValidatorStatus,
 	);
 
 	const [sourceToken, setSourceToken] = useState<TokenEnum | undefined>(
@@ -343,29 +339,6 @@ const BridgeInput = ({
 	} else {
 		minDfmValue = minValueToBridge;
 	}
-
-	const getReactorValidatorChangeStatus = useCallback(async () => {
-		try {
-			const isInProgress =
-				await fetchAndUpdateReactorValidatorStatusAction();
-			setReactorValidatorChangeInProgress(isInProgress);
-		} catch (err) {
-			console.error('Failed to fetch validator set change status:', err);
-		}
-	}, []);
-
-	useEffect(() => {
-		getReactorValidatorChangeStatus();
-
-		const intervalId = setInterval(
-			getReactorValidatorChangeStatus,
-			REFETCH_VSU_STATUS_MS,
-		);
-
-		return () => {
-			clearInterval(intervalId);
-		};
-	}, [getReactorValidatorChangeStatus]);
 
 	// when bridging native tokens, the lovelace that must also be given to the bridge for carrying native tokens
 	// is calculated later. in case for example insufficient lovelace balance, the call where the calculation

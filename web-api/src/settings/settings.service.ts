@@ -22,7 +22,7 @@ export class SettingsService {
 	constructor(private readonly schedulerRegistry: SchedulerRegistry) {}
 
 	async init() {
-		this.reactorValidatorChangeStatus = true;
+		this.reactorValidatorChangeStatus = await getReactorValidatorChangeStatus();
 
 		const skylineUrl = process.env.CARDANO_API_SKYLINE_URL;
 		const skylineApiKey = process.env.CARDANO_API_SKYLINE_API_KEY;
