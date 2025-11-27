@@ -6,7 +6,7 @@ import { Logger } from '@nestjs/common';
 
 export const resolveConfigDir = (configName: string): string => {
 	const candidates = [
-		path.resolve(process.cwd(), 'dist', 'appConfig', 'config'),
+		path.resolve(process.cwd(), 'dist/src', 'appConfig', 'config'),
 		path.resolve(process.cwd(), 'src', 'appConfig', 'config'),
 		path.resolve(__dirname, '../config'),
 		path.resolve(__dirname, '../../config'),
