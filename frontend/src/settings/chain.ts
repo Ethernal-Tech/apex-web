@@ -2,6 +2,7 @@ import { SVGProps } from 'react';
 import {
 	ChainApexBridgeEnum,
 	ChainEnum,
+	TokenEnum,
 } from '../swagger/apexBridgeApiService';
 import { ReactComponent as PrimeIcon } from '../assets/chain-icons/prime.svg';
 import { ReactComponent as VectorIcon } from '../assets/chain-icons/vector.svg';
@@ -10,7 +11,6 @@ import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg
 import { ReactComponent as BaseIcon } from '../assets/chain-icons/base.svg';
 import { captureAndThrowError } from '../utils/generalUtils';
 import { ReactComponent as BNBIcon } from '../assets/chain-icons/bsc.svg';
-import { TokenEnum } from '../features/enums';
 import { ISettingsState, SettingsPerMode } from './settingsRedux';
 import appSettings from './appSettings';
 

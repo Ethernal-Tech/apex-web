@@ -1,6 +1,5 @@
 import { FunctionComponent, SVGProps } from 'react';
-import { TokenEnum } from '../features/enums';
-import { ChainEnum } from '../swagger/apexBridgeApiService';
+import { ChainEnum, TokenEnum } from '../swagger/apexBridgeApiService';
 import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg';
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg';
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg';
@@ -47,7 +46,7 @@ const tokenInfos: TokenInfo[] = [
 	{
 		token: TokenEnum.WADA,
 		icon: AdaIcon,
-		label: 'vADA',
+		label: 'xADA',
 		borderColor: '#0538AF',
 	},
 	{
@@ -170,11 +169,11 @@ export const getToken = (
 		: getChainInfo(srcChain).currencyToken;
 };
 
-export const getTokenInfo = (token: TokenEnum | undefined): TokenInfo => {
+export const getTokenInfo = (token: string | undefined): TokenInfo => {
 	if (!token) return unknownTokenInfo;
 
 	const tokenInfo = tokenInfos.find(
-		(ti) => ti.token.toLowerCase() === token.toLowerCase(),
+		(ti) => ti.token === (token as TokenEnum),
 	);
 
 	return tokenInfo || unknownTokenInfo;
@@ -211,4 +210,12 @@ export const getLayerZeroToken = (chain: ChainEnum): TokenEnum => {
 		default:
 			return TokenEnum.APEX;
 	}
+};
+
+export const isAdaToken = (token: TokenEnum): boolean => {
+	return TokenEnum.ADA === token || TokenEnum.WADA === token;
+};
+
+export const isApexToken = (token: TokenEnum): boolean => {
+	return TokenEnum.APEX === token || TokenEnum.WAPEX === token;
 };

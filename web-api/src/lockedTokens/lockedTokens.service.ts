@@ -5,6 +5,7 @@ import {
 	Logger,
 } from '@nestjs/common';
 import {
+	LockedTokensDto,
 	LockedTokensResponse,
 	TransferredTokensByDay,
 	TransferredTokensResponse,
@@ -18,6 +19,7 @@ import {
 	BridgingModeEnum,
 	ChainEnum,
 	GroupByTimePeriod,
+	TokenEnum,
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -50,7 +52,67 @@ export class LockedTokensService {
 			process.env.CARDANO_API_SKYLINE_URL + `/api/CardanoTx/GetLockedTokens`;
 	}
 
-	public async getLockedTokens(): Promise<LockedTokensResponse> {
+	public async fillTokensData(
+		allowedBridgingModes: BridgingModeEnum[],
+	): Promise<LockedTokensDto> {
+		const lockedTokens = await this.getLockedTokens();
+		const totalTransferred =
+			await this.sumTransferredTokensPerChain(allowedBridgingModes);
+
+		const mappedChains: Record<
+			string,
+			Partial<Record<TokenEnum, Record<string, string>>>
+		> = {};
+
+		const availableDirections = getAllChainsDirections(
+			[BridgingModeEnum.Skyline],
+			this.settingsService.SettingsResponse,
+		);
+
+		for (const chainName in lockedTokens.chains) {
+			if (
+				Object.prototype.hasOwnProperty.call(lockedTokens.chains, chainName)
+			) {
+				const tokens = lockedTokens.chains[chainName];
+				const mappedTokens: {
+					[tokenName: string]: { [address: string]: string };
+				} = {};
+
+				for (const token in tokens) {
+					if (Object.prototype.hasOwnProperty.call(tokens, token)) {
+						const addresses = tokens[token];
+
+						const matchingDstChain = availableDirections.find(
+							(d) => d.srcChain === (chainName as ChainEnum),
+						);
+
+						if (!matchingDstChain) {
+							continue;
+						}
+
+						const tokenName = getTokenNameFromSettings(
+							chainName as ChainEnum,
+							matchingDstChain?.dstChain,
+							this.settingsService.SettingsResponse,
+							token.toLowerCase() === 'lovelace',
+						);
+
+						if (tokenName) {
+							mappedTokens[tokenName] = addresses;
+						}
+					}
+				}
+				mappedChains[chainName] = mappedTokens;
+			}
+		}
+
+		return {
+			chains: mappedChains,
+			totalTransferred: totalTransferred.totalTransferred,
+		};
+	}
+
+	private async getLockedTokens(): Promise<LockedTokensResponse> {
 		Logger.debug(`axios.get: ${this.endpointUrl}`);
 
 		try {
@@ -77,7 +139,7 @@ export class LockedTokensService {
 		}
 	}
 
-	public async sumTransferredTokensPerChain(
+	private async sumTransferredTokensPerChain(
 		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<TransferredTokensResponse> {
 		const cacheKey = 'transferredTokensPerChainNestedMap';
@@ -100,40 +162,59 @@ export class LockedTokensService {
 				info.srcChain,
 				info.dstChain,
 				this.settingsService.SettingsResponse,
+				true,
 			);
+
+			if (!tokenName) {
+				continue;
+			}
+
 			const amount = await this.getAggregatedSum(
 				info.srcChain,
 				info.dstChain,
 				'amount',
 			);
 
-			if (!result.totalTransferred[info.srcChain]) {
-				result.totalTransferred[info.srcChain] = {
-					amount: '0',
-				};
+			result.totalTransferred[info.srcChain] ??= {};
+			result.totalTransferred[info.srcChain][tokenName] = (
+				BigInt(result.totalTransferred[info.srcChain][tokenName] ?? '0') +
+				amountToBigInt(amount, info.srcChain)
+			).toString();
+
+			const wrappedTokenName = getTokenNameFromSettings(
+				info.srcChain,
+				info.dstChain,
+				this.settingsService.SettingsResponse,
+			);
+
+			if (!wrappedTokenName) {
+				continue;
 			}
 
-			const currencyAmount =
-				BigInt(result.totalTransferred[info.srcChain]['amount']) +
-				amountToBigInt(amount, info.srcChain);
-			result.totalTransferred[info.srcChain]['amount'] =
-				currencyAmount.toString();
-
-			if (tokenName) {
+			if (wrappedTokenName !== tokenName) {
+				// check for wrapped token because in some
 				const tokenAmount = await this.getAggregatedSum(
 					info.srcChain,
 					info.dstChain,
 					'nativeTokenAmount',
 				);
 
-				if (!result.totalTransferred[info.srcChain][tokenName]) {
-					result.totalTransferred[info.srcChain][tokenName] = '0';
+				if (!result.totalTransferred[info.srcChain]) {
+					result.totalTransferred[info.srcChain] = {};
 				}
 
-				const sumToken =
-					BigInt(result.totalTransferred[info.srcChain][tokenName]) +
-					amountToBigInt(tokenAmount, info.srcChain);
-				result.totalTransferred[info.srcChain][tokenName] = sumToken.toString();
+				if (!result.totalTransferred[info.srcChain][wrappedTokenName]) {
+					result.totalTransferred[info.srcChain][wrappedTokenName] = '0';
+				}
+				result.totalTransferred[info.srcChain] ??= {};
+				result.totalTransferred[info.srcChain][wrappedTokenName as TokenEnum] =
+					(
+						BigInt(
+							result.totalTransferred[info.srcChain][
+								wrappedTokenName as TokenEnum
+							] ?? '0',
+						) + amountToBigInt(tokenAmount, info.srcChain)
+					).toString();
 			}
 		}
 

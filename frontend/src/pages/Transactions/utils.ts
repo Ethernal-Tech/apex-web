@@ -1,5 +1,4 @@
-import { TokenEnum } from '../../features/enums';
-import { ChainEnum } from '../../swagger/apexBridgeApiService';
+import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
 import { useMemo } from 'react';
 import {
 	getBridgingInfo,
