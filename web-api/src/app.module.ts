@@ -8,6 +8,7 @@ import { SettingsModule } from './settings/settings.module';
 import { ContactModule } from './contact/contact.module';
 import { MailerConfigModule } from './mailer/mailer.module';
 import { LockedTokensModule } from './lockedTokens/lockedTokens.module';
+import { AppConfigModule } from './appConfig/appConfig.module';
 
 @Module({
 	imports: [
@@ -21,6 +22,7 @@ import { LockedTokensModule } from './lockedTokens/lockedTokens.module';
 		BridgeTransactionModule,
 		ContactModule,
 		LockedTokensModule,
+		AppConfigModule,
 	],
 	controllers: [],
 	providers: [],

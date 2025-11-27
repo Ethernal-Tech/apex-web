@@ -16,7 +16,11 @@ import {
 	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
-import { ChainApexBridgeEnum, TransactionStatusEnum } from 'src/common/enum';
+import {
+	BridgingModeEnum,
+	ChainApexBridgeEnum,
+	TransactionStatusEnum,
+} from 'src/common/enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThan, Repository } from 'typeorm';
 import {
@@ -33,10 +37,13 @@ import {
 	LayerZeroTransferResponseDto,
 } from './layerzerotransaction.dto';
 import {
+	getBridgingMode,
 	getBridgingSettings,
 	isCardanoChain,
 	isEvmChain,
 } from 'src/utils/chainUtils';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
+import { getAppConfig } from 'src/appConfig/appConfig';
 
 @Injectable()
 export class TransactionService {
@@ -44,6 +51,7 @@ export class TransactionService {
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly settingsService: SettingsService,
+		private readonly appConfig: AppConfigService,
 	) {}
 
 	private validateCreateCardanoTx(dto: CreateTransactionDto) {
@@ -107,9 +115,9 @@ export class TransactionService {
 
 	async getRecentInputs(dto: CreateTransactionDto): Promise<Utxo[]> {
 		const recentInputsThresholdMinutes =
-			process.env.RECENT_INPUTS_THRESHOLD_MINUTES || '5';
+			this.appConfig.bridge.recentInputsThresholdMinutes;
 		const threshold = new Date(
-			Date.now() - parseInt(recentInputsThresholdMinutes) * 60 * 1000,
+			Date.now() - recentInputsThresholdMinutes * 60 * 1000,
 		);
 		const previousTxs = await this.bridgeTransactionRepository.find({
 			where: {
@@ -138,12 +146,23 @@ export class TransactionService {
 	): Promise<CreateCardanoTransactionResponseDto> {
 		this.validateCreateCardanoTx(dto);
 
-		const recentInputs = await this.getRecentInputs(dto);
-		const tx = await createCardanoBridgingTx(
-			dto,
-			recentInputs,
+		const bridgingMode = getBridgingMode(
+			dto.originChain,
+			dto.destinationChain,
 			this.settingsService.SettingsResponse,
 		);
+
+		if (
+			bridgingMode === BridgingModeEnum.Reactor &&
+			this.settingsService.reactorValidatorChangeStatus
+		) {
+			throw new BadRequestException(
+				'validator set change in progress, cant create transactions',
+			);
+		}
+
+		const recentInputs = await this.getRecentInputs(dto);
+		const tx = await createCardanoBridgingTx(dto, recentInputs, bridgingMode!);
 
 		if (!tx) {
 			throw new BadRequestException('error while creating bridging tx');
@@ -157,11 +176,25 @@ export class TransactionService {
 	): Promise<CardanoTransactionFeeResponseDto> {
 		this.validateCreateCardanoTx(dto);
 
+		const bridgingMode = getBridgingMode(
+			dto.originChain,
+			dto.destinationChain,
+			this.settingsService.SettingsResponse,
+		);
+
+		if (
+			bridgingMode === BridgingModeEnum.Reactor &&
+			this.settingsService.reactorValidatorChangeStatus
+		) {
+			throw new BadRequestException(
+				'validator set change in progress, cant create transactions',
+			);
+		}
 		const recentInputs = await this.getRecentInputs(dto);
 		const feeResp = await getCardanoBridgingTxFee(
 			dto,
 			recentInputs,
-			this.settingsService.SettingsResponse,
+			bridgingMode!,
 		);
 
 		if (!feeResp) {
@@ -172,6 +205,12 @@ export class TransactionService {
 	}
 
 	createEth(dto: CreateTransactionDto): CreateEthTransactionResponseDto {
+		if (this.settingsService.reactorValidatorChangeStatus) {
+			throw new BadRequestException(
+				'validator set change in progress, cant create transactions',
+			);
+		}
+
 		if (
 			!this.settingsService.SettingsResponse.enabledChains.includes(
 				dto.originChain,
@@ -271,7 +310,9 @@ export class TransactionService {
 		dto: LayerZeroTransferDto,
 	): Promise<LayerZeroTransferResponseDto> {
 		try {
-			const endpointUrl = `${process.env.LAYERZERO_API_URL}/transfer`;
+			const lzConfig = getAppConfig().layerZero;
+
+			const endpointUrl = `${lzConfig.apiUrl}/transfer`;
 			Logger.debug(`axios.get: ${endpointUrl}`);
 
 			const response: AxiosResponse<any, any> = await axios.get(endpointUrl, {

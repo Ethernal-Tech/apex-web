@@ -1,0 +1,65 @@
+{
+  "app": {
+    "logLevel": "debug",
+    "port": 30000,
+    "isMainnet": false
+  },
+  "features": {
+    "useCentralizedBridge": false,
+    "statusUpdateModesSupported": [
+      "reactor",
+      "skyline",
+      "layerzero",
+      "centralized"
+    ]
+  },
+  "bridge": {
+    "ethTxTtlInc": 50,
+    "recentInputsThresholdMinutes": 5
+  },
+  "services": {
+    "oracleSkylineUrl": "http://validator-1-skyline-partner.testnet.ethernal.work:10003",
+    "oracleReactorUrl": "http://bridge-api-testnet.apexfusion.org:10003",
+    "cardanoSkylineApiUrl": "http://localhost:41003",
+    "cardanoReactorApiUrl": "http://localhost:41001",
+    "centralizedApiUrl": "https://developers.apexfusion.org"
+  },
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "name": "",
+    "ssl": false,
+    "migrationsTableName": "migrations",
+    "entities": ["dist/**/*.entity.js"],
+    "migrations": ["dist/migrations/*.js"]
+  },
+  "email": {
+    "contactEmail": "",
+    "smtpHost": "",
+    "smtpPort": 465
+  },
+  "layerzero": {
+    "apiUrl": "https://metadata.layerzero-api.com/v1/metadata/experiment/ofts",
+    "scanUrl": "https://scan.layerzero-api.com/v1",
+    "networks": [
+      {
+        "chain": "nexus",
+        "oftAddress": "0x9208d82F121806A34a39bB90733b4C5c54F3993e",
+        "chainID": 30384,
+        "txType": "London"
+      },
+      {
+        "chain": "base",
+        "oftAddress": "0x9208d82F121806A34a39bB90733b4C5c54F3993e",
+        "chainID": 30184,
+        "txType": "London"
+      },
+      {
+        "chain": "bsc",
+        "oftAddress": "0x9208d82F121806A34a39bB90733b4C5c54F3993e",
+        "chainID": 30102,
+        "txType": "Legacy"
+      }
+    ]
+  }
+}

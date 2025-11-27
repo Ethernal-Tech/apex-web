@@ -1,4 +1,4 @@
-import { ChainApexBridgeEnum } from 'src/common/enum';
+import { BridgingModeEnum, ChainApexBridgeEnum } from 'src/common/enum';
 import {
 	CreateCardanoTransactionResponseDto,
 	ErrorResponseDto,
@@ -15,18 +15,12 @@ import {
 import web3, { Web3 } from 'web3';
 import { isAddress } from 'web3-validator';
 import { NewAddress, RewardAddress } from 'src/utils/Address/addreses';
-import {
-	areChainsEqual,
-	getBridgingMode,
-	toNumChainID,
-} from 'src/utils/chainUtils';
+import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
 import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
-import {
-	BridgingSettingsDto,
-	SettingsFullResponseDto,
-} from 'src/settings/settings.dto';
+import { BridgingSettingsDto } from 'src/settings/settings.dto';
 import { convertDfmToWei, getUrlAndApiKey } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
+import { getAppConfig } from 'src/appConfig/appConfig';
 
 const prepareCreateCardanoBridgingTx = (
 	dto: CreateTransactionDto,
@@ -38,7 +32,7 @@ const prepareCreateCardanoBridgingTx = (
 		dto.destinationChain === ChainApexBridgeEnum.Nexus;
 
 	const isCentralized =
-		process.env.USE_CENTRALIZED_BRIDGE === 'true' && nexusInvolved;
+		getAppConfig().features.useCentralizedBridge && nexusInvolved;
 
 	const body = {
 		senderAddr: dto.senderAddress,
@@ -63,13 +57,8 @@ const prepareCreateCardanoBridgingTx = (
 export const createCardanoBridgingTx = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
-	settings: SettingsFullResponseDto,
+	bridgingMode: BridgingModeEnum,
 ): Promise<CreateCardanoTransactionResponseDto> => {
-	const bridgingMode = getBridgingMode(
-		dto.originChain,
-		dto.destinationChain,
-		settings,
-	);
 	const { url, apiKey } = getUrlAndApiKey(bridgingMode, false);
 	const endpointUrl = url + `/api/CardanoTx/CreateBridgingTx`;
 
@@ -104,13 +93,8 @@ export const createCardanoBridgingTx = async (
 export const getCardanoBridgingTxFee = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
-	settings: SettingsFullResponseDto,
+	bridgingMode: BridgingModeEnum,
 ): Promise<CardanoTransactionFeeResponseDto> => {
-	const bridgingMode = getBridgingMode(
-		dto.originChain,
-		dto.destinationChain,
-		settings,
-	);
 	const { url, apiKey } = getUrlAndApiKey(bridgingMode, false);
 	const endpointUrl = url + `/api/CardanoTx/GetBridgingTxFee`;
 
@@ -143,6 +127,8 @@ export const createEthBridgingTx = (
 	dto: CreateTransactionDto,
 	bridgingSettings: BridgingSettingsDto,
 ): CreateEthTransactionResponseDto => {
+	const appConfig = getAppConfig();
+
 	if (!isAddress(dto.senderAddress)) {
 		throw new BadRequestException('Invalid sender address');
 	}
@@ -169,9 +155,13 @@ export const createEthBridgingTx = (
 		);
 	}
 
-	const isMainnet = process.env.IS_MAINNET == 'true';
-
-	if (!areChainsEqual(dto.destinationChain, addr.GetNetwork(), isMainnet)) {
+	if (
+		!areChainsEqual(
+			dto.destinationChain,
+			addr.GetNetwork(),
+			appConfig.app.isMainnet,
+		)
+	) {
 		throw new BadRequestException(
 			`Destination address: ${dto.destinationAddress} not compatible with destination chain: ${dto.destinationChain}`,
 		);
@@ -215,9 +205,9 @@ export const createEthBridgingTx = (
 		);
 	}
 
-	const isCentralized = process.env.USE_CENTRALIZED_BRIDGE === 'true';
-
-	const createFunc = isCentralized ? ethCentralizedBridgingTx : ethBridgingTx;
+	const createFunc = appConfig.features.useCentralizedBridge
+		? ethCentralizedBridgingTx
+		: ethBridgingTx;
 	return createFunc(dto, BigInt(dto.amount) + bridgingFee, bridgingFee);
 };
 
@@ -226,7 +216,7 @@ const ethBridgingTx = (
 	value: bigint,
 	bridgingFee: bigint,
 ): CreateEthTransactionResponseDto => {
-	const to = process.env.NEXUS_BRIDGING_ADDR;
+	const to = getAppConfig().bridge.addresses.nexusBridging;
 	if (!to) {
 		throw new BadRequestException('Empty to address');
 	}
@@ -260,7 +250,7 @@ const ethCentralizedBridgingTx = (
 	value: bigint,
 	bridgingFee: bigint,
 ): CreateEthTransactionResponseDto => {
-	const to = process.env.NEXUS_CENTRALIZED_BRIDGING_ADDR;
+	const to = getAppConfig().bridge.addresses.nexusCentralizedBridging;
 	if (!to) {
 		throw new BadRequestException('Empty to address');
 	}
