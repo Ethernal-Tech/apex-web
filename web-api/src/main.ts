@@ -17,7 +17,7 @@ async function bootstrap() {
 
 	if (
 		process.env.NODE_ENV === 'production' &&
-		appConfig.corsAllowList !== undefined
+		appConfig.corsAllowList?.length > 0
 	) {
 		const corsOptions = { origin: appConfig.corsAllowList };
 		app.enableCors(corsOptions);

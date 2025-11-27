@@ -15,8 +15,6 @@ import { isCardanoChain } from 'src/utils/chainUtils';
 import { getUrlAndApiKey } from 'src/utils/generalUtils';
 import { getAppConfig } from 'src/appConfig/appConfig';
 
-const appConfig = getAppConfig();
-
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
 	TransactionStatusEnum.DiscoveredOnSource,
@@ -135,7 +133,7 @@ export const getHasTxFailedRequestStates = async (
 export const getLayerZeroRequestState = async (
 	model: GetLayerZeroBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
-	const layerZeroUrl = appConfig.layerZero.scanUrl;
+	const layerZeroUrl = getAppConfig().layerZero.scanUrl;
 	if (!layerZeroUrl) {
 		Logger.error('layer zero scan url not set');
 
@@ -320,7 +318,7 @@ export const getCentralizedBridgingRequestState = async (
 	model: GetBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
 	const direction = `${chainId}To${capitalizeWord(model.destinationChainId)}`;
-	const statusApiUrl = `${appConfig.centralizedApiUrl}/api/txStatus/${direction}/${model.txHash}`;
+	const statusApiUrl = `${getAppConfig().centralizedApiUrl}/api/txStatus/${direction}/${model.txHash}`;
 
 	try {
 		Logger.debug(`axios.get: ${statusApiUrl}`);
@@ -335,7 +333,7 @@ export const getCentralizedBridgingRequestState = async (
 		let destinationTxHash: string = '';
 
 		if (!BridgingRequestNotFinalStatesMap[status]) {
-			const apiUrl = `${appConfig.centralizedApiUrl}/api/bridge/transactions?originChain=${chainId}&sourceTxHash=${model.txHash}`;
+			const apiUrl = `${getAppConfig().centralizedApiUrl}/api/bridge/transactions?originChain=${chainId}&sourceTxHash=${model.txHash}`;
 
 			Logger.debug(`axios.get: ${apiUrl}`);
 			const response = await axios.get(apiUrl);
@@ -475,7 +473,7 @@ export const getEthTTL = (txRaw: string): bigint | undefined => {
 				? BigInt(value.substring('bigint:'.length))
 				: value,
 		);
-		return BigInt(tx.block) + BigInt(appConfig.bridge.ethTxTtlInc);
+		return BigInt(tx.block) + BigInt(getAppConfig().bridge.ethTxTtlInc);
 	} catch (e) {
 		Logger.warn(`Error while getEthTTL: ${e}`, e.stack);
 	}
