@@ -47,6 +47,7 @@ import {
 	SubmitLoadingState,
 	UpdateSubmitLoadingState,
 } from '../../utils/statusUtils';
+import { captureException } from '../../components/sentry/sentry';
 
 function NewTransactionPage() {
 	const [loadingState, setLoadingState] = useState<
@@ -323,6 +324,12 @@ function NewTransactionPage() {
 				}
 			} catch (err) {
 				console.log(err);
+				captureException(err, {
+					tags: {
+						component: 'NewTransactionPage.ts',
+						action: 'handleSubmitCallback',
+					},
+				});
 				if (
 					err instanceof Error &&
 					err.message.includes('account changed')
@@ -368,6 +375,12 @@ function NewTransactionPage() {
 				response && goToDetails(response);
 			} catch (err) {
 				console.log(err);
+				captureException(err, {
+					tags: {
+						component: 'NewTransactionPage.ts',
+						action: 'handleLZSubmitCallback',
+					},
+				});
 				if (
 					err instanceof Error &&
 					err.message.includes('account changed')

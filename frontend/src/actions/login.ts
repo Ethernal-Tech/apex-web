@@ -26,6 +26,7 @@ import {
 	shortRetryOptions,
 	shouldUseMainnet,
 } from '../utils/generalUtils';
+import { captureException } from '../components/sentry/sentry';
 
 let onLoadCalled = false;
 
@@ -111,6 +112,12 @@ const onEvmAccountsChanged = async (
 	} catch (e) {
 		const we = `Error on evm accounts changed. ${e}`;
 		console.log(we);
+		captureException(e, {
+			tags: {
+				component: 'login.ts',
+				action: 'onEvmAccountsChanged',
+			},
+		});
 		toast.error(we);
 
 		logout(dispatch);
@@ -257,6 +264,12 @@ const enableWallet = async (
 			);
 		} catch (e) {
 			console.log(e);
+			captureException(e, {
+				tags: {
+					component: 'login.ts',
+					action: 'enableWallet',
+				},
+			});
 			toast.error(`${e}`);
 		}
 
@@ -275,6 +288,12 @@ const enableWallet = async (
 		);
 	} catch (e) {
 		console.log(e);
+		captureException(e, {
+			tags: {
+				component: 'login.ts',
+				action: 'enableWallet',
+			},
+		});
 		toast.error(`${e}`);
 	}
 

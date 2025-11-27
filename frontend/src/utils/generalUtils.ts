@@ -327,6 +327,12 @@ export const calculateTokenUtxoMinValue = (
 		);
 	} catch (e) {
 		console.log('error while calculating minUtxo value', e);
+		captureException(e, {
+			tags: {
+				component: 'generalUtils.ts',
+				action: 'calculateTokenUtxoMinValue',
+			},
+		});
 	}
 
 	return 2 * defaultMinUtxo;
@@ -347,6 +353,12 @@ export const calculateChangeUtxoMinValue = (
 		);
 	} catch (e) {
 		console.log('error while calculating change utxo min value', e);
+		captureException(e, {
+			tags: {
+				component: 'generalUtils.ts',
+				action: 'calculateChangeUtxoMinValue',
+			},
+		});
 	}
 
 	// if the calculation failed and we have native tokens, take changeMinUtxo to be 2*defaultMinUtxo

@@ -1,32 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Box, Button, Link } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import {
-	initSentryFull,
-	getCookieConsent,
+	InitSentry,
 	setCookieConsent,
-	COOKIE_CONSENT_ACCEPTED,
-	COOKIE_CONSENT_REJECTED,
+	shouldShowCookieBanner,
 } from '../sentry/sentry';
 
 export default function CookieConsent() {
-	const [visible, setVisible] = useState(false);
-
-	// Check if the consent cookie already exists
-	useEffect(() => {
-		if (getCookieConsent() === null) setVisible(true);
-	}, []);
+	const [visible, setVisible] = useState(shouldShowCookieBanner());
 
 	const acceptCookies = () => {
 		setVisible(false);
-		setCookieConsent(COOKIE_CONSENT_ACCEPTED);
+		setCookieConsent(true);
 
-		initSentryFull();
+		InitSentry();
 	};
 
 	const rejectCookies = () => {
 		setVisible(false);
-		setCookieConsent(COOKIE_CONSENT_REJECTED);
+		setCookieConsent(false);
 	};
 
 	if (!visible) return null;

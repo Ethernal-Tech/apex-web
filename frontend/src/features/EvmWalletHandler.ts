@@ -135,7 +135,11 @@ class EvmWalletHandler {
 					);
 				}
 			} else {
-				throw enableError;
+				captureAndThrowError(
+					enableError,
+					'EvmWalletHandler.ts',
+					'forceChainWithRetry',
+				);
 			}
 		}
 

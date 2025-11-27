@@ -28,6 +28,7 @@ export class AppSettings {
 	private _maxTokenAmountAllowedToBridge = '0';
 	private _minValueToBridge = '0';
 	private _potentialWalletFee = 0;
+	private _disableSentry = false;
 	private _isMainnet = false;
 	private _isSkyline = false;
 
@@ -51,6 +52,7 @@ export class AppSettings {
 			settingsJson.maxTokenAmountAllowedToBridge;
 		this._minValueToBridge = settingsJson.minValueToBridge;
 		this._potentialWalletFee = settingsJson.potentialWalletFee;
+		this._disableSentry = settingsJson.disableSentry;
 		this._isMainnet = settingsJson.isMainnet;
 		this._isSkyline = settingsJson.isSkyline;
 	}
@@ -93,6 +95,10 @@ export class AppSettings {
 
 	get potentialWalletFee(): number {
 		return this._potentialWalletFee;
+	}
+
+	get disableSentry(): boolean {
+		return this._disableSentry;
 	}
 
 	get isMainnet(): boolean {

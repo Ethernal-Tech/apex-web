@@ -7,6 +7,7 @@ import {
 } from '../utils/generalUtils';
 import { ApexBridgeNetwork } from './enums';
 import { UtxoRetriever } from './types';
+import { captureException } from '../components/sentry/sentry';
 
 type Wallet = {
 	name: string;
@@ -117,6 +118,12 @@ class WalletHandler implements UtxoRetriever {
 			return ETERNL_NETWORK_ID_TO_APEX_BRIDGE_NETWORK[eternlNetworkId];
 		} catch (e) {
 			console.log(e);
+			captureException(e, {
+				tags: {
+					component: 'WalletHandler.ts',
+					action: 'getNetwork',
+				},
+			});
 		}
 	};
 
@@ -138,6 +145,12 @@ class WalletHandler implements UtxoRetriever {
 			}
 		} catch (e) {
 			console.log(e);
+			captureException(e, {
+				tags: {
+					component: 'WalletHandler.ts',
+					action: 'getChangeAddress',
+				},
+			});
 		}
 
 		return await this._enabledWallet!.getChangeAddress();

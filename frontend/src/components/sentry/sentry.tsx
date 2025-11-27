@@ -2,8 +2,6 @@ import * as Sentry from '@sentry/react';
 import appSettings from '../../settings/appSettings';
 
 const COOKIE_CONSENT_KEY = 'cookieConsent';
-export const COOKIE_CONSENT_ACCEPTED = 'accepted';
-export const COOKIE_CONSENT_REJECTED = 'rejected';
 
 const fullConfig = {
 	dsn: appSettings.sentryDsn,
@@ -37,14 +35,18 @@ const restrictedConfig = {
 };
 
 export function InitSentry() {
-	if (getCookieConsent() === true) {
+	if (appSettings.disableSentry) {
+		return;
+	}
+
+	if (getCookieConsent()) {
 		initSentryFull();
 	} else {
 		Sentry.init(restrictedConfig);
 	}
 }
 
-export async function initSentryFull() {
+async function initSentryFull() {
 	const client = Sentry.getClient();
 	if (client !== undefined) {
 		// Close the old client cleanly
@@ -61,15 +63,40 @@ export function captureException(err: any, context: any = {}) {
 	});
 }
 
-export const getCookieConsent = (): boolean | null => {
-	const cookieConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
-	if (cookieConsent === null) {
-		return cookieConsent;
+interface CookieConsent {
+	accepted: boolean;
+	expiry: string;
+}
+
+const checkCookieConsent = (): CookieConsent | undefined => {
+	const cookieConsentRaw = localStorage.getItem(COOKIE_CONSENT_KEY);
+	if (!cookieConsentRaw) {
+		return;
 	}
 
-	return (cookieConsent as string) === COOKIE_CONSENT_ACCEPTED;
+	const cookieConsent = JSON.parse(cookieConsentRaw) as CookieConsent;
+	const expiry = new Date(cookieConsent.expiry);
+	if (expiry < new Date()) {
+		localStorage.removeItem(COOKIE_CONSENT_KEY);
+		return;
+	}
+
+	return cookieConsent;
 };
 
-export const setCookieConsent = (decision: string) => {
-	localStorage.setItem(COOKIE_CONSENT_KEY, decision);
+const getCookieConsent = (): boolean => !!checkCookieConsent()?.accepted;
+
+export const shouldShowCookieBanner = (): boolean => !checkCookieConsent();
+
+export const setCookieConsent = (accepted: boolean) => {
+	const expiry = new Date();
+	expiry.setFullYear(expiry.getFullYear() + 1);
+
+	localStorage.setItem(
+		COOKIE_CONSENT_KEY,
+		JSON.stringify({
+			accepted,
+			expiry: expiry.toISOString(),
+		} as CookieConsent),
+	);
 };

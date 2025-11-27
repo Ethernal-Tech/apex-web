@@ -1,6 +1,7 @@
 import { bech32 } from 'bech32';
 import { CardanoNetworkType } from './types';
 import { captureAndThrowError } from '../../utils/generalUtils';
+import { captureException } from '../../components/sentry/sentry';
 
 export type Bech32DecodeData = {
 	prefix: string;
@@ -76,6 +77,12 @@ export const Bech32EncodeFromBase256 = (
 		return bech32.encode(hrp, converted, 1000);
 	} catch (e) {
 		console.log('failed to Bech32EncodeFromBase256. err:', e);
+		captureException(e, {
+			tags: {
+				component: 'utils.ts',
+				action: 'Bech32EncodeFromBase256',
+			},
+		});
 	}
 };
 
@@ -91,5 +98,11 @@ export const Bech32DecodeToBase256 = (
 		return { prefix: decoded.prefix, data };
 	} catch (e) {
 		console.log('failed to Bech32DecodeToBase256. err:', e);
+		captureException(e, {
+			tags: {
+				component: 'utils.ts',
+				action: 'Bech32DecodeToBase256',
+			},
+		});
 	}
 };

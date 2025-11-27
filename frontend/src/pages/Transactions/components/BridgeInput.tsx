@@ -37,6 +37,7 @@ import {
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
+import { captureException } from '../../../components/sentry/sentry';
 
 type BridgeInputType = {
 	getCardanoTxFee: (
@@ -261,6 +262,12 @@ const BridgeInput = ({
 			}
 		} catch (e) {
 			console.log('error while calculating wallet fee', e);
+			captureException(e, {
+				tags: {
+					component: 'BridgeInput.ts',
+					action: 'fetchWalletFee',
+				},
+			});
 		}
 
 		setUserWalletFee(undefined);
