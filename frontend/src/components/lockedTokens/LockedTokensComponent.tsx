@@ -114,6 +114,10 @@ const LockedTokensComponent = () => {
 		}
 
 		const cardanoCurrency = getCurrencyTokenInfo(ChainEnum.Cardano).token;
+
+		// temporarily disable display of ada
+		delete balances[ChainEnum.Cardano];
+
 		const adaTotal = getBalanceSafe(ChainEnum.Cardano, cardanoCurrency);
 		if (adaTotal > BigInt(0)) {
 			chunks.push(
@@ -143,6 +147,9 @@ const LockedTokensComponent = () => {
 				[TokenEnum.ADA]: BigInt(0),
 			},
 		);
+
+		// temporarily disable display of ada
+		delete grandTotals[TokenEnum.ADA];
 
 		const chunks = Object.entries(grandTotals)
 			.map(([tokenKey, totalValue]) => {
