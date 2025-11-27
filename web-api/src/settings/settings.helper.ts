@@ -9,8 +9,6 @@ export const getReactorValidatorChangeStatus = async (
 		appConfig.oracleReactorUrl + `/api/Settings/GetValidatorChangeStatus`;
 	const reactorApiKey = process.env.ORACLE_REACTOR_API_KEY || 'test_api_key';
 
-	return true;
-
 	Logger.debug(`axios.get: ${endpointUrl}`);
 	try {
 		const response = await axios.get(endpointUrl!, {
