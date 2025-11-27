@@ -1,9 +1,12 @@
 import { Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
 
-export const getReactorValidatorChangeStatus = async () => {
+export const getReactorValidatorChangeStatus = async (
+	appConfig: AppConfigService,
+) => {
 	const endpointUrl =
-		process.env.ORACLE_REACTOR_URL + `/api/Settings/GetValidatorChangeStatus`;
+		appConfig.oracleReactorUrl + `/api/Settings/GetValidatorChangeStatus`;
 	const reactorApiKey = process.env.ORACLE_REACTOR_API_KEY || 'test_api_key';
 
 	Logger.debug(`axios.get: ${endpointUrl}`);

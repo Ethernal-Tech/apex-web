@@ -16,11 +16,15 @@ import {
 } from './settings.dto';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
 
 @ApiTags('Settings')
 @Controller('settings')
 export class SettingsController {
-	constructor(private readonly settingsService: SettingsService) {}
+	constructor(
+		private readonly settingsService: SettingsService,
+		private readonly appConfig: AppConfigService,
+	) {}
 
 	@ApiOperation({
 		summary: 'Get bridge settings',
@@ -54,7 +58,7 @@ export class SettingsController {
 	): Promise<AllBridgingAddressesDto> {
 		const apiKey = process.env.CARDANO_API_SKYLINE_API_KEY;
 		const endpointUrl =
-			process.env.CARDANO_API_SKYLINE_URL +
+			this.appConfig.cardanoSkylineApiUrl +
 			`/api/CardanoTx/GetBridgingAddresses?chainId=${chainId}`;
 
 		Logger.debug(`axios.get: ${endpointUrl}`);

@@ -35,6 +35,7 @@ import {
 } from 'src/common/enum';
 import { getBridgingMode } from 'src/utils/chainUtils';
 import { SettingsService } from 'src/settings/settings.service';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
 
 @Injectable()
 export class BridgeTransactionService {
@@ -43,6 +44,7 @@ export class BridgeTransactionService {
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly settingsService: SettingsService,
 		private readonly schedulerRegistry: SchedulerRegistry,
+		private readonly appConfig: AppConfigService,
 	) {}
 
 	async get(id: number): Promise<BridgeTransactionDto> {
@@ -136,13 +138,13 @@ export class BridgeTransactionService {
 	// every 10 seconds
 	@Cron('*/10 * * * * *', { name: 'updateStatusesJob' })
 	async updateStatuses(): Promise<void> {
-		if (!process.env.STATUS_UPDATE_MODES_SUPPORTED) {
+		if (this.appConfig.features.statusUpdateModesSupported.length === 0) {
 			Logger.warn('cronjob CRONJOB_MODES_SUPPORTED not set');
 			return;
 		}
 
 		const modesSupported = new Set<string>(
-			process.env.STATUS_UPDATE_MODES_SUPPORTED.split(','),
+			this.appConfig.features.statusUpdateModesSupported,
 		);
 
 		const job = this.schedulerRegistry.getCronJob('updateStatusesJob');
