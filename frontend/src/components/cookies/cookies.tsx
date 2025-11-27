@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Box, Button, Link } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
+import { InitSentry } from '../../features/sentry';
 import {
-	InitSentry,
 	setCookieConsent,
 	shouldShowCookieBanner,
-} from '../sentry/sentry';
+} from '../../features/cookies';
 
 export default function CookieConsent() {
 	const [visible, setVisible] = useState(shouldShowCookieBanner());

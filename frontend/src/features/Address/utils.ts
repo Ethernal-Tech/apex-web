@@ -1,7 +1,6 @@
 import { bech32 } from 'bech32';
 import { CardanoNetworkType } from './types';
-import { captureAndThrowError } from '../../utils/generalUtils';
-import { captureException } from '../../components/sentry/sentry';
+import { captureAndThrowError, captureException } from '../sentry';
 
 export type Bech32DecodeData = {
 	prefix: string;

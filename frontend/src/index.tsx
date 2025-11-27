@@ -11,7 +11,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import AppContainer from './containers/AppContainer';
 import { ToastContainer } from 'react-toastify';
-import { InitSentry } from './components/sentry/sentry';
+import { InitSentry } from './features/sentry';
 
 InitSentry();
 

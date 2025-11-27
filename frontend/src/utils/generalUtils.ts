@@ -23,7 +23,7 @@ import {
 import { isCardanoChain, isEvmChain, isLZBridging } from '../settings/chain';
 import appSettings from '../settings/appSettings';
 import { normalizeNativeTokenKey } from './tokenUtils';
-import { captureException } from '../components/sentry/sentry';
+import { captureAndThrowError, captureException } from '../features/sentry';
 
 export const capitalizeWord = (word: string): string => {
 	if (!word || word.length === 0) {
@@ -366,20 +366,3 @@ export const calculateChangeUtxoMinValue = (
 		? 2 * defaultMinUtxo
 		: defaultMinUtxo;
 };
-
-export function captureAndThrowError(
-	message: string | Error,
-	component: string,
-	action: string,
-): never {
-	const err = message instanceof Error ? message : new Error(String(message));
-
-	captureException(err, {
-		tags: {
-			component: component,
-			action: action,
-		},
-	});
-
-	throw err;
-}

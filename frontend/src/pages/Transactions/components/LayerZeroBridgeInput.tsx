@@ -29,7 +29,7 @@ import {
 } from '../../../actions/submitTx';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
-import { captureException } from '../../../components/sentry/sentry';
+import { captureException } from '../../../features/sentry';
 
 type BridgeInputType = {
 	submit: (address: string, amount: string) => Promise<void>;

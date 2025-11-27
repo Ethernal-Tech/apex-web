@@ -1,3 +1,4 @@
+import { captureAndThrowError } from '../sentry';
 import { CardanoAddress } from './interfaces';
 import {
 	StakeCredential,
@@ -5,7 +6,6 @@ import {
 	KeyHashSize,
 	StakeCredentialType,
 } from './types';
-import { captureAndThrowError } from '../../utils/generalUtils';
 import {
 	Bech32DecodeToBase256,
 	Bech32EncodeFromBase256,

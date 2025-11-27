@@ -1,4 +1,4 @@
-import { captureException } from '../components/sentry/sentry';
+import { captureException } from './sentry';
 import appSettings from '../settings/appSettings';
 import { isEvmChain } from '../settings/chain';
 import { ChainEnum } from '../swagger/apexBridgeApiService';

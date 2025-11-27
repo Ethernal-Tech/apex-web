@@ -1,13 +1,9 @@
 import { BrowserWallet, Asset, UTxO } from '@meshsdk/core';
 import { NewAddressFromBytes } from './Address/addreses';
-import {
-	getAssetsSumMap,
-	toBytes,
-	captureAndThrowError,
-} from '../utils/generalUtils';
+import { getAssetsSumMap, toBytes } from '../utils/generalUtils';
 import { ApexBridgeNetwork } from './enums';
 import { UtxoRetriever } from './types';
-import { captureException } from '../components/sentry/sentry';
+import { captureAndThrowError, captureException } from './sentry';
 
 type Wallet = {
 	name: string;

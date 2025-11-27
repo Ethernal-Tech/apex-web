@@ -9,7 +9,7 @@ import { setLockedTokensAction } from '../redux/slices/lockedTokensSlice';
 import { CHAIN_RPC_URLS } from '../utils/chainUtils';
 import Web3 from 'web3';
 import { LayerZeroChains } from '../settings/settingsRedux';
-import { captureException } from '../components/sentry/sentry';
+import { captureException } from '../features/sentry';
 
 async function readErc20Meta(
 	rpcUrl: string,

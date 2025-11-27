@@ -1,7 +1,8 @@
 import { UtxoRetriever } from './types';
-import { getAssetsSumMap, captureAndThrowError } from '../utils/generalUtils';
+import { getAssetsSumMap } from '../utils/generalUtils';
 import { UTxO } from './WalletHandler';
 import { LovelaceTokenName } from '../utils/chainUtils';
+import { captureAndThrowError } from './sentry';
 
 type JsonRpcRequest = {
 	jsonrpc: '2.0';

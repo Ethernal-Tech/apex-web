@@ -2,7 +2,6 @@ import {
 	bridgingTransactionSubmittedAction,
 	layerZeroTransferAction,
 } from '../pages/Transactions/action';
-import { captureAndThrowError } from '../utils/generalUtils';
 import {
 	CreateTransactionDto,
 	CreateCardanoTransactionResponseDto,
@@ -24,6 +23,7 @@ import { longRetryOptions, retry } from '../utils/generalUtils';
 import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
 import { UpdateSubmitLoadingState } from '../utils/statusUtils';
 import { validateSubmitTxInputs } from '../utils/validationUtils';
+import { captureAndThrowError } from '../features/sentry';
 
 type TxDetailsOptions = {
 	feePercMult: bigint;

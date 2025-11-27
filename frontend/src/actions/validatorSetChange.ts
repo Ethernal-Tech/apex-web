@@ -2,7 +2,7 @@ import { Dispatch } from '@reduxjs/toolkit';
 import { setReactorValidatorStatus } from '../redux/slices/settingsSlice';
 import { SettingsControllerClient } from '../swagger/apexBridgeApiService';
 import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
-import { captureException } from '../components/sentry/sentry';
+import { captureException } from '../features/sentry';
 
 export const getReactorValidatorChangeStatusAction = () => {
 	const client = new SettingsControllerClient();

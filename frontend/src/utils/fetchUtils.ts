@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify';
 import { ApiException } from '../swagger/apexBridgeApiService';
-import { captureException } from '../components/sentry/sentry';
+import { captureException } from '../features/sentry';
 
 export class ErrorResponse {
 	err: string;

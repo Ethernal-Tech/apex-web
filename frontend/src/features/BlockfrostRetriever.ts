@@ -1,6 +1,7 @@
 import { UtxoRetriever } from './types';
-import { getAssetsSumMap, captureAndThrowError } from '../utils/generalUtils';
+import { getAssetsSumMap } from '../utils/generalUtils';
 import { UTxO } from './WalletHandler';
+import { captureAndThrowError } from './sentry';
 
 class BlockfrostRetriever implements UtxoRetriever {
 	private address: string;

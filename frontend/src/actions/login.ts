@@ -4,7 +4,6 @@ import { Dispatch } from 'redux';
 import { logout } from './logout';
 import { toast } from 'react-toastify';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
-import { captureAndThrowError } from '../utils/generalUtils';
 import {
 	checkChainCompatibility,
 	fromChainToNetwork,
@@ -26,7 +25,7 @@ import {
 	shortRetryOptions,
 	shouldUseMainnet,
 } from '../utils/generalUtils';
-import { captureException } from '../components/sentry/sentry';
+import { captureAndThrowError, captureException } from '../features/sentry';
 
 let onLoadCalled = false;
 

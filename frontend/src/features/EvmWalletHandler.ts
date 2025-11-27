@@ -2,12 +2,9 @@ import Web3 from 'web3';
 import { BlockNumberOrTag, Numbers, Transaction } from 'web3-types';
 import { toHex } from 'web3-utils';
 import { ERC20_MIN_ABI } from './ABI';
-import {
-	shortRetryOptions,
-	wait,
-	captureAndThrowError,
-} from '../utils/generalUtils';
+import { shortRetryOptions, wait } from '../utils/generalUtils';
 import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
+import { captureAndThrowError } from './sentry';
 
 type Wallet = {
 	name: string;

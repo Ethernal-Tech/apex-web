@@ -4,11 +4,12 @@ import {
 	SettingsControllerClient,
 } from '../swagger/apexBridgeApiService';
 import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
-import { captureAndThrowError, retryForever } from '../utils/generalUtils';
+import { retryForever } from '../utils/generalUtils';
 import {
 	setBridgingAddressesAction,
 	setSettingsAction,
 } from '../redux/slices/settingsSlice';
+import { captureAndThrowError } from '../features/sentry';
 
 const RETRY_DELAY_MS = 5000;
 

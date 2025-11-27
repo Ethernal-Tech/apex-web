@@ -1,6 +1,6 @@
 import Web3 from 'web3';
 import { isHex } from 'web3-validator';
-import { captureAndThrowError } from './generalUtils';
+import { captureAndThrowError } from '../features/sentry';
 
 export const normalizeNativeTokenKey = (k: string) => {
 	if (!k.includes('.')) return k;

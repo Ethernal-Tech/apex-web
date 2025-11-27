@@ -1,9 +1,6 @@
 import BasePage from '../base/BasePage';
 import BridgeInput from './components/BridgeInput';
-import {
-	formatTxDetailUrl,
-	captureAndThrowError,
-} from '../../utils/generalUtils';
+import { formatTxDetailUrl } from '../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { useCallback, useState } from 'react';
@@ -47,7 +44,7 @@ import {
 	SubmitLoadingState,
 	UpdateSubmitLoadingState,
 } from '../../utils/statusUtils';
-import { captureException } from '../../components/sentry/sentry';
+import { captureAndThrowError, captureException } from '../../features/sentry';
 
 function NewTransactionPage() {
 	const [loadingState, setLoadingState] = useState<
