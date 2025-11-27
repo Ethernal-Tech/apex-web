@@ -116,12 +116,12 @@ const LockedTokensComponent = () => {
 			);
 		}
 
-		const adaTotal = getBalanceSafe(ChainEnum.Cardano, LovelaceTokenName);
-		if (adaTotal > BigInt(0)) {
-			chunks.push(
-				`${formatBigIntDecimalString(adaTotal, 6)} ${decodeTokenKey(LovelaceTokenName, ChainEnum.Cardano)}`,
-			);
-		}
+		// const adaTotal = getBalanceSafe(ChainEnum.Cardano, LovelaceTokenName);
+		// if (adaTotal > BigInt(0)) {
+		// 	chunks.push(
+		// 		`${formatBigIntDecimalString(adaTotal, 6)} ${decodeTokenKey(LovelaceTokenName, ChainEnum.Cardano)}`,
+		// 	);
+		// }
 
 		return chunks.join(' | ').trim();
 	}, [lockedTokens.chains, lockedTokensLZFormatted]);
@@ -176,6 +176,8 @@ const LockedTokensComponent = () => {
 				});
 			},
 		);
+
+		delete tvb['ADA'];
 
 		const chunks: string[] = Object.entries(tvb)
 			.map(([tokenLabel, value]) =>
