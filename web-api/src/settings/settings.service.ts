@@ -45,8 +45,6 @@ export class SettingsService {
 			),
 		]);
 
-		console.log('APP CONFIG', this.appConfig.layerZero);
-
 		const layerZeroChains = this.appConfig.layerZero.networks
 			.map((network) => {
 				if (!network.chain || !network.oftAddress) {

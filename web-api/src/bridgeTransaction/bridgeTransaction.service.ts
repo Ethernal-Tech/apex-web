@@ -138,6 +138,15 @@ export class BridgeTransactionService {
 	// every 10 seconds
 	@Cron('*/10 * * * * *', { name: 'updateStatusesJob' })
 	async updateStatuses(): Promise<void> {
+		if (this.appConfig.features.statusUpdateModesSupported.length === 0) {
+			Logger.warn('cronjob CRONJOB_MODES_SUPPORTED not set');
+			return;
+		}
+
+		const modesSupported = new Set<string>(
+			this.appConfig.features.statusUpdateModesSupported,
+		);
+
 		const job = this.schedulerRegistry.getCronJob('updateStatusesJob');
 		job.stop();
 		try {
@@ -158,11 +167,7 @@ export class BridgeTransactionService {
 					for (const entity of entities) {
 						// handle layer zero
 						if (entity.isLayerZero) {
-							if (
-								this.appConfig.features.statusUpdateModesSupported.includes(
-									BridgingModeEnum.LayerZero,
-								)
-							) {
+							if (modesSupported.has(BridgingModeEnum.LayerZero)) {
 								modelsLayerZero.push({
 									txHash: entity.sourceTxHash,
 								});
@@ -178,11 +183,7 @@ export class BridgeTransactionService {
 						};
 
 						if (entity.isCentralized) {
-							if (
-								this.appConfig.features.statusUpdateModesSupported.includes(
-									BridgingModeEnum.Centralized,
-								)
-							) {
+							if (modesSupported.has(BridgingModeEnum.Centralized)) {
 								modelsCentralized.push(model);
 							}
 						} else {
@@ -196,19 +197,11 @@ export class BridgeTransactionService {
 							}
 
 							if (bridgingMode === BridgingModeEnum.Skyline) {
-								if (
-									this.appConfig.features.statusUpdateModesSupported.includes(
-										BridgingModeEnum.Skyline,
-									)
-								) {
+								if (modesSupported.has(BridgingModeEnum.Skyline)) {
 									modelsSkyline.push(model);
 								}
 							} else {
-								if (
-									this.appConfig.features.statusUpdateModesSupported.includes(
-										BridgingModeEnum.Reactor,
-									)
-								) {
+								if (modesSupported.has(BridgingModeEnum.Reactor)) {
 									modelsReactor.push(model);
 								}
 							}
@@ -218,19 +211,11 @@ export class BridgeTransactionService {
 								!!entity.txRaw
 							) {
 								if (bridgingMode === BridgingModeEnum.Skyline) {
-									if (
-										this.appConfig.features.statusUpdateModesSupported.includes(
-											BridgingModeEnum.Skyline,
-										)
-									) {
+									if (modesSupported.has(BridgingModeEnum.Skyline)) {
 										modelsPendingSkyline.push(model);
 									}
 								} else {
-									if (
-										this.appConfig.features.statusUpdateModesSupported.includes(
-											BridgingModeEnum.Reactor,
-										)
-									) {
+									if (modesSupported.has(BridgingModeEnum.Reactor)) {
 										modelsPendingReactor.push(model);
 									}
 								}
