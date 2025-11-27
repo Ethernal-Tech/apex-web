@@ -31,4 +31,5 @@ export interface ISettingsState {
 	allowedDirections: { [key: string]: string[] };
 	layerZeroChains: LayerZeroChains;
 	bridgingAddresses: string[];
+	reactorValidatorStatus: boolean;
 }
