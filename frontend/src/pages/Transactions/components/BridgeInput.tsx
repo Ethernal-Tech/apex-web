@@ -37,7 +37,7 @@ import {
 import { getTokenInfo, isWrappedToken } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
-import { fetchAndUpdateValidatorStatusAction } from '../../../actions/validatorSetChange';
+import { fetchAndUpdateReactorValidatorStatusAction } from '../../../actions/validatorSetChange';
 
 const REFETCH_VSU_STATUS_MS = 30000;
 
@@ -143,8 +143,10 @@ const BridgeInput = ({
 	const [amount, setAmount] = useState('');
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
-	const [reactorValidatorChangeInProgress, setValidatorChangeInProgress] =
-		useState(true);
+	const [
+		reactorValidatorChangeInProgress,
+		setReactorValidatorChangeInProgress,
+	] = useState(true);
 
 	const walletUTxOs = useSelector(
 		(state: RootState) => state.accountInfo.utxos,
@@ -344,8 +346,9 @@ const BridgeInput = ({
 
 	const getReactorValidatorChangeStatus = useCallback(async () => {
 		try {
-			const isInProgress = await fetchAndUpdateValidatorStatusAction();
-			setValidatorChangeInProgress(isInProgress);
+			const isInProgress =
+				await fetchAndUpdateReactorValidatorStatusAction();
+			setReactorValidatorChangeInProgress(isInProgress);
 		} catch (err) {
 			console.error('Failed to fetch validator set change status:', err);
 		}

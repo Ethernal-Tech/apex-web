@@ -1,14 +1,14 @@
 import { SettingsControllerClient } from '../swagger/apexBridgeApiService';
 import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
 
-export const getValidatorChangeStatusAction = async () => {
+export const getReactorValidatorChangeStatusAction = async () => {
 	const client = new SettingsControllerClient();
 	return client.getReactorValidatorChange();
 };
 
-export const fetchAndUpdateValidatorStatusAction = async () => {
+export const fetchAndUpdateReactorValidatorStatusAction = async () => {
 	const validatorChangeStatusResp = await tryCatchJsonByAction(
-		() => getValidatorChangeStatusAction(),
+		() => getReactorValidatorChangeStatusAction(),
 		false,
 	);
 	if (validatorChangeStatusResp instanceof ErrorResponse) {
