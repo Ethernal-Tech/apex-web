@@ -1,11 +1,17 @@
 import Web3 from 'web3';
 import { isHex } from 'web3-validator';
+import { captureAndThrowError } from '../features/sentry';
 
 export const normalizeNativeTokenKey = (k: string) => {
 	if (!k.includes('.')) return k;
 
 	const kParts = k.split('.');
-	if (kParts.length > 2) throw new Error(`invalid native token key: ${k}`);
+	if (kParts.length > 2)
+		captureAndThrowError(
+			`invalid native token key: ${k}`,
+			'tokenUtils.ts',
+			'normalizeNativeTokenKey',
+		);
 
 	let name = kParts[1];
 	if (!isHex(name)) {

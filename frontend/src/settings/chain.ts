@@ -12,6 +12,7 @@ import { ReactComponent as BaseIcon } from '../assets/chain-icons/base.svg';
 import { ReactComponent as BNBIcon } from '../assets/chain-icons/bsc.svg';
 import { ISettingsState, SettingsPerMode } from './settingsRedux';
 import appSettings from './appSettings';
+import { captureAndThrowError } from '../features/sentry';
 
 export enum BridgingModeEnum {
 	Reactor = 'reactor',
@@ -186,7 +187,7 @@ export const toChainEnum = function (value: string): ChainEnum {
 		return lower as ChainEnum;
 	}
 
-	throw new Error(`Invalid chain: ${value}`);
+	captureAndThrowError(`Invalid chain: ${value}`, 'chain.ts', 'toChainEnum');
 };
 
 export function isApexBridgeChain(chain: ChainEnum): boolean {

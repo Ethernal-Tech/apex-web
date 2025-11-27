@@ -1,6 +1,8 @@
 export class AppSettings {
 	private _apiUrl = 'https://localhost:30000';
 
+	private _sentryDsn = '';
+
 	private _minUtxoChainValue: { [key: string]: string } = {
 		prime: '0',
 		vector: '0',
@@ -26,6 +28,7 @@ export class AppSettings {
 	private _maxTokenAmountAllowedToBridge = '0';
 	private _minValueToBridge = '0';
 	private _potentialWalletFee = 0;
+	private _disableSentry = false;
 	private _isMainnet = false;
 	private _isSkyline = false;
 
@@ -39,6 +42,7 @@ export class AppSettings {
 				: './appSettings_production.json',
 		);
 		this._apiUrl = settingsJson.apiUrl;
+		this._sentryDsn = settingsJson.sentryDsn;
 		this._minUtxoChainValue = settingsJson.minUtxoChainValue;
 		this._minChainFeeForBridging = settingsJson.minChainFeeForBridging;
 		this._minOperationFee = settingsJson.minOperationFee;
@@ -48,12 +52,17 @@ export class AppSettings {
 			settingsJson.maxTokenAmountAllowedToBridge;
 		this._minValueToBridge = settingsJson.minValueToBridge;
 		this._potentialWalletFee = settingsJson.potentialWalletFee;
+		this._disableSentry = settingsJson.disableSentry;
 		this._isMainnet = settingsJson.isMainnet;
 		this._isSkyline = settingsJson.isSkyline;
 	}
 
 	get apiUrl(): string {
 		return this._apiUrl;
+	}
+
+	get sentryDsn(): string {
+		return this._sentryDsn;
 	}
 
 	get minUtxoChainValue(): { [key: string]: string } {
@@ -86,6 +95,10 @@ export class AppSettings {
 
 	get potentialWalletFee(): number {
 		return this._potentialWalletFee;
+	}
+
+	get disableSentry(): boolean {
+		return this._disableSentry;
 	}
 
 	get isMainnet(): boolean {

@@ -9,6 +9,7 @@ import {
 	setBridgingAddressesAction,
 	setSettingsAction,
 } from '../redux/slices/settingsSlice';
+import { captureAndThrowError } from '../features/sentry';
 
 const RETRY_DELAY_MS = 5000;
 
@@ -24,8 +25,10 @@ export const fetchAndUpdateSettingsAction = async (dispatch: Dispatch) => {
 			false,
 		);
 		if (settingsResp instanceof ErrorResponse) {
-			throw new Error(
+			captureAndThrowError(
 				`Error while fetching settings: ${settingsResp.err}`,
+				'settings.ts',
+				'fetchAndUpdateSettingsAction',
 			);
 		}
 
@@ -50,8 +53,10 @@ export const fetchAndUpdateBridgingAddressesAction = async (
 			false,
 		);
 		if (bridgingAddressesResp instanceof ErrorResponse) {
-			throw new Error(
+			captureAndThrowError(
 				`Error while fetching bridging addresses: ${bridgingAddressesResp.err}`,
+				'settings.ts',
+				'fetchAndUpdateBridgingAddressesAction',
 			);
 		}
 

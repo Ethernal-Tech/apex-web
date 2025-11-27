@@ -29,6 +29,7 @@ import {
 } from '../../../actions/submitTx';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
+import { captureException } from '../../../features/sentry';
 
 type BridgeInputType = {
 	submit: (address: string, amount: string) => Promise<void>;
@@ -123,6 +124,12 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 			}
 		} catch (e) {
 			console.log('error while calculating bridging fee', e);
+			captureException(e, {
+				tags: {
+					component: 'LayerZeroBridgeInput.ts',
+					action: 'fetchWalletFee',
+				},
+			});
 			setUserWalletFee(undefined);
 			resetBridgeTxFee();
 
@@ -151,6 +158,12 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 			setUserWalletFee(totalTxFee.toString(10));
 		} catch (e) {
 			console.log('error while calculating wallet fee', e);
+			captureException(e, {
+				tags: {
+					component: 'LayerZeroBridgeInput.ts',
+					action: 'fetchWalletFee',
+				},
+			});
 		}
 	}, [
 		destinationAddr,

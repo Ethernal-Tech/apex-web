@@ -1,5 +1,6 @@
 import { bech32 } from 'bech32';
 import { CardanoNetworkType } from './types';
+import { captureAndThrowError, captureException } from '../sentry';
 
 export type Bech32DecodeData = {
 	prefix: string;
@@ -57,8 +58,10 @@ const convertBits = (
 			result.push((value << (outBits - bits)) & maxV);
 		}
 	} else {
-		if (bits >= inBits) throw Error('Excess padding');
-		if ((value << (outBits - bits)) & maxV) throw Error('Non-zero padding');
+		if (bits >= inBits)
+			captureAndThrowError('Excess padding', 'utils.ts', 'convertBits');
+		if ((value << (outBits - bits)) & maxV)
+			captureAndThrowError('Non-zero padding', 'utils.ts', 'convertBits');
 	}
 
 	return result;
@@ -73,6 +76,12 @@ export const Bech32EncodeFromBase256 = (
 		return bech32.encode(hrp, converted, 1000);
 	} catch (e) {
 		console.log('failed to Bech32EncodeFromBase256. err:', e);
+		captureException(e, {
+			tags: {
+				component: 'utils.ts',
+				action: 'Bech32EncodeFromBase256',
+			},
+		});
 	}
 };
 
@@ -88,5 +97,11 @@ export const Bech32DecodeToBase256 = (
 		return { prefix: decoded.prefix, data };
 	} catch (e) {
 		console.log('failed to Bech32DecodeToBase256. err:', e);
+		captureException(e, {
+			tags: {
+				component: 'utils.ts',
+				action: 'Bech32DecodeToBase256',
+			},
+		});
 	}
 };
