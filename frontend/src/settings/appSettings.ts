@@ -1,6 +1,8 @@
 export class AppSettings {
 	private _apiUrl = 'https://localhost:30000';
 
+	private _sentryDsn = '';
+
 	private _minUtxoChainValue: { [key: string]: string } = {
 		prime: '0',
 		vector: '0',
@@ -39,6 +41,7 @@ export class AppSettings {
 				: './appSettings_production.json',
 		);
 		this._apiUrl = settingsJson.apiUrl;
+		this._sentryDsn = settingsJson.sentryDsn;
 		this._minUtxoChainValue = settingsJson.minUtxoChainValue;
 		this._minChainFeeForBridging = settingsJson.minChainFeeForBridging;
 		this._minOperationFee = settingsJson.minOperationFee;
@@ -54,6 +57,10 @@ export class AppSettings {
 
 	get apiUrl(): string {
 		return this._apiUrl;
+	}
+
+	get sentryDsn(): string {
+		return this._sentryDsn;
 	}
 
 	get minUtxoChainValue(): { [key: string]: string } {

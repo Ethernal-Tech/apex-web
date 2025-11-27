@@ -1,14 +1,19 @@
 import * as Sentry from '@sentry/react';
+import appSettings from '../../settings/appSettings';
 
-const DSN =
-	'https://bf7c682b341edcc67fbec7597e25791f@o4510034117722112.ingest.de.sentry.io/4510046234345552'; // TODO: Change with production DSN
+const COOKIE_CONSENT_KEY = 'cookieConsent';
+export const COOKIE_CONSENT_ACCEPTED = 'accepted';
+export const COOKIE_CONSENT_REJECTED = 'rejected';
 
 const fullConfig = {
-	dsn: DSN,
+	dsn: appSettings.sentryDsn,
 	sendDefaultPii: true,
 	integrations: [
 		Sentry.browserTracingIntegration(),
-		Sentry.replayIntegration(),
+		Sentry.replayIntegration({
+			maskAllText: false,
+			blockAllMedia: false,
+		}),
 	],
 	enableLogs: true,
 	tracesSampleRate: 1.0,
@@ -18,7 +23,7 @@ const fullConfig = {
 };
 
 const restrictedConfig = {
-	dsn: DSN,
+	dsn: appSettings.sentryDsn,
 	beforeSend(event: any) {
 		// Strip any potentially personal info
 		delete event.user;
@@ -32,8 +37,7 @@ const restrictedConfig = {
 };
 
 export function InitSentry() {
-	const cookies = document.cookie.split(';').map((c) => c.trim());
-	if (cookies && cookies.some((c) => c.startsWith('cookieConsent=true'))) {
+	if (getCookieConsent() === true) {
 		initSentryFull();
 	} else {
 		Sentry.init(restrictedConfig);
@@ -56,3 +60,16 @@ export function captureException(err: any, context: any = {}) {
 		tags: context,
 	});
 }
+
+export const getCookieConsent = (): boolean | null => {
+	const cookieConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
+	if (cookieConsent === null) {
+		return cookieConsent;
+	}
+
+	return (cookieConsent as string) === COOKIE_CONSENT_ACCEPTED;
+};
+
+export const setCookieConsent = (decision: string) => {
+	localStorage.setItem(COOKIE_CONSENT_KEY, decision);
+};
