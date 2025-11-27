@@ -1,6 +1,5 @@
 {
   "app": {
-    "name": "apex-bridge",
     "logLevel": "debug",
     "port": 30000,
     "isMainnet": false
@@ -48,22 +47,22 @@
     "scanUrl": "https://scan.layerzero-api.com/v1",
     "networks": [
       {
-        "name": "nexus",
-        "address": "0x9208d82F121806A34a39bB90733b4C5c54F3993e",
-        "lzChainId": 30384,
-        "type": "London"
+        "chain": "nexus",
+        "oftAddress": "0x9208d82F121806A34a39bB90733b4C5c54F3993e",
+        "chainID": 30384,
+        "txType": "London"
       },
       {
-        "name": "base",
-        "address": "0x9208d82F121806A34a39bB90733b4C5c54F3993e",
-        "lzChainId": 30184,
-        "type": "London"
+        "chain": "base",
+        "oftAddress": "0x9208d82F121806A34a39bB90733b4C5c54F3993e",
+        "chainID": 30184,
+        "txType": "London"
       },
       {
-        "name": "bsc",
-        "address": "0x9208d82F121806A34a39bB90733b4C5c54F3993e",
-        "lzChainId": 30102,
-        "type": "Legacy"
+        "chain": "bsc",
+        "oftAddress": "0x9208d82F121806A34a39bB90733b4C5c54F3993e",
+        "chainID": 30102,
+        "txType": "Legacy"
       }
     ]
   }

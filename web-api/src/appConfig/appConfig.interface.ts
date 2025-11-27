@@ -9,15 +9,14 @@ export type LogLevel =
 	| 'debug';
 
 export interface LayerZeroNetworkConfig {
-	name: string;
-	address: `0x${string}`;
-	lzChainId: number;
-	type: string;
+	chain: string;
+	oftAddress: `0x${string}`;
+	chainID: number;
+	txType: string;
 }
 
 export interface AppConfig {
 	app: {
-		name: string;
 		logLevel: LogLevel;
 		port: number;
 		corsAllowList: string[];

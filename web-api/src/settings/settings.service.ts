@@ -45,19 +45,19 @@ export class SettingsService {
 			),
 		]);
 
-		console.log('APP CONFIG', this.appConfig);
+		console.log('APP CONFIG', this.appConfig.layerZero);
 
 		const layerZeroChains = this.appConfig.layerZero.networks
 			.map((network) => {
-				if (!network.name || !network.address) {
+				if (!network.chain || !network.oftAddress) {
 					return undefined;
 				}
 
 				const item = new LayerZeroChainSettingsDto();
-				item.chain = network.name as ChainEnum;
-				item.oftAddress = network.address;
-				item.chainID = network.lzChainId;
-				item.txType = network.type as TxTypeEnum;
+				item.chain = network.chain as ChainEnum;
+				item.oftAddress = network.oftAddress;
+				item.chainID = network.chainID;
+				item.txType = network.txType as TxTypeEnum;
 
 				return item;
 			})
@@ -99,6 +99,8 @@ export class SettingsService {
 		// skyline
 		skylineSettings.enabledChains.forEach((chain) => enabledChains.add(chain));
 		// layer zero
+		layerZeroChains.forEach((x) => enabledChains.add(x.chain));
+
 		this.SettingsResponse = new SettingsFullResponseDto();
 		this.SettingsResponse.layerZeroChains = layerZeroChains;
 		this.SettingsResponse.settingsPerMode = {

@@ -1,6 +1,5 @@
 {
   "app": {
-    "name": "apex-bridge",
     "logLevel": "debug",
     "port": 30000,
     "isMainnet": false
@@ -44,9 +43,27 @@
     "smtpPort": 465
   },
   "layerzero": {
-    "apiUrl": "",
-    "scanUrl": "https://scan-testnet.layerzero-api.com/v1",
+    "apiUrl": "https://metadata.layerzero-api.com/v1/metadata/experiment/ofts",
+    "scanUrl": "https://scan.layerzero-api.com/v1",
     "networks": [
+      {
+        "chain": "nexus",
+        "oftAddress": "0x9208d82F121806A34a39bB90733b4C5c54F3993e",
+        "chainID": 30384,
+        "txType": "London"
+      },
+      {
+        "chain": "base",
+        "oftAddress": "0x9208d82F121806A34a39bB90733b4C5c54F3993e",
+        "chainID": 30184,
+        "txType": "London"
+      },
+      {
+        "chain": "bsc",
+        "oftAddress": "0x9208d82F121806A34a39bB90733b4C5c54F3993e",
+        "chainID": 30102,
+        "txType": "Legacy"
+      }
     ]
   }
 }

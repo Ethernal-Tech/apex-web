@@ -50,19 +50,18 @@ export const layerZeroConfig = makeValidator((x) => {
 			if (parts.length !== 4) {
 				throw new Error(`Invalid LAYERZERO_CONFIG item format: "${item}"`);
 			}
-			const [name, address, lzChainIdStr, type] = parts;
+			const [chain, oftAddress, chainID, txType] = parts;
 			return {
-				name,
-				address: address as `0x${string}`,
-				lzChainId: parseInt(lzChainIdStr, 10),
-				type,
+				chain,
+				oftAddress: oftAddress as `0x${string}`,
+				chainID: parseInt(chainID, 10),
+				txType,
 			};
 		});
 });
 
 export const envOverrides = (): DeepPartial<AppConfig> => {
 	const env = cleanEnv(process.env, {
-		APP_NAME: str({ default: undefined }),
 		LOG_LEVEL: str({ default: undefined }),
 		PORT: num({ default: undefined }),
 		CORS_ALLOW_LIST: list({
@@ -103,7 +102,6 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 
 	return {
 		app: {
-			name: env.APP_NAME,
 			logLevel: env.LOG_LEVEL as LogLevel,
 			port: env.PORT,
 			corsAllowList: env.CORS_ALLOW_LIST,
