@@ -123,8 +123,8 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 		services: {
 			oracleSkylineUrl: env.ORACLE_SKYLINE_URL,
 			oracleReactorUrl: env.ORACLE_REACTOR_URL,
-			cardanoSkylineApiUrl: env.CARDANO_API_SKYLINE_URL,
-			cardanoReactorApiUrl: env.CARDANO_API_REACTOR_URL,
+			cardanoApiSkylineUrl: env.CARDANO_API_SKYLINE_URL,
+			cardanoApiReactorUrl: env.CARDANO_API_REACTOR_URL,
 			centralizedApiUrl: env.CENTRALIZED_API_URL,
 		},
 		database: {

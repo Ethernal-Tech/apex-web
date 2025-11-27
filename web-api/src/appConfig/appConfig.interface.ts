@@ -37,8 +37,8 @@ export interface AppConfig {
 	services: {
 		oracleSkylineUrl: string;
 		oracleReactorUrl: string;
-		cardanoSkylineApiUrl: string;
-		cardanoReactorApiUrl: string;
+		cardanoApiSkylineUrl: string;
+		cardanoApiReactorUrl: string;
 		centralizedApiUrl: string;
 	};
 	database: {

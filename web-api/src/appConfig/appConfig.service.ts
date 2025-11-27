@@ -16,8 +16,8 @@ const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
 	services: {
 		oracleSkylineUrl: defaultUrl,
 		oracleReactorUrl: defaultUrl,
-		cardanoSkylineApiUrl: defaultUrl,
-		cardanoReactorApiUrl: defaultUrl,
+		cardanoApiSkylineUrl: defaultUrl,
+		cardanoApiReactorUrl: defaultUrl,
 	},
 	database: {
 		port: 5432,
@@ -81,10 +81,10 @@ export class AppConfigService {
 		return this.config.services.oracleReactorUrl;
 	}
 	get cardanoSkylineApiUrl() {
-		return this.config.services.cardanoSkylineApiUrl;
+		return this.config.services.cardanoApiSkylineUrl;
 	}
 	get cardanoReactorApiUrl() {
-		return this.config.services.cardanoReactorApiUrl;
+		return this.config.services.cardanoApiReactorUrl;
 	}
 	get centralizedApiUrl() {
 		return this.config.services.centralizedApiUrl;

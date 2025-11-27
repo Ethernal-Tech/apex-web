@@ -15,11 +15,7 @@
   },
   "bridge": {
     "ethTxTtlInc": 50,
-    "recentInputsThresholdMinutes": 5,
-    "addresses": {
-      "nexusBridging": "0x43Bca3122Efa14C68F9d385e3b4Da8847eca32Ba",
-      "nexusCentralizedBridging": "0xEe639cDA5D46Bd32D0013bB75f60F3E691D9839f"
-    }
+    "recentInputsThresholdMinutes": 5
   },
   "services": {
     "oracleSkylineUrl": "http://validator-1-skyline-partner.testnet.ethernal.work:10003",
