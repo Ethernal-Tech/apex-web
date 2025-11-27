@@ -2,6 +2,7 @@ import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
 	IsArray,
+	IsBoolean,
 	IsInt,
 	IsNotEmpty,
 	IsObject,
@@ -226,4 +227,14 @@ export class AllBridgingAddressesDto {
 		description: 'Bridging address',
 	})
 	addresses: string[];
+}
+
+export class ValidatorChangeDto {
+	@IsNotEmpty()
+	@IsBoolean()
+	@ApiProperty({
+		description:
+			'Indicates whether the validator set change is currently in progress.',
+	})
+	inProgress: boolean;
 }

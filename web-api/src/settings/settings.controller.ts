@@ -12,6 +12,7 @@ import { SettingsService } from './settings.service';
 import {
 	AllBridgingAddressesDto,
 	SettingsFullResponseDto,
+	ValidatorChangeDto,
 } from './settings.dto';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
@@ -84,5 +85,15 @@ export class SettingsController {
 
 			throw new BadRequestException();
 		}
+	}
+
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: ValidatorChangeDto,
+	})
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Not Found' })
+	@Get('reactorValidatorChangeStatus')
+	getReactorValidatorChange(): ValidatorChangeDto {
+		return { inProgress: this.settingsService.reactorValidatorChangeStatus };
 	}
 }

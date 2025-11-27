@@ -16,7 +16,11 @@ import {
 	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
-import { ChainApexBridgeEnum, TransactionStatusEnum } from 'src/common/enum';
+import {
+	BridgingModeEnum,
+	ChainApexBridgeEnum,
+	TransactionStatusEnum,
+} from 'src/common/enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThan, Repository } from 'typeorm';
 import {
@@ -33,6 +37,7 @@ import {
 	LayerZeroTransferResponseDto,
 } from './layerzerotransaction.dto';
 import {
+	getBridgingMode,
 	getBridgingSettings,
 	isCardanoChain,
 	isEvmChain,
@@ -141,12 +146,23 @@ export class TransactionService {
 	): Promise<CreateCardanoTransactionResponseDto> {
 		this.validateCreateCardanoTx(dto);
 
-		const recentInputs = await this.getRecentInputs(dto);
-		const tx = await createCardanoBridgingTx(
-			dto,
-			recentInputs,
+		const bridgingMode = getBridgingMode(
+			dto.originChain,
+			dto.destinationChain,
 			this.settingsService.SettingsResponse,
 		);
+
+		if (
+			bridgingMode === BridgingModeEnum.Reactor &&
+			this.settingsService.reactorValidatorChangeStatus
+		) {
+			throw new BadRequestException(
+				'validator set change in progress, cant create transactions',
+			);
+		}
+
+		const recentInputs = await this.getRecentInputs(dto);
+		const tx = await createCardanoBridgingTx(dto, recentInputs, bridgingMode!);
 
 		if (!tx) {
 			throw new BadRequestException('error while creating bridging tx');
@@ -160,11 +176,25 @@ export class TransactionService {
 	): Promise<CardanoTransactionFeeResponseDto> {
 		this.validateCreateCardanoTx(dto);
 
+		const bridgingMode = getBridgingMode(
+			dto.originChain,
+			dto.destinationChain,
+			this.settingsService.SettingsResponse,
+		);
+
+		if (
+			bridgingMode === BridgingModeEnum.Reactor &&
+			this.settingsService.reactorValidatorChangeStatus
+		) {
+			throw new BadRequestException(
+				'validator set change in progress, cant create transactions',
+			);
+		}
 		const recentInputs = await this.getRecentInputs(dto);
 		const feeResp = await getCardanoBridgingTxFee(
 			dto,
 			recentInputs,
-			this.settingsService.SettingsResponse,
+			bridgingMode!,
 		);
 
 		if (!feeResp) {
@@ -175,6 +205,12 @@ export class TransactionService {
 	}
 
 	createEth(dto: CreateTransactionDto): CreateEthTransactionResponseDto {
+		if (this.settingsService.reactorValidatorChangeStatus) {
+			throw new BadRequestException(
+				'validator set change in progress, cant create transactions',
+			);
+		}
+
 		if (
 			!this.settingsService.SettingsResponse.enabledChains.includes(
 				dto.originChain,

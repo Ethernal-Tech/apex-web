@@ -163,6 +163,9 @@ const BridgeInput = ({
 		chain,
 		destinationChain,
 	);
+	const reactorValidatorChangeInProgress = useSelector(
+		(state: RootState) => state.settings.reactorValidatorStatus,
+	);
 
 	const [sourceToken, setSourceToken] = useState<TokenEnum | undefined>(
 		supportedSourceTokenOptions.length > 0
@@ -490,6 +493,7 @@ const BridgeInput = ({
 						borderRadius: '8px',
 						padding: 2,
 					}}
+					isFeeInformation={!reactorValidatorChangeInProgress}
 				/>
 
 				{!!loadingState && (
@@ -521,7 +525,13 @@ const BridgeInput = ({
 				<ButtonCustom
 					onClick={onSubmit}
 					variant={appSettings.isSkyline ? 'whiteSkyline' : 'white'}
-					disabled={!!loadingState || currencyMaxAmount < 0}
+					disabled={
+						!!loadingState ||
+						currencyMaxAmount < 0 ||
+						(bridgingModeInfo.bridgingMode ===
+							BridgingModeEnum.Reactor &&
+							reactorValidatorChangeInProgress)
+					}
 					sx={{
 						gridColumn: 'span 1',
 						textTransform: 'uppercase',

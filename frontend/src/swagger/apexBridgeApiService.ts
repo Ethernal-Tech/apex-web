@@ -102,6 +102,46 @@ export class SettingsControllerClient extends BaseClient {
         }
         return Promise.resolve<AllBridgingAddressesDto>(null as any);
     }
+
+    getReactorValidatorChange(): Promise<ValidatorChangeDto> {
+        let url_ = this.baseUrl + "/settings/reactorValidatorChangeStatus";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGetReactorValidatorChange(_response);
+        });
+    }
+
+    protected processGetReactorValidatorChange(response: Response): Promise<ValidatorChangeDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ValidatorChangeDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("Not Found", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ValidatorChangeDto>(null as any);
+    }
 }
 
 export class TransactionControllerClient extends BaseClient {
@@ -1206,6 +1246,56 @@ export class AllBridgingAddressesDto implements IAllBridgingAddressesDto {
 export interface IAllBridgingAddressesDto {
     /** Bridging address */
     addresses: string[];
+
+    [key: string]: any;
+}
+
+export class ValidatorChangeDto implements IValidatorChangeDto {
+    /** Indicates whether the validator set change is currently in progress. */
+    inProgress!: boolean;
+
+    [key: string]: any;
+
+    constructor(data?: IValidatorChangeDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.inProgress = _data["inProgress"];
+        }
+    }
+
+    static fromJS(data: any): ValidatorChangeDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ValidatorChangeDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["inProgress"] = this.inProgress;
+        return data;
+    }
+}
+
+export interface IValidatorChangeDto {
+    /** Indicates whether the validator set change is currently in progress. */
+    inProgress: boolean;
 
     [key: string]: any;
 }
@@ -2733,7 +2823,7 @@ function formatDate(d: Date) {
 }
 
 export class ApiException extends Error {
-    override message: string;
+    message: string;
     status: number;
     response: string;
     headers: { [key: string]: any; };

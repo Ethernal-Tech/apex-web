@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"sync"
 	"time"
 
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
@@ -78,7 +79,9 @@ type BridgingSettings struct {
 } // @name BridgingSettings
 
 type AppConfig struct {
-	RunMode          common.VCRunMode               `json:"runMode"`
+	RunMode common.VCRunMode `json:"runMode"`
+
+	cardanoChainsMu  sync.RWMutex
 	CardanoChains    map[string]*CardanoChainConfig `json:"cardanoChains"`
 	EthChains        map[string]*EthChainConfig     `json:"ethChains"`
 	UtxoCacheTimeout time.Duration                  `json:"utxoCacheTimeout"`
@@ -89,11 +92,15 @@ type AppConfig struct {
 }
 
 func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) error {
+	appConfig.cardanoChainsMu.Lock()
+
 	for chainID, cardanoChainConfig := range appConfig.CardanoChains {
 		cardanoChainConfig.ChainID = chainID
 		cardanoChainConfig.ChainSpecific.NetworkID = cardanoChainConfig.NetworkID
 		cardanoChainConfig.ChainSpecific.NetworkMagic = cardanoChainConfig.NetworkMagic
 	}
+
+	appConfig.cardanoChainsMu.Unlock()
 
 	for chainID, ethChainConfig := range appConfig.EthChains {
 		ethChainConfig.ChainID = chainID
@@ -103,7 +110,7 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 
 	logger.Debug("fetching settings from oracle API", "url", settingsRequestURL)
 
-	err := common.RetryForever(ctx, 5*time.Second, func(ctx context.Context) error {
+	return common.RetryForever(ctx, 5*time.Second, func(ctx context.Context) error {
 		settingsResponse, err := common.HTTPGet[*SettingsResponse](
 			ctx, settingsRequestURL, appConfig.OracleAPI.APIKey)
 		if err != nil {
@@ -150,14 +157,16 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 
 		return nil
 	})
-
-	return err
 }
 
-func GetChainConfig(appConfig *AppConfig, chainID string) (*CardanoChainConfig, *EthChainConfig) {
+func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig, *EthChainConfig) {
+	appConfig.cardanoChainsMu.RLock()
+
 	if cardanoChainConfig, exists := appConfig.CardanoChains[chainID]; exists && cardanoChainConfig.IsEnabled {
 		return cardanoChainConfig, nil
 	}
+
+	appConfig.cardanoChainsMu.RUnlock()
 
 	if ethChainConfig, exists := appConfig.EthChains[chainID]; exists && ethChainConfig.IsEnabled {
 		return nil, ethChainConfig
@@ -166,11 +175,13 @@ func GetChainConfig(appConfig *AppConfig, chainID string) (*CardanoChainConfig, 
 	return nil, nil
 }
 
-func (appConfig AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]sendtx.ChainConfig, error) {
+func (appConfig *AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]sendtx.ChainConfig, error) {
+	appConfig.cardanoChainsMu.RLock()
+
 	result := make(map[string]sendtx.ChainConfig, len(appConfig.CardanoChains)+len(appConfig.EthChains))
 
 	for chainID, cardanoConfig := range appConfig.CardanoChains {
-		cfg, err := cardanoConfig.ToSendTxChainConfig(&appConfig, useFallback)
+		cfg, err := cardanoConfig.ToSendTxChainConfig(appConfig, useFallback)
 		if err != nil {
 			return nil, err
 		}
@@ -178,11 +189,74 @@ func (appConfig AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]se
 		result[chainID] = cfg
 	}
 
+	appConfig.cardanoChainsMu.RUnlock()
+
 	for chainID, config := range appConfig.EthChains {
-		result[chainID] = config.ToSendTxChainConfig(&appConfig)
+		result[chainID] = config.ToSendTxChainConfig(appConfig)
 	}
 
 	return result, nil
+}
+
+func (appConfig *AppConfig) FetchAndUpdateMultiSigAddresses(ctx context.Context, logger hclog.Logger) error {
+	multiSigAddrRequestURL := fmt.Sprintf("%s/api/Settings/GetMultiSigBridgingAddr", appConfig.OracleAPI.URL)
+
+	logger.Debug("fetching multisig addresses from oracle API", "url", multiSigAddrRequestURL)
+
+	return common.RetryForever(ctx, 5*time.Second, func(ctx context.Context) error {
+		multiSigAddrResponse, err := common.HTTPGet[*MultiSigAddressesResponse](
+			ctx, multiSigAddrRequestURL, appConfig.OracleAPI.APIKey)
+		if err != nil {
+			return err
+		}
+
+		appConfig.updateMultisigAddresses(logger, multiSigAddrResponse.CardanoChains)
+
+		logger.Debug("applied multisig addresses from oracle API", "multiSigAddr", multiSigAddrResponse)
+
+		return nil
+	})
+}
+
+func (appConfig *AppConfig) updateMultisigAddresses(
+	logger hclog.Logger,
+	addresses map[string]BridgingAddresses) {
+	appConfig.cardanoChainsMu.Lock()
+	defer appConfig.cardanoChainsMu.Unlock()
+
+	for chainID, multiSigAddr := range addresses {
+		if chainConfig, ok := appConfig.CardanoChains[chainID]; ok {
+			chainConfig.BridgingAddresses.BridgingAddress = multiSigAddr.BridgingAddress
+			chainConfig.BridgingAddresses.FeeAddress = multiSigAddr.FeeAddress
+
+			logger.Info("successfully updated bridge address", "chainID", chainID)
+		}
+	}
+}
+
+func (appConfig *AppConfig) CreateEnabledChainsAndNativeTokens() ([]string, map[string][]sendtx.TokenExchangeConfig) {
+	var enabledChains []string
+
+	appConfig.cardanoChainsMu.RLock()
+
+	nativeTokens := map[string][]sendtx.TokenExchangeConfig{}
+	for chainID, cfg := range appConfig.CardanoChains {
+		nativeTokens[chainID] = cfg.ChainSpecific.NativeTokens
+
+		if cfg.IsEnabled {
+			enabledChains = append(enabledChains, chainID)
+		}
+	}
+
+	appConfig.cardanoChainsMu.RUnlock()
+
+	for chainID, cfg := range appConfig.EthChains {
+		if cfg.IsEnabled {
+			enabledChains = append(enabledChains, chainID)
+		}
+	}
+
+	return enabledChains, nativeTokens
 }
 
 func (config CardanoChainConfig) ToSendTxChainConfig(

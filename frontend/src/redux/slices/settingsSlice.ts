@@ -43,6 +43,7 @@ const initialState: ISettingsState = {
 	allowedDirections: {},
 	layerZeroChains: {},
 	bridgingAddresses: [],
+	reactorValidatorStatus: true,
 };
 
 const settingsSlice = createSlice({
@@ -139,6 +140,9 @@ const settingsSlice = createSlice({
 		clearBridgingAddressesAction: (state) => {
 			state.bridgingAddresses = [];
 		},
+		setReactorValidatorStatus: (state, action: PayloadAction<boolean>) => {
+			state.reactorValidatorStatus = action.payload;
+		},
 	},
 });
 
@@ -147,6 +151,7 @@ export const {
 	setSettingsAction,
 	setBridgingAddressesAction,
 	clearBridgingAddressesAction,
+	setReactorValidatorStatus,
 } = settingsSlice.actions;
 
 export default settingsSlice.reducer;

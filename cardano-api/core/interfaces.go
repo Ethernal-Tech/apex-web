@@ -11,3 +11,8 @@ type API interface {
 	Start(context.Context)
 	Dispose() error
 }
+
+type ValidatorChangeTracker interface {
+	SetValidatorChangeStatus(inProgress bool)
+	IsValidatorChangeInProgress() bool
+}

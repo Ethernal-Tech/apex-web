@@ -28,6 +28,7 @@ interface FeeInformationProps {
 	operationFee?: string;
 	chain: ChainEnum;
 	bridgingMode: BridgingModeEnum;
+	isFeeInformation: boolean;
 }
 
 const FeeInformation: React.FC<FeeInformationProps> = ({
@@ -37,10 +38,30 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 	operationFee,
 	chain,
 	bridgingMode,
+	isFeeInformation,
 }) => {
 	const currencyToken = getCurrencyTokenInfo(chain);
 	const isSkylineMode = bridgingMode === BridgingModeEnum.Skyline;
 	const isLayerZeroMode = bridgingMode === BridgingModeEnum.LayerZero;
+	const isReactorMode = bridgingMode === BridgingModeEnum.Reactor;
+
+	if (isReactorMode && !isFeeInformation) {
+		return (
+			<CustomBox
+				sx={{
+					color: 'white',
+					textAlign: 'center',
+					...sx,
+				}}
+			>
+				<Typography sx={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
+					Bridge validator set change in progress.
+					<br />
+					Bridging is not possible at the moment.
+				</Typography>
+			</CustomBox>
+		);
+	}
 
 	return (
 		<CustomBox

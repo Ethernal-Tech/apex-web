@@ -10,16 +10,27 @@ import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { BridgingModeEnum, ChainEnum, TxTypeEnum } from 'src/common/enum';
 import { getTokenNameFromSettings } from 'src/utils/chainUtils';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
+import { Cron, SchedulerRegistry } from '@nestjs/schedule';
+import { getReactorValidatorChangeStatus } from './settings.helper';
 
 const RETRY_DELAY_MS = 5000;
 const settingsApiPath = `/api/CardanoTx/GetSettings`;
+
 @Injectable()
 export class SettingsService {
 	SettingsResponse: SettingsFullResponseDto;
+	reactorValidatorChangeStatus: boolean;
 
-	constructor(private readonly appConfig: AppConfigService) {}
+	constructor(
+		private readonly schedulerRegistry: SchedulerRegistry,
+		private readonly appConfig: AppConfigService,
+	) {}
 
 	async init() {
+		this.reactorValidatorChangeStatus = await getReactorValidatorChangeStatus(
+			this.appConfig,
+		);
+
 		const skylineUrl = this.appConfig.cardanoSkylineApiUrl;
 		const skylineApiKey = process.env.CARDANO_API_SKYLINE_API_KEY;
 
@@ -160,6 +171,25 @@ export class SettingsService {
 			}
 
 			throw new BadRequestException();
+		}
+	}
+
+	@Cron('*/30 * * * * *', { name: 'updateValidatorChangeStatus' })
+	async updateValidatorChangeStatus(): Promise<void> {
+		const job = this.schedulerRegistry.getCronJob(
+			'updateValidatorChangeStatus',
+		);
+		job.stop();
+		try {
+			this.reactorValidatorChangeStatus = await getReactorValidatorChangeStatus(
+				this.appConfig,
+			);
+		} catch (error) {
+			Logger.error('Failed to update validator set change status.', error);
+		} finally {
+			job.start();
+
+			Logger.debug('Job updateValidatorChangeStatus executed');
 		}
 	}
 }
