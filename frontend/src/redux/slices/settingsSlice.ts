@@ -10,6 +10,7 @@ export interface ISettingsState {
 	minValueToBridge: string;
 	enabledChains: string[];
 	allowedDirections: { [key: string]: string[] };
+	validatorStatus: boolean;
 }
 
 const initialState: ISettingsState = {
@@ -19,6 +20,7 @@ const initialState: ISettingsState = {
 	minValueToBridge: appSettings.minValueToBridge,
 	enabledChains: appSettings.enabledChains,
 	allowedDirections: {},
+	validatorStatus: true,
 };
 
 const settingsSlice = createSlice({
@@ -62,10 +64,13 @@ const settingsSlice = createSlice({
 				action.payload.bridgingSettings.maxAmountAllowedToBridge;
 			state.enabledChains = action.payload.enabledChains;
 		},
+		setValidatorStatus: (state, action: PayloadAction<boolean>) => {
+			state.validatorStatus = action.payload;
+		},
 	},
 });
 
 // Action creators are generated for each case reducer function
-export const { setSettingsAction } = settingsSlice.actions;
+export const { setSettingsAction, setValidatorStatus } = settingsSlice.actions;
 
 export default settingsSlice.reducer;

@@ -20,7 +20,7 @@ export class SettingsService {
 	) {}
 
 	async init() {
-		this.validatorChangeStatus = true;
+		this.validatorChangeStatus = await getValidatorChangeStatus();
 
 		const apiUrl = this.appConfig.cardanoApiUrl;
 		const apiKey = process.env.CARDANO_API_API_KEY;

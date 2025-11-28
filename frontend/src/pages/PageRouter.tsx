@@ -16,6 +16,7 @@ import {
 import { fetchAndUpdateSettingsAction } from '../actions/settings';
 import TermsOfServicePage from './TermsOfServicePage/TermsOfServicePage';
 import PrivacyPolicyPage from './PrivacyPolicyPage/PrivacyPolicyPage';
+import { fetchAndUpdateValidatorStatusAction } from '../actions/validatorSetChange';
 
 export const HOME_ROUTE = '/';
 export const TRANSACTIONS_ROUTE = '/transactions';
@@ -23,6 +24,7 @@ export const NEW_TRANSACTION_ROUTE = '/new-transaction';
 export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
 export const PRIVACY_POLICY_ROUTE = '/privacy-policy';
 export const TERMS_OF_SERVICE_ROUTE = '/terms-of-service';
+const REFETCH_VSU_STATUS_MS = 30000;
 
 const PageRouter: React.FC = () => {
 	const settings = useSelector((state: RootState) => state.settings);
@@ -75,6 +77,19 @@ const PageRouter: React.FC = () => {
 			}
 		};
 	}, [dispatch, isFullyLoggedIn]);
+
+	useEffect(() => {
+		fetchAndUpdateValidatorStatusAction(dispatch);
+
+		const intervalId = setInterval(
+			async () => await fetchAndUpdateValidatorStatusAction(dispatch),
+			REFETCH_VSU_STATUS_MS,
+		);
+
+		return () => {
+			clearInterval(intervalId);
+		};
+	}, [dispatch]);
 
 	const renderHomePage = <HomePage />;
 
