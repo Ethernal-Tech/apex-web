@@ -22,10 +22,7 @@ import { estimateEthGas } from '../../../actions/submitTx';
 import { isCardanoChain, isEvmChain } from '../../../settings/chain';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
-import { fetchAndUpdateValidatorStatusAction } from '../../../actions/validatorSetChange';
 import InfoBox from './InfoBox';
-
-const REFETCH_VSU_STATUS_MS = 30000;
 
 type BridgeInputType = {
 	bridgeTxFee: string;
@@ -94,8 +91,6 @@ const BridgeInput = ({
 	const [amount, setAmount] = useState('');
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
-	const [validatorChangeInProgress, setValidatorChangeInProgress] =
-		useState(true);
 
 	const walletUTxOs = useSelector(
 		(state: RootState) => state.accountInfo.utxos,
@@ -109,6 +104,9 @@ const BridgeInput = ({
 	);
 	const maxAmountAllowedToBridge = useSelector(
 		(state: RootState) => state.settings.maxAmountAllowedToBridge,
+	);
+	const validatorChangeInProgress = useSelector(
+		(state: RootState) => state.settings.validatorStatus,
 	);
 
 	const fetchWalletFee = useCallback(async () => {
@@ -161,28 +159,6 @@ const BridgeInput = ({
 			}
 		};
 	}, [fetchWalletFee]);
-
-	const getValidatorChangeStatus = useCallback(async () => {
-		try {
-			const isInProgress = await fetchAndUpdateValidatorStatusAction();
-			setValidatorChangeInProgress(isInProgress);
-		} catch (err) {
-			console.error('Failed to fetch validator set change status:', err);
-		}
-	}, []);
-
-	useEffect(() => {
-		getValidatorChangeStatus();
-
-		const intervalId = setInterval(
-			getValidatorChangeStatus,
-			REFETCH_VSU_STATUS_MS,
-		);
-
-		return () => {
-			clearInterval(intervalId);
-		};
-	}, [getValidatorChangeStatus]);
 
 	const onDiscard = () => {
 		setDestinationAddr('');
