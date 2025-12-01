@@ -44,6 +44,7 @@ import {
 } from 'src/utils/chainUtils';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
+import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
 
 @Injectable()
 export class TransactionService {
@@ -75,6 +76,7 @@ export class TransactionService {
 		const settings = getBridgingSettings(
 			dto.originChain,
 			dto.destinationChain,
+			dto.tokenID,
 			this.settingsService.SettingsResponse,
 		);
 		if (!settings) {
@@ -83,9 +85,22 @@ export class TransactionService {
 			);
 		}
 
-		const srcMinFee = dto.isNativeToken
-			? settings.bridgingSettings.minChainFeeForBridgingTokens[dto.originChain]
-			: settings.bridgingSettings.minChainFeeForBridging[dto.originChain];
+		const currencyID = getCurrencyIDFromDirectionConfig(
+			this.settingsService.SettingsResponse.directionConfig,
+			dto.originChain,
+		);
+		if (!currencyID) {
+			throw new InternalServerErrorException(
+				`No currencyID for source chain: ${dto.originChain}`,
+			);
+		}
+
+		const srcMinFee =
+			dto.tokenID !== currencyID
+				? settings.bridgingSettings.minChainFeeForBridgingTokens[
+						dto.originChain
+					]
+				: settings.bridgingSettings.minChainFeeForBridging[dto.originChain];
 		if (!srcMinFee) {
 			throw new InternalServerErrorException(
 				`No minFee for source chain: ${dto.originChain}`,
@@ -149,6 +164,7 @@ export class TransactionService {
 		const bridgingMode = getBridgingMode(
 			dto.originChain,
 			dto.destinationChain,
+			dto.tokenID,
 			this.settingsService.SettingsResponse,
 		);
 
@@ -179,6 +195,7 @@ export class TransactionService {
 		const bridgingMode = getBridgingMode(
 			dto.originChain,
 			dto.destinationChain,
+			dto.tokenID,
 			this.settingsService.SettingsResponse,
 		);
 
@@ -231,6 +248,7 @@ export class TransactionService {
 		const settings = getBridgingSettings(
 			dto.originChain,
 			dto.destinationChain,
+			dto.tokenID,
 			this.settingsService.SettingsResponse,
 		);
 		if (!settings) {
@@ -255,6 +273,7 @@ export class TransactionService {
 		receiverAddrs,
 		amount,
 		nativeTokenAmount,
+		tokenID,
 		txRaw,
 		isFallback,
 		isLayerZero,
@@ -274,7 +293,7 @@ export class TransactionService {
 		entity.amount = (amount ?? '').trim() || entity.amount;
 		entity.nativeTokenAmount =
 			(nativeTokenAmount ?? '').trim() || entity.nativeTokenAmount;
-
+		entity.tokenID = tokenID;
 		entity.originChain = originChain;
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;

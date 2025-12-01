@@ -42,6 +42,12 @@ export class CreateTransactionDto {
 	})
 	amount: string;
 
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'id of the token',
+	})
+	tokenID: number;
+
 	@ApiProperty({
 		description:
 			'Fee covering the submission of the transaction on the destination chain, expressed in Lovelace',
@@ -64,13 +70,6 @@ export class CreateTransactionDto {
 		required: false,
 	})
 	utxoCacheKey?: string;
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description:
-			'True if the amount is specified in a native token; false if in a currency on source chain',
-	})
-	isNativeToken: boolean;
 }
 
 export class TransactionSubmittedDto {
@@ -125,6 +124,11 @@ export class TransactionSubmittedDto {
 	})
 	nativeTokenAmount: string;
 
+	@ApiProperty({
+		description: 'Token ID',
+	})
+	tokenID: number;
+
 	@IsNotEmpty()
 	@ApiProperty({
 		description: 'Transaction raw data on source chain',
@@ -140,6 +144,20 @@ export class TransactionSubmittedDto {
 		description: 'Indicates if Layer Zero bridging is used',
 	})
 	isLayerZero: boolean;
+}
+
+export class CreateCardanoTransactionResponseTokenAmountDto {
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'ID of the token',
+	})
+	tokenID: number;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'amount of the token',
+	})
+	amount: string;
 }
 
 export class CreateCardanoTransactionResponseDto {
@@ -175,11 +193,13 @@ export class CreateCardanoTransactionResponseDto {
 	amount: string;
 
 	@ApiProperty({
-		description: 'Amount of native token to be bridged',
+		description: 'Amounts of tokens to be bridged',
 		nullable: true,
 		required: false,
+		isArray: true,
+		type: CreateCardanoTransactionResponseTokenAmountDto,
 	})
-	nativeTokenAmount?: string;
+	nativeTokenAmount?: CreateCardanoTransactionResponseTokenAmountDto[];
 }
 
 export class CardanoTransactionFeeResponseDto {

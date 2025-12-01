@@ -5,6 +5,11 @@ import (
 	"strconv"
 )
 
+type BridgingTxResponseTokenAmount struct {
+	TokenID uint16 `json:"tokenID"`
+	Amount  string `json:"amount"`
+}
+
 type BridgingTxResponse struct {
 	// Raw transaction data, encoded as a hexadecimal string
 	TxRaw string `json:"txRaw"`
@@ -15,15 +20,18 @@ type BridgingTxResponse struct {
 	// Amount of currency to be bridged, expressed in Lovelace
 	Amount string `json:"amount"`
 	// Amount of native token to be bridged
-	NativeTokenAmount map[uint16]string `json:"nativeTokenAmount"`
+	NativeTokenAmount []BridgingTxResponseTokenAmount `json:"nativeTokenAmount"`
 } // @name BridgingTxResponse
 
 func NewBridgingTxResponse(
 	txRaw []byte, txHash string, bridgingFee uint64, amount uint64, nativeTokens map[uint16]uint64,
 ) *BridgingTxResponse {
-	nativeTokenAmounts := make(map[uint16]string, len(nativeTokens))
+	nativeTokenAmounts := make([]BridgingTxResponseTokenAmount, 0, len(nativeTokens))
 	for tokID, amnt := range nativeTokens {
-		nativeTokenAmounts[tokID] = strconv.FormatUint(amnt, 10)
+		nativeTokenAmounts = append(nativeTokenAmounts, BridgingTxResponseTokenAmount{
+			TokenID: tokID,
+			Amount:  strconv.FormatUint(amnt, 10),
+		})
 	}
 
 	return &BridgingTxResponse{

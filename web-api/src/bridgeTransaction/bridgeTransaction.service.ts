@@ -36,6 +36,10 @@ import {
 import { getBridgingMode } from 'src/utils/chainUtils';
 import { SettingsService } from 'src/settings/settings.service';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
+import {
+	getCurrencyIDFromDirectionConfig,
+	getWrappedCurrencyIDFromDirectionConfig,
+} from 'src/settings/utils';
 
 @Injectable()
 export class BridgeTransactionService {
@@ -187,9 +191,45 @@ export class BridgeTransactionService {
 								modelsCentralized.push(model);
 							}
 						} else {
+							const currencyID = getCurrencyIDFromDirectionConfig(
+								this.settingsService.SettingsResponse.directionConfig,
+								entity.originChain,
+							);
+							if (!currencyID) {
+								Logger.error(
+									`failed to get currencyID for chain: ${entity.originChain}`,
+								);
+
+								return;
+							}
+
+							let tokenID = entity.tokenID;
+							// for backward compatibility reasons
+							if (!tokenID) {
+								if (BigInt(entity.nativeTokenAmount) > BigInt(0)) {
+									const wrappedCurrencyID =
+										getWrappedCurrencyIDFromDirectionConfig(
+											this.settingsService.SettingsResponse.directionConfig,
+											entity.originChain,
+										);
+									if (!wrappedCurrencyID) {
+										Logger.error(
+											`failed to get wrappedCurrencyID for chain: ${entity.originChain}`,
+										);
+
+										return;
+									}
+
+									tokenID = wrappedCurrencyID;
+								} else {
+									tokenID = currencyID;
+								}
+							}
+
 							const bridgingMode = getBridgingMode(
 								entity.originChain,
 								entity.destinationChain,
+								tokenID,
 								this.settingsService.SettingsResponse,
 							);
 							if (!bridgingMode) {

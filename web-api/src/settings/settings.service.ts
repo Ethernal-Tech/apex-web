@@ -2,16 +2,19 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import { retryForever } from 'src/utils/generalUtils';
 import {
+	BridgingSettingsDirectionConfigDto,
+	BridgingSettingsEcosystemTokenDto,
 	LayerZeroChainSettingsDto,
+	ReactorOnlySettingsResponseDto,
 	SettingsFullResponseDto,
 	SettingsResponseDto,
 } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { BridgingModeEnum, ChainEnum, TxTypeEnum } from 'src/common/enum';
-import { getTokenNameFromSettings } from 'src/utils/chainUtils';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { Cron, SchedulerRegistry } from '@nestjs/schedule';
 import { getReactorValidatorChangeStatus } from './settings.helper';
+import { getCurrencyIDFromDirectionConfig, Lovelace } from './utils';
 
 const RETRY_DELAY_MS = 5000;
 const settingsApiPath = `/api/CardanoTx/GetSettings`;
@@ -47,11 +50,15 @@ export class SettingsService {
 
 		const [skylineSettings, reactorSettings] = await Promise.all([
 			retryForever(
-				() => this.fetchOnce(skylineUrl, skylineApiKey),
+				() => this.fetchOnce<SettingsResponseDto>(skylineUrl, skylineApiKey),
 				RETRY_DELAY_MS,
 			),
 			retryForever(
-				() => this.fetchOnce(reactorUrl, reactorApiKey),
+				() =>
+					this.fetchOnce<ReactorOnlySettingsResponseDto>(
+						reactorUrl,
+						reactorApiKey,
+					),
 				RETRY_DELAY_MS,
 			),
 		]);
@@ -72,35 +79,191 @@ export class SettingsService {
 			})
 			.filter((x) => !!x);
 
-		const allowedDirections: { [key: string]: string[] } = {};
-		// reactor
+		const ecosystemTokens: BridgingSettingsEcosystemTokenDto[] = [
+			...skylineSettings.bridgingSettings.ecosystemTokens,
+		];
+		const directionConfig: {
+			[key: string]: BridgingSettingsDirectionConfigDto;
+		} = { ...skylineSettings.bridgingSettings.directionConfig };
+
+		// convert reactor
+		const apexID = getCurrencyIDFromDirectionConfig(
+			directionConfig,
+			ChainEnum.Prime,
+		);
+		if (!apexID) {
+			throw new Error(
+				`failed to find currencyID for chain: ${ChainEnum.Prime}`,
+			);
+		}
+
+		const apexEcosystemToken = ecosystemTokens.find(
+			(x: BridgingSettingsEcosystemTokenDto) => x.id === apexID,
+		);
+		if (!apexEcosystemToken) {
+			throw new Error(
+				`failed to find currency ecosystem token for chain: ${ChainEnum.Prime}`,
+			);
+		}
+
+		const reactorConvertedSettings: SettingsResponseDto = {
+			enabledChains: [...reactorSettings.enabledChains],
+			bridgingSettings: {
+				maxAmountAllowedToBridge:
+					reactorSettings.bridgingSettings.maxAmountAllowedToBridge,
+				maxReceiversPerBridgingRequest:
+					reactorSettings.bridgingSettings.maxReceiversPerBridgingRequest,
+				maxTokenAmountAllowedToBridge: '0',
+				minChainFeeForBridging: {
+					...reactorSettings.bridgingSettings.minChainFeeForBridging,
+				},
+				minChainFeeForBridgingTokens: {},
+				minColCoinsAllowedToBridge: 0,
+				minOperationFee: {},
+				minUtxoChainValue: {
+					...reactorSettings.bridgingSettings.minUtxoChainValue,
+				},
+				minValueToBridge: reactorSettings.bridgingSettings.minValueToBridge,
+				ecosystemTokens: [apexEcosystemToken],
+				directionConfig: {
+					[ChainEnum.Prime]: {
+						destChain: {},
+						tokens: {
+							[apexID]: {
+								chainSpecific: Lovelace,
+								lockUnlock: true,
+								isWrappedCurrency: false,
+							},
+						},
+					},
+					[ChainEnum.Vector]: {
+						destChain: {},
+						tokens: {
+							[apexID]: {
+								chainSpecific: Lovelace,
+								lockUnlock: true,
+								isWrappedCurrency: false,
+							},
+						},
+					},
+					[ChainEnum.Nexus]: {
+						destChain: {},
+						tokens: {
+							[apexID]: {
+								chainSpecific: Lovelace,
+								lockUnlock: true,
+								isWrappedCurrency: false,
+							},
+						},
+					},
+				},
+			},
+		};
+
+		//just in case skyline doesn't include nexus from the start
+		if (!directionConfig[ChainEnum.Nexus]) {
+			directionConfig[ChainEnum.Nexus] = {
+				destChain: {},
+				tokens: {
+					[apexID]: {
+						chainSpecific: Lovelace,
+						lockUnlock: true,
+						isWrappedCurrency: false,
+					},
+				},
+			};
+		}
+
 		for (const [srcChain, dstChains] of Object.entries(
 			reactorSettings.bridgingSettings.allowedDirections,
 		)) {
-			if (srcChain in allowedDirections) {
-				allowedDirections[srcChain].push(...dstChains);
-			} else {
-				allowedDirections[srcChain] = [...dstChains];
+			const currencyID = getCurrencyIDFromDirectionConfig(
+				directionConfig,
+				srcChain,
+			);
+			if (!currencyID) {
+				throw new Error(`failed to find currencyID for chain: ${srcChain}`);
+			}
+
+			for (const dstChain of dstChains) {
+				reactorConvertedSettings.bridgingSettings.directionConfig[
+					srcChain
+				].destChain = {
+					...reactorConvertedSettings.bridgingSettings.directionConfig[srcChain]
+						.destChain,
+					[dstChain]: [
+						...reactorConvertedSettings.bridgingSettings.directionConfig[
+							srcChain
+						].destChain[dstChain],
+						{ srcTokenID: currencyID, dstTokenID: currencyID },
+					],
+				};
+
+				directionConfig[srcChain].destChain = {
+					...directionConfig[srcChain].destChain,
+					[dstChain]: [
+						...directionConfig[srcChain].destChain[dstChain],
+						{ srcTokenID: currencyID, dstTokenID: currencyID },
+					],
+				};
 			}
 		}
-		// skyline
-		for (const [srcChain, dstChains] of Object.entries(
-			skylineSettings.bridgingSettings.allowedDirections,
-		)) {
-			if (srcChain in allowedDirections) {
-				allowedDirections[srcChain].push(...dstChains);
-			} else {
-				allowedDirections[srcChain] = [...dstChains];
-			}
-		}
+
 		// layer zero
-		allowedDirections[ChainEnum.Base] = [ChainEnum.Nexus, ChainEnum.BNB];
-		allowedDirections[ChainEnum.BNB] = [ChainEnum.Nexus, ChainEnum.Base];
-		if (ChainEnum.Nexus in allowedDirections) {
-			allowedDirections[ChainEnum.Nexus].push(ChainEnum.Base, ChainEnum.BNB);
-		} else {
-			allowedDirections[ChainEnum.Nexus] = [ChainEnum.Base, ChainEnum.BNB];
-		}
+		const ethID = Number.MAX_SAFE_INTEGER - 4;
+		const bapexID = Number.MAX_SAFE_INTEGER - 3;
+		const bnapexID = Number.MAX_SAFE_INTEGER - 2;
+		const bnbID = Number.MAX_SAFE_INTEGER - 1;
+		ecosystemTokens.push(
+			{ id: ethID, name: 'ETH' },
+			{ id: bapexID, name: 'BAP3X' },
+			{ id: bnapexID, name: 'BNAP3X' },
+			{ id: bnbID, name: 'BNB' },
+		);
+
+		directionConfig[ChainEnum.Base] = {
+			destChain: {
+				[ChainEnum.Nexus]: [{ srcTokenID: bapexID, dstTokenID: apexID }],
+				[ChainEnum.BNB]: [{ srcTokenID: bapexID, dstTokenID: bnapexID }],
+			},
+			tokens: {
+				[ethID]: {
+					chainSpecific: Lovelace,
+					lockUnlock: true,
+					isWrappedCurrency: false,
+				},
+				[bapexID]: {
+					chainSpecific: 'BAP3X',
+					lockUnlock: false,
+					isWrappedCurrency: true,
+				},
+			},
+		};
+
+		directionConfig[ChainEnum.BNB] = {
+			destChain: {
+				[ChainEnum.Nexus]: [{ srcTokenID: bnapexID, dstTokenID: apexID }],
+				[ChainEnum.Base]: [{ srcTokenID: bnapexID, dstTokenID: bapexID }],
+			},
+			tokens: {
+				[bnbID]: {
+					chainSpecific: Lovelace,
+					lockUnlock: true,
+					isWrappedCurrency: false,
+				},
+				[bnapexID]: {
+					chainSpecific: 'BNAP3X',
+					lockUnlock: false,
+					isWrappedCurrency: true,
+				},
+			},
+		};
+
+		directionConfig[ChainEnum.Nexus].destChain = {
+			...directionConfig[ChainEnum.Nexus].destChain,
+			[ChainEnum.Base]: [{ srcTokenID: apexID, dstTokenID: bapexID }],
+			[ChainEnum.BNB]: [{ srcTokenID: apexID, dstTokenID: bnbID }],
+		};
 
 		const enabledChains = new Set<string>();
 		// reactor
@@ -113,39 +276,16 @@ export class SettingsService {
 		this.SettingsResponse = new SettingsFullResponseDto();
 		this.SettingsResponse.layerZeroChains = layerZeroChains;
 		this.SettingsResponse.settingsPerMode = {
-			[BridgingModeEnum.Reactor]: reactorSettings,
+			[BridgingModeEnum.Reactor]: reactorConvertedSettings,
 			[BridgingModeEnum.Skyline]: skylineSettings,
 		};
-		this.SettingsResponse.allowedDirections = allowedDirections;
+		this.SettingsResponse.directionConfig = directionConfig;
 		this.SettingsResponse.enabledChains = Array.from(enabledChains);
-
-		for (const [srcChain, tokens] of Object.entries(
-			this.SettingsResponse.settingsPerMode[BridgingModeEnum.Skyline]
-				.cardanoChainsNativeTokens,
-		)) {
-			if (tokens && tokens.length > 0) {
-				const token = getTokenNameFromSettings(
-					srcChain as ChainEnum,
-					tokens[0].dstChainID as ChainEnum,
-					this.SettingsResponse,
-					false,
-				);
-
-				if (token) {
-					this.SettingsResponse.settingsPerMode[
-						BridgingModeEnum.Skyline
-					].cardanoChainsNativeTokens[srcChain][0].token = token;
-				}
-			}
-		}
 
 		Logger.debug(`settings dto ${JSON.stringify(this.SettingsResponse)}`);
 	}
 
-	private async fetchOnce(
-		url: string,
-		apiKey: string,
-	): Promise<SettingsResponseDto> {
+	private async fetchOnce<T>(url: string, apiKey: string): Promise<T> {
 		const endpointUrl = url + settingsApiPath;
 
 		Logger.debug(`axios.get: ${endpointUrl}`);
@@ -160,7 +300,7 @@ export class SettingsService {
 
 			Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
-			return response.data as SettingsResponseDto;
+			return response.data as T;
 		} catch (error) {
 			if (error instanceof AxiosError) {
 				if (error.response) {

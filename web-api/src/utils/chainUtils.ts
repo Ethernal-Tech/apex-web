@@ -2,10 +2,11 @@ import {
 	BridgingModeEnum,
 	ChainApexBridgeEnum,
 	ChainEnum,
-	TokenEnum,
 } from 'src/common/enum';
 import { CardanoNetworkType } from './Address/types';
 import {
+	BridgingSettingsDirectionConfigDto,
+	BridgingSettingsTokenPairDto,
 	SettingsFullResponseDto,
 	SettingsResponseDto,
 } from 'src/settings/settings.dto';
@@ -74,14 +75,27 @@ export const isEvmChain = (chain: ChainEnum) => chain === ChainEnum.Nexus;
 const isAllowedDirection = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
-	allowedDirections: { [key: string]: string[] },
+	srcTokenID: number,
+	directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto },
 ): boolean {
-	return (allowedDirections[srcChain] || []).includes(dstChain);
+	if (
+		!directionConfig[srcChain] ||
+		!directionConfig[srcChain].destChain[dstChain]
+	) {
+		return false;
+	}
+
+	const tokenPairs = directionConfig[srcChain].destChain[dstChain];
+
+	return tokenPairs.some(
+		(x: BridgingSettingsTokenPairDto) => x.srcTokenID === srcTokenID,
+	);
 };
 
 export const getBridgingSettings = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
+	srcTokenID: number,
 	fullSettings: SettingsFullResponseDto,
 ): SettingsResponseDto | undefined {
 	if (!fullSettings) {
@@ -96,7 +110,8 @@ export const getBridgingSettings = function (
 		isAllowedDirection(
 			srcChain,
 			dstChain,
-			settingsReactor.bridgingSettings.allowedDirections,
+			srcTokenID,
+			settingsReactor.bridgingSettings.directionConfig,
 		)
 	) {
 		return settingsReactor;
@@ -104,7 +119,8 @@ export const getBridgingSettings = function (
 		isAllowedDirection(
 			srcChain,
 			dstChain,
-			settingsSkyline.bridgingSettings.allowedDirections,
+			srcTokenID,
+			settingsSkyline.bridgingSettings.directionConfig,
 		)
 	) {
 		return settingsSkyline;
@@ -115,6 +131,7 @@ export const getBridgingSettings = function (
 export const getBridgingMode = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
+	srcTokenID: number,
 	fullSettings: SettingsFullResponseDto,
 ): BridgingModeEnum | undefined {
 	if (!fullSettings) {
@@ -126,11 +143,21 @@ export const getBridgingMode = function (
 		fullSettings.settingsPerMode[BridgingModeEnum.Skyline].bridgingSettings;
 
 	if (
-		isAllowedDirection(srcChain, dstChain, settingsReactor.allowedDirections)
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			srcTokenID,
+			settingsReactor.directionConfig,
+		)
 	) {
 		return BridgingModeEnum.Reactor;
 	} else if (
-		isAllowedDirection(srcChain, dstChain, settingsSkyline.allowedDirections)
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			srcTokenID,
+			settingsSkyline.directionConfig,
+		)
 	) {
 		return BridgingModeEnum.Skyline;
 	}

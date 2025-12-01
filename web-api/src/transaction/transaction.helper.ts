@@ -42,7 +42,7 @@ const prepareCreateCardanoBridgingTx = (
 			{
 				addr: dto.destinationAddress,
 				amount: +dto.amount,
-				isNativeToken: dto.isNativeToken,
+				tokenID: dto.tokenID,
 			},
 		],
 		bridgingFee: dto.bridgingFee ? +dto.bridgingFee : undefined,
