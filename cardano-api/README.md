@@ -169,6 +169,8 @@ $ go run main.go generate-configs skyline \
 		--vector-bridging-fee-address "addr_test1wz3q8gnjsuyf7etplmcuw8rfusckmn5dmjwnhwdsap6savqcx8xg3"\
 		--vector-bridging-fallback-address "addr_test1wrntyxdelrw98ps0vrpuf4rr2mmknem83y9ywxfn0a3jeasxtsjz5"\
 		--vector-ogmios-url "http://preview-services-skyline.testnet.ethernal.work:1733"\
+		--vector-is-enabled\
+		--nexus-is-enabled\
 		--logs-path "./logs"\
 		--utxo-cache-timeout 1m30s\
 		--oracle-api-url "http://validators-oracle-api-skyline.testnet.ethernal.work" \
