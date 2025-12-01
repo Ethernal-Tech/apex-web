@@ -244,6 +244,10 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	transactions := make([]commonRequest.CreateBridgingTxTransactionRequest, 0, len(requestBody.Transactions))
 
 	for _, receiver := range requestBody.Transactions {
+		if receiver.TokenID == 0 {
+			receiver.TokenID = srcCurrencyID
+		}
+
 		// if fee address is specified in transactions just add amount to the fee sum
 		// otherwise keep this transaction
 		if (cardanoDestConfig != nil &&

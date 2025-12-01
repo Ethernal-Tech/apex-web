@@ -75,10 +75,8 @@ type DirectionConfig struct {
 type TokenPairs = []TokenPair
 
 type TokenPair struct {
-	SourceTokenID         uint16 `json:"srcTokenID"`
-	DestinationTokenID    uint16 `json:"dstTokenID"`
-	TrackSourceToken      bool   `json:"trackSource"`
-	TrackDestinationToken bool   `json:"trackDestination"`
+	SourceTokenID      uint16 `json:"srcTokenID"`
+	DestinationTokenID uint16 `json:"dstTokenID"`
 }
 
 type Token struct {
