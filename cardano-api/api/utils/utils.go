@@ -90,10 +90,10 @@ func useUtxoCache(
 }
 
 func ContainsNativeTokens(
-	requestBody commonRequest.CreateBridgingTxRequest,
+	currencyID uint16, requestBody commonRequest.CreateBridgingTxRequest,
 ) bool {
 	for _, tx := range requestBody.Transactions {
-		if tx.IsNativeToken {
+		if tx.TokenID != currencyID {
 			return true
 		}
 	}

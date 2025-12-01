@@ -15,18 +15,23 @@ type BridgingTxResponse struct {
 	// Amount of currency to be bridged, expressed in Lovelace
 	Amount string `json:"amount"`
 	// Amount of native token to be bridged
-	NativeTokenAmount string `json:"nativeTokenAmount"`
+	NativeTokenAmount map[uint16]string `json:"nativeTokenAmount"`
 } // @name BridgingTxResponse
 
 func NewBridgingTxResponse(
-	txRaw []byte, txHash string, bridgingFee uint64, amount uint64, nativeTokenAmount uint64,
+	txRaw []byte, txHash string, bridgingFee uint64, amount uint64, nativeTokens map[uint16]uint64,
 ) *BridgingTxResponse {
+	nativeTokenAmounts := make(map[uint16]string, len(nativeTokens))
+	for tokID, amnt := range nativeTokens {
+		nativeTokenAmounts[tokID] = strconv.FormatUint(amnt, 10)
+	}
+
 	return &BridgingTxResponse{
 		TxRaw:             hex.EncodeToString(txRaw),
 		TxHash:            txHash,
 		BridgingFee:       strconv.FormatUint(bridgingFee, 10),
 		Amount:            strconv.FormatUint(amount, 10),
-		NativeTokenAmount: strconv.FormatUint(nativeTokenAmount, 10),
+		NativeTokenAmount: nativeTokenAmounts,
 	}
 }
 

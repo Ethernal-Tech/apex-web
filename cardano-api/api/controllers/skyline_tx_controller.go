@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"strings"
 	"time"
 
 	commonRequest "github.com/Ethernal-Tech/cardano-api/api/model/common/request"
@@ -19,11 +20,13 @@ import (
 	"github.com/Ethernal-Tech/cardano-api/api/utils"
 	utxotransformer "github.com/Ethernal-Tech/cardano-api/api/utxo_transformer"
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
+	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
 	infracommon "github.com/Ethernal-Tech/cardano-infrastructure/common"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 	cache "github.com/dgraph-io/ristretto"
+	goEthCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/hashicorp/go-hclog"
 )
 
@@ -96,7 +99,14 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 
 	c.logger.Debug("getBridgingTxFee request", "body", requestBody, "url", r.URL)
 
-	err := c.validateAndFillOutCreateBridgingTxRequest(&requestBody)
+	currencyID, err := c.appConfig.SkylineBridgingSettings.GetCurrencyID(requestBody.SourceChainID)
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("validation error. err: %w", err), c.logger)
+	}
+
+	err = c.validateAndFillOutCreateBridgingTxRequest(currencyID, &requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
@@ -105,7 +115,7 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txFeeInfo, bridgingRequestMetadata, err := c.calculateTxFee(r.Context(), requestBody)
+	txFeeInfo, bridgingRequestMetadata, err := c.calculateTxFee(r.Context(), currencyID, requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
@@ -136,7 +146,14 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	c.logger.Debug("createBridgingTx request", "body", requestBody, "url", r.URL)
 
-	err := c.validateAndFillOutCreateBridgingTxRequest(&requestBody)
+	currencyID, err := c.appConfig.SkylineBridgingSettings.GetCurrencyID(requestBody.SourceChainID)
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("validation error. err: %w", err), c.logger)
+	}
+
+	err = c.validateAndFillOutCreateBridgingTxRequest(currencyID, &requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
@@ -145,20 +162,21 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	txInfo, bridgingRequestMetadata, err := c.createTx(r.Context(), requestBody)
+	txInfo, bridgingRequestMetadata, err := c.createTx(r.Context(), currencyID, requestBody)
 	if err != nil {
 		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
 
 		return
 	}
 
-	currencyOutput, tokenOutput := bridgingRequestMetadata.GetOutputAmounts()
-	currencyOutput -= bridgingRequestMetadata.BridgingFee + bridgingRequestMetadata.OperationFee
+	amounts := bridgingRequestMetadata.GetOutputAmounts(currencyID)
+	amounts.CurrencyLovelace -= bridgingRequestMetadata.BridgingFee + bridgingRequestMetadata.OperationFee
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		commonResponse.NewBridgingTxResponse(
-			txInfo.TxRaw, txInfo.TxHash, bridgingRequestMetadata.BridgingFee, currencyOutput, tokenOutput), c.logger,
+			txInfo.TxRaw, txInfo.TxHash,
+			bridgingRequestMetadata.BridgingFee, amounts.CurrencyLovelace, amounts.NativeTokens), c.logger,
 	)
 }
 
@@ -166,7 +184,7 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 // @Description Returns the participating chains with their specific settings, global bridge configuration (such as minimum and maximum allowed bridging amounts), and, for each source chain, the native token that will be received on the destination chain.
 // @Tags CardanoTx
 // @Produce json
-// @Success 200 {object} commonResponse.SettingsResponse "OK - Returns the configuration settings."
+// @Success 200 {object} commonResponse.SkylineSettingsResponse "OK - Returns the configuration settings."
 // @Failure 401 {object} commonResponse.ErrorResponse "Unauthorized – API key missing or invalid."
 // @Security ApiKeyAuth
 // @Router /CardanoTx/GetSettings [get]
@@ -175,10 +193,11 @@ func (c *SkylineTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Req
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		commonResponse.NewSettingsResponse(c.appConfig), c.logger)
+		commonResponse.NewSkylineSettingsResponse(c.appConfig), c.logger)
 }
 
 func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
+	srcCurrencyID uint16,
 	requestBody *commonRequest.CreateBridgingTxRequest,
 ) error {
 	cardanoSrcConfig, _ := c.appConfig.GetChainConfig(requestBody.SourceChainID)
@@ -186,155 +205,176 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		return fmt.Errorf("origin chain not registered: %v", requestBody.SourceChainID)
 	}
 
-	cardanoDestConfig, _ := c.appConfig.GetChainConfig(requestBody.DestinationChainID)
-	if cardanoDestConfig == nil {
+	cardanoDestConfig, ethDestConfig := c.appConfig.GetChainConfig(requestBody.DestinationChainID)
+	if cardanoDestConfig == nil && ethDestConfig == nil {
 		return fmt.Errorf("destination chain not registered: %v", requestBody.DestinationChainID)
 	}
 
-	if len(requestBody.Transactions) > c.appConfig.BridgingSettings.MaxReceiversPerBridgingRequest {
+	if len(requestBody.Transactions) > c.appConfig.SkylineBridgingSettings.MaxReceiversPerBridgingRequest {
 		return fmt.Errorf("number of receivers in metadata greater than maximum allowed - no: %v, max: %v, requestBody: %v",
-			len(requestBody.Transactions), c.appConfig.BridgingSettings.MaxReceiversPerBridgingRequest, requestBody)
+			len(requestBody.Transactions), c.appConfig.SkylineBridgingSettings.MaxReceiversPerBridgingRequest, requestBody)
 	}
 
-	receiverAmountSum := big.NewInt(0)
-	receiverWrappedTokenAmountSum := big.NewInt(0)
-	feeSum := uint64(0)
-	foundAUtxoValueBelowMinimumValue := false
-	foundAnInvalidReceiverAddr := false
-	hasNativeTokenOnSource := false
-	hasCurrencyOnSource := false
-	transactions := make([]commonRequest.CreateBridgingTxTransactionRequest, 0, len(requestBody.Transactions))
-
-	srcMinUtxoChainValue, srcFound := c.appConfig.BridgingSettings.MinUtxoChainValue[requestBody.SourceChainID]
+	srcMinUtxoChainValue, srcFound := c.appConfig.SkylineBridgingSettings.MinUtxoChainValue[requestBody.SourceChainID]
 	if !srcFound {
 		return fmt.Errorf("no MinUtxoChainValue for source chain: %s", requestBody.SourceChainID)
 	}
 
-	dstMinUtxoChainValue, dstFound := c.appConfig.BridgingSettings.MinUtxoChainValue[requestBody.DestinationChainID]
-	if !dstFound {
-		return fmt.Errorf("no MinUtxoChainValue for destination chain: %s", requestBody.DestinationChainID)
+	destCurrencyID, err := c.appConfig.SkylineBridgingSettings.GetCurrencyID(requestBody.DestinationChainID)
+	if err != nil {
+		return err
 	}
 
-	for _, receiver := range requestBody.Transactions {
-		if receiver.IsNativeToken {
-			hasNativeTokenOnSource = true
-
-			if receiver.Amount < dstMinUtxoChainValue {
-				foundAUtxoValueBelowMinimumValue = true
-
-				break
-			}
-		}
-
-		if !receiver.IsNativeToken {
-			hasCurrencyOnSource = true
-
-			if receiver.Amount < srcMinUtxoChainValue {
-				foundAUtxoValueBelowMinimumValue = true
-
-				break
-			}
-		}
-
-		if !cardanotx.IsValidOutputAddress(receiver.Addr, cardanoDestConfig.NetworkID) {
-			foundAnInvalidReceiverAddr = true
-
-			break
-		}
-
-		// if fee address is specified in transactions just add amount to the fee sum
-		// otherwise keep this transaction
-		if receiver.Addr == cardanoDestConfig.BridgingAddresses.FeeAddress {
-			if receiver.IsNativeToken {
-				return fmt.Errorf("fee receiver invalid")
-			}
-
-			feeSum += receiver.Amount
-		} else {
-			transactions = append(transactions, receiver)
-
-			if !receiver.IsNativeToken {
-				receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(receiver.Amount))
-			} else {
-				receiverWrappedTokenAmountSum.Add(receiverWrappedTokenAmountSum, new(big.Int).SetUint64(receiver.Amount))
-			}
-		}
-	}
-
-	if foundAUtxoValueBelowMinimumValue {
-		return fmt.Errorf("found a utxo value below minimum value in request body receivers: %v", requestBody)
-	}
-
-	if foundAnInvalidReceiverAddr {
-		return fmt.Errorf("found an invalid receiver addr in request body: %v", requestBody)
-	}
-
-	if hasNativeTokenOnSource {
-		_, err := cardanoSrcConfig.ChainSpecific.GetNativeToken(requestBody.DestinationChainID)
-		if err != nil {
-			return err
-		}
-	}
-
-	if hasCurrencyOnSource {
-		if _, err := cardanoDestConfig.ChainSpecific.GetNativeToken(requestBody.SourceChainID); err != nil {
-			return err
-		}
-	}
-
-	requestBody.BridgingFee += feeSum
-	requestBody.Transactions = transactions
-
-	minFee, found := c.appConfig.BridgingSettings.GetMinBridgingFee(requestBody.SourceChainID, hasNativeTokenOnSource)
-	if !found {
-		return fmt.Errorf("no minimal fee for chain: %s", requestBody.SourceChainID)
-	}
-
-	// this is just convinient way to setup default min fee
-	if requestBody.BridgingFee == 0 {
-		requestBody.BridgingFee = minFee
-	}
-
-	if c.appConfig.BridgingSettings.MaxAmountAllowedToBridge != nil &&
-		c.appConfig.BridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 &&
-		receiverAmountSum.Cmp(c.appConfig.BridgingSettings.MaxAmountAllowedToBridge) == 1 {
-		return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
-			c.appConfig.BridgingSettings.MaxAmountAllowedToBridge, requestBody)
-	}
-
-	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))
-
-	if requestBody.BridgingFee < minFee {
-		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
-	}
-
-	operationFee, found := c.appConfig.BridgingSettings.MinOperationFee[requestBody.SourceChainID]
+	operationFee, found := c.appConfig.SkylineBridgingSettings.MinOperationFee[requestBody.SourceChainID]
 	if !found {
 		return fmt.Errorf("no operation fee for chain: %s", requestBody.SourceChainID)
 	}
 
-	// this is just convinient way to setup default operation fee
+	// this is just convenient way to setup default operation fee
 	if requestBody.OperationFee == 0 {
 		requestBody.OperationFee = operationFee
 	}
-
-	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.OperationFee))
 
 	if requestBody.OperationFee < operationFee {
 		return fmt.Errorf("operation fee in request body is less than minimum: %v", requestBody)
 	}
 
-	if c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge != nil &&
-		c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge.Sign() == 1 &&
-		receiverWrappedTokenAmountSum.Cmp(c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge) == 1 {
-		return fmt.Errorf("sum of receiver token amounts greater than maximum allowed: %v, for request: %v",
-			c.appConfig.BridgingSettings.MaxTokenAmountAllowedToBridge, requestBody)
+	amountSums := make(map[uint16]*big.Int)
+	feeSum := uint64(0)
+	transactions := make([]commonRequest.CreateBridgingTxTransactionRequest, 0, len(requestBody.Transactions))
+
+	for _, receiver := range requestBody.Transactions {
+		// if fee address is specified in transactions just add amount to the fee sum
+		// otherwise keep this transaction
+		if (cardanoDestConfig != nil &&
+			normalizeAddr(receiver.Addr) == normalizeAddr(cardanoDestConfig.BridgingAddresses.FeeAddress)) ||
+			(ethDestConfig != nil && normalizeAddr(receiver.Addr) == normalizeAddr(common.EthZeroAddr)) {
+			if receiver.TokenID != srcCurrencyID {
+				return fmt.Errorf("fee receiver invalid. receiver: %v", receiver)
+			}
+
+			feeSum += receiver.Amount
+
+			continue
+		}
+
+		tokenPair, err := c.appConfig.SkylineBridgingSettings.GetTokenPair(
+			requestBody.SourceChainID,
+			requestBody.DestinationChainID,
+			receiver.TokenID,
+		)
+		if err != nil {
+			return fmt.Errorf("requestBody: %v, err: %w", requestBody, err)
+		}
+
+		if tokenPair.SourceTokenID == srcCurrencyID {
+			if receiver.Amount < srcMinUtxoChainValue {
+				return fmt.Errorf(
+					"found an value below minimum value in receivers, receiver: %v. min: %v",
+					receiver, srcMinUtxoChainValue)
+			}
+		}
+
+		if cardanoDestConfig != nil {
+			if !cardanotx.IsValidOutputAddress(receiver.Addr, cardanoDestConfig.NetworkID) {
+				return fmt.Errorf("found an invalid receiver addr in request body. receiver: %v", receiver)
+			}
+
+			if tokenPair.DestinationTokenID == destCurrencyID {
+				dstMinUtxoChainValue, dstFound :=
+					c.appConfig.SkylineBridgingSettings.MinUtxoChainValue[requestBody.DestinationChainID]
+				if !dstFound {
+					return fmt.Errorf("no MinUtxoChainValue for dst chain: %s", requestBody.DestinationChainID)
+				}
+
+				if receiver.Amount < dstMinUtxoChainValue {
+					return fmt.Errorf(
+						"found an value below minimum value in receivers, receiver: %v. min: %v",
+						receiver, dstMinUtxoChainValue)
+				}
+			}
+
+			if tokenPair.SourceTokenID != srcCurrencyID && tokenPair.DestinationTokenID != destCurrencyID {
+				if receiver.Amount < c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge {
+					return fmt.Errorf(
+						"found an value below minimum value in receivers, receiver: %v. min: %v",
+						receiver, c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge)
+				}
+			}
+		} else {
+			if !goEthCommon.IsHexAddress(receiver.Addr) {
+				return fmt.Errorf("found an invalid receiver addr in request body. receiver: %v", receiver)
+			}
+
+			if tokenPair.DestinationTokenID == destCurrencyID {
+				if receiver.Amount < c.appConfig.SkylineBridgingSettings.MinValueToBridge {
+					return fmt.Errorf(
+						"found an value below minimum value in receivers, receiver: %v. min: %v",
+						receiver, c.appConfig.SkylineBridgingSettings.MinValueToBridge)
+				}
+			} else if receiver.Amount < c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge {
+				return fmt.Errorf(
+					"found an value below minimum value in receivers, receiver: %v. min: %v",
+					receiver, c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge)
+			}
+		}
+
+		if sum, ok := amountSums[tokenPair.SourceTokenID]; ok {
+			sum.Add(sum, new(big.Int).SetUint64(receiver.Amount))
+		} else {
+			amountSums[tokenPair.SourceTokenID] = new(big.Int).SetUint64(receiver.Amount)
+		}
+
+		transactions = append(transactions, receiver)
+	}
+
+	requestBody.Transactions = transactions
+
+	currencyAmount, currencyFound := amountSums[srcCurrencyID]
+	if currencyFound {
+		maxCurrAmt := c.appConfig.SkylineBridgingSettings.MaxAmountAllowedToBridge
+		if maxCurrAmt != nil && maxCurrAmt.Sign() == 1 && currencyAmount.Cmp(maxCurrAmt) == 1 {
+			return fmt.Errorf("sum of receiver currency amounts greater than maximum allowed: %v, for request: %v",
+				maxCurrAmt, requestBody)
+		}
+	}
+
+	// Remove currency entry from the map
+	delete(amountSums, srcCurrencyID)
+
+	maxTokAmnt := c.appConfig.SkylineBridgingSettings.MaxTokenAmountAllowedToBridge
+	if maxTokAmnt != nil && maxTokAmnt.Sign() > 0 {
+		for tokID, tokAmnt := range amountSums {
+			if tokAmnt.Cmp(maxTokAmnt) == 1 {
+				return fmt.Errorf(
+					"sum of receiver token amounts greater than maximum allowed. tokenID: %v, maxAmnt: %v, for request: %v",
+					tokID, maxTokAmnt, requestBody)
+			}
+		}
+	}
+
+	requestBody.BridgingFee += feeSum
+
+	minFee, found := c.appConfig.SkylineBridgingSettings.GetMinBridgingFee(requestBody.SourceChainID, len(amountSums) > 0)
+	if !found {
+		return fmt.Errorf("no minimal fee for chain: %s", requestBody.SourceChainID)
+	}
+
+	// this is just convenient way to setup default min fee
+	if requestBody.BridgingFee == 0 {
+		requestBody.BridgingFee = minFee
+	}
+
+	if requestBody.BridgingFee < minFee {
+		return fmt.Errorf("bridging fee in request body is less than minimum: %v", requestBody)
 	}
 
 	return nil
 }
 
-func (c *SkylineTxControllerImpl) createTx(ctx context.Context, requestBody commonRequest.CreateBridgingTxRequest) (
+func (c *SkylineTxControllerImpl) createTx(
+	ctx context.Context, currencyID uint16, requestBody commonRequest.CreateBridgingTxRequest,
+) (
 	*sendtx.TxInfo, *sendtx.BridgingRequestMetadata, error,
 ) {
 	cacheUtxosTransformer := utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher)
@@ -344,7 +384,7 @@ func (c *SkylineTxControllerImpl) createTx(ctx context.Context, requestBody comm
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
 		requestBody.SourceChainID,
-		utils.ContainsNativeTokens(requestBody),
+		utils.ContainsNativeTokens(currencyID, requestBody),
 	)
 	if err != nil {
 		return nil, nil, err
@@ -365,7 +405,7 @@ func (c *SkylineTxControllerImpl) createTx(ctx context.Context, requestBody comm
 			Receivers:              receivers,
 			BridgingAddress:        bridgingAddress.Address,
 			BridgingFee:            requestBody.BridgingFee,
-			OperationFee:           0,
+			OperationFee:           requestBody.OperationFee,
 		},
 	)
 	if err != nil {
@@ -387,6 +427,7 @@ func (c *SkylineTxControllerImpl) createTx(ctx context.Context, requestBody comm
 
 func (c *SkylineTxControllerImpl) calculateTxFee(
 	ctx context.Context,
+	currencyID uint16,
 	requestBody commonRequest.CreateBridgingTxRequest) (
 	*sendtx.TxFeeInfo,
 	*sendtx.BridgingRequestMetadata,
@@ -398,7 +439,7 @@ func (c *SkylineTxControllerImpl) calculateTxFee(
 		c.appConfig.OracleAPI.URL,
 		c.appConfig.OracleAPI.APIKey,
 		requestBody.SourceChainID,
-		utils.ContainsNativeTokens(requestBody),
+		utils.ContainsNativeTokens(currencyID, requestBody),
 	)
 	if err != nil {
 		return nil, nil, err
@@ -443,18 +484,18 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
 		return nil, nil, fmt.Errorf("failed to generate configuration")
 	}
 
-	txSender := sendtx.NewTxSender(txSenderChainsConfig, sendtx.WithUtxosTransformer(utxosTransformer))
+	txSender := sendtx.NewTxSender(
+		txSenderChainsConfig,
+		sendtx.WithUtxosTransformer(utxosTransformer),
+		sendtx.WithMinAmountToBridge(c.appConfig.SkylineBridgingSettings.MinUtxoChainValue[requestBody.SourceChainID]),
+	)
 
 	receivers := make([]sendtx.BridgingTxReceiver, len(requestBody.Transactions))
 	for i, tx := range requestBody.Transactions {
 		receivers[i] = sendtx.BridgingTxReceiver{
 			Addr:   tx.Addr,
 			Amount: tx.Amount,
-		}
-		if tx.IsNativeToken {
-			receivers[i].BridgingType = sendtx.BridgingTypeNativeTokenOnSource
-		} else {
-			receivers[i].BridgingType = sendtx.BridgingTypeCurrencyOnSource
+			Token:  tx.TokenID,
 		}
 	}
 
@@ -479,7 +520,7 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 		}
 	}
 
-	calculateLockedTokens := func(cfg *core.CardanoChainConfig) (map[string]map[string]string, error) {
+	calculateLockedTokens := func(cfg *core.CardanoChainConfig) (map[uint16]map[string]string, error) {
 		// Get all bridging addresses
 		bridgingAddresses, err := utils.GetAllBridgingAddress(
 			r.Context(),
@@ -496,23 +537,33 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 			return nil, fmt.Errorf("failed to create tx provider. err: %w", err)
 		}
 
-		tokenNames := map[string]bool{}
+		tokenNames := map[string]uint16{}
 
-		for _, nt := range cfg.ChainSpecific.NativeTokens {
-			token, err := wallet.NewTokenWithFullNameTry(nt.TokenName)
+		currencyID, err := c.appConfig.SkylineBridgingSettings.GetCurrencyID(cfg.ChainID)
+		if err != nil {
+			return nil, err
+		}
+
+		chainTokens, err := c.appConfig.SkylineBridgingSettings.GetTokens(cfg.ChainID)
+		if err != nil {
+			return nil, err
+		}
+
+		for tokID, tok := range chainTokens {
+			token, err := wallet.NewTokenWithFullNameTry(tok.ChainSpecific)
 			if err != nil {
 				continue
 			}
 
-			tokenNames[token.String()] = true
+			tokenNames[token.String()] = tokID
 		}
 
 		// First accumulate per-address → token → big.Int
-		perAddr := map[string]map[string]*big.Int{}
+		perAddr := map[string]map[uint16]*big.Int{}
 
-		ensure := func(addr, token string) {
+		ensure := func(addr string, token uint16) {
 			if _, ok := perAddr[addr]; !ok {
-				perAddr[addr] = map[string]*big.Int{}
+				perAddr[addr] = map[uint16]*big.Int{}
 			}
 
 			if _, ok := perAddr[addr][token]; !ok {
@@ -530,27 +581,29 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 
 			for _, utxo := range utxos {
 				// ADA
-				ensure(addr, wallet.AdaTokenName)
-				perAddr[addr][wallet.AdaTokenName].Add(
-					perAddr[addr][wallet.AdaTokenName],
+				ensure(addr, currencyID)
+				perAddr[addr][currencyID].Add(
+					perAddr[addr][currencyID],
 					new(big.Int).SetUint64(utxo.Amount),
 				)
 
 				for _, tkn := range utxo.Tokens {
 					name := tkn.TokenName()
-					if !tokenNames[name] {
+
+					tokID, ok := tokenNames[name]
+					if !ok {
 						continue
 					}
 
-					ensure(addr, name)
+					ensure(addr, tokID)
 
-					perAddr[addr][name].Add(perAddr[addr][name], new(big.Int).SetUint64(tkn.Amount))
+					perAddr[addr][tokID].Add(perAddr[addr][tokID], new(big.Int).SetUint64(tkn.Amount))
 				}
 			}
 		}
 
 		// Transpose to token → address → string
-		out := map[string]map[string]string{}
+		out := map[uint16]map[string]string{}
 
 		for addr, tokens := range perAddr {
 			for token, amt := range tokens {
@@ -566,7 +619,7 @@ func (c *SkylineTxControllerImpl) getLockedAmountOfTokens(
 	}
 
 	// Calculate locked tokens for all chains
-	response := commonResponse.NewLockedTokensResponse(map[string]map[string]map[string]string{})
+	response := commonResponse.NewLockedTokensResponse(map[string]map[uint16]map[string]string{})
 
 	for chainID, chainCfg := range c.appConfig.CardanoChains {
 		subResponse, err := calculateLockedTokens(chainCfg)
@@ -634,4 +687,10 @@ func (c *SkylineTxControllerImpl) getBridgingAddresses(w http.ResponseWriter, r 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		bridgingAddresses, c.logger)
+}
+
+func normalizeAddr(addr string) string {
+	addr = strings.ToLower(addr)
+
+	return strings.TrimPrefix(addr, "0x")
 }

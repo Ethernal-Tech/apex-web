@@ -125,10 +125,10 @@ func TestCardanoAPI(t *testing.T) {
 			Transactions: []request.CreateBridgingTxTransactionRequest{
 				{
 					Addr:   receiverAddr.String(),
-					Amount: config.BridgingSettings.MinValueToBridge + 1,
+					Amount: config.SkylineBridgingSettings.MinValueToBridge + 1,
 				},
 			},
-			BridgingFee: config.BridgingSettings.MinChainFeeForBridging[dstChainConfig.ChainID],
+			BridgingFee: config.SkylineBridgingSettings.MinChainFeeForBridging[dstChainConfig.ChainID],
 		}
 
 		bridgingTxFeeResult := getBridgingTxFee(t, ctx, config, requestDTO)
@@ -167,10 +167,10 @@ func TestCardanoAPI(t *testing.T) {
 			Transactions: []request.CreateBridgingTxTransactionRequest{
 				{
 					Addr:   receiverAddr.String(),
-					Amount: config.BridgingSettings.MinValueToBridge + 1,
+					Amount: config.SkylineBridgingSettings.MinValueToBridge + 1,
 				},
 			},
-			BridgingFee: config.BridgingSettings.MinChainFeeForBridging[dstChainConfig.ChainID],
+			BridgingFee: config.SkylineBridgingSettings.MinChainFeeForBridging[dstChainConfig.ChainID],
 		}
 
 		bridgingTxFeeResult := getBridgingTxFee(t, ctx, config, requestDTO)

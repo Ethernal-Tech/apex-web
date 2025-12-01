@@ -9,8 +9,8 @@ type CreateBridgingTxTransactionRequest struct {
 	Addr string `json:"addr" validate:"required"`
 	// Amount to be bridged
 	Amount uint64 `json:"amount" validate:"required"`
-	// True if the amount is specified in a native token; false if in a currency on source chain
-	IsNativeToken bool `json:"isNativeToken"`
+	// Token ID to be bridged
+	TokenID uint16 `json:"tokenID"`
 } // @name CreateBridgingTxTransactionRequest
 
 type UtxoRequest struct {
