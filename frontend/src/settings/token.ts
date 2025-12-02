@@ -217,5 +217,10 @@ export const isAdaToken = (token: TokenEnum): boolean => {
 };
 
 export const isApexToken = (token: TokenEnum): boolean => {
-	return TokenEnum.APEX === token || TokenEnum.WAPEX === token;
+	return (
+		TokenEnum.APEX === token ||
+		TokenEnum.WAPEX === token ||
+		TokenEnum.BNAP3X === token ||
+		TokenEnum.BNB === token
+	);
 };
