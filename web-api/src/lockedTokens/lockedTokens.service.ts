@@ -165,21 +165,19 @@ export class LockedTokensService {
 				true,
 			);
 
-			if (!tokenName) {
-				continue;
+			if (tokenName) {
+				const amount = await this.getAggregatedSum(
+					info.srcChain,
+					info.dstChain,
+					'amount',
+				);
+
+				result.totalTransferred[info.srcChain] ??= {};
+				result.totalTransferred[info.srcChain][tokenName] = (
+					BigInt(result.totalTransferred[info.srcChain][tokenName] ?? '0') +
+					amountToBigInt(amount, info.srcChain)
+				).toString();
 			}
-
-			const amount = await this.getAggregatedSum(
-				info.srcChain,
-				info.dstChain,
-				'amount',
-			);
-
-			result.totalTransferred[info.srcChain] ??= {};
-			result.totalTransferred[info.srcChain][tokenName] = (
-				BigInt(result.totalTransferred[info.srcChain][tokenName] ?? '0') +
-				amountToBigInt(amount, info.srcChain)
-			).toString();
 
 			const wrappedTokenName = getTokenNameFromSettings(
 				info.srcChain,
@@ -187,11 +185,7 @@ export class LockedTokensService {
 				this.settingsService.SettingsResponse,
 			);
 
-			if (!wrappedTokenName) {
-				continue;
-			}
-
-			if (wrappedTokenName !== tokenName) {
+			if (wrappedTokenName) {
 				// check for wrapped token because in some
 				const tokenAmount = await this.getAggregatedSum(
 					info.srcChain,
