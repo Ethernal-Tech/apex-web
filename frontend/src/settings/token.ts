@@ -221,6 +221,6 @@ export const isApexToken = (token: TokenEnum): boolean => {
 		TokenEnum.APEX === token ||
 		TokenEnum.WAPEX === token ||
 		TokenEnum.BNAP3X === token ||
-		TokenEnum.BNB === token
+		TokenEnum.BAP3X === token
 	);
 };
