@@ -1,11 +1,10 @@
 import { Dispatch } from '@reduxjs/toolkit';
 import { store } from '../redux/store';
-import { ChainEnum } from '../swagger/apexBridgeApiService';
 import {
-	fromNetworkToChain,
-	getTokenNameFromSettings,
-	LovelaceTokenName,
-} from '../utils/chainUtils';
+	BridgingSettingsTokenPairDto,
+	ChainEnum,
+} from '../swagger/apexBridgeApiService';
+import { fromNetworkToChain } from '../utils/chainUtils';
 import {
 	IBalanceState,
 	updateBalanceAction,
@@ -18,11 +17,16 @@ import BlockfrostRetriever from '../features/BlockfrostRetriever';
 import OgmiosRetriever from '../features/OgmiosRetriever';
 import { getUtxoRetrieverType } from '../features/utils';
 import { UtxoRetrieverEnum } from '../features/enums';
-import { getChainInfo, isEvmChain } from '../settings/chain';
-import { getBridgingInfo, getToken } from '../settings/token';
+import { isEvmChain } from '../settings/chain';
 import { shouldUseMainnet } from '../utils/generalUtils';
 import { ISettingsState } from '../settings/settingsRedux';
 import { captureException } from '../features/sentry';
+import {
+	getCurrencyID,
+	getTokenConfig,
+	LovelaceTokenName,
+} from '../settings/token';
+import { normalizeNativeTokenKey } from '../utils/tokenUtils';
 
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
@@ -32,22 +36,36 @@ const getWalletBalanceAction = async (
 	dstChain: ChainEnum,
 	settings: ISettingsState,
 ): Promise<IBalanceState> => {
-	const bridgingInfo = getBridgingInfo(srcChain, dstChain);
-	const currencyTokenName = getChainInfo(srcChain).currencyToken;
+	const currencyID = getCurrencyID(settings, srcChain);
+	const dirTokens = (
+		(settings.directionConfig[srcChain] || {}).destChain[dstChain] || {}
+	).map((x: BridgingSettingsTokenPairDto) => x.srcTokenID);
+
+	if (currencyID && !dirTokens.includes(currencyID)) {
+		dirTokens.push(currencyID);
+	}
 
 	if (isEvmChain(srcChain)) {
-		const balances: { [key: string]: string } = {};
-		if (srcChain !== ChainEnum.Nexus) {
-			const oftAddress = settings.layerZeroChains[srcChain].oftAddress;
-			const token = getToken(srcChain, dstChain, true);
-			balances[token!] =
-				await evmWalletHandler.getERC20Balance(oftAddress);
+		const promises = [];
+		for (let i = 0; i < dirTokens.length; ++i) {
+			promises.push(
+				dirTokens[i] === currencyID
+					? evmWalletHandler.getBalance()
+					: evmWalletHandler.getERC20Balance(
+							getTokenConfig(settings, srcChain, dirTokens[i])!
+								.chainSpecific,
+						),
+			);
 		}
 
-		const balance = await evmWalletHandler.getBalance();
-		balances[currencyTokenName] = balance;
+		const balances = await Promise.all(promises);
 
-		return { balance: balances };
+		const balancesMap: { [key: string]: string } = {};
+		for (let i = 0; i < dirTokens.length; ++i) {
+			balancesMap[dirTokens[i]] = balances[i];
+		}
+
+		return { balance: balancesMap };
 	}
 
 	let utxoRetriever: UtxoRetriever = walletHandler;
@@ -70,21 +88,23 @@ const getWalletBalanceAction = async (
 	const utxos = await utxoRetriever.getAllUtxos();
 	const balance = await utxoRetriever.getBalance(utxos);
 
-	const finalBalance: { [key: string]: string } = {
-		[currencyTokenName]: (balance[LovelaceTokenName] || BigInt(0)).toString(
-			10,
-		),
-	};
-	if (bridgingInfo.wrappedToken) {
-		const tokenName = getTokenNameFromSettings(
-			srcChain,
-			dstChain,
-			settings,
-		);
-		finalBalance[bridgingInfo.wrappedToken!] = (
-			balance[tokenName] || BigInt(0)
-		).toString(10);
-	}
+	const finalBalance: { [key: string]: string } = dirTokens.reduce(
+		(acc: { [key: string]: string }, cv: number) => {
+			acc[cv.toString()] = (
+				balance[
+					cv === currencyID
+						? LovelaceTokenName
+						: normalizeNativeTokenKey(
+								getTokenConfig(settings, srcChain, cv)!
+									.chainSpecific,
+							)
+				] || BigInt(0)
+			).toString(10);
+
+			return acc;
+		},
+		{},
+	);
 
 	return {
 		balance: finalBalance,

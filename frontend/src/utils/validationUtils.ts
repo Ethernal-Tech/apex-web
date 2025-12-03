@@ -6,7 +6,6 @@ import {
 	isEvmChain,
 } from '../settings/chain';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
-import { getTokenInfoBySrcDst } from '../settings/token';
 import { NewAddress, RewardAddress } from '../features/Address/addreses';
 import { checkCardanoAddressCompatibility } from './chainUtils';
 import {

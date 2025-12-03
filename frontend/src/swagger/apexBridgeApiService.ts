@@ -1269,7 +1269,7 @@ export class SettingsFullResponseDto implements ISettingsFullResponseDto {
     /** For each chain, the configuration of tokens and bridging directions */
     directionConfig!: { [key: string]: BridgingSettingsDirectionConfigDto; };
     /** Ecosystem tokens */
-    ecosystemTokens?: BridgingSettingsEcosystemTokenDto[] | undefined;
+    ecosystemTokens!: BridgingSettingsEcosystemTokenDto[];
 
     [key: string]: any;
 
@@ -1285,6 +1285,7 @@ export class SettingsFullResponseDto implements ISettingsFullResponseDto {
             this.layerZeroChains = [];
             this.enabledChains = [];
             this.directionConfig = {};
+            this.ecosystemTokens = [];
         }
     }
 
@@ -1382,7 +1383,7 @@ export interface ISettingsFullResponseDto {
     /** For each chain, the configuration of tokens and bridging directions */
     directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto; };
     /** Ecosystem tokens */
-    ecosystemTokens?: BridgingSettingsEcosystemTokenDto[] | undefined;
+    ecosystemTokens: BridgingSettingsEcosystemTokenDto[];
 
     [key: string]: any;
 }

@@ -2,17 +2,18 @@ import { Box, Typography } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { useEffect, useMemo } from 'react';
-import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
+import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import './lockedTokens.css';
 import {
-	isAdaToken,
-	isApexToken,
 	getTokenInfo,
 	getCurrencyTokenInfo,
+	apexID,
+	adaID,
 } from '../../settings/token';
 import { toChainEnum } from '../../settings/chain';
 import { fetchAndUpdateLockedTokensAction } from '../../actions/lockedTokens';
 import { convertWeiToDfmBig } from '../../utils/generalUtils';
+import { isAdaToken, isApexToken } from '../Audit/token';
 
 const powBigInt = (base: bigint, exp: number): bigint => {
 	let result = BigInt(1);
@@ -97,23 +98,23 @@ const LockedTokensComponent = () => {
 
 		const chunks: string[] = [];
 
-		const getBalanceSafe = (chain: ChainEnum, tokenKey: string) => {
+		const getBalanceSafe = (chain: ChainEnum, tokenKey: number) => {
 			if (!balances[chain]) return BigInt(0);
 
 			return balances[chain][tokenKey] || BigInt(0);
 		};
 
 		const apexTotal =
-			getBalanceSafe(ChainEnum.Prime, TokenEnum.APEX) +
-			getBalanceSafe(ChainEnum.Vector, TokenEnum.APEX) +
+			getBalanceSafe(ChainEnum.Prime, apexID) +
+			getBalanceSafe(ChainEnum.Vector, apexID) +
 			lockedTokensLZFormatted;
 		if (apexTotal > BigInt(0)) {
 			chunks.push(
-				`${formatBigIntDecimalString(apexTotal, 6)} ${getTokenInfo(TokenEnum.APEX).label}`,
+				`${formatBigIntDecimalString(apexTotal, 6)} ${getTokenInfo(apexID).label}`,
 			);
 		}
 
-		const cardanoCurrency = getCurrencyTokenInfo(ChainEnum.Cardano).token;
+		const cardanoCurrency = getCurrencyTokenInfo(ChainEnum.Cardano).tokenID;
 
 		// temporarily disable display of ada
 		delete balances[ChainEnum.Cardano];
@@ -134,27 +135,27 @@ const LockedTokensComponent = () => {
 				for (const [tokenKey, value] of Object.entries(perTokenMap)) {
 					const amount = BigInt(value || '0');
 
-					if (isApexToken(tokenKey as TokenEnum)) {
-						accumulator[TokenEnum.APEX] += amount;
-					} else if (isAdaToken(tokenKey as TokenEnum)) {
-						accumulator[TokenEnum.ADA] += amount;
+					if (isApexToken(+tokenKey)) {
+						accumulator[apexID] += amount;
+					} else if (isAdaToken(+tokenKey)) {
+						accumulator[adaID] += amount;
 					}
 				}
 				return accumulator;
 			},
 			{
-				[TokenEnum.APEX]: BigInt(0),
-				[TokenEnum.ADA]: BigInt(0),
+				[apexID]: BigInt(0),
+				[adaID]: BigInt(0),
 			},
 		);
 
 		// temporarily disable display of ada
-		delete grandTotals[TokenEnum.ADA];
+		delete grandTotals[adaID];
 
 		const chunks = Object.entries(grandTotals)
 			.map(([tokenKey, totalValue]) => {
 				if (totalValue > BigInt(0)) {
-					const label = getTokenInfo(tokenKey as TokenEnum).label;
+					const label = getTokenInfo(+tokenKey).label;
 					const formattedAmount = formatBigIntDecimalString(
 						totalValue,
 						6,

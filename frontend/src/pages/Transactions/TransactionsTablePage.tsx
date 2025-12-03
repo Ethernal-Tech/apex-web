@@ -39,7 +39,11 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import appSettings from '../../settings/appSettings';
 import { getChainInfo } from '../../settings/chain';
-import { getTokenInfoBySrcDst } from '../../settings/token';
+import {
+	getCurrencyID,
+	getRealTokenIDFromEntity,
+	getTokenInfo,
+} from '../../settings/token';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<
@@ -49,6 +53,7 @@ const TransactionsTablePage = () => {
 	const tableRef = useRef(null);
 
 	const { chain } = useSelector((state: RootState) => state.chain);
+	const settings = useSelector((state: RootState) => state.settings);
 	const account = useSelector(
 		(state: RootState) => state.accountInfo.account,
 	);
@@ -338,10 +343,11 @@ const TransactionsTablePage = () => {
 										6,
 									)}{' '}
 									{
-										getTokenInfoBySrcDst(
-											transaction.originChain,
-											transaction.destinationChain,
-											false,
+										getTokenInfo(
+											getCurrencyID(
+												settings,
+												transaction.originChain,
+											),
 										).label
 									}
 								</TableCell>
@@ -362,10 +368,11 @@ const TransactionsTablePage = () => {
 													6,
 												)}{' '}
 												{
-													getTokenInfoBySrcDst(
-														transaction.originChain,
-														transaction.destinationChain,
-														true,
+													getTokenInfo(
+														getRealTokenIDFromEntity(
+															settings,
+															transaction,
+														),
 													).label
 												}
 											</>

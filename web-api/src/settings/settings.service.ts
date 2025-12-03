@@ -18,6 +18,10 @@ import { getCurrencyIDFromDirectionConfig, Lovelace } from './utils';
 
 const RETRY_DELAY_MS = 5000;
 const settingsApiPath = `/api/CardanoTx/GetSettings`;
+const ethID = Number.MAX_SAFE_INTEGER - 4;
+const bapexID = Number.MAX_SAFE_INTEGER - 3;
+const bnapexID = Number.MAX_SAFE_INTEGER - 2;
+const bnbID = Number.MAX_SAFE_INTEGER - 1;
 
 @Injectable()
 export class SettingsService {
@@ -164,10 +168,6 @@ export class SettingsService {
 		}
 
 		// layer zero
-		const ethID = Number.MAX_SAFE_INTEGER - 4;
-		const bapexID = Number.MAX_SAFE_INTEGER - 3;
-		const bnapexID = Number.MAX_SAFE_INTEGER - 2;
-		const bnbID = Number.MAX_SAFE_INTEGER - 1;
 		ecosystemTokens.push(
 			{ id: ethID, name: 'ETH' },
 			{ id: bapexID, name: 'BAP3X' },
@@ -187,7 +187,9 @@ export class SettingsService {
 					isWrappedCurrency: false,
 				},
 				[bapexID]: {
-					chainSpecific: 'BAP3X',
+					chainSpecific:
+						layerZeroChains.find((x) => x.chain === ChainEnum.Base)
+							?.oftAddress || '',
 					lockUnlock: false,
 					isWrappedCurrency: true,
 				},
@@ -206,7 +208,9 @@ export class SettingsService {
 					isWrappedCurrency: false,
 				},
 				[bnapexID]: {
-					chainSpecific: 'BNAP3X',
+					chainSpecific:
+						layerZeroChains.find((x) => x.chain === ChainEnum.BNB)
+							?.oftAddress || '',
 					lockUnlock: false,
 					isWrappedCurrency: true,
 				},
@@ -216,7 +220,7 @@ export class SettingsService {
 		directionConfig[ChainEnum.Nexus].destChain = {
 			...directionConfig[ChainEnum.Nexus].destChain,
 			[ChainEnum.Base]: [{ srcTokenID: apexID, dstTokenID: bapexID }],
-			[ChainEnum.BNB]: [{ srcTokenID: apexID, dstTokenID: bnbID }],
+			[ChainEnum.BNB]: [{ srcTokenID: apexID, dstTokenID: bnapexID }],
 		};
 
 		const enabledChains = new Set<string>();

@@ -2,10 +2,15 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { Box, Link, Tooltip, Typography } from '@mui/material';
 import CustomSelect from '../../components/customSelect/CustomSelect';
 import { isEvmChain, getChainInfo } from '../../settings/chain';
-import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
+import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import { formatBigIntDecimalString } from '../lockedTokens/LockedTokensComponent';
 import { getExplorerAddressUrl } from '../../utils/chainUtils';
-import { getCurrencyTokenInfo, getTokenInfo } from '../../settings/token';
+import {
+	adaID,
+	apexID,
+	getCurrencyTokenInfo,
+	getTokenInfo,
+} from '../../settings/token';
 import { compareBigInts } from '../../features/utils';
 import LaunchIcon from '@mui/icons-material/Launch';
 
@@ -86,8 +91,8 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 		if (!chains[selChain]) setSelChain(chainKeys[0] ?? '');
 	}, [chains, chainKeys, selChain]);
 
-	const selToken: string = useMemo((): string => {
-		return getCurrencyTokenInfo(selChain as ChainEnum).token;
+	const selToken: number = useMemo((): number => {
+		return getCurrencyTokenInfo(selChain as ChainEnum).tokenID;
 	}, [selChain]);
 
 	const addrMap = chains[selChain]?.[selToken] ?? {};
@@ -100,8 +105,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 					{sortEntries(tokenTotalsAllChains)
 						.filter(
 							([tokenKey]) =>
-								tokenKey === TokenEnum.APEX ||
-								tokenKey === TokenEnum.ADA, // only show desired tokens
+								+tokenKey === apexID || +tokenKey === adaID, // only show desired tokens
 						)
 						.map(([tokenKey, amt]) => (
 							<AmountCard
@@ -122,7 +126,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 							const rows = sortEntries(
 								perChainTotals[ck] ?? {},
 							).map(([t, a]) => ({
-								label: getTokenInfo(t).label,
+								label: getTokenInfo(+t).label,
 								amt: a,
 							}));
 							return (
@@ -254,7 +258,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 					{Object.entries(tvbGrandTotal).map(([tokenKey, amount]) => (
 						<AmountCard
 							key={tokenKey}
-							left={getTokenInfo(tokenKey as TokenEnum).label}
+							left={getTokenInfo(+tokenKey).label}
 							right={fmt(amount)}
 						/>
 					))}
@@ -267,7 +271,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 					{sortEntries(tvbTokenTotalsAllChains).map(([tk, amt]) => (
 						<AmountCard
 							key={tk}
-							left={getTokenInfo(tk).label}
+							left={getTokenInfo(+tk).label}
 							right={fmt(amt)}
 						/>
 					))}
@@ -288,7 +292,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 							const rows = sortEntries(
 								tvbPerChainTotals[ck] ?? {},
 							).map(([t, a]) => ({
-								label: getTokenInfo(t).label,
+								label: getTokenInfo(+t).label,
 								amt: a,
 							}));
 							return (

@@ -18,8 +18,6 @@ import { RootState } from '../../../redux/store';
 import {
 	CardanoTransactionFeeResponseDto,
 	ChainEnum,
-	CreateEthTransactionResponseDto,
-	TokenEnum,
 	TxTypeEnum,
 } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
@@ -34,7 +32,7 @@ import {
 	isCardanoChain,
 	isEvmChain,
 } from '../../../settings/chain';
-import { getTokenInfo, isWrappedToken } from '../../../settings/token';
+import { getTokenInfo } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
 import { captureException } from '../../../features/sentry';

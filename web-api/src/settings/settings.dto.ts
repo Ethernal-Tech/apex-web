@@ -186,6 +186,7 @@ export class BridgingSettingsDto {
 	})
 	ecosystemTokens: BridgingSettingsEcosystemTokenDto[];
 }
+
 export class ReactorOnlyBridgingSettingsDto {
 	@IsNotEmpty()
 	@IsPositive()
@@ -352,8 +353,6 @@ export class SettingsFullResponseDto {
 	@ValidateNested()
 	@ApiProperty({
 		description: 'Ecosystem tokens',
-		nullable: true,
-		required: false,
 		isArray: true,
 		type: BridgingSettingsEcosystemTokenDto,
 	})

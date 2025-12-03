@@ -7,12 +7,13 @@ import BasePage from '../base/BasePage';
 import {
 	BridgingModeEnum,
 	ChainEnum,
-	TokenEnum,
 } from '../../swagger/apexBridgeApiService';
 import SkylinePanel from '../../components/Audit/SkylineAudit';
 import LayerZeroPanel from '../../components/Audit/LayerZeroAudit';
 import '../../audit.css';
-import { isAdaToken, isApexToken } from '../../settings/token';
+import { isAdaToken, isApexToken } from '../../components/Audit/token';
+import { adaID, apexID } from '../../settings/token';
+
 const sumToken = (m: Record<string, bigint>): bigint =>
 	Object.values(m).reduce((a, b) => a + b, BigInt(0));
 
@@ -108,14 +109,12 @@ const AuditPage: React.FC = () => {
 							continue;
 						}
 
-						if (isApexToken(tokenKey as TokenEnum)) {
-							accumulator[TokenEnum.APEX] =
-								(accumulator[TokenEnum.APEX] ?? BigInt(0)) +
-								value;
-						} else if (isAdaToken(tokenKey as TokenEnum)) {
-							accumulator[TokenEnum.ADA] =
-								(accumulator[TokenEnum.ADA] ?? BigInt(0)) +
-								value;
+						if (isApexToken(+tokenKey)) {
+							accumulator[apexID] =
+								(accumulator[apexID] ?? BigInt(0)) + value;
+						} else if (isAdaToken(+tokenKey)) {
+							accumulator[adaID] =
+								(accumulator[adaID] ?? BigInt(0)) + value;
 						}
 					}
 					return accumulator;

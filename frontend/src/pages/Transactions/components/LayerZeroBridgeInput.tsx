@@ -11,17 +11,12 @@ import {
 	ChainEnum,
 	TxTypeEnum,
 	TransactionDataDto,
-	TokenEnum,
 } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { useSupporedSourceLZTokenOptions } from '../utils';
 import { BridgingModeEnum, getChainInfo } from '../../../settings/chain';
-import {
-	getTokenInfo,
-	isCurrencyBridgingAllowed,
-	isWrappedToken,
-} from '../../../settings/token';
+import { getTokenInfo } from '../../../settings/token';
 import FeeInformation from './FeeInformation';
 import {
 	estimateEthTxFee,

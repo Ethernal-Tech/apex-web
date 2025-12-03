@@ -1,4 +1,4 @@
-import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
+import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import { useMemo } from 'react';
 import {
 	getBridgingInfo,
@@ -11,7 +11,7 @@ import { RootState } from '../../redux/store';
 import { getBridgingMode } from '../../settings/chain';
 
 export interface TokenOption {
-	value: TokenEnum;
+	value: number;
 	label: string;
 	icon: React.FunctionComponent<React.SVGProps<SVGSVGElement>>;
 	borderColor: string;
@@ -19,7 +19,7 @@ export interface TokenOption {
 
 const tokenInfoToTokenOption = (info: TokenInfo): TokenOption => {
 	return {
-		value: info.token,
+		value: info.tokenID,
 		label: info.label,
 		icon: info.icon,
 		borderColor: info.borderColor,

@@ -5,7 +5,6 @@ import {
 import {
 	CreateTransactionDto,
 	CreateCardanoTransactionResponseDto,
-	CreateEthTransactionResponseDto,
 	TransactionSubmittedDto,
 	ChainEnum,
 	LayerZeroTransferResponseDto,
@@ -17,7 +16,6 @@ import walletHandler from '../features/WalletHandler';
 import evmWalletHandler from '../features/EvmWalletHandler';
 import { Transaction } from 'web3-types';
 import { toApexBridgeName, toLayerZeroChainName } from '../settings/chain';
-import { isCurrencyBridgingAllowed } from '../settings/token';
 import { ISettingsState } from '../settings/settingsRedux';
 import { longRetryOptions, retry } from '../utils/generalUtils';
 import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';

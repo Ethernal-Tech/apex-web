@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Link, Tooltip, Typography } from '@mui/material';
-import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
-import { getTokenInfo } from '../../settings/token';
+import { ChainEnum } from '../../swagger/apexBridgeApiService';
+import { apexID, getTokenInfo } from '../../settings/token';
 import { formatBigIntDecimalString } from '../lockedTokens/LockedTokensComponent';
 import '../../audit.css';
 import { useSelector } from 'react-redux';
@@ -42,7 +42,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 							<Box className="audit-card-content audit-row">
 								<Box className="audit-left">
 									<Typography>
-										{getTokenInfo(TokenEnum.APEX).label}
+										{getTokenInfo(apexID).label}
 									</Typography>
 									<Tooltip title="Open in explorer">
 										<Link
@@ -81,7 +81,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 						<Box className="audit-card audit-card--center">
 							<Box className="audit-card-content audit-row">
 								<Typography>
-									{getTokenInfo(TokenEnum.APEX).label}
+									{getTokenInfo(apexID).label}
 								</Typography>
 								<Typography className="audit-amount">
 									{formatBigIntDecimalString(lzGrandTotal, 6)}
@@ -103,7 +103,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 								<Box key={tk} className="audit-card">
 									<Box className="audit-card-content audit-row">
 										<Typography className="fw-700">
-											{getTokenInfo(tk).label}
+											{getTokenInfo(+tk).label}
 										</Typography>
 										<Typography className="audit-amount">
 											{formatBigIntDecimalString(amt, 6)}
@@ -130,7 +130,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 							)
 								.sort((a, b) => compareBigInts(b[1], a[1]))
 								.map(([token, amt]) => ({
-									token: getTokenInfo(token).label,
+									token: getTokenInfo(+token).label,
 									amt,
 								}));
 							return (

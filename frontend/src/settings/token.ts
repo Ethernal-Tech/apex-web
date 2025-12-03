@@ -1,191 +1,171 @@
 import { FunctionComponent, SVGProps } from 'react';
-import { ChainEnum, TokenEnum } from '../swagger/apexBridgeApiService';
 import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg';
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg';
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg';
-import { getChainInfo } from './chain';
+import { ReactComponent as UnknownTokenIcon } from '../assets/token-icons/unknown.svg';
+import { BridgeTransactionDto, BridgingSettingsTokenDto } from '../swagger/apexBridgeApiService';
+import { ISettingsState } from './settingsRedux';
 
-export type BridgingInfo = {
-	isCurrencyBridgingAllowed: boolean;
-	wrappedToken?: TokenEnum;
-};
+export const LovelaceTokenName = 'lovelace';
 
 export type TokenInfo = {
-	token: TokenEnum;
+	tokenID: number;
 	icon: FunctionComponent<SVGProps<SVGSVGElement>>;
 	label: string;
 	borderColor: string;
 };
 
+export const apexID = 1;
+export const adaID = 2;
+export const capexID = 3;
+export const xadaID = 4;
+const myTestTokenID = 5;
+
+const ethID = Number.MAX_SAFE_INTEGER - 4;
+export const bapexID = Number.MAX_SAFE_INTEGER - 3;
+export const bnapexID = Number.MAX_SAFE_INTEGER - 2;
+const bnbID = Number.MAX_SAFE_INTEGER - 1;
+
 const unknownTokenInfo: TokenInfo = {
-	token: TokenEnum.APEX,
+	tokenID: 0,
 	icon: ApexIcon,
 	label: '',
 	borderColor: 'transparent',
 };
 
-const tokenInfos: TokenInfo[] = [
-	{
-		token: TokenEnum.APEX,
+const tokenInfos: Record<number, TokenInfo> = {
+	[apexID]: {
+		tokenID: apexID,
 		icon: ApexIcon,
 		label: 'AP3X',
 		borderColor: '#077368',
 	},
-	{
-		token: TokenEnum.WAPEX,
-		icon: ApexIcon,
-		label: 'cAP3X',
-		borderColor: '#0538AF',
-	},
-	{
-		token: TokenEnum.ADA,
+	[adaID]: {
+		tokenID: adaID,
 		icon: AdaIcon,
 		label: 'ADA',
 		borderColor: '#077368',
 	},
-	{
-		token: TokenEnum.WADA,
+	[capexID]: {
+		tokenID: capexID,
+		icon: ApexIcon,
+		label: 'cAP3X',
+		borderColor: '#0538AF',
+	},
+	[xadaID]: {
+		tokenID: xadaID,
 		icon: AdaIcon,
 		label: 'xADA',
 		borderColor: '#0538AF',
 	},
-	{
-		token: TokenEnum.ETH,
+	[myTestTokenID]: {
+		tokenID: myTestTokenID,
+		icon: UnknownTokenIcon,
+		label: 'myTestToken',
+		borderColor: '#0538AF',
+	},
+	[ethID]: {
+		tokenID: ethID,
 		icon: EthIcon,
 		label: 'ETH',
 		borderColor: '#8A92B2',
 	},
-	{
-		token: TokenEnum.BAP3X,
+	[bapexID]: {
+		tokenID: bapexID,
 		icon: ApexIcon,
 		label: 'bAP3X',
-		borderColor: '#077368',
+		borderColor: '#8A92B2',
 	},
-	{
-		token: TokenEnum.BNAP3X,
+	[bnapexID]: {
+		tokenID: bnapexID,
 		icon: ApexIcon,
 		label: 'bnAP3X',
 		borderColor: '#F3BA2F',
 	},
-	{
-		token: TokenEnum.BNB,
-		icon: ApexIcon,
+	[bnbID]: {
+		tokenID: bnbID,
+		icon: UnknownTokenIcon,
 		label: 'BNB',
 		borderColor: '#F3BA2F',
 	},
-];
-
-const tokensDirection: Partial<
-	Record<ChainEnum, Partial<Record<ChainEnum, BridgingInfo>>>
-> = {
-	[ChainEnum.Prime]: {
-		[ChainEnum.Cardano]: {
-			isCurrencyBridgingAllowed: true,
-			// wrappedToken: TokenEnum.WAda,
-		},
-		[ChainEnum.Vector]: {
-			isCurrencyBridgingAllowed: true,
-		},
-		[ChainEnum.Nexus]: {
-			isCurrencyBridgingAllowed: true,
-		},
-	},
-	[ChainEnum.Cardano]: {
-		[ChainEnum.Prime]: {
-			isCurrencyBridgingAllowed: false,
-			wrappedToken: TokenEnum.WAPEX,
-		},
-		[ChainEnum.Vector]: {
-			isCurrencyBridgingAllowed: true,
-		},
-	},
-	[ChainEnum.Vector]: {
-		[ChainEnum.Prime]: {
-			isCurrencyBridgingAllowed: true,
-		},
-		[ChainEnum.Nexus]: {
-			isCurrencyBridgingAllowed: true,
-		},
-		[ChainEnum.Cardano]: {
-			isCurrencyBridgingAllowed: false,
-			wrappedToken: TokenEnum.WADA,
-		},
-	},
-	[ChainEnum.Nexus]: {
-		[ChainEnum.Prime]: {
-			isCurrencyBridgingAllowed: true,
-		},
-		[ChainEnum.Vector]: {
-			isCurrencyBridgingAllowed: true,
-		},
-		[ChainEnum.Base]: {
-			isCurrencyBridgingAllowed: true,
-		},
-		[ChainEnum.Bsc]: {
-			isCurrencyBridgingAllowed: true,
-		},
-	},
-	[ChainEnum.Base]: {
-		[ChainEnum.Nexus]: {
-			isCurrencyBridgingAllowed: false,
-			wrappedToken: TokenEnum.BAP3X,
-		},
-		[ChainEnum.Bsc]: {
-			isCurrencyBridgingAllowed: false,
-			wrappedToken: TokenEnum.BAP3X,
-		},
-	},
-	[ChainEnum.Bsc]: {
-		[ChainEnum.Nexus]: {
-			isCurrencyBridgingAllowed: false,
-			wrappedToken: TokenEnum.BNAP3X,
-		},
-		[ChainEnum.Base]: {
-			isCurrencyBridgingAllowed: false,
-			wrappedToken: TokenEnum.BNAP3X,
-		},
-	},
 };
 
-export const getBridgingInfo = (
-	srcChain: ChainEnum,
-	dstChain: ChainEnum,
-): BridgingInfo => {
-	return (
-		(tokensDirection[srcChain] || {})[dstChain] || {
-			isCurrencyBridgingAllowed: false,
-		}
-	);
+export const getTokenInfo = (tokenID: number | undefined): TokenInfo => {
+	if (!tokenID) return unknownTokenInfo;
+
+	return tokenInfos[tokenID] || unknownTokenInfo;
 };
 
-export const getToken = (
-	srcChain: ChainEnum,
-	dstChain: ChainEnum,
-	isWrappedToken: boolean,
-): TokenEnum | undefined => {
-	const data = getBridgingInfo(srcChain, dstChain);
-	return isWrappedToken
-		? data?.wrappedToken
-		: getChainInfo(srcChain).currencyToken;
-};
+export const getCurrencyID = (
+	settings: ISettingsState,
+	chain: string,
+): number | undefined => {
+	if (!settings.directionConfig[chain]) {
+		return;
+	}
 
-export const getTokenInfo = (token: string | undefined): TokenInfo => {
-	if (!token) return unknownTokenInfo;
-
-	const tokenInfo = tokenInfos.find(
-		(ti) => ti.token === (token as TokenEnum),
+	const currencyID = Object.keys(settings.directionConfig[chain].tokens).find(
+		(x: string) =>
+			settings.directionConfig[chain].tokens[+x].chainSpecific ===
+			LovelaceTokenName,
 	);
 
-	return tokenInfo || unknownTokenInfo;
+	return currencyID ? +currencyID : undefined;
 };
 
-export const getTokenInfoBySrcDst = (
-	srcChain: ChainEnum,
-	dstChain: ChainEnum,
-	isWrappedToken: boolean,
-): TokenInfo => {
-	return getTokenInfo(getToken(srcChain, dstChain, isWrappedToken));
+export const getWrappedCurrencyID = (
+	settings: ISettingsState,
+	chain: string,
+): number | undefined => {
+	if (!settings.directionConfig[chain]) {
+		return;
+	}
+
+	const wrappedCurrencyID = Object.keys(
+		settings.directionConfig[chain].tokens,
+	).find(
+		(x: string) =>
+			settings.directionConfig[chain].tokens[+x].isWrappedCurrency,
+	);
+
+	return wrappedCurrencyID ? +wrappedCurrencyID : undefined;
 };
+
+export const getRealTokenIDFromEntity = (
+	settings: ISettingsState,
+	transaction: BridgeTransactionDto | undefined,
+) => {
+	if (!transaction) return apexID;
+
+	if (transaction.tokenID) return transaction.tokenID;
+
+	if (BigInt(transaction.nativeTokenAmount) === BigInt(0)) {
+		const currencyID = getCurrencyID(settings, transaction.originChain);
+
+		return currencyID || apexID;
+	}
+
+	const wrappedCurrencyID = getWrappedCurrencyID(
+		settings,
+		transaction.originChain,
+	);
+
+	return wrappedCurrencyID || apexID;
+};
+
+export const getTokenConfig = (
+	settings: ISettingsState,
+	chain: string,
+	tokenID: number,
+): BridgingSettingsTokenDto | undefined => {
+	if (!settings.directionConfig[chain]) {
+		return;
+	}
+
+	return settings.directionConfig[chain].tokens[tokenID];
+};
+
+/*
 
 export const isWrappedToken = (token: TokenEnum | undefined): boolean =>
 	token === TokenEnum.WAPEX ||
@@ -201,26 +181,4 @@ export const isCurrencyBridgingAllowed = (
 	dstChain: ChainEnum,
 ): boolean => getBridgingInfo(srcChain, dstChain).isCurrencyBridgingAllowed;
 
-export const getLayerZeroToken = (chain: ChainEnum): TokenEnum => {
-	switch (chain) {
-		case ChainEnum.Base:
-			return TokenEnum.BAP3X;
-		case ChainEnum.Bsc:
-			return TokenEnum.BNAP3X;
-		default:
-			return TokenEnum.APEX;
-	}
-};
-
-export const isAdaToken = (token: TokenEnum): boolean => {
-	return TokenEnum.ADA === token || TokenEnum.WADA === token;
-};
-
-export const isApexToken = (token: TokenEnum): boolean => {
-	return (
-		TokenEnum.APEX === token ||
-		TokenEnum.WAPEX === token ||
-		TokenEnum.BNAP3X === token ||
-		TokenEnum.BAP3X === token
-	);
-};
+*/

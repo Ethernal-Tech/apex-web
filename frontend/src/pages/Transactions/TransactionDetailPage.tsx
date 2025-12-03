@@ -1,7 +1,7 @@
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { Box, Link, Typography } from '@mui/material';
 import BasePage from '../base/BasePage';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { TRANSACTIONS_ROUTE } from '../PageRouter';
@@ -27,9 +27,14 @@ import {
 	getBridgingMode,
 	getChainInfo,
 } from '../../settings/chain';
-import { getTokenInfoBySrcDst } from '../../settings/token';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
+import {
+	apexID,
+	getCurrencyID,
+	getTokenInfo,
+	getRealTokenIDFromEntity,
+} from '../../settings/token';
 
 const tabletMediaQuery = '@media (max-width:800px)';
 
@@ -69,11 +74,25 @@ const TransactionDetailPage = () => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const currencyID = useMemo(
+		() =>
+			transaction
+				? getCurrencyID(settings, transaction.originChain)
+				: apexID,
+		[settings, transaction],
+	);
+
+	const realTokenID = useMemo(
+		() => getRealTokenIDFromEntity(settings, transaction),
+		[settings, transaction],
+	);
+
 	const isNotReactor =
 		!!transaction &&
 		getBridgingMode(
 			transaction.originChain,
 			transaction.destinationChain,
+			realTokenID,
 			settings,
 		).bridgingMode !== BridgingModeEnum.Reactor;
 
@@ -304,11 +323,7 @@ const TransactionDetailPage = () => {
 													6,
 												)}{' '}
 											{transaction &&
-												getTokenInfoBySrcDst(
-													transaction.originChain,
-													transaction.destinationChain,
-													false,
-												).label}
+												getTokenInfo(currencyID).label}
 										</Typography>
 									</Box>
 									{isNotReactor && (
@@ -347,10 +362,8 @@ const TransactionDetailPage = () => {
 																6,
 															)}{' '}
 														{transaction &&
-															getTokenInfoBySrcDst(
-																transaction.originChain,
-																transaction.destinationChain,
-																true,
+															getTokenInfo(
+																realTokenID,
 															).label}
 													</>
 												)}
