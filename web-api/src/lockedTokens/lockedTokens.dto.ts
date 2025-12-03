@@ -14,11 +14,11 @@ export class LockedTokensDto {
 		},
 	})
 	chains: {
-		[chainName: string]: { [tokenName: string]: { [address: string]: string } };
+		[chainName: string]: Record<number, { [address: string]: string }>;
 	};
 
 	@ApiProperty({
-		description: 'Mapping of total transfered tokens per chain',
+		description: 'Mapping of total transferred tokens per chain',
 		type: 'object',
 		additionalProperties: {
 			type: 'object',

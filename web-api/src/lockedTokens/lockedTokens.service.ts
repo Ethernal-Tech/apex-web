@@ -8,7 +8,6 @@ import {
 	LockedTokensDto,
 	LockedTokensResponse,
 	TransferredTokensByDay,
-	TransferredTokensResponse,
 } from './lockedTokens.dto';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
@@ -19,17 +18,11 @@ import {
 	BridgingModeEnum,
 	ChainEnum,
 	GroupByTimePeriod,
-	TokenEnum,
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SettingsService } from 'src/settings/settings.service';
-import {
-	getAllChainsDirections,
-	getTokenNameFromSettings,
-} from 'src/utils/chainUtils';
-import { amountToBigInt } from 'src/utils/generalUtils';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 
 @Injectable()
@@ -54,6 +47,16 @@ export class LockedTokensService {
 			this.appConfig.cardanoSkylineApiUrl + `/api/CardanoTx/GetLockedTokens`;
 	}
 
+	public fillTokensData(
+		_allowedBridgingModes: BridgingModeEnum[],
+	): LockedTokensDto {
+		return {
+			chains: {},
+			totalTransferred: {},
+		};
+	}
+
+	/*
 	public async fillTokensData(
 		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<LockedTokensDto> {
@@ -113,7 +116,7 @@ export class LockedTokensService {
 			totalTransferred: totalTransferred.totalTransferred,
 		};
 	}
-
+*/
 	private async getLockedTokens(): Promise<LockedTokensResponse> {
 		Logger.debug(`axios.get: ${this.endpointUrl}`);
 
@@ -141,6 +144,16 @@ export class LockedTokensService {
 		}
 	}
 
+	public sumOfTransferredTokenByDate(
+		_startDate: Date,
+		_endDate: Date,
+		_groupBy: GroupByTimePeriod,
+		_allowedBridgingModes: BridgingModeEnum[],
+	): TransferredTokensByDay[] {
+		return [];
+	}
+
+	/*
 	private async sumTransferredTokensPerChain(
 		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<TransferredTokensResponse> {
@@ -303,6 +316,7 @@ export class LockedTokensService {
 			(a, b) => a.date.getTime() - b.date.getTime(),
 		);
 	}
+*/
 
 	private normalizeGroupedDate(date: Date, groupBy: GroupByTimePeriod): Date {
 		switch (groupBy) {

@@ -50,10 +50,7 @@ export class BridgingSettingsDirectionConfigDto {
 	@IsObject()
 	@ValidateNested()
 	@ApiProperty({
-		description: 'Ecosystem tokens',
-		nullable: true,
-		required: false,
-		isArray: true,
+		description: 'Token pairs',
 		type: Object,
 		additionalProperties: {
 			type: 'array',
@@ -184,8 +181,6 @@ export class BridgingSettingsDto {
 	@ValidateNested()
 	@ApiProperty({
 		description: 'Ecosystem tokens',
-		nullable: true,
-		required: false,
 		isArray: true,
 		type: BridgingSettingsEcosystemTokenDto,
 	})

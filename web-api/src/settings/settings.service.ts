@@ -106,59 +106,8 @@ export class SettingsService {
 			);
 		}
 
-		const reactorConvertedSettings: SettingsResponseDto = {
-			enabledChains: [...reactorSettings.enabledChains],
-			bridgingSettings: {
-				maxAmountAllowedToBridge:
-					reactorSettings.bridgingSettings.maxAmountAllowedToBridge,
-				maxReceiversPerBridgingRequest:
-					reactorSettings.bridgingSettings.maxReceiversPerBridgingRequest,
-				maxTokenAmountAllowedToBridge: '0',
-				minChainFeeForBridging: {
-					...reactorSettings.bridgingSettings.minChainFeeForBridging,
-				},
-				minChainFeeForBridgingTokens: {},
-				minColCoinsAllowedToBridge: 0,
-				minOperationFee: {},
-				minUtxoChainValue: {
-					...reactorSettings.bridgingSettings.minUtxoChainValue,
-				},
-				minValueToBridge: reactorSettings.bridgingSettings.minValueToBridge,
-				ecosystemTokens: [apexEcosystemToken],
-				directionConfig: {
-					[ChainEnum.Prime]: {
-						destChain: {},
-						tokens: {
-							[apexID]: {
-								chainSpecific: Lovelace,
-								lockUnlock: true,
-								isWrappedCurrency: false,
-							},
-						},
-					},
-					[ChainEnum.Vector]: {
-						destChain: {},
-						tokens: {
-							[apexID]: {
-								chainSpecific: Lovelace,
-								lockUnlock: true,
-								isWrappedCurrency: false,
-							},
-						},
-					},
-					[ChainEnum.Nexus]: {
-						destChain: {},
-						tokens: {
-							[apexID]: {
-								chainSpecific: Lovelace,
-								lockUnlock: true,
-								isWrappedCurrency: false,
-							},
-						},
-					},
-				},
-			},
-		};
+		const reactorConvertedSettings: SettingsResponseDto =
+			this.convertReactorSettings(apexEcosystemToken, reactorSettings);
 
 		//just in case skyline doesn't include nexus from the start
 		if (!directionConfig[ChainEnum.Nexus]) {
@@ -186,23 +135,28 @@ export class SettingsService {
 			}
 
 			for (const dstChain of dstChains) {
+				const exReactorDestChains =
+					reactorConvertedSettings.bridgingSettings.directionConfig[srcChain]
+						?.destChain || {};
+				const exReactorTokenPairs = exReactorDestChains[dstChain] || [];
+
 				reactorConvertedSettings.bridgingSettings.directionConfig[
 					srcChain
 				].destChain = {
-					...reactorConvertedSettings.bridgingSettings.directionConfig[srcChain]
-						.destChain,
+					...exReactorDestChains,
 					[dstChain]: [
-						...reactorConvertedSettings.bridgingSettings.directionConfig[
-							srcChain
-						].destChain[dstChain],
+						...exReactorTokenPairs,
 						{ srcTokenID: currencyID, dstTokenID: currencyID },
 					],
 				};
 
+				const exDestChains = directionConfig[srcChain]?.destChain || {};
+				const exTokenPairs = exDestChains[dstChain] || [];
+
 				directionConfig[srcChain].destChain = {
-					...directionConfig[srcChain].destChain,
+					...exDestChains,
 					[dstChain]: [
-						...directionConfig[srcChain].destChain[dstChain],
+						...exTokenPairs,
 						{ srcTokenID: currencyID, dstTokenID: currencyID },
 					],
 				};
@@ -282,8 +236,69 @@ export class SettingsService {
 		this.SettingsResponse.directionConfig = directionConfig;
 		this.SettingsResponse.enabledChains = Array.from(enabledChains);
 
-		Logger.debug(`settings dto ${JSON.stringify(this.SettingsResponse)}`);
+		Logger.debug(
+			`settings dto ${JSON.stringify(this.SettingsResponse, undefined, ' ')}`,
+		);
 	}
+
+	private convertReactorSettings = (
+		apexEcosystemToken: BridgingSettingsEcosystemTokenDto,
+		reactorSettings: ReactorOnlySettingsResponseDto,
+	): SettingsResponseDto => {
+		return {
+			enabledChains: [...reactorSettings.enabledChains],
+			bridgingSettings: {
+				maxAmountAllowedToBridge:
+					reactorSettings.bridgingSettings.maxAmountAllowedToBridge,
+				maxReceiversPerBridgingRequest:
+					reactorSettings.bridgingSettings.maxReceiversPerBridgingRequest,
+				maxTokenAmountAllowedToBridge: '0',
+				minChainFeeForBridging: {
+					...reactorSettings.bridgingSettings.minChainFeeForBridging,
+				},
+				minChainFeeForBridgingTokens: {},
+				minColCoinsAllowedToBridge: 0,
+				minOperationFee: {},
+				minUtxoChainValue: {
+					...reactorSettings.bridgingSettings.minUtxoChainValue,
+				},
+				minValueToBridge: reactorSettings.bridgingSettings.minValueToBridge,
+				ecosystemTokens: [apexEcosystemToken],
+				directionConfig: {
+					[ChainEnum.Prime]: {
+						destChain: {},
+						tokens: {
+							[apexEcosystemToken.id]: {
+								chainSpecific: Lovelace,
+								lockUnlock: true,
+								isWrappedCurrency: false,
+							},
+						},
+					},
+					[ChainEnum.Vector]: {
+						destChain: {},
+						tokens: {
+							[apexEcosystemToken.id]: {
+								chainSpecific: Lovelace,
+								lockUnlock: true,
+								isWrappedCurrency: false,
+							},
+						},
+					},
+					[ChainEnum.Nexus]: {
+						destChain: {},
+						tokens: {
+							[apexEcosystemToken.id]: {
+								chainSpecific: Lovelace,
+								lockUnlock: true,
+								isWrappedCurrency: false,
+							},
+						},
+					},
+				},
+			},
+		};
+	};
 
 	private async fetchOnce<T>(url: string, apiKey: string): Promise<T> {
 		const endpointUrl = url + settingsApiPath;
@@ -298,7 +313,9 @@ export class SettingsService {
 				},
 			});
 
-			Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
+			Logger.debug(
+				`axios.response: ${JSON.stringify(response.data, undefined, ' ')}`,
+			);
 
 			return response.data as T;
 		} catch (error) {

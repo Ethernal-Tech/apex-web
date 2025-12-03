@@ -1,5 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
+import { ApiExtraModels, ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+	IsArray,
+	IsEnum,
+	IsNotEmpty,
+	IsObject,
+	IsPositive,
+	ValidateNested,
+} from 'class-validator';
 import { ChainApexBridgeEnum, ChainEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
@@ -217,7 +225,7 @@ export class CardanoTransactionFeeResponseDto {
 	bridgingFee: string;
 }
 
-export class CreateEthTransactionResponseDto {
+export class EthTransactionResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	from: string;
@@ -232,13 +240,39 @@ export class CreateEthTransactionResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	data: string;
+}
 
+@ApiExtraModels(EthTransactionResponseDto)
+export class BridgingEthTransactionResponseDto extends EthTransactionResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	bridgingFee: string;
 
 	@ApiProperty()
 	isFallback: boolean;
+}
+
+@ApiExtraModels(EthTransactionResponseDto, BridgingEthTransactionResponseDto)
+export class CreateEthTransactionFullResponseDto {
+	@IsObject()
+	@ValidateNested()
+	@Type(() => EthTransactionResponseDto)
+	@ApiProperty({
+		description: 'Approval tx for the bridging tx',
+		type: EthTransactionResponseDto,
+		nullable: true,
+	})
+	approvalTx?: EthTransactionResponseDto;
+
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@Type(() => BridgingEthTransactionResponseDto)
+	@ApiProperty({
+		description: 'Eth Bridging tx',
+		type: BridgingEthTransactionResponseDto,
+	})
+	bridgingTx: BridgingEthTransactionResponseDto;
 }
 
 export class ErrorResponseDto {

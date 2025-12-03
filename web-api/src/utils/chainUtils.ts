@@ -10,7 +10,6 @@ import {
 	SettingsFullResponseDto,
 	SettingsResponseDto,
 } from 'src/settings/settings.dto';
-import Web3 from 'web3';
 
 const NEXUS_TESTNET_CHAIN_ID = BigInt(9070);
 const NEXUS_MAINNET_CHAIN_ID = BigInt(9069);
@@ -172,7 +171,7 @@ export const getBridgingMode = function (
 
 	return undefined;
 };
-
+/*
 export const getAllChainsDirections = function (
 	allowedBridgingModes: BridgingModeEnum[],
 	settings: SettingsFullResponseDto,
@@ -305,3 +304,4 @@ export const decodeNativeTokenName = (
 		return toTokenEnum(tokenName);
 	}
 };
+*/

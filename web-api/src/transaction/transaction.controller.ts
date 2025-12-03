@@ -4,7 +4,7 @@ import {
 	CreateCardanoTransactionResponseDto,
 	TransactionSubmittedDto,
 	CreateTransactionDto,
-	CreateEthTransactionResponseDto,
+	CreateEthTransactionFullResponseDto,
 	CardanoTransactionFeeResponseDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
@@ -74,7 +74,7 @@ export class TransactionController {
 
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: CreateEthTransactionResponseDto,
+		type: CreateEthTransactionFullResponseDto,
 		description: 'Success',
 	})
 	@ApiResponse({
@@ -85,7 +85,7 @@ export class TransactionController {
 	@Post('createEth')
 	createEth(
 		@Body() model: CreateTransactionDto,
-	): CreateEthTransactionResponseDto {
+	): CreateEthTransactionFullResponseDto {
 		return this.transactionService.createEth(model);
 	}
 
