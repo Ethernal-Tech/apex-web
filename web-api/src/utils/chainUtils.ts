@@ -207,15 +207,23 @@ export const getTokenNameFromSettings = (
 ): TokenEnum | undefined => {
 	switch (getBridgingMode(srcChain, dstChain, settings)) {
 		case BridgingModeEnum.LayerZero:
-			switch (srcChain) {
-				case ChainEnum.BNB:
-					return TokenEnum.BNAP3X;
-				case ChainEnum.Base:
-					return TokenEnum.BAP3X;
-				case ChainEnum.Nexus:
-					return TokenEnum.APEX;
+			if (isCurrency) {
+				switch (srcChain) {
+					case ChainEnum.Nexus:
+						return TokenEnum.APEX;
+					default:
+						return undefined;
+				}
+			} else {
+				switch (srcChain) {
+					case ChainEnum.BNB:
+						return TokenEnum.BNAP3X;
+					case ChainEnum.Base:
+						return TokenEnum.BAP3X;
+					default:
+						return undefined;
+				}
 			}
-			return undefined;
 		case BridgingModeEnum.Skyline: {
 			const nativeTokens =
 				settings?.settingsPerMode[BridgingModeEnum.Skyline]
