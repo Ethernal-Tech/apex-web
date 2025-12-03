@@ -18,6 +18,7 @@ import { RootState } from '../../../redux/store';
 import {
 	CardanoTransactionFeeResponseDto,
 	ChainEnum,
+	CreateEthTransactionFullResponseDto,
 	TxTypeEnum,
 } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
@@ -41,17 +42,14 @@ type BridgeInputType = {
 	getCardanoTxFee: (
 		address: string,
 		amount: string,
-		isNativeToken: boolean,
+		tokenID: number,
 	) => Promise<CardanoTransactionFeeResponseDto>;
 	getEthTxFee: (
 		address: string,
 		amount: string,
-	) => Promise<CreateEthTransactionResponseDto>;
-	submit: (
-		address: string,
-		amount: string,
-		isNativeToken: boolean,
-	) => Promise<void>;
+		tokenID: number,
+	) => Promise<CreateEthTransactionFullResponseDto>;
+	submit: (address: string, amount: string, tokenID: number) => Promise<void>;
 	loadingState: SubmitLoadingState | undefined;
 };
 
@@ -151,7 +149,7 @@ const BridgeInput = ({
 	);
 	const settings = useSelector((state: RootState) => state.settings);
 
-	const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
+	const bridgingModeInfo = getBridgingMode(settings, chain, destinationChain);
 	const minValueToBridge =
 		bridgingModeInfo?.settings?.minValueToBridge || '0';
 	const maxAmountAllowedToBridge =

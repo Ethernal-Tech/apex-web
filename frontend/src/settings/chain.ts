@@ -230,10 +230,10 @@ export function toApexBridgeName(chain: string): ChainEnum {
 }
 
 export function getBridgingMode(
+	settings: ISettingsState,
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
 	tokenID: number,
-	settings?: ISettingsState,
 ): BridgingModeWithSettings {
 	for (const [key, value] of Object.entries(
 		settings?.settingsPerMode || {},

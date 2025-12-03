@@ -23,7 +23,7 @@ const TotalBalance = () => {
 	);
 	const settings = useSelector((state: RootState) => state.settings);
 
-	const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
+	const bridgingModeInfo = getBridgingMode(settings, chain, destinationChain);
 	const isSkylineMode =
 		bridgingModeInfo.bridgingMode === BridgingModeEnum.Skyline;
 	const isLayerZeroMode =

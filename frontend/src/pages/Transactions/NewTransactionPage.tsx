@@ -15,7 +15,7 @@ import {
 import {
 	BridgeTransactionDto,
 	CardanoTransactionFeeResponseDto,
-	CreateEthTransactionResponseDto,
+	CreateEthTransactionFullResponseDto,
 	CreateTransactionDto,
 	TxTypeEnum,
 } from '../../swagger/apexBridgeApiService';
@@ -32,10 +32,9 @@ import {
 import NewTransaction from './components/NewTransaction';
 import { useNavigate } from 'react-router-dom';
 import {
-	BridgingModeEnum,
-	getBridgingMode,
 	isCardanoChain,
 	isEvmChain,
+	isLZBridging,
 	toApexBridge,
 } from '../../settings/chain';
 import BridgeInputLZ from './components/LayerZeroBridgeInput';
@@ -61,7 +60,7 @@ function NewTransactionPage() {
 	);
 	const settings = useSelector((state: RootState) => state.settings);
 
-	const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
+	const isLayerZero = isLZBridging(chain, destinationChain);
 
 	const updateLoadingState = useCallback(
 		(newState: UpdateSubmitLoadingState) => {
@@ -87,7 +86,7 @@ function NewTransactionPage() {
 		async (
 			address: string,
 			amount: string,
-			isNativeToken = false,
+			tokenID: number,
 		): Promise<CreateTransactionDto> => {
 			await walletHandler.getChangeAddress(); // this line triggers an error if the wallet account has been changed by the user in the meantime
 
@@ -102,8 +101,8 @@ function NewTransactionPage() {
 				senderAddress: account,
 				destinationAddress: address,
 				amount,
+				tokenID,
 				utxoCacheKey: undefined,
-				isNativeToken,
 			});
 		},
 		[account, chain, destinationChain],
@@ -113,12 +112,12 @@ function NewTransactionPage() {
 		async (
 			address: string,
 			amount: string,
-			isNativeToken: boolean,
+			tokenID: number,
 		): Promise<CardanoTransactionFeeResponseDto> => {
 			const createTxDto = await prepareCreateCardanoTx(
 				address,
 				amount,
-				isNativeToken,
+				tokenID,
 			);
 			const bindedCreateAction = getCardanoTransactionFeeAction.bind(
 				null,
@@ -145,15 +144,15 @@ function NewTransactionPage() {
 		async (
 			address: string,
 			amount: string,
-			isNativeToken: boolean,
+			tokenID: number,
 		): Promise<CreateCardanoTxResponse> => {
 			const validationErr = validateSubmitTxInputs(
+				settings,
 				chain,
 				destinationChain,
 				address,
 				amount,
-				isNativeToken,
-				settings,
+				tokenID,
 			);
 			if (validationErr) {
 				captureAndThrowError(
@@ -166,7 +165,7 @@ function NewTransactionPage() {
 			const createTxDto = await prepareCreateCardanoTx(
 				address,
 				amount,
-				isNativeToken,
+				tokenID,
 			);
 			const bindedCreateAction = createCardanoTransactionAction.bind(
 				null,
@@ -190,7 +189,11 @@ function NewTransactionPage() {
 	);
 
 	const prepareCreateEthTx = useCallback(
-		(address: string, amount: string): CreateTransactionDto => {
+		(
+			address: string,
+			amount: string,
+			tokenID: number,
+		): CreateTransactionDto => {
 			const destChain = toApexBridge(destinationChain);
 			const originChain = toApexBridge(chain);
 
@@ -202,8 +205,8 @@ function NewTransactionPage() {
 				senderAddress: account,
 				destinationAddress: address,
 				amount,
+				tokenID,
 				utxoCacheKey: undefined,
-				isNativeToken: false,
 			});
 		},
 		[account, chain, destinationChain],
@@ -213,8 +216,9 @@ function NewTransactionPage() {
 		async (
 			address: string,
 			amount: string,
-		): Promise<CreateEthTransactionResponseDto> => {
-			const createTxDto = prepareCreateEthTx(address, amount);
+			tokenID: number,
+		): Promise<CreateEthTransactionFullResponseDto> => {
+			const createTxDto = prepareCreateEthTx(address, amount, tokenID);
 			const bindedCreateAction = createEthTransactionAction.bind(
 				null,
 				createTxDto,
@@ -240,14 +244,15 @@ function NewTransactionPage() {
 		async (
 			address: string,
 			amount: string,
+			tokenID: number,
 		): Promise<CreateEthTxResponse> => {
 			const validationErr = validateSubmitTxInputs(
+				settings,
 				chain,
 				destinationChain,
 				address,
 				amount,
-				false,
-				settings,
+				tokenID,
 			);
 			if (validationErr) {
 				captureAndThrowError(
@@ -257,7 +262,7 @@ function NewTransactionPage() {
 				);
 			}
 
-			const createTxDto = prepareCreateEthTx(address, amount);
+			const createTxDto = prepareCreateEthTx(address, amount, tokenID);
 			const bindedCreateAction = createEthTransactionAction.bind(
 				null,
 				createTxDto,
@@ -280,7 +285,7 @@ function NewTransactionPage() {
 	);
 
 	const handleSubmitCallback = useCallback(
-		async (address: string, amount: string, isNativeToken: boolean) => {
+		async (address: string, amount: string, tokenID: number) => {
 			setLoadingState({
 				content: 'Preparing the transaction...',
 				txHash: undefined,
@@ -290,7 +295,7 @@ function NewTransactionPage() {
 					const createTxResp = await createCardanoTx(
 						address,
 						amount,
-						isNativeToken,
+						tokenID,
 					);
 
 					const response = await signAndSubmitCardanoTx(
@@ -303,7 +308,11 @@ function NewTransactionPage() {
 
 					response && goToDetails(response);
 				} else if (isEvmChain(chain)) {
-					const createTxResp = await createEthTx(address, amount);
+					const createTxResp = await createEthTx(
+						address,
+						amount,
+						tokenID,
+					);
 
 					const response = await signAndSubmitEthTx(
 						createTxResp.createTxDto,
@@ -405,8 +414,7 @@ function NewTransactionPage() {
 	return (
 		<BasePage>
 			<NewTransaction txInProgress={false}>
-				{bridgingModeInfo.bridgingMode ===
-				BridgingModeEnum.LayerZero ? (
+				{isLayerZero ? (
 					<BridgeInputLZ
 						submit={handleLZSubmitCallback}
 						loadingState={loadingState}

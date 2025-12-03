@@ -5,7 +5,11 @@ import {
 	isCardanoChain,
 	isEvmChain,
 } from '../settings/chain';
-import { ChainEnum } from '../swagger/apexBridgeApiService';
+import {
+	BridgingSettingsTokenPairDto,
+	ChainEnum,
+	SettingsResponseDto,
+} from '../swagger/apexBridgeApiService';
 import { NewAddress, RewardAddress } from '../features/Address/addreses';
 import { checkCardanoAddressCompatibility } from './chainUtils';
 import {
@@ -14,17 +18,18 @@ import {
 	convertUtxoDfmToApex,
 	shouldUseMainnet,
 } from './generalUtils';
-import { ISettingsState, SettingsPerMode } from '../settings/settingsRedux';
+import { ISettingsState } from '../settings/settingsRedux';
+import { getCurrencyID, getTokenInfo } from '../settings/token';
 
 export const validateSubmitTxInputs = (
+	settings: ISettingsState,
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
 	dstAddr: string,
 	amount: string,
-	isNativeToken: boolean,
-	settings?: ISettingsState,
+	tokenID: number,
 ): string | undefined => {
-	const subSettings = getBridgingMode(srcChain, dstChain, settings);
+	const subSettings = getBridgingMode(settings, srcChain, dstChain, tokenID);
 	switch (subSettings.bridgingMode) {
 		case BridgingModeEnum.LayerZero:
 			return layerZeroValidation(BigInt(amount), dstAddr);
@@ -34,7 +39,7 @@ export const validateSubmitTxInputs = (
 				dstChain,
 				dstAddr,
 				BigInt(amount),
-				isNativeToken,
+				tokenID,
 				subSettings.settings!,
 			);
 		case BridgingModeEnum.Reactor:
@@ -67,13 +72,15 @@ function reactorValidation(
 	dstChain: ChainEnum,
 	dstAddr: string,
 	amount: bigint,
-	settings: SettingsPerMode,
+	settings: SettingsResponseDto,
 ) {
 	if (!settings) {
 		return 'settings not provided';
 	}
 
-	const tokenInfo = getTokenInfoBySrcDst(srcChain, dstChain, false);
+	const tokenInfo = getTokenInfo(
+		getCurrencyID(settings.bridgingSettings, srcChain),
+	);
 	if (isCardanoChain(srcChain)) {
 		const minAllowedToBridge = BigInt(settings.minValueToBridge);
 		if (amount < minAllowedToBridge) {
@@ -131,46 +138,82 @@ function skylineValidaton(
 	dstChain: ChainEnum,
 	dstAddr: string,
 	amount: bigint,
-	isNativeToken: boolean,
-	settings: SettingsPerMode,
+	tokenID: number,
+	settings: SettingsResponseDto,
 ): string | undefined {
-	const tokenInfo = getTokenInfoBySrcDst(srcChain, dstChain, isNativeToken);
-	const chain = isNativeToken ? dstChain : srcChain;
-	const minUtxo = BigInt(settings.minUtxoChainValue[chain]);
+	const tokenInfo = getTokenInfo(tokenID);
+	const srcCurrencyID = getCurrencyID(settings.bridgingSettings, srcChain);
+	const dstCurrencyID = getCurrencyID(settings.bridgingSettings, dstChain);
 
-	if (amount < minUtxo) {
-		return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(minUtxo.toString(10))} ${tokenInfo.label}`;
+	const tokenPair = settings.bridgingSettings.directionConfig[
+		srcChain
+	].destChain[dstChain].find(
+		(x: BridgingSettingsTokenPairDto) => x.srcTokenID === tokenID,
+	)!;
+
+	const isCurrencyBridging = tokenID === srcCurrencyID;
+	const isWrappedCurrencyBridging =
+		!isCurrencyBridging && tokenPair.dstTokenID === dstCurrencyID;
+
+	let minValue = settings.bridgingSettings.minColCoinsAllowedToBridge;
+	if (isWrappedCurrencyBridging) {
+		minValue =
+			settings.bridgingSettings.minUtxoChainValue[dstChain] ||
+			settings.bridgingSettings.minValueToBridge;
+	} else if (isCurrencyBridging) {
+		minValue =
+			settings.bridgingSettings.minUtxoChainValue[srcChain] ||
+			settings.bridgingSettings.minValueToBridge;
 	}
 
-	if (!isNativeToken) {
-		const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge);
+	const maxAllowed = isCurrencyBridging
+		? settings.bridgingSettings.maxAmountAllowedToBridge
+		: settings.bridgingSettings.maxTokenAmountAllowedToBridge;
+
+	if (isCardanoChain(srcChain)) {
+		const minValueBN = BigInt(minValue || '0');
+		if (amount < minValueBN) {
+			return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(minValueBN.toString(10))} ${tokenInfo.label}`;
+		}
+
+		const maxAllowedToBridgeDfm = BigInt(maxAllowed || '0');
 		if (maxAllowedToBridgeDfm > 0 && amount > maxAllowedToBridgeDfm) {
 			return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
 		}
-	} else {
-		const maxTokenAllowedToBridgeDfm = BigInt(
-			settings.maxTokenAmountAllowedToBridge,
-		);
-		if (
-			maxTokenAllowedToBridgeDfm > 0 &&
-			amount > maxTokenAllowedToBridgeDfm
-		) {
-			return `Token amount more than maximum allowed: ${convertUtxoDfmToApex(maxTokenAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
+	} else if (isEvmChain(srcChain)) {
+		const minValueWei = BigInt(convertDfmToWei(minValue || '0'));
+		if (amount < minValueWei) {
+			return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(minValue || '0')} ${tokenInfo.label}`;
+		}
+
+		const maxAllowedWei = BigInt(convertDfmToWei(maxAllowed || '0'));
+		if (maxAllowedWei > 0 && amount > maxAllowedWei) {
+			return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedWei.toString(10))} ${tokenInfo.label}`;
 		}
 	}
 
-	const addr = NewAddress(dstAddr);
-	if (!addr || addr instanceof RewardAddress || dstAddr !== addr.String()) {
-		return `Invalid destination address: ${dstAddr}`;
-	}
+	if (isCardanoChain(dstChain)) {
+		const addr = NewAddress(dstAddr);
+		if (
+			!addr ||
+			addr instanceof RewardAddress ||
+			dstAddr !== addr.String()
+		) {
+			return `Invalid destination address: ${dstAddr}`;
+		}
 
-	if (
-		!checkCardanoAddressCompatibility(
-			dstChain,
-			addr,
-			shouldUseMainnet(srcChain, dstChain),
-		)
-	) {
-		return `Destination address not compatible with destination chain: ${dstChain}`;
+		if (
+			!checkCardanoAddressCompatibility(
+				dstChain,
+				addr,
+				shouldUseMainnet(srcChain, dstChain),
+			)
+		) {
+			return `Destination address not compatible with destination chain: ${dstChain}`;
+		}
+	} else if (isEvmChain(dstChain)) {
+		if (!isAddress(dstAddr)) {
+			return `Invalid destination address: ${dstAddr}`;
+		}
 	}
 }

@@ -3,10 +3,19 @@ import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg';
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg';
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg';
 import { ReactComponent as UnknownTokenIcon } from '../assets/token-icons/unknown.svg';
-import { BridgeTransactionDto, BridgingSettingsTokenDto } from '../swagger/apexBridgeApiService';
-import { ISettingsState } from './settingsRedux';
+import {
+	BridgeTransactionDto,
+	BridgingSettingsDirectionConfigDto,
+	BridgingSettingsEcosystemTokenDto,
+	BridgingSettingsTokenDto,
+} from '../swagger/apexBridgeApiService';
 
 export const LovelaceTokenName = 'lovelace';
+
+export interface IDirectionFullConfig {
+	directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto };
+	ecosystemTokens: BridgingSettingsEcosystemTokenDto[];
+}
 
 export type TokenInfo = {
 	tokenID: number;
@@ -97,7 +106,7 @@ export const getTokenInfo = (tokenID: number | undefined): TokenInfo => {
 };
 
 export const getCurrencyID = (
-	settings: ISettingsState,
+	settings: IDirectionFullConfig,
 	chain: string,
 ): number | undefined => {
 	if (!settings.directionConfig[chain]) {
@@ -114,7 +123,7 @@ export const getCurrencyID = (
 };
 
 export const getWrappedCurrencyID = (
-	settings: ISettingsState,
+	settings: IDirectionFullConfig,
 	chain: string,
 ): number | undefined => {
 	if (!settings.directionConfig[chain]) {
@@ -132,7 +141,7 @@ export const getWrappedCurrencyID = (
 };
 
 export const getRealTokenIDFromEntity = (
-	settings: ISettingsState,
+	settings: IDirectionFullConfig,
 	transaction: BridgeTransactionDto | undefined,
 ) => {
 	if (!transaction) return apexID;
@@ -154,7 +163,7 @@ export const getRealTokenIDFromEntity = (
 };
 
 export const getTokenConfig = (
-	settings: ISettingsState,
+	settings: IDirectionFullConfig,
 	chain: string,
 	tokenID: number,
 ): BridgingSettingsTokenDto | undefined => {

@@ -10,6 +10,7 @@ import {
 	LayerZeroTransferResponseDto,
 	LayerZeroTransferDto,
 	TxTypeEnum,
+	CreateEthTransactionFullResponseDto,
 } from '../swagger/apexBridgeApiService';
 import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
 import walletHandler from '../features/WalletHandler';
@@ -102,7 +103,7 @@ export const signAndSubmitCardanoTx = async (
 
 export const signAndSubmitEthTx = async (
 	values: CreateTransactionDto,
-	createResponse: CreateEthTransactionResponseDto,
+	createResponse: CreateEthTransactionFullResponseDto,
 	updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
 ) => {
 	if (!evmWalletHandler.checkWallet()) {
@@ -457,12 +458,12 @@ export const getLayerZeroTransferResponse = async function (
 	amount: string,
 ): Promise<LayerZeroTransferResponseDto> {
 	const validationErr = validateSubmitTxInputs(
+		settings,
 		srcChain,
 		dstChain,
 		toAddr,
 		amount,
 		false,
-		settings,
 	);
 	if (validationErr) {
 		captureAndThrowError(

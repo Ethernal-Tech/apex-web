@@ -143,25 +143,42 @@ export const createEthBridgingTx = (
 		throw new BadRequestException('Invalid sender address');
 	}
 
-	const currencyID = getCurrencyIDFromDirectionConfig(
+	const srcCurrencyID = getCurrencyIDFromDirectionConfig(
 		bridgingSettings.directionConfig,
 		dto.originChain,
 	);
-	if (!currencyID) {
+	if (!srcCurrencyID) {
 		throw new BadRequestException(
 			`failed to find currencyID for chain: ${dto.originChain}`,
 		);
 	}
 
-	const isCurrencyBridging = dto.tokenID === currencyID;
-
-	const minValueToBridge = BigInt(
-		convertDfmToWei(
-			isCurrencyBridging
-				? bridgingSettings.minValueToBridge
-				: bridgingSettings.minColCoinsAllowedToBridge || '0',
-		),
+	const dstCurrencyID = getCurrencyIDFromDirectionConfig(
+		bridgingSettings.directionConfig,
+		dto.destinationChain,
 	);
+	if (!dstCurrencyID) {
+		throw new BadRequestException(
+			`failed to find currencyID for chain: ${dto.destinationChain}`,
+		);
+	}
+
+	const tokenPair = bridgingSettings.directionConfig[dto.originChain].destChain[
+		dto.destinationChain
+	].find((x) => x.srcTokenID === dto.tokenID)!;
+
+	const isCurrencyBridging = dto.tokenID === srcCurrencyID;
+	const isWrappedCurrencyBridging =
+		!isCurrencyBridging && tokenPair.dstTokenID === dstCurrencyID;
+
+	let minValue = bridgingSettings.minColCoinsAllowedToBridge;
+	if (isWrappedCurrencyBridging) {
+		minValue = bridgingSettings.minUtxoChainValue[dto.destinationChain];
+	} else if (isCurrencyBridging) {
+		minValue = bridgingSettings.minValueToBridge;
+	}
+
+	const minValueToBridge = BigInt(convertDfmToWei(minValue || '0'));
 	const amount = BigInt(dto.amount);
 
 	if (amount < minValueToBridge) {

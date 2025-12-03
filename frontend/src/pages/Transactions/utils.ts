@@ -32,7 +32,7 @@ export const useSupportedSourceTokenOptions = (
 ): TokenOption[] => {
 	const settings = useSelector((state: RootState) => state.settings);
 
-	const bridgingModeInfo = getBridgingMode(srcChain, dstChain, settings);
+	const bridgingModeInfo = getBridgingMode(settings, srcChain, dstChain);
 	const cardanoChainsNativeTokens =
 		bridgingModeInfo.settings?.cardanoChainsNativeTokens;
 

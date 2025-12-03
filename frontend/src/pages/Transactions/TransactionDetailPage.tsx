@@ -90,10 +90,10 @@ const TransactionDetailPage = () => {
 	const isNotReactor =
 		!!transaction &&
 		getBridgingMode(
+			settings,
 			transaction.originChain,
 			transaction.destinationChain,
 			realTokenID,
-			settings,
 		).bridgingMode !== BridgingModeEnum.Reactor;
 
 	return (
