@@ -298,15 +298,32 @@ export class TransactionService {
 			.filter(Boolean)
 			.join(', ');
 
+		const currencyID = getCurrencyIDFromDirectionConfig(
+			this.settingsService.SettingsResponse.directionConfig,
+			originChain,
+		);
+		if (!currencyID) {
+			throw new BadRequestException(
+				`failed to find currencyID for chain: ${originChain}`,
+			);
+		}
+
+		const enNativeTokenAmount =
+			(nativeTokenAmount ?? '').trim() || entity.nativeTokenAmount;
+		const nNativeTokenAmount = BigInt(enNativeTokenAmount || '0');
+
+		// for db, tokenID is only referred to a token, and never currency (amount)
+		const enTokenID =
+			tokenID !== currencyID || nNativeTokenAmount > BigInt(0) ? tokenID : 0;
+
 		entity.sourceTxHash = (originTxHash ?? '').trim();
 		entity.senderAddress = (senderAddress ?? '').trim() || entity.senderAddress;
 		entity.receiverAddresses = receiverAddresses ?? entity.receiverAddresses;
 		entity.destinationChain =
 			(destinationChain as ChainApexBridgeEnum) ?? entity.destinationChain;
 		entity.amount = (amount ?? '').trim() || entity.amount;
-		entity.nativeTokenAmount =
-			(nativeTokenAmount ?? '').trim() || entity.nativeTokenAmount;
-		entity.tokenID = tokenID;
+		entity.nativeTokenAmount = enNativeTokenAmount;
+		entity.tokenID = enTokenID;
 		entity.originChain = originChain;
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;

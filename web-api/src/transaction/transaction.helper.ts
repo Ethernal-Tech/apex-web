@@ -148,7 +148,9 @@ export const createEthBridgingTx = (
 		dto.originChain,
 	);
 	if (!currencyID) {
-		throw new Error(`failed to find currencyID for chain: ${dto.originChain}`);
+		throw new BadRequestException(
+			`failed to find currencyID for chain: ${dto.originChain}`,
+		);
 	}
 
 	const isCurrencyBridging = dto.tokenID === currencyID;
