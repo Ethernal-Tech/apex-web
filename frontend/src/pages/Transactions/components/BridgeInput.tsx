@@ -33,7 +33,7 @@ import {
 	isCardanoChain,
 	isEvmChain,
 } from '../../../settings/chain';
-import { getTokenInfo } from '../../../settings/token';
+import { getCurrencyID, getTokenInfo } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
 import { captureException } from '../../../features/sentry';
@@ -162,33 +162,45 @@ const BridgeInput = ({
 			: undefined,
 	);
 
-	const bridgingModeInfo = getBridgingMode(settings, chain, destinationChain, sourceTokenID || 0);
-	const minValueToBridge =
-		bridgingModeInfo?.settings?.minValueToBridge || '0';
-	const maxAmountAllowedToBridge =
-		bridgingModeInfo?.settings?.maxAmountAllowedToBridge || '0';
-	const maxTokenAmountAllowedToBridge =
-		bridgingModeInfo?.settings?.maxTokenAmountAllowedToBridge || '0';
 	const reactorValidatorChangeInProgress = useSelector(
 		(state: RootState) => state.settings.reactorValidatorStatus,
 	);
 
-	const minUtxoValue =
-		(bridgingModeInfo?.settings?.minUtxoChainValue &&
-			bridgingModeInfo?.settings?.minUtxoChainValue[chain]) ||
-		appSettings.minUtxoChainValue[chain];
+	const bridgingModeInfo = getBridgingMode(
+		settings,
+		chain,
+		destinationChain,
+		sourceTokenID || 0,
+	);
 
 	const {
+		minValueToBridge,
+		maxAmountAllowedToBridge,
+		maxTokenAmountAllowedToBridge,
+		minUtxoChainValue,
 		minChainFeeForBridging,
 		minChainFeeForBridgingTokens,
 		minOperationFee,
 	} = bridgingModeInfo?.settings || {
+		minValueToBridge: '0',
+		maxAmountAllowedToBridge: '0',
+		maxTokenAmountAllowedToBridge: '0',
+		minUtxoChainValue: {} as { [key: string]: string },
 		minChainFeeForBridging: {} as { [key: string]: string },
 		minChainFeeForBridgingTokens: {} as { [key: string]: string },
 		minOperationFee: {} as { [key: string]: string },
 	};
 
-	const operationFee = useMemo(
+	const currencyID = useMemo(
+		() => getCurrencyID(settings, chain),
+		[chain, settings],
+	);
+
+	const minUtxoValue =
+		(minUtxoChainValue && minUtxoChainValue[chain]) ||
+		appSettings.minUtxoChainValue[chain];
+
+	const defaultOperationFee = useMemo(
 		() =>
 			isEvmChain(chain)
 				? convertDfmToWei(minOperationFee[chain] || '0')
@@ -196,18 +208,30 @@ const BridgeInput = ({
 		[chain, minOperationFee],
 	);
 
+	const [operationFee, setOperationFee] = useState<string>(defaultOperationFee);
+
+	const resetOperationFee = useCallback(
+		() => setOperationFee(defaultOperationFee),
+		[defaultOperationFee],
+	);
+
+	useEffect(() => {
+		setOperationFee(defaultOperationFee);
+	}, [defaultOperationFee, setOperationFee]);
+
 	const defaultBridgeTxFee = useMemo(
 		() =>
 			isEvmChain(chain)
 				? convertDfmToWei(minChainFeeForBridging[chain] || '0')
-				: isWrappedToken(sourceToken)
-					? minChainFeeForBridgingTokens[chain] || '0'
-					: minChainFeeForBridging[chain] || '0',
+				: !sourceTokenID || !currencyID || sourceTokenID === currencyID
+					? minChainFeeForBridging[chain] || '0'
+					: minChainFeeForBridgingTokens[chain] || '0',
 		[
 			chain,
 			minChainFeeForBridging,
 			minChainFeeForBridgingTokens,
-			sourceToken,
+			sourceTokenID,
+			currencyID,
 		],
 	);
 
@@ -223,7 +247,7 @@ const BridgeInput = ({
 	}, [defaultBridgeTxFee, setBridgeTxFee]);
 
 	const fetchWalletFee = useCallback(async () => {
-		if (!destinationAddr || !amount || !sourceToken) {
+		if (!destinationAddr || !amount || !sourceTokenID || !currencyID) {
 			setUserWalletFee(undefined);
 
 			return;
@@ -234,11 +258,14 @@ const BridgeInput = ({
 				const feeResp = await getCardanoTxFee(
 					destinationAddr,
 					convertApexToDfm(amount || '0', chain),
-					isWrappedToken(sourceToken),
+					sourceTokenID,
 				);
 				setUserWalletFee(BigInt(feeResp?.fee || '0').toString(10));
 				setBridgeTxFee(
 					BigInt(feeResp?.bridgingFee || '0').toString(10),
+				);
+				setOperationFee(
+					BigInt(feeResp?.operationFee || '0').toString(10),
 				);
 
 				return;
@@ -246,16 +273,23 @@ const BridgeInput = ({
 				const feeResp = await getEthTxFee(
 					destinationAddr,
 					convertApexToDfm(amount || '0', chain),
+					sourceTokenID,
 				);
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				const { bridgingFee, isFallback, ...tx } = feeResp;
+
+				const { bridgingTx } = feeResp;
 
 				const fee = await estimateEthTxFee(
-					tx,
+					feeResp.bridgingTx.ethTx,
 					TxTypeEnum.London,
-					isFallback,
+					bridgingTx.isFallback,
 				);
 				setUserWalletFee(fee.toString());
+				setBridgeTxFee(
+					BigInt(bridgingTx.bridgingFee || '0').toString(10),
+				);
+				setOperationFee(
+					BigInt(bridgingTx.operationFee || '0').toString(10),
+				);
 
 				return;
 			}
@@ -275,7 +309,8 @@ const BridgeInput = ({
 		amount,
 		chain,
 		getCardanoTxFee,
-		sourceToken,
+		sourceTokenID,
+		currencyID,
 		setBridgeTxFee,
 		getEthTxFee,
 	]);

@@ -229,6 +229,12 @@ export class CardanoTransactionFeeResponseDto {
 			'Bridging fee for covering submission on the destination chain, expressed in Lovelace',
 	})
 	bridgingFee: string;
+
+	@ApiProperty({
+		description:
+			'Operation fee for covering operation costs of the bridge, expressed in Lovelace',
+	})
+	operationFee: string;
 }
 
 export class EthTransactionResponseDto {

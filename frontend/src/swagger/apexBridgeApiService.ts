@@ -1756,6 +1756,8 @@ export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeR
     fee!: string;
     /** Bridging fee for covering submission on the destination chain, expressed in Lovelace */
     bridgingFee!: string;
+    /** Operation fee for covering operation costs of the bridge, expressed in Lovelace */
+    operationFee!: string;
 
     [key: string]: any;
 
@@ -1776,6 +1778,7 @@ export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeR
             }
             this.fee = _data["fee"];
             this.bridgingFee = _data["bridgingFee"];
+            this.operationFee = _data["operationFee"];
         }
     }
 
@@ -1794,6 +1797,7 @@ export class CardanoTransactionFeeResponseDto implements ICardanoTransactionFeeR
         }
         data["fee"] = this.fee;
         data["bridgingFee"] = this.bridgingFee;
+        data["operationFee"] = this.operationFee;
         return data;
     }
 }
@@ -1803,6 +1807,8 @@ export interface ICardanoTransactionFeeResponseDto {
     fee: string;
     /** Bridging fee for covering submission on the destination chain, expressed in Lovelace */
     bridgingFee: string;
+    /** Operation fee for covering operation costs of the bridge, expressed in Lovelace */
+    operationFee: string;
 
     [key: string]: any;
 }

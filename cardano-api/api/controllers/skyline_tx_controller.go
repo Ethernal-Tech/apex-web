@@ -123,7 +123,7 @@ func (c *SkylineTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 	}
 
 	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewBridgingTxFeeResponse(
-		txFeeInfo.Fee, bridgingRequestMetadata.BridgingFee), c.logger)
+		txFeeInfo.Fee, bridgingRequestMetadata.BridgingFee, bridgingRequestMetadata.OperationFee), c.logger)
 }
 
 // @Summary Create a bridging transaction
