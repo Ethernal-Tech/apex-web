@@ -89,6 +89,11 @@ body.landing-page {
     background-color: #188a85 !important;
 }
 
+.buttons-group {
+    display: flex;
+    gap: 20px; /* space between the two buttons */
+}
+
 .bridge-button {
     background-color: #0b5855 !important;
     text-transform: none !important;
@@ -101,6 +106,26 @@ body.landing-page {
 .bridge-button:hover {
     box-shadow: none !important;
     background-color: #188a85 !important;
+}
+
+.documentation-button {
+    background-color: transparent !important;
+    text-transform: none !important;
+    border-radius: 0px !important;
+    padding: 20px 30px !important;
+    font-size: 22px !important;
+
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.documentation-button:hover {
+    box-shadow: none !important;
+    background-color: #188a85 !important;
+}
+
+.mobile-text {
+    display: none;
 }
 
 .bridge-image-container {
@@ -408,32 +433,61 @@ body.landing-page {
     font-size: 15px !important;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 910px) {
+    .desktop-text {
+        display: none;
+    }
+    .mobile-text {
+        display: inline;
+    }
+}
+
+@media (max-width: 800px) {
     .logo-container {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: 1fr auto; 
+        grid-template-rows: auto auto; 
         align-items: center;
         padding: 20px;
         padding-bottom: 30px;
+        gap: 30px;
     }
 
     .logo-skyline-container {
+        grid-column: 1;
+        grid-row: 1;
         display: flex;
-        flex-direction: row;
+        flex-direction: row; 
         justify-content: flex-start;
-        display: flex;
         align-items: center;
-        width: 100%;
-        padding-bottom: 50px;
+        width: auto;
+        padding-bottom: 0;
+    }
+
+    .buttons-group {
+        display: contents;
     }
 
     .bridge-button {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        justify-self: center; 
+        width: auto; 
         background-color: #0b5855 !important;
         text-transform: none !important;
         border-radius: 0px !important;
         border: 1px solid #ffffff !important;
         padding: 10px 27px !important;
         font-size: 16px !important;
+    }
+
+    .documentation-button {
+        grid-column: 2;
+        grid-row: 1;
+        padding: 10px 10px !important;
+        font-size: 16px !important;
+        min-width: auto !important;
+        margin: 0 !important;
     }
 
     .skyline-logo {
