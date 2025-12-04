@@ -490,13 +490,6 @@ body.landing-page {
         margin: 0 !important;
     }
 
-    .desktop-text {
-        display: none;
-    }
-    .mobile-text {
-        display: inline;
-    }
-
     .skyline-logo {
         height: 60px;
     }
