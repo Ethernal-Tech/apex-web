@@ -30,10 +30,10 @@ export const capexID = 3;
 export const xadaID = 4;
 const myTestTokenID = 5;
 
-const ethID = Number.MAX_SAFE_INTEGER - 4;
-export const bapexID = Number.MAX_SAFE_INTEGER - 3;
-export const bnapexID = Number.MAX_SAFE_INTEGER - 2;
-const bnbID = Number.MAX_SAFE_INTEGER - 1;
+const ethID = 1000001;
+export const bapexID = 1000002;
+export const bnapexID = 1000003;
+const bnbID = 1000004;
 
 const unknownTokenInfo: TokenInfo = {
 	tokenID: 0,
@@ -173,21 +173,3 @@ export const getTokenConfig = (
 
 	return settings.directionConfig[chain].tokens[tokenID];
 };
-
-/*
-
-export const isWrappedToken = (token: TokenEnum | undefined): boolean =>
-	token === TokenEnum.WAPEX ||
-	token === TokenEnum.WADA ||
-	token === TokenEnum.BAP3X ||
-	token === TokenEnum.BNAP3X;
-
-export const getCurrencyTokenInfo = (srcChain: ChainEnum): TokenInfo =>
-	getTokenInfo(getChainInfo(srcChain).currencyToken);
-
-export const isCurrencyBridgingAllowed = (
-	srcChain: ChainEnum,
-	dstChain: ChainEnum,
-): boolean => getBridgingInfo(srcChain, dstChain).isCurrencyBridgingAllowed;
-
-*/

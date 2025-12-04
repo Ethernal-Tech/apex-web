@@ -18,10 +18,10 @@ import { getCurrencyIDFromDirectionConfig, Lovelace } from './utils';
 
 const RETRY_DELAY_MS = 5000;
 const settingsApiPath = `/api/CardanoTx/GetSettings`;
-const ethID = Number.MAX_SAFE_INTEGER - 4;
-const bapexID = Number.MAX_SAFE_INTEGER - 3;
-const bnapexID = Number.MAX_SAFE_INTEGER - 2;
-const bnbID = Number.MAX_SAFE_INTEGER - 1;
+const ethID = 1000001;
+const bapexID = 1000002;
+const bnapexID = 1000003;
+const bnbID = 1000004;
 
 @Injectable()
 export class SettingsService {

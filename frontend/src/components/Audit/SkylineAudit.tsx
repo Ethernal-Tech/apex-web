@@ -8,11 +8,13 @@ import { getExplorerAddressUrl } from '../../utils/chainUtils';
 import {
 	adaID,
 	apexID,
-	getCurrencyTokenInfo,
+	getCurrencyID,
 	getTokenInfo,
 } from '../../settings/token';
 import { compareBigInts } from '../../features/utils';
 import LaunchIcon from '@mui/icons-material/Launch';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
 
 type SkylinePanelProps = {
 	chains: Record<string, Record<string, Record<string, bigint>>>;
@@ -78,6 +80,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 	tvbGrandTotal,
 	skylineChains,
 }) => {
+	const settings = useSelector((s: RootState) => s.settings);
 	const srcChainOptions = useMemo(() => {
 		const chainInfos = skylineChains.map(getChainInfo);
 		chainInfos.sort((a, b) => (a.order < b.order ? -1 : 1));
@@ -92,8 +95,8 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 	}, [chains, chainKeys, selChain]);
 
 	const selToken: number = useMemo((): number => {
-		return getCurrencyTokenInfo(selChain as ChainEnum).tokenID;
-	}, [selChain]);
+		return getCurrencyID(settings, selChain as ChainEnum) || apexID;
+	}, [selChain, settings]);
 
 	const addrMap = chains[selChain]?.[selToken] ?? {};
 

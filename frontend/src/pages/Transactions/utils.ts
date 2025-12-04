@@ -29,8 +29,9 @@ export const useSupportedSourceTokenOptions = (
 ): TokenOption[] => {
 	return useMemo(() => {
 		const tokenPairs =
-			(settings.directionConfig[srcChain] || {}).destChain[dstChain] ||
-			[];
+			(settings.directionConfig[srcChain] || { destChain: {} }).destChain[
+				dstChain
+			] || [];
 
 		return tokenPairs.map((x: BridgingSettingsTokenPairDto) =>
 			tokenInfoToTokenOption(getTokenInfo(x.srcTokenID)),

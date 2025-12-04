@@ -14,8 +14,10 @@ import {
 	toFixed,
 } from '../../../utils/generalUtils';
 import { ChainEnum } from '../../../swagger/apexBridgeApiService';
-import { getCurrencyTokenInfo } from '../../../settings/token';
 import { BridgingModeEnum } from '../../../settings/chain';
+import { getCurrencyID, getTokenInfo } from '../../../settings/token';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../redux/store';
 
 const CustomBox = styled(Box)({
 	background: '#075159',
@@ -23,8 +25,8 @@ const CustomBox = styled(Box)({
 
 interface FeeInformationProps {
 	sx?: SxProps<Theme>;
-	userWalletFee?: string;
-	bridgeTxFee?: string;
+	userWalletFee: string;
+	bridgeTxFee: string;
 	operationFee?: string;
 	chain: ChainEnum;
 	bridgingMode: BridgingModeEnum;
@@ -40,7 +42,8 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 	bridgingMode,
 	isFeeInformation,
 }) => {
-	const currencyToken = getCurrencyTokenInfo(chain);
+	const settings = useSelector((s: RootState) => s.settings);
+	const currencyToken = getTokenInfo(getCurrencyID(settings, chain));
 	const isSkylineMode = bridgingMode === BridgingModeEnum.Skyline;
 	const isLayerZeroMode = bridgingMode === BridgingModeEnum.LayerZero;
 	const isReactorMode = bridgingMode === BridgingModeEnum.Reactor;
@@ -74,7 +77,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 			}}
 		>
 			{userWalletFee && (
-				<Typography
+				<Box
 					sx={{
 						display: 'flex',
 						justifyContent: 'space-between',
@@ -88,10 +91,12 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 							color: 'rgba(255,255,255,0.6)',
 						}}
 					>
-						{isLayerZeroMode
-							? 'Estimated Network Fee'
-							: 'User Wallet Fee'}
-						:
+						<Typography>
+							{isLayerZeroMode
+								? 'Estimated Network Fee'
+								: 'User Wallet Fee'}
+							:
+						</Typography>
 						<Tooltip
 							title={
 								<Typography
@@ -112,16 +117,21 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 						</Tooltip>
 					</Box>
 					<Box component="span">
-						{BigInt(userWalletFee) > 0
-							? toFixed(convertDfmToApex(userWalletFee, chain), 6)
-							: '0'}{' '}
-						{currencyToken.label}
+						<Typography>
+							{BigInt(userWalletFee) > 0
+								? toFixed(
+										convertDfmToApex(userWalletFee, chain),
+										6,
+									)
+								: '0'}{' '}
+							{currencyToken.label}
+						</Typography>
 					</Box>
-				</Typography>
+				</Box>
 			)}
 
 			{bridgeTxFee && (
-				<Typography
+				<Box
 					sx={{
 						display: 'flex',
 						justifyContent: 'space-between',
@@ -135,7 +145,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 							color: 'rgba(255,255,255,0.6)',
 						}}
 					>
-						Bridge Transaction Fee:
+						<Typography>Bridge Transaction Fee:</Typography>
 						<Tooltip
 							title={
 								<Typography
@@ -155,18 +165,23 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 						</Tooltip>
 					</Box>
 					<Box component="span">
-						{BigInt(bridgeTxFee) > 0
-							? toFixed(convertDfmToApex(bridgeTxFee, chain), 6)
-							: '0'}{' '}
-						{currencyToken.label}
+						<Typography>
+							{BigInt(bridgeTxFee) > 0
+								? toFixed(
+										convertDfmToApex(bridgeTxFee, chain),
+										6,
+									)
+								: '0'}{' '}
+							{currencyToken.label}
+						</Typography>
 					</Box>
-				</Typography>
+				</Box>
 			)}
 
 			{isSkylineMode &&
 				operationFee &&
 				BigInt(operationFee) > BigInt(0) && (
-					<Typography
+					<Box
 						sx={{
 							display: 'flex',
 							justifyContent: 'space-between',
@@ -180,7 +195,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 								color: 'rgba(255,255,255,0.6)',
 							}}
 						>
-							Bridge Operation Fee:
+							<Typography>Bridge Operation Fee:</Typography>
 							<Tooltip
 								title={
 									<Typography
@@ -201,18 +216,23 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 							</Tooltip>
 						</Box>
 						<Box component="span">
-							{BigInt(operationFee) > 0
-								? toFixed(
-										convertDfmToApex(operationFee, chain),
-										6,
-									)
-								: '0'}{' '}
-							{currencyToken.label}
+							<Typography>
+								{BigInt(operationFee) > 0
+									? toFixed(
+											convertDfmToApex(
+												operationFee,
+												chain,
+											),
+											6,
+										)
+									: '0'}{' '}
+								{currencyToken.label}
+							</Typography>
 						</Box>
-					</Typography>
+					</Box>
 				)}
 
-			<Typography
+			<Box
 				sx={{
 					display: 'flex',
 					justifyContent: 'space-between',
@@ -224,16 +244,20 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 						color: 'rgba(255,255,255,0.6)',
 					}}
 				>
-					Estimated time
+					<Typography>Estimated time</Typography>
 				</Box>
 				{isLayerZeroMode ? (
-					<Box>{'1-5 minutes'}</Box>
+					<Box>
+						<Typography>{'1-5 minutes'}</Typography>
+					</Box>
 				) : (
 					<Box component="span">
-						{isSkylineMode ? '28-35 minutes' : '16-20 minutes'}
+						<Typography>
+							{isSkylineMode ? '28-35 minutes' : '16-20 minutes'}
+						</Typography>
 					</Box>
 				)}
-			</Typography>
+			</Box>
 		</CustomBox>
 	);
 };

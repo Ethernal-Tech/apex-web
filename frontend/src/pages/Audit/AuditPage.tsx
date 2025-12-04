@@ -78,8 +78,8 @@ const AuditPage: React.FC = () => {
 	const skylineChains = useMemo<ChainEnum[]>(() => {
 		if (!settings) return [];
 		return Object.keys(
-			settings.settingsPerMode[BridgingModeEnum.Skyline]
-				.allowedDirections,
+			settings.settingsPerMode[BridgingModeEnum.Skyline].bridgingSettings
+				.directionConfig,
 		) as unknown as ChainEnum[];
 	}, [settings]);
 

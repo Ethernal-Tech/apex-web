@@ -5,7 +5,7 @@ import PasteApexAmountInput from './PasteApexAmountInput';
 import ButtonCustom from '../../../components/Buttons/ButtonCustom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import {
 	TxTypeEnum,
@@ -24,6 +24,7 @@ import {
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
 import { captureException } from '../../../features/sentry';
+import { setNewTxSourceTokenIDAction } from '../../../redux/slices/newTxSlice';
 
 type BridgeInputType = {
 	submit: (address: string, amount: string, tokenID: number) => Promise<void>;
@@ -60,12 +61,15 @@ const calculateMaxAmountCurrency = (
 };
 
 const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
+	const dispatch = useDispatch();
 	const [destinationAddr, setDestinationAddr] = useState('');
 	const [amount, setAmount] = useState('');
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
-	const [sourceTokenID, setSourceTokenID] = useState<number | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 	const settings = useSelector((state: RootState) => state.settings);
+	const sourceTokenID = useSelector(
+		(state: RootState) => state.newTx.sourceTokenID,
+	);
 	const account = useSelector(
 		(state: RootState) => state.accountInfo.account,
 	);
@@ -80,6 +84,19 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 		chain,
 		destinationChain,
 	);
+
+	const setSourceTokenID = useCallback(
+		(newSrcTokID: number | undefined) =>
+			dispatch(setNewTxSourceTokenIDAction(newSrcTokID)),
+		[dispatch],
+	);
+
+	useEffect(() => {
+		setSourceTokenID(undefined);
+		return () => {
+			setSourceTokenID(undefined);
+		};
+	}, [setSourceTokenID]);
 
 	const currencyID = useMemo(
 		() => getCurrencyID(settings, chain),
@@ -184,7 +201,7 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 			setAmount('');
 			resetBridgeTxFee();
 		},
-		[resetBridgeTxFee],
+		[resetBridgeTxFee, setSourceTokenID],
 	);
 
 	useEffect(() => {
@@ -212,7 +229,7 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 		) {
 			setSourceTokenID(+supportedSourceTokenOptions[0].value);
 		}
-	}, [sourceTokenID, supportedSourceTokenOptions]);
+	}, [setSourceTokenID, sourceTokenID, supportedSourceTokenOptions]);
 
 	const onDiscard = () => {
 		setDestinationAddr('');
