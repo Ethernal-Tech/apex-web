@@ -36,10 +36,8 @@ import {
 import { getBridgingMode } from 'src/utils/chainUtils';
 import { SettingsService } from 'src/settings/settings.service';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
-import {
-	getCurrencyIDFromDirectionConfig,
-	getWrappedCurrencyIDFromDirectionConfig,
-} from 'src/settings/utils';
+import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
+import { getRealTokenIDFromEntity } from './utils';
 
 @Injectable()
 export class BridgeTransactionService {
@@ -203,27 +201,16 @@ export class BridgeTransactionService {
 								return;
 							}
 
-							let tokenID = entity.tokenID;
-							// for backward compatibility reasons
+							const tokenID = getRealTokenIDFromEntity(
+								this.settingsService.SettingsResponse.directionConfig,
+								entity,
+							);
 							if (!tokenID) {
-								if (BigInt(entity.nativeTokenAmount) > BigInt(0)) {
-									const wrappedCurrencyID =
-										getWrappedCurrencyIDFromDirectionConfig(
-											this.settingsService.SettingsResponse.directionConfig,
-											entity.originChain,
-										);
-									if (!wrappedCurrencyID) {
-										Logger.error(
-											`failed to get wrappedCurrencyID for chain: ${entity.originChain}`,
-										);
+								Logger.error(
+									`failed to get real tokenID for chain: ${entity.originChain} ${entity.sourceTxHash}`,
+								);
 
-										return;
-									}
-
-									tokenID = wrappedCurrencyID;
-								} else {
-									tokenID = currencyID;
-								}
+								return;
 							}
 
 							const bridgingMode = getBridgingMode(

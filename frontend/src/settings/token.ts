@@ -154,6 +154,7 @@ export const getRealTokenIDFromEntity = (
 		return currencyID || apexID;
 	}
 
+	// for backward compatibility reasons
 	const wrappedCurrencyID = getWrappedCurrencyID(
 		settings,
 		transaction.originChain,
