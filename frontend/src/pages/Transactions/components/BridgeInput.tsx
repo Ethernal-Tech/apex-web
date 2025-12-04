@@ -556,7 +556,11 @@ const BridgeInput = ({
 						borderRadius: '8px',
 						padding: 2,
 					}}
-					isFeeInformation={!reactorValidatorChangeInProgress}
+					isFeeInformation={
+						bridgingModeInfo.bridgingMode !==
+							BridgingModeEnum.Reactor ||
+						!reactorValidatorChangeInProgress
+					}
 				/>
 
 				{!!loadingState && (
@@ -593,7 +597,7 @@ const BridgeInput = ({
 						currencyMaxAmount < 0 ||
 						(bridgingModeInfo.bridgingMode ===
 							BridgingModeEnum.Reactor &&
-							reactorValidatorChangeInProgress)
+							reactorValidatorChangeInProgress !== false)
 					}
 					sx={{
 						gridColumn: 'span 1',

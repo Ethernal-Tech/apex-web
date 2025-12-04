@@ -17,5 +17,5 @@ export interface ISettingsState {
 	directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto };
 	ecosystemTokens: BridgingSettingsEcosystemTokenDto[];
 	bridgingAddresses: string[];
-	reactorValidatorStatus: boolean;
+	reactorValidatorStatus: boolean | undefined;
 }

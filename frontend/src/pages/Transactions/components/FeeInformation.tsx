@@ -40,7 +40,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 	operationFee,
 	chain,
 	bridgingMode,
-	isFeeInformation,
+	isFeeInformation = true,
 }) => {
 	const settings = useSelector((s: RootState) => s.settings);
 	const currencyToken = getTokenInfo(getCurrencyID(settings, chain));

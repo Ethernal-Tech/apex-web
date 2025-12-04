@@ -53,7 +53,7 @@ const initialState: ISettingsState = {
 	directionConfig: {},
 	ecosystemTokens: [],
 	bridgingAddresses: [],
-	reactorValidatorStatus: true,
+	reactorValidatorStatus: undefined,
 };
 
 const settingsSlice = createSlice({
