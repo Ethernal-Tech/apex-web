@@ -56,16 +56,19 @@ type BridgeInputType = {
 const calculateMaxAmountToken = (
 	totalDfmBalance: { [key: string]: string },
 	maxTokenAmountAllowedToBridge: string,
-	sourceToken: TokenEnum | undefined,
+	sourceTokenID: number | undefined,
+	currencyID: number | undefined,
 ): { maxByBalance: bigint; maxByAllowed: bigint } => {
-	if (!sourceToken || !isWrappedToken(sourceToken)) {
+	if (
+		!totalDfmBalance ||
+		!sourceTokenID ||
+		!currencyID ||
+		sourceTokenID === currencyID
+	) {
 		return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
 	}
 
-	const tokenBalance = BigInt(
-		(sourceToken && totalDfmBalance ? totalDfmBalance[sourceToken] : '0') ||
-			'0',
-	);
+	const tokenBalance = BigInt(totalDfmBalance[sourceTokenID] || '0');
 
 	const tokenBalanceAllowedToUse =
 		BigInt(maxTokenAmountAllowedToBridge || '0') !== BigInt(0) &&
@@ -81,6 +84,8 @@ const calculateMaxAmountToken = (
 
 const calculateMaxAmountCurrency = (
 	totalDfmBalance: { [key: string]: string },
+	sourceTokenID: number | undefined,
+	currencyID: number | undefined,
 	maxAmountAllowedToBridge: string,
 	chain: ChainEnum,
 	changeMinUtxo: number,
@@ -88,11 +93,9 @@ const calculateMaxAmountCurrency = (
 	bridgeTxFee: string,
 	operationFee: string,
 ): { maxByBalance: bigint; maxByAllowed: bigint } => {
-	if (!totalDfmBalance || !chain) {
+	if (!totalDfmBalance || !sourceTokenID || !currencyID || !chain) {
 		return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
 	}
-
-	const sourceToken = getChainInfo(chain).currencyToken;
 
 	const maxAmountAllowedToBridgeDfm =
 		BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
@@ -103,21 +106,20 @@ const calculateMaxAmountCurrency = (
 
 	const balanceAllowedToUse =
 		maxAmountAllowedToBridgeDfm !== BigInt(0) &&
-		BigInt(totalDfmBalance[sourceToken] || '0') >
-			maxAmountAllowedToBridgeDfm
+		BigInt(totalDfmBalance[currencyID] || '0') > maxAmountAllowedToBridgeDfm
 			? maxAmountAllowedToBridgeDfm
-			: BigInt(totalDfmBalance[sourceToken] || '0');
+			: BigInt(totalDfmBalance[currencyID] || '0');
 
 	let maxByBalance;
 	if (isEvmChain(chain)) {
 		maxByBalance =
-			BigInt(totalDfmBalance[sourceToken] || '0') -
+			BigInt(totalDfmBalance[currencyID] || '0') -
 			BigInt(bridgeTxFee) -
 			BigInt(minDfmValue) -
 			BigInt(operationFee);
 	} else {
 		maxByBalance =
-			BigInt(totalDfmBalance[sourceToken] || '0') -
+			BigInt(totalDfmBalance[currencyID] || '0') -
 			BigInt(appSettings.potentialWalletFee) -
 			BigInt(bridgeTxFee) -
 			BigInt(changeMinUtxo) -
@@ -148,26 +150,27 @@ const BridgeInput = ({
 		(state: RootState) => state.chain,
 	);
 	const settings = useSelector((state: RootState) => state.settings);
+	const supportedSourceTokenOptions = useSupportedSourceTokenOptions(
+		settings,
+		chain,
+		destinationChain,
+	);
 
-	const bridgingModeInfo = getBridgingMode(settings, chain, destinationChain);
+	const [sourceTokenID, setSourceTokenID] = useState<number | undefined>(
+		supportedSourceTokenOptions.length > 0
+			? +supportedSourceTokenOptions[0].value
+			: undefined,
+	);
+
+	const bridgingModeInfo = getBridgingMode(settings, chain, destinationChain, sourceTokenID || 0);
 	const minValueToBridge =
 		bridgingModeInfo?.settings?.minValueToBridge || '0';
 	const maxAmountAllowedToBridge =
 		bridgingModeInfo?.settings?.maxAmountAllowedToBridge || '0';
 	const maxTokenAmountAllowedToBridge =
 		bridgingModeInfo?.settings?.maxTokenAmountAllowedToBridge || '0';
-	const supportedSourceTokenOptions = useSupportedSourceTokenOptions(
-		chain,
-		destinationChain,
-	);
 	const reactorValidatorChangeInProgress = useSelector(
 		(state: RootState) => state.settings.reactorValidatorStatus,
-	);
-
-	const [sourceToken, setSourceToken] = useState<TokenEnum | undefined>(
-		supportedSourceTokenOptions.length > 0
-			? supportedSourceTokenOptions[0].value
-			: undefined,
 	);
 
 	const minUtxoValue =
