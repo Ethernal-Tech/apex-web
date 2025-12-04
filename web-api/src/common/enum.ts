@@ -45,14 +45,3 @@ export enum BridgingModeEnum {
 	LayerZero = 'layerzero',
 	Centralized = 'centralized',
 }
-
-// export enum TokenEnum {
-// 	ADA = 'ADA',
-// 	WADA = 'WADA',
-// 	APEX = 'APEX',
-// 	WAPEX = 'wAPEX',
-// 	ETH = 'ETH',
-// 	BAP3X = 'BAP3X',
-// 	BNAP3X = 'BNAP3X',
-// 	BNB = 'BNB',
-// }
