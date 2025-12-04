@@ -29,6 +29,8 @@ import { formatAddress } from '../../utils/generalUtils';
 import { logout } from '../../actions/logout';
 import appSettings from '../../settings/appSettings';
 
+const DOCUMENTATION_URL = 'https://ethernal-5.gitbook.io/skyline';
+
 const CustomMenu = styled(Menu)({
 	// backgroundColor: 'rgba(0,0,0, 0.4)',
 	'.MuiPaper-root': {
@@ -108,6 +110,15 @@ const AppBarComponent = () => {
 					</Button>
 
 					<div>
+						<ButtonCustom
+							variant="navigation"
+							onClick={() =>
+								window.open(DOCUMENTATION_URL, '_blank')
+							}
+						>
+							Documentation
+						</ButtonCustom>
+
 						{isActiveNavLink(AUDIT_ROUTE) && !isLoggedInMemo && (
 							<ButtonCustom
 								variant="navigation"
