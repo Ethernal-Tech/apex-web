@@ -24,6 +24,9 @@ import { isCardanoChain, isEvmChain, isLZBridging } from '../settings/chain';
 import appSettings from '../settings/appSettings';
 import { normalizeNativeTokenKey } from './tokenUtils';
 
+export const SKYLINE_DOCUMENTATION_URL =
+	'https://ethernal-5.gitbook.io/skyline';
+
 export const capitalizeWord = (word: string): string => {
 	if (!word || word.length === 0) {
 		return word;
