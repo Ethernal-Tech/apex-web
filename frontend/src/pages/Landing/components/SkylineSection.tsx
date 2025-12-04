@@ -4,6 +4,8 @@ import SkylineBridge from '../../../assets/skyline/skyline-bg.svg';
 import SkylineBridgeMobile from '../../../assets/skyline/skyline-bg-mobile.svg';
 import { ArrowForward } from '@mui/icons-material';
 
+const DOCUMENTATION_URL = 'https://ethernal-5.gitbook.io/skyline';
+
 type Props = {
 	scrollToSection(): void;
 	navigateToBridge(): void;
@@ -20,14 +22,24 @@ const SkylineSection = ({ scrollToSection, navigateToBridge }: Props) => (
 				/>
 				<Typography className="skyline-text">SKYLINE</Typography>
 			</Box>
-			<Button
-				variant="contained"
-				className="bridge-button"
-				onClick={navigateToBridge}
-				endIcon={<ArrowForward />}
-			>
-				Go To Bridge
-			</Button>
+			<Box className="buttons-group">
+				<Button
+					variant="contained"
+					className="documentation-button"
+					onClick={() => window.open(DOCUMENTATION_URL, '_blank')}
+				>
+					<span className="desktop-text">Documentation</span>
+					<span className="mobile-text">Docs</span>
+				</Button>
+				<Button
+					variant="contained"
+					className="bridge-button"
+					onClick={navigateToBridge}
+					endIcon={<ArrowForward />}
+				>
+					Go To Bridge
+				</Button>
+			</Box>
 		</Box>
 		<Box className="content-box">
 			<Box className="info-container">
