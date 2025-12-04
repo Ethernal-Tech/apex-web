@@ -10,7 +10,7 @@ export interface ISettingsState {
 	minValueToBridge: string;
 	enabledChains: string[];
 	allowedDirections: { [key: string]: string[] };
-	validatorStatus: boolean;
+	validatorStatus: boolean | undefined;
 }
 
 const initialState: ISettingsState = {
@@ -20,7 +20,7 @@ const initialState: ISettingsState = {
 	minValueToBridge: appSettings.minValueToBridge,
 	enabledChains: appSettings.enabledChains,
 	allowedDirections: {},
-	validatorStatus: true,
+	validatorStatus: undefined,
 };
 
 const settingsSlice = createSlice({

@@ -20,7 +20,7 @@ const InfoBox: React.FC<InfoBoxProps> = ({
 	userWalletFee,
 	bridgeTxFee,
 	chain,
-	isFeeInformation = false,
+	isFeeInformation = true,
 }) => {
 	return (
 		<CustomBox
@@ -32,7 +32,7 @@ const InfoBox: React.FC<InfoBoxProps> = ({
 				...sx,
 			}}
 		>
-			{!isFeeInformation ? (
+			{isFeeInformation ? (
 				<FeeInformation
 					userWalletFee={userWalletFee}
 					bridgeTxFee={bridgeTxFee}

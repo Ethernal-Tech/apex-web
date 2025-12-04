@@ -250,7 +250,7 @@ const BridgeInput = ({
 						borderRadius: '8px',
 						padding: 2,
 					}}
-					isFeeInformation={validatorChangeInProgress}
+					isFeeInformation={!validatorChangeInProgress}
 				/>
 
 				{!!loadingState && (
@@ -283,7 +283,7 @@ const BridgeInput = ({
 					onClick={onSubmit}
 					variant="white"
 					disabled={
-						validatorChangeInProgress ||
+						validatorChangeInProgress !== false ||
 						!!loadingState ||
 						BigInt(maxAmount) <= 0
 					}
