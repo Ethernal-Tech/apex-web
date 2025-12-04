@@ -25,11 +25,12 @@ import SkylineLogo from '../../assets/skyline/skyline-logo.svg';
 import { menuDark, white } from '../../containers/theme';
 import ButtonCustom from '../Buttons/ButtonCustom';
 import { RootState } from '../../redux/store';
-import { formatAddress } from '../../utils/generalUtils';
+import {
+	formatAddress,
+	SKYLINE_DOCUMENTATION_URL,
+} from '../../utils/generalUtils';
 import { logout } from '../../actions/logout';
 import appSettings from '../../settings/appSettings';
-
-const DOCUMENTATION_URL = 'https://ethernal-5.gitbook.io/skyline';
 
 const CustomMenu = styled(Menu)({
 	// backgroundColor: 'rgba(0,0,0, 0.4)',
@@ -113,7 +114,7 @@ const AppBarComponent = () => {
 						<ButtonCustom
 							variant="navigation"
 							onClick={() =>
-								window.open(DOCUMENTATION_URL, '_blank')
+								window.open(SKYLINE_DOCUMENTATION_URL, '_blank')
 							}
 						>
 							Documentation

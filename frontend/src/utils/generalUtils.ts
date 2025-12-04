@@ -25,6 +25,9 @@ import appSettings from '../settings/appSettings';
 import { normalizeNativeTokenKey } from './tokenUtils';
 import { captureAndThrowError, captureException } from '../features/sentry';
 
+export const SKYLINE_DOCUMENTATION_URL =
+	'https://ethernal-5.gitbook.io/skyline';
+
 export const capitalizeWord = (word: string): string => {
 	if (!word || word.length === 0) {
 		return word;

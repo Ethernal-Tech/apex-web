@@ -433,7 +433,16 @@ body.landing-page {
     font-size: 15px !important;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 910px) {
+    .desktop-text {
+        display: none;
+    }
+    .mobile-text {
+        display: inline;
+    }
+}
+
+@media (max-width: 800px) {
     .logo-container {
         display: grid;
         grid-template-columns: 1fr auto; 
