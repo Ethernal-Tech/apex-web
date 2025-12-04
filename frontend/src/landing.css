@@ -462,12 +462,8 @@ body.landing-page {
     .bridge-button {
         grid-column: 1 / -1;
         grid-row: 2;
-        
-        /* THIS FIXES YOUR ISSUE: Centers the button and keeps intrinsic width */
         justify-self: center; 
         width: auto; 
-
-        /* Your existing styles */
         background-color: #0b5855 !important;
         text-transform: none !important;
         border-radius: 0px !important;
@@ -477,10 +473,8 @@ body.landing-page {
     }
 
     .documentation-button {
-        grid-column: 2; /* Place in second column (right) */
-        grid-row: 1;    /* Place in first row (top) */
-        
-        /* Adjust styling to fit nicely inline on mobile */
+        grid-column: 2;
+        grid-row: 1;
         padding: 10px 10px !important;
         font-size: 16px !important;
         min-width: auto !important;
