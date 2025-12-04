@@ -354,7 +354,7 @@ function NewTransactionPage() {
 	);
 
 	const handleLZSubmitCallback = useCallback(
-		async (toAddress: string, amount: string) => {
+		async (toAddress: string, amount: string, tokenID: number) => {
 			setLoadingState({
 				content: 'Preparing the transaction...',
 				txHash: undefined,
@@ -368,13 +368,16 @@ function NewTransactionPage() {
 					account,
 					toAddress,
 					amount,
+					tokenID,
 				);
 				const response = await signAndSubmitLayerZeroTx(
+					settings,
 					account,
 					settings.layerZeroChains[chain]?.txType ||
 						TxTypeEnum.Legacy,
 					toAddress,
 					lzResponse,
+					tokenID,
 					updateLoadingState,
 				);
 

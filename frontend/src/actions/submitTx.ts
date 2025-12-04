@@ -23,6 +23,7 @@ import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
 import { UpdateSubmitLoadingState } from '../utils/statusUtils';
 import { validateSubmitTxInputs } from '../utils/validationUtils';
 import { captureAndThrowError } from '../features/sentry';
+import { getCurrencyID } from '../settings/token';
 
 type TxDetailsOptions = {
 	feePercMult: bigint;
@@ -69,7 +70,17 @@ export const signAndSubmitCardanoTx = async (
 
 	const amount =
 		BigInt(createResponse.bridgingFee || '0') +
+		BigInt(createResponse.operationFee || '0') +
 		BigInt(createResponse.amount || '0');
+
+	const nativeToken =
+		createResponse.nativeTokenAmount &&
+		createResponse.nativeTokenAmount.length > 0
+			? createResponse.nativeTokenAmount[0]
+			: undefined;
+
+	const nativeTokenAmount = BigInt(nativeToken?.amount || '0');
+	const tokenID = nativeTokenAmount > BigInt(0) ? nativeToken!.tokenID : 0;
 
 	const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
 		null,
@@ -82,9 +93,8 @@ export const signAndSubmitCardanoTx = async (
 			originTxHash: createResponse.txHash,
 			txRaw: createResponse.txRaw,
 			isFallback: createResponse.isFallback,
-			nativeTokenAmount: BigInt(
-				createResponse.nativeTokenAmount || '0',
-			).toString(10),
+			nativeTokenAmount: nativeTokenAmount.toString(10),
+			tokenID,
 			isLayerZero: false,
 		}),
 	);
@@ -114,12 +124,41 @@ export const signAndSubmitEthTx = async (
 		);
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const { bridgingFee, isFallback, ...txParts } = createResponse;
+	const { approvalTx } = createResponse;
+	if (approvalTx) {
+		console.log('processing eth approval tx...');
+		const tx: Transaction = await retry(
+			() =>
+				populateTxDetails(
+					approvalTx,
+					TxTypeEnum.London,
+					defaultTxDetailsOptions,
+				),
+			longRetryOptions.retryCnt,
+			longRetryOptions.waitTime,
+		);
+
+		updateLoadingState({
+			content: 'Signing and submitting the approval transaction...',
+		});
+
+		console.log('submitting eth approval tx...', tx);
+		const receipt = await evmWalletHandler.submitTx(tx);
+		if (receipt.status !== BigInt(1)) {
+			captureAndThrowError(
+				'approval transaction has failed. receipt status unsuccessful',
+				'submitTx.ts',
+				'signAndSubmitEthTx',
+			);
+		}
+
+		console.log('eth approval tx has been submitted');
+	}
+
 	const tx: Transaction = await retry(
 		() =>
 			populateTxDetails(
-				txParts,
+				createResponse.bridgingTx.ethTx,
 				TxTypeEnum.London,
 				defaultTxDetailsOptions,
 			),
@@ -128,7 +167,7 @@ export const signAndSubmitEthTx = async (
 	);
 
 	updateLoadingState({
-		content: 'Signing and submitting the transaction...',
+		content: 'Signing and submitting the bridging transaction...',
 	});
 
 	const onTxHash = (txHash: any) => {
@@ -159,7 +198,9 @@ export const signAndSubmitEthTx = async (
 		txHash: receipt.transactionHash.toString(),
 	});
 
-	const amount = BigInt(bridgingFee) + BigInt(values.amount);
+	const enTokenAmount = BigInt(createResponse.bridgingTx.tokenAmount || '0');
+	const enTokenID =
+		enTokenAmount > BigInt(0) ? createResponse.bridgingTx.tokenID : 0;
 
 	const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
 		null,
@@ -176,9 +217,10 @@ export const signAndSubmitEthTx = async (
 						? `bigint:${value.toString()}`
 						: value,
 			),
-			amount: amount.toString(),
+			amount: BigInt(createResponse.bridgingTx.value || '0').toString(10),
+			tokenID: enTokenID,
+			nativeTokenAmount: enTokenAmount.toString(10),
 			isFallback: createResponse.isFallback,
-			nativeTokenAmount: '0',
 			isLayerZero: false,
 		}),
 	);
@@ -192,10 +234,12 @@ export const signAndSubmitEthTx = async (
 };
 
 export const signAndSubmitLayerZeroTx = async (
+	settings: ISettingsState,
 	account: string,
 	txType: TxTypeEnum,
 	receiverAddr: string,
 	createResponse: LayerZeroTransferResponseDto,
+	tokenID: number,
 	updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
 ) => {
 	if (!evmWalletHandler.checkWallet()) {
@@ -205,6 +249,22 @@ export const signAndSubmitLayerZeroTx = async (
 			'signAndSubmitLayerZeroTx',
 		);
 	}
+
+	const originalSrcChain = toApexBridgeName(createResponse.dstChainName);
+	const originalDstChain = toApexBridgeName(
+		createResponse.metadata.properties.dstChainName,
+	);
+
+	const currencyID = getCurrencyID(settings, originalSrcChain);
+	if (!currencyID) {
+		captureAndThrowError(
+			`currencyID not found for chain ${originalSrcChain}.`,
+			'submitTx.ts',
+			'signAndSubmitLayerZeroTx',
+		);
+	}
+
+	const isCurrency = tokenID === currencyID;
 
 	const { transactionData } = createResponse;
 	const opts: SendTransactionOptions = {
@@ -292,15 +352,6 @@ export const signAndSubmitLayerZeroTx = async (
 
 	console.log('layer zero send tx has been submitted', sendTx.value);
 
-	const originalSrcChain = toApexBridgeName(createResponse.dstChainName);
-	const originalDstChain = toApexBridgeName(
-		createResponse.metadata.properties.dstChainName,
-	);
-	const isWrappedToken = !isCurrencyBridgingAllowed(
-		originalSrcChain,
-		originalDstChain,
-	);
-
 	const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
 		null,
 		new TransactionSubmittedDto({
@@ -316,12 +367,13 @@ export const signAndSubmitLayerZeroTx = async (
 						? `bigint:${value.toString()}`
 						: value,
 			),
+			amount: transactionData.populatedTransaction.value,
+			nativeTokenAmount: isCurrency
+				? '0'
+				: createResponse.metadata.properties.amount,
+			tokenID: isCurrency ? 0 : tokenID,
 			isFallback: false,
 			isLayerZero: true,
-			amount: transactionData.populatedTransaction.value,
-			nativeTokenAmount: isWrappedToken
-				? createResponse.metadata.properties.amount
-				: '0',
 		}),
 	);
 
@@ -456,6 +508,7 @@ export const getLayerZeroTransferResponse = async function (
 	fromAddr: string,
 	toAddr: string,
 	amount: string,
+	tokenID: number,
 ): Promise<LayerZeroTransferResponseDto> {
 	const validationErr = validateSubmitTxInputs(
 		settings,
@@ -463,7 +516,7 @@ export const getLayerZeroTransferResponse = async function (
 		dstChain,
 		toAddr,
 		amount,
-		false,
+		tokenID,
 	);
 	if (validationErr) {
 		captureAndThrowError(

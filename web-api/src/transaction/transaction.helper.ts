@@ -350,11 +350,16 @@ const skylineEthBridgingTx = (
 	return {
 		approvalTx,
 		bridgingTx: {
-			from: dto.senderAddress,
-			to,
+			ethTx: {
+				from: dto.senderAddress,
+				to,
+				value: web3.utils.toHex(value),
+				data: calldata,
+			},
 			bridgingFee: web3.utils.toHex(bridgingFee),
-			value: web3.utils.toHex(value),
-			data: calldata,
+			operationFee: web3.utils.toHex(operationFee),
+			tokenAmount: web3.utils.toHex(isCurrencyBridging ? '0' : dto.amount),
+			tokenID: dto.tokenID,
 			isFallback: false,
 		},
 	};
@@ -383,11 +388,16 @@ const reactorEthBridgingTx = (
 
 	return {
 		bridgingTx: {
-			from: dto.senderAddress,
-			to,
+			ethTx: {
+				from: dto.senderAddress,
+				to,
+				value: web3.utils.toHex(value),
+				data: calldata,
+			},
 			bridgingFee: web3.utils.toHex(bridgingFee),
-			value: web3.utils.toHex(value),
-			data: calldata,
+			operationFee: web3.utils.toHex(0),
+			tokenAmount: web3.utils.toHex(0),
+			tokenID: 0,
 			isFallback: false,
 		},
 	};
@@ -412,11 +422,16 @@ const ethCentralizedBridgingTx = (
 
 	return {
 		bridgingTx: {
-			from: dto.senderAddress,
-			to,
+			ethTx: {
+				from: dto.senderAddress,
+				to,
+				value: web3.utils.toHex(value),
+				data: calldata,
+			},
 			bridgingFee: web3.utils.toHex(bridgingFee),
-			value: web3.utils.toHex(value),
-			data: calldata,
+			operationFee: web3.utils.toHex(0),
+			tokenAmount: web3.utils.toHex(0),
+			tokenID: 0,
 			isFallback: true,
 		},
 	};

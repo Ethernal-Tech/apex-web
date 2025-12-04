@@ -132,7 +132,7 @@ func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		commonResponse.NewBridgingTxResponse(txInfo.TxRaw, txInfo.TxHash, requestBody.BridgingFee, amount, nil), c.logger)
+		commonResponse.NewBridgingTxResponse(txInfo.TxRaw, txInfo.TxHash, requestBody.BridgingFee, 0, amount, nil), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Request) {

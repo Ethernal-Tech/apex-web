@@ -190,6 +190,12 @@ export class CreateCardanoTransactionResponseDto {
 	bridgingFee: string;
 
 	@ApiProperty({
+		description:
+			'Operation fee for covering operation costs of the bridge, expressed in Lovelace',
+	})
+	operationFee: string;
+
+	@ApiProperty({
 		description: 'Indicates is fallback mechanism used',
 	})
 	isFallback: boolean;
@@ -243,10 +249,29 @@ export class EthTransactionResponseDto {
 }
 
 @ApiExtraModels(EthTransactionResponseDto)
-export class BridgingEthTransactionResponseDto extends EthTransactionResponseDto {
+export class BridgingEthTransactionResponseDto {
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@Type(() => EthTransactionResponseDto)
+	@ApiProperty({
+		description: 'Eth tx to be executed',
+		type: EthTransactionResponseDto,
+	})
+	ethTx: EthTransactionResponseDto;
+
 	@IsNotEmpty()
 	@ApiProperty()
 	bridgingFee: string;
+
+	@ApiProperty()
+	operationFee: string;
+
+	@ApiProperty()
+	tokenAmount: string;
+
+	@ApiProperty()
+	tokenID: number;
 
 	@ApiProperty()
 	isFallback: boolean;

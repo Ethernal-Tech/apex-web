@@ -17,6 +17,8 @@ type BridgingTxResponse struct {
 	TxHash string `json:"txHash"`
 	// Bridging fee for covering submission on the destination chain, expressed in Lovelace
 	BridgingFee string `json:"bridgingFee"`
+	// Operation fee for covering operation costs of the bridge, expressed in Lovelace
+	OperationFee string `json:"operationFee"`
 	// Amount of currency to be bridged, expressed in Lovelace
 	Amount string `json:"amount"`
 	// Amount of native token to be bridged
@@ -24,7 +26,7 @@ type BridgingTxResponse struct {
 } // @name BridgingTxResponse
 
 func NewBridgingTxResponse(
-	txRaw []byte, txHash string, bridgingFee uint64, amount uint64, nativeTokens map[uint16]uint64,
+	txRaw []byte, txHash string, bridgingFee uint64, operationFee uint64, amount uint64, nativeTokens map[uint16]uint64,
 ) *BridgingTxResponse {
 	nativeTokenAmounts := make([]BridgingTxResponseTokenAmount, 0, len(nativeTokens))
 	for tokID, amnt := range nativeTokens {
@@ -38,6 +40,7 @@ func NewBridgingTxResponse(
 		TxRaw:             hex.EncodeToString(txRaw),
 		TxHash:            txHash,
 		BridgingFee:       strconv.FormatUint(bridgingFee, 10),
+		OperationFee:      strconv.FormatUint(operationFee, 10),
 		Amount:            strconv.FormatUint(amount, 10),
 		NativeTokenAmount: nativeTokenAmounts,
 	}

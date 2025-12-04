@@ -176,7 +176,8 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		w, r, http.StatusOK,
 		commonResponse.NewBridgingTxResponse(
 			txInfo.TxRaw, txInfo.TxHash,
-			bridgingRequestMetadata.BridgingFee, amounts.CurrencyLovelace, amounts.NativeTokens), c.logger,
+			bridgingRequestMetadata.BridgingFee, bridgingRequestMetadata.OperationFee,
+			amounts.CurrencyLovelace, amounts.NativeTokens), c.logger,
 	)
 }
 

@@ -27,7 +27,7 @@ import { SubmitLoadingState } from '../../../utils/statusUtils';
 import { captureException } from '../../../features/sentry';
 
 type BridgeInputType = {
-	submit: (address: string, amount: string) => Promise<void>;
+	submit: (address: string, amount: string, tokenID: number) => Promise<void>;
 	loadingState: SubmitLoadingState | undefined;
 };
 
