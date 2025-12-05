@@ -3,30 +3,31 @@ export class AppSettings {
 
 	private _sentryDsn = '';
 
-	private _minUtxoChainValue: { [key: string]: string } = {
-		prime: '0',
-		vector: '0',
-		cardano: '0',
+	private _minUtxoChainValue: { [key: string]: number } = {
+		prime: 0,
+		vector: 0,
+		cardano: 0,
 	};
 
-	private _minChainFeeForBridging: { [key: string]: string } = {
-		nexus: '0',
-		prime: '0',
-		vector: '0',
-		cardano: '0',
+	private _minChainFeeForBridging: { [key: string]: number } = {
+		nexus: 0,
+		prime: 0,
+		vector: 0,
+		cardano: 0,
 	};
 
-	private _minOperationFee: { [key: string]: string } = {
-		nexus: '0',
-		prime: '0',
-		vector: '0',
-		cardano: '0',
+	private _minOperationFee: { [key: string]: number } = {
+		nexus: 0,
+		prime: 0,
+		vector: 0,
+		cardano: 0,
 	};
 
 	private _utxoRetriever: UtxoRetrieverConfig = {};
 	private _maxAmountAllowedToBridge = '0';
 	private _maxTokenAmountAllowedToBridge = '0';
-	private _minValueToBridge = '0';
+	private _minValueToBridge = 0;
+	private _minColCoinsAllowedToBridge = 0;
 	private _potentialWalletFee = 0;
 	private _disableSentry = false;
 	private _isMainnet = false;
@@ -51,6 +52,8 @@ export class AppSettings {
 		this._maxTokenAmountAllowedToBridge =
 			settingsJson.maxTokenAmountAllowedToBridge;
 		this._minValueToBridge = settingsJson.minValueToBridge;
+		this._minColCoinsAllowedToBridge =
+			settingsJson.minColCoinsAllowedToBridge;
 		this._potentialWalletFee = settingsJson.potentialWalletFee;
 		this._disableSentry = settingsJson.disableSentry;
 		this._isMainnet = settingsJson.isMainnet;
@@ -65,15 +68,15 @@ export class AppSettings {
 		return this._sentryDsn;
 	}
 
-	get minUtxoChainValue(): { [key: string]: string } {
+	get minUtxoChainValue(): { [key: string]: number } {
 		return this._minUtxoChainValue;
 	}
 
-	get minChainFeeForBridging(): { [key: string]: string } {
+	get minChainFeeForBridging(): { [key: string]: number } {
 		return this._minChainFeeForBridging;
 	}
 
-	get minOperationFee(): { [key: string]: string } {
+	get minOperationFee(): { [key: string]: number } {
 		return this._minOperationFee;
 	}
 
@@ -89,8 +92,12 @@ export class AppSettings {
 		return this._maxTokenAmountAllowedToBridge;
 	}
 
-	get minValueToBridge(): string {
+	get minValueToBridge(): number {
 		return this._minValueToBridge;
+	}
+
+	get minColCoinsAllowedToBridge(): number {
+		return this._minColCoinsAllowedToBridge;
 	}
 
 	get potentialWalletFee(): number {

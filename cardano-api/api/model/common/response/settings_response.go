@@ -3,30 +3,47 @@ package response
 import (
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
-	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 )
 
-type SettingsResponse struct {
+type ReactorSettingsResponse struct {
 	// Specifies the current operating mode of the application
 	RunMode common.VCRunMode `json:"runMode"`
-	// For each source chain, defines the native token that will be received on the destination chain
-	CardanoChainsNativeTokens map[string][]sendtx.TokenExchangeConfig `json:"cardanoChainsNativeTokens"`
 	// Settings for bridge
-	BridgingSettings core.BridgingSettings `json:"bridgingSettings"`
+	BridgingSettings core.ReactorBridgingSettings `json:"bridgingSettings"`
 	// Participating chains in the bridge
 	EnabledChains []string `json:"enabledChains"`
 } // @name SettingsResponse
 
-func NewSettingsResponse(
+func NewReactorSettingsResponse(
 	config *core.AppConfig,
-) *SettingsResponse {
-	enabledChains, nativeTokens := config.CreateEnabledChainsAndNativeTokens()
+) *ReactorSettingsResponse {
+	enabledChains := config.CreateEnabledChains()
 
-	return &SettingsResponse{
-		RunMode:                   config.RunMode,
-		CardanoChainsNativeTokens: nativeTokens,
-		BridgingSettings:          config.BridgingSettings,
-		EnabledChains:             enabledChains,
+	return &ReactorSettingsResponse{
+		RunMode:          config.RunMode,
+		BridgingSettings: config.ReactorBridgingSettings,
+		EnabledChains:    enabledChains,
+	}
+}
+
+type SkylineSettingsResponse struct {
+	// Specifies the current operating mode of the application
+	RunMode common.VCRunMode `json:"runMode"`
+	// Settings for bridge
+	BridgingSettings core.SkylineBridgingSettings `json:"bridgingSettings"`
+	// Participating chains in the bridge
+	EnabledChains []string `json:"enabledChains"`
+} // @name SettingsResponse
+
+func NewSkylineSettingsResponse(
+	config *core.AppConfig,
+) *SkylineSettingsResponse {
+	enabledChains := config.CreateEnabledChains()
+
+	return &SkylineSettingsResponse{
+		RunMode:          config.RunMode,
+		BridgingSettings: config.SkylineBridgingSettings,
+		EnabledChains:    enabledChains,
 	}
 }
 

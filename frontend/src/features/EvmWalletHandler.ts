@@ -4,7 +4,7 @@ import { toHex } from 'web3-utils';
 import { ERC20_MIN_ABI } from './ABI';
 import { shortRetryOptions, wait } from '../utils/generalUtils';
 import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
-import { captureAndThrowError } from './sentry';
+import { captureAndThrowError, captureException } from './sentry';
 
 type Wallet = {
 	name: string;
@@ -224,14 +224,28 @@ class EvmWalletHandler {
 				'getERC20Balance',
 			);
 
-		const web3 = this.getWeb3();
-		const contract = new web3!.eth.Contract(ERC20_MIN_ABI, tokenAddress);
-		const rawBalResp = await contract.methods.balanceOf(account).call();
-		const raw = Array.isArray(rawBalResp) ? rawBalResp[0] : rawBalResp;
+		try {
+			const web3 = this.getWeb3();
+			const contract = new web3!.eth.Contract(
+				ERC20_MIN_ABI,
+				tokenAddress,
+			);
+			const rawBalResp = await contract.methods.balanceOf(account).call();
+			const raw = Array.isArray(rawBalResp) ? rawBalResp[0] : rawBalResp;
 
-		const balance = BigInt(raw);
+			const balance = BigInt(raw);
 
-		return web3!.utils.fromWei(balance, 'wei');
+			return web3!.utils.fromWei(balance, 'wei');
+		} catch (e) {
+			captureException(e, {
+				tags: {
+					component: 'EvmWalletHandler.ts',
+					action: 'getERC20Balance',
+				},
+			});
+
+			return '0';
+		}
 	};
 }
 

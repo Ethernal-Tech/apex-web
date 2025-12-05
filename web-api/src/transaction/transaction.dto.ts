@@ -1,5 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
+import { ApiExtraModels, ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+	IsArray,
+	IsEnum,
+	IsNotEmpty,
+	IsObject,
+	IsPositive,
+	ValidateNested,
+} from 'class-validator';
 import { ChainApexBridgeEnum, ChainEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
@@ -42,6 +50,12 @@ export class CreateTransactionDto {
 	})
 	amount: string;
 
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'id of the token',
+	})
+	tokenID: number;
+
 	@ApiProperty({
 		description:
 			'Fee covering the submission of the transaction on the destination chain, expressed in Lovelace',
@@ -64,13 +78,6 @@ export class CreateTransactionDto {
 		required: false,
 	})
 	utxoCacheKey?: string;
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description:
-			'True if the amount is specified in a native token; false if in a currency on source chain',
-	})
-	isNativeToken: boolean;
 }
 
 export class TransactionSubmittedDto {
@@ -125,6 +132,11 @@ export class TransactionSubmittedDto {
 	})
 	nativeTokenAmount: string;
 
+	@ApiProperty({
+		description: 'Token ID',
+	})
+	tokenID: number;
+
 	@IsNotEmpty()
 	@ApiProperty({
 		description: 'Transaction raw data on source chain',
@@ -140,6 +152,20 @@ export class TransactionSubmittedDto {
 		description: 'Indicates if Layer Zero bridging is used',
 	})
 	isLayerZero: boolean;
+}
+
+export class CreateCardanoTransactionResponseTokenAmountDto {
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'ID of the token',
+	})
+	tokenID: number;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'amount of the token',
+	})
+	amount: string;
 }
 
 export class CreateCardanoTransactionResponseDto {
@@ -164,6 +190,12 @@ export class CreateCardanoTransactionResponseDto {
 	bridgingFee: string;
 
 	@ApiProperty({
+		description:
+			'Operation fee for covering operation costs of the bridge, expressed in Lovelace',
+	})
+	operationFee: string;
+
+	@ApiProperty({
 		description: 'Indicates is fallback mechanism used',
 	})
 	isFallback: boolean;
@@ -175,11 +207,13 @@ export class CreateCardanoTransactionResponseDto {
 	amount: string;
 
 	@ApiProperty({
-		description: 'Amount of native token to be bridged',
+		description: 'Amounts of tokens to be bridged',
 		nullable: true,
 		required: false,
+		isArray: true,
+		type: CreateCardanoTransactionResponseTokenAmountDto,
 	})
-	nativeTokenAmount?: string;
+	nativeTokenAmount?: CreateCardanoTransactionResponseTokenAmountDto[];
 }
 
 export class CardanoTransactionFeeResponseDto {
@@ -195,9 +229,15 @@ export class CardanoTransactionFeeResponseDto {
 			'Bridging fee for covering submission on the destination chain, expressed in Lovelace',
 	})
 	bridgingFee: string;
+
+	@ApiProperty({
+		description:
+			'Operation fee for covering operation costs of the bridge, expressed in Lovelace',
+	})
+	operationFee: string;
 }
 
-export class CreateEthTransactionResponseDto {
+export class EthTransactionResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	from: string;
@@ -212,13 +252,58 @@ export class CreateEthTransactionResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	data: string;
+}
+
+@ApiExtraModels(EthTransactionResponseDto)
+export class BridgingEthTransactionResponseDto {
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@Type(() => EthTransactionResponseDto)
+	@ApiProperty({
+		description: 'Eth tx to be executed',
+		type: EthTransactionResponseDto,
+	})
+	ethTx: EthTransactionResponseDto;
 
 	@IsNotEmpty()
 	@ApiProperty()
 	bridgingFee: string;
 
 	@ApiProperty()
+	operationFee: string;
+
+	@ApiProperty()
+	tokenAmount: string;
+
+	@ApiProperty()
+	tokenID: number;
+
+	@ApiProperty()
 	isFallback: boolean;
+}
+
+@ApiExtraModels(EthTransactionResponseDto, BridgingEthTransactionResponseDto)
+export class CreateEthTransactionFullResponseDto {
+	@IsObject()
+	@ValidateNested()
+	@Type(() => EthTransactionResponseDto)
+	@ApiProperty({
+		description: 'Approval tx for the bridging tx',
+		type: EthTransactionResponseDto,
+		nullable: true,
+	})
+	approvalTx?: EthTransactionResponseDto;
+
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@Type(() => BridgingEthTransactionResponseDto)
+	@ApiProperty({
+		description: 'Eth Bridging tx',
+		type: BridgingEthTransactionResponseDto,
+	})
+	bridgingTx: BridgingEthTransactionResponseDto;
 }
 
 export class ErrorResponseDto {

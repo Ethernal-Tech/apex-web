@@ -74,8 +74,10 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 
 		ETH_TX_TTL_INC: num({ default: undefined }),
 		RECENT_INPUTS_THRESHOLD_MINUTES: num({ default: undefined }),
-		NEXUS_BRIDGING_ADDR: str({ default: undefined }),
-		NEXUS_CENTRALIZED_BRIDGING_ADDR: str({ default: undefined }),
+		SKYLINE_NEXUS_GATEWAY_ADDR: str({ default: undefined }),
+		SKYLINE_NEXUS_NT_WALLET_ADDR: str({ default: undefined }),
+		REACTOR_NEXUS_GATEWAY_ADDR: str({ default: undefined }),
+		REACTOR_NEXUS_CENTRALIZED_GATEWAY_ADDR: str({ default: undefined }),
 
 		CENTRALIZED_API_URL: str({ default: undefined }),
 		ORACLE_SKYLINE_URL: str({ default: undefined }),
@@ -115,9 +117,12 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			ethTxTtlInc: env.ETH_TX_TTL_INC,
 			recentInputsThresholdMinutes: env.RECENT_INPUTS_THRESHOLD_MINUTES,
 			addresses: {
-				nexusBridging: env.NEXUS_BRIDGING_ADDR as `0x${string}`,
-				nexusCentralizedBridging:
-					env.NEXUS_CENTRALIZED_BRIDGING_ADDR as `0x${string}`,
+				skylineNexusGateway: env.SKYLINE_NEXUS_GATEWAY_ADDR as `0x${string}`,
+				skylineNexusNativeTokenWallet:
+					env.SKYLINE_NEXUS_NT_WALLET_ADDR as `0x${string}`,
+				reactorNexusGateway: env.REACTOR_NEXUS_GATEWAY_ADDR as `0x${string}`,
+				reactorNexusCentralizedGateway:
+					env.REACTOR_NEXUS_CENTRALIZED_GATEWAY_ADDR as `0x${string}`,
 			},
 		},
 		services: {

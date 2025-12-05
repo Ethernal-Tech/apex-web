@@ -30,8 +30,10 @@ export interface AppConfig {
 		ethTxTtlInc: number;
 		recentInputsThresholdMinutes: number;
 		addresses: {
-			nexusBridging: `0x${string}`;
-			nexusCentralizedBridging: `0x${string}`;
+			skylineNexusGateway: `0x${string}`;
+			skylineNexusNativeTokenWallet: `0x${string}`;
+			reactorNexusGateway: `0x${string}`;
+			reactorNexusCentralizedGateway: `0x${string}`;
 		};
 	};
 	services: {

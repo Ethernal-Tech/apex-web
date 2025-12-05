@@ -24,6 +24,9 @@ export class BridgeTransaction {
 	@Column('numeric', { default: '0', scale: 0, precision: 1000 })
 	nativeTokenAmount: string;
 
+	@Column({ default: 0 })
+	tokenID: number;
+
 	@Column({ enum: TransactionStatusEnum, enumName: 'TransactionStatusEnum' })
 	status: TransactionStatusEnum;
 
