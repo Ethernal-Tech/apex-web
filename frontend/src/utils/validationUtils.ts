@@ -82,25 +82,29 @@ function reactorValidation(
 		getCurrencyID(settings.bridgingSettings, srcChain),
 	);
 	if (isCardanoChain(srcChain)) {
-		const minAllowedToBridge = BigInt(settings.minValueToBridge);
+		const minAllowedToBridge = BigInt(
+			settings.bridgingSettings.minValueToBridge,
+		);
 		if (amount < minAllowedToBridge) {
-			return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} ${tokenInfo.label}`;
+			return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.bridgingSettings.minValueToBridge)} ${tokenInfo.label}`;
 		}
 
-		const maxAllowedToBridgeDfm = BigInt(settings.maxAmountAllowedToBridge);
+		const maxAllowedToBridgeDfm = BigInt(
+			settings.bridgingSettings.maxAmountAllowedToBridge,
+		);
 		if (maxAllowedToBridgeDfm > 0 && amount > maxAllowedToBridgeDfm) {
 			return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
 		}
 	} else if (isEvmChain(srcChain)) {
 		const minAllowedToBridge = BigInt(
-			convertDfmToWei(settings.minValueToBridge),
+			convertDfmToWei(settings.bridgingSettings.minValueToBridge),
 		);
 		if (amount < minAllowedToBridge) {
-			return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.minValueToBridge)} ${tokenInfo.label}`;
+			return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(settings.bridgingSettings.minValueToBridge)} ${tokenInfo.label}`;
 		}
 
 		const maxAllowedToBridgeWei = BigInt(
-			convertDfmToWei(settings.maxAmountAllowedToBridge),
+			convertDfmToWei(settings.bridgingSettings.maxAmountAllowedToBridge),
 		);
 		if (maxAllowedToBridgeWei > 0 && amount > maxAllowedToBridgeWei) {
 			return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedToBridgeWei.toString(10))} ${tokenInfo.label}`;
