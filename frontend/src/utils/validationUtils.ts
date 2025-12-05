@@ -145,11 +145,16 @@ function skylineValidaton(
 	const srcCurrencyID = getCurrencyID(settings.bridgingSettings, srcChain);
 	const dstCurrencyID = getCurrencyID(settings.bridgingSettings, dstChain);
 
-	const tokenPair = settings.bridgingSettings.directionConfig[
-		srcChain
-	].destChain[dstChain].find(
-		(x: BridgingSettingsTokenPairDto) => x.srcTokenID === tokenID,
-	)!;
+	const tokenPair = (
+		(
+			settings.bridgingSettings.directionConfig[srcChain] || {
+				destChain: {},
+			}
+		).destChain[dstChain] || []
+	).find((x: BridgingSettingsTokenPairDto) => x.srcTokenID === tokenID);
+	if (!tokenPair) {
+		return `Bridging ${tokenInfo.label} from chain ${srcChain} not allowed`;
+	}
 
 	const isCurrencyBridging = tokenID === srcCurrencyID;
 	const isWrappedCurrencyBridging =

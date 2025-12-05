@@ -163,9 +163,10 @@ export const createEthBridgingTx = (
 		);
 	}
 
-	const tokenPair = bridgingSettings.directionConfig[dto.originChain].destChain[
-		dto.destinationChain
-	].find((x) => x.srcTokenID === dto.tokenID)!;
+	const tokenPair = (
+		(bridgingSettings.directionConfig[dto.originChain] || { destChain: {} })
+			.destChain[dto.destinationChain] || {}
+	).find((x) => x.srcTokenID === dto.tokenID)!;
 
 	const isCurrencyBridging = dto.tokenID === srcCurrencyID;
 	const isWrappedCurrencyBridging =
@@ -271,8 +272,9 @@ export const createEthBridgingTx = (
 			txValue += BigInt(dto.amount);
 		}
 
-		const tokenInfo =
-			bridgingSettings.directionConfig[dto.originChain].tokens[dto.tokenID];
+		const tokenInfo = (
+			bridgingSettings.directionConfig[dto.originChain] || { tokens: {} }
+		).tokens[dto.tokenID];
 		if (!tokenInfo) {
 			throw new BadRequestException(
 				`token ${dto.tokenID} not defined for chain ${dto.originChain}`,

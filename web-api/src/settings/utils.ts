@@ -8,12 +8,13 @@ export const getCurrencyIDFromDirectionConfig = (
 	},
 	chain: string,
 ): number | undefined => {
-	if (!dirConfig[chain]) {
+	if (!dirConfig[chain] || !dirConfig[chain].tokens) {
 		return;
 	}
 
 	const currencyID = Object.keys(dirConfig[chain].tokens).find(
-		(x: string) => dirConfig[chain].tokens[+x].chainSpecific === Lovelace,
+		(x: string) =>
+			(dirConfig[chain].tokens[+x] || {}).chainSpecific === Lovelace,
 	);
 
 	return currencyID ? +currencyID : undefined;
@@ -25,12 +26,12 @@ export const getWrappedCurrencyIDFromDirectionConfig = (
 	},
 	chain: string,
 ): number | undefined => {
-	if (!dirConfig[chain]) {
+	if (!dirConfig[chain] || !dirConfig[chain].tokens) {
 		return;
 	}
 
 	const wrappedCurrencyID = Object.keys(dirConfig[chain].tokens).find(
-		(x: string) => dirConfig[chain].tokens[+x].isWrappedCurrency,
+		(x: string) => (dirConfig[chain].tokens[+x] || {}).isWrappedCurrency,
 	);
 
 	return wrappedCurrencyID ? +wrappedCurrencyID : undefined;

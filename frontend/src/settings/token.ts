@@ -109,7 +109,10 @@ export const getCurrencyID = (
 	settings: IDirectionFullConfig,
 	chain: string,
 ): number | undefined => {
-	if (!settings.directionConfig[chain]) {
+	if (
+		!settings.directionConfig[chain] ||
+		!settings.directionConfig[chain].tokens
+	) {
 		return;
 	}
 
@@ -126,7 +129,10 @@ export const getWrappedCurrencyID = (
 	settings: IDirectionFullConfig,
 	chain: string,
 ): number | undefined => {
-	if (!settings.directionConfig[chain]) {
+	if (
+		!settings.directionConfig[chain] ||
+		!settings.directionConfig[chain].tokens
+	) {
 		return;
 	}
 
