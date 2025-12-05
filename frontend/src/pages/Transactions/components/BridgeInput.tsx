@@ -474,6 +474,14 @@ const BridgeInput = ({
 		currencyMaxAmounts.maxByBalance,
 	);
 
+	const insufficientBalance =
+		BigInt(convertApexToDfm(amount || '0', chain)) >
+		maxAmounts.maxByBalance;
+	const overMaxAllowed =
+		BigInt(convertApexToDfm(amount || '0', chain)) >
+			maxAmounts.maxByAllowed && maxAmounts.maxByAllowed > 0;
+	const insufficientCurrency = currencyMaxAmount < 0;
+
 	const onSubmit = useCallback(async () => {
 		if (!sourceTokenID) return;
 		await submit(
@@ -594,7 +602,9 @@ const BridgeInput = ({
 					variant={appSettings.isSkyline ? 'whiteSkyline' : 'white'}
 					disabled={
 						!!loadingState ||
-						currencyMaxAmount < 0 ||
+						insufficientBalance ||
+						insufficientCurrency ||
+						overMaxAllowed ||
 						(bridgingModeInfo.bridgingMode ===
 							BridgingModeEnum.Reactor &&
 							reactorValidatorChangeInProgress !== false)
