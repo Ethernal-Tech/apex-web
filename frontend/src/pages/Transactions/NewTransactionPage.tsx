@@ -90,6 +90,22 @@ function NewTransactionPage() {
 		): Promise<CreateTransactionDto> => {
 			await walletHandler.getChangeAddress(); // this line triggers an error if the wallet account has been changed by the user in the meantime
 
+			const validationErr = validateSubmitTxInputs(
+				settings,
+				chain,
+				destinationChain,
+				address,
+				amount,
+				tokenID,
+			);
+			if (validationErr) {
+				captureAndThrowError(
+					validationErr,
+					'NewTransactionPage.tsx',
+					'createCardanoTx',
+				);
+			}
+
 			const destChain = toApexBridge(destinationChain);
 			const originChain = toApexBridge(chain);
 
@@ -105,7 +121,7 @@ function NewTransactionPage() {
 				utxoCacheKey: undefined,
 			});
 		},
-		[account, chain, destinationChain],
+		[account, chain, destinationChain, settings],
 	);
 
 	const getCardanoTxFee = useCallback(
@@ -146,22 +162,6 @@ function NewTransactionPage() {
 			amount: string,
 			tokenID: number,
 		): Promise<CreateCardanoTxResponse> => {
-			const validationErr = validateSubmitTxInputs(
-				settings,
-				chain,
-				destinationChain,
-				address,
-				amount,
-				tokenID,
-			);
-			if (validationErr) {
-				captureAndThrowError(
-					validationErr,
-					'NewTransactionPage.tsx',
-					'createCardanoTx',
-				);
-			}
-
 			const createTxDto = await prepareCreateCardanoTx(
 				address,
 				amount,
@@ -185,7 +185,7 @@ function NewTransactionPage() {
 
 			return { createTxDto, createResponse };
 		},
-		[chain, destinationChain, prepareCreateCardanoTx, settings],
+		[prepareCreateCardanoTx],
 	);
 
 	const prepareCreateEthTx = useCallback(
@@ -194,6 +194,22 @@ function NewTransactionPage() {
 			amount: string,
 			tokenID: number,
 		): CreateTransactionDto => {
+			const validationErr = validateSubmitTxInputs(
+				settings,
+				chain,
+				destinationChain,
+				address,
+				amount,
+				tokenID,
+			);
+			if (validationErr) {
+				captureAndThrowError(
+					validationErr,
+					'NewTransactionPage.tsx',
+					'createEthTx',
+				);
+			}
+
 			const destChain = toApexBridge(destinationChain);
 			const originChain = toApexBridge(chain);
 
@@ -209,7 +225,7 @@ function NewTransactionPage() {
 				utxoCacheKey: undefined,
 			});
 		},
-		[account, chain, destinationChain],
+		[account, chain, destinationChain, settings],
 	);
 
 	const getEthTxFee = useCallback(
@@ -246,22 +262,6 @@ function NewTransactionPage() {
 			amount: string,
 			tokenID: number,
 		): Promise<CreateEthTxResponse> => {
-			const validationErr = validateSubmitTxInputs(
-				settings,
-				chain,
-				destinationChain,
-				address,
-				amount,
-				tokenID,
-			);
-			if (validationErr) {
-				captureAndThrowError(
-					validationErr,
-					'NewTransactionPage.tsx',
-					'createEthTx',
-				);
-			}
-
 			const createTxDto = prepareCreateEthTx(address, amount, tokenID);
 			const bindedCreateAction = createEthTransactionAction.bind(
 				null,
@@ -281,7 +281,7 @@ function NewTransactionPage() {
 
 			return { createTxDto, createResponse };
 		},
-		[chain, destinationChain, prepareCreateEthTx, settings],
+		[prepareCreateEthTx],
 	);
 
 	const handleSubmitCallback = useCallback(
