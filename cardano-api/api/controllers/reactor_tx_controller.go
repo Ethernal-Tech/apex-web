@@ -155,7 +155,7 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	}
 
 	allowedDestinations, ok := c.appConfig.ReactorBridgingSettings.AllowedDirections[requestBody.SourceChainID]
-	if !ok || slices.Contains(allowedDestinations, requestBody.DestinationChainID) {
+	if !ok || !slices.Contains(allowedDestinations, requestBody.DestinationChainID) {
 		return fmt.Errorf("direction: %s -> %s not supported", requestBody.SourceChainID, requestBody.DestinationChainID)
 	}
 
