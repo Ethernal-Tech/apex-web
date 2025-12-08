@@ -45,6 +45,7 @@ import {
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
+import { isAddress } from 'web3-validator';
 
 @Injectable()
 export class TransactionService {
@@ -358,6 +359,18 @@ export class TransactionService {
 	async transferLayerZero(
 		dto: LayerZeroTransferDto,
 	): Promise<LayerZeroTransferResponseDto> {
+		if (!isAddress(dto.from)) {
+			throw new BadRequestException(
+				`error while calling Layer Zero transfer: request.from is not a valid address`,
+			);
+		}
+
+		if (!isAddress(dto.to)) {
+			throw new BadRequestException(
+				`error while calling Layer Zero transfer: request.to is not a valid address`,
+			);
+		}
+
 		try {
 			const lzConfig = getAppConfig().layerZero;
 
