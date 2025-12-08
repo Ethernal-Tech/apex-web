@@ -164,7 +164,13 @@ export const getBridgingMode = function (
 	if (
 		srcChain != dstChain &&
 		fullSettings.layerZeroChains.some((x) => x.chain == srcChain) &&
-		fullSettings.layerZeroChains.some((x) => x.chain == dstChain)
+		fullSettings.layerZeroChains.some((x) => x.chain == dstChain) &&
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			srcTokenID,
+			fullSettings.directionConfig,
+		)
 	) {
 		return BridgingModeEnum.LayerZero;
 	}
