@@ -1,0 +1,246 @@
+{
+	"info": {
+		"_postman_id": "fac7721c-1eee-4868-a658-ce44c5804cd0",
+		"name": "Ogmios Test Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "50162718",
+		"_collection_link": "https://nikola-jovicevic-760450.postman.co/workspace/Nikola-Jovicevic's-Workspace~670737d6-2e4a-43d2-8b80-709aba6fd580/collection/50162718-fac7721c-1eee-4868-a658-ce44c5804cd0?action=share&source=collection_link&creator=50162718"
+	},
+	"item": [
+		{
+			"name": "frequent calls",
+			"item": [
+				{
+					"name": "GetProtocolParameters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Protocol parameters contain version\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.result.version.major).to.be.a(\"number\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"queryLedgerState/protocolParameters\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ogmios_base_url}}",
+							"host": [
+								"{{ogmios_base_url}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetTip",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Block height OK\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.result).to.be.a(\"number\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"queryNetwork/blockHeight\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ogmios_base_url}}",
+							"host": [
+								"{{ogmios_base_url}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetUtxos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"UTxOs array exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.result).to.be.an(\"array\");",
+									"});",
+									"",
+									"pm.test(\"Each UTxO has transaction and value\", () => {",
+									"    const json = pm.response.json();",
+									"    json.result.forEach(utxo => {",
+									"        pm.expect(utxo.transaction.id).to.be.a(\"string\");",
+									"        pm.expect(utxo.value).to.be.an(\"object\");",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"queryLedgerState/utxo\",\n  \"params\": {\n    \"addresses\": [\n      \"{{example_address}}\"\n    ]\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ogmios_base_url}}",
+							"host": [
+								"{{ogmios_base_url}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SubmitTx",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 because validity interval of the transaction passed\", () => {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Transaction is valid or expired TTL\", function () {",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    if(pm.response.code === 400) {",
+									"        pm.expect(jsonData.error.code).to.be.oneOf([3118, 3124]); // expired TTL or vector testnet address missmach",
+									"    } else {",
+									"        pm.expect(pm.response.code).to.eql(200);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"submitTransaction\",\n  \"params\": {\n    \"transaction\": {\n      \"cbor\": \"{{valid_tx_cbor}}\"\n    }\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ogmios_base_url}}",
+							"host": [
+								"{{ogmios_base_url}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"value": ""
+		}
+	]
+}
