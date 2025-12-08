@@ -498,9 +498,9 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
 	receivers := make([]sendtx.BridgingTxReceiver, len(requestBody.Transactions))
 	for i, tx := range requestBody.Transactions {
 		receivers[i] = sendtx.BridgingTxReceiver{
-			Addr:   tx.Addr,
-			Amount: tx.Amount,
-			Token:  tx.TokenID,
+			Addr:    tx.Addr,
+			Amount:  tx.Amount,
+			TokenID: tx.TokenID,
 		}
 	}
 
