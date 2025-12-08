@@ -77,10 +77,13 @@ const AuditPage: React.FC = () => {
 
 	const skylineChains = useMemo<ChainEnum[]>(() => {
 		if (!settings) return [];
-		return Object.keys(
+
+		const chains = Object.keys(
 			settings.settingsPerMode[BridgingModeEnum.Skyline].bridgingSettings
 				.directionConfig,
 		) as unknown as ChainEnum[];
+
+		return chains.filter((chain) => chain !== ChainEnum.Nexus); // nexus isn’t a UTXO chain, so we need to exclude it
 	}, [settings]);
 
 	const { tvbPerChainTotals, tvbTokenTotalsAllChains, tvbGrandTotal } =
@@ -131,11 +134,21 @@ const AuditPage: React.FC = () => {
 	const { lzPerChainTotals, lzTokenTotalsAllChains, lzGrandTotal } =
 		useMemo(() => {
 			const lzSet = new Set(layerZeroChains);
+			const ignoredTokens = new Set([1000001, 1000004]); // its hard-coded; maybe a better solution exists
 
 			const lzPerChainTotals = Object.fromEntries(
 				Object.entries(tvbChains)
 					.filter(([chain]) => lzSet.has(chain as ChainEnum))
-					.map(([chain, tokenMap]) => [chain, sumChain(tokenMap)]),
+					.map(([chain, tokenMap]) => {
+						const filteredTokenMap = Object.fromEntries(
+							Object.entries(tokenMap).filter(([tokenId]) => {
+								const id = Number(tokenId);
+								return !ignoredTokens.has(id);
+							}),
+						);
+
+						return [chain, sumChain(filteredTokenMap)];
+					}),
 			);
 
 			const lzTokenTotalsAllChains = Object.values(

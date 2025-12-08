@@ -36,3 +36,36 @@ export const getWrappedCurrencyIDFromDirectionConfig = (
 
 	return wrappedCurrencyID ? +wrappedCurrencyID : undefined;
 };
+
+export const getWrappedTokensFromDirectionConfig = (
+	dirConfig: { [key: string]: BridgingSettingsDirectionConfigDto },
+	srcChain: string,
+	dstChain: string,
+	forceIncludeIds: number[] = [],
+): number[] => {
+	const sourceConfig = dirConfig[srcChain];
+
+	if (!sourceConfig || !sourceConfig.destChain || !sourceConfig.tokens) {
+		return [];
+	}
+
+	const destinationPairs = sourceConfig.destChain[dstChain];
+
+	if (!destinationPairs) {
+		return [];
+	}
+
+	const tokenDefinitions = sourceConfig.tokens;
+
+	return destinationPairs
+		.filter((pair) => {
+			const tokenDef = tokenDefinitions[pair.srcTokenID];
+
+			const isWrapped = tokenDef && tokenDef.isWrappedCurrency === true;
+
+			const isForcedException = forceIncludeIds.includes(pair.srcTokenID);
+
+			return isWrapped || isForcedException;
+		})
+		.map((pair) => pair.srcTokenID);
+};

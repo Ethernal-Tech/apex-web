@@ -8,6 +8,7 @@ import {
 	LockedTokensDto,
 	LockedTokensResponse,
 	TransferredTokensByDay,
+	TransferredTokensResponse,
 } from './lockedTokens.dto';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
@@ -24,6 +25,14 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { SettingsService } from 'src/settings/settings.service';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
+import { BridgingSettingsDirectionConfigDto } from 'src/settings/settings.dto';
+import {
+	getCurrencyIDFromDirectionConfig,
+	getWrappedCurrencyIDFromDirectionConfig,
+	getWrappedTokensFromDirectionConfig,
+} from 'src/settings/utils';
+import { amountToBigInt } from 'src/utils/generalUtils';
+import { getBridgingMode } from 'src/utils/chainUtils';
 
 @Injectable()
 export class LockedTokensService {
@@ -47,76 +56,21 @@ export class LockedTokensService {
 			this.appConfig.cardanoSkylineApiUrl + `/api/CardanoTx/GetLockedTokens`;
 	}
 
-	public fillTokensData(
-		_allowedBridgingModes: BridgingModeEnum[],
-	): LockedTokensDto {
-		return {
-			chains: {},
-			totalTransferred: {},
-		};
-	}
-
-	/*
 	public async fillTokensData(
-		allowedBridgingModes: BridgingModeEnum[],
+		_allowedBridgingModes: BridgingModeEnum[],
 	): Promise<LockedTokensDto> {
 		const lockedTokens = await this.getLockedTokens();
-		const totalTransferred =
-			await this.sumTransferredTokensPerChain(allowedBridgingModes);
-
-		const mappedChains: Record<
-			string,
-			Partial<Record<TokenEnum, Record<string, string>>>
-		> = {};
-
-		const availableDirections = getAllChainsDirections(
-			[BridgingModeEnum.Skyline],
-			this.settingsService.SettingsResponse,
+		const sumTransferred = await this.sumTransferredTokensPerChain(
+			this.settingsService.SettingsResponse.directionConfig,
+			_allowedBridgingModes,
 		);
 
-		for (const chainName in lockedTokens.chains) {
-			if (
-				Object.prototype.hasOwnProperty.call(lockedTokens.chains, chainName)
-			) {
-				const tokens = lockedTokens.chains[chainName];
-				const mappedTokens: {
-					[tokenName: string]: { [address: string]: string };
-				} = {};
-
-				for (const token in tokens) {
-					if (Object.prototype.hasOwnProperty.call(tokens, token)) {
-						const addresses = tokens[token];
-
-						const matchingDstChain = availableDirections.find(
-							(d) => d.srcChain === (chainName as ChainEnum),
-						);
-
-						if (!matchingDstChain) {
-							continue;
-						}
-
-						const tokenName = getTokenNameFromSettings(
-							chainName as ChainEnum,
-							matchingDstChain?.dstChain,
-							this.settingsService.SettingsResponse,
-							token.toLowerCase() === 'lovelace',
-						);
-
-						if (tokenName) {
-							mappedTokens[tokenName] = addresses;
-						}
-					}
-				}
-				mappedChains[chainName] = mappedTokens;
-			}
-		}
-
 		return {
-			chains: mappedChains,
-			totalTransferred: totalTransferred.totalTransferred,
+			chains: lockedTokens.chains,
+			totalTransferred: sumTransferred.totalTransferred,
 		};
 	}
-*/
+
 	private async getLockedTokens(): Promise<LockedTokensResponse> {
 		Logger.debug(`axios.get: ${this.endpointUrl}`);
 
@@ -153,8 +107,10 @@ export class LockedTokensService {
 		return [];
 	}
 
-	/*
 	private async sumTransferredTokensPerChain(
+		directionConfig: {
+			[key: string]: BridgingSettingsDirectionConfigDto;
+		},
 		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<TransferredTokensResponse> {
 		const cacheKey = 'transferredTokensPerChainNestedMap';
@@ -165,65 +121,134 @@ export class LockedTokensService {
 			return cached;
 		}
 
-		const availableDirections = getAllChainsDirections(
-			allowedBridgingModes,
-			this.settingsService.SettingsResponse,
-		);
 		const result = new TransferredTokensResponse();
 		result.totalTransferred = {};
 
-		for (const info of availableDirections) {
-			const tokenName = getTokenNameFromSettings(
-				info.srcChain,
-				info.dstChain,
-				this.settingsService.SettingsResponse,
-				true,
-			);
-
-			if (tokenName) {
-				const amount = await this.getAggregatedSum(
-					info.srcChain,
-					info.dstChain,
-					'amount',
+		for (const [srcChain, config] of Object.entries(directionConfig)) {
+			for (const dstChain of Object.keys(config.destChain)) {
+				const wrappedTokenIds = getWrappedTokensFromDirectionConfig(
+					directionConfig,
+					srcChain,
+					dstChain,
 				);
 
-				result.totalTransferred[info.srcChain] ??= {};
-				result.totalTransferred[info.srcChain][tokenName] = (
-					BigInt(result.totalTransferred[info.srcChain][tokenName] ?? '0') +
-					amountToBigInt(amount, info.srcChain)
-				).toString();
-			}
-
-			const wrappedTokenName = getTokenNameFromSettings(
-				info.srcChain,
-				info.dstChain,
-				this.settingsService.SettingsResponse,
-			);
-
-			if (wrappedTokenName) {
-				// check for wrapped token because in some
-				const tokenAmount = await this.getAggregatedSum(
-					info.srcChain,
-					info.dstChain,
-					'nativeTokenAmount',
+				const currency = getCurrencyIDFromDirectionConfig(
+					directionConfig,
+					srcChain,
 				);
 
-				if (!result.totalTransferred[info.srcChain]) {
-					result.totalTransferred[info.srcChain] = {};
-				}
+				if (wrappedTokenIds && wrappedTokenIds.length > 0) {
+					for (const tokenID of wrappedTokenIds) {
+						const bridgingMode = getBridgingMode(
+							srcChain as ChainEnum,
+							dstChain as ChainEnum,
+							tokenID,
+							this.settingsService.SettingsResponse,
+						);
 
-				if (!result.totalTransferred[info.srcChain][wrappedTokenName]) {
-					result.totalTransferred[info.srcChain][wrappedTokenName] = '0';
+						if (!allowedBridgingModes.includes(bridgingMode!)) continue;
+
+						const nativeTokenAmount = await this.getAggregatedSum(
+							srcChain,
+							dstChain,
+							'nativeTokenAmount',
+							tokenID,
+						);
+
+						if (!result.totalTransferred[srcChain]) {
+							result.totalTransferred[srcChain] = {};
+						}
+
+						if (!result.totalTransferred[srcChain][tokenID]) {
+							result.totalTransferred[srcChain][tokenID] = '0';
+						}
+						result.totalTransferred[srcChain] ??= {};
+						result.totalTransferred[srcChain][tokenID] = (
+							BigInt(result.totalTransferred[srcChain][tokenID] ?? '0') +
+							amountToBigInt(nativeTokenAmount, srcChain as ChainEnum)
+						).toString();
+
+						if (BigInt(result.totalTransferred[srcChain][tokenID] ?? '0') > 0) {
+							const amount = await this.getAggregatedSum(
+								srcChain,
+								dstChain,
+								'amount',
+								tokenID,
+								true, // sum only the amounts where nativeTokenAmount is greater than zero
+							);
+
+							if (currency) {
+								result.totalTransferred[srcChain] ??= {};
+								result.totalTransferred[srcChain][currency] = (
+									BigInt(result.totalTransferred[srcChain][currency] ?? '0') +
+									amountToBigInt(amount, srcChain as ChainEnum)
+								).toString();
+							}
+						}
+
+						// backward compatibility
+						if (
+							getWrappedCurrencyIDFromDirectionConfig(
+								directionConfig,
+								srcChain,
+							) == tokenID
+						) {
+							const nativeTokenAmountZeroId = await this.getAggregatedSum(
+								srcChain,
+								dstChain,
+								'nativeTokenAmount',
+							);
+
+							result.totalTransferred[srcChain][tokenID] = (
+								BigInt(result.totalTransferred[srcChain][tokenID] ?? '0') +
+								amountToBigInt(nativeTokenAmountZeroId, srcChain as ChainEnum)
+							).toString();
+
+							if (
+								BigInt(result.totalTransferred[srcChain][tokenID] ?? '0') > 0
+							) {
+								const amount = await this.getAggregatedSum(
+									srcChain,
+									dstChain,
+									'amount',
+									0, // All old transactions have a value of 0 for tokenID
+									true,
+								);
+
+								if (currency) {
+									result.totalTransferred[srcChain] ??= {};
+									result.totalTransferred[srcChain][currency] = (
+										BigInt(result.totalTransferred[srcChain][currency] ?? '0') +
+										amountToBigInt(amount, srcChain as ChainEnum)
+									).toString();
+								}
+							}
+						}
+					}
+				} else {
+					const bridgingMode = getBridgingMode(
+						srcChain as ChainEnum,
+						dstChain as ChainEnum,
+						currency!,
+						this.settingsService.SettingsResponse,
+					);
+
+					if (!allowedBridgingModes.includes(bridgingMode!)) continue;
+
+					const amount = await this.getAggregatedSum(
+						srcChain,
+						dstChain,
+						'amount',
+					);
+
+					if (currency) {
+						result.totalTransferred[srcChain] ??= {};
+						result.totalTransferred[srcChain][currency] = (
+							BigInt(result.totalTransferred[srcChain][currency] ?? '0') +
+							amountToBigInt(amount, srcChain as ChainEnum)
+						).toString();
+					}
 				}
-				result.totalTransferred[info.srcChain] ??= {};
-				result.totalTransferred[info.srcChain][wrappedTokenName as TokenEnum] =
-					(
-						BigInt(
-							result.totalTransferred[info.srcChain][
-								wrappedTokenName as TokenEnum
-							] ?? '0',
-						) + amountToBigInt(tokenAmount, info.srcChain)
-					).toString();
 			}
 		}
 
@@ -231,86 +256,6 @@ export class LockedTokensService {
 
 		return result;
 	}
-
-	public async sumOfTransferredTokenByDate(
-		startDate: Date,
-		endDate: Date,
-		groupBy: GroupByTimePeriod,
-		allowedBridgingModes: BridgingModeEnum[],
-	): Promise<TransferredTokensByDay[]> {
-		const availableDirections = getAllChainsDirections(
-			allowedBridgingModes,
-			this.settingsService.SettingsResponse,
-		);
-
-		const fetchResult: {
-			groupedDate: string;
-			amount: string | null;
-			nativeSum: string | null;
-			originChain: ChainEnum;
-			destinationChain: ChainEnum;
-		}[] = [];
-
-		for (const info of availableDirections) {
-			const rows = await this.getGroupByAggregatedSum(
-				startDate,
-				endDate,
-				info.srcChain,
-				info.dstChain,
-				groupBy,
-			);
-			fetchResult.push(...rows);
-		}
-
-		return this.transformRawResultsToDto(fetchResult, groupBy);
-	}
-
-	private transformRawResultsToDto(
-		rawResults: any[],
-		groupBy: GroupByTimePeriod,
-	): TransferredTokensByDay[] {
-		const groupedByDate: Record<string, TransferredTokensByDay> = {};
-
-		for (const row of rawResults) {
-			const normalizedDate = this.normalizeGroupedDate(
-				new Date(row.groupedDate),
-				groupBy,
-			);
-
-			const chain = row.originChain;
-			const dateKey = normalizedDate.toISOString();
-			const tokenName = getTokenNameFromSettings(
-				chain,
-				row.destinationChain,
-				this.settingsService.SettingsResponse,
-			);
-			if (!groupedByDate[dateKey]) {
-				groupedByDate[dateKey] = {
-					date: normalizedDate,
-					totalTransferred: {},
-				};
-			}
-
-			const chainResult: Record<string, string> = {};
-
-			if (row.amount !== null) {
-				chainResult.amount = amountToBigInt(row.amount, chain).toString(10);
-			}
-
-			if (!!tokenName && row.nativeSum !== null) {
-				chainResult[tokenName] = amountToBigInt(row.nativeSum, chain).toString(
-					10,
-				);
-			}
-
-			groupedByDate[dateKey].totalTransferred[chain] = chainResult;
-		}
-
-		return Object.values(groupedByDate).sort(
-			(a, b) => a.date.getTime() - b.date.getTime(),
-		);
-	}
-*/
 
 	private normalizeGroupedDate(date: Date, groupBy: GroupByTimePeriod): Date {
 		switch (groupBy) {
@@ -365,6 +310,8 @@ export class LockedTokensService {
 		srcChain: string,
 		dstChain: string,
 		fieldName: string,
+		tokenID: number = 0,
+		wrapped: boolean = false,
 		status: TransactionStatusEnum = TransactionStatusEnum.ExecutedOnDestination,
 	): Promise<string> {
 		const query = this.bridgeTransactionRepository
@@ -372,7 +319,13 @@ export class LockedTokensService {
 			.select(`SUM(tx.${fieldName})`, 'sumAll')
 			.where('tx.status = :status', { status })
 			.andWhere('tx.originChain = :srcChain', { srcChain })
-			.andWhere('tx.destinationChain = :dstChain', { dstChain });
+			.andWhere('tx.destinationChain = :dstChain', { dstChain })
+			.andWhere('tx.tokenID = :tokenID', { tokenID });
+
+		if (wrapped) {
+			query.andWhere('tx.nativeTokenAmount > 0');
+		}
+
 		const { sumAll } = await query.getRawOne();
 		return sumAll;
 	}

@@ -113,7 +113,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 						.map(([tokenKey, amt]) => (
 							<AmountCard
 								key={tokenKey}
-								left={tokenKey}
+								left={getTokenInfo(Number(tokenKey)).label}
 								right={fmt(amt)}
 							/>
 						))}
