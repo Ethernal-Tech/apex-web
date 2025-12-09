@@ -37,7 +37,7 @@ export const getWrappedCurrencyIDFromDirectionConfig = (
 	return wrappedCurrencyID ? +wrappedCurrencyID : undefined;
 };
 
-export const getWrappedTokensFromDirectionConfig = (
+export const getDirectionTokenIDsFromDirectionConfig = (
 	dirConfig: { [key: string]: BridgingSettingsDirectionConfigDto },
 	srcChain: string,
 	dstChain: string,

@@ -29,7 +29,7 @@ import { BridgingSettingsDirectionConfigDto } from 'src/settings/settings.dto';
 import {
 	getCurrencyIDFromDirectionConfig,
 	getWrappedCurrencyIDFromDirectionConfig,
-	getWrappedTokensFromDirectionConfig,
+	getDirectionTokenIDsFromDirectionConfig,
 } from 'src/settings/utils';
 import { amountToBigInt } from 'src/utils/generalUtils';
 import { getBridgingMode } from 'src/utils/chainUtils';
@@ -57,12 +57,12 @@ export class LockedTokensService {
 	}
 
 	public async fillTokensData(
-		_allowedBridgingModes: BridgingModeEnum[],
+		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<LockedTokensDto> {
 		const lockedTokens = await this.getLockedTokens();
 		const sumTransferred = await this.sumTransferredTokensPerChain(
 			this.settingsService.SettingsResponse.directionConfig,
-			_allowedBridgingModes,
+			allowedBridgingModes,
 		);
 
 		return {
@@ -126,7 +126,7 @@ export class LockedTokensService {
 
 		for (const [srcChain, config] of Object.entries(directionConfig)) {
 			for (const dstChain of Object.keys(config.destChain)) {
-				const wrappedTokenIds = getWrappedTokensFromDirectionConfig(
+				const tokenIds = getDirectionTokenIDsFromDirectionConfig(
 					directionConfig,
 					srcChain,
 					dstChain,
@@ -137,16 +137,16 @@ export class LockedTokensService {
 					srcChain,
 				);
 
-				const currencyIndex = wrappedTokenIds.indexOf(currency!);
+				const currencyIndex = tokenIds.indexOf(currency!);
 
 				const isCurrencyContained = currencyIndex !== -1;
 
 				if (isCurrencyContained) {
-					wrappedTokenIds.splice(currencyIndex, 1);
+					tokenIds.splice(currencyIndex, 1);
 				}
 
-				if (wrappedTokenIds && wrappedTokenIds.length > 0) {
-					for (const tokenID of wrappedTokenIds) {
+				if (tokenIds && tokenIds.length > 0) {
+					for (const tokenID of tokenIds) {
 						const bridgingMode = getBridgingMode(
 							srcChain as ChainEnum,
 							dstChain as ChainEnum,
@@ -326,7 +326,7 @@ export class LockedTokensService {
 		dstChain: string,
 		fieldName: string,
 		tokenID: number = 0,
-		wrapped: boolean = false,
+		isNativeToken: boolean = false,
 		status: TransactionStatusEnum = TransactionStatusEnum.ExecutedOnDestination,
 	): Promise<string> {
 		const query = this.bridgeTransactionRepository
@@ -337,7 +337,7 @@ export class LockedTokensService {
 			.andWhere('tx.destinationChain = :dstChain', { dstChain })
 			.andWhere('tx.tokenID = :tokenID', { tokenID });
 
-		if (wrapped) {
+		if (isNativeToken) {
 			query.andWhere('tx.nativeTokenAmount > 0');
 		} else {
 			query.andWhere('tx.nativeTokenAmount = 0');
