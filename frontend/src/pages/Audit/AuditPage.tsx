@@ -12,7 +12,7 @@ import SkylinePanel from '../../components/Audit/SkylineAudit';
 import LayerZeroPanel from '../../components/Audit/LayerZeroAudit';
 import '../../audit.css';
 import { isAdaToken, isApexToken } from '../../components/Audit/token';
-import { adaID, apexID } from '../../settings/token';
+import { adaID, apexID, bnbID, ethID } from '../../settings/token';
 
 const sumToken = (m: Record<string, bigint>): bigint =>
 	Object.values(m).reduce((a, b) => a + b, BigInt(0));
@@ -134,7 +134,7 @@ const AuditPage: React.FC = () => {
 	const { lzPerChainTotals, lzTokenTotalsAllChains, lzGrandTotal } =
 		useMemo(() => {
 			const lzSet = new Set(layerZeroChains);
-			const ignoredTokens = new Set([1000001, 1000004]); // its hard-coded; maybe a better solution exists
+			const ignoredTokens = new Set([ethID, bnbID]);
 
 			const lzPerChainTotals = Object.fromEntries(
 				Object.entries(tvbChains)

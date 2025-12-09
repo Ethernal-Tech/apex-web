@@ -30,10 +30,10 @@ export const capexID = 3;
 export const xadaID = 4;
 const myTestTokenID = 5;
 
-const ethID = 1000001;
+export const ethID = 1000001;
 export const bapexID = 1000002;
 export const bnapexID = 1000003;
-const bnbID = 1000004;
+export const bnbID = 1000004;
 
 const unknownTokenInfo: TokenInfo = {
 	tokenID: 0,
