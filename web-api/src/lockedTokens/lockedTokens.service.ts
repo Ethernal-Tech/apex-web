@@ -137,6 +137,14 @@ export class LockedTokensService {
 					srcChain,
 				);
 
+				const currencyIndex = wrappedTokenIds.indexOf(currency!);
+
+				const isCurrencyContained = currencyIndex !== -1;
+
+				if (isCurrencyContained) {
+					wrappedTokenIds.splice(currencyIndex, 1);
+				}
+
 				if (wrappedTokenIds && wrappedTokenIds.length > 0) {
 					for (const tokenID of wrappedTokenIds) {
 						const bridgingMode = getBridgingMode(
@@ -153,6 +161,7 @@ export class LockedTokensService {
 							dstChain,
 							'nativeTokenAmount',
 							tokenID,
+							true,
 						);
 
 						if (!result.totalTransferred[srcChain]) {
@@ -197,6 +206,8 @@ export class LockedTokensService {
 								srcChain,
 								dstChain,
 								'nativeTokenAmount',
+								0,
+								true,
 							);
 
 							result.totalTransferred[srcChain][tokenID] = (
@@ -207,7 +218,7 @@ export class LockedTokensService {
 							if (
 								BigInt(result.totalTransferred[srcChain][tokenID] ?? '0') > 0
 							) {
-								const amount = await this.getAggregatedSum(
+								const amountZeroId = await this.getAggregatedSum(
 									srcChain,
 									dstChain,
 									'amount',
@@ -219,13 +230,15 @@ export class LockedTokensService {
 									result.totalTransferred[srcChain] ??= {};
 									result.totalTransferred[srcChain][currency] = (
 										BigInt(result.totalTransferred[srcChain][currency] ?? '0') +
-										amountToBigInt(amount, srcChain as ChainEnum)
+										amountToBigInt(amountZeroId, srcChain as ChainEnum)
 									).toString();
 								}
 							}
 						}
 					}
-				} else {
+				}
+
+				if (isCurrencyContained) {
 					const bridgingMode = getBridgingMode(
 						srcChain as ChainEnum,
 						dstChain as ChainEnum,
@@ -239,6 +252,8 @@ export class LockedTokensService {
 						srcChain,
 						dstChain,
 						'amount',
+						0,
+						false,
 					);
 
 					if (currency) {
@@ -324,6 +339,8 @@ export class LockedTokensService {
 
 		if (wrapped) {
 			query.andWhere('tx.nativeTokenAmount > 0');
+		} else {
+			query.andWhere('tx.nativeTokenAmount = 0');
 		}
 
 		const { sumAll } = await query.getRawOne();

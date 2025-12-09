@@ -158,11 +158,14 @@ const AuditPage: React.FC = () => {
 				{} as Record<string, bigint>,
 			);
 
-			const lzGrandTotal = Object.values(lzTokenTotalsAllChains).reduce(
-				(a, b) => a + b,
+			const lzGrandTotal = Object.entries(lzTokenTotalsAllChains).reduce(
+				(acc, [tokenSymbol, amount]) => {
+					return isApexToken(Number(tokenSymbol))
+						? acc + amount
+						: acc;
+				},
 				BigInt(0),
 			);
-
 			return { lzPerChainTotals, lzTokenTotalsAllChains, lzGrandTotal };
 		}, [tvbChains]);
 
