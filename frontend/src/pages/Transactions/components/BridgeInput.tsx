@@ -38,6 +38,9 @@ import { SubmitLoadingState } from '../../../utils/statusUtils';
 import { captureException } from '../../../features/sentry';
 import { setNewTxSourceTokenIDAction } from '../../../redux/slices/newTxSlice';
 
+const estimatedLockUnlockEthTxFee = BigInt('383748002686236');
+const ethLockUnlockFeeMultiplier = 1.5;
+
 type BridgeInputType = {
 	getCardanoTxFee: (
 		address: string,
@@ -58,22 +61,31 @@ const calculateMaxAmountToken = (
 	sourceTokenID: number | undefined,
 	currencyID: number | undefined,
 	maxTokenAmountAllowedToBridge: string,
+	chain: ChainEnum,
 ): { maxByBalance: bigint; maxByAllowed: bigint } => {
 	if (
 		!totalDfmBalance ||
 		!sourceTokenID ||
 		!currencyID ||
-		sourceTokenID === currencyID
+		sourceTokenID === currencyID ||
+		!chain
 	) {
 		return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
 	}
 
+	const maxTokenAmountAllowedToBridgeDfm =
+		BigInt(maxTokenAmountAllowedToBridge || '0') !== BigInt(0)
+			? isEvmChain(chain)
+				? BigInt(convertDfmToWei(maxTokenAmountAllowedToBridge))
+				: BigInt(maxTokenAmountAllowedToBridge)
+			: BigInt(0);
+
 	const tokenBalance = BigInt(totalDfmBalance[sourceTokenID] || '0');
 
 	const tokenBalanceAllowedToUse =
-		BigInt(maxTokenAmountAllowedToBridge || '0') !== BigInt(0) &&
-		tokenBalance > BigInt(maxTokenAmountAllowedToBridge || '0')
-			? BigInt(maxTokenAmountAllowedToBridge || '0')
+		BigInt(maxTokenAmountAllowedToBridgeDfm || '0') !== BigInt(0) &&
+		tokenBalance > BigInt(maxTokenAmountAllowedToBridgeDfm || '0')
+			? BigInt(maxTokenAmountAllowedToBridgeDfm || '0')
 			: tokenBalance;
 
 	return {
@@ -303,16 +315,22 @@ const BridgeInput = ({
 						TxTypeEnum.London,
 						false,
 					);
+
+					const totalTxFee =
+						approvalTxFee +
+						(BigInt(ethLockUnlockFeeMultiplier * 100) *
+							estimatedLockUnlockEthTxFee) /
+							BigInt(100);
+					setUserWalletFee(totalTxFee.toString());
+				} else {
+					const fee = await estimateEthTxFee(
+						feeResp.bridgingTx.ethTx,
+						TxTypeEnum.London,
+						bridgingTx.isFallback,
+					);
+
+					setUserWalletFee(fee.toString());
 				}
-
-				const fee = await estimateEthTxFee(
-					feeResp.bridgingTx.ethTx,
-					TxTypeEnum.London,
-					bridgingTx.isFallback,
-				);
-
-				const totalTxFee = approvalTxFee + fee;
-				setUserWalletFee(totalTxFee.toString());
 
 				setBridgeTxFee(
 					BigInt(bridgingTx.bridgingFee || '0').toString(10),
@@ -464,6 +482,7 @@ const BridgeInput = ({
 		sourceTokenID,
 		currencyID,
 		maxTokenAmountAllowedToBridge,
+		chain,
 	);
 	const maxAmounts =
 		sourceTokenID && currencyID && sourceTokenID !== currencyID

@@ -304,8 +304,6 @@ function NewTransactionPage() {
 						updateLoadingState,
 					);
 
-					console.log('signed transaction');
-
 					response && goToDetails(response);
 				} else if (isEvmChain(chain)) {
 					const createTxResp = await createEthTx(

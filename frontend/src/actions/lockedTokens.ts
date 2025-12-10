@@ -21,8 +21,6 @@ async function readErc20Meta(
 
 	try {
 		totalRaw = await web3.eth.getBalance(tokenAddress);
-
-		console.log('Locked tokens LayerZero Token on Nexus: ', totalRaw);
 	} catch (e) {
 		console.log(`Failed to get eth balance for: ${tokenAddress}. e: ${e}`);
 		captureException(e, {

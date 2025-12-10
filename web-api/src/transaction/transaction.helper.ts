@@ -315,7 +315,7 @@ const skylineEthBridgingTx = (
 		const calldata = erc20Contract.methods
 			.approve(
 				getAppConfig().bridge.addresses.skylineNexusNativeTokenWallet,
-				web3.utils.toHex(value),
+				web3.utils.toHex(BigInt(dto.amount)),
 			)
 			.encodeABI();
 
@@ -360,7 +360,9 @@ const skylineEthBridgingTx = (
 			},
 			bridgingFee: web3.utils.toHex(bridgingFee),
 			operationFee: web3.utils.toHex(operationFee),
-			tokenAmount: web3.utils.toHex(isCurrencyBridging ? '0' : dto.amount),
+			tokenAmount: web3.utils.toHex(
+				BigInt(isCurrencyBridging ? '0' : dto.amount),
+			),
 			tokenID: dto.tokenID,
 			isFallback: false,
 		},

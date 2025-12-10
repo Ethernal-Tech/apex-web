@@ -217,7 +217,9 @@ export const signAndSubmitEthTx = async (
 						? `bigint:${value.toString()}`
 						: value,
 			),
-			amount: BigInt(createResponse.bridgingTx.value || '0').toString(10),
+			amount: BigInt(
+				createResponse.bridgingTx.ethTx.value || '0',
+			).toString(10),
 			tokenID: enTokenID,
 			nativeTokenAmount: enTokenAmount.toString(10),
 			isFallback: createResponse.isFallback,
