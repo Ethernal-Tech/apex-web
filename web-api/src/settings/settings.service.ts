@@ -239,6 +239,7 @@ export class SettingsService {
 		};
 		this.SettingsResponse.directionConfig = directionConfig;
 		this.SettingsResponse.enabledChains = Array.from(enabledChains);
+		this.SettingsResponse.ecosystemTokens = ecosystemTokens;
 
 		Logger.debug(
 			`settings dto ${JSON.stringify(this.SettingsResponse, undefined, ' ')}`,

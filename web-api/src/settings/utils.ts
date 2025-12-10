@@ -1,4 +1,7 @@
-import { BridgingSettingsDirectionConfigDto } from './settings.dto';
+import {
+	BridgingSettingsDirectionConfigDto,
+	BridgingSettingsEcosystemTokenDto,
+} from './settings.dto';
 
 export const Lovelace = 'lovelace';
 
@@ -56,3 +59,12 @@ export const getDirectionTokenIDsFromDirectionConfig = (
 
 	return destinationPairs.map((pair) => pair.srcTokenID);
 };
+
+export function getTokenNameById(
+	ecosystemTokens: BridgingSettingsEcosystemTokenDto[],
+	id: number,
+) {
+	const token = ecosystemTokens.find((t) => t.id === id);
+
+	return token ? token.name : null;
+}

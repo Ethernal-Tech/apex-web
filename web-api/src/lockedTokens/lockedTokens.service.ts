@@ -30,6 +30,7 @@ import {
 	getCurrencyIDFromDirectionConfig,
 	getWrappedCurrencyIDFromDirectionConfig,
 	getDirectionTokenIDsFromDirectionConfig,
+	getTokenNameById,
 } from 'src/settings/utils';
 import { amountToBigInt } from 'src/utils/generalUtils';
 import { getBridgingMode } from 'src/utils/chainUtils';
@@ -96,15 +97,6 @@ export class LockedTokensService {
 
 			throw new BadRequestException();
 		}
-	}
-
-	public sumOfTransferredTokenByDate(
-		_startDate: Date,
-		_endDate: Date,
-		_groupBy: GroupByTimePeriod,
-		_allowedBridgingModes: BridgingModeEnum[],
-	): TransferredTokensByDay[] {
-		return [];
 	}
 
 	private async sumTransferredTokensPerChain(
@@ -272,6 +264,138 @@ export class LockedTokensService {
 		return result;
 	}
 
+	private async getAggregatedSum(
+		srcChain: string,
+		dstChain: string,
+		fieldName: string,
+		tokenID: number = 0,
+		isNativeToken: boolean = false,
+		status: TransactionStatusEnum = TransactionStatusEnum.ExecutedOnDestination,
+	): Promise<string> {
+		const query = this.bridgeTransactionRepository
+			.createQueryBuilder('tx')
+			.select(`SUM(tx.${fieldName})`, 'sumAll')
+			.where('tx.status = :status', { status })
+			.andWhere('tx.originChain = :srcChain', { srcChain })
+			.andWhere('tx.destinationChain = :dstChain', { dstChain })
+			.andWhere('tx.tokenID = :tokenID', { tokenID });
+
+		if (isNativeToken) {
+			query.andWhere('tx.nativeTokenAmount > 0');
+		} else {
+			query.andWhere('tx.nativeTokenAmount = 0');
+		}
+
+		const { sumAll } = await query.getRawOne();
+		return sumAll;
+	}
+
+	public async sumOfTransferredTokenByDate(
+		startDate: Date,
+		endDate: Date,
+		groupBy: GroupByTimePeriod,
+		allowedBridgingModes: BridgingModeEnum[],
+	): Promise<TransferredTokensByDay[]> {
+		const fetchResult: any[] = [];
+		const settings = this.settingsService.SettingsResponse; // Cache reference for readability
+
+		for (const [srcChain, config] of Object.entries(settings.directionConfig)) {
+			for (const dstChain of Object.keys(config.destChain)) {
+				const allTokenIds = getDirectionTokenIDsFromDirectionConfig(
+					settings.directionConfig,
+					srcChain,
+					dstChain,
+				);
+
+				const currencyId = getCurrencyIDFromDirectionConfig(
+					settings.directionConfig,
+					srcChain,
+				);
+
+				const currencyIndex = allTokenIds.indexOf(currencyId!);
+				const hasCurrency = currencyIndex !== -1;
+
+				const standardTokenIds = hasCurrency
+					? allTokenIds.filter((id) => id !== currencyId)
+					: allTokenIds;
+
+				for (const tokenID of standardTokenIds) {
+					const rows = await this.processTokenData(
+						{ startDate, endDate, groupBy, allowedBridgingModes },
+						{ src: srcChain as ChainEnum, dst: dstChain as ChainEnum },
+						{ tokenID: tokenID, dbID: tokenID, isNative: true },
+					);
+					fetchResult.push(...rows);
+
+					const wrappedId = getWrappedCurrencyIDFromDirectionConfig(
+						settings.directionConfig,
+						srcChain,
+					);
+
+					if (wrappedId === tokenID) {
+						const compatRows = await this.processTokenData(
+							{ startDate, endDate, groupBy, allowedBridgingModes },
+							{ src: srcChain as ChainEnum, dst: dstChain as ChainEnum },
+							{ tokenID: tokenID, dbID: 0, isNative: true }, // query DB with 0, but report as tokenID
+						);
+						fetchResult.push(...compatRows);
+					}
+				}
+
+				if (hasCurrency) {
+					const currencyRows = await this.processTokenData(
+						{ startDate, endDate, groupBy, allowedBridgingModes },
+						{ src: srcChain as ChainEnum, dst: dstChain as ChainEnum },
+						{ tokenID: currencyId!, dbID: 0, isNative: false }, // Query DB with 0, report as currencyId
+					);
+					fetchResult.push(...currencyRows);
+				}
+			}
+		}
+
+		return this.transformRawResultsToDto(fetchResult, groupBy);
+	}
+
+	private async processTokenData(
+		params: {
+			startDate: Date;
+			endDate: Date;
+			groupBy: GroupByTimePeriod;
+			allowedBridgingModes: BridgingModeEnum[];
+		},
+		chain: { src: ChainEnum; dst: ChainEnum },
+		token: { tokenID: number; dbID: number; isNative: boolean },
+	) {
+		const bridgingMode = getBridgingMode(
+			chain.src,
+			chain.dst,
+			token.tokenID,
+			this.settingsService.SettingsResponse,
+		);
+
+		if (!bridgingMode || !params.allowedBridgingModes.includes(bridgingMode)) {
+			return [];
+		}
+
+		const rows = await this.getGroupByAggregatedSum(
+			params.startDate,
+			params.endDate,
+			chain.src,
+			chain.dst,
+			params.groupBy,
+			token.dbID,
+			token.isNative,
+		);
+
+		if (token.dbID !== token.tokenID) {
+			for (const row of rows) {
+				row.tokenID = token.tokenID;
+			}
+		}
+
+		return rows;
+	}
+
 	private normalizeGroupedDate(date: Date, groupBy: GroupByTimePeriod): Date {
 		switch (groupBy) {
 			case GroupByTimePeriod.Year:
@@ -321,30 +445,98 @@ export class LockedTokensService {
 		}
 	}
 
-	private async getAggregatedSum(
-		srcChain: string,
-		dstChain: string,
-		fieldName: string,
-		tokenID: number = 0,
-		isNativeToken: boolean = false,
-		status: TransactionStatusEnum = TransactionStatusEnum.ExecutedOnDestination,
-	): Promise<string> {
-		const query = this.bridgeTransactionRepository
-			.createQueryBuilder('tx')
-			.select(`SUM(tx.${fieldName})`, 'sumAll')
-			.where('tx.status = :status', { status })
-			.andWhere('tx.originChain = :srcChain', { srcChain })
-			.andWhere('tx.destinationChain = :dstChain', { dstChain })
-			.andWhere('tx.tokenID = :tokenID', { tokenID });
+	private transformRawResultsToDto(
+		rawResults: any[],
+		groupBy: GroupByTimePeriod,
+	): TransferredTokensByDay[] {
+		const groupedByDate: Record<string, TransferredTokensByDay> = {};
 
-		if (isNativeToken) {
-			query.andWhere('tx.nativeTokenAmount > 0');
-		} else {
-			query.andWhere('tx.nativeTokenAmount = 0');
+		for (const row of rawResults) {
+			const normalizedDate = this.normalizeGroupedDate(
+				new Date(row.groupedDate),
+				groupBy,
+			);
+			const dateKey = normalizedDate.toISOString();
+
+			if (!groupedByDate[dateKey]) {
+				groupedByDate[dateKey] = {
+					date: normalizedDate,
+					totalTransferred: {},
+				};
+			}
+
+			const chainResult = this.processRowData(row);
+
+			this.mergeChainResult(
+				groupedByDate[dateKey].totalTransferred,
+				row.originChain,
+				chainResult,
+			);
 		}
 
-		const { sumAll } = await query.getRawOne();
-		return sumAll;
+		return Object.values(groupedByDate).sort(
+			(a, b) => a.date.getTime() - b.date.getTime(),
+		);
+	}
+
+	private processRowData(row: any): Record<string, string> {
+		const chainResult: Record<string, string> = {};
+		const chain = row.originChain;
+
+		const tokenName = getTokenNameById(
+			this.settingsService.SettingsResponse.ecosystemTokens,
+			row.tokenID,
+		);
+
+		if (!tokenName) return chainResult;
+
+		if (row.nativeSum && Number(row.nativeSum) > 0) {
+			chainResult[tokenName] = amountToBigInt(row.nativeSum, chain).toString(
+				10,
+			);
+
+			const currencyTokenId = getCurrencyIDFromDirectionConfig(
+				this.settingsService.SettingsResponse.directionConfig,
+				chain,
+			);
+
+			const currencyName = getTokenNameById(
+				this.settingsService.SettingsResponse.ecosystemTokens,
+				currencyTokenId!,
+			);
+
+			if (currencyName) {
+				chainResult[currencyName] = amountToBigInt(row.amount, chain).toString(
+					10,
+				);
+			}
+		} else {
+			chainResult[tokenName] = amountToBigInt(row.amount, chain).toString(10);
+		}
+
+		return chainResult;
+	}
+
+	private mergeChainResult(
+		totalTransferred: Record<string, Record<string, string>>,
+		chain: string,
+		newResult: Record<string, string>,
+	): void {
+		if (!totalTransferred[chain]) {
+			totalTransferred[chain] = newResult;
+			return;
+		}
+
+		const existingData = totalTransferred[chain];
+
+		for (const [key, value] of Object.entries(newResult)) {
+			if (existingData[key]) {
+				const sum = BigInt(existingData[key]) + BigInt(value);
+				existingData[key] = sum.toString(10);
+			} else {
+				existingData[key] = value;
+			}
+		}
 	}
 
 	private async getGroupByAggregatedSum(
@@ -353,6 +545,8 @@ export class LockedTokensService {
 		srcChain: ChainEnum,
 		dstChain: ChainEnum,
 		groupBy: GroupByTimePeriod,
+		tokenID: number = 0,
+		isNativeToken: boolean = false,
 		status: TransactionStatusEnum = TransactionStatusEnum.ExecutedOnDestination,
 	): Promise<
 		Array<{
@@ -361,6 +555,7 @@ export class LockedTokensService {
 			nativeSum: string | null;
 			originChain: ChainEnum;
 			destinationChain: ChainEnum;
+			tokenID: number;
 		}>
 	> {
 		const dateExpr =
@@ -374,6 +569,7 @@ export class LockedTokensService {
 			.addSelect('SUM(tx.nativeTokenAmount)', 'nativeSum')
 			.addSelect('tx.originChain', 'originChain')
 			.addSelect('tx.destinationChain', 'destinationChain')
+			.addSelect('tx.tokenID', 'tokenID')
 			.where('tx.status = :status', { status })
 			.andWhere('tx."finishedAt" >= :start AND tx."finishedAt" < :end', {
 				start: startDate,
@@ -383,11 +579,20 @@ export class LockedTokensService {
 				'tx.originChain = :srcChain AND tx.destinationChain = :dstChain',
 				{ srcChain, dstChain },
 			)
-			.setParameter('truncUnit', groupBy.toLowerCase())
+			.andWhere('tx.tokenID = :tokenID', { tokenID });
+
+		if (isNativeToken) {
+			qb.andWhere('tx.nativeTokenAmount > 0');
+		} else {
+			qb.andWhere('tx.nativeTokenAmount = 0');
+		}
+
+		qb.setParameter('truncUnit', groupBy.toLowerCase())
 			.groupBy(dateExpr)
 			.addGroupBy('tx.originChain')
 			.addGroupBy('tx.destinationChain')
-			.orderBy(dateExpr, 'ASC');
+			.addGroupBy('tx.tokenID')
+			.orderBy('"groupedDate"', 'ASC');
 
 		return qb.getRawMany();
 	}
