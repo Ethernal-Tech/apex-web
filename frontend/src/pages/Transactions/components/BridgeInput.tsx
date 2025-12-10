@@ -512,7 +512,7 @@ const BridgeInput = ({
 
 	return (
 		<Box sx={{ width: '100%' }}>
-			<TotalBalance />
+			<TotalBalance tokenID={sourceTokenID} />
 
 			<Typography sx={{ color: 'white', mt: 4, mb: 2 }}>
 				Destination Address

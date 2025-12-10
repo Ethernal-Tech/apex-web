@@ -130,7 +130,7 @@ const TransactionDetailPage = () => {
 				</Box>
 			</Box>
 			{!!transaction && !isStatusFinal(transaction.status) && (
-				<NewTransaction txInProgress={true}>
+				<NewTransaction txInProgress={true} tokenID={realTokenID}>
 					<TransferProgress tx={transaction} />
 				</NewTransaction>
 			)}

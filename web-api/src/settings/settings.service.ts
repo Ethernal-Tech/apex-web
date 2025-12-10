@@ -4,6 +4,8 @@ import { retryForever } from 'src/utils/generalUtils';
 import {
 	BridgingSettingsDirectionConfigDto,
 	BridgingSettingsEcosystemTokenDto,
+	BridgingSettingsTokenDto,
+	BridgingSettingsTokenPairDto,
 	LayerZeroChainSettingsDto,
 	ReactorOnlySettingsResponseDto,
 	SettingsFullResponseDto,
@@ -88,7 +90,39 @@ export class SettingsService {
 		];
 		const directionConfig: {
 			[key: string]: BridgingSettingsDirectionConfigDto;
-		} = { ...skylineSettings.bridgingSettings.directionConfig };
+		} = {};
+
+		for (const srcChain of Object.keys(
+			skylineSettings.bridgingSettings.directionConfig,
+		)) {
+			if (!directionConfig[srcChain]) {
+				directionConfig[srcChain] = new BridgingSettingsDirectionConfigDto();
+			}
+
+			const dir = skylineSettings.bridgingSettings.directionConfig[srcChain];
+			for (const dstChain of Object.keys(dir.destChain)) {
+				if (!directionConfig[srcChain].destChain) {
+					directionConfig[srcChain].destChain = {};
+				}
+
+				const tokenPairs = dir.destChain[dstChain];
+
+				directionConfig[srcChain].destChain[dstChain] = tokenPairs.map(
+					(x: BridgingSettingsTokenPairDto) => ({ ...x }),
+				);
+			}
+
+			directionConfig[srcChain].tokens = Object.keys(dir.tokens).reduce(
+				(
+					acc: Record<number, BridgingSettingsTokenDto>,
+					cv: string,
+				): Record<number, BridgingSettingsTokenDto> => {
+					acc[+cv] = { ...dir.tokens[+cv] };
+					return acc;
+				},
+				{},
+			);
+		}
 
 		// convert reactor
 		const apexID = getCurrencyIDFromDirectionConfig(

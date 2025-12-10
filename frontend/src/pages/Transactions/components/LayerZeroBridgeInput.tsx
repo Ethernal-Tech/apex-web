@@ -287,7 +287,7 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 
 	return (
 		<Box sx={{ width: '100%' }}>
-			<TotalBalance />
+			<TotalBalance tokenID={sourceTokenID} />
 
 			<Box
 				sx={{

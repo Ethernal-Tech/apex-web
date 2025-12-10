@@ -59,6 +59,9 @@ function NewTransactionPage() {
 		(state: RootState) => state.accountInfo.account,
 	);
 	const settings = useSelector((state: RootState) => state.settings);
+	const newTxTokenID = useSelector(
+		(state: RootState) => state.newTx.sourceTokenID,
+	);
 
 	const isLayerZero = isLZBridging(chain, destinationChain);
 
@@ -414,7 +417,7 @@ function NewTransactionPage() {
 
 	return (
 		<BasePage>
-			<NewTransaction txInProgress={false}>
+			<NewTransaction txInProgress={false} tokenID={newTxTokenID}>
 				{isLayerZero ? (
 					<BridgeInputLZ
 						submit={handleLZSubmitCallback}

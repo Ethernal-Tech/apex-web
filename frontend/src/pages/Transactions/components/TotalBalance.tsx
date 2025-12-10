@@ -10,7 +10,11 @@ import appSettings from '../../../settings/appSettings';
 import { apexID, getCurrencyID, getTokenInfo } from '../../../settings/token';
 import { BridgingModeEnum, getBridgingMode } from '../../../settings/chain';
 
-const TotalBalance = () => {
+interface TotalBalanceProps {
+	tokenID?: number;
+}
+
+const TotalBalance = ({ tokenID }: TotalBalanceProps) => {
 	const totalDfmBalance = useSelector(
 		(state: RootState) => state.accountInfo.balance,
 	);
@@ -18,25 +22,21 @@ const TotalBalance = () => {
 		(state: RootState) => state.chain,
 	);
 	const settings = useSelector((state: RootState) => state.settings);
-	const sourceTokenID = useSelector(
-		(state: RootState) => state.newTx.sourceTokenID,
-	);
 
 	const bridgingModeInfo = getBridgingMode(
 		settings,
 		chain,
 		destinationChain,
-		sourceTokenID || 0,
+		tokenID || 0,
 	);
-	const isSkylineMode = sourceTokenID
+	const isSkylineMode = tokenID
 		? bridgingModeInfo.bridgingMode === BridgingModeEnum.Skyline
 		: appSettings.isSkyline;
 	const isLayerZeroMode =
 		bridgingModeInfo.bridgingMode === BridgingModeEnum.LayerZero;
 
 	const currencyID = getCurrencyID(settings, chain) || apexID;
-	const showToken =
-		sourceTokenID && currencyID && sourceTokenID !== currencyID;
+	const showToken = tokenID && currencyID && tokenID !== currencyID;
 
 	const currencyBalance = totalDfmBalance[currencyID]
 		? toFixed(convertDfmToApex(totalDfmBalance[currencyID], chain), 6)
@@ -44,11 +44,8 @@ const TotalBalance = () => {
 	const tokenBalance =
 		(isSkylineMode || isLayerZeroMode) &&
 		showToken &&
-		totalDfmBalance[sourceTokenID]
-			? toFixed(
-					convertDfmToApex(totalDfmBalance[sourceTokenID], chain),
-					6,
-				)
+		totalDfmBalance[tokenID]
+			? toFixed(convertDfmToApex(totalDfmBalance[tokenID], chain), 6)
 			: null;
 
 	if (isSkylineMode || isLayerZeroMode) {
@@ -173,9 +170,7 @@ const TotalBalance = () => {
 								</Box>
 							)}
 						</Typography>
-						<Typography>
-							{getTokenInfo(sourceTokenID).label}
-						</Typography>
+						<Typography>{getTokenInfo(tokenID).label}</Typography>
 					</Box>
 				)}
 			</Box>
