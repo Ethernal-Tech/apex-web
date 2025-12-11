@@ -192,6 +192,11 @@ const BridgeInput = ({
 		maxAmounts.maxByBalance,
 	);
 
+	const hasInsufficientBalance =
+		BigInt(convertApexToDfm(amount, chain)) > maxAmounts.maxByBalance;
+	const overMaxAllowed =
+		BigInt(convertApexToDfm(amount, chain)) > maxAmounts.maxByAllowed;
+
 	const onSubmit = useCallback(async () => {
 		await submit(destinationAddr, convertApexToDfm(amount || '0', chain));
 	}, [amount, destinationAddr, submit, chain]);
@@ -285,7 +290,9 @@ const BridgeInput = ({
 					disabled={
 						validatorChangeInProgress !== false ||
 						!!loadingState ||
-						BigInt(maxAmount) <= 0
+						BigInt(maxAmount) <= 0 ||
+						hasInsufficientBalance ||
+						overMaxAllowed
 					}
 					sx={{
 						gridColumn: 'span 1',
