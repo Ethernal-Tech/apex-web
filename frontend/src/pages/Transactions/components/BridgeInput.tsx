@@ -20,10 +20,9 @@ import {
 import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
 import { isCardanoChain, isEvmChain } from '../../../settings/chain';
-import { fetchAndUpdateValidatorStatusAction } from '../../../actions/validatorSetChange';
+import SubmitLoading from './SubmitLoading';
+import { SubmitLoadingState } from '../../../utils/statusUtils';
 import InfoBox from './InfoBox';
-
-const REFETCH_VSU_STATUS_MS = 30000;
 
 type BridgeInputType = {
 	bridgeTxFee: string;
@@ -36,7 +35,7 @@ type BridgeInputType = {
 		amount: string,
 	) => Promise<CreateEthTransactionResponseDto>;
 	submit: (address: string, amount: string) => Promise<void>;
-	loading?: boolean;
+	loadingState: SubmitLoadingState | undefined;
 };
 
 const calculateMaxAmount = (
@@ -86,14 +85,12 @@ const BridgeInput = ({
 	getCardanoTxFee,
 	getEthTxFee,
 	submit,
-	loading,
+	loadingState,
 }: BridgeInputType) => {
 	const [destinationAddr, setDestinationAddr] = useState('');
 	const [amount, setAmount] = useState('');
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
-	const [validatorChangeInProgress, setValidatorChangeInProgress] =
-		useState(true);
 
 	const walletUTxOs = useSelector(
 		(state: RootState) => state.accountInfo.utxos,
@@ -107,6 +104,9 @@ const BridgeInput = ({
 	);
 	const maxAmountAllowedToBridge = useSelector(
 		(state: RootState) => state.settings.maxAmountAllowedToBridge,
+	);
+	const validatorChangeInProgress = useSelector(
+		(state: RootState) => state.settings.validatorStatus,
 	);
 
 	const fetchWalletFee = useCallback(async () => {
@@ -160,28 +160,6 @@ const BridgeInput = ({
 		};
 	}, [fetchWalletFee]);
 
-	const getValidatorChangeStatus = useCallback(async () => {
-		try {
-			const isInProgress = await fetchAndUpdateValidatorStatusAction();
-			setValidatorChangeInProgress(isInProgress);
-		} catch (err) {
-			console.error('Failed to fetch validator set change status:', err);
-		}
-	}, []);
-
-	useEffect(() => {
-		getValidatorChangeStatus();
-
-		const intervalId = setInterval(
-			getValidatorChangeStatus,
-			REFETCH_VSU_STATUS_MS,
-		);
-
-		return () => {
-			clearInterval(intervalId);
-		};
-	}, [getValidatorChangeStatus]);
-
 	const onDiscard = () => {
 		setDestinationAddr('');
 		setAmount('');
@@ -230,7 +208,7 @@ const BridgeInput = ({
 				sx={{ width: '50%' }}
 				text={destinationAddr}
 				setText={setDestinationAddr}
-				disabled={loading}
+				disabled={!!loadingState}
 				id="dest-addr"
 			/>
 
@@ -249,7 +227,7 @@ const BridgeInput = ({
 					maxAmounts={maxAmounts}
 					text={amount}
 					setAmount={setAmount}
-					disabled={loading}
+					disabled={!!loadingState}
 					id="bridge-amount"
 					sx={{
 						gridColumn: 'span 1',
@@ -272,12 +250,26 @@ const BridgeInput = ({
 						borderRadius: '8px',
 						padding: 2,
 					}}
-					isFeeInformation={validatorChangeInProgress}
+					isFeeInformation={!validatorChangeInProgress}
 				/>
+
+				{!!loadingState && (
+					<Box
+						sx={{
+							gridColumn: 'span 2',
+							display: 'flex',
+							flexDirection: 'column',
+							justifyContent: 'center',
+							alignItems: 'center',
+						}}
+					>
+						<SubmitLoading loadingState={loadingState} />
+					</Box>
+				)}
 
 				<ButtonCustom
 					onClick={onDiscard}
-					disabled={loading}
+					disabled={!!loadingState}
 					variant="red"
 					sx={{
 						gridColumn: 'span 1',
@@ -291,8 +283,8 @@ const BridgeInput = ({
 					onClick={onSubmit}
 					variant="white"
 					disabled={
-						validatorChangeInProgress ||
-						loading ||
+						validatorChangeInProgress !== false ||
+						!!loadingState ||
 						BigInt(maxAmount) <= 0
 					}
 					sx={{

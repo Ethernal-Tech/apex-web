@@ -236,7 +236,7 @@ const ethCentralizedBridgingTx = (
 	value: bigint,
 	bridgingFee: bigint,
 ): CreateEthTransactionResponseDto => {
-	const to = getAppConfig().bridge.addresses.nexusBridging;
+	const to = getAppConfig().bridge.addresses.nexusCentralizedBridging;
 	if (!to) {
 		throw new BadRequestException('Empty to address');
 	}
