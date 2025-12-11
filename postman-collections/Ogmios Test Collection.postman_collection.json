@@ -1,10 +1,10 @@
 {
 	"info": {
-		"_postman_id": "fac7721c-1eee-4868-a658-ce44c5804cd0",
+		"_postman_id": "4e9bbdf8-ae43-4610-b583-68f474b8e7f5",
 		"name": "Ogmios Test Collection",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "50162718",
-		"_collection_link": "https://nikola-jovicevic-760450.postman.co/workspace/Nikola-Jovicevic's-Workspace~670737d6-2e4a-43d2-8b80-709aba6fd580/collection/50162718-fac7721c-1eee-4868-a658-ce44c5804cd0?action=share&source=collection_link&creator=50162718"
+		"_exporter_id": "50715205",
+		"_collection_link": "https://zoltan-babinski-6513521.postman.co/workspace/Zoltan-Babinski's-Workspace~6397d4ec-10c6-4750-8c5f-7025d4f152b1/collection/50715205-4e9bbdf8-ae43-4610-b583-68f474b8e7f5?action=share&source=collection_link&creator=50715205"
 	},
 	"item": [
 		{
@@ -58,7 +58,7 @@
 					"response": []
 				},
 				{
-					"name": "GetTip",
+					"name": "GetBlockHeight",
 					"event": [
 						{
 							"listen": "test",
@@ -89,6 +89,55 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"queryNetwork/blockHeight\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ogmios_base_url}}",
+							"host": [
+								"{{ogmios_base_url}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetTip",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Tip OK\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.result).to.be.a(\"object\");",
+									"    pm.expect(json.result.slot).to.be.a(\"number\");",
+									"    pm.expect(json.result.id).to.be.a(\"string\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"queryLedgerState/tip\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
