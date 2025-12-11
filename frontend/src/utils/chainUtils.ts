@@ -1,10 +1,8 @@
-import Web3 from 'web3';
 import { CardanoAddress } from '../features/Address/interfaces';
 import { CardanoNetworkType } from '../features/Address/types';
 import { ApexBridgeNetwork } from '../features/enums';
 import appSettings from '../settings/appSettings';
-import { getBridgingMode, isEvmChain } from '../settings/chain';
-import { ISettingsState } from '../settings/settingsRedux';
+import { isEvmChain } from '../settings/chain';
 import {
 	BridgeTransactionDto,
 	ChainEnum,
@@ -318,36 +316,4 @@ export const getExplorerAddressUrl = (
 	}
 
 	return url;
-};
-
-export const LovelaceTokenName = 'lovelace';
-
-export const getTokenNameFromSettings = (
-	srcChain: ChainEnum,
-	dstChain: ChainEnum,
-	settings: ISettingsState,
-): string => {
-	const bridgingModeInfo = getBridgingMode(srcChain, dstChain, settings);
-	if (
-		!bridgingModeInfo.settings ||
-		!bridgingModeInfo.settings.cardanoChainsNativeTokens ||
-		!(srcChain in bridgingModeInfo.settings.cardanoChainsNativeTokens)
-	) {
-		return '';
-	}
-
-	for (const item of bridgingModeInfo.settings.cardanoChainsNativeTokens[
-		srcChain
-	]) {
-		if (item.dstChainID === dstChain) {
-			const subs = item.tokenName.split('.');
-			if (subs.length !== 2) {
-				return item.tokenName;
-			}
-
-			return subs[0] + new Web3().utils.toHex(subs[1]).substring(2);
-		}
-	}
-
-	return '';
 };

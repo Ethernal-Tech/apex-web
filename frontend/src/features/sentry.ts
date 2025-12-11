@@ -57,9 +57,7 @@ async function initSentryFull() {
 }
 
 export function captureException(err: any, context: any = {}) {
-	Sentry.captureException(err, {
-		tags: context,
-	});
+	Sentry.captureException(err, context);
 }
 
 export function captureAndThrowError(

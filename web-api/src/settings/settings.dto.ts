@@ -9,8 +9,87 @@ import {
 	IsPositive,
 	ValidateNested,
 } from 'class-validator';
-import { ChainEnum, TokenEnum, TxTypeEnum } from 'src/common/enum';
+import { ChainEnum, TxTypeEnum } from 'src/common/enum';
 
+export class BridgingSettingsTokenPairDto {
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Source Token ID',
+	})
+	srcTokenID: number;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Destination Token ID',
+	})
+	dstTokenID: number;
+}
+
+export class BridgingSettingsTokenDto {
+	@IsNotEmpty()
+	@ApiProperty({
+		description:
+			'For Cardano policyID.name. For eth, its the erc20 contract address',
+	})
+	chainSpecific: string;
+
+	@ApiProperty({
+		description: 'Specifies the mechanism of bridge handling of this token',
+	})
+	lockUnlock: boolean;
+
+	@ApiProperty({
+		description: 'Specifies if this token is a wrapped currency',
+	})
+	isWrappedCurrency: boolean;
+}
+
+@ApiExtraModels(BridgingSettingsTokenPairDto, BridgingSettingsTokenDto)
+export class BridgingSettingsDirectionConfigDto {
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@ApiProperty({
+		description: 'Token pairs',
+		type: Object,
+		additionalProperties: {
+			type: 'array',
+			items: { $ref: getSchemaPath(BridgingSettingsTokenPairDto) },
+		},
+	})
+	destChain: { [key: string]: BridgingSettingsTokenPairDto[] };
+
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@ApiProperty({
+		description: 'For each tokenID (key), the definition of the token',
+		type: Object,
+		additionalProperties: {
+			$ref: getSchemaPath(BridgingSettingsTokenDto),
+		},
+	})
+	tokens: Record<number, BridgingSettingsTokenDto>;
+}
+
+export class BridgingSettingsEcosystemTokenDto {
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'ID of the token',
+	})
+	id: number;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Name of the token',
+	})
+	name: string;
+}
+
+@ApiExtraModels(
+	BridgingSettingsDirectionConfigDto,
+	BridgingSettingsEcosystemTokenDto,
+)
 export class BridgingSettingsDto {
 	@IsNotEmpty()
 	@IsPositive()
@@ -73,6 +152,77 @@ export class BridgingSettingsDto {
 	@IsNotEmpty()
 	@IsPositive()
 	@ApiProperty({
+		description: 'Minimum amount of colored tokens allowed to be bridged',
+	})
+	minColCoinsAllowedToBridge: number;
+
+	@IsNotEmpty()
+	@IsPositive()
+	@ApiProperty({
+		description: 'Maximum number of receivers allowed in a bridging request',
+	})
+	maxReceiversPerBridgingRequest: number;
+
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@ApiProperty({
+		description:
+			'For each chain, the configuration of tokens and bridging directions',
+		type: Object,
+		additionalProperties: {
+			$ref: getSchemaPath(BridgingSettingsDirectionConfigDto),
+		},
+	})
+	directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto };
+
+	@IsNotEmpty()
+	@IsArray()
+	@ValidateNested()
+	@ApiProperty({
+		description: 'Ecosystem tokens',
+		isArray: true,
+		type: BridgingSettingsEcosystemTokenDto,
+	})
+	ecosystemTokens: BridgingSettingsEcosystemTokenDto[];
+}
+
+export class ReactorOnlyBridgingSettingsDto {
+	@IsNotEmpty()
+	@IsPositive()
+	@ApiProperty({
+		description:
+			'For each chain, the minimum fee required to cover the submission of the currency transaction on the destination chain',
+		type: Object,
+		additionalProperties: { type: 'number' },
+	})
+	minChainFeeForBridging: { [key: string]: number };
+
+	@IsNotEmpty()
+	@IsPositive()
+	@ApiProperty({
+		description: 'For each chain, the minimum allowed UTXO value',
+		type: Object,
+		additionalProperties: { type: 'number' },
+	})
+	minUtxoChainValue: { [key: string]: number };
+
+	@IsNotEmpty()
+	@IsPositive()
+	@ApiProperty({
+		description: 'Minimum value allowed to be bridged',
+	})
+	minValueToBridge: number;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Maximum amount of currency allowed to be bridged',
+	})
+	maxAmountAllowedToBridge: string;
+
+	@IsNotEmpty()
+	@IsPositive()
+	@ApiProperty({
 		description: 'Maximum number of receivers allowed in a bridging request',
 	})
 	maxReceiversPerBridgingRequest: number;
@@ -88,25 +238,42 @@ export class BridgingSettingsDto {
 	allowedDirections: { [key: string]: string[] };
 }
 
-export class NativeTokenDto {
+@ApiExtraModels(ReactorOnlyBridgingSettingsDto)
+export class ReactorOnlySettingsResponseDto {
 	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@Type(() => ReactorOnlyBridgingSettingsDto)
 	@ApiProperty({
-		description: 'Destination chain ID',
+		description: 'Settings for bridge',
+		type: ReactorOnlyBridgingSettingsDto,
 	})
-	dstChainID: string;
+	bridgingSettings: ReactorOnlyBridgingSettingsDto;
 
 	@IsNotEmpty()
 	@ApiProperty({
-		description: 'Native token name',
+		description: 'Participating chains in the bridge',
 	})
-	tokenName: string;
+	enabledChains: string[];
+}
 
+@ApiExtraModels(BridgingSettingsDto)
+export class SettingsResponseDto {
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@Type(() => BridgingSettingsDto)
 	@ApiProperty({
-		description: 'Token identifier',
-		enum: TokenEnum,
-		enumName: 'TokenEnum',
+		description: 'Settings for bridge',
+		type: BridgingSettingsDto,
 	})
-	token: TokenEnum;
+	bridgingSettings: BridgingSettingsDto;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Participating chains in the bridge',
+	})
+	enabledChains: string[];
 }
 
 export class LayerZeroChainSettingsDto {
@@ -142,45 +309,6 @@ export class LayerZeroChainSettingsDto {
 	txType: TxTypeEnum;
 }
 
-@ApiExtraModels(NativeTokenDto, BridgingSettingsDto)
-export class SettingsResponseDto {
-	@IsNotEmpty()
-	@ApiProperty({
-		description: 'Specifies the current operating mode of the application',
-	})
-	runMode: string;
-
-	@IsNotEmpty()
-	@IsObject()
-	@ApiProperty({
-		description:
-			'For each source chain, defines the native token that will be received on the destination chain',
-		type: Object,
-		additionalProperties: {
-			type: 'array',
-			items: { $ref: getSchemaPath(NativeTokenDto) },
-		},
-	})
-	cardanoChainsNativeTokens: {
-		[key: string]: NativeTokenDto[];
-	};
-
-	@IsNotEmpty()
-	@ValidateNested()
-	@Type(() => BridgingSettingsDto)
-	@ApiProperty({
-		description: 'Settings for bridge',
-		type: BridgingSettingsDto,
-	})
-	bridgingSettings: BridgingSettingsDto;
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description: 'Participating chains in the bridge',
-	})
-	enabledChains: string[];
-}
-
 @ApiExtraModels(SettingsResponseDto, LayerZeroChainSettingsDto)
 export class SettingsFullResponseDto {
 	@IsNotEmpty()
@@ -190,17 +318,6 @@ export class SettingsFullResponseDto {
 		additionalProperties: { $ref: getSchemaPath(SettingsResponseDto) },
 	})
 	settingsPerMode: { [key: string]: SettingsResponseDto };
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description: 'All allowed directions',
-		type: 'object',
-		additionalProperties: {
-			type: 'array',
-			items: { type: 'string' },
-		},
-	})
-	allowedDirections: { [key: string]: string[] };
 
 	@IsNotEmpty()
 	@IsArray()
@@ -217,6 +334,29 @@ export class SettingsFullResponseDto {
 		description: 'Participating chains in the bridge',
 	})
 	enabledChains: string[];
+
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@ApiProperty({
+		description:
+			'For each chain, the configuration of tokens and bridging directions',
+		type: Object,
+		additionalProperties: {
+			$ref: getSchemaPath(BridgingSettingsDirectionConfigDto),
+		},
+	})
+	directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto };
+
+	@IsNotEmpty()
+	@IsArray()
+	@ValidateNested()
+	@ApiProperty({
+		description: 'Ecosystem tokens',
+		isArray: true,
+		type: BridgingSettingsEcosystemTokenDto,
+	})
+	ecosystemTokens: BridgingSettingsEcosystemTokenDto[];
 }
 
 export class AllBridgingAddressesDto {

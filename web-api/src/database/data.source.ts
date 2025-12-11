@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { getAppConfig } from 'src/appConfig/appConfig';
+import { getAppConfig } from '../appConfig/appConfig';
 import { DataSource, DataSourceOptions } from 'typeorm';
 
 // Load env file

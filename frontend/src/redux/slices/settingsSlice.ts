@@ -3,47 +3,57 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import appSettings from '../../settings/appSettings';
 import {
 	AllBridgingAddressesDto,
+	BridgingSettingsDto,
 	SettingsFullResponseDto,
+	SettingsResponseDto,
 } from '../../swagger/apexBridgeApiService';
-import {
-	ISettingsState,
-	LayerZeroChains,
-	SettingsPerMode,
-} from '../../settings/settingsRedux';
+import { ISettingsState, LayerZeroChains } from '../../settings/settingsRedux';
 import { BridgingModeEnum } from '../../settings/chain';
 
 const initialState: ISettingsState = {
 	settingsPerMode: {
-		[BridgingModeEnum.Skyline]: {
-			minUtxoChainValue: appSettings.minUtxoChainValue,
-			minChainFeeForBridging: appSettings.minChainFeeForBridging,
-			minChainFeeForBridgingTokens: appSettings.minChainFeeForBridging,
-			minOperationFee: appSettings.minOperationFee,
-			maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,
-			maxTokenAmountAllowedToBridge:
-				appSettings.maxTokenAmountAllowedToBridge,
-			minValueToBridge: appSettings.minValueToBridge,
-			cardanoChainsNativeTokens: {},
-			allowedDirections: {},
-		},
-		[BridgingModeEnum.Reactor]: {
-			minUtxoChainValue: appSettings.minUtxoChainValue,
-			minChainFeeForBridging: appSettings.minChainFeeForBridging,
-			minChainFeeForBridgingTokens: appSettings.minChainFeeForBridging,
-			minOperationFee: appSettings.minOperationFee,
-			maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,
-			maxTokenAmountAllowedToBridge:
-				appSettings.maxTokenAmountAllowedToBridge,
-			minValueToBridge: appSettings.minValueToBridge,
-			cardanoChainsNativeTokens: {},
-			allowedDirections: {},
-		},
+		[BridgingModeEnum.Skyline]: new SettingsResponseDto({
+			bridgingSettings: new BridgingSettingsDto({
+				minUtxoChainValue: appSettings.minUtxoChainValue,
+				minChainFeeForBridging: appSettings.minChainFeeForBridging,
+				minChainFeeForBridgingTokens:
+					appSettings.minChainFeeForBridging,
+				minOperationFee: appSettings.minOperationFee,
+				maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,
+				maxTokenAmountAllowedToBridge:
+					appSettings.maxTokenAmountAllowedToBridge,
+				minValueToBridge: appSettings.minValueToBridge,
+				minColCoinsAllowedToBridge:
+					appSettings.minColCoinsAllowedToBridge,
+				maxReceiversPerBridgingRequest: 0,
+				directionConfig: {},
+				ecosystemTokens: [],
+			}),
+			enabledChains: [],
+		}),
+		[BridgingModeEnum.Reactor]: new SettingsResponseDto({
+			bridgingSettings: new BridgingSettingsDto({
+				minUtxoChainValue: appSettings.minUtxoChainValue,
+				minChainFeeForBridging: appSettings.minChainFeeForBridging,
+				minChainFeeForBridgingTokens: {},
+				minOperationFee: {},
+				maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,
+				maxTokenAmountAllowedToBridge: '0',
+				minValueToBridge: appSettings.minValueToBridge,
+				minColCoinsAllowedToBridge: 0,
+				maxReceiversPerBridgingRequest: 0,
+				directionConfig: {},
+				ecosystemTokens: [],
+			}),
+			enabledChains: [],
+		}),
 	},
-	enabledChains: appSettings.enabledChains,
-	allowedDirections: {},
 	layerZeroChains: {},
+	enabledChains: appSettings.enabledChains,
+	directionConfig: {},
+	ecosystemTokens: [],
 	bridgingAddresses: [],
-	reactorValidatorStatus: true,
+	reactorValidatorStatus: undefined,
 };
 
 const settingsSlice = createSlice({
@@ -54,8 +64,10 @@ const settingsSlice = createSlice({
 			state,
 			action: PayloadAction<SettingsFullResponseDto>,
 		) => {
+			state.ecosystemTokens = action.payload.ecosystemTokens;
+			state.directionConfig = action.payload.directionConfig;
 			state.enabledChains = action.payload.enabledChains;
-			state.allowedDirections = action.payload.allowedDirections;
+			state.settingsPerMode = action.payload.settingsPerMode;
 			state.layerZeroChains =
 				action.payload.layerZeroChains.reduce<LayerZeroChains>(
 					(acc, cfg) => {
@@ -69,67 +81,6 @@ const settingsSlice = createSlice({
 					},
 					{},
 				);
-			state.settingsPerMode = Object.entries(
-				action.payload.settingsPerMode,
-			).reduce(
-				(acc, [mode, modeSettings]) => {
-					acc[mode] = {
-						minUtxoChainValue: Object.entries(
-							modeSettings.bridgingSettings.minUtxoChainValue,
-						).reduce(
-							(acc, [key, value]) => {
-								acc[key] = value.toString();
-								return acc;
-							},
-							{} as { [key: string]: string },
-						),
-						minChainFeeForBridging: Object.entries(
-							modeSettings.bridgingSettings
-								.minChainFeeForBridging,
-						).reduce(
-							(acc, [key, value]) => {
-								acc[key] = value.toString();
-								return acc;
-							},
-							{} as { [key: string]: string },
-						),
-						minChainFeeForBridgingTokens: Object.entries(
-							modeSettings.bridgingSettings
-								.minChainFeeForBridgingTokens || [],
-						).reduce(
-							(acc, [key, value]) => {
-								acc[key] = value.toString();
-								return acc;
-							},
-							{} as { [key: string]: string },
-						),
-						minOperationFee: Object.entries(
-							modeSettings.bridgingSettings.minOperationFee || {},
-						).reduce(
-							(acc, [key, value]) => {
-								acc[key] = value.toString();
-								return acc;
-							},
-							{} as { [key: string]: string },
-						),
-						maxAmountAllowedToBridge:
-							modeSettings.bridgingSettings
-								.maxAmountAllowedToBridge,
-						maxTokenAmountAllowedToBridge:
-							modeSettings.bridgingSettings
-								.maxTokenAmountAllowedToBridge,
-						minValueToBridge:
-							modeSettings.bridgingSettings.minValueToBridge.toString(),
-						cardanoChainsNativeTokens:
-							modeSettings.cardanoChainsNativeTokens,
-						allowedDirections:
-							modeSettings.bridgingSettings.allowedDirections,
-					};
-
-					return acc;
-				},
-				{} as { [key: string]: SettingsPerMode },
-			);
 		},
 		setBridgingAddressesAction: (
 			state,
