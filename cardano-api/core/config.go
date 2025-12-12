@@ -197,11 +197,13 @@ func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig,
 	return nil, nil
 }
 
-func (appConfig AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]sendtx.ChainConfig, error) {
+func (appConfig *AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]sendtx.ChainConfig, error) {
 	result := make(map[string]sendtx.ChainConfig, len(appConfig.CardanoChains)+len(appConfig.EthChains))
 
+	appConfig.cardanoChainsMu.RLock()
+
 	for chainID, cardanoConfig := range appConfig.CardanoChains {
-		cfg, err := cardanoConfig.ToSendTxChainConfig(&appConfig, useFallback)
+		cfg, err := cardanoConfig.ToSendTxChainConfig(appConfig, useFallback)
 		if err != nil {
 			return nil, err
 		}
@@ -209,8 +211,10 @@ func (appConfig AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]se
 		result[chainID] = cfg
 	}
 
+	appConfig.cardanoChainsMu.RUnlock()
+
 	for chainID, config := range appConfig.EthChains {
-		result[chainID] = config.ToSendTxChainConfig(&appConfig)
+		result[chainID] = config.ToSendTxChainConfig(appConfig)
 	}
 
 	return result, nil

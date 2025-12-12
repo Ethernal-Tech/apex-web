@@ -123,11 +123,6 @@ func (c *CardanoTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 		return
 	}
 
-	var amount uint64
-	for _, transaction := range requestBody.Transactions {
-		amount += transaction.Amount
-	}
-
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		response.NewFullBridgingTxResponse(txInfo.TxRaw, txInfo.TxHash, requestBody.BridgingFee), c.logger)
