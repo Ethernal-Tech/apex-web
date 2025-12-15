@@ -107,6 +107,8 @@ export class BridgeTransactionService {
 					ChainEnum.Nexus,
 				]);
 			}
+
+			where.tokenID = 0;
 		}
 
 		const page = model.page || 0;
@@ -194,7 +196,7 @@ export class BridgeTransactionService {
 							);
 							if (!tokenID) {
 								Logger.error(
-									`failed to get real tokenID for chain: ${entity.originChain} ${entity.sourceTxHash}`,
+									`failed to get real tokenID for entity: ${entity.originChain} ${entity.sourceTxHash}`,
 								);
 
 								return;
