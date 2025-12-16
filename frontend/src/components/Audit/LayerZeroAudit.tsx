@@ -28,7 +28,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 	const { layerZeroChains } = useSelector(
 		(state: RootState) => state.settings,
 	);
-	const address = layerZeroChains[ChainEnum.Nexus].oftAddress;
+	const address = layerZeroChains[ChainEnum.Nexus]?.oftAddress;
 
 	return (
 		<Box className="skyline-bridge-section layerzero">
@@ -44,25 +44,27 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 									<Typography>
 										{getTokenInfo(apexID).label}
 									</Typography>
-									<Tooltip title="Open in explorer">
-										<Link
-											href={getExplorerAddressUrl(
-												ChainEnum.Nexus,
-												address,
-												true,
-											)}
-											target="_blank"
-											rel="noreferrer"
-										>
-											<LaunchIcon
-												sx={{
-													marginLeft: '6px',
-													fontSize: '20px',
-													color: 'white',
-												}}
-											/>
-										</Link>
-									</Tooltip>
+									{!!address && (
+										<Tooltip title="Open in explorer">
+											<Link
+												href={getExplorerAddressUrl(
+													ChainEnum.Nexus,
+													address,
+													true,
+												)}
+												target="_blank"
+												rel="noreferrer"
+											>
+												<LaunchIcon
+													sx={{
+														marginLeft: '6px',
+														fontSize: '20px',
+														color: 'white',
+													}}
+												/>
+											</Link>
+										</Tooltip>
+									)}
 								</Box>
 								<Typography className="audit-amount">
 									{formatBigIntDecimalString(
