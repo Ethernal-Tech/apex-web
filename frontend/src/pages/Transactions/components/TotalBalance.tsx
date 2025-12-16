@@ -112,6 +112,7 @@ const TotalBalance = ({ tokenID }: TotalBalanceProps) => {
 							display: 'flex',
 							justifyContent: 'space-between',
 							alignItems: 'center',
+							overflow: 'hidden',
 						}}
 					>
 						<Typography>
@@ -135,7 +136,7 @@ const TotalBalance = ({ tokenID }: TotalBalanceProps) => {
 								</Box>
 							)}
 						</Typography>
-						<Typography>
+						<Typography sx={{ ml: 1 }}>
 							{getTokenInfo(currencyID).label}
 						</Typography>
 					</Box>
@@ -147,6 +148,7 @@ const TotalBalance = ({ tokenID }: TotalBalanceProps) => {
 							display: 'flex',
 							justifyContent: 'space-between',
 							alignItems: 'center',
+							overflow: 'hidden',
 						}}
 					>
 						<Typography>
@@ -170,7 +172,9 @@ const TotalBalance = ({ tokenID }: TotalBalanceProps) => {
 								</Box>
 							)}
 						</Typography>
-						<Typography>{getTokenInfo(tokenID).label}</Typography>
+						<Typography sx={{ ml: 1 }}>
+							{getTokenInfo(tokenID).label}
+						</Typography>
 					</Box>
 				)}
 			</Box>

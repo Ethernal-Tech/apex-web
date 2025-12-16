@@ -1,5 +1,4 @@
 import { Box, SelectChangeEvent, Typography } from '@mui/material';
-import TotalBalance from '../components/TotalBalance';
 import PasteTextInput from '../components/PasteTextInput';
 import PasteApexAmountInput from './PasteApexAmountInput';
 import ButtonCustom from '../../../components/Buttons/ButtonCustom';
@@ -287,15 +286,12 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 
 	return (
 		<Box sx={{ width: '100%' }}>
-			<TotalBalance tokenID={sourceTokenID} />
-
 			<Box
 				sx={{
 					display: 'grid',
 					gridTemplateColumns: '1fr 1fr',
 					gap: 2,
 					width: '100%',
-					mt: 4,
 				}}
 			>
 				{/* Destination address */}

@@ -22,11 +22,14 @@ export const getReactorValidatorChangeStatus = async (
 	} catch (e) {
 		if (e instanceof AxiosError) {
 			Logger.error(
-				`Error while getBridgingRequestStates: ${e}. response: ${JSON.stringify(e.response?.data)}`,
+				`Error while getReactorValidatorChangeStatus: ${e}. response: ${JSON.stringify(e.response?.data)}`,
 				e.stack,
 			);
 		} else {
-			Logger.error(`Error while getBridgingRequestStates: ${e}`, e.stack);
+			Logger.error(
+				`Error while getReactorValidatorChangeStatus: ${e}`,
+				e.stack,
+			);
 		}
 		return false;
 	}

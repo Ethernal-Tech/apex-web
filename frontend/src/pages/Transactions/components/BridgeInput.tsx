@@ -1,5 +1,4 @@
 import { Box, SelectChangeEvent, Typography } from '@mui/material';
-import TotalBalance from '../components/TotalBalance';
 import PasteTextInput from '../components/PasteTextInput';
 import PasteApexAmountInput from './PasteApexAmountInput';
 import FeeInformation from '../components/FeeInformation';
@@ -512,9 +511,7 @@ const BridgeInput = ({
 
 	return (
 		<Box sx={{ width: '100%' }}>
-			<TotalBalance tokenID={sourceTokenID} />
-
-			<Typography sx={{ color: 'white', mt: 4, mb: 2 }}>
+			<Typography sx={{ color: 'white', mb: 2 }}>
 				Destination Address
 			</Typography>
 			{/* validate inputs */}
