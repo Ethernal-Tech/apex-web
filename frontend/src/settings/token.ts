@@ -9,6 +9,7 @@ import {
 	BridgingSettingsEcosystemTokenDto,
 	BridgingSettingsTokenDto,
 } from '../swagger/apexBridgeApiService';
+import appSettings from './appSettings';
 
 export const LovelaceTokenName = 'lovelace';
 
@@ -29,6 +30,14 @@ export const adaID = 2;
 export const capexID = 3;
 export const xadaID = 4;
 const myTestTokenID = 5;
+const tokN2ID = 6;
+const tokN3ID = 7;
+const tokC1ID = 8;
+const tokC2ID = 9;
+const tokC3ID = 10;
+const tokV1ID = 11;
+const tokV2ID = 12;
+const tokV3ID = 13;
 
 export const ethID = 1000001;
 export const bapexID = 1000002;
@@ -42,7 +51,112 @@ const unknownTokenInfo: TokenInfo = {
 	borderColor: 'transparent',
 };
 
-const tokenInfos: Record<number, TokenInfo> = {
+const testnetTokenInfos: Record<number, TokenInfo> = {
+	[apexID]: {
+		tokenID: apexID,
+		icon: ApexIcon,
+		label: 'AP3X',
+		borderColor: '#077368',
+	},
+	[adaID]: {
+		tokenID: adaID,
+		icon: AdaIcon,
+		label: 'ADA',
+		borderColor: '#077368',
+	},
+	[capexID]: {
+		tokenID: capexID,
+		icon: ApexIcon,
+		label: 'cAP3X',
+		borderColor: '#0538AF',
+	},
+	[xadaID]: {
+		tokenID: xadaID,
+		icon: AdaIcon,
+		label: 'xADA',
+		borderColor: '#0538AF',
+	},
+	[myTestTokenID]: {
+		tokenID: myTestTokenID,
+		icon: UnknownTokenIcon,
+		label: 'myTestToken',
+		borderColor: '#0538AF',
+	},
+	[tokN2ID]: {
+		tokenID: tokN2ID,
+		icon: UnknownTokenIcon,
+		label: 'TokN2',
+		borderColor: '#0538AF',
+	},
+	[tokN3ID]: {
+		tokenID: tokN3ID,
+		icon: UnknownTokenIcon,
+		label: 'TokN3',
+		borderColor: '#0538AF',
+	},
+	[tokC1ID]: {
+		tokenID: tokC1ID,
+		icon: UnknownTokenIcon,
+		label: 'TokC1',
+		borderColor: '#0538AF',
+	},
+	[tokC2ID]: {
+		tokenID: tokC2ID,
+		icon: UnknownTokenIcon,
+		label: 'TokC2',
+		borderColor: '#0538AF',
+	},
+	[tokC3ID]: {
+		tokenID: tokC3ID,
+		icon: UnknownTokenIcon,
+		label: 'TokC3',
+		borderColor: '#0538AF',
+	},
+	[tokV1ID]: {
+		tokenID: tokV1ID,
+		icon: UnknownTokenIcon,
+		label: 'TokV1',
+		borderColor: '#0538AF',
+	},
+	[tokV2ID]: {
+		tokenID: tokV2ID,
+		icon: UnknownTokenIcon,
+		label: 'TokV2',
+		borderColor: '#0538AF',
+	},
+	[tokV3ID]: {
+		tokenID: tokV3ID,
+		icon: UnknownTokenIcon,
+		label: 'TokV3',
+		borderColor: '#0538AF',
+	},
+	[ethID]: {
+		tokenID: ethID,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	[bapexID]: {
+		tokenID: bapexID,
+		icon: ApexIcon,
+		label: 'bAP3X',
+		borderColor: '#8A92B2',
+	},
+	[bnapexID]: {
+		tokenID: bnapexID,
+		icon: ApexIcon,
+		label: 'bnAP3X',
+		borderColor: '#F3BA2F',
+	},
+	[bnbID]: {
+		tokenID: bnbID,
+		icon: UnknownTokenIcon,
+		label: 'BNB',
+		borderColor: '#F3BA2F',
+	},
+};
+
+const mainnetTokenInfos: Record<number, TokenInfo> = {
 	[apexID]: {
 		tokenID: apexID,
 		icon: ApexIcon,
@@ -101,6 +215,10 @@ const tokenInfos: Record<number, TokenInfo> = {
 
 export const getTokenInfo = (tokenID: number | undefined): TokenInfo => {
 	if (!tokenID) return unknownTokenInfo;
+
+	const tokenInfos = appSettings.isMainnet
+		? mainnetTokenInfos
+		: testnetTokenInfos;
 
 	return tokenInfos[tokenID] || unknownTokenInfo;
 };
