@@ -734,10 +734,12 @@ func (c *SkylineTxControllerImpl) getAddressToBridgeTo(
 	// Choose address with the lowest lovelace balance
 	choosenIdx, lowestBalance := uint8(0), uint64(math.MaxUint64)
 
-	for i, address := range addressesResponse.Addresses {
-		utxos, err := txProvider.GetUtxos(ctx, address)
+	for i, addr := range addressesResponse.Addresses {
+		utxos, err := infracommon.ExecuteWithRetry(ctx, func(ctx context.Context) ([]wallet.Utxo, error) {
+			return txProvider.GetUtxos(ctx, addr)
+		})
 		if err != nil {
-			return "", fmt.Errorf("failed to retrieve utxos for %s: %w", address, err)
+			return "", fmt.Errorf("failed to retrieve utxos for %s: %w", addr, err)
 		}
 
 		sum := uint64(0)
