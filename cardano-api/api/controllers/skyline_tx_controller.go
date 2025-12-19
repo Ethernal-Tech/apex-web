@@ -407,7 +407,7 @@ func (c *SkylineTxControllerImpl) createTx(
 			SenderAddr:             requestBody.SenderAddr,
 			SenderAddrPolicyScript: requestBody.SenderAddrPolicyScript,
 			Receivers:              receivers,
-			BridgingAddress:        bridgingAddress.Address,
+			BridgingAddress:        bridgingAddress,
 			BridgingFee:            requestBody.BridgingFee,
 			OperationFee:           requestBody.OperationFee,
 		},
@@ -697,34 +697,38 @@ func (c *SkylineTxControllerImpl) getAddressToBridgeTo(
 	ctx context.Context,
 	currencyID uint16,
 	requestBody commonRequest.CreateBridgingTxRequest,
-) (*commonResponse.BridgingAddressResponse, error) {
+) (string, error) {
 	chainID := requestBody.SourceChainID
 	containsNativeTokens := utils.ContainsNativeTokens(currencyID, requestBody)
 
 	if c.appConfig.SkylineBridgingSettings.UseOracleForBridgingAddressRetrieval {
-		return utils.GetAddressToBridgeTo(
+		response, err := utils.GetAddressToBridgeTo(
 			ctx,
 			c.appConfig.OracleAPI.URL,
 			c.appConfig.OracleAPI.APIKey,
 			chainID,
 			containsNativeTokens,
 		)
+		if err != nil {
+			return "", err
+		}
+
+		return response.Address, nil
 	}
 
 	addressesResponse, err := utils.GetAllBridgingAddress(
 		ctx, c.appConfig.OracleAPI.URL, c.appConfig.OracleAPI.APIKey, chainID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve bridging addresses: %w", err)
+		return "", fmt.Errorf("failed to retrieve bridging addresses: %w", err)
 	}
 
 	if containsNativeTokens {
-		return commonResponse.NewBridgingAddressResponse(
-			chainID, 0, addressesResponse.Addresses[0]), nil
+		return addressesResponse.Addresses[0], nil
 	}
 
 	txProvider, err := c.appConfig.CardanoChains[chainID].ChainSpecific.CreateTxProvider()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create tx provider: %w", err)
+		return "", fmt.Errorf("failed to create tx provider: %w", err)
 	}
 
 	// Choose address with the lowest cUTXO balance
@@ -733,7 +737,7 @@ func (c *SkylineTxControllerImpl) getAddressToBridgeTo(
 	for i, address := range addressesResponse.Addresses {
 		utxos, err := txProvider.GetUtxos(ctx, address)
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve utxos for %s: %w", address, err)
+			return "", fmt.Errorf("failed to retrieve utxos for %s: %w", address, err)
 		}
 
 		sum := uint64(0)
@@ -746,9 +750,7 @@ func (c *SkylineTxControllerImpl) getAddressToBridgeTo(
 		}
 	}
 
-	return commonResponse.NewBridgingAddressResponse(
-		chainID, choosenIdx, addressesResponse.Addresses[choosenIdx],
-	), nil
+	return addressesResponse.Addresses[choosenIdx], nil
 }
 
 func normalizeAddr(addr string) string {
