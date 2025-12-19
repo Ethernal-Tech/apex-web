@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"net/http"
 	"strings"
@@ -211,6 +212,10 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		return fmt.Errorf("destination chain not registered: %v", requestBody.DestinationChainID)
 	}
 
+	if len(requestBody.Transactions) == 0 {
+		return fmt.Errorf("no receivers in metadata: %v", requestBody)
+	}
+
 	if len(requestBody.Transactions) > c.appConfig.SkylineBridgingSettings.MaxReceiversPerBridgingRequest {
 		return fmt.Errorf("number of receivers in metadata greater than maximum allowed - no: %v, max: %v, requestBody: %v",
 			len(requestBody.Transactions), c.appConfig.SkylineBridgingSettings.MaxReceiversPerBridgingRequest, requestBody)
@@ -384,13 +389,7 @@ func (c *SkylineTxControllerImpl) createTx(
 ) {
 	cacheUtxosTransformer := utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher)
 
-	bridgingAddress, err := utils.GetAddressToBridgeTo(
-		ctx,
-		c.appConfig.OracleAPI.URL,
-		c.appConfig.OracleAPI.APIKey,
-		requestBody.SourceChainID,
-		utils.ContainsNativeTokens(currencyID, requestBody),
-	)
+	bridgingAddress, err := c.getAddressToBridgeTo(ctx, currencyID, requestBody)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -692,6 +691,64 @@ func (c *SkylineTxControllerImpl) getBridgingAddresses(w http.ResponseWriter, r 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		bridgingAddresses, c.logger)
+}
+
+func (c *SkylineTxControllerImpl) getAddressToBridgeTo(
+	ctx context.Context,
+	currencyID uint16,
+	requestBody commonRequest.CreateBridgingTxRequest,
+) (*commonResponse.BridgingAddressResponse, error) {
+	chainID := requestBody.SourceChainID
+	containsNativeTokens := utils.ContainsNativeTokens(currencyID, requestBody)
+
+	if c.appConfig.SkylineBridgingSettings.UseOracleForBridgingAddressRetrieval {
+		return utils.GetAddressToBridgeTo(
+			ctx,
+			c.appConfig.OracleAPI.URL,
+			c.appConfig.OracleAPI.APIKey,
+			chainID,
+			containsNativeTokens,
+		)
+	}
+
+	addressesResponse, err := utils.GetAllBridgingAddress(
+		ctx, c.appConfig.OracleAPI.URL, c.appConfig.OracleAPI.APIKey, chainID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve bridging addresses: %w", err)
+	}
+
+	if containsNativeTokens {
+		return commonResponse.NewBridgingAddressResponse(
+			chainID, 0, addressesResponse.Addresses[0]), nil
+	}
+
+	txProvider, err := c.appConfig.CardanoChains[chainID].ChainSpecific.CreateTxProvider()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create tx provider: %w", err)
+	}
+
+	// Choose address with the lowest cUTXO balance
+	choosenIdx, lowestBalance := uint8(0), uint64(math.MaxUint64)
+
+	for i, address := range addressesResponse.Addresses {
+		utxos, err := txProvider.GetUtxos(ctx, address)
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve utxos for %s: %w", address, err)
+		}
+
+		sum := uint64(0)
+		for _, utxo := range utxos {
+			sum += utxo.Amount
+		}
+
+		if lowestBalance > sum {
+			choosenIdx, lowestBalance = uint8(i), sum
+		}
+	}
+
+	return commonResponse.NewBridgingAddressResponse(
+		chainID, choosenIdx, addressesResponse.Addresses[choosenIdx],
+	), nil
 }
 
 func normalizeAddr(addr string) string {
