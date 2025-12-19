@@ -126,6 +126,8 @@ type SkylineBridgingSettings struct {
 	DirectionConfig map[string]DirectionConfig `json:"directionConfig"`
 	// All defined tokens across the whole ecosystem
 	EcosystemTokens []EcosystemToken `json:"ecosystemTokens"`
+	//  Whether to use the oracle to retrieve bridging addresses or use txprovider
+	UseOracleForBridgingAddressRetrieval bool `json:"useOracleForBridgingAddressRetrieval"`
 } // @name BridgingSettings
 
 type AppConfig struct {
