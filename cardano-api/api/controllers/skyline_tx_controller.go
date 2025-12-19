@@ -731,7 +731,7 @@ func (c *SkylineTxControllerImpl) getAddressToBridgeTo(
 		return "", fmt.Errorf("failed to create tx provider: %w", err)
 	}
 
-	// Choose address with the lowest cUTXO balance
+	// Choose address with the lowest lovelace balance
 	choosenIdx, lowestBalance := uint8(0), uint64(math.MaxUint64)
 
 	for i, address := range addressesResponse.Addresses {
