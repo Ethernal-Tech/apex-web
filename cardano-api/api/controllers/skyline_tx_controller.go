@@ -721,7 +721,7 @@ func (c *SkylineTxControllerImpl) getAddressToBridgeTo(
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve bridging addresses: %w", err)
 	}
-
+	// if there are native tokens to bridge, just return the first address (this is by design)
 	if containsNativeTokens {
 		return addressesResponse.Addresses[0], nil
 	}
