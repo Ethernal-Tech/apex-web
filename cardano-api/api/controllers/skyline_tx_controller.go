@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"net/http"
 	"strings"
@@ -211,6 +212,10 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		return fmt.Errorf("destination chain not registered: %v", requestBody.DestinationChainID)
 	}
 
+	if len(requestBody.Transactions) == 0 {
+		return fmt.Errorf("no receivers in metadata: %v", requestBody)
+	}
+
 	if len(requestBody.Transactions) > c.appConfig.SkylineBridgingSettings.MaxReceiversPerBridgingRequest {
 		return fmt.Errorf("number of receivers in metadata greater than maximum allowed - no: %v, max: %v, requestBody: %v",
 			len(requestBody.Transactions), c.appConfig.SkylineBridgingSettings.MaxReceiversPerBridgingRequest, requestBody)
@@ -384,13 +389,7 @@ func (c *SkylineTxControllerImpl) createTx(
 ) {
 	cacheUtxosTransformer := utils.GetUtxosTransformer(requestBody, c.appConfig, c.usedUtxoCacher)
 
-	bridgingAddress, err := utils.GetAddressToBridgeTo(
-		ctx,
-		c.appConfig.OracleAPI.URL,
-		c.appConfig.OracleAPI.APIKey,
-		requestBody.SourceChainID,
-		utils.ContainsNativeTokens(currencyID, requestBody),
-	)
+	bridgingAddress, err := c.getAddressToBridgeTo(ctx, currencyID, requestBody)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -408,7 +407,7 @@ func (c *SkylineTxControllerImpl) createTx(
 			SenderAddr:             requestBody.SenderAddr,
 			SenderAddrPolicyScript: requestBody.SenderAddrPolicyScript,
 			Receivers:              receivers,
-			BridgingAddress:        bridgingAddress.Address,
+			BridgingAddress:        bridgingAddress,
 			BridgingFee:            requestBody.BridgingFee,
 			OperationFee:           requestBody.OperationFee,
 		},
@@ -692,6 +691,69 @@ func (c *SkylineTxControllerImpl) getBridgingAddresses(w http.ResponseWriter, r 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		bridgingAddresses, c.logger)
+}
+
+func (c *SkylineTxControllerImpl) getAddressToBridgeTo(
+	ctx context.Context,
+	currencyID uint16,
+	requestBody commonRequest.CreateBridgingTxRequest,
+) (string, error) {
+	chainID := requestBody.SourceChainID
+	containsNativeTokens := utils.ContainsNativeTokens(currencyID, requestBody)
+
+	if c.appConfig.SkylineBridgingSettings.UseOracleForBridgingAddressRetrieval {
+		response, err := utils.GetAddressToBridgeTo(
+			ctx,
+			c.appConfig.OracleAPI.URL,
+			c.appConfig.OracleAPI.APIKey,
+			chainID,
+			containsNativeTokens,
+		)
+		if err != nil {
+			return "", err
+		}
+
+		return response.Address, nil
+	}
+
+	addressesResponse, err := utils.GetAllBridgingAddress(
+		ctx, c.appConfig.OracleAPI.URL, c.appConfig.OracleAPI.APIKey, chainID)
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve bridging addresses: %w", err)
+	}
+	// if there are native tokens to bridge, just return the first address (this is by design)
+	if containsNativeTokens {
+		return addressesResponse.Addresses[0], nil
+	}
+
+	txProvider, err := c.appConfig.CardanoChains[chainID].ChainSpecific.CreateTxProvider()
+	if err != nil {
+		return "", fmt.Errorf("failed to create tx provider: %w", err)
+	}
+
+	// Choose address with the lowest lovelace balance
+	choosenIdx, lowestBalance := uint8(0), uint64(math.MaxUint64)
+
+	for i, addr := range addressesResponse.Addresses {
+		utxos, err := infracommon.ExecuteWithRetry(ctx, func(ctx context.Context) ([]wallet.Utxo, error) {
+			return txProvider.GetUtxos(ctx, addr)
+		})
+		if err != nil {
+			return "", fmt.Errorf("failed to retrieve utxos for %s: %w", addr, err)
+		}
+
+		sum := uint64(0)
+		for _, utxo := range utxos {
+			sum += utxo.Amount
+		}
+
+		if lowestBalance > sum {
+			//nolint:gosec
+			choosenIdx, lowestBalance = uint8(i), sum
+		}
+	}
+
+	return addressesResponse.Addresses[choosenIdx], nil
 }
 
 func normalizeAddr(addr string) string {
