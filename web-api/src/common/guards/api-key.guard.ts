@@ -19,9 +19,7 @@ export class ApiKeyGuard implements CanActivate {
 			throw new UnauthorizedException('API key is missing');
 		}
 
-		const validApiKey = this.configService.get<string>(
-			'WEB_API_SKYLINE_API_KEY',
-		);
+		const validApiKey = this.configService.get<string>('WEB_API_API_KEY');
 
 		if (apiKey !== validApiKey) {
 			throw new UnauthorizedException('Invalid API key');
