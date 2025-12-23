@@ -20,7 +20,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ApexFusionLogo from '../../assets/apex-fusion-logo.svg';
-import { menuDark, white } from '../../containers/theme';
+import { white } from '../../containers/theme';
 import ButtonCustom from '../Buttons/ButtonCustom';
 import { RootState } from '../../redux/store';
 import { formatAddress } from '../../utils/generalUtils';
@@ -80,7 +80,11 @@ const AppBarComponent = () => {
 		<>
 			<AppBar
 				position="fixed"
-				sx={{ zIndex: 20, boxShadow: 'none', background: menuDark }}
+				sx={{
+					zIndex: 20,
+					boxShadow: 'none',
+					background: 'transparent',
+				}}
 			>
 				<Toolbar
 					sx={{
@@ -89,6 +93,7 @@ const AppBarComponent = () => {
 						flexDirection: 'row',
 						justifyContent: 'space-between',
 						marginLeft: '10px',
+						background: `linear-gradient(180deg, rgba(0,0,0,0.1) 60%, transparent 100%)`,
 					}}
 				>
 					<Button onClick={() => handleOptionClick(HOME_ROUTE)}>
