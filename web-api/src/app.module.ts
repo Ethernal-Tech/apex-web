@@ -9,6 +9,8 @@ import { ContactModule } from './contact/contact.module';
 import { MailerConfigModule } from './mailer/mailer.module';
 import { LockedTokensModule } from './lockedTokens/lockedTokens.module';
 import { AppConfigModule } from './appConfig/appConfig.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ApiKeyGuard } from './common/guards/api-key.guard';
 
 @Module({
 	imports: [
@@ -25,7 +27,12 @@ import { AppConfigModule } from './appConfig/appConfig.module';
 		AppConfigModule,
 	],
 	controllers: [],
-	providers: [],
+	providers: [
+		{
+			provide: APP_GUARD,
+			useClass: ApiKeyGuard,
+		},
+	],
 	exports: [],
 })
 export class AppModule {}
