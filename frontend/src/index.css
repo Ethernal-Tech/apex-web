@@ -6,14 +6,17 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: 
-    radial-gradient(50% 50% at 50% 50%, rgba(5, 29, 38, 0.00) 0%, #051D26 100%),
-    url("./assets/planet-background.png");
+  background:
+    radial-gradient(50% 50% at 50% 50%, rgba(18, 18, 18, 0.8) 0%, rgba(18, 18, 18, 0.8) 100%),
+    url("./assets/planet-background.webp");
+  background-color: #000;
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
-  min-height: calc(100vh - 64px); /*64px is the height of the navbar*/
-  padding-bottom: 56px; /* to compensate for fixed footer*/
+  /* min-height: calc(100vh - 64px); 64px is the height of the navbar */
+  /* padding-bottom: 56px; to compensate for fixed footer */
+  min-height: 100vh;
+  /* @todo confirm this is doable */
 }
 
 code {
