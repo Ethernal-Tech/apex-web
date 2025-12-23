@@ -63,7 +63,13 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"url": {
 									"raw": "{{web_api_base_url}}/bridgeTransaction/{{transaction_id}}",
 									"host": [
@@ -135,7 +141,13 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"senderAddress\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"originChain\": \"cardano\",\n  \"receiverAddresses\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"nativeTokenAmountFrom\": \"10000000\",\n  \"nativeTokenAmountTo\": \"20000000\"\n}",
@@ -186,14 +198,24 @@
 								{
 									"listen": "prerequest",
 									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
 										"packages": {},
-										"type": "text/javascript"
+										"requests": {}
 									}
 								}
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"name\": \"postman test name\",\n  \"email\": \"test@gmail.com\",\n  \"message\": \"test message\"\n}",
@@ -287,7 +309,13 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"url": {
 									"raw": "{{web_api_base_url}}/settings",
 									"host": [
@@ -333,7 +361,13 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"url": {
 									"raw": "{{web_api_base_url}}/settings/getBridgingAddresses?chainId=prime",
 									"host": [
@@ -381,7 +415,13 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"url": {
 									"raw": "{{web_api_base_url}}/settings/reactorValidatorChangeStatus",
 									"host": [
@@ -430,7 +470,13 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"senderAddress\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"originChain\": \"cardano\",\n  \"destinationChain\": \"prime\",\n  \"destinationAddress\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"amount\": \"1000000\",\n  \"tokenID\": 3,\n  \"bridgingFee\": \"3100000\",\n  \"operationFee\": \"1000010\",\n  \"utxoCacheKey\": \"testCacheKey123\"\n}",
@@ -507,7 +553,13 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"senderAddress\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"originChain\": \"cardano\",\n  \"destinationChain\": \"prime\",\n  \"destinationAddress\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"amount\": \"1000000\",\n  \"tokenID\": 3,\n  \"bridgingFee\": \"3100000\",\n  \"operationFee\": \"1000010\",\n  \"utxoCacheKey\": \"testCacheKey123\"\n}",
@@ -616,7 +668,13 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"senderAddress\": \"0xcCB2dDA531690E0eacf03338116Ea214c6379cD4\",\n  \"originChain\": \"nexus\",\n  \"destinationChain\": \"vector\",\n  \"destinationAddress\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n  \"amount\": \"2500000000000000000\",\n  \"tokenID\": 1,\n  \"bridgingFee\": \"1000010\",\n  \"operationFee\": \"1000010\",\n  \"utxoCacheKey\": \"testCacheKey123\"\n}",
@@ -718,10 +776,16 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"originChain\": \"cardano\",\n  \"destinationChain\": \"prime\",\n  \"originTxHash\": \"d6fa7775be9acd120379f267e92602f34b44cf106fb8fb62be6bb2ba\",\n  \"senderAddress\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"receiverAddrs\": [\"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\"],\n  \"amount\": \"4019390\",\n  \"nativeTokenAmount\": \"15000000\",\n  \"txRaw\": \"0xAAA_rawTxHash\",\n  \"isFallback\": false,\n  \"isLayerZero\": false\n}",
+									"raw": "{\n  \"originChain\": \"cardano\",\n  \"destinationChain\": \"prime\",\n  \"originTxHash\": \"d6fa7775be9ac5a9d3033d120379f267e92602f34b44cf106fb8fb62be6bb2ba\",\n  \"senderAddress\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"receiverAddrs\": [\"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\"],\n  \"amount\": \"4019390\",\n  \"nativeTokenAmount\": \"15000000\",\n  \"txRaw\": \"0xAAA_rawTxHash\",\n  \"isFallback\": false,\n  \"isLayerZero\": false\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -777,6 +841,11 @@
 										"value": "{{layer_zero_api_key}}",
 										"type": "text",
 										"disabled": true
+									},
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
 									}
 								],
 								"body": {
@@ -835,7 +904,13 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"url": {
 									"raw": "{{web_api_base_url}}/lockedTokens?allowedBridgingModes=skyline,reactor,layerZero,centralized",
 									"host": [
@@ -878,7 +953,13 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"url": {
 									"raw": "{{web_api_base_url}}/lockedTokens/transferred?allowedBridgingModes=reactor,skyline",
 									"host": [
@@ -2425,12 +2506,13 @@
 													"    pm.expect(json).to.have.property(\"minChainFeeForBridgingTokens\");",
 													"    pm.expect(json).to.have.property(\"minOperationFee\");",
 													"    pm.expect(json).to.have.property(\"minUtxoChainValue\");",
-													"    pm.expect(json).to.have.property(\"nativeTokens\");",
+													"    pm.expect(json).to.have.property(\"directionConfig\");",
+													"    pm.expect(json).to.have.property(\"ecosystemTokens\");",
 													"    pm.expect(json).to.have.property(\"minValueToBridge\");",
 													"    pm.expect(json).to.have.property(\"maxAmountAllowedToBridge\");",
 													"    pm.expect(json).to.have.property(\"maxTokenAmountAllowedToBridge\");",
+													"    pm.expect(json).to.have.property(\"minColCoinsAllowedToBridge\");",
 													"    pm.expect(json).to.have.property(\"maxReceiversPerBridgingRequest\");",
-													"    pm.expect(json).to.have.property(\"allowedDirections\");",
 													"});",
 													"",
 													"pm.test(\"Fields have correct types\", () => {",
@@ -2438,13 +2520,14 @@
 													"    pm.expect(json.minChainFeeForBridging).to.be.an(\"object\");",
 													"    pm.expect(json.minChainFeeForBridgingTokens).to.be.an(\"object\");",
 													"    pm.expect(json.minOperationFee).to.be.an(\"object\");",
-													"    pm.expect(json.nativeTokens).to.be.an(\"object\");",
 													"    pm.expect(json.minUtxoChainValue).to.be.an(\"object\");",
+													"    pm.expect(json.directionConfig).to.be.an(\"object\");",
+													"    pm.expect(json.ecosystemTokens).to.be.an(\"array\");",
 													"    pm.expect(json.minValueToBridge).to.be.a(\"number\");",
 													"    pm.expect(json.maxAmountAllowedToBridge).to.be.a(\"string\");",
 													"    pm.expect(json.maxTokenAmountAllowedToBridge).to.be.a(\"string\");",
+													"    pm.expect(json.minColCoinsAllowedToBridge).to.be.an(\"string\");",
 													"    pm.expect(json.maxReceiversPerBridgingRequest).to.be.a(\"number\");",
-													"    pm.expect(json.allowedDirections).to.be.an(\"object\");",
 													"});"
 												],
 												"type": "text/javascript",
@@ -2641,15 +2724,18 @@
 	"variable": [
 		{
 			"key": "web_api_base_url",
-			"value": ""
+			"value": "",
+			"disabled": true
 		},
 		{
 			"key": "cardano_api_skyline_base_url",
-			"value": ""
+			"value": "",
+			"disabled": true
 		},
 		{
 			"key": "cardano_api_reactor_base_url",
-			"value": ""
+			"value": "",
+			"disabled": true
 		},
 		{
 			"key": "oracle_api_skyline_base_url",
@@ -2661,18 +2747,15 @@
 		},
 		{
 			"key": "cardano_api_reactor_base_url",
-			"value": "",
-			"disabled": true
+			"value": ""
 		},
 		{
 			"key": "cardano_api_skyline_base_url",
-			"value": "",
-			"disabled": true
+			"value": ""
 		},
 		{
 			"key": "web_api_base_url",
-			"value": "",
-			"disabled": true
+			"value": ""
 		}
 	]
 }
