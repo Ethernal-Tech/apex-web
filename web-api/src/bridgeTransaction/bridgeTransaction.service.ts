@@ -60,6 +60,7 @@ export class BridgeTransactionService {
 			destinationChain: model.destinationChain,
 			senderAddress: model.senderAddress,
 			originChain: model.originChain,
+			tokenID: 0,
 		};
 
 		if (model.amountFrom && model.amountTo) {
@@ -134,6 +135,7 @@ export class BridgeTransactionService {
 						status: In(BridgingRequestNotFinalStates),
 						originChain: chain,
 						destinationChain: In(Object.values(ChainEnum)), // Support only Reactor
+						tokenID: 0,
 					},
 				});
 				if (entities.length > 0) {
