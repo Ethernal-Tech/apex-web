@@ -24,6 +24,7 @@ import PrivacyPolicyPage from './PrivacyPolicyPage/PrivacyPolicyPage';
 import AuditPage from './Audit/AuditPage';
 import { clearBridgingAddressesAction } from '../redux/slices/settingsSlice';
 import { fetchAndUpdateReactorValidatorStatusAction } from '../actions/validatorSetChange';
+import { fetchAndUpdateLockedTokensAction } from '../actions/lockedTokens';
 
 export const HOME_ROUTE = appSettings.isSkyline ? '/app' : '/';
 export const TRANSACTIONS_ROUTE = '/transactions';
@@ -34,6 +35,7 @@ export const PRIVACY_POLICY_ROUTE = '/privacy-policy';
 export const TERMS_OF_SERVICE_ROUTE = '/terms-of-service';
 export const AUDIT_ROUTE = '/audit';
 
+const REFETCH_LOCKED_TOKENS_MS = 30000;
 const REFETCH_VSU_STATUS_MS = 30000;
 
 const PageRouter: React.FC = () => {
@@ -56,7 +58,7 @@ const PageRouter: React.FC = () => {
 	useEffect(() => {
 		if (
 			isLoggedInMemo &&
-			Object.keys(settings.allowedDirections).length > 0
+			Object.keys(settings.directionConfig).length > 0
 		) {
 			onLoad(wallet, chain, destinationChain, settings, dispatch);
 		}
@@ -113,6 +115,22 @@ const PageRouter: React.FC = () => {
 			clearInterval(intervalId);
 		};
 	}, [dispatch]);
+
+	useEffect(() => {
+		// Call once immediately on mount
+		fetchAndUpdateLockedTokensAction(dispatch, settings.layerZeroChains);
+
+		// Then call periodically every 30 seconds
+		const interval = setInterval(() => {
+			fetchAndUpdateLockedTokensAction(
+				dispatch,
+				settings.layerZeroChains,
+			);
+		}, REFETCH_LOCKED_TOKENS_MS);
+
+		// Cleanup on component unmount
+		return () => clearInterval(interval);
+	}, [settings.layerZeroChains, dispatch]);
 
 	useEffect(() => {
 		if (appSettings.isSkyline) {

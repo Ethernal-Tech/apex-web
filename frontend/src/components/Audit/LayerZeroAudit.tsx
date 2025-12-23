@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Link, Tooltip, Typography } from '@mui/material';
-import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
-import { getTokenInfo } from '../../settings/token';
+import { ChainEnum } from '../../swagger/apexBridgeApiService';
+import { apexID, getTokenInfo } from '../../settings/token';
 import { formatBigIntDecimalString } from '../lockedTokens/LockedTokensComponent';
 import '../../audit.css';
 import { useSelector } from 'react-redux';
@@ -28,7 +28,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 	const { layerZeroChains } = useSelector(
 		(state: RootState) => state.settings,
 	);
-	const address = layerZeroChains[ChainEnum.Nexus].oftAddress;
+	const address = layerZeroChains[ChainEnum.Nexus]?.oftAddress;
 
 	return (
 		<Box className="skyline-bridge-section layerzero">
@@ -42,27 +42,29 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 							<Box className="audit-card-content audit-row">
 								<Box className="audit-left">
 									<Typography>
-										{getTokenInfo(TokenEnum.APEX).label}
+										{getTokenInfo(apexID).label}
 									</Typography>
-									<Tooltip title="Open in explorer">
-										<Link
-											href={getExplorerAddressUrl(
-												ChainEnum.Nexus,
-												address,
-												true,
-											)}
-											target="_blank"
-											rel="noreferrer"
-										>
-											<LaunchIcon
-												sx={{
-													marginLeft: '6px',
-													fontSize: '20px',
-													color: 'white',
-												}}
-											/>
-										</Link>
-									</Tooltip>
+									{!!address && (
+										<Tooltip title="Open in explorer">
+											<Link
+												href={getExplorerAddressUrl(
+													ChainEnum.Nexus,
+													address,
+													true,
+												)}
+												target="_blank"
+												rel="noreferrer"
+											>
+												<LaunchIcon
+													sx={{
+														marginLeft: '6px',
+														fontSize: '20px',
+														color: 'white',
+													}}
+												/>
+											</Link>
+										</Tooltip>
+									)}
 								</Box>
 								<Typography className="audit-amount">
 									{formatBigIntDecimalString(
@@ -81,7 +83,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 						<Box className="audit-card audit-card--center">
 							<Box className="audit-card-content audit-row">
 								<Typography>
-									{getTokenInfo(TokenEnum.APEX).label}
+									{getTokenInfo(apexID).label}
 								</Typography>
 								<Typography className="audit-amount">
 									{formatBigIntDecimalString(lzGrandTotal, 6)}
@@ -103,7 +105,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 								<Box key={tk} className="audit-card">
 									<Box className="audit-card-content audit-row">
 										<Typography className="fw-700">
-											{getTokenInfo(tk).label}
+											{getTokenInfo(+tk).label}
 										</Typography>
 										<Typography className="audit-amount">
 											{formatBigIntDecimalString(amt, 6)}
@@ -130,7 +132,7 @@ const LayerZeroPanel: React.FC<LayerZeroPanelProps> = ({
 							)
 								.sort((a, b) => compareBigInts(b[1], a[1]))
 								.map(([token, amt]) => ({
-									token: getTokenInfo(token).label,
+									token: getTokenInfo(+token).label,
 									amt,
 								}));
 							return (

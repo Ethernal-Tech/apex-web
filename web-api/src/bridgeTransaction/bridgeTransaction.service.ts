@@ -36,6 +36,7 @@ import {
 import { getBridgingMode } from 'src/utils/chainUtils';
 import { SettingsService } from 'src/settings/settings.service';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
+import { getRealTokenIDFromEntity } from './utils';
 
 @Injectable()
 export class BridgeTransactionService {
@@ -106,6 +107,8 @@ export class BridgeTransactionService {
 					ChainEnum.Nexus,
 				]);
 			}
+
+			where.tokenID = 0;
 		}
 
 		const page = model.page || 0;
@@ -187,9 +190,22 @@ export class BridgeTransactionService {
 								modelsCentralized.push(model);
 							}
 						} else {
+							const tokenID = getRealTokenIDFromEntity(
+								this.settingsService.SettingsResponse.directionConfig,
+								entity,
+							);
+							if (!tokenID) {
+								Logger.error(
+									`failed to get real tokenID for entity: ${entity.originChain} ${entity.sourceTxHash}`,
+								);
+
+								return;
+							}
+
 							const bridgingMode = getBridgingMode(
 								entity.originChain,
 								entity.destinationChain,
+								tokenID,
 								this.settingsService.SettingsResponse,
 							);
 							if (!bridgingMode) {

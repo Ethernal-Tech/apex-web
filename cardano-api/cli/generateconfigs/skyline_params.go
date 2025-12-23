@@ -69,6 +69,9 @@ type skylineGenerateConfigsParams struct {
 	vectorBlockfrostAPIKey        string
 	vectorSocketPath              string
 	vectorTTLSlotInc              uint64
+	vectorIsEnabled               bool
+
+	nexusIsEnabled bool
 
 	logsPath         string
 	utxoCacheTimeout time.Duration
@@ -347,6 +350,20 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		vectorTTLSlotIncFlagDesc,
 	)
 
+	cmd.Flags().BoolVar(
+		&p.vectorIsEnabled,
+		vectorIsEnabledFlag,
+		false,
+		vectorIsEnabledFlagDesc,
+	)
+
+	cmd.Flags().BoolVar(
+		&p.nexusIsEnabled,
+		nexusIsEnabledFlag,
+		false,
+		nexusIsEnabledFlagDesc,
+	)
+
 	cmd.Flags().StringVar(
 		&p.logsPath,
 		logsPathFlag,
@@ -467,11 +484,13 @@ func (p *skylineGenerateConfigsParams) Execute(
 					PotentialFee:     500000,
 					TTLSlotNumberInc: p.vectorTTLSlotInc,
 				},
-				IsEnabled: true,
+				IsEnabled: p.vectorIsEnabled,
 			},
 		},
 		EthChains: map[string]*core.EthChainConfig{
-			common.ChainIDStrNexus: {},
+			common.ChainIDStrNexus: {
+				IsEnabled: p.nexusIsEnabled,
+			},
 		},
 		UtxoCacheTimeout: p.utxoCacheTimeout,
 		OracleAPI: core.OracleAPISettings{

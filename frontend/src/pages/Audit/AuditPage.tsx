@@ -7,12 +7,13 @@ import BasePage from '../base/BasePage';
 import {
 	BridgingModeEnum,
 	ChainEnum,
-	TokenEnum,
 } from '../../swagger/apexBridgeApiService';
 import SkylinePanel from '../../components/Audit/SkylineAudit';
 import LayerZeroPanel from '../../components/Audit/LayerZeroAudit';
 import '../../audit.css';
-import { isAdaToken, isApexToken } from '../../settings/token';
+import { isAdaToken, isApexToken } from '../../components/Audit/token';
+import { adaID, apexID, bnbID, ethID } from '../../settings/token';
+
 const sumToken = (m: Record<string, bigint>): bigint =>
 	Object.values(m).reduce((a, b) => a + b, BigInt(0));
 
@@ -76,10 +77,13 @@ const AuditPage: React.FC = () => {
 
 	const skylineChains = useMemo<ChainEnum[]>(() => {
 		if (!settings) return [];
-		return Object.keys(
-			settings.settingsPerMode[BridgingModeEnum.Skyline]
-				.allowedDirections,
+
+		const chains = Object.keys(
+			settings.settingsPerMode[BridgingModeEnum.Skyline].bridgingSettings
+				.directionConfig,
 		) as unknown as ChainEnum[];
+
+		return chains.filter((chain) => chain !== ChainEnum.Nexus); // nexus isn’t a UTXO chain, so we need to exclude it
 	}, [settings]);
 
 	const { tvbPerChainTotals, tvbTokenTotalsAllChains, tvbGrandTotal } =
@@ -108,14 +112,12 @@ const AuditPage: React.FC = () => {
 							continue;
 						}
 
-						if (isApexToken(tokenKey as TokenEnum)) {
-							accumulator[TokenEnum.APEX] =
-								(accumulator[TokenEnum.APEX] ?? BigInt(0)) +
-								value;
-						} else if (isAdaToken(tokenKey as TokenEnum)) {
-							accumulator[TokenEnum.ADA] =
-								(accumulator[TokenEnum.ADA] ?? BigInt(0)) +
-								value;
+						if (isApexToken(+tokenKey)) {
+							accumulator[apexID] =
+								(accumulator[apexID] ?? BigInt(0)) + value;
+						} else if (isAdaToken(+tokenKey)) {
+							accumulator[adaID] =
+								(accumulator[adaID] ?? BigInt(0)) + value;
 						}
 					}
 					return accumulator;
@@ -132,11 +134,21 @@ const AuditPage: React.FC = () => {
 	const { lzPerChainTotals, lzTokenTotalsAllChains, lzGrandTotal } =
 		useMemo(() => {
 			const lzSet = new Set(layerZeroChains);
+			const ignoredTokens = new Set([ethID, bnbID]);
 
 			const lzPerChainTotals = Object.fromEntries(
 				Object.entries(tvbChains)
 					.filter(([chain]) => lzSet.has(chain as ChainEnum))
-					.map(([chain, tokenMap]) => [chain, sumChain(tokenMap)]),
+					.map(([chain, tokenMap]) => {
+						const filteredTokenMap = Object.fromEntries(
+							Object.entries(tokenMap).filter(([tokenId]) => {
+								const id = Number(tokenId);
+								return !ignoredTokens.has(id);
+							}),
+						);
+
+						return [chain, sumChain(filteredTokenMap)];
+					}),
 			);
 
 			const lzTokenTotalsAllChains = Object.values(
@@ -146,11 +158,14 @@ const AuditPage: React.FC = () => {
 				{} as Record<string, bigint>,
 			);
 
-			const lzGrandTotal = Object.values(lzTokenTotalsAllChains).reduce(
-				(a, b) => a + b,
+			const lzGrandTotal = Object.entries(lzTokenTotalsAllChains).reduce(
+				(acc, [tokenSymbol, amount]) => {
+					return isApexToken(Number(tokenSymbol))
+						? acc + amount
+						: acc;
+				},
 				BigInt(0),
 			);
-
 			return { lzPerChainTotals, lzTokenTotalsAllChains, lzGrandTotal };
 		}, [tvbChains]);
 

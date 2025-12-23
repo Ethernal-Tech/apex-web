@@ -17,7 +17,7 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import appSettings from '../../../settings/appSettings';
-import { getCurrencyTokenInfo } from '../../../settings/token';
+import { getCurrencyID, getTokenInfo } from '../../../settings/token';
 // import './CustomStyles.css'; // Import the CSS file
 
 // const apexPriceInDollars = NaN // fiat price doesn't exist for apex
@@ -104,6 +104,8 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({
 	).toString(10);
 
 	const chain = useSelector((state: RootState) => state.chain.chain);
+	const settings = useSelector((s: RootState) => s.settings);
+	const currencyToken = getTokenInfo(getCurrencyID(settings, chain));
 
 	// TODO: depending on selected token, update logic for maxSendable because we use same input.
 	// To do this we need to know logic for validating/parsing native token amount (WAda / WAPEX)
@@ -166,8 +168,6 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({
 	const overMaxAllowed =
 		BigInt(convertApexToDfm(text, chain)) > maxAmounts.maxByAllowed &&
 		maxAmounts.maxByAllowed > 0;
-
-	const currencyToken = getCurrencyTokenInfo(chain);
 
 	return (
 		<Box sx={sx}>

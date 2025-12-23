@@ -1,27 +1,20 @@
 import { Box, SelectChangeEvent, Typography } from '@mui/material';
-import TotalBalance from '../components/TotalBalance';
 import PasteTextInput from '../components/PasteTextInput';
 import PasteApexAmountInput from './PasteApexAmountInput';
 import ButtonCustom from '../../../components/Buttons/ButtonCustom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import {
-	ChainEnum,
 	TxTypeEnum,
 	TransactionDataDto,
-	TokenEnum,
 } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
-import { useSupporedSourceLZTokenOptions } from '../utils';
-import { BridgingModeEnum, getChainInfo } from '../../../settings/chain';
-import {
-	getTokenInfo,
-	isCurrencyBridgingAllowed,
-	isWrappedToken,
-} from '../../../settings/token';
+import { useSupportedSourceTokenOptions } from '../utils';
+import { BridgingModeEnum } from '../../../settings/chain';
+import { getCurrencyID, getTokenInfo } from '../../../settings/token';
 import FeeInformation from './FeeInformation';
 import {
 	estimateEthTxFee,
@@ -30,48 +23,52 @@ import {
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
 import { captureException } from '../../../features/sentry';
+import { setNewTxSourceTokenIDAction } from '../../../redux/slices/newTxSlice';
 
 type BridgeInputType = {
-	submit: (address: string, amount: string) => Promise<void>;
+	submit: (address: string, amount: string, tokenID: number) => Promise<void>;
 	loadingState: SubmitLoadingState | undefined;
 };
 
 const calculateMaxAmountToken = (
 	totalDfmBalance: { [key: string]: string },
-	sourceToken: TokenEnum | undefined,
+	sourceTokenID: number | undefined,
+	currencyID: number | undefined,
 ): bigint => {
-	if (!sourceToken || !isWrappedToken(sourceToken)) {
+	if (
+		!totalDfmBalance ||
+		!sourceTokenID ||
+		!currencyID ||
+		sourceTokenID === currencyID
+	) {
 		return BigInt(0);
 	}
 
-	const tokenBalance = BigInt(
-		(sourceToken && totalDfmBalance ? totalDfmBalance[sourceToken] : '0') ||
-			'0',
-	);
-
-	return tokenBalance;
+	return BigInt(totalDfmBalance[sourceTokenID] || '0');
 };
 
 const calculateMaxAmountCurrency = (
 	totalDfmBalance: { [key: string]: string },
-	chain: ChainEnum,
+	sourceTokenID: number | undefined,
+	currencyID: number | undefined,
 ): bigint => {
-	if (!totalDfmBalance || !chain) {
+	if (!totalDfmBalance || !sourceTokenID || !currencyID) {
 		return BigInt(0);
 	}
 
-	const sourceToken = getChainInfo(chain).currencyToken;
-
-	return BigInt(totalDfmBalance[sourceToken] || '0');
+	return BigInt(totalDfmBalance[currencyID] || '0');
 };
 
 const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
+	const dispatch = useDispatch();
 	const [destinationAddr, setDestinationAddr] = useState('');
 	const [amount, setAmount] = useState('');
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
-	const [sourceToken, setSourceToken] = useState<TokenEnum | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 	const settings = useSelector((state: RootState) => state.settings);
+	const sourceTokenID = useSelector(
+		(state: RootState) => state.newTx.sourceTokenID,
+	);
 	const account = useSelector(
 		(state: RootState) => state.accountInfo.account,
 	);
@@ -81,9 +78,28 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 	const { chain, destinationChain } = useSelector(
 		(state: RootState) => state.chain,
 	);
-	const supportedSourceTokenOptions = useSupporedSourceLZTokenOptions(
+	const supportedSourceTokenOptions = useSupportedSourceTokenOptions(
+		settings,
 		chain,
 		destinationChain,
+	);
+
+	const setSourceTokenID = useCallback(
+		(newSrcTokID: number | undefined) =>
+			dispatch(setNewTxSourceTokenIDAction(newSrcTokID)),
+		[dispatch],
+	);
+
+	useEffect(() => {
+		setSourceTokenID(undefined);
+		return () => {
+			setSourceTokenID(undefined);
+		};
+	}, [setSourceTokenID]);
+
+	const currencyID = useMemo(
+		() => getCurrencyID(settings, chain),
+		[chain, settings],
 	);
 
 	const [bridgeTxFee, setBridgeTxFee] = useState<string>('0');
@@ -91,7 +107,7 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 	const resetBridgeTxFee = useCallback(() => setBridgeTxFee('0'), []);
 
 	const fetchWalletFee = useCallback(async () => {
-		if (!destinationAddr || !amount || !sourceToken) {
+		if (!destinationAddr || !amount || !sourceTokenID || !currencyID) {
 			setUserWalletFee(undefined);
 			resetBridgeTxFee();
 
@@ -109,18 +125,19 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 				account,
 				destinationAddr,
 				amountDfm,
+				sourceTokenID,
 			);
 
 			transactionData = lzResponse.transactionData;
 
-			if (!isCurrencyBridgingAllowed(chain, destinationChain)) {
-				setBridgeTxFee(transactionData.populatedTransaction.value);
-			} else {
+			if (sourceTokenID === currencyID) {
 				const amount = BigInt(lzResponse.metadata.properties.amount);
 				const valueBig = BigInt(
 					transactionData.populatedTransaction.value,
 				);
 				setBridgeTxFee((valueBig - amount).toString(10));
+			} else {
+				setBridgeTxFee(transactionData.populatedTransaction.value);
 			}
 		} catch (e) {
 			console.log('error while calculating bridging fee', e);
@@ -168,21 +185,22 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 	}, [
 		destinationAddr,
 		amount,
-		sourceToken,
+		sourceTokenID,
 		resetBridgeTxFee,
 		chain,
 		settings,
 		destinationChain,
 		account,
+		currencyID,
 	]);
 
 	const setSourceTokenCallback = useCallback(
-		(token: TokenEnum) => {
-			setSourceToken(token);
+		(tokenID: number) => {
+			setSourceTokenID(tokenID);
 			setAmount('');
 			resetBridgeTxFee();
 		},
-		[resetBridgeTxFee],
+		[resetBridgeTxFee, setSourceTokenID],
 	);
 
 	useEffect(() => {
@@ -203,12 +221,14 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 
 	useEffect(() => {
 		if (
-			!supportedSourceTokenOptions.some((x) => x.value === sourceToken) &&
+			!supportedSourceTokenOptions.some(
+				(x) => +(x.value || '0') === sourceTokenID,
+			) &&
 			supportedSourceTokenOptions.length > 0
 		) {
-			setSourceToken(supportedSourceTokenOptions[0].value);
+			setSourceTokenID(+supportedSourceTokenOptions[0].value);
 		}
-	}, [sourceToken, supportedSourceTokenOptions]);
+	}, [setSourceTokenID, sourceTokenID, supportedSourceTokenOptions]);
 
 	const onDiscard = () => {
 		setDestinationAddr('');
@@ -217,33 +237,39 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 
 	const handleSourceTokenChange = useCallback(
 		(e: SelectChangeEvent<string>) => {
-			setSourceTokenCallback(e.target.value as TokenEnum);
+			setSourceTokenCallback(+e.target.value);
 		},
 		[setSourceTokenCallback],
 	);
 
 	const memoizedTokenIcon = useMemo(
-		() => getTokenInfo(sourceToken).icon,
-		[sourceToken],
+		() => getTokenInfo(sourceTokenID).icon,
+		[sourceTokenID],
 	);
 
 	const currencyMaxAmount = calculateMaxAmountCurrency(
 		totalDfmBalance,
-		chain,
+		sourceTokenID,
+		currencyID,
 	);
 	const tokenMaxAmounts = calculateMaxAmountToken(
 		totalDfmBalance,
-		sourceToken,
+		sourceTokenID,
+		currencyID,
 	);
 	const maxAmount =
-		sourceToken && chain !== ChainEnum.Nexus && isWrappedToken(sourceToken)
+		sourceTokenID && currencyID && sourceTokenID !== currencyID
 			? tokenMaxAmounts
 			: currencyMaxAmount;
 
 	const onSubmit = useCallback(async () => {
-		if (!sourceToken) return;
-		await submit(destinationAddr, convertApexToDfm(amount || '0', chain));
-	}, [amount, destinationAddr, submit, chain, sourceToken]);
+		if (!sourceTokenID) return;
+		await submit(
+			destinationAddr,
+			convertApexToDfm(amount || '0', chain),
+			sourceTokenID,
+		);
+	}, [amount, destinationAddr, submit, chain, sourceTokenID]);
 
 	// compute entered amount in DFM/wei (same unit as your balances)
 	const enteredDfm = BigInt(convertApexToDfm(amount || '0', chain));
@@ -260,15 +286,12 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 
 	return (
 		<Box sx={{ width: '100%' }}>
-			<TotalBalance />
-
 			<Box
 				sx={{
 					display: 'grid',
 					gridTemplateColumns: '1fr 1fr',
 					gap: 2,
 					width: '100%',
-					mt: 4,
 				}}
 			>
 				{/* Destination address */}
@@ -295,7 +318,9 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 							id="src-tokens"
 							label="SourceToken"
 							icon={memoizedTokenIcon}
-							value={sourceToken || ''}
+							value={
+								sourceTokenID ? sourceTokenID.toString() : ''
+							}
 							onChange={handleSourceTokenChange}
 							options={supportedSourceTokenOptions}
 							width="100%"

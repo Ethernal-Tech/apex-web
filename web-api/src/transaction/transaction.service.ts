@@ -12,8 +12,8 @@ import {
 	CreateTransactionDto,
 	CreateCardanoTransactionResponseDto,
 	TransactionSubmittedDto,
-	CreateEthTransactionResponseDto,
 	CardanoTransactionFeeResponseDto,
+	CreateEthTransactionFullResponseDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import {
@@ -44,6 +44,8 @@ import {
 } from 'src/utils/chainUtils';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
+import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
+import { isAddress } from 'web3-validator';
 
 @Injectable()
 export class TransactionService {
@@ -54,7 +56,7 @@ export class TransactionService {
 		private readonly appConfig: AppConfigService,
 	) {}
 
-	private validateCreateCardanoTx(dto: CreateTransactionDto) {
+	private validateCreateTx(dto: CreateTransactionDto) {
 		if (
 			!this.settingsService.SettingsResponse.enabledChains.includes(
 				dto.originChain,
@@ -66,26 +68,34 @@ export class TransactionService {
 			throw new BadRequestException('Chain not supported');
 		}
 
-		if (!isCardanoChain(dto.originChain)) {
-			throw new BadRequestException(
-				`Chain ${dto.originChain} is not Cardano chain`,
-			);
-		}
-
 		const settings = getBridgingSettings(
 			dto.originChain,
 			dto.destinationChain,
+			dto.tokenID,
 			this.settingsService.SettingsResponse,
 		);
 		if (!settings) {
 			throw new BadRequestException(
-				`Bridging from ${dto.originChain} to ${dto.destinationChain} not supported`,
+				`Bridging token ${dto.tokenID} from ${dto.originChain} to ${dto.destinationChain} not supported`,
 			);
 		}
 
-		const srcMinFee = dto.isNativeToken
-			? settings.bridgingSettings.minChainFeeForBridgingTokens[dto.originChain]
-			: settings.bridgingSettings.minChainFeeForBridging[dto.originChain];
+		const currencyID = getCurrencyIDFromDirectionConfig(
+			this.settingsService.SettingsResponse.directionConfig,
+			dto.originChain,
+		);
+		if (!currencyID) {
+			throw new InternalServerErrorException(
+				`No currencyID for source chain: ${dto.originChain}`,
+			);
+		}
+
+		const srcMinFee =
+			dto.tokenID !== currencyID && !isEvmChain(dto.originChain)
+				? settings.bridgingSettings.minChainFeeForBridgingTokens[
+						dto.originChain
+					]
+				: settings.bridgingSettings.minChainFeeForBridging[dto.originChain];
 		if (!srcMinFee) {
 			throw new InternalServerErrorException(
 				`No minFee for source chain: ${dto.originChain}`,
@@ -111,6 +121,26 @@ export class TransactionService {
 				'Operation fee in request body is less than minimum',
 			);
 		}
+	}
+
+	private validateCreateCardanoTx(dto: CreateTransactionDto) {
+		if (!isCardanoChain(dto.originChain)) {
+			throw new BadRequestException(
+				`Chain ${dto.originChain} is not Cardano chain`,
+			);
+		}
+
+		return this.validateCreateTx(dto);
+	}
+
+	private validateCreateEthTx(dto: CreateTransactionDto) {
+		if (!isEvmChain(dto.originChain)) {
+			throw new BadRequestException(
+				`Chain ${dto.originChain} is not EVM chain`,
+			);
+		}
+
+		return this.validateCreateTx(dto);
 	}
 
 	async getRecentInputs(dto: CreateTransactionDto): Promise<Utxo[]> {
@@ -149,6 +179,7 @@ export class TransactionService {
 		const bridgingMode = getBridgingMode(
 			dto.originChain,
 			dto.destinationChain,
+			dto.tokenID,
 			this.settingsService.SettingsResponse,
 		);
 
@@ -179,6 +210,7 @@ export class TransactionService {
 		const bridgingMode = getBridgingMode(
 			dto.originChain,
 			dto.destinationChain,
+			dto.tokenID,
 			this.settingsService.SettingsResponse,
 		);
 
@@ -204,42 +236,42 @@ export class TransactionService {
 		return feeResp;
 	}
 
-	createEth(dto: CreateTransactionDto): CreateEthTransactionResponseDto {
-		if (this.settingsService.reactorValidatorChangeStatus) {
-			throw new BadRequestException(
-				'validator set change in progress, cant create transactions',
-			);
-		}
+	createEth(dto: CreateTransactionDto): CreateEthTransactionFullResponseDto {
+		this.validateCreateEthTx(dto);
+
+		const bridgingMode = getBridgingMode(
+			dto.originChain,
+			dto.destinationChain,
+			dto.tokenID,
+			this.settingsService.SettingsResponse,
+		);
 
 		if (
-			!this.settingsService.SettingsResponse.enabledChains.includes(
-				dto.originChain,
-			) ||
-			!this.settingsService.SettingsResponse.enabledChains.includes(
-				dto.destinationChain,
-			)
+			bridgingMode === BridgingModeEnum.Reactor &&
+			this.settingsService.reactorValidatorChangeStatus
 		) {
-			throw new BadRequestException('Chain not supported');
-		}
-
-		if (!isEvmChain(dto.originChain)) {
 			throw new BadRequestException(
-				`Chain ${dto.originChain} is not EVM chain`,
+				'validator set change in progress, cant create transactions',
 			);
 		}
 
 		const settings = getBridgingSettings(
 			dto.originChain,
 			dto.destinationChain,
+			dto.tokenID,
 			this.settingsService.SettingsResponse,
 		);
 		if (!settings) {
 			throw new BadRequestException(
-				`Bridging from ${dto.originChain} to ${dto.destinationChain} not supported`,
+				`Bridging token ${dto.tokenID} from ${dto.originChain} to ${dto.destinationChain} not supported`,
 			);
 		}
 
-		const tx = createEthBridgingTx(dto, settings.bridgingSettings);
+		const tx = createEthBridgingTx(
+			dto,
+			bridgingMode!,
+			settings.bridgingSettings,
+		);
 		if (!tx) {
 			throw new BadRequestException('error while creating bridging tx');
 		}
@@ -255,6 +287,7 @@ export class TransactionService {
 		receiverAddrs,
 		amount,
 		nativeTokenAmount,
+		tokenID,
 		txRaw,
 		isFallback,
 		isLayerZero,
@@ -266,15 +299,32 @@ export class TransactionService {
 			.filter(Boolean)
 			.join(', ');
 
+		const currencyID = getCurrencyIDFromDirectionConfig(
+			this.settingsService.SettingsResponse.directionConfig,
+			originChain,
+		);
+		if (!currencyID) {
+			throw new BadRequestException(
+				`failed to find currencyID for chain: ${originChain}`,
+			);
+		}
+
+		const enNativeTokenAmount =
+			(nativeTokenAmount ?? '').trim() || entity.nativeTokenAmount;
+		const nNativeTokenAmount = BigInt(enNativeTokenAmount || '0');
+
+		// for db, tokenID is only referred to a token, and never currency (amount)
+		const enTokenID =
+			tokenID !== currencyID || nNativeTokenAmount > BigInt(0) ? tokenID : 0;
+
 		entity.sourceTxHash = (originTxHash ?? '').trim();
 		entity.senderAddress = (senderAddress ?? '').trim() || entity.senderAddress;
 		entity.receiverAddresses = receiverAddresses ?? entity.receiverAddresses;
 		entity.destinationChain =
 			(destinationChain as ChainApexBridgeEnum) ?? entity.destinationChain;
 		entity.amount = (amount ?? '').trim() || entity.amount;
-		entity.nativeTokenAmount =
-			(nativeTokenAmount ?? '').trim() || entity.nativeTokenAmount;
-
+		entity.nativeTokenAmount = enNativeTokenAmount;
+		entity.tokenID = enTokenID;
 		entity.originChain = originChain;
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;
@@ -309,6 +359,18 @@ export class TransactionService {
 	async transferLayerZero(
 		dto: LayerZeroTransferDto,
 	): Promise<LayerZeroTransferResponseDto> {
+		if (!isAddress(dto.from)) {
+			throw new BadRequestException(
+				`error while calling Layer Zero transfer: request.from is not a valid address`,
+			);
+		}
+
+		if (!isAddress(dto.to)) {
+			throw new BadRequestException(
+				`error while calling Layer Zero transfer: request.to is not a valid address`,
+			);
+		}
+
 		try {
 			const lzConfig = getAppConfig().layerZero;
 

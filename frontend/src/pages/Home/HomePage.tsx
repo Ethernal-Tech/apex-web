@@ -206,8 +206,7 @@ const HomePage: React.FC = () => {
 					/>
 				</Box>
 			</Box>
-			{loginConnecting ||
-			Object.keys(settings.allowedDirections).length === 0 ? (
+			{loginConnecting || srcChainOptions.length === 0 ? (
 				<ButtonCustom
 					variant={color}
 					sx={{ textTransform: 'uppercase' }}

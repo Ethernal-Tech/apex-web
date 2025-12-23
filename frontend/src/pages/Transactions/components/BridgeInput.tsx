@@ -1,5 +1,4 @@
 import { Box, SelectChangeEvent, Typography } from '@mui/material';
-import TotalBalance from '../components/TotalBalance';
 import PasteTextInput from '../components/PasteTextInput';
 import PasteApexAmountInput from './PasteApexAmountInput';
 import FeeInformation from '../components/FeeInformation';
@@ -13,13 +12,12 @@ import {
 	createUtxo,
 	minBigInt,
 } from '../../../utils/generalUtils';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import {
 	CardanoTransactionFeeResponseDto,
 	ChainEnum,
-	CreateEthTransactionResponseDto,
-	TokenEnum,
+	CreateEthTransactionFullResponseDto,
 	TxTypeEnum,
 } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
@@ -30,51 +28,63 @@ import { useSupportedSourceTokenOptions } from '../utils';
 import {
 	BridgingModeEnum,
 	getBridgingMode,
-	getChainInfo,
 	isCardanoChain,
 	isEvmChain,
 } from '../../../settings/chain';
-import { getTokenInfo, isWrappedToken } from '../../../settings/token';
+import { getCurrencyID, getTokenInfo } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
 import { captureException } from '../../../features/sentry';
+import { setNewTxSourceTokenIDAction } from '../../../redux/slices/newTxSlice';
+
+const estimatedLockUnlockEthTxFee = BigInt('383748002686236');
+const ethLockUnlockFeeMultiplier = 1.5;
 
 type BridgeInputType = {
 	getCardanoTxFee: (
 		address: string,
 		amount: string,
-		isNativeToken: boolean,
+		tokenID: number,
 	) => Promise<CardanoTransactionFeeResponseDto>;
 	getEthTxFee: (
 		address: string,
 		amount: string,
-	) => Promise<CreateEthTransactionResponseDto>;
-	submit: (
-		address: string,
-		amount: string,
-		isNativeToken: boolean,
-	) => Promise<void>;
+		tokenID: number,
+	) => Promise<CreateEthTransactionFullResponseDto>;
+	submit: (address: string, amount: string, tokenID: number) => Promise<void>;
 	loadingState: SubmitLoadingState | undefined;
 };
 
 const calculateMaxAmountToken = (
 	totalDfmBalance: { [key: string]: string },
+	sourceTokenID: number | undefined,
+	currencyID: number | undefined,
 	maxTokenAmountAllowedToBridge: string,
-	sourceToken: TokenEnum | undefined,
+	chain: ChainEnum,
 ): { maxByBalance: bigint; maxByAllowed: bigint } => {
-	if (!sourceToken || !isWrappedToken(sourceToken)) {
+	if (
+		!totalDfmBalance ||
+		!sourceTokenID ||
+		!currencyID ||
+		sourceTokenID === currencyID ||
+		!chain
+	) {
 		return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
 	}
 
-	const tokenBalance = BigInt(
-		(sourceToken && totalDfmBalance ? totalDfmBalance[sourceToken] : '0') ||
-			'0',
-	);
+	const maxTokenAmountAllowedToBridgeDfm =
+		BigInt(maxTokenAmountAllowedToBridge || '0') !== BigInt(0)
+			? isEvmChain(chain)
+				? BigInt(convertDfmToWei(maxTokenAmountAllowedToBridge))
+				: BigInt(maxTokenAmountAllowedToBridge)
+			: BigInt(0);
+
+	const tokenBalance = BigInt(totalDfmBalance[sourceTokenID] || '0');
 
 	const tokenBalanceAllowedToUse =
-		BigInt(maxTokenAmountAllowedToBridge || '0') !== BigInt(0) &&
-		tokenBalance > BigInt(maxTokenAmountAllowedToBridge || '0')
-			? BigInt(maxTokenAmountAllowedToBridge || '0')
+		BigInt(maxTokenAmountAllowedToBridgeDfm || '0') !== BigInt(0) &&
+		tokenBalance > BigInt(maxTokenAmountAllowedToBridgeDfm || '0')
+			? BigInt(maxTokenAmountAllowedToBridgeDfm || '0')
 			: tokenBalance;
 
 	return {
@@ -85,18 +95,18 @@ const calculateMaxAmountToken = (
 
 const calculateMaxAmountCurrency = (
 	totalDfmBalance: { [key: string]: string },
+	sourceTokenID: number | undefined,
+	currencyID: number | undefined,
 	maxAmountAllowedToBridge: string,
 	chain: ChainEnum,
 	changeMinUtxo: number,
-	minDfmValue: string,
+	minEvmWeiValue: string,
 	bridgeTxFee: string,
 	operationFee: string,
 ): { maxByBalance: bigint; maxByAllowed: bigint } => {
-	if (!totalDfmBalance || !chain) {
+	if (!totalDfmBalance || !sourceTokenID || !currencyID || !chain) {
 		return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
 	}
-
-	const sourceToken = getChainInfo(chain).currencyToken;
 
 	const maxAmountAllowedToBridgeDfm =
 		BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
@@ -107,21 +117,20 @@ const calculateMaxAmountCurrency = (
 
 	const balanceAllowedToUse =
 		maxAmountAllowedToBridgeDfm !== BigInt(0) &&
-		BigInt(totalDfmBalance[sourceToken] || '0') >
-			maxAmountAllowedToBridgeDfm
+		BigInt(totalDfmBalance[currencyID] || '0') > maxAmountAllowedToBridgeDfm
 			? maxAmountAllowedToBridgeDfm
-			: BigInt(totalDfmBalance[sourceToken] || '0');
+			: BigInt(totalDfmBalance[currencyID] || '0');
 
 	let maxByBalance;
 	if (isEvmChain(chain)) {
 		maxByBalance =
-			BigInt(totalDfmBalance[sourceToken] || '0') -
+			BigInt(totalDfmBalance[currencyID] || '0') -
 			BigInt(bridgeTxFee) -
-			BigInt(minDfmValue) -
+			BigInt(minEvmWeiValue) -
 			BigInt(operationFee);
 	} else {
 		maxByBalance =
-			BigInt(totalDfmBalance[sourceToken] || '0') -
+			BigInt(totalDfmBalance[currencyID] || '0') -
 			BigInt(appSettings.potentialWalletFee) -
 			BigInt(bridgeTxFee) -
 			BigInt(changeMinUtxo) -
@@ -137,10 +146,14 @@ const BridgeInput = ({
 	submit,
 	loadingState,
 }: BridgeInputType) => {
+	const dispatch = useDispatch();
 	const [destinationAddr, setDestinationAddr] = useState('');
 	const [amount, setAmount] = useState('');
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
+	const sourceTokenID = useSelector(
+		(state: RootState) => state.newTx.sourceTokenID,
+	);
 
 	const walletUTxOs = useSelector(
 		(state: RootState) => state.accountInfo.utxos,
@@ -152,63 +165,100 @@ const BridgeInput = ({
 		(state: RootState) => state.chain,
 	);
 	const settings = useSelector((state: RootState) => state.settings);
-
-	const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
-	const minValueToBridge =
-		bridgingModeInfo?.settings?.minValueToBridge || '0';
-	const maxAmountAllowedToBridge =
-		bridgingModeInfo?.settings?.maxAmountAllowedToBridge || '0';
-	const maxTokenAmountAllowedToBridge =
-		bridgingModeInfo?.settings?.maxTokenAmountAllowedToBridge || '0';
 	const supportedSourceTokenOptions = useSupportedSourceTokenOptions(
+		settings,
 		chain,
 		destinationChain,
 	);
+
+	const setSourceTokenID = useCallback(
+		(newSrcTokID: number | undefined) =>
+			dispatch(setNewTxSourceTokenIDAction(newSrcTokID)),
+		[dispatch],
+	);
+
+	useEffect(() => {
+		setSourceTokenID(
+			supportedSourceTokenOptions.length > 0
+				? +supportedSourceTokenOptions[0].value
+				: undefined,
+		);
+		return () => {
+			setSourceTokenID(undefined);
+		};
+	}, [setSourceTokenID, supportedSourceTokenOptions]);
+
 	const reactorValidatorChangeInProgress = useSelector(
 		(state: RootState) => state.settings.reactorValidatorStatus,
 	);
 
-	const [sourceToken, setSourceToken] = useState<TokenEnum | undefined>(
-		supportedSourceTokenOptions.length > 0
-			? supportedSourceTokenOptions[0].value
-			: undefined,
+	const bridgingModeInfo = getBridgingMode(
+		settings,
+		chain,
+		destinationChain,
+		sourceTokenID || 0,
 	);
 
-	const minUtxoValue =
-		(bridgingModeInfo?.settings?.minUtxoChainValue &&
-			bridgingModeInfo?.settings?.minUtxoChainValue[chain]) ||
-		appSettings.minUtxoChainValue[chain];
-
 	const {
+		minValueToBridge,
+		maxAmountAllowedToBridge,
+		maxTokenAmountAllowedToBridge,
+		minUtxoChainValue,
 		minChainFeeForBridging,
 		minChainFeeForBridgingTokens,
 		minOperationFee,
-	} = bridgingModeInfo?.settings || {
-		minChainFeeForBridging: {} as { [key: string]: string },
-		minChainFeeForBridgingTokens: {} as { [key: string]: string },
-		minOperationFee: {} as { [key: string]: string },
+	} = bridgingModeInfo?.settings?.bridgingSettings || {
+		minValueToBridge: 0,
+		maxAmountAllowedToBridge: '0',
+		maxTokenAmountAllowedToBridge: '0',
+		minUtxoChainValue: {} as { [key: string]: number },
+		minChainFeeForBridging: {} as { [key: string]: number },
+		minChainFeeForBridgingTokens: {} as { [key: string]: number },
+		minOperationFee: {} as { [key: string]: number },
 	};
 
-	const operationFee = useMemo(
+	const currencyID = useMemo(
+		() => getCurrencyID(settings, chain),
+		[chain, settings],
+	);
+
+	const minUtxoValue =
+		(minUtxoChainValue && minUtxoChainValue[chain]) ||
+		appSettings.minUtxoChainValue[chain];
+
+	const defaultOperationFee = useMemo(
 		() =>
 			isEvmChain(chain)
 				? convertDfmToWei(minOperationFee[chain] || '0')
-				: minOperationFee[chain] || '0',
+				: (minOperationFee[chain] || '0') + '',
 		[chain, minOperationFee],
 	);
+
+	const [operationFee, setOperationFee] =
+		useState<string>(defaultOperationFee);
+
+	const resetOperationFee = useCallback(
+		() => setOperationFee(defaultOperationFee),
+		[defaultOperationFee],
+	);
+
+	useEffect(() => {
+		setOperationFee(defaultOperationFee);
+	}, [defaultOperationFee, setOperationFee]);
 
 	const defaultBridgeTxFee = useMemo(
 		() =>
 			isEvmChain(chain)
 				? convertDfmToWei(minChainFeeForBridging[chain] || '0')
-				: isWrappedToken(sourceToken)
-					? minChainFeeForBridgingTokens[chain] || '0'
-					: minChainFeeForBridging[chain] || '0',
+				: !sourceTokenID || !currencyID || sourceTokenID === currencyID
+					? (minChainFeeForBridging[chain] || '0') + ''
+					: (minChainFeeForBridgingTokens[chain] || '0') + '',
 		[
 			chain,
 			minChainFeeForBridging,
 			minChainFeeForBridgingTokens,
-			sourceToken,
+			sourceTokenID,
+			currencyID,
 		],
 	);
 
@@ -224,8 +274,10 @@ const BridgeInput = ({
 	}, [defaultBridgeTxFee, setBridgeTxFee]);
 
 	const fetchWalletFee = useCallback(async () => {
-		if (!destinationAddr || !amount || !sourceToken) {
+		if (!destinationAddr || !amount || !sourceTokenID || !currencyID) {
 			setUserWalletFee(undefined);
+			resetBridgeTxFee();
+			resetOperationFee();
 
 			return;
 		}
@@ -235,11 +287,14 @@ const BridgeInput = ({
 				const feeResp = await getCardanoTxFee(
 					destinationAddr,
 					convertApexToDfm(amount || '0', chain),
-					isWrappedToken(sourceToken),
+					sourceTokenID,
 				);
 				setUserWalletFee(BigInt(feeResp?.fee || '0').toString(10));
 				setBridgeTxFee(
 					BigInt(feeResp?.bridgingFee || '0').toString(10),
+				);
+				setOperationFee(
+					BigInt(feeResp?.operationFee || '0').toString(10),
 				);
 
 				return;
@@ -247,16 +302,41 @@ const BridgeInput = ({
 				const feeResp = await getEthTxFee(
 					destinationAddr,
 					convertApexToDfm(amount || '0', chain),
+					sourceTokenID,
 				);
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				const { bridgingFee, isFallback, ...tx } = feeResp;
 
-				const fee = await estimateEthTxFee(
-					tx,
-					TxTypeEnum.London,
-					isFallback,
+				const { bridgingTx, approvalTx } = feeResp;
+
+				let approvalTxFee = BigInt(0);
+				if (approvalTx) {
+					approvalTxFee = await estimateEthTxFee(
+						approvalTx,
+						TxTypeEnum.London,
+						false,
+					);
+
+					const totalTxFee =
+						approvalTxFee +
+						(BigInt(ethLockUnlockFeeMultiplier * 100) *
+							estimatedLockUnlockEthTxFee) /
+							BigInt(100);
+					setUserWalletFee(totalTxFee.toString());
+				} else {
+					const fee = await estimateEthTxFee(
+						feeResp.bridgingTx.ethTx,
+						TxTypeEnum.London,
+						bridgingTx.isFallback,
+					);
+
+					setUserWalletFee(fee.toString());
+				}
+
+				setBridgeTxFee(
+					BigInt(bridgingTx.bridgingFee || '0').toString(10),
 				);
-				setUserWalletFee(fee.toString());
+				setOperationFee(
+					BigInt(bridgingTx.operationFee || '0').toString(10),
+				);
 
 				return;
 			}
@@ -274,30 +354,24 @@ const BridgeInput = ({
 	}, [
 		destinationAddr,
 		amount,
+		sourceTokenID,
+		currencyID,
+		resetBridgeTxFee,
+		resetOperationFee,
 		chain,
 		getCardanoTxFee,
-		sourceToken,
-		setBridgeTxFee,
 		getEthTxFee,
 	]);
 
 	const setSourceTokenCallback = useCallback(
-		(token: TokenEnum) => {
-			setSourceToken(token);
+		(tokenID: number) => {
+			setSourceTokenID(tokenID);
 			setAmount('');
 			resetBridgeTxFee();
+			resetOperationFee();
 		},
-		[resetBridgeTxFee],
+		[resetBridgeTxFee, resetOperationFee, setSourceTokenID],
 	);
-
-	useEffect(() => {
-		if (
-			!supportedSourceTokenOptions.some((x) => x.value === sourceToken) &&
-			supportedSourceTokenOptions.length > 0
-		) {
-			setSourceToken(supportedSourceTokenOptions[0].value);
-		}
-	}, [sourceToken, supportedSourceTokenOptions]);
 
 	useEffect(() => {
 		if (fetchCreateTxTimeoutRef.current) {
@@ -327,25 +401,21 @@ const BridgeInput = ({
 
 	const handleSourceTokenChange = useCallback(
 		(e: SelectChangeEvent<string>) => {
-			setSourceTokenCallback(e.target.value as TokenEnum);
+			setSourceTokenCallback(+e.target.value);
 		},
 		[setSourceTokenCallback],
 	);
 
 	const memoizedTokenIcon = useMemo(
-		() => getTokenInfo(sourceToken).icon,
-		[sourceToken],
+		() => getTokenInfo(sourceTokenID).icon,
+		[sourceTokenID],
 	);
 
-	// either for nexus(wei dfm), or prime&vector (lovelace dfm) units
-	let minDfmValue: string;
-	if (isEvmChain(chain)) {
-		minDfmValue = convertDfmToWei(minValueToBridge);
-	} else if (bridgingModeInfo.bridgingMode === BridgingModeEnum.Skyline) {
-		minDfmValue = minUtxoValue;
-	} else {
-		minDfmValue = minValueToBridge;
-	}
+	const minEvmWeiValue =
+		isEvmChain(chain) &&
+		(!sourceTokenID || !currencyID || sourceTokenID === currencyID)
+			? convertDfmToWei(minValueToBridge)
+			: '0';
 
 	// when bridging native tokens, the lovelace that must also be given to the bridge for carrying native tokens
 	// is calculated later. in case for example insufficient lovelace balance, the call where the calculation
@@ -354,26 +424,25 @@ const BridgeInput = ({
 		if (
 			(settings.bridgingAddresses || []).length === 0 ||
 			isEvmChain(chain) ||
-			!isWrappedToken(sourceToken) ||
+			!sourceTokenID ||
+			!currencyID ||
+			sourceTokenID === currencyID ||
 			bridgeTxFee === '0' ||
 			bridgeTxFee !== defaultBridgeTxFee
 		) {
 			return bridgeTxFee;
 		}
 
-		const chosenTokenInput = getTokenInfo(sourceToken);
-		const settingsToken = settings.settingsPerMode[
-			BridgingModeEnum.Skyline
-		].cardanoChainsNativeTokens[chain].find(
-			(x) => chosenTokenInput.token === x.token,
-		);
-		if (!settingsToken) {
+		const tokenConfig = (settings.directionConfig[chain] || { tokens: {} })
+			.tokens[sourceTokenID];
+
+		if (!tokenConfig) {
 			return bridgeTxFee;
 		}
 
 		const approxAdditionToBridgingFee = calculateTokenUtxoMinValue(
 			createUtxo(settings.bridgingAddresses[0], '0', {
-				[settingsToken.tokenName]: convertApexToDfm(
+				[tokenConfig.chainSpecific]: convertApexToDfm(
 					amount || '1',
 					chain,
 				),
@@ -388,29 +457,34 @@ const BridgeInput = ({
 		amount,
 		bridgeTxFee,
 		chain,
+		currencyID,
 		defaultBridgeTxFee,
 		minUtxoValue,
 		settings.bridgingAddresses,
-		settings.settingsPerMode,
-		sourceToken,
+		settings.directionConfig,
+		sourceTokenID,
 	]);
 
 	const currencyMaxAmounts = calculateMaxAmountCurrency(
 		totalDfmBalance,
+		sourceTokenID,
+		currencyID,
 		maxAmountAllowedToBridge,
 		chain,
 		changeMinUtxo,
-		minDfmValue,
+		minEvmWeiValue,
 		adjustedBridgeTxFee,
 		operationFee,
 	);
 	const tokenMaxAmounts = calculateMaxAmountToken(
 		totalDfmBalance,
+		sourceTokenID,
+		currencyID,
 		maxTokenAmountAllowedToBridge,
-		sourceToken,
+		chain,
 	);
 	const maxAmounts =
-		sourceToken && isWrappedToken(sourceToken)
+		sourceTokenID && currencyID && sourceTokenID !== currencyID
 			? tokenMaxAmounts
 			: currencyMaxAmounts;
 	const currencyMaxAmount = minBigInt(
@@ -418,20 +492,26 @@ const BridgeInput = ({
 		currencyMaxAmounts.maxByBalance,
 	);
 
+	const insufficientBalance =
+		BigInt(convertApexToDfm(amount || '0', chain)) >
+		maxAmounts.maxByBalance;
+	const overMaxAllowed =
+		BigInt(convertApexToDfm(amount || '0', chain)) >
+			maxAmounts.maxByAllowed && maxAmounts.maxByAllowed > 0;
+	const insufficientCurrency = currencyMaxAmount < 0;
+
 	const onSubmit = useCallback(async () => {
-		if (!sourceToken) return;
+		if (!sourceTokenID) return;
 		await submit(
 			destinationAddr,
 			convertApexToDfm(amount || '0', chain),
-			isWrappedToken(sourceToken),
+			sourceTokenID,
 		);
-	}, [amount, destinationAddr, submit, chain, sourceToken]);
+	}, [amount, destinationAddr, submit, chain, sourceTokenID]);
 
 	return (
 		<Box sx={{ width: '100%' }}>
-			<TotalBalance />
-
-			<Typography sx={{ color: 'white', mt: 4, mb: 2 }}>
+			<Typography sx={{ color: 'white', mb: 2 }}>
 				Destination Address
 			</Typography>
 			{/* validate inputs */}
@@ -451,7 +531,7 @@ const BridgeInput = ({
 						id="src-tokens"
 						label="SourceToken"
 						icon={memoizedTokenIcon}
-						value={sourceToken || ''}
+						value={sourceTokenID ? sourceTokenID.toString() : ''}
 						onChange={handleSourceTokenChange}
 						options={supportedSourceTokenOptions}
 						width="50%"
@@ -500,7 +580,11 @@ const BridgeInput = ({
 						borderRadius: '8px',
 						padding: 2,
 					}}
-					isFeeInformation={!reactorValidatorChangeInProgress}
+					isFeeInformation={
+						bridgingModeInfo.bridgingMode !==
+							BridgingModeEnum.Reactor ||
+						!reactorValidatorChangeInProgress
+					}
 				/>
 
 				{!!loadingState && (
@@ -534,10 +618,12 @@ const BridgeInput = ({
 					variant={appSettings.isSkyline ? 'whiteSkyline' : 'white'}
 					disabled={
 						!!loadingState ||
-						currencyMaxAmount < 0 ||
+						insufficientBalance ||
+						insufficientCurrency ||
+						overMaxAllowed ||
 						(bridgingModeInfo.bridgingMode ===
 							BridgingModeEnum.Reactor &&
-							reactorValidatorChangeInProgress)
+							reactorValidatorChangeInProgress !== false)
 					}
 					sx={{
 						gridColumn: 'span 1',

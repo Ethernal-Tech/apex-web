@@ -1,18 +1,18 @@
 import { Box, Typography } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
-import { useEffect, useMemo } from 'react';
-import { ChainEnum, TokenEnum } from '../../swagger/apexBridgeApiService';
+import { useMemo } from 'react';
+import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import './lockedTokens.css';
 import {
-	isAdaToken,
-	isApexToken,
 	getTokenInfo,
-	getCurrencyTokenInfo,
+	apexID,
+	adaID,
+	getCurrencyID,
 } from '../../settings/token';
 import { toChainEnum } from '../../settings/chain';
-import { fetchAndUpdateLockedTokensAction } from '../../actions/lockedTokens';
 import { convertWeiToDfmBig } from '../../utils/generalUtils';
+import { isAdaToken, isApexToken } from '../Audit/token';
 
 const powBigInt = (base: bigint, exp: number): bigint => {
 	let result = BigInt(1);
@@ -43,25 +43,7 @@ export const formatBigIntDecimalString = (value: bigint, decimals = 6) => {
 
 const LockedTokensComponent = () => {
 	const lockedTokens = useSelector((state: RootState) => state.lockedTokens);
-	const { layerZeroChains } = useSelector(
-		(state: RootState) => state.settings,
-	);
-	const dispatch = useDispatch();
-
-	useEffect(() => {
-		// Call once immediately on mount
-		fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
-
-		// Then call periodically every 30 seconds
-		const interval = setInterval(() => {
-			fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
-		}, 30_000); // 30,000 ms = 30 seconds
-
-		// Cleanup on component unmount
-		return () => clearInterval(interval);
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [layerZeroChains]);
+	const settings = useSelector((state: RootState) => state.settings);
 
 	const lockedTokensLZFormatted = useMemo(() => {
 		return convertWeiToDfmBig(lockedTokens.layerZeroLockedTokens);
@@ -97,23 +79,24 @@ const LockedTokensComponent = () => {
 
 		const chunks: string[] = [];
 
-		const getBalanceSafe = (chain: ChainEnum, tokenKey: string) => {
+		const getBalanceSafe = (chain: ChainEnum, tokenKey: number) => {
 			if (!balances[chain]) return BigInt(0);
 
 			return balances[chain][tokenKey] || BigInt(0);
 		};
 
 		const apexTotal =
-			getBalanceSafe(ChainEnum.Prime, TokenEnum.APEX) +
-			getBalanceSafe(ChainEnum.Vector, TokenEnum.APEX) +
+			getBalanceSafe(ChainEnum.Prime, apexID) +
+			getBalanceSafe(ChainEnum.Vector, apexID) +
 			lockedTokensLZFormatted;
 		if (apexTotal > BigInt(0)) {
 			chunks.push(
-				`${formatBigIntDecimalString(apexTotal, 6)} ${getTokenInfo(TokenEnum.APEX).label}`,
+				`${formatBigIntDecimalString(apexTotal, 6)} ${getTokenInfo(apexID).label}`,
 			);
 		}
 
-		const cardanoCurrency = getCurrencyTokenInfo(ChainEnum.Cardano).token;
+		const cardanoCurrency =
+			getCurrencyID(settings, ChainEnum.Cardano) || adaID;
 
 		// temporarily disable display of ada
 		delete balances[ChainEnum.Cardano];
@@ -126,7 +109,7 @@ const LockedTokensComponent = () => {
 		}
 
 		return chunks.join(' | ').trim();
-	}, [lockedTokens.chains, lockedTokensLZFormatted]);
+	}, [lockedTokens.chains, lockedTokensLZFormatted, settings]);
 
 	const transferredData = useMemo(() => {
 		const grandTotals = Object.values(lockedTokens.totalTransferred).reduce(
@@ -134,27 +117,27 @@ const LockedTokensComponent = () => {
 				for (const [tokenKey, value] of Object.entries(perTokenMap)) {
 					const amount = BigInt(value || '0');
 
-					if (isApexToken(tokenKey as TokenEnum)) {
-						accumulator[TokenEnum.APEX] += amount;
-					} else if (isAdaToken(tokenKey as TokenEnum)) {
-						accumulator[TokenEnum.ADA] += amount;
+					if (isApexToken(+tokenKey)) {
+						accumulator[apexID] += amount;
+					} else if (isAdaToken(+tokenKey)) {
+						accumulator[adaID] += amount;
 					}
 				}
 				return accumulator;
 			},
 			{
-				[TokenEnum.APEX]: BigInt(0),
-				[TokenEnum.ADA]: BigInt(0),
+				[apexID]: BigInt(0),
+				[adaID]: BigInt(0),
 			},
 		);
 
 		// temporarily disable display of ada
-		delete grandTotals[TokenEnum.ADA];
+		delete grandTotals[adaID];
 
 		const chunks = Object.entries(grandTotals)
 			.map(([tokenKey, totalValue]) => {
 				if (totalValue > BigInt(0)) {
-					const label = getTokenInfo(tokenKey as TokenEnum).label;
+					const label = getTokenInfo(+tokenKey).label;
 					const formattedAmount = formatBigIntDecimalString(
 						totalValue,
 						6,

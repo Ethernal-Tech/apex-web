@@ -36,6 +36,11 @@ export class BridgeTransactionDto {
 	})
 	nativeTokenAmount: string;
 
+	@ApiProperty({
+		description: 'Token ID',
+	})
+	tokenID: number;
+
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
 	@ApiProperty({

@@ -37,7 +37,8 @@
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "eject": "react-scripts eject",
-    "lint": "npx eslint ./src --ext .ts --ext .tsx --config .eslintrc.js"
+    "lint": "npx eslint ./src --ext .ts --ext .tsx --config .eslintrc.js",
+    "swagger": "npx nswag run ./src/swagger/apexBridgeService.nswag"
   },
   "eslintConfig": {
     "extends": [

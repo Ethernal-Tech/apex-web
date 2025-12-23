@@ -2,14 +2,14 @@ import {
 	BridgingModeEnum,
 	ChainApexBridgeEnum,
 	ChainEnum,
-	TokenEnum,
 } from 'src/common/enum';
 import { CardanoNetworkType } from './Address/types';
 import {
+	BridgingSettingsDirectionConfigDto,
+	BridgingSettingsTokenPairDto,
 	SettingsFullResponseDto,
 	SettingsResponseDto,
 } from 'src/settings/settings.dto';
-import Web3 from 'web3';
 
 const NEXUS_TESTNET_CHAIN_ID = BigInt(9070);
 const NEXUS_MAINNET_CHAIN_ID = BigInt(9069);
@@ -74,14 +74,27 @@ export const isEvmChain = (chain: ChainEnum) => chain === ChainEnum.Nexus;
 const isAllowedDirection = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
-	allowedDirections: { [key: string]: string[] },
+	srcTokenID: number,
+	directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto },
 ): boolean {
-	return (allowedDirections[srcChain] || []).includes(dstChain);
+	if (
+		!directionConfig[srcChain] ||
+		!directionConfig[srcChain].destChain[dstChain]
+	) {
+		return false;
+	}
+
+	const tokenPairs = directionConfig[srcChain].destChain[dstChain];
+
+	return tokenPairs.some(
+		(x: BridgingSettingsTokenPairDto) => x.srcTokenID === srcTokenID,
+	);
 };
 
 export const getBridgingSettings = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
+	srcTokenID: number,
 	fullSettings: SettingsFullResponseDto,
 ): SettingsResponseDto | undefined {
 	if (!fullSettings) {
@@ -96,7 +109,8 @@ export const getBridgingSettings = function (
 		isAllowedDirection(
 			srcChain,
 			dstChain,
-			settingsReactor.bridgingSettings.allowedDirections,
+			srcTokenID,
+			settingsReactor.bridgingSettings.directionConfig,
 		)
 	) {
 		return settingsReactor;
@@ -104,7 +118,8 @@ export const getBridgingSettings = function (
 		isAllowedDirection(
 			srcChain,
 			dstChain,
-			settingsSkyline.bridgingSettings.allowedDirections,
+			srcTokenID,
+			settingsSkyline.bridgingSettings.directionConfig,
 		)
 	) {
 		return settingsSkyline;
@@ -115,6 +130,7 @@ export const getBridgingSettings = function (
 export const getBridgingMode = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
+	srcTokenID: number,
 	fullSettings: SettingsFullResponseDto,
 ): BridgingModeEnum | undefined {
 	if (!fullSettings) {
@@ -126,11 +142,21 @@ export const getBridgingMode = function (
 		fullSettings.settingsPerMode[BridgingModeEnum.Skyline].bridgingSettings;
 
 	if (
-		isAllowedDirection(srcChain, dstChain, settingsReactor.allowedDirections)
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			srcTokenID,
+			settingsReactor.directionConfig,
+		)
 	) {
 		return BridgingModeEnum.Reactor;
 	} else if (
-		isAllowedDirection(srcChain, dstChain, settingsSkyline.allowedDirections)
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			srcTokenID,
+			settingsSkyline.directionConfig,
+		)
 	) {
 		return BridgingModeEnum.Skyline;
 	}
@@ -138,151 +164,16 @@ export const getBridgingMode = function (
 	if (
 		srcChain != dstChain &&
 		fullSettings.layerZeroChains.some((x) => x.chain == srcChain) &&
-		fullSettings.layerZeroChains.some((x) => x.chain == dstChain)
+		fullSettings.layerZeroChains.some((x) => x.chain == dstChain) &&
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			srcTokenID,
+			fullSettings.directionConfig,
+		)
 	) {
 		return BridgingModeEnum.LayerZero;
 	}
 
 	return undefined;
-};
-
-export const getAllChainsDirections = function (
-	allowedBridgingModes: BridgingModeEnum[],
-	settings: SettingsFullResponseDto,
-): BridgingDirectionInfo[] {
-	if (allowedBridgingModes.length == 0 || !settings) {
-		return [];
-	}
-
-	const result: BridgingDirectionInfo[] = [];
-	const chains = Object.values(ChainEnum);
-
-	for (const srcChain of chains) {
-		for (const dstChain of chains) {
-			const bridgingMode = getBridgingMode(srcChain, dstChain, settings);
-			if (!!bridgingMode && allowedBridgingModes.includes(bridgingMode)) {
-				result.push({
-					srcChain,
-					dstChain,
-					bridgingMode,
-				});
-			}
-		}
-	}
-
-	return result;
-};
-
-export const getTokenNameFromSettings = (
-	srcChain: ChainEnum,
-	dstChain: ChainEnum,
-	settings: SettingsFullResponseDto,
-	isCurrency = false,
-): TokenEnum | undefined => {
-	switch (getBridgingMode(srcChain, dstChain, settings)) {
-		case BridgingModeEnum.LayerZero:
-			if (isCurrency) {
-				switch (srcChain) {
-					case ChainEnum.Nexus:
-						return TokenEnum.APEX;
-					default:
-						return undefined;
-				}
-			} else {
-				switch (srcChain) {
-					case ChainEnum.BNB:
-						return TokenEnum.BNAP3X;
-					case ChainEnum.Base:
-						return TokenEnum.BAP3X;
-					default:
-						return undefined;
-				}
-			}
-		case BridgingModeEnum.Skyline: {
-			const nativeTokens =
-				settings?.settingsPerMode[BridgingModeEnum.Skyline]
-					.cardanoChainsNativeTokens[srcChain];
-
-			switch (srcChain) {
-				case ChainEnum.Cardano: {
-					if (isCurrency || dstChain === ChainEnum.Vector) {
-						return TokenEnum.ADA;
-					}
-
-					const idx =
-						nativeTokens?.findIndex((x) => x.dstChainID === dstChain) ?? -1;
-					if (idx === -1) return undefined;
-
-					if (idx === 0) return TokenEnum.WAPEX;
-
-					const tokenName = nativeTokens[idx].tokenName?.trim();
-					return decodeNativeTokenName(tokenName);
-				}
-				case ChainEnum.Vector: {
-					if (
-						isCurrency ||
-						dstChain === ChainEnum.Prime ||
-						dstChain === ChainEnum.Nexus
-					) {
-						return TokenEnum.APEX;
-					}
-
-					const idx =
-						nativeTokens?.findIndex((x) => x.dstChainID === dstChain) ?? -1;
-					if (idx === -1) return undefined;
-
-					if (idx === 0) return TokenEnum.WADA;
-
-					const tokenName = nativeTokens[idx].tokenName?.trim();
-					return decodeNativeTokenName(tokenName);
-				}
-				case ChainEnum.Prime: {
-					return TokenEnum.APEX;
-				}
-			}
-			return undefined;
-		}
-		case BridgingModeEnum.Reactor: {
-			return TokenEnum.APEX;
-		}
-	}
-};
-
-export const toTokenEnum = (s?: string): TokenEnum | undefined => {
-	if (!s) return undefined;
-
-	const cleaned = s.split('\u0000').join('').trim();
-
-	const enumValues = Object.values(TokenEnum) as string[];
-	const enumKeys = Object.keys(TokenEnum);
-
-	let found = enumValues.find((v) => v === cleaned);
-	if (found) return found as TokenEnum;
-
-	found = enumValues.find((v) => v.toLowerCase() === cleaned.toLowerCase());
-	if (found) return found as TokenEnum;
-
-	const keyMatch = enumKeys.find(
-		(k) => k.toLowerCase() === cleaned.toLowerCase(),
-	);
-	if (keyMatch) return (TokenEnum as any)[keyMatch] as TokenEnum;
-
-	return undefined;
-};
-
-export const decodeNativeTokenName = (
-	nativeTokenName: string,
-): TokenEnum | undefined => {
-	const parts = nativeTokenName.split('.');
-	if (parts.length < 2) {
-		return toTokenEnum(nativeTokenName);
-	}
-	const tokenName = parts[1];
-
-	try {
-		const decodedTokenName = Web3.utils.hexToAscii(tokenName);
-		return toTokenEnum(decodedTokenName);
-	} catch (_) {
-		return toTokenEnum(tokenName);
-	}
 };
