@@ -133,6 +133,7 @@ const HomePage: React.FC = () => {
 				>
 					Bridge your tokens
 				</Typography>
+
 				<Box
 					p={4}
 					mt={2}
@@ -160,22 +161,45 @@ const HomePage: React.FC = () => {
 						options={srcChainOptions}
 					/>
 
-					<Button
-						onClick={switchValues}
-						disabled={!isSwitchBtnEnabled}
+					<Box
 						sx={{
+							position: 'relative',
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
 							mt: '20px',
-							mx: '28px',
-							boxShadow: 'none',
-							background: 'none',
+							'&::before': {
+								content: '""',
+								position: 'absolute',
+								width: '100%',
+								height: '1px',
+								backgroundColor: '#4B4A4A',
+								zIndex: 0,
+							},
 						}}
 					>
-						{!isLoggedInMemo ? (
-							<SwitcherIcon />
-						) : (
-							<OneDirectionArrowIcon />
-						)}
-					</Button>
+						<Button
+							onClick={switchValues}
+							disabled={!isSwitchBtnEnabled}
+							sx={{
+								margin: 0,
+								padding: 0,
+								boxShadow: 'none',
+								zIndex: 1,
+								minWidth: '0',
+								borderRadius: '100%',
+								'&:hover': {
+									// backgroundColor: 'transparent',
+								},
+							}}
+						>
+							{!isLoggedInMemo ? (
+								<SwitcherIcon />
+							) : (
+								<OneDirectionArrowIcon />
+							)}
+						</Button>
+					</Box>
 
 					<Typography
 						mb={'4px'}
