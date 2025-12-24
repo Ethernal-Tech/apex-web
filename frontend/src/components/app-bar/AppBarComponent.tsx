@@ -1,5 +1,6 @@
 import {
 	AppBar,
+	Box,
 	Button,
 	CircularProgress,
 	ListItemIcon,
@@ -19,7 +20,7 @@ import {
 } from '../../pages/PageRouter';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LogoutIcon from '@mui/icons-material/Logout';
-import ApexFusionLogo from '../../assets/apex-fusion-logo.svg';
+import { ReactComponent as ApexFusionLogo } from '../../assets/apex-fusion-logo.svg';
 import { white } from '../../containers/theme';
 import ButtonCustom from '../Buttons/ButtonCustom';
 import { RootState } from '../../redux/store';
@@ -27,7 +28,6 @@ import { formatAddress } from '../../utils/generalUtils';
 import { logout } from '../../actions/logout';
 
 const CustomMenu = styled(Menu)({
-	// backgroundColor: 'rgba(0,0,0, 0.4)',
 	'.MuiPaper-root': {
 		backgroundColor: '#051D26',
 		border: '1px solid #435F69',
@@ -96,12 +96,19 @@ const AppBarComponent = () => {
 						background: `linear-gradient(180deg, rgba(0,0,0,0.1) 60%, transparent 100%)`,
 					}}
 				>
-					<Button onClick={() => handleOptionClick(HOME_ROUTE)}>
-						{/* Logo svg */}
-						<img src={ApexFusionLogo} alt="apex fusion logo" />
-					</Button>
+					<Box sx={{ flex: 1 }}>
+						<Button onClick={() => handleOptionClick(HOME_ROUTE)}>
+							<ApexFusionLogo />
+						</Button>
+					</Box>
 
-					<div>
+					<Box
+						sx={{
+							flex: 1,
+							display: 'flex',
+							justifyContent: 'center',
+						}}
+					>
 						{isLoggedInMemo && (
 							<>
 								<ButtonCustom
@@ -130,7 +137,14 @@ const AppBarComponent = () => {
 								</ButtonCustom>
 							</>
 						)}
-
+					</Box>
+					<Box
+						sx={{
+							flex: 1,
+							display: 'flex',
+							justifyContent: 'flex-end',
+						}}
+					>
 						{loginConnecting ? (
 							<Button
 								sx={{
@@ -169,7 +183,7 @@ const AppBarComponent = () => {
 								{formatAddress(account)}
 							</Button>
 						) : null}
-					</div>
+					</Box>
 					<CustomMenu
 						id="basic-menu"
 						anchorEl={anchorEl}
