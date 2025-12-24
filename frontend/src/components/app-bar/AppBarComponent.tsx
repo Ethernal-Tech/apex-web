@@ -3,6 +3,7 @@ import {
 	Box,
 	Button,
 	CircularProgress,
+	lighten,
 	ListItemIcon,
 	ListItemText,
 	Menu,
@@ -29,15 +30,31 @@ import { logout } from '../../actions/logout';
 
 const CustomMenu = styled(Menu)({
 	'.MuiPaper-root': {
-		backgroundColor: '#051D26',
+		backgroundColor: '#424543',
 		border: '1px solid #435F69',
 	},
+
+	'& .MuiMenu-list': {
+		paddingTop: '0',
+		paddingBottom: '0',
+	},
+
+	'& .MuiTypography-root': {
+		fontSize: '14px',
+	},
+
+	// @todo check this
+	/* '& .MuiSvgIcon-root': {
+		marginRight: '0px',
+	}, */
 });
 
 const CustomMenuItem = styled(MenuItem)({
-	backgroundColor: '#051D26',
+	paddingTop: '10px',
+	paddingBottom: '10px',
+	backgroundColor: '#424543',
 	'&:hover': {
-		backgroundColor: '#073B4C',
+		backgroundColor: lighten('#424543', 0.1),
 	},
 	color: '#ffffff',
 });
@@ -171,10 +188,10 @@ const AppBarComponent = () => {
 								onClick={handleClick}
 								sx={{
 									border: '1px solid',
-									borderColor: '#435F69',
+									borderColor: '#424543',
 									px: '24px',
 									py: '10px',
-									borderRadius: '8px',
+									borderRadius: '100px',
 									color: white,
 									textTransform: 'lowercase',
 								}}
