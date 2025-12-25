@@ -37,7 +37,7 @@ const ReputationSystemWidget = () => {
 			</Typography>
 
 			<ButtonCustom
-				variant="white"
+				variant="primary"
 				onClick={() => window.open(REPUTATION_SYSTEM_ROUTE, '_blank')}
 				sx={{
 					textTransform: 'uppercase',

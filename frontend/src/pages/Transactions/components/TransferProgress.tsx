@@ -425,7 +425,7 @@ const TransferProgress = ({ tx }: TransferProgressProps) => {
 				}}
 			>
 				<ButtonCustom
-					variant="red"
+					variant="secondary"
 					onClick={() => navigate(TRANSACTIONS_ROUTE)}
 					sx={{ gridColumn: 'span 1', textTransform: 'uppercase' }}
 				>
@@ -433,7 +433,7 @@ const TransferProgress = ({ tx }: TransferProgressProps) => {
 				</ButtonCustom>
 
 				<ButtonCustom
-					variant="white"
+					variant="primary"
 					onClick={onOpenExplorer}
 					disabled={!getExplorerUrl(tx)}
 					sx={{ gridColumn: 'span 1', textTransform: 'uppercase' }}
@@ -442,7 +442,7 @@ const TransferProgress = ({ tx }: TransferProgressProps) => {
 				</ButtonCustom>
 
 				{/* TODO af - removed for now as bridge doesn't currently support refunds */}
-				{/* <ButtonCustom  variant="white" sx={{ gridColumn:'span 1', textTransform:'uppercase' }}>
+				{/* <ButtonCustom  variant="primary" sx={{ gridColumn:'span 1', textTransform:'uppercase' }}>
                     request a refund
                 </ButtonCustom> */}
 			</Box>
