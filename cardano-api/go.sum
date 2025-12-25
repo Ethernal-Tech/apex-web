@@ -1,7 +1,7 @@
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
 filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
-github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20251223104118-181f582d1471 h1:pV2/k+esvkKz0PO9zLBlCA4/LXg1BJEdvLSGLOWXfAk=
-github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20251223104118-181f582d1471/go.mod h1:v0z3aaYeuDhLfmO/s+1lq1WBPnLQyHIAjpPiEiecMeU=
+github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20251225111657-649c99ec921d h1:vr5urK4emxIZBoHKH3hhh5D1A/2vJQq95hRyPnmR704=
+github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20251225111657-649c99ec921d/go.mod h1:v0z3aaYeuDhLfmO/s+1lq1WBPnLQyHIAjpPiEiecMeU=
 github.com/blinklabs-io/gouroboros v0.103.1 h1:D/3Hlr09kw/cYM8gt6t7jVlTfDCXjb25nHL5V2l/3kc=
 github.com/blinklabs-io/gouroboros v0.103.1/go.mod h1:wjiNCbZ2uQy9DGfLCgEgqagHxNBAv5UYsOdRBgoi3SU=
 github.com/blinklabs-io/ouroboros-mock v0.3.5 h1:/KWbSoH8Pjrd9uxOH7mVbI7XFsDCNW/O9FtLlvJDUpQ=
