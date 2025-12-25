@@ -44,6 +44,7 @@ import {
 	getRealTokenIDFromEntity,
 	getTokenInfo,
 } from '../../settings/token';
+import { formatBalance } from '../../utils/tokenUtils';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<
@@ -335,12 +336,14 @@ const TransactionsTablePage = () => {
 								</TableCell>
 
 								<TableCell sx={tableCellStyle}>
-									{toFixed(
-										convertDfmToApex(
-											transaction.amount,
-											transaction.originChain,
+									{formatBalance(
+										toFixed(
+											convertDfmToApex(
+												transaction.amount,
+												transaction.originChain,
+											),
+											6,
 										),
-										6,
 									)}{' '}
 									{
 										getTokenInfo(
@@ -360,12 +363,14 @@ const TransactionsTablePage = () => {
 											<Box sx={{ ml: 3 }}>-</Box>
 										) : (
 											<>
-												{toFixed(
-													convertDfmToApex(
-														transaction.nativeTokenAmount,
-														transaction.originChain,
+												{formatBalance(
+													toFixed(
+														convertDfmToApex(
+															transaction.nativeTokenAmount,
+															transaction.originChain,
+														),
+														6,
 													),
-													6,
 												)}{' '}
 												{
 													getTokenInfo(
