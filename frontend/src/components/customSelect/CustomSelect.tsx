@@ -26,7 +26,7 @@ interface CustomSelectProps {
 	icon: React.FC;
 	value: string;
 	disabled?: boolean;
-	onChange: (event: SelectChangeEvent<string>) => void;
+	onChange?: (event: SelectChangeEvent<string>) => void;
 	options: Option[];
 	sx?: SxProps<Theme>;
 }
@@ -51,6 +51,10 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			},
 			'& .MuiTypography-root': {
 				WebkitTextFillColor: 'white',
+			},
+
+			'&:hover fieldset': {
+				border: '2px solid transparent!important',
 			},
 		},
 

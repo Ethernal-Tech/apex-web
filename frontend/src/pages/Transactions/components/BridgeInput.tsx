@@ -10,7 +10,7 @@ import {
 	convertDfmToWei,
 	minBigInt,
 } from '../../../utils/generalUtils';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import {
 	CardanoTransactionFeeResponseDto,
@@ -19,10 +19,17 @@ import {
 } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
-import { isCardanoChain, isEvmChain } from '../../../settings/chain';
+import {
+	isCardanoChain,
+	isEvmChain,
+	getChainInfo,
+	getSrcChains,
+} from '../../../settings/chain';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
 import InfoBox from './InfoBox';
+import CustomSelect from '../../../components/customSelect/CustomSelect';
+import { setChainAction } from '../../../redux/slices/chainSlice';
 
 type BridgeInputType = {
 	bridgeTxFee: string;
@@ -92,6 +99,8 @@ const BridgeInput = ({
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
+	const dispatch = useDispatch();
+
 	const walletUTxOs = useSelector(
 		(state: RootState) => state.accountInfo.utxos,
 	);
@@ -99,6 +108,11 @@ const BridgeInput = ({
 		(state: RootState) => state.accountInfo.balance,
 	);
 	const { chain } = useSelector((state: RootState) => state.chain);
+	const wallet = useSelector((state: RootState) => state.wallet.wallet);
+	const account = useSelector(
+		(state: RootState) => state.accountInfo.account,
+	);
+	const settings = useSelector((state: RootState) => state.settings);
 	const minValueToBridge = useSelector(
 		(state: RootState) => state.settings.minValueToBridge,
 	);
@@ -108,6 +122,14 @@ const BridgeInput = ({
 	const validatorChangeInProgress = useSelector(
 		(state: RootState) => state.settings.validatorStatus,
 	);
+
+	const srcChain = chain;
+	const isLoggedInMemo = !!wallet && !!account;
+	const srcChainOptions = useMemo(
+		() => getSrcChains(settings).map((x) => getChainInfo(x)),
+		[settings],
+	);
+	const srcChainInfo = useMemo(() => getChainInfo(srcChain), [srcChain]);
 
 	const fetchWalletFee = useCallback(async () => {
 		if (!destinationAddr || !amount) {
@@ -160,6 +182,15 @@ const BridgeInput = ({
 		};
 	}, [fetchWalletFee]);
 
+	useEffect(() => {
+		if (
+			(!srcChain || !srcChainOptions.some((x) => x.value === srcChain)) &&
+			srcChainOptions.length > 0
+		) {
+			dispatch(setChainAction(srcChainOptions[0].value));
+		}
+	}, [srcChain, srcChainOptions, dispatch]);
+
 	/* const onDiscard = () => {
 		setDestinationAddr('');
 		setAmount('');
@@ -203,6 +234,25 @@ const BridgeInput = ({
 
 	return (
 		<Box sx={{ width: '100%' }}>
+			<Box display="flex" flexDirection="column">
+				<Typography
+					mb={'4px'}
+					fontWeight={400}
+					sx={{ color: '#fff', fontSize: '13px' }}
+				>
+					From
+				</Typography>
+
+				{srcChainOptions.length > 0 && (
+					<CustomSelect
+						label="Source"
+						icon={srcChainInfo.icon}
+						value={srcChain}
+						disabled={isLoggedInMemo}
+						options={srcChainOptions}
+					/>
+				)}
+			</Box>
 			<Box marginY={2}>
 				<Typography sx={{ color: 'white', mb: 1, fontSize: '13px' }}>
 					Destination Address
@@ -249,18 +299,6 @@ const BridgeInput = ({
 						</Box>
 					)}
 					<Box display="flex" justifyContent="center" gap={2}>
-						{/* <ButtonCustom
-							onClick={onDiscard}
-							disabled={!!loadingState}
-							variant="secondary"
-							sx={{
-								gridColumn: 'span 1',
-								textTransform: 'uppercase',
-							}}
-						>
-							Discard
-						</ButtonCustom> */}
-
 						<ButtonCustom
 							onClick={onSubmit}
 							variant="primary"
