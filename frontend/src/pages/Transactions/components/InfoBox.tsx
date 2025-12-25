@@ -4,7 +4,11 @@ import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 import FeeInformation from './FeeInformation';
 
 const CustomBox = styled(Box)({
-	background: '#075159',
+	color: 'white',
+	display: 'flex',
+	flexDirection: 'column',
+	justifyContent: 'space-between',
+	marginTop: '30px',
 });
 
 interface InfoBoxProps {
@@ -25,10 +29,6 @@ const InfoBox: React.FC<InfoBoxProps> = ({
 	return (
 		<CustomBox
 			sx={{
-				color: 'white',
-				display: 'flex',
-				flexDirection: 'column',
-				justifyContent: 'space-between',
 				...sx,
 			}}
 		>
@@ -41,7 +41,7 @@ const InfoBox: React.FC<InfoBoxProps> = ({
 			) : (
 				<Typography
 					sx={{
-						color: 'rgba(255,255,255,0.8)',
+						color: 'white',
 						textAlign: 'center',
 						fontSize: '18px',
 					}}

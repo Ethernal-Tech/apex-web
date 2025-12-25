@@ -43,6 +43,7 @@ const CustomTextField = styled(TextField)({
 		fontSize: '1.5rem',
 		color: 'white',
 		paddingLeft: 0,
+		paddingTop: 0,
 		caretColor: '#FF5E5E',
 		'&::placeholder': {
 			color: '#a3a3a3',

@@ -1,8 +1,8 @@
 import { Box, Typography } from '@mui/material';
-import TotalBalance from '../components/TotalBalance';
 import PasteTextInput from '../components/PasteTextInput';
 import PasteApexAmountInput from './PasteApexAmountInput';
 import ButtonCustom from '../../../components/Buttons/ButtonCustom';
+import TotalBalance from './TotalBalance';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	calculateChangeMinUtxo,
@@ -203,105 +203,91 @@ const BridgeInput = ({
 
 	return (
 		<Box sx={{ width: '100%' }}>
-			<TotalBalance />
-
-			<Typography sx={{ color: 'white', mt: 4, mb: 2 }}>
-				Destination Address
-			</Typography>
-			{/* validate inputs */}
-			<PasteTextInput
-				sx={{ width: '50%' }}
-				text={destinationAddr}
-				setText={setDestinationAddr}
-				disabled={!!loadingState}
-				id="dest-addr"
-			/>
-
-			<Typography sx={{ color: 'white', mt: 4, mb: 1 }}>
-				Enter amount to send
-			</Typography>
-			<Box
-				sx={{
-					display: 'grid',
-					gridTemplateColumns: 'repeat(2,1fr)',
-					gap: '20px',
-				}}
-			>
+			<Box marginY={2}>
+				<Typography sx={{ color: 'white', mb: 1, fontSize: '13px' }}>
+					Destination Address
+				</Typography>
 				{/* validate inputs */}
-				<PasteApexAmountInput
-					maxAmounts={maxAmounts}
-					text={amount}
-					setAmount={setAmount}
+				<PasteTextInput
+					text={destinationAddr}
+					setText={setDestinationAddr}
 					disabled={!!loadingState}
-					id="bridge-amount"
-					sx={{
-						gridColumn: 'span 1',
-						borderBottom: '2px solid',
-						borderImageSource:
-							'linear-gradient(180deg, #435F69 10.63%, rgba(67, 95, 105, 0) 130.31%)',
-						borderImageSlice: 1,
-						paddingBottom: 2,
-						paddingTop: 2,
-					}}
+					id="dest-addr"
 				/>
+			</Box>
 
-				<InfoBox
-					userWalletFee={userWalletFee || '0'}
-					bridgeTxFee={bridgeTxFee}
-					chain={chain}
-					sx={{
-						gridColumn: 'span 1',
-						border: '1px solid #077368',
-						borderRadius: '8px',
-						padding: 2,
-					}}
-					isFeeInformation={!validatorChangeInProgress}
-				/>
-
-				{!!loadingState && (
-					<Box
-						sx={{
-							gridColumn: 'span 2',
-							display: 'flex',
-							flexDirection: 'column',
-							justifyContent: 'center',
-							alignItems: 'center',
-						}}
+			<Box marginY={2}>
+				<Box display="flex" justifyContent="space-between">
+					<Typography
+						sx={{ color: 'white', mb: 1, fontSize: '13px' }}
 					>
-						<SubmitLoading loadingState={loadingState} />
+						Enter amount
+					</Typography>
+
+					<TotalBalance />
+				</Box>
+				<Box>
+					<PasteApexAmountInput
+						maxAmounts={maxAmounts}
+						text={amount}
+						setAmount={setAmount}
+						disabled={!!loadingState}
+						id="bridge-amount"
+					/>
+
+					{!!loadingState && (
+						<Box
+							sx={{
+								gridColumn: 'span 2',
+								display: 'flex',
+								flexDirection: 'column',
+								justifyContent: 'center',
+								alignItems: 'center',
+							}}
+						>
+							<SubmitLoading loadingState={loadingState} />
+						</Box>
+					)}
+					<Box display="flex" justifyContent="center" gap={2}>
+						<ButtonCustom
+							onClick={onDiscard}
+							disabled={!!loadingState}
+							variant="red"
+							sx={{
+								gridColumn: 'span 1',
+								textTransform: 'uppercase',
+							}}
+						>
+							Discard
+						</ButtonCustom>
+
+						<ButtonCustom
+							onClick={onSubmit}
+							variant="white"
+							disabled={
+								validatorChangeInProgress !== false ||
+								!!loadingState ||
+								BigInt(maxAmount) <= 0 ||
+								hasInsufficientBalance ||
+								overMaxAllowed
+							}
+							sx={{
+								gridColumn: 'span 1',
+								textTransform: 'uppercase',
+							}}
+							id="bridge-tx"
+						>
+							Move funds
+						</ButtonCustom>
 					</Box>
-				)}
 
-				<ButtonCustom
-					onClick={onDiscard}
-					disabled={!!loadingState}
-					variant="red"
-					sx={{
-						gridColumn: 'span 1',
-						textTransform: 'uppercase',
-					}}
-				>
-					Discard
-				</ButtonCustom>
-
-				<ButtonCustom
-					onClick={onSubmit}
-					variant="white"
-					disabled={
-						validatorChangeInProgress !== false ||
-						!!loadingState ||
-						BigInt(maxAmount) <= 0 ||
-						hasInsufficientBalance ||
-						overMaxAllowed
-					}
-					sx={{
-						gridColumn: 'span 1',
-						textTransform: 'uppercase',
-					}}
-					id="bridge-tx"
-				>
-					Move funds
-				</ButtonCustom>
+					<InfoBox
+						userWalletFee={userWalletFee || '0'}
+						bridgeTxFee={bridgeTxFee}
+						chain={chain}
+						isFeeInformation={!validatorChangeInProgress}
+					/>
+				</Box>
 			</Box>
 		</Box>
 	);
