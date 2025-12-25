@@ -4,15 +4,17 @@ import CustomSelect from '../../components/customSelect/CustomSelect';
 import { isEvmChain, getChainInfo } from '../../settings/chain';
 import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import { formatBigIntDecimalString } from '../lockedTokens/LockedTokensComponent';
+import { getExplorerAddressUrl } from '../../utils/chainUtils';
 import {
-	getExplorerAddressUrl,
-	LovelaceTokenName,
-} from '../../utils/chainUtils';
-import { decodeTokenKey } from '../../utils/tokenUtils';
-import { getTokenInfo } from '../../settings/token';
-import { TokenEnum } from '../../features/enums';
+	adaID,
+	apexID,
+	getCurrencyID,
+	getTokenInfo,
+} from '../../settings/token';
 import { compareBigInts } from '../../features/utils';
 import LaunchIcon from '@mui/icons-material/Launch';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
 
 type SkylinePanelProps = {
 	chains: Record<string, Record<string, Record<string, bigint>>>;
@@ -27,7 +29,7 @@ type SkylinePanelProps = {
 
 const sumToken = (m: Record<string, bigint>) =>
 	Object.values(m).reduce((a, v) => a + v, BigInt(0));
-const fmt = (v: bigint) => formatBigIntDecimalString(v, 6);
+const fmt = (v: bigint) => formatBigIntDecimalString(v ?? BigInt(0), 6);
 const sortEntries = (r: Record<string, bigint>) =>
 	Object.entries(r).sort((a, b) => compareBigInts(b[1], a[1]));
 
@@ -78,6 +80,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 	tvbGrandTotal,
 	skylineChains,
 }) => {
+	const settings = useSelector((s: RootState) => s.settings);
 	const srcChainOptions = useMemo(() => {
 		const chainInfos = skylineChains.map(getChainInfo);
 		chainInfos.sort((a, b) => (a.order < b.order ? -1 : 1));
@@ -91,19 +94,9 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 		if (!chains[selChain]) setSelChain(chainKeys[0] ?? '');
 	}, [chains, chainKeys, selChain]);
 
-	const tokensOfSelChain = useMemo(
-		() => Object.keys(chains[selChain] ?? {}),
-		[chains, selChain],
-	);
-
-	const selToken: string = useMemo(
-		(): string =>
-			tokensOfSelChain.length > 0 &&
-			!tokensOfSelChain.includes(LovelaceTokenName)
-				? tokensOfSelChain[0]
-				: LovelaceTokenName,
-		[tokensOfSelChain],
-	);
+	const selToken: number = useMemo((): number => {
+		return getCurrencyID(settings, selChain as ChainEnum) || apexID;
+	}, [selChain, settings]);
 
 	const addrMap = chains[selChain]?.[selToken] ?? {};
 
@@ -111,29 +104,32 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 		<Box className="audit-layout">
 			<Box>
 				<Typography className="audit-h2">Total Locked (TVL)</Typography>
-				<Box className="audit-mb-8 audit-grid-md-3 audit-gap-12">
-					{sortEntries(tokenTotalsAllChains).map(
-						([tokenKey, amt]) => (
+				<Box className="audit-mb-8 audit-grid-md-2 audit-gap-12">
+					{sortEntries(tokenTotalsAllChains)
+						.filter(
+							([tokenKey]) =>
+								+tokenKey === apexID || +tokenKey === adaID, // only show desired tokens
+						)
+						.map(([tokenKey, amt]) => (
 							<AmountCard
 								key={tokenKey}
-								left={tokenKey}
+								left={getTokenInfo(Number(tokenKey)).label}
 								right={fmt(amt)}
 							/>
-						),
-					)}
+						))}
 				</Box>
 
 				<Typography className="audit-h2">
 					Total Locked Per Chain
 				</Typography>
-				<Box className="audit-grid-md-3 audit-gap-12">
+				<Box className="audit-grid-md-2 audit-gap-12">
 					{Object.keys(perChainTotals)
 						.filter((ck) => !isEvmChain(ck as ChainEnum))
 						.map((ck) => {
 							const rows = sortEntries(
 								perChainTotals[ck] ?? {},
 							).map(([t, a]) => ({
-								label: decodeTokenKey(t, ck),
+								label: getTokenInfo(+t).label,
 								amt: a,
 							}));
 							return (
@@ -186,7 +182,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 											className="audit-dim"
 											style={{ fontSize: 14 }}
 										>
-											{decodeTokenKey(selToken, selChain)}
+											{getTokenInfo(selToken).label}
 										</Typography>
 									</Typography>
 								</Typography>
@@ -262,19 +258,13 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 				</Typography>
 
 				<Box className="audit-grid-md-2 audit-gap-12 audit-mb-16">
-					<AmountCard
-						left={getTokenInfo(TokenEnum.APEX).label}
-						right={fmt(
-							tvbGrandTotal[getTokenInfo(TokenEnum.APEX).label],
-						)}
-					/>
-
-					<AmountCard
-						left={getTokenInfo(TokenEnum.ADA).label}
-						right={fmt(
-							tvbGrandTotal[getTokenInfo(TokenEnum.ADA).label],
-						)}
-					/>
+					{Object.entries(tvbGrandTotal).map(([tokenKey, amount]) => (
+						<AmountCard
+							key={tokenKey}
+							left={getTokenInfo(+tokenKey).label}
+							right={fmt(amount)}
+						/>
+					))}
 				</Box>
 
 				<Typography className="audit-h2">
@@ -282,7 +272,11 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 				</Typography>
 				<Box className="audit-grid-md-2 audit-gap-12 audit-mb-16">
 					{sortEntries(tvbTokenTotalsAllChains).map(([tk, amt]) => (
-						<AmountCard key={tk} left={tk} right={fmt(amt)} />
+						<AmountCard
+							key={tk}
+							left={getTokenInfo(+tk).label}
+							right={fmt(amt)}
+						/>
 					))}
 					{Object.keys(tvbTokenTotalsAllChains).length === 0 && (
 						<Typography className="audit-dim">
@@ -301,7 +295,7 @@ const SkylinePanel: React.FC<SkylinePanelProps> = ({
 							const rows = sortEntries(
 								tvbPerChainTotals[ck] ?? {},
 							).map(([t, a]) => ({
-								label: decodeTokenKey(t, ck),
+								label: getTokenInfo(+t).label,
 								amt: a,
 							}));
 							return (

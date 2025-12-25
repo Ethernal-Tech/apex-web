@@ -1,0 +1,2678 @@
+{
+	"info": {
+		"_postman_id": "5d29b19d-88ce-4947-bc47-d492ea12a1d3",
+		"name": "Skyline Test Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "50162718",
+		"_collection_link": "https://nikola-jovicevic-760450.postman.co/workspace/Nikola-Jovicevic's-Workspace~670737d6-2e4a-43d2-8b80-709aba6fd580/collection/50162718-5d29b19d-88ce-4947-bc47-d492ea12a1d3?action=share&source=collection_link&creator=50162718"
+	},
+	"item": [
+		{
+			"name": "web-api",
+			"item": [
+				{
+					"name": "bridgeTransaction",
+					"item": [
+						{
+							"name": "Get Bridge Transaction",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", function () {",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Body has expected fields\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"senderAddress\");",
+											"    pm.expect(json).to.have.property(\"receiverAddresses\");",
+											"    pm.expect(json).to.have.property(\"destinationChain\");",
+											"    pm.expect(json).to.have.property(\"sourceTxHash\");",
+											"    pm.expect(json).to.have.property(\"destinationTxHash\");",
+											"    pm.expect(json).to.have.property(\"status\");",
+											"    pm.expect(json).to.have.property(\"finishedAt\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// const txID = 28456;",
+											"",
+											"const txID = 41;",
+											"",
+											"pm.variables.set(\"transaction_id\", txID);",
+											"console.log(`🔍 Testing with transaction ID: ${txID}`);"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{web_api_base_url}}/bridgeTransaction/{{transaction_id}}",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"bridgeTransaction",
+										"{{transaction_id}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Filter Bridge Transactions",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", function () {",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Response has expected structure\", function () {",
+											"    const json = pm.response.json();",
+											"",
+											"    pm.expect(json).to.have.property(\"items\");",
+											"    pm.expect(json.items).to.be.an(\"array\");",
+											"",
+											"    pm.expect(json).to.have.property(\"page\");",
+											"    pm.expect(json.page).to.be.a(\"number\");",
+											"",
+											"    pm.expect(json).to.have.property(\"perPage\");",
+											"    pm.expect(json.perPage).to.be.a(\"number\");",
+											"",
+											"    pm.expect(json).to.have.property(\"total\");",
+											"    pm.expect(json.total).to.be.a(\"number\");",
+											"});",
+											"",
+											"pm.test(\"Each item in items is valid BridgeTransactionDto\", function () {",
+											"    const json = pm.response.json();",
+											"",
+											"    json.items.forEach(item => {",
+											"        pm.expect(item).to.have.property(\"id\");",
+											"        pm.expect(item).to.have.property(\"senderAddress\");",
+											"        pm.expect(item).to.have.property(\"receiverAddresses\");",
+											"        pm.expect(item).to.have.property(\"destinationChain\");",
+											"        pm.expect(item).to.have.property(\"originChain\");",
+											"        pm.expect(item).to.have.property(\"amount\");",
+											"        pm.expect(item).to.have.property(\"sourceTxHash\");",
+											"        pm.expect(item).to.have.property(\"destinationTxHash\");",
+											"        pm.expect(item).to.have.property(\"status\");",
+											"        pm.expect(item).to.have.property(\"createdAt\");",
+											"        pm.expect(item).to.have.property(\"finishedAt\");",
+											"        pm.expect(item).to.have.property(\"isRefund\");",
+											"    });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"senderAddress\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"originChain\": \"cardano\",\n  \"receiverAddresses\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"nativeTokenAmountFrom\": \"10000000\",\n  \"nativeTokenAmountTo\": \"20000000\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{web_api_base_url}}/bridgeTransaction/filter",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"bridgeTransaction",
+										"filter"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "contact",
+					"item": [
+						{
+							"name": "Submit Contact Form",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response should be empty\", function () {",
+											"    pm.expect(pm.response.text()).to.be.oneOf([\"\", null, undefined]);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"packages": {},
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"postman test name\",\n  \"email\": \"test@gmail.com\",\n  \"message\": \"test message\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{web_api_base_url}}/contact",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"contact"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "settings",
+					"item": [
+						{
+							"name": "Get Settings",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", function () {",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Response has expected top-level fields\", function () {",
+											"    const json = pm.response.json();",
+											"    ",
+											"    pm.expect(json).to.have.property(\"layerZeroChains\");",
+											"    pm.expect(json).to.have.property(\"settingsPerMode\");",
+											"    ",
+											"    pm.expect(json).to.have.property(\"directionConfig\");",
+											"    pm.expect(json).to.have.property(\"enabledChains\");",
+											"});",
+											"",
+											"pm.test(\"settingsPerMode has expected fields\", function () {",
+											"    const bs = pm.response.json().settingsPerMode;",
+											"",
+											"    pm.expect(bs).to.have.property(\"reactor\");",
+											"    pm.expect(bs).to.have.property(\"skyline\");",
+											"});",
+											"",
+											"pm.test(\"enabledChains is an array\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json.enabledChains).to.be.an(\"array\").that.is.not.empty;",
+											"});",
+											"",
+											"pm.test(\"directionConfig has correct chain keys\", function () {",
+											"    const ad = pm.response.json().directionConfig;",
+											"",
+											"    pm.expect(ad).to.have.property(\"nexus\");",
+											"    pm.expect(ad.nexus).to.be.an(\"object\");",
+											"",
+											"    pm.expect(ad).to.have.property(\"prime\");",
+											"    pm.expect(ad.prime).to.be.an(\"object\");",
+											"",
+											"    pm.expect(ad).to.have.property(\"vector\");",
+											"    pm.expect(ad.vector).to.be.an(\"object\");",
+											"",
+											"    pm.expect(ad).to.have.property(\"cardano\");",
+											"    pm.expect(ad.cardano).to.be.an(\"object\");",
+											"",
+											"    pm.expect(ad).to.have.property(\"base\");",
+											"    pm.expect(ad.base).to.be.an(\"object\");",
+											"",
+											"    pm.expect(ad).to.have.property(\"bsc\");",
+											"    pm.expect(ad.bsc).to.be.an(\"object\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{web_api_base_url}}/settings",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"settings"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Bridging Address",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", () => {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Response contains addresses\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"addresses\");",
+											"});",
+											"",
+											"pm.test(\"addresses is a non-empty array\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json.addresses).to.be.an(\"array\").that.is.not.empty;",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{web_api_base_url}}/settings/getBridgingAddresses?chainId=prime",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"settings",
+										"getBridgingAddresses"
+									],
+									"query": [
+										{
+											"key": "chainId",
+											"value": "prime"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Reactor Validator Change Status",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", () => {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Response contains addresses\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"inProgress\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{web_api_base_url}}/settings/reactorValidatorChangeStatus",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"settings",
+										"reactorValidatorChangeStatus"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "transaction",
+					"item": [
+						{
+							"name": "Create Cardano",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", function () {",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"No unexpected fields\", () => {",
+											"    const allowed = [\"txRaw\", \"txHash\", \"bridgingFee\", \"operationFee\", \"amount\", \"nativeTokenAmount\", \"isFallback\"];",
+											"    Object.keys(pm.response.json()).forEach(k => {",
+											"        pm.expect(allowed).to.include(k);",
+											"    });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"senderAddress\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"originChain\": \"cardano\",\n  \"destinationChain\": \"prime\",\n  \"destinationAddress\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"amount\": \"1000000\",\n  \"tokenID\": 3,\n  \"bridgingFee\": \"3100000\",\n  \"operationFee\": \"1000010\",\n  \"utxoCacheKey\": \"testCacheKey123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{web_api_base_url}}/transaction/createCardano",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"transaction",
+										"createCardano"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Cardano TX Fee",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", function () {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Body has 'fee' field\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"fee\");",
+											"});",
+											"",
+											"pm.test(\"'fee' is a positive numeric string\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json.fee).to.be.a(\"string\");",
+											"    pm.expect(Number(json.fee)).to.be.above(0);",
+											"});",
+											"",
+											"pm.test(\"Response has only expected fields\", function () {",
+											"    const json = pm.response.json();",
+											"    const allowed = [\"fee\", \"bridgingFee\", \"operationFee\"];",
+											"",
+											"    Object.keys(json).forEach(key => {",
+											"        pm.expect(allowed).to.include(key);",
+											"    });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"senderAddress\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"originChain\": \"cardano\",\n  \"destinationChain\": \"prime\",\n  \"destinationAddress\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"amount\": \"1000000\",\n  \"tokenID\": 3,\n  \"bridgingFee\": \"3100000\",\n  \"operationFee\": \"1000010\",\n  \"utxoCacheKey\": \"testCacheKey123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{web_api_base_url}}/transaction/getCardanoTxFee",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"transaction",
+										"getCardanoTxFee"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Eth",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", function () {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Response contains bridgingTx\", function () {",
+											"    const json = pm.response.json();",
+											"",
+											"    pm.expect(json).to.have.property(\"bridgingTx\");",
+											"});",
+											"",
+											"pm.test(\"bridgingTx has expected fields\", function () {",
+											"    const bTx = pm.response.json().bridgingTx;",
+											"",
+											"    pm.expect(bTx).to.have.property(\"ethTx\");",
+											"    pm.expect(bTx).to.have.property(\"bridgingFee\");",
+											"    pm.expect(bTx).to.have.property(\"operationFee\");",
+											"    pm.expect(bTx).to.have.property(\"tokenAmount\");",
+											"    pm.expect(bTx).to.have.property(\"tokenID\");",
+											"    pm.expect(bTx).to.have.property(\"isFallback\");",
+											"",
+											"",
+											"    const eTx = pm.response.json().bridgingTx.ethTx;",
+											"",
+											"    pm.expect(eTx).to.have.property(\"from\");",
+											"    pm.expect(eTx).to.have.property(\"to\");",
+											"    pm.expect(eTx).to.have.property(\"value\");",
+											"    pm.expect(eTx).to.have.property(\"data\");",
+											"});",
+											"",
+											"pm.test(\"Optional field 'value' is valid if present\", function () {",
+											"    const eth = pm.response.json().bridgingTx.ethTx;",
+											"    if (eth.hasOwnProperty(\"value\") && eth.value !== null) {",
+											"        pm.expect(eth.value).to.be.a(\"string\");",
+											"    }",
+											"});",
+											"",
+											"pm.test(\"'from' and 'to' look like ETH addresses\", function () {",
+											"    const eth = pm.response.json().bridgingTx.ethTx;",
+											"    const ethRegex = /^0x[a-fA-F0-9]{40}$/;",
+											"",
+											"    pm.expect(eth.from).to.match(ethRegex);",
+											"    pm.expect(eth.to).to.match(ethRegex);",
+											"});",
+											"",
+											"pm.test(\"'value' is valid hex string\", function () {",
+											"    const eth = pm.response.json().bridgingTx.ethTx;",
+											"    pm.expect(eth.value).to.match(/^0x[a-fA-F0-9]+$/);",
+											"});",
+											"",
+											"pm.test(\"'data' is valid hex string\", function () {",
+											"    const eth = pm.response.json().bridgingTx.ethTx;",
+											"    pm.expect(eth.data).to.match(/^0x[a-fA-F0-9]*$/);",
+											"});",
+											"",
+											"pm.test(\"'bridgingFee' is positive hex string\", function () {",
+											"    const tx = pm.response.json().bridgingTx;",
+											"    pm.expect(tx.bridgingFee).to.be.a(\"string\");",
+											"",
+											"    const numeric = parseInt(tx.bridgingFee, 16);",
+											"    pm.expect(numeric).to.be.above(0);",
+											"});",
+											"",
+											"pm.test(\"'isFallback' is boolean\", function () {",
+											"    const tx = pm.response.json().bridgingTx;",
+											"    pm.expect(tx.isFallback).to.be.a(\"boolean\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"senderAddress\": \"0xcCB2dDA531690E0eacf03338116Ea214c6379cD4\",\n  \"originChain\": \"nexus\",\n  \"destinationChain\": \"vector\",\n  \"destinationAddress\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n  \"amount\": \"2500000000000000000\",\n  \"tokenID\": 1,\n  \"bridgingFee\": \"1000010\",\n  \"operationFee\": \"1000010\",\n  \"utxoCacheKey\": \"testCacheKey123\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{web_api_base_url}}/transaction/createEth",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"transaction",
+										"createEth"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Bridging Transaction Submitted",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", function () {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Response has required fields\", function () {",
+											"    const json = pm.response.json();",
+											"    const required = [",
+											"        \"id\",",
+											"        \"senderAddress\",",
+											"        \"receiverAddresses\",",
+											"        \"amount\",",
+											"        \"originChain\",",
+											"        \"destinationChain\",",
+											"        \"sourceTxHash\",",
+											"        \"status\",",
+											"        \"createdAt\",",
+											"        \"isRefund\"",
+											"    ];",
+											"",
+											"    required.forEach(field => {",
+											"        pm.expect(json).to.have.property(field);",
+											"    });",
+											"});",
+											"",
+											"pm.test(\"Optional fields are valid if present\", function () {",
+											"    const json = pm.response.json();",
+											"    if (json.hasOwnProperty(\"destinationTxHash\") && json.destinationTxHash !== null) {",
+											"        pm.expect(json.destinationTxHash).to.be.a(\"string\");",
+											"    }",
+											"    if (json.hasOwnProperty(\"finishedAt\") && json.finishedAt !== null) {",
+											"        pm.expect(new Date(json.finishedAt).toString()).not.eql(\"Invalid Date\");",
+											"    }",
+											"});",
+											"",
+											"pm.test(\"Chain fields are valid enums\", function () {",
+											"    const chains = [\"cardano\", \"prime\", \"vector\"];",
+											"    const json = pm.response.json();",
+											"    pm.expect(chains).to.include(json.originChain);",
+											"    pm.expect(chains).to.include(json.destinationChain);",
+											"});",
+											"",
+											"pm.test(\"Status field is valid enum\", function () {",
+											"    const allowedStatus = [\"Pending\", \"DiscoveredOnSource\", \"InvalidRequest\", \"SubmittedToBridge\", \"IncludedInBatch\", \"SubmittedToDestination\", \"FailedToExecuteOnDestination\", \"ExecutedOnDestination\"];",
+											"    const json = pm.response.json();",
+											"    pm.expect(allowedStatus).to.include(json.status);",
+											"});",
+											"",
+											"pm.test(\"Dates are valid\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(new Date(json.createdAt).toString()).not.eql(\"Invalid Date\");",
+											"    if (json.finishedAt) {",
+											"        pm.expect(new Date(json.finishedAt).toString()).not.eql(\"Invalid Date\");",
+											"    }",
+											"});",
+											"",
+											"pm.test(\"Boolean fields are boolean\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json.isRefund).to.be.a(\"boolean\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"originChain\": \"cardano\",\n  \"destinationChain\": \"prime\",\n  \"originTxHash\": \"d6fa7775be9acd120379f267e92602f34b44cf106fb8fb62be6bb2ba\",\n  \"senderAddress\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"receiverAddrs\": [\"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\"],\n  \"amount\": \"4019390\",\n  \"nativeTokenAmount\": \"15000000\",\n  \"txRaw\": \"0xAAA_rawTxHash\",\n  \"isFallback\": false,\n  \"isLayerZero\": false\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{web_api_base_url}}/transaction/bridgingTransactionSubmitted",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"transaction",
+										"bridgingTransactionSubmitted"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "LayerZero Transfer",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", function () {",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"No unexpected fields\", () => {",
+											"    const allowed = [\"dstTxHistory\", \"shouldSimulate\", \"type\", \"created\", \"dstChainName\", \"metadata\", \"transactionData\", \"transactionType\"];",
+											"    Object.keys(pm.response.json()).forEach(k => {",
+											"        pm.expect(allowed).to.include(k);",
+											"    });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-layerzero-api-key",
+										"value": "{{layer_zero_api_key}}",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"srcChainName\": \"apexfusionnexus\",\n    \"dstChainName\": \"bsc\",\n    \"oftAddress\": \"0x9208d82F121806A34a39bB90733b4C5c54F3993e\",\n    \"amount\": \"1000000000000\",\n    \"from\": \"0x834405c3c5787d3d7378e137ed2cb914e780c1a2\",\n    \"to\": \"0x834405c3c5787d3d7378e137ed2cb914e780c1a2\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{web_api_base_url}}/transaction/layerZeroTransfer",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"transaction",
+										"layerZeroTransfer"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "lockedTokens",
+					"item": [
+						{
+							"name": "Get Locked Tokens",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", function () {",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+											"});",
+											"",
+											"pm.test(\"Body has expected fields\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"chains\");",
+											"    pm.expect(json).to.have.property(\"totalTransferred\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{web_api_base_url}}/lockedTokens?allowedBridgingModes=skyline,reactor,layerZero,centralized",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"lockedTokens"
+									],
+									"query": [
+										{
+											"key": "allowedBridgingModes",
+											"value": "skyline,reactor,layerZero,centralized"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Transfered",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 500\", function () {",
+											"    pm.response.to.have.status(500);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", function () {",
+											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+											"});",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{web_api_base_url}}/lockedTokens/transferred?allowedBridgingModes=reactor,skyline",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"lockedTokens",
+										"transferred"
+									],
+									"query": [
+										{
+											"key": "allowedBridgingModes",
+											"value": "reactor,skyline"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "cardano-api",
+			"item": [
+				{
+					"name": "reactor mode",
+					"item": [
+						{
+							"name": "CreateBridgingTx",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status 200\", () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", () => {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Has expected fields\", () => {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"txRaw\");",
+											"    pm.expect(json).to.have.property(\"txHash\");",
+											"    pm.expect(json).to.have.property(\"bridgingFee\");",
+											"});",
+											"",
+											"// Check types",
+											"pm.test(\"txRaw is non-empty string\", () => {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json.txRaw).to.be.a(\"string\").and.not.empty;",
+											"});",
+											"",
+											"pm.test(\"txHash looks valid\", () => {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json.txHash).to.match(/^[a-fA-F0-9]+$/);",
+											"});",
+											"",
+											"pm.test(\"bridgingFee is numeric-like\", () => {",
+											"    const val = pm.response.json().bridgingFee;",
+											"    pm.expect(!isNaN(Number(val))).to.be.true;",
+											"});",
+											"",
+											"// Soft schema check",
+											"pm.test(\"No unexpected fields\", () => {",
+											"    const allowed = [\"txRaw\", \"txHash\", \"bridgingFee\", \"operationFee\", \"amount\", \"nativeTokenAmount\"];",
+											"    Object.keys(pm.response.json()).forEach(k => {",
+											"        pm.expect(allowed).to.include(k);",
+											"    });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_reactor_api_key}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"senderAddr\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"vector\",\n  \"destinationChainId\": \"prime\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n      \"amount\": 1000000\n    }\n  ],\n  \"bridgingFee\": 1000100,\n  \"operationFee\": 1000100,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{cardano_api_reactor_base_url}}/api/CardanoTx/CreateBridgingTx",
+									"host": [
+										"{{cardano_api_reactor_base_url}}"
+									],
+									"path": [
+										"api",
+										"CardanoTx",
+										"CreateBridgingTx"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetBridgingTxFee",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", () => {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Response has fee and bridgingFee\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"fee\");",
+											"    pm.expect(Number(json.fee)).to.be.a(\"number\");",
+											"    pm.expect(Number(json.fee)).to.be.greaterThan(0);",
+											"    pm.expect(json).to.have.property(\"bridgingFee\");",
+											"    pm.expect(Number(json.bridgingFee)).to.be.a(\"number\");",
+											"    pm.expect(Number(json.bridgingFee)).to.be.greaterThan(0);",
+											"    pm.expect(json).to.have.property(\"operationFee\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_reactor_api_key}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"senderAddr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"prime\",\n  \"destinationChainId\": \"vector\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n      \"amount\": 1000000\n    }\n  ],\n  \"bridgingFee\": 1000100,\n  \"operationFee\": 1000100,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{cardano_api_reactor_base_url}}/api/CardanoTx/GetBridgingTxFee",
+									"host": [
+										"{{cardano_api_reactor_base_url}}"
+									],
+									"path": [
+										"api",
+										"CardanoTx",
+										"GetBridgingTxFee"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetSettings",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", () => {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Response has required top-level fields\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"runMode\");",
+											"    pm.expect(json).to.have.property(\"bridgingSettings\");",
+											"    pm.expect(json).to.have.property(\"enabledChains\");",
+											"});",
+											"",
+											"pm.test(\"BridgingSettings has expected fields\", function () {",
+											"    const bs = pm.response.json().bridgingSettings;",
+											"",
+											"    pm.expect(bs).to.have.property(\"minChainFeeForBridging\");",
+											"    pm.expect(bs).to.have.property(\"minUtxoChainValue\");",
+											"    pm.expect(bs).to.have.property(\"minValueToBridge\");",
+											"    pm.expect(bs).to.have.property(\"maxAmountAllowedToBridge\");",
+											"    pm.expect(bs).to.have.property(\"maxReceiversPerBridgingRequest\");",
+											"    pm.expect(bs).to.have.property(\"allowedDirections\");",
+											"});",
+											"",
+											"pm.test(\"enabledChains is a non-empty array\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json.enabledChains).to.be.an(\"array\").that.is.not.empty;",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_reactor_api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{cardano_api_reactor_base_url}}/api/CardanoTx/GetSettings",
+									"host": [
+										"{{cardano_api_reactor_base_url}}"
+									],
+									"path": [
+										"api",
+										"CardanoTx",
+										"GetSettings"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "skyline mode",
+					"item": [
+						{
+							"name": "CreateBridgingTx",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status 200\", () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", () => {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Has expected fields\", () => {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"txRaw\");",
+											"    pm.expect(json).to.have.property(\"txHash\");",
+											"    pm.expect(json).to.have.property(\"bridgingFee\");",
+											"    pm.expect(json).to.have.property(\"amount\");",
+											"    pm.expect(json).to.have.property(\"nativeTokenAmount\");",
+											"});",
+											"",
+											"// Check types",
+											"pm.test(\"txRaw is non-empty string\", () => {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json.txRaw).to.be.a(\"string\").and.not.empty;",
+											"});",
+											"",
+											"pm.test(\"txHash looks valid\", () => {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json.txHash).to.match(/^[a-fA-F0-9]+$/);",
+											"});",
+											"",
+											"pm.test(\"bridgingFee is numeric-like\", () => {",
+											"    const val = pm.response.json().bridgingFee;",
+											"    pm.expect(!isNaN(Number(val))).to.be.true;",
+											"});",
+											"",
+											"pm.test(\"No unexpected fields\", () => {",
+											"    const allowed = [\"txRaw\", \"txHash\", \"bridgingFee\", \"operationFee\", \"amount\", \"nativeTokenAmount\"];",
+											"    Object.keys(pm.response.json()).forEach(k => {",
+											"        pm.expect(allowed).to.include(k);",
+											"    });",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_skyline_api_key}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"senderAddr\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"cardano\",\n  \"destinationChainId\": \"prime\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n      \"amount\": 2000000,\n      \"tokenID\": 3\n    }\n  ],\n  \"bridgingFee\": 3000100,\n  \"operationFee\": 1000100,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{cardano_api_skyline_base_url}}/api/CardanoTx/CreateBridgingTx",
+									"host": [
+										"{{cardano_api_skyline_base_url}}"
+									],
+									"path": [
+										"api",
+										"CardanoTx",
+										"CreateBridgingTx"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetBridgingTxFee",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", () => {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Response has fee and bridgingFee\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"fee\");",
+											"    pm.expect(Number(json.fee)).to.be.a(\"number\");",
+											"    pm.expect(Number(json.fee)).to.be.greaterThan(0);",
+											"    pm.expect(json).to.have.property(\"bridgingFee\");",
+											"    pm.expect(Number(json.bridgingFee)).to.be.a(\"number\");",
+											"    pm.expect(Number(json.bridgingFee)).to.be.greaterThan(0);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_skyline_api_key}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"senderAddr\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"cardano\",\n  \"destinationChainId\": \"prime\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n      \"amount\": 2000000,\n      \"tokenID\": 3\n    }\n  ],\n  \"bridgingFee\": 3000100,\n  \"operationFee\": 1000100,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{cardano_api_skyline_base_url}}/api/CardanoTx/GetBridgingTxFee",
+									"host": [
+										"{{cardano_api_skyline_base_url}}"
+									],
+									"path": [
+										"api",
+										"CardanoTx",
+										"GetBridgingTxFee"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetSettings",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", () => {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Response has required top-level fields\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"runMode\");",
+											"    pm.expect(json).to.have.property(\"bridgingSettings\");",
+											"    pm.expect(json).to.have.property(\"enabledChains\");",
+											"});",
+											"",
+											"pm.test(\"BridgingSettings has expected fields\", function () {",
+											"    const bs = pm.response.json().bridgingSettings;",
+											"",
+											"    pm.expect(bs).to.have.property(\"minChainFeeForBridging\");",
+											"    pm.expect(bs).to.have.property(\"minChainFeeForBridgingTokens\");",
+											"    pm.expect(bs).to.have.property(\"minOperationFee\");",
+											"    pm.expect(bs).to.have.property(\"minUtxoChainValue\");",
+											"    pm.expect(bs).to.have.property(\"minValueToBridge\");",
+											"    pm.expect(bs).to.have.property(\"maxAmountAllowedToBridge\");",
+											"    pm.expect(bs).to.have.property(\"maxTokenAmountAllowedToBridge\");",
+											"    pm.expect(bs).to.have.property(\"minColCoinsAllowedToBridge\");",
+											"    pm.expect(bs).to.have.property(\"maxReceiversPerBridgingRequest\");",
+											"    pm.expect(bs).to.have.property(\"directionConfig\");",
+											"    pm.expect(bs).to.have.property(\"ecosystemTokens\");",
+											"});",
+											"",
+											"pm.test(\"enabledChains is a non-empty array\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json.enabledChains).to.be.an(\"array\").that.is.not.empty;",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_skyline_api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{cardano_api_skyline_base_url}}/api/CardanoTx/GetSettings",
+									"host": [
+										"{{cardano_api_skyline_base_url}}"
+									],
+									"path": [
+										"api",
+										"CardanoTx",
+										"GetSettings"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetLockedTokens",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", () => {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Response has required top-level fields\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"chains\");",
+											"});",
+											"",
+											"pm.test(\"chains map has expected keys\", function () {",
+											"    const bs = pm.response.json().chains;",
+											"",
+											"    pm.expect(bs).to.have.keys(\"cardano\", \"prime\", \"vector\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_skyline_api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{cardano_api_skyline_base_url}}/api/CardanoTx/GetLockedTokens",
+									"host": [
+										"{{cardano_api_skyline_base_url}}"
+									],
+									"path": [
+										"api",
+										"CardanoTx",
+										"GetLockedTokens"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetBridgingAddresses",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", () => {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Response contains addresses\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"addresses\");",
+											"});",
+											"",
+											"pm.test(\"addresses is a non-empty array\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json.addresses).to.be.an(\"array\").that.is.not.empty;",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_skyline_api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{cardano_api_skyline_base_url}}/api/CardanoTx/GetBridgingAddresses?chainId=prime",
+									"host": [
+										"{{cardano_api_skyline_base_url}}"
+									],
+									"path": [
+										"api",
+										"CardanoTx",
+										"GetBridgingAddresses"
+									],
+									"query": [
+										{
+											"key": "chainId",
+											"value": "prime"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "oracle-api",
+			"item": [
+				{
+					"name": "reactor mode",
+					"item": [
+						{
+							"name": "bridgingRequestState",
+							"item": [
+								{
+									"name": "Get",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON\", () => {",
+													"    pm.response.to.be.json;",
+													"});",
+													"",
+													"pm.test(\"Response contains required fields\", function () {",
+													"    const json = pm.response.json();",
+													"",
+													"    pm.expect(json).to.have.property(\"sourceChainId\");",
+													"    pm.expect(json).to.have.property(\"sourceTxHash\");",
+													"    pm.expect(json).to.have.property(\"destinationChainId\");",
+													"    pm.expect(json).to.have.property(\"status\");",
+													"    pm.expect(json).to.have.property(\"destinationTxHash\");",
+													"    pm.expect(json).to.have.property(\"isRefund\");",
+													"});",
+													"",
+													"pm.test(\"Source chainId matches requested chainId\", function () {",
+													"    const json = pm.response.json();",
+													"",
+													"    const chainIdQueryParam = pm.request.url.query.toObject().chainId;",
+													"",
+													"    pm.expect(json.sourceChainId).to.eql(chainIdQueryParam);",
+													"});",
+													"",
+													"pm.test(\"destinationTxHash is null or a hex string\", function () {",
+													"    const json = pm.response.json();",
+													"",
+													"    if (json.destinationTxHash !== \"\" && json.destinationTxHash !== null) {",
+													"        pm.expect(json.destinationTxHash).to.match(/^[a-fA-F0-9]+$/);",
+													"    }",
+													"});",
+													"",
+													"pm.test(\"isRefund is boolean\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json.isRefund).to.be.a(\"boolean\");",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_reactor_api_key}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{oracle_api_reactor_base_url}}/api/BridgingRequestState/Get?chainId=prime&txHash=24d0ab325293b0dfc90938abd5dcc93893dc54f210bdc469b143ff34a83f0730",
+											"host": [
+												"{{oracle_api_reactor_base_url}}"
+											],
+											"path": [
+												"api",
+												"BridgingRequestState",
+												"Get"
+											],
+											"query": [
+												{
+													"key": "chainId",
+													"value": "prime"
+												},
+												{
+													"key": "txHash",
+													"value": "24d0ab325293b0dfc90938abd5dcc93893dc54f210bdc469b143ff34a83f0730"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "GetMultiple",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON object\", function () {",
+													"    pm.expect(pm.response.json()).to.be.an(\"object\");",
+													"});",
+													"",
+													"pm.test(\"Each transaction has required fields\", function () {",
+													"    const json = pm.response.json();",
+													"",
+													"    Object.values(json).forEach(tx => {",
+													"        pm.expect(tx).to.have.property(\"sourceChainId\");",
+													"        pm.expect(tx).to.have.property(\"sourceTxHash\");",
+													"        pm.expect(tx).to.have.property(\"destinationChainId\");",
+													"        pm.expect(tx).to.have.property(\"status\");",
+													"        pm.expect(tx).to.have.property(\"destinationTxHash\");",
+													"        pm.expect(tx).to.have.property(\"isRefund\");",
+													"    });",
+													"});",
+													"",
+													"pm.test(\"All requested txHashes are in response\", function () {",
+													"    const json = pm.response.json();",
+													"   ",
+													"    const txHashes = pm.request.url.query",
+													"        .filter(q => q.key === \"txHash\")",
+													"        .map(q => q.value);",
+													"",
+													"    txHashes.forEach(hash => {",
+													"        pm.expect(json).to.have.property(hash);",
+													"    });",
+													"});",
+													"",
+													"pm.test(\"Each transaction has required fields\", function () {",
+													"    const json = pm.response.json();",
+													"    Object.values(json).forEach(tx => {",
+													"        pm.expect(tx).to.have.property(\"sourceChainId\");",
+													"        pm.expect(tx).to.have.property(\"sourceTxHash\");",
+													"        pm.expect(tx).to.have.property(\"destinationChainId\");",
+													"        pm.expect(tx).to.have.property(\"status\");",
+													"        pm.expect(tx).to.have.property(\"destinationTxHash\");",
+													"        pm.expect(tx).to.have.property(\"isRefund\");",
+													"    });",
+													"});",
+													"",
+													"pm.test(\"All sourceChainId match requested chainId\", function () {",
+													"    const json = pm.response.json();",
+													"    const chainIdQueryParam = pm.request.url.query.toObject().chainId;",
+													"",
+													"    Object.values(json).forEach(tx => {",
+													"        pm.expect(tx.sourceChainId).to.eql(chainIdQueryParam);",
+													"    });",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_reactor_api_key}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{oracle_api_reactor_base_url}}/api/BridgingRequestState/GetMultiple?chainId=prime&txHash=24d0ab325293b0dfc90938abd5dcc93893dc54f210bdc469b143ff34a83f0730&txHash=21cae0418e0f60d0f50385ebf94854bca786c17ff45af17c0f9c117cd79f7083",
+											"host": [
+												"{{oracle_api_reactor_base_url}}"
+											],
+											"path": [
+												"api",
+												"BridgingRequestState",
+												"GetMultiple"
+											],
+											"query": [
+												{
+													"key": "chainId",
+													"value": "prime"
+												},
+												{
+													"key": "txHash",
+													"value": "24d0ab325293b0dfc90938abd5dcc93893dc54f210bdc469b143ff34a83f0730"
+												},
+												{
+													"key": "txHash",
+													"value": "21cae0418e0f60d0f50385ebf94854bca786c17ff45af17c0f9c117cd79f7083"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "oracleState",
+							"item": [
+								{
+									"name": "Get",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON\", () => {",
+													"    pm.response.to.be.json;",
+													"});",
+													"",
+													"pm.test(\"ChainID matches requested chain\", function () {",
+													"    const json = pm.response.json();",
+													"    const requestedChain = pm.request.url.query.get(\"chainId\");",
+													"    pm.expect(json.chainID).to.eql(requestedChain);",
+													"});",
+													"",
+													"pm.test(\"Response has slot and hash\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json).to.have.property(\"chainID\");",
+													"    pm.expect(json).to.have.property(\"utxos\");",
+													"    pm.expect(json).to.have.property(\"slot\");",
+													"    pm.expect(json).to.have.property(\"hash\");",
+													"});",
+													"",
+													"pm.test(\"UTXOs array has valid elements\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json.utxos).to.be.an(\"array\");",
+													"    json.utxos.forEach(utxo => {",
+													"        pm.expect(utxo).to.have.property(\"id\").that.is.an(\"array\");",
+													"        pm.expect(utxo).to.have.property(\"index\").that.is.a(\"number\");",
+													"        pm.expect(utxo).to.have.property(\"address\").that.is.a(\"string\");",
+													"        pm.expect(utxo).to.have.property(\"amount\").that.is.a(\"number\");",
+													"        pm.expect(utxo).to.have.property(\"slot\").that.is.a(\"number\");",
+													"    });",
+													"});",
+													"",
+													"pm.test(\"At least one UTXO is returned\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json.utxos.length).to.be.greaterThan(0);",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_reactor_api_key}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{oracle_api_reactor_base_url}}/api/OracleState/Get?chainId=prime",
+											"host": [
+												"{{oracle_api_reactor_base_url}}"
+											],
+											"path": [
+												"api",
+												"OracleState",
+												"Get"
+											],
+											"query": [
+												{
+													"key": "chainId",
+													"value": "prime"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "GetHasTxFailed",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON\", () => {",
+													"    pm.response.to.be.json;",
+													"});",
+													"",
+													"pm.test(\"Response equals 'failed'\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json).to.have.property(\"failed\");",
+													"    pm.expect(json.failed).to.be.a(\"boolean\");",
+													"});",
+													"",
+													"pm.test(\"Request has required query params\", function () {",
+													"    const chainId = pm.request.url.query.get(\"chainId\");",
+													"    const txHash = pm.request.url.query.get(\"txHash\");",
+													"    const ttl = pm.request.url.query.get(\"ttl\");",
+													"",
+													"    pm.expect(chainId).to.not.be.undefined;",
+													"    pm.expect(txHash).to.not.be.undefined;",
+													"    pm.expect(ttl).to.not.be.undefined;",
+													"});",
+													"",
+													"pm.test(\"Failed is boolean value\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect([true, false]).to.include(json.failed);",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_reactor_api_key}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{oracle_api_reactor_base_url}}/api/OracleState/GetHasTxFailed?chainId=prime&txHash=24d0ab325293b0dfc90938abd5dcc93893dc54f210bdc469b143ff34a83f0730&ttl=1000",
+											"host": [
+												"{{oracle_api_reactor_base_url}}"
+											],
+											"path": [
+												"api",
+												"OracleState",
+												"GetHasTxFailed"
+											],
+											"query": [
+												{
+													"key": "chainId",
+													"value": "prime"
+												},
+												{
+													"key": "txHash",
+													"value": "24d0ab325293b0dfc90938abd5dcc93893dc54f210bdc469b143ff34a83f0730"
+												},
+												{
+													"key": "ttl",
+													"value": "1000"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "settings",
+							"item": [
+								{
+									"name": "Get",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", () => {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON\", () => {",
+													"    pm.response.to.be.json;",
+													"});",
+													"",
+													"pm.test(\"Response has expected fields\", () => {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json).to.have.property(\"minChainFeeForBridging\");",
+													"    pm.expect(json).to.have.property(\"minUtxoChainValue\");",
+													"    pm.expect(json).to.have.property(\"minValueToBridge\");",
+													"    pm.expect(json).to.have.property(\"maxAmountAllowedToBridge\");",
+													"    pm.expect(json).to.have.property(\"maxReceiversPerBridgingRequest\");",
+													"    pm.expect(json).to.have.property(\"allowedDirections\");",
+													"});",
+													"",
+													"pm.test(\"Fields have correct types\", () => {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json.minChainFeeForBridging).to.be.an(\"object\");",
+													"    pm.expect(json.minUtxoChainValue).to.be.an(\"object\");",
+													"    pm.expect(json.minValueToBridge).to.be.a(\"number\");",
+													"    pm.expect(json.maxAmountAllowedToBridge).to.be.a(\"string\");",
+													"    pm.expect(json.maxReceiversPerBridgingRequest).to.be.a(\"number\");",
+													"    pm.expect(json.allowedDirections).to.be.an(\"object\");",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_reactor_api_key}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{oracle_api_reactor_base_url}}/api/Settings/Get",
+											"host": [
+												"{{oracle_api_reactor_base_url}}"
+											],
+											"path": [
+												"api",
+												"Settings",
+												"Get"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "GetValidatorChangeStatus",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", () => {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON\", () => {",
+													"    pm.response.to.be.json;",
+													"});",
+													"",
+													"pm.test(\"Response has 'inProgress' boolean field\", () => {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json).to.have.property(\"inProgress\");",
+													"    pm.expect(json.inProgress).to.be.a(\"boolean\");",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_reactor_api_key}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{oracle_api_reactor_base_url}}/api/Settings/GetValidatorChangeStatus",
+											"host": [
+												"{{oracle_api_reactor_base_url}}"
+											],
+											"path": [
+												"api",
+												"Settings",
+												"GetValidatorChangeStatus"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "GetMultiSigBridgingAddr",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", () => {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON\", () => {",
+													"    pm.response.to.be.json;",
+													"});",
+													"",
+													"pm.test(\"Response has 'bridgingAddress' object\", () => {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json).to.have.property(\"bridgingAddress\");",
+													"    pm.expect(json.bridgingAddress).to.be.an(\"object\");",
+													"});",
+													"",
+													"pm.test(\"Each chain has addresses\", () => {",
+													"    const json = pm.response.json();",
+													"    Object.values(json.bridgingAddress).forEach(chain => {",
+													"        pm.expect(chain).to.have.property(\"address\");",
+													"        pm.expect(chain).to.have.property(\"feeAddress\");",
+													"        pm.expect(chain.address).to.be.a(\"string\");",
+													"        pm.expect(chain.feeAddress).to.be.a(\"string\");",
+													"    });",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_reactor_api_key}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{oracle_api_reactor_base_url}}/api/Settings/GetMultiSigBridgingAddr",
+											"host": [
+												"{{oracle_api_reactor_base_url}}"
+											],
+											"path": [
+												"api",
+												"Settings",
+												"GetMultiSigBridgingAddr"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "skyline mode",
+					"item": [
+						{
+							"name": "bridgingRequestState",
+							"item": [
+								{
+									"name": "Get",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON\", () => {",
+													"    pm.response.to.be.json;",
+													"});",
+													"",
+													"pm.test(\"Response contains required fields\", function () {",
+													"    const json = pm.response.json();",
+													"",
+													"    pm.expect(json).to.have.property(\"sourceChainId\");",
+													"    pm.expect(json).to.have.property(\"sourceTxHash\");",
+													"    pm.expect(json).to.have.property(\"destinationChainId\");",
+													"    pm.expect(json).to.have.property(\"status\");",
+													"    pm.expect(json).to.have.property(\"destinationTxHash\");",
+													"    pm.expect(json).to.have.property(\"isRefund\");",
+													"});",
+													"",
+													"pm.test(\"Source chainId matches requested chainId\", function () {",
+													"    const json = pm.response.json();",
+													"",
+													"    const chainIdQueryParam = pm.request.url.query.toObject().chainId;",
+													"",
+													"    pm.expect(json.sourceChainId).to.eql(chainIdQueryParam);",
+													"});",
+													"",
+													"pm.test(\"destinationTxHash is null or a hex string\", function () {",
+													"    const json = pm.response.json();",
+													"",
+													"    if (json.destinationTxHash !== \"\" && json.destinationTxHash !== null) {",
+													"        pm.expect(json.destinationTxHash).to.match(/^[a-fA-F0-9]+$/);",
+													"    }",
+													"});",
+													"",
+													"pm.test(\"isRefund is boolean\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json.isRefund).to.be.a(\"boolean\");",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"protocolProfileBehavior": {
+										"disableBodyPruning": true
+									},
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_skyline_api_key}}",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{oracle_api_skyline_base_url}}/api/BridgingRequestState/Get?chainId=cardano&txHash=d6fa7775be9ac5a9d3033d120379f267e92602f34b44cf106fb8fb62be6bb2ba",
+											"host": [
+												"{{oracle_api_skyline_base_url}}"
+											],
+											"path": [
+												"api",
+												"BridgingRequestState",
+												"Get"
+											],
+											"query": [
+												{
+													"key": "chainId",
+													"value": "cardano"
+												},
+												{
+													"key": "txHash",
+													"value": "d6fa7775be9ac5a9d3033d120379f267e92602f34b44cf106fb8fb62be6bb2ba"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "GetMultiple",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON object\", function () {",
+													"    pm.expect(pm.response.json()).to.be.an(\"object\");",
+													"});",
+													"",
+													"pm.test(\"Each transaction has required fields\", function () {",
+													"    const json = pm.response.json();",
+													"",
+													"    Object.values(json).forEach(tx => {",
+													"        pm.expect(tx).to.have.property(\"sourceChainId\");",
+													"        pm.expect(tx).to.have.property(\"sourceTxHash\");",
+													"        pm.expect(tx).to.have.property(\"destinationChainId\");",
+													"        pm.expect(tx).to.have.property(\"status\");",
+													"        pm.expect(tx).to.have.property(\"destinationTxHash\");",
+													"        pm.expect(tx).to.have.property(\"isRefund\");",
+													"    });",
+													"});",
+													"",
+													"pm.test(\"All requested txHashes are in response\", function () {",
+													"    const json = pm.response.json();",
+													"   ",
+													"    const txHashes = pm.request.url.query",
+													"        .filter(q => q.key === \"txHash\")",
+													"        .map(q => q.value);",
+													"",
+													"    txHashes.forEach(hash => {",
+													"        pm.expect(json).to.have.property(hash);",
+													"    });",
+													"});",
+													"",
+													"pm.test(\"Each transaction has required fields\", function () {",
+													"    const json = pm.response.json();",
+													"    Object.values(json).forEach(tx => {",
+													"        pm.expect(tx).to.have.property(\"sourceChainId\");",
+													"        pm.expect(tx).to.have.property(\"sourceTxHash\");",
+													"        pm.expect(tx).to.have.property(\"destinationChainId\");",
+													"        pm.expect(tx).to.have.property(\"status\");",
+													"        pm.expect(tx).to.have.property(\"destinationTxHash\");",
+													"        pm.expect(tx).to.have.property(\"isRefund\");",
+													"    });",
+													"});",
+													"",
+													"pm.test(\"All sourceChainId match requested chainId\", function () {",
+													"    const json = pm.response.json();",
+													"    const chainIdQueryParam = pm.request.url.query.toObject().chainId;",
+													"",
+													"    Object.values(json).forEach(tx => {",
+													"        pm.expect(tx.sourceChainId).to.eql(chainIdQueryParam);",
+													"    });",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_skyline_api_key}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{oracle_api_skyline_base_url}}/api/BridgingRequestState/GetMultiple?chainId=cardano&txHash=d6fa7775be9ac5a9d3033d120379f267e92602f34b44cf106fb8fb62be6bb2ba&txHash=cd01cee9a10afd19a4e7ed46997267e7afba0bce54eee77dd7ed174ae85060e1",
+											"host": [
+												"{{oracle_api_skyline_base_url}}"
+											],
+											"path": [
+												"api",
+												"BridgingRequestState",
+												"GetMultiple"
+											],
+											"query": [
+												{
+													"key": "chainId",
+													"value": "cardano"
+												},
+												{
+													"key": "txHash",
+													"value": "d6fa7775be9ac5a9d3033d120379f267e92602f34b44cf106fb8fb62be6bb2ba"
+												},
+												{
+													"key": "txHash",
+													"value": "cd01cee9a10afd19a4e7ed46997267e7afba0bce54eee77dd7ed174ae85060e1"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "oracleState",
+							"item": [
+								{
+									"name": "Get",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON\", () => {",
+													"    pm.response.to.be.json;",
+													"});",
+													"",
+													"pm.test(\"ChainID matches requested chain\", function () {",
+													"    const json = pm.response.json();",
+													"    const requestedChain = pm.request.url.query.get(\"chainId\");",
+													"    pm.expect(json.chainID).to.eql(requestedChain);",
+													"});",
+													"",
+													"pm.test(\"Response has slot and hash\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json).to.have.property(\"chainID\");",
+													"    pm.expect(json).to.have.property(\"utxos\");",
+													"    pm.expect(json).to.have.property(\"slot\");",
+													"    pm.expect(json).to.have.property(\"hash\");",
+													"});",
+													"",
+													"pm.test(\"UTXOs array has valid elements\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json.utxos).to.be.an(\"array\");",
+													"    json.utxos.forEach(utxo => {",
+													"        pm.expect(utxo).to.have.property(\"id\").that.is.an(\"array\");",
+													"        pm.expect(utxo).to.have.property(\"index\").that.is.a(\"number\");",
+													"        pm.expect(utxo).to.have.property(\"address\").that.is.a(\"string\");",
+													"        pm.expect(utxo).to.have.property(\"amount\").that.is.a(\"number\");",
+													"        pm.expect(utxo).to.have.property(\"slot\").that.is.a(\"number\");",
+													"    });",
+													"});",
+													"",
+													"pm.test(\"At least one UTXO is returned\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json.utxos.length).to.be.greaterThan(0);",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_skyline_api_key}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{oracle_api_skyline_base_url}}/api/OracleState/Get?chainId=prime",
+											"host": [
+												"{{oracle_api_skyline_base_url}}"
+											],
+											"path": [
+												"api",
+												"OracleState",
+												"Get"
+											],
+											"query": [
+												{
+													"key": "chainId",
+													"value": "prime"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "GetHasTxFailed",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON\", () => {",
+													"    pm.response.to.be.json;",
+													"});",
+													"",
+													"pm.test(\"Response equals 'failed'\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json).to.have.property(\"failed\");",
+													"    pm.expect(json.failed).to.be.a(\"boolean\");",
+													"});",
+													"",
+													"pm.test(\"Request has required query params\", function () {",
+													"    const chainId = pm.request.url.query.get(\"chainId\");",
+													"    const txHash = pm.request.url.query.get(\"txHash\");",
+													"    const ttl = pm.request.url.query.get(\"ttl\");",
+													"",
+													"    pm.expect(chainId).to.not.be.undefined;",
+													"    pm.expect(txHash).to.not.be.undefined;",
+													"    pm.expect(ttl).to.not.be.undefined;",
+													"});",
+													"",
+													"pm.test(\"Failed is boolean value\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect([true, false]).to.include(json.failed);",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_skyline_api_key}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{oracle_api_skyline_base_url}}/api/OracleState/GetHasTxFailed?chainId=prime&txHash=24d0ab325293b0dfc90938abd5dcc93893dc54f210bdc469b143ff34a83f0730&ttl=1000",
+											"host": [
+												"{{oracle_api_skyline_base_url}}"
+											],
+											"path": [
+												"api",
+												"OracleState",
+												"GetHasTxFailed"
+											],
+											"query": [
+												{
+													"key": "chainId",
+													"value": "prime"
+												},
+												{
+													"key": "txHash",
+													"value": "24d0ab325293b0dfc90938abd5dcc93893dc54f210bdc469b143ff34a83f0730"
+												},
+												{
+													"key": "ttl",
+													"value": "1000"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "settings",
+							"item": [
+								{
+									"name": "Get",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", () => {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON\", () => {",
+													"    pm.response.to.be.json;",
+													"});",
+													"",
+													"pm.test(\"Response has expected fields\", () => {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json).to.have.property(\"minChainFeeForBridging\");",
+													"    pm.expect(json).to.have.property(\"minChainFeeForBridgingTokens\");",
+													"    pm.expect(json).to.have.property(\"minOperationFee\");",
+													"    pm.expect(json).to.have.property(\"minUtxoChainValue\");",
+													"    pm.expect(json).to.have.property(\"nativeTokens\");",
+													"    pm.expect(json).to.have.property(\"minValueToBridge\");",
+													"    pm.expect(json).to.have.property(\"maxAmountAllowedToBridge\");",
+													"    pm.expect(json).to.have.property(\"maxTokenAmountAllowedToBridge\");",
+													"    pm.expect(json).to.have.property(\"maxReceiversPerBridgingRequest\");",
+													"    pm.expect(json).to.have.property(\"allowedDirections\");",
+													"});",
+													"",
+													"pm.test(\"Fields have correct types\", () => {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json.minChainFeeForBridging).to.be.an(\"object\");",
+													"    pm.expect(json.minChainFeeForBridgingTokens).to.be.an(\"object\");",
+													"    pm.expect(json.minOperationFee).to.be.an(\"object\");",
+													"    pm.expect(json.nativeTokens).to.be.an(\"object\");",
+													"    pm.expect(json.minUtxoChainValue).to.be.an(\"object\");",
+													"    pm.expect(json.minValueToBridge).to.be.a(\"number\");",
+													"    pm.expect(json.maxAmountAllowedToBridge).to.be.a(\"string\");",
+													"    pm.expect(json.maxTokenAmountAllowedToBridge).to.be.a(\"string\");",
+													"    pm.expect(json.maxReceiversPerBridgingRequest).to.be.a(\"number\");",
+													"    pm.expect(json.allowedDirections).to.be.an(\"object\");",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_skyline_api_key}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{oracle_api_skyline_base_url}}/api/Settings/Get",
+											"host": [
+												"{{oracle_api_skyline_base_url}}"
+											],
+											"path": [
+												"api",
+												"Settings",
+												"Get"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "bridgeAddress",
+							"item": [
+								{
+									"name": "GetAddressToBridgeTo",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON\", () => {",
+													"    pm.response.to.be.json;",
+													"});",
+													"",
+													"pm.test(\"No unexpected fields\", () => {",
+													"    const allowed = [\"chainID\", \"addressIndex\", \"address\"];",
+													"    Object.keys(pm.response.json()).forEach(k => {",
+													"        pm.expect(allowed).to.include(k);",
+													"    });",
+													"});",
+													"",
+													"pm.test(\"address is a non-empty string\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json.address).to.be.a(\"string\").that.is.not.empty;",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_skyline_api_key}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{oracle_api_skyline_base_url}}/api/BridgingAddress/GetAddressToBridgeTo?chainId=prime&containsNativeTokens=true",
+											"host": [
+												"{{oracle_api_skyline_base_url}}"
+											],
+											"path": [
+												"api",
+												"BridgingAddress",
+												"GetAddressToBridgeTo"
+											],
+											"query": [
+												{
+													"key": "chainId",
+													"value": "prime"
+												},
+												{
+													"key": "containsNativeTokens",
+													"value": "true"
+												}
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "GetAllAddresses",
+									"event": [
+										{
+											"listen": "test",
+											"script": {
+												"exec": [
+													"pm.test(\"Status code is 200\", function () {",
+													"    pm.response.to.have.status(200);",
+													"});",
+													"",
+													"pm.test(\"Response is JSON\", () => {",
+													"    pm.response.to.be.json;",
+													"});",
+													"",
+													"pm.test(\"Response contains addresses\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json).to.have.property(\"addresses\");",
+													"});",
+													"",
+													"pm.test(\"addresses is a non-empty array\", function () {",
+													"    const json = pm.response.json();",
+													"    pm.expect(json.addresses).to.be.an(\"array\").that.is.not.empty;",
+													"});"
+												],
+												"type": "text/javascript",
+												"packages": {},
+												"requests": {}
+											}
+										}
+									],
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "x-api-key",
+												"value": "{{oracle_skyline_api_key}}",
+												"type": "text"
+											}
+										],
+										"url": {
+											"raw": "{{oracle_api_skyline_base_url}}/api/BridgingAddress/GetAllAddresses?chainId=prime",
+											"host": [
+												"{{oracle_api_skyline_base_url}}"
+											],
+											"path": [
+												"api",
+												"BridgingAddress",
+												"GetAllAddresses"
+											],
+											"query": [
+												{
+													"key": "chainId",
+													"value": "prime"
+												}
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "web_api_base_url",
+			"value": ""
+		},
+		{
+			"key": "cardano_api_skyline_base_url",
+			"value": ""
+		},
+		{
+			"key": "cardano_api_reactor_base_url",
+			"value": ""
+		},
+		{
+			"key": "oracle_api_skyline_base_url",
+			"value": ""
+		},
+		{
+			"key": "oracle_api_reactor_base_url",
+			"value": ""
+		},
+		{
+			"key": "cardano_api_reactor_base_url",
+			"value": "",
+			"disabled": true
+		},
+		{
+			"key": "cardano_api_skyline_base_url",
+			"value": "",
+			"disabled": true
+		},
+		{
+			"key": "web_api_base_url",
+			"value": "",
+			"disabled": true
+		}
+	]
+}

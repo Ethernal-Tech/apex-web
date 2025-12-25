@@ -3,6 +3,7 @@ import { NewAddressFromBytes } from './Address/addreses';
 import { getAssetsSumMap, toBytes } from '../utils/generalUtils';
 import { ApexBridgeNetwork } from './enums';
 import { UtxoRetriever } from './types';
+import { captureAndThrowError, captureException } from './sentry';
 
 type Wallet = {
 	name: string;
@@ -43,12 +44,20 @@ class WalletHandler implements UtxoRetriever {
 		const nativeAPI = this.getNativeAPI();
 		const experimentalAPI = nativeAPI['experimental'];
 		if (!experimentalAPI) {
-			throw new Error('experimental not defined');
+			captureAndThrowError(
+				'experimental not defined',
+				'WalletHandler.ts',
+				'version',
+			);
 		}
 
 		const appVersion = experimentalAPI['appVersion'];
 		if (!appVersion) {
-			throw new Error('appVersion not defined');
+			captureAndThrowError(
+				'appVersion not defined',
+				'WalletHandler.ts',
+				'version',
+			);
 		}
 
 		return appVersion;
@@ -69,7 +78,11 @@ class WalletHandler implements UtxoRetriever {
 
 	private _checkWalletAndThrow = () => {
 		if (!this.checkWallet()) {
-			throw new Error('Wallet not enabled');
+			captureAndThrowError(
+				'Wallet not enabled',
+				'WalletHandler.ts',
+				'_checkWalletAndThrow',
+			);
 		}
 	};
 
@@ -80,19 +93,33 @@ class WalletHandler implements UtxoRetriever {
 			const nativeAPI = this.getNativeAPI();
 			const experimentalAPI = nativeAPI['experimental'];
 			if (!experimentalAPI) {
-				throw new Error('experimental not defined');
+				captureAndThrowError(
+					'experimental not defined',
+					'WalletHandler.ts',
+					'getNetwork',
+				);
 			}
 
 			const getConnectedNetworkId =
 				experimentalAPI['getConnectedNetworkId'];
 			if (!getConnectedNetworkId) {
-				throw new Error('getConnectedNetworkId not defined');
+				captureAndThrowError(
+					'getConnectedNetworkId not defined',
+					'WalletHandler.ts',
+					'getNetwork',
+				);
 			}
 
 			const eternlNetworkId = await getConnectedNetworkId();
 			return ETERNL_NETWORK_ID_TO_APEX_BRIDGE_NETWORK[eternlNetworkId];
 		} catch (e) {
 			console.log(e);
+			captureException(e, {
+				tags: {
+					component: 'WalletHandler.ts',
+					action: 'getNetwork',
+				},
+			});
 		}
 	};
 
@@ -114,12 +141,18 @@ class WalletHandler implements UtxoRetriever {
 			}
 		} catch (e) {
 			console.log(e);
+			captureException(e, {
+				tags: {
+					component: 'WalletHandler.ts',
+					action: 'getChangeAddress',
+				},
+			});
 		}
 
 		return await this._enabledWallet!.getChangeAddress();
 	};
 
-	getAllUtxos = async (includeCollateral = false): Promise<UTxO[]> => {
+	getAllUtxos = async (includeCollateral = true): Promise<UTxO[]> => {
 		this._checkWalletAndThrow();
 
 		const address = await this.getChangeAddress();

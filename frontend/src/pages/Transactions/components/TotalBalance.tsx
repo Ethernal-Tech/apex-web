@@ -7,14 +7,14 @@ import { convertDfmToApex, toFixed } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import appSettings from '../../../settings/appSettings';
-import { getBridgingInfo, getTokenInfo } from '../../../settings/token';
-import {
-	BridgingModeEnum,
-	getBridgingMode,
-	getChainInfo,
-} from '../../../settings/chain';
+import { apexID, getCurrencyID, getTokenInfo } from '../../../settings/token';
+import { BridgingModeEnum, getBridgingMode } from '../../../settings/chain';
 
-const TotalBalance = () => {
+interface TotalBalanceProps {
+	tokenID?: number;
+}
+
+const TotalBalance = ({ tokenID }: TotalBalanceProps) => {
 	const totalDfmBalance = useSelector(
 		(state: RootState) => state.accountInfo.balance,
 	);
@@ -23,25 +23,29 @@ const TotalBalance = () => {
 	);
 	const settings = useSelector((state: RootState) => state.settings);
 
-	const bridgingModeInfo = getBridgingMode(chain, destinationChain, settings);
-	const isSkylineMode =
-		bridgingModeInfo.bridgingMode === BridgingModeEnum.Skyline;
+	const bridgingModeInfo = getBridgingMode(
+		settings,
+		chain,
+		destinationChain,
+		tokenID || 0,
+	);
+	const isSkylineMode = tokenID
+		? bridgingModeInfo.bridgingMode === BridgingModeEnum.Skyline
+		: appSettings.isSkyline;
 	const isLayerZeroMode =
 		bridgingModeInfo.bridgingMode === BridgingModeEnum.LayerZero;
-	const bridgingInfo = getBridgingInfo(chain, destinationChain);
-	const chainCurrency = getChainInfo(chain).currencyToken;
-	const chainNativeToken = bridgingInfo.wrappedToken;
-	const showChainNativeToken = !!chainNativeToken;
 
-	const totalBalanceInApex = totalDfmBalance[chainCurrency]
-		? toFixed(convertDfmToApex(totalDfmBalance[chainCurrency], chain), 6)
+	const currencyID = getCurrencyID(settings, chain) || apexID;
+	const showToken = tokenID && currencyID && tokenID !== currencyID;
+
+	const currencyBalance = totalDfmBalance[currencyID]
+		? toFixed(convertDfmToApex(totalDfmBalance[currencyID], chain), 6)
 		: null;
-	const totalBalanceInNativeToken =
-		(isSkylineMode || isLayerZeroMode) && totalDfmBalance[chainNativeToken!]
-			? toFixed(
-					convertDfmToApex(totalDfmBalance[chainNativeToken!], chain),
-					6,
-				)
+	const tokenBalance =
+		(isSkylineMode || isLayerZeroMode) &&
+		showToken &&
+		totalDfmBalance[tokenID]
+			? toFixed(convertDfmToApex(totalDfmBalance[tokenID], chain), 6)
 			: null;
 
 	if (isSkylineMode || isLayerZeroMode) {
@@ -102,12 +106,13 @@ const TotalBalance = () => {
 					</Tooltip>
 				</Typography>
 
-				{totalBalanceInApex && (
+				{currencyBalance && (
 					<Box
 						sx={{
 							display: 'flex',
 							justifyContent: 'space-between',
 							alignItems: 'center',
+							overflow: 'hidden',
 						}}
 					>
 						<Typography>
@@ -121,28 +126,29 @@ const TotalBalance = () => {
 									fontSize: '32px',
 								}}
 							>
-								{totalBalanceInApex.split('.')[0]}
+								{currencyBalance.split('.')[0]}
 							</Box>
 
 							{/* show decimals if applicable */}
-							{totalBalanceInApex.includes('.') && (
+							{currencyBalance.includes('.') && (
 								<Box component="span" sx={{ fontSize: '20px' }}>
-									.{totalBalanceInApex.split('.')[1]}
+									.{currencyBalance.split('.')[1]}
 								</Box>
 							)}
 						</Typography>
-						<Typography>
-							{getTokenInfo(chainCurrency).label}
+						<Typography sx={{ ml: 1 }}>
+							{getTokenInfo(currencyID).label}
 						</Typography>
 					</Box>
 				)}
 
-				{totalBalanceInNativeToken && showChainNativeToken && (
+				{tokenBalance && showToken && (
 					<Box
 						sx={{
 							display: 'flex',
 							justifyContent: 'space-between',
 							alignItems: 'center',
+							overflow: 'hidden',
 						}}
 					>
 						<Typography>
@@ -156,18 +162,18 @@ const TotalBalance = () => {
 									fontSize: '32px',
 								}}
 							>
-								{totalBalanceInNativeToken.split('.')[0]}
+								{tokenBalance.split('.')[0]}
 							</Box>
 
 							{/* show decimals if applicable */}
-							{totalBalanceInNativeToken.includes('.') && (
+							{tokenBalance.includes('.') && (
 								<Box component="span" sx={{ fontSize: '20px' }}>
-									.{totalBalanceInNativeToken.split('.')[1]}
+									.{tokenBalance.split('.')[1]}
 								</Box>
 							)}
 						</Typography>
-						<Typography>
-							{getTokenInfo(chainNativeToken).label}
+						<Typography sx={{ ml: 1 }}>
+							{getTokenInfo(tokenID).label}
 						</Typography>
 					</Box>
 				)}
@@ -228,7 +234,7 @@ const TotalBalance = () => {
 				</Typography>
 			</Box>
 
-			{totalBalanceInApex && (
+			{currencyBalance && (
 				<Typography>
 					<Box
 						component="span"
@@ -239,16 +245,16 @@ const TotalBalance = () => {
 							lineheight: '32px',
 						}}
 					>
-						{totalBalanceInApex.split('.')[0]}
+						{currencyBalance.split('.')[0]}
 					</Box>
 
 					{/* show decimals if applicable */}
-					{totalBalanceInApex.includes('.') && (
+					{currencyBalance.includes('.') && (
 						<Box
 							component="span"
 							sx={{ fontSize: '20px', lineheight: '24px' }}
 						>
-							.{totalBalanceInApex.split('.')[1]}
+							.{currencyBalance.split('.')[1]}
 						</Box>
 					)}
 				</Typography>

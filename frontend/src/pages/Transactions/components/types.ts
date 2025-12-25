@@ -1,7 +1,7 @@
 import {
 	CreateTransactionDto,
 	CreateCardanoTransactionResponseDto,
-	CreateEthTransactionResponseDto,
+	CreateEthTransactionFullResponseDto,
 } from '../../../swagger/apexBridgeApiService';
 
 export type CreateCardanoTxResponse = {
@@ -11,5 +11,5 @@ export type CreateCardanoTxResponse = {
 
 export type CreateEthTxResponse = {
 	createTxDto: CreateTransactionDto;
-	createResponse: CreateEthTransactionResponseDto;
+	createResponse: CreateEthTransactionFullResponseDto;
 };

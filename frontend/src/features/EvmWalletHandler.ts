@@ -4,6 +4,7 @@ import { toHex } from 'web3-utils';
 import { ERC20_MIN_ABI } from './ABI';
 import { shortRetryOptions, wait } from '../utils/generalUtils';
 import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
+import { captureAndThrowError, captureException } from './sentry';
 
 type Wallet = {
 	name: string;
@@ -96,7 +97,11 @@ class EvmWalletHandler {
 
 	private _checkWalletAndThrow = () => {
 		if (!this.checkWallet()) {
-			throw new Error('Wallet not enabled');
+			captureAndThrowError(
+				'Wallet not enabled',
+				'EvmWalletHandler.ts',
+				'_checkWalletAndThrow',
+			);
 		}
 	};
 
@@ -127,7 +132,11 @@ class EvmWalletHandler {
 					);
 				}
 			} else {
-				throw enableError;
+				captureAndThrowError(
+					enableError,
+					'EvmWalletHandler.ts',
+					'forceChainWithRetry',
+				);
 			}
 		}
 
@@ -140,8 +149,10 @@ class EvmWalletHandler {
 			} catch (e) {
 				console.log(e);
 
-				throw new Error(
+				captureAndThrowError(
 					`Failed to switch to network with ID: ${expectedChainId}. Try adding that network to the wallet first.`,
+					'EvmWalletHandler.ts',
+					'forceChainWithRetry',
 				);
 			}
 
@@ -206,16 +217,35 @@ class EvmWalletHandler {
 		this._checkWalletAndThrow();
 		const account = await this.getAddress();
 
-		if (!account) throw new Error('No connected wallet address.');
+		if (!account)
+			captureAndThrowError(
+				'No connected wallet address.',
+				'EvmWalletHandler.ts',
+				'getERC20Balance',
+			);
 
-		const web3 = this.getWeb3();
-		const contract = new web3!.eth.Contract(ERC20_MIN_ABI, tokenAddress);
-		const rawBalResp = await contract.methods.balanceOf(account).call();
-		const raw = Array.isArray(rawBalResp) ? rawBalResp[0] : rawBalResp;
+		try {
+			const web3 = this.getWeb3();
+			const contract = new web3!.eth.Contract(
+				ERC20_MIN_ABI,
+				tokenAddress,
+			);
+			const rawBalResp = await contract.methods.balanceOf(account).call();
+			const raw = Array.isArray(rawBalResp) ? rawBalResp[0] : rawBalResp;
 
-		const balance = BigInt(raw);
+			const balance = BigInt(raw);
 
-		return web3!.utils.fromWei(balance, 'wei');
+			return web3!.utils.fromWei(balance, 'wei');
+		} catch (e) {
+			captureException(e, {
+				tags: {
+					component: 'EvmWalletHandler.ts',
+					action: 'getERC20Balance',
+				},
+			});
+
+			return '0';
+		}
 	};
 }
 

@@ -23,6 +23,8 @@ import TermsOfServicePage from './TermsOfServicePage/TermsOfServicePage';
 import PrivacyPolicyPage from './PrivacyPolicyPage/PrivacyPolicyPage';
 import AuditPage from './Audit/AuditPage';
 import { clearBridgingAddressesAction } from '../redux/slices/settingsSlice';
+import { fetchAndUpdateReactorValidatorStatusAction } from '../actions/validatorSetChange';
+import { fetchAndUpdateLockedTokensAction } from '../actions/lockedTokens';
 
 export const HOME_ROUTE = appSettings.isSkyline ? '/app' : '/';
 export const TRANSACTIONS_ROUTE = '/transactions';
@@ -32,6 +34,9 @@ export const LANDING_ROUTE = '/landing';
 export const PRIVACY_POLICY_ROUTE = '/privacy-policy';
 export const TERMS_OF_SERVICE_ROUTE = '/terms-of-service';
 export const AUDIT_ROUTE = '/audit';
+
+const REFETCH_LOCKED_TOKENS_MS = 30000;
+const REFETCH_VSU_STATUS_MS = 30000;
 
 const PageRouter: React.FC = () => {
 	const location = useLocation();
@@ -53,7 +58,7 @@ const PageRouter: React.FC = () => {
 	useEffect(() => {
 		if (
 			isLoggedInMemo &&
-			Object.keys(settings.allowedDirections).length > 0
+			Object.keys(settings.directionConfig).length > 0
 		) {
 			onLoad(wallet, chain, destinationChain, settings, dispatch);
 		}
@@ -96,6 +101,36 @@ const PageRouter: React.FC = () => {
 			}
 		};
 	}, [dispatch, isFullyLoggedIn]);
+
+	useEffect(() => {
+		fetchAndUpdateReactorValidatorStatusAction(dispatch);
+
+		const intervalId = setInterval(
+			async () =>
+				await fetchAndUpdateReactorValidatorStatusAction(dispatch),
+			REFETCH_VSU_STATUS_MS,
+		);
+
+		return () => {
+			clearInterval(intervalId);
+		};
+	}, [dispatch]);
+
+	useEffect(() => {
+		// Call once immediately on mount
+		fetchAndUpdateLockedTokensAction(dispatch, settings.layerZeroChains);
+
+		// Then call periodically every 30 seconds
+		const interval = setInterval(() => {
+			fetchAndUpdateLockedTokensAction(
+				dispatch,
+				settings.layerZeroChains,
+			);
+		}, REFETCH_LOCKED_TOKENS_MS);
+
+		// Cleanup on component unmount
+		return () => clearInterval(interval);
+	}, [settings.layerZeroChains, dispatch]);
 
 	useEffect(() => {
 		if (appSettings.isSkyline) {
@@ -172,18 +207,14 @@ const PageRouter: React.FC = () => {
 			{appSettings.isSkyline && (
 				<Route path={LANDING_ROUTE} element={renderLandingPage} />
 			)}
-			{!appSettings.isSkyline && (
-				<Route
-					path={TERMS_OF_SERVICE_ROUTE}
-					element={withMiddleware(() => <TermsOfServicePage />)({})}
-				/>
-			)}
-			{!appSettings.isSkyline && (
-				<Route
-					path={PRIVACY_POLICY_ROUTE}
-					element={withMiddleware(() => <PrivacyPolicyPage />)({})}
-				/>
-			)}
+			<Route
+				path={TERMS_OF_SERVICE_ROUTE}
+				element={withMiddleware(() => <TermsOfServicePage />)({})}
+			/>
+			<Route
+				path={PRIVACY_POLICY_ROUTE}
+				element={withMiddleware(() => <PrivacyPolicyPage />)({})}
+			/>
 			<Route
 				path="*"
 				element={

@@ -1,10 +1,11 @@
-import { ChainApexBridgeEnum } from 'src/common/enum';
+import { BridgingModeEnum, ChainApexBridgeEnum } from 'src/common/enum';
 import {
 	CreateCardanoTransactionResponseDto,
 	ErrorResponseDto,
 	CreateTransactionDto,
-	CreateEthTransactionResponseDto,
 	CardanoTransactionFeeResponseDto,
+	CreateEthTransactionFullResponseDto,
+	EthTransactionResponseDto,
 } from './transaction.dto';
 import axios, { AxiosError } from 'axios';
 import {
@@ -15,18 +16,20 @@ import {
 import web3, { Web3 } from 'web3';
 import { isAddress } from 'web3-validator';
 import { NewAddress, RewardAddress } from 'src/utils/Address/addreses';
+import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
 import {
-	areChainsEqual,
-	getBridgingMode,
-	toNumChainID,
-} from 'src/utils/chainUtils';
-import { nexusBridgingContractABI } from './nexusBridgingContract.abi';
+	erc20ABI,
+	reactorGatewayABI,
+	skylineGatewayABI,
+} from './nexusBridgingContract.abi';
 import {
 	BridgingSettingsDto,
-	SettingsFullResponseDto,
+	BridgingSettingsTokenDto,
 } from 'src/settings/settings.dto';
 import { convertDfmToWei, getUrlAndApiKey } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
+import { getAppConfig } from 'src/appConfig/appConfig';
+import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
 
 const prepareCreateCardanoBridgingTx = (
 	dto: CreateTransactionDto,
@@ -38,7 +41,7 @@ const prepareCreateCardanoBridgingTx = (
 		dto.destinationChain === ChainApexBridgeEnum.Nexus;
 
 	const isCentralized =
-		process.env.USE_CENTRALIZED_BRIDGE === 'true' && nexusInvolved;
+		getAppConfig().features.useCentralizedBridge && nexusInvolved;
 
 	const body = {
 		senderAddr: dto.senderAddress,
@@ -48,7 +51,7 @@ const prepareCreateCardanoBridgingTx = (
 			{
 				addr: dto.destinationAddress,
 				amount: +dto.amount,
-				isNativeToken: dto.isNativeToken,
+				tokenID: dto.tokenID,
 			},
 		],
 		bridgingFee: dto.bridgingFee ? +dto.bridgingFee : undefined,
@@ -63,13 +66,8 @@ const prepareCreateCardanoBridgingTx = (
 export const createCardanoBridgingTx = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
-	settings: SettingsFullResponseDto,
+	bridgingMode: BridgingModeEnum,
 ): Promise<CreateCardanoTransactionResponseDto> => {
-	const bridgingMode = getBridgingMode(
-		dto.originChain,
-		dto.destinationChain,
-		settings,
-	);
 	const { url, apiKey } = getUrlAndApiKey(bridgingMode, false);
 	const endpointUrl = url + `/api/CardanoTx/CreateBridgingTx`;
 
@@ -104,13 +102,8 @@ export const createCardanoBridgingTx = async (
 export const getCardanoBridgingTxFee = async (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
-	settings: SettingsFullResponseDto,
+	bridgingMode: BridgingModeEnum,
 ): Promise<CardanoTransactionFeeResponseDto> => {
-	const bridgingMode = getBridgingMode(
-		dto.originChain,
-		dto.destinationChain,
-		settings,
-	);
 	const { url, apiKey } = getUrlAndApiKey(bridgingMode, false);
 	const endpointUrl = url + `/api/CardanoTx/GetBridgingTxFee`;
 
@@ -141,23 +134,61 @@ export const getCardanoBridgingTxFee = async (
 
 export const createEthBridgingTx = (
 	dto: CreateTransactionDto,
+	bridgingMode: BridgingModeEnum,
 	bridgingSettings: BridgingSettingsDto,
-): CreateEthTransactionResponseDto => {
+): CreateEthTransactionFullResponseDto => {
+	const appConfig = getAppConfig();
+
 	if (!isAddress(dto.senderAddress)) {
 		throw new BadRequestException('Invalid sender address');
 	}
 
-	const minValue = BigInt(
-		convertDfmToWei(bridgingSettings.minValueToBridge || '1000000'),
+	const srcCurrencyID = getCurrencyIDFromDirectionConfig(
+		bridgingSettings.directionConfig,
+		dto.originChain,
 	);
-	const amount = BigInt(dto.amount);
-
-	if (amount < minValue) {
+	if (!srcCurrencyID) {
 		throw new BadRequestException(
-			`Amount: ${amount} less than minimum: ${minValue}`,
+			`failed to find currencyID for chain: ${dto.originChain}`,
 		);
 	}
 
+	const dstCurrencyID = getCurrencyIDFromDirectionConfig(
+		bridgingSettings.directionConfig,
+		dto.destinationChain,
+	);
+	if (!dstCurrencyID) {
+		throw new BadRequestException(
+			`failed to find currencyID for chain: ${dto.destinationChain}`,
+		);
+	}
+
+	const tokenPair = (
+		(bridgingSettings.directionConfig[dto.originChain] || { destChain: {} })
+			.destChain[dto.destinationChain] || {}
+	).find((x) => x.srcTokenID === dto.tokenID)!;
+
+	const isCurrencyBridging = dto.tokenID === srcCurrencyID;
+	const isWrappedCurrencyBridging =
+		!isCurrencyBridging && tokenPair.dstTokenID === dstCurrencyID;
+
+	let minValue = bridgingSettings.minColCoinsAllowedToBridge;
+	if (isWrappedCurrencyBridging) {
+		minValue = bridgingSettings.minUtxoChainValue[dto.destinationChain];
+	} else if (isCurrencyBridging) {
+		minValue = bridgingSettings.minValueToBridge;
+	}
+
+	const minValueToBridge = BigInt(convertDfmToWei(minValue || '0'));
+	const amount = BigInt(dto.amount);
+
+	if (amount < minValueToBridge) {
+		throw new BadRequestException(
+			`Amount: ${amount} less than minimum: ${minValueToBridge}`,
+		);
+	}
+
+	// wTODO: support eth destinations also
 	const addr = NewAddress(dto.destinationAddress);
 	if (
 		!addr ||
@@ -169,75 +200,189 @@ export const createEthBridgingTx = (
 		);
 	}
 
-	const isMainnet = process.env.IS_MAINNET == 'true';
-
-	if (!areChainsEqual(dto.destinationChain, addr.GetNetwork(), isMainnet)) {
+	if (
+		!areChainsEqual(
+			dto.destinationChain,
+			addr.GetNetwork(),
+			appConfig.app.isMainnet,
+		)
+	) {
 		throw new BadRequestException(
 			`Destination address: ${dto.destinationAddress} not compatible with destination chain: ${dto.destinationChain}`,
 		);
 	}
 
-	const destMinFee =
-		bridgingSettings.minChainFeeForBridging[dto.destinationChain];
-	if (!destMinFee) {
+	const chainForMinFee =
+		bridgingMode === BridgingModeEnum.Reactor
+			? dto.destinationChain
+			: dto.originChain;
+	const minFee = bridgingSettings.minChainFeeForBridging[chainForMinFee];
+	if (!minFee) {
 		throw new InternalServerErrorException(
-			`No minFee for destination chain: ${dto.destinationChain}`,
+			`No minFee for chain: ${chainForMinFee}`,
 		);
 	}
-	const minBridgingFee = BigInt(convertDfmToWei(destMinFee || '1000010'));
-
+	const minBridgingFee = BigInt(convertDfmToWei(minFee || '0'));
 	let bridgingFee = BigInt(dto.bridgingFee || '0');
 	bridgingFee = bridgingFee < minBridgingFee ? minBridgingFee : bridgingFee;
 
-	const maxAllowedToBridge = BigInt(
-		convertDfmToWei(bridgingSettings.maxAmountAllowedToBridge) || '0',
-	);
+	const minOpFee = bridgingSettings.minOperationFee[dto.originChain];
+	const minOperationFee = BigInt(convertDfmToWei(minOpFee || '0'));
+	let operationFee = BigInt(dto.operationFee || '0');
+	operationFee =
+		operationFee < minOperationFee ? minOperationFee : operationFee;
 
-	if (
-		maxAllowedToBridge !== BigInt(0) &&
-		maxAllowedToBridge < BigInt(dto.amount)
-	) {
-		throw new BadRequestException(
-			`Amount: ${dto.amount} more than max allowed: ${maxAllowedToBridge}`,
+	if (isCurrencyBridging) {
+		const maxAllowedToBridge = BigInt(
+			convertDfmToWei(bridgingSettings.maxAmountAllowedToBridge) || '0',
 		);
+
+		if (
+			maxAllowedToBridge !== BigInt(0) &&
+			maxAllowedToBridge < BigInt(dto.amount)
+		) {
+			throw new BadRequestException(
+				`Currency Amount: ${dto.amount} more than max allowed: ${maxAllowedToBridge}`,
+			);
+		}
+	} else {
+		const maxTokenAmountAllowedToBridge = BigInt(
+			convertDfmToWei(bridgingSettings.maxTokenAmountAllowedToBridge) || '0',
+		);
+
+		if (
+			maxTokenAmountAllowedToBridge !== BigInt(0) &&
+			maxTokenAmountAllowedToBridge < BigInt(dto.amount)
+		) {
+			throw new BadRequestException(
+				`Token Amount: ${dto.amount} more than max allowed: ${maxTokenAmountAllowedToBridge}`,
+			);
+		}
 	}
 
-	const maxTokenAmountAllowedToBridge = BigInt(
-		convertDfmToWei(bridgingSettings.maxTokenAmountAllowedToBridge) || '0',
-	);
+	if (bridgingMode === BridgingModeEnum.Reactor) {
+		const createFunc = appConfig.features.useCentralizedBridge
+			? ethCentralizedBridgingTx
+			: reactorEthBridgingTx;
 
-	if (
-		maxTokenAmountAllowedToBridge !== BigInt(0) &&
-		maxTokenAmountAllowedToBridge < BigInt(dto.amount)
-	) {
+		return createFunc(dto, BigInt(dto.amount) + bridgingFee, bridgingFee);
+	} else if (bridgingMode === BridgingModeEnum.Skyline) {
+		let txValue = bridgingFee + operationFee;
+		if (isCurrencyBridging) {
+			txValue += BigInt(dto.amount);
+		}
+
+		const tokenInfo = (
+			bridgingSettings.directionConfig[dto.originChain] || { tokens: {} }
+		).tokens[dto.tokenID];
+		if (!tokenInfo) {
+			throw new BadRequestException(
+				`token ${dto.tokenID} not defined for chain ${dto.originChain}`,
+			);
+		}
+
+		return skylineEthBridgingTx(
+			dto,
+			tokenInfo,
+			isCurrencyBridging,
+			txValue,
+			bridgingFee,
+			operationFee,
+		);
+	} else {
 		throw new BadRequestException(
-			`Amount: ${dto.amount} more than max allowed: ${maxTokenAmountAllowedToBridge}`,
+			`unsupported bridging mode: ${bridgingMode} for createEthBridgingTx`,
 		);
 	}
-
-	const isCentralized = process.env.USE_CENTRALIZED_BRIDGE === 'true';
-
-	const createFunc = isCentralized ? ethCentralizedBridgingTx : ethBridgingTx;
-	return createFunc(dto, BigInt(dto.amount) + bridgingFee, bridgingFee);
 };
 
-const ethBridgingTx = (
+const skylineEthBridgingTx = (
+	dto: CreateTransactionDto,
+	tokenInfo: BridgingSettingsTokenDto,
+	isCurrencyBridging: boolean,
+	value: bigint,
+	bridgingFee: bigint,
+	operationFee: bigint,
+): CreateEthTransactionFullResponseDto => {
+	const web3Obj = new Web3();
+
+	let approvalTx: EthTransactionResponseDto | undefined;
+	if (!isCurrencyBridging && tokenInfo.lockUnlock) {
+		const to = tokenInfo.chainSpecific;
+
+		const erc20Contract = new web3Obj.eth.Contract(JSON.parse(erc20ABI), to);
+
+		const calldata = erc20Contract.methods
+			.approve(
+				getAppConfig().bridge.addresses.skylineNexusNativeTokenWallet,
+				web3.utils.toHex(BigInt(dto.amount)),
+			)
+			.encodeABI();
+
+		approvalTx = {
+			from: dto.senderAddress,
+			to,
+			value: web3.utils.toHex(0),
+			data: calldata,
+		};
+	}
+
+	const to = getAppConfig().bridge.addresses.skylineNexusGateway;
+	if (!to) {
+		throw new BadRequestException('Empty to address');
+	}
+
+	const contract = new web3Obj.eth.Contract(JSON.parse(skylineGatewayABI), to);
+
+	const calldata = contract.methods
+		.withdraw(
+			toNumChainID(dto.destinationChain),
+			[
+				{
+					receiver: dto.destinationAddress,
+					amount: dto.amount,
+					tokenId: dto.tokenID,
+				},
+			],
+			web3.utils.toHex(bridgingFee),
+			web3.utils.toHex(operationFee),
+		)
+		.encodeABI();
+
+	return {
+		approvalTx,
+		bridgingTx: {
+			ethTx: {
+				from: dto.senderAddress,
+				to,
+				value: web3.utils.toHex(value),
+				data: calldata,
+			},
+			bridgingFee: web3.utils.toHex(bridgingFee),
+			operationFee: web3.utils.toHex(operationFee),
+			tokenAmount: web3.utils.toHex(
+				BigInt(isCurrencyBridging ? '0' : dto.amount),
+			),
+			tokenID: dto.tokenID,
+			isFallback: false,
+		},
+	};
+};
+
+const reactorEthBridgingTx = (
 	dto: CreateTransactionDto,
 	value: bigint,
 	bridgingFee: bigint,
-): CreateEthTransactionResponseDto => {
-	const to = process.env.NEXUS_BRIDGING_ADDR;
+): CreateEthTransactionFullResponseDto => {
+	const to = getAppConfig().bridge.addresses.reactorNexusGateway;
 	if (!to) {
 		throw new BadRequestException('Empty to address');
 	}
 
 	const web3Obj = new Web3();
-	const nexusBridgingContract = new web3Obj.eth.Contract(
-		JSON.parse(nexusBridgingContractABI),
-		to,
-	);
+	const contract = new web3Obj.eth.Contract(JSON.parse(reactorGatewayABI), to);
 
-	const calldata = nexusBridgingContract.methods
+	const calldata = contract.methods
 		.withdraw(
 			toNumChainID(dto.destinationChain),
 			[{ receiver: dto.destinationAddress, amount: dto.amount }],
@@ -246,12 +391,19 @@ const ethBridgingTx = (
 		.encodeABI();
 
 	return {
-		from: dto.senderAddress,
-		to,
-		bridgingFee: web3.utils.toHex(bridgingFee),
-		value: web3.utils.toHex(value),
-		data: calldata,
-		isFallback: false,
+		bridgingTx: {
+			ethTx: {
+				from: dto.senderAddress,
+				to,
+				value: web3.utils.toHex(value),
+				data: calldata,
+			},
+			bridgingFee: web3.utils.toHex(bridgingFee),
+			operationFee: web3.utils.toHex(0),
+			tokenAmount: web3.utils.toHex(0),
+			tokenID: 0,
+			isFallback: false,
+		},
 	};
 };
 
@@ -259,8 +411,8 @@ const ethCentralizedBridgingTx = (
 	dto: CreateTransactionDto,
 	value: bigint,
 	bridgingFee: bigint,
-): CreateEthTransactionResponseDto => {
-	const to = process.env.NEXUS_CENTRALIZED_BRIDGING_ADDR;
+): CreateEthTransactionFullResponseDto => {
+	const to = getAppConfig().bridge.addresses.reactorNexusCentralizedGateway;
 	if (!to) {
 		throw new BadRequestException('Empty to address');
 	}
@@ -273,11 +425,18 @@ const ethCentralizedBridgingTx = (
 	);
 
 	return {
-		from: dto.senderAddress,
-		to,
-		bridgingFee: web3.utils.toHex(bridgingFee),
-		value: web3.utils.toHex(value),
-		data: calldata,
-		isFallback: true,
+		bridgingTx: {
+			ethTx: {
+				from: dto.senderAddress,
+				to,
+				value: web3.utils.toHex(value),
+				data: calldata,
+			},
+			bridgingFee: web3.utils.toHex(bridgingFee),
+			operationFee: web3.utils.toHex(0),
+			tokenAmount: web3.utils.toHex(0),
+			tokenID: 0,
+			isFallback: true,
+		},
 	};
 };

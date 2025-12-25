@@ -12,14 +12,19 @@ import { SettingsService } from './settings.service';
 import {
 	AllBridgingAddressesDto,
 	SettingsFullResponseDto,
+	ValidatorChangeDto,
 } from './settings.dto';
 import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
 
 @ApiTags('Settings')
 @Controller('settings')
 export class SettingsController {
-	constructor(private readonly settingsService: SettingsService) {}
+	constructor(
+		private readonly settingsService: SettingsService,
+		private readonly appConfig: AppConfigService,
+	) {}
 
 	@ApiOperation({
 		summary: 'Get bridge settings',
@@ -53,7 +58,7 @@ export class SettingsController {
 	): Promise<AllBridgingAddressesDto> {
 		const apiKey = process.env.CARDANO_API_SKYLINE_API_KEY;
 		const endpointUrl =
-			process.env.CARDANO_API_SKYLINE_URL +
+			this.appConfig.cardanoSkylineApiUrl +
 			`/api/CardanoTx/GetBridgingAddresses?chainId=${chainId}`;
 
 		Logger.debug(`axios.get: ${endpointUrl}`);
@@ -80,5 +85,15 @@ export class SettingsController {
 
 			throw new BadRequestException();
 		}
+	}
+
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: ValidatorChangeDto,
+	})
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Not Found' })
+	@Get('reactorValidatorChangeStatus')
+	getReactorValidatorChange(): ValidatorChangeDto {
+		return { inProgress: this.settingsService.reactorValidatorChangeStatus };
 	}
 }

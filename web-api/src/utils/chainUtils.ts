@@ -2,10 +2,11 @@ import {
 	BridgingModeEnum,
 	ChainApexBridgeEnum,
 	ChainEnum,
-	TokenEnum,
 } from 'src/common/enum';
 import { CardanoNetworkType } from './Address/types';
 import {
+	BridgingSettingsDirectionConfigDto,
+	BridgingSettingsTokenPairDto,
 	SettingsFullResponseDto,
 	SettingsResponseDto,
 } from 'src/settings/settings.dto';
@@ -73,14 +74,27 @@ export const isEvmChain = (chain: ChainEnum) => chain === ChainEnum.Nexus;
 const isAllowedDirection = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
-	allowedDirections: { [key: string]: string[] },
+	srcTokenID: number,
+	directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto },
 ): boolean {
-	return (allowedDirections[srcChain] || []).includes(dstChain);
+	if (
+		!directionConfig[srcChain] ||
+		!directionConfig[srcChain].destChain[dstChain]
+	) {
+		return false;
+	}
+
+	const tokenPairs = directionConfig[srcChain].destChain[dstChain];
+
+	return tokenPairs.some(
+		(x: BridgingSettingsTokenPairDto) => x.srcTokenID === srcTokenID,
+	);
 };
 
 export const getBridgingSettings = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
+	srcTokenID: number,
 	fullSettings: SettingsFullResponseDto,
 ): SettingsResponseDto | undefined {
 	if (!fullSettings) {
@@ -95,7 +109,8 @@ export const getBridgingSettings = function (
 		isAllowedDirection(
 			srcChain,
 			dstChain,
-			settingsReactor.bridgingSettings.allowedDirections,
+			srcTokenID,
+			settingsReactor.bridgingSettings.directionConfig,
 		)
 	) {
 		return settingsReactor;
@@ -103,7 +118,8 @@ export const getBridgingSettings = function (
 		isAllowedDirection(
 			srcChain,
 			dstChain,
-			settingsSkyline.bridgingSettings.allowedDirections,
+			srcTokenID,
+			settingsSkyline.bridgingSettings.directionConfig,
 		)
 	) {
 		return settingsSkyline;
@@ -114,6 +130,7 @@ export const getBridgingSettings = function (
 export const getBridgingMode = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
+	srcTokenID: number,
 	fullSettings: SettingsFullResponseDto,
 ): BridgingModeEnum | undefined {
 	if (!fullSettings) {
@@ -125,11 +142,21 @@ export const getBridgingMode = function (
 		fullSettings.settingsPerMode[BridgingModeEnum.Skyline].bridgingSettings;
 
 	if (
-		isAllowedDirection(srcChain, dstChain, settingsReactor.allowedDirections)
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			srcTokenID,
+			settingsReactor.directionConfig,
+		)
 	) {
 		return BridgingModeEnum.Reactor;
 	} else if (
-		isAllowedDirection(srcChain, dstChain, settingsSkyline.allowedDirections)
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			srcTokenID,
+			settingsSkyline.directionConfig,
+		)
 	) {
 		return BridgingModeEnum.Skyline;
 	}
@@ -137,62 +164,16 @@ export const getBridgingMode = function (
 	if (
 		srcChain != dstChain &&
 		fullSettings.layerZeroChains.some((x) => x.chain == srcChain) &&
-		fullSettings.layerZeroChains.some((x) => x.chain == dstChain)
+		fullSettings.layerZeroChains.some((x) => x.chain == dstChain) &&
+		isAllowedDirection(
+			srcChain,
+			dstChain,
+			srcTokenID,
+			fullSettings.directionConfig,
+		)
 	) {
 		return BridgingModeEnum.LayerZero;
 	}
 
 	return undefined;
-};
-
-export const getAllChainsDirections = function (
-	allowedBridgingModes: BridgingModeEnum[],
-	settings: SettingsFullResponseDto,
-): BridgingDirectionInfo[] {
-	if (allowedBridgingModes.length == 0 || !settings) {
-		return [];
-	}
-
-	const result: BridgingDirectionInfo[] = [];
-	const chains = Object.values(ChainEnum);
-
-	for (const srcChain of chains) {
-		for (const dstChain of chains) {
-			const bridgingMode = getBridgingMode(srcChain, dstChain, settings);
-			if (!!bridgingMode && allowedBridgingModes.includes(bridgingMode)) {
-				result.push({
-					srcChain,
-					dstChain,
-					bridgingMode,
-				});
-			}
-		}
-	}
-
-	return result;
-};
-
-export const getTokenNameFromSettings = (
-	srcChain: ChainEnum,
-	dstChain: ChainEnum,
-	settings: SettingsFullResponseDto,
-): string | undefined => {
-	switch (getBridgingMode(srcChain, dstChain, settings)) {
-		case BridgingModeEnum.LayerZero:
-			switch (srcChain) {
-				case ChainEnum.BNB:
-					return TokenEnum.BNAP3X;
-				case ChainEnum.Base:
-					return TokenEnum.BAP3X;
-			}
-			return undefined;
-		case BridgingModeEnum.Skyline: {
-			const nativeTokens =
-				settings?.settingsPerMode[BridgingModeEnum.Skyline]
-					.cardanoChainsNativeTokens[srcChain];
-			return nativeTokens
-				?.find((x) => x.dstChainID === dstChain)
-				?.tokenName.trim();
-		}
-	}
 };

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 )
 
@@ -19,7 +18,6 @@ type CardanoChainConfig struct {
 	SocketPath       string                           `json:"socketPath,omitempty"`
 	PotentialFee     uint64                           `json:"potentialFee"`
 	TTLSlotNumberInc uint64                           `json:"ttlSlotNumberIncrement"`
-	NativeTokens     []sendtx.TokenExchangeConfig     `json:"-"`
 }
 
 func NewCardanoChainConfig(rawMessage json.RawMessage) (*CardanoChainConfig, error) {
@@ -54,43 +52,4 @@ func (config CardanoChainConfig) CreateTxProvider() (cardanowallet.ITxProvider, 
 	}
 
 	return nil, errors.New("neither a blockfrost nor a ogmios nor a socket path is specified")
-}
-
-func (config CardanoChainConfig) GetNativeToken(dstChainID string) (token cardanowallet.Token, err error) {
-	tokenName := config.GetNativeTokenName(dstChainID)
-	if tokenName == "" {
-		return token, fmt.Errorf("no native token specified for destination: %s", dstChainID)
-	}
-
-	token, err = GetNativeTokenFromName(tokenName)
-	if err == nil {
-		return token, nil
-	}
-
-	return token, fmt.Errorf("chainID: %s, err: %w", dstChainID, err)
-}
-
-func (config CardanoChainConfig) GetNativeTokenName(dstChainID string) string {
-	for _, dst := range config.NativeTokens {
-		if dst.DstChainID != dstChainID {
-			continue
-		}
-
-		return dst.TokenName
-	}
-
-	return ""
-}
-
-func GetNativeTokenFromConfig(tokenConfig sendtx.TokenExchangeConfig) (token cardanowallet.Token, err error) {
-	token, err = GetNativeTokenFromName(tokenConfig.TokenName)
-	if err == nil {
-		return token, nil
-	}
-
-	return token, fmt.Errorf("chainID: %s, err: %w", tokenConfig.DstChainID, err)
-}
-
-func GetNativeTokenFromName(tokenName string) (token cardanowallet.Token, err error) {
-	return cardanowallet.NewTokenWithFullNameTry(tokenName)
 }

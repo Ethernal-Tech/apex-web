@@ -2,30 +2,52 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
 import { retryForever } from 'src/utils/generalUtils';
 import {
+	BridgingSettingsDirectionConfigDto,
+	BridgingSettingsEcosystemTokenDto,
+	BridgingSettingsTokenDto,
+	BridgingSettingsTokenPairDto,
 	LayerZeroChainSettingsDto,
+	ReactorOnlySettingsResponseDto,
 	SettingsFullResponseDto,
 	SettingsResponseDto,
 } from './settings.dto';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { BridgingModeEnum, ChainEnum, TxTypeEnum } from 'src/common/enum';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
+import { Cron, SchedulerRegistry } from '@nestjs/schedule';
+import { getReactorValidatorChangeStatus } from './settings.helper';
+import { getCurrencyIDFromDirectionConfig, Lovelace } from './utils';
 
 const RETRY_DELAY_MS = 5000;
 const settingsApiPath = `/api/CardanoTx/GetSettings`;
+const ethID = 1000001;
+const bapexID = 1000002;
+const bnapexID = 1000003;
+const bnbID = 1000004;
+
 @Injectable()
 export class SettingsService {
 	SettingsResponse: SettingsFullResponseDto;
+	reactorValidatorChangeStatus: boolean;
 
-	constructor() {}
+	constructor(
+		private readonly schedulerRegistry: SchedulerRegistry,
+		private readonly appConfig: AppConfigService,
+	) {}
 
 	async init() {
-		const skylineUrl = process.env.CARDANO_API_SKYLINE_URL;
+		this.reactorValidatorChangeStatus = await getReactorValidatorChangeStatus(
+			this.appConfig,
+		);
+
+		const skylineUrl = this.appConfig.cardanoSkylineApiUrl;
 		const skylineApiKey = process.env.CARDANO_API_SKYLINE_API_KEY;
 
 		if (!skylineUrl || !skylineApiKey) {
 			throw new Error('cardano api url or api key not defined for skyline');
 		}
 
-		const reactorUrl = process.env.CARDANO_API_REACTOR_URL;
+		const reactorUrl = this.appConfig.cardanoReactorApiUrl;
 		const reactorApiKey = process.env.CARDANO_API_REACTOR_API_KEY;
 
 		if (!reactorUrl || !reactorApiKey) {
@@ -34,62 +56,206 @@ export class SettingsService {
 
 		const [skylineSettings, reactorSettings] = await Promise.all([
 			retryForever(
-				() => this.fetchOnce(skylineUrl, skylineApiKey),
+				() => this.fetchOnce<SettingsResponseDto>(skylineUrl, skylineApiKey),
 				RETRY_DELAY_MS,
 			),
 			retryForever(
-				() => this.fetchOnce(reactorUrl, reactorApiKey),
+				() =>
+					this.fetchOnce<ReactorOnlySettingsResponseDto>(
+						reactorUrl,
+						reactorApiKey,
+					),
 				RETRY_DELAY_MS,
 			),
 		]);
 
-		const layerZeroChains = (process.env.LAYERZERO_CONFIG || '')
-			.split(',')
-			.map((x) => {
-				const subItems = x.split('::');
-				if (subItems.length < 4) {
-					return;
+		const layerZeroChains = this.appConfig.layerZero.networks
+			.map((network) => {
+				if (!network.chain || !network.oftAddress) {
+					return undefined;
 				}
 
 				const item = new LayerZeroChainSettingsDto();
-				item.chain = subItems[0].trim() as ChainEnum;
-				item.oftAddress = subItems[1].trim();
-				item.chainID = parseInt(subItems[2].trim(), 10);
-				item.txType = subItems[3].trim() as TxTypeEnum;
+				item.chain = network.chain as ChainEnum;
+				item.oftAddress = network.oftAddress;
+				item.chainID = network.chainID;
+				item.txType = network.txType as TxTypeEnum;
 
 				return item;
 			})
 			.filter((x) => !!x);
 
-		const allowedDirections: { [key: string]: string[] } = {};
-		// reactor
+		const ecosystemTokens: BridgingSettingsEcosystemTokenDto[] = [
+			...skylineSettings.bridgingSettings.ecosystemTokens,
+		];
+		const directionConfig: {
+			[key: string]: BridgingSettingsDirectionConfigDto;
+		} = {};
+
+		for (const srcChain of Object.keys(
+			skylineSettings.bridgingSettings.directionConfig,
+		)) {
+			if (!directionConfig[srcChain]) {
+				directionConfig[srcChain] = new BridgingSettingsDirectionConfigDto();
+			}
+
+			const dir = skylineSettings.bridgingSettings.directionConfig[srcChain];
+			for (const dstChain of Object.keys(dir.destChain)) {
+				if (!directionConfig[srcChain].destChain) {
+					directionConfig[srcChain].destChain = {};
+				}
+
+				const tokenPairs = dir.destChain[dstChain];
+
+				directionConfig[srcChain].destChain[dstChain] = tokenPairs.map(
+					(x: BridgingSettingsTokenPairDto) => ({ ...x }),
+				);
+			}
+
+			directionConfig[srcChain].tokens = Object.keys(dir.tokens).reduce(
+				(
+					acc: Record<number, BridgingSettingsTokenDto>,
+					cv: string,
+				): Record<number, BridgingSettingsTokenDto> => {
+					acc[+cv] = { ...dir.tokens[+cv] };
+					return acc;
+				},
+				{},
+			);
+		}
+
+		// convert reactor
+		const apexID = getCurrencyIDFromDirectionConfig(
+			directionConfig,
+			ChainEnum.Prime,
+		);
+		if (!apexID) {
+			throw new Error(
+				`failed to find currencyID for chain: ${ChainEnum.Prime}`,
+			);
+		}
+
+		const apexEcosystemToken = ecosystemTokens.find(
+			(x: BridgingSettingsEcosystemTokenDto) => x.id === apexID,
+		);
+		if (!apexEcosystemToken) {
+			throw new Error(
+				`failed to find currency ecosystem token for chain: ${ChainEnum.Prime}`,
+			);
+		}
+
+		const reactorConvertedSettings: SettingsResponseDto =
+			this.convertReactorSettings(apexEcosystemToken, reactorSettings);
+
+		//just in case skyline doesn't include nexus from the start
+		if (!directionConfig[ChainEnum.Nexus]) {
+			directionConfig[ChainEnum.Nexus] = {
+				destChain: {},
+				tokens: {
+					[apexID]: {
+						chainSpecific: Lovelace,
+						lockUnlock: true,
+						isWrappedCurrency: false,
+					},
+				},
+			};
+		}
+
 		for (const [srcChain, dstChains] of Object.entries(
 			reactorSettings.bridgingSettings.allowedDirections,
 		)) {
-			if (srcChain in allowedDirections) {
-				allowedDirections[srcChain].push(...dstChains);
-			} else {
-				allowedDirections[srcChain] = [...dstChains];
+			const currencyID = getCurrencyIDFromDirectionConfig(
+				directionConfig,
+				srcChain,
+			);
+			if (!currencyID) {
+				throw new Error(`failed to find currencyID for chain: ${srcChain}`);
+			}
+
+			for (const dstChain of dstChains) {
+				const exReactorDestChains =
+					reactorConvertedSettings.bridgingSettings.directionConfig[srcChain]
+						?.destChain || {};
+				const exReactorTokenPairs = exReactorDestChains[dstChain] || [];
+
+				reactorConvertedSettings.bridgingSettings.directionConfig[
+					srcChain
+				].destChain = {
+					...exReactorDestChains,
+					[dstChain]: [
+						...exReactorTokenPairs,
+						{ srcTokenID: currencyID, dstTokenID: currencyID },
+					],
+				};
+
+				const exDestChains = directionConfig[srcChain]?.destChain || {};
+				const exTokenPairs = exDestChains[dstChain] || [];
+
+				directionConfig[srcChain].destChain = {
+					...exDestChains,
+					[dstChain]: [
+						...exTokenPairs,
+						{ srcTokenID: currencyID, dstTokenID: currencyID },
+					],
+				};
 			}
 		}
-		// skyline
-		for (const [srcChain, dstChains] of Object.entries(
-			skylineSettings.bridgingSettings.allowedDirections,
-		)) {
-			if (srcChain in allowedDirections) {
-				allowedDirections[srcChain].push(...dstChains);
-			} else {
-				allowedDirections[srcChain] = [...dstChains];
-			}
-		}
+
 		// layer zero
-		allowedDirections[ChainEnum.Base] = [ChainEnum.Nexus, ChainEnum.BNB];
-		allowedDirections[ChainEnum.BNB] = [ChainEnum.Nexus, ChainEnum.Base];
-		if (ChainEnum.Nexus in allowedDirections) {
-			allowedDirections[ChainEnum.Nexus].push(ChainEnum.Base, ChainEnum.BNB);
-		} else {
-			allowedDirections[ChainEnum.Nexus] = [ChainEnum.Base, ChainEnum.BNB];
-		}
+		ecosystemTokens.push(
+			{ id: ethID, name: 'ETH' },
+			{ id: bapexID, name: 'BAP3X' },
+			{ id: bnapexID, name: 'BNAP3X' },
+			{ id: bnbID, name: 'BNB' },
+		);
+
+		directionConfig[ChainEnum.Base] = {
+			destChain: {
+				[ChainEnum.Nexus]: [{ srcTokenID: bapexID, dstTokenID: apexID }],
+				[ChainEnum.BNB]: [{ srcTokenID: bapexID, dstTokenID: bnapexID }],
+			},
+			tokens: {
+				[ethID]: {
+					chainSpecific: Lovelace,
+					lockUnlock: true,
+					isWrappedCurrency: false,
+				},
+				[bapexID]: {
+					chainSpecific:
+						layerZeroChains.find((x) => x.chain === ChainEnum.Base)
+							?.oftAddress || '',
+					lockUnlock: false,
+					isWrappedCurrency: true,
+				},
+			},
+		};
+
+		directionConfig[ChainEnum.BNB] = {
+			destChain: {
+				[ChainEnum.Nexus]: [{ srcTokenID: bnapexID, dstTokenID: apexID }],
+				[ChainEnum.Base]: [{ srcTokenID: bnapexID, dstTokenID: bapexID }],
+			},
+			tokens: {
+				[bnbID]: {
+					chainSpecific: Lovelace,
+					lockUnlock: true,
+					isWrappedCurrency: false,
+				},
+				[bnapexID]: {
+					chainSpecific:
+						layerZeroChains.find((x) => x.chain === ChainEnum.BNB)
+							?.oftAddress || '',
+					lockUnlock: false,
+					isWrappedCurrency: true,
+				},
+			},
+		};
+
+		directionConfig[ChainEnum.Nexus].destChain = {
+			...directionConfig[ChainEnum.Nexus].destChain,
+			[ChainEnum.Base]: [{ srcTokenID: apexID, dstTokenID: bapexID }],
+			[ChainEnum.BNB]: [{ srcTokenID: apexID, dstTokenID: bnapexID }],
+		};
 
 		const enabledChains = new Set<string>();
 		// reactor
@@ -102,19 +268,78 @@ export class SettingsService {
 		this.SettingsResponse = new SettingsFullResponseDto();
 		this.SettingsResponse.layerZeroChains = layerZeroChains;
 		this.SettingsResponse.settingsPerMode = {
-			[BridgingModeEnum.Reactor]: reactorSettings,
+			[BridgingModeEnum.Reactor]: reactorConvertedSettings,
 			[BridgingModeEnum.Skyline]: skylineSettings,
 		};
-		this.SettingsResponse.allowedDirections = allowedDirections;
+		this.SettingsResponse.directionConfig = directionConfig;
 		this.SettingsResponse.enabledChains = Array.from(enabledChains);
+		this.SettingsResponse.ecosystemTokens = ecosystemTokens;
 
-		Logger.debug(`settings dto ${JSON.stringify(this.SettingsResponse)}`);
+		Logger.debug(
+			`settings dto ${JSON.stringify(this.SettingsResponse, undefined, ' ')}`,
+		);
 	}
 
-	private async fetchOnce(
-		url: string,
-		apiKey: string,
-	): Promise<SettingsResponseDto> {
+	private convertReactorSettings = (
+		apexEcosystemToken: BridgingSettingsEcosystemTokenDto,
+		reactorSettings: ReactorOnlySettingsResponseDto,
+	): SettingsResponseDto => {
+		return {
+			enabledChains: [...reactorSettings.enabledChains],
+			bridgingSettings: {
+				maxAmountAllowedToBridge:
+					reactorSettings.bridgingSettings.maxAmountAllowedToBridge,
+				maxReceiversPerBridgingRequest:
+					reactorSettings.bridgingSettings.maxReceiversPerBridgingRequest,
+				maxTokenAmountAllowedToBridge: '0',
+				minChainFeeForBridging: {
+					...reactorSettings.bridgingSettings.minChainFeeForBridging,
+				},
+				minChainFeeForBridgingTokens: {},
+				minColCoinsAllowedToBridge: 0,
+				minOperationFee: {},
+				minUtxoChainValue: {
+					...reactorSettings.bridgingSettings.minUtxoChainValue,
+				},
+				minValueToBridge: reactorSettings.bridgingSettings.minValueToBridge,
+				ecosystemTokens: [apexEcosystemToken],
+				directionConfig: {
+					[ChainEnum.Prime]: {
+						destChain: {},
+						tokens: {
+							[apexEcosystemToken.id]: {
+								chainSpecific: Lovelace,
+								lockUnlock: true,
+								isWrappedCurrency: false,
+							},
+						},
+					},
+					[ChainEnum.Vector]: {
+						destChain: {},
+						tokens: {
+							[apexEcosystemToken.id]: {
+								chainSpecific: Lovelace,
+								lockUnlock: true,
+								isWrappedCurrency: false,
+							},
+						},
+					},
+					[ChainEnum.Nexus]: {
+						destChain: {},
+						tokens: {
+							[apexEcosystemToken.id]: {
+								chainSpecific: Lovelace,
+								lockUnlock: true,
+								isWrappedCurrency: false,
+							},
+						},
+					},
+				},
+			},
+		};
+	};
+
+	private async fetchOnce<T>(url: string, apiKey: string): Promise<T> {
 		const endpointUrl = url + settingsApiPath;
 
 		Logger.debug(`axios.get: ${endpointUrl}`);
@@ -127,9 +352,11 @@ export class SettingsService {
 				},
 			});
 
-			Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
+			Logger.debug(
+				`axios.response: ${JSON.stringify(response.data, undefined, ' ')}`,
+			);
 
-			return response.data as SettingsResponseDto;
+			return response.data as T;
 		} catch (error) {
 			if (error instanceof AxiosError) {
 				if (error.response) {
@@ -140,6 +367,25 @@ export class SettingsService {
 			}
 
 			throw new BadRequestException();
+		}
+	}
+
+	@Cron('*/30 * * * * *', { name: 'updateValidatorChangeStatus' })
+	async updateValidatorChangeStatus(): Promise<void> {
+		const job = this.schedulerRegistry.getCronJob(
+			'updateValidatorChangeStatus',
+		);
+		job.stop();
+		try {
+			this.reactorValidatorChangeStatus = await getReactorValidatorChangeStatus(
+				this.appConfig,
+			);
+		} catch (error) {
+			Logger.error('Failed to update validator set change status.', error);
+		} finally {
+			job.start();
+
+			Logger.debug('Job updateValidatorChangeStatus executed');
 		}
 	}
 }

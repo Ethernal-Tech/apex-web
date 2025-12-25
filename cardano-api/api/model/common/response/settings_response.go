@@ -3,44 +3,50 @@ package response
 import (
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
-	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 )
 
-type SettingsResponse struct {
+type ReactorSettingsResponse struct {
 	// Specifies the current operating mode of the application
 	RunMode common.VCRunMode `json:"runMode"`
-	// For each source chain, defines the native token that will be received on the destination chain
-	CardanoChainsNativeTokens map[string][]sendtx.TokenExchangeConfig `json:"cardanoChainsNativeTokens"`
 	// Settings for bridge
-	BridgingSettings core.BridgingSettings `json:"bridgingSettings"`
+	BridgingSettings core.ReactorBridgingSettings `json:"bridgingSettings"`
 	// Participating chains in the bridge
 	EnabledChains []string `json:"enabledChains"`
 } // @name SettingsResponse
 
-func NewSettingsResponse(
+func NewReactorSettingsResponse(
 	config *core.AppConfig,
-) *SettingsResponse {
-	var enabledChains []string
+) *ReactorSettingsResponse {
+	enabledChains := config.CreateEnabledChains()
 
-	nativeTokens := map[string][]sendtx.TokenExchangeConfig{}
-	for chainID, cfg := range config.CardanoChains {
-		nativeTokens[chainID] = cfg.ChainSpecific.NativeTokens
-
-		if cfg.IsEnabled {
-			enabledChains = append(enabledChains, chainID)
-		}
+	return &ReactorSettingsResponse{
+		RunMode:          config.RunMode,
+		BridgingSettings: config.ReactorBridgingSettings,
+		EnabledChains:    enabledChains,
 	}
+}
 
-	for chainID, cfg := range config.EthChains {
-		if cfg.IsEnabled {
-			enabledChains = append(enabledChains, chainID)
-		}
-	}
+type SkylineSettingsResponse struct {
+	// Specifies the current operating mode of the application
+	RunMode common.VCRunMode `json:"runMode"`
+	// Settings for bridge
+	BridgingSettings core.SkylineBridgingSettings `json:"bridgingSettings"`
+	// Participating chains in the bridge
+	EnabledChains []string `json:"enabledChains"`
+} // @name SettingsResponse
 
-	return &SettingsResponse{
-		RunMode:                   config.RunMode,
-		CardanoChainsNativeTokens: nativeTokens,
-		BridgingSettings:          config.BridgingSettings,
-		EnabledChains:             enabledChains,
+func NewSkylineSettingsResponse(
+	config *core.AppConfig,
+) *SkylineSettingsResponse {
+	enabledChains := config.CreateEnabledChains()
+
+	return &SkylineSettingsResponse{
+		RunMode:          config.RunMode,
+		BridgingSettings: config.SkylineBridgingSettings,
+		EnabledChains:    enabledChains,
 	}
+}
+
+type ValidatorChangeStatusReponse struct {
+	InProgress bool `json:"inProgress"`
 }

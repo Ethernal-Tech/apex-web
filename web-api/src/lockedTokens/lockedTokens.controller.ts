@@ -8,11 +8,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LockedTokensService } from './lockedTokens.service';
-import {
-	LockedTokensDto,
-	LockedTokensResponse,
-	TransferredTokensByDay,
-} from './lockedTokens.dto';
+import { LockedTokensDto, TransferredTokensByDay } from './lockedTokens.dto';
 import { BridgingModeEnum, GroupByTimePeriod } from 'src/common/enum';
 
 @ApiTags('LockedTokens')
@@ -51,16 +47,7 @@ export class LockedTokensController {
 	): Promise<LockedTokensDto> {
 		const allowedBridgingModes = (modes ?? []) as BridgingModeEnum[];
 
-		const lockedTokens = await this.lockedTokensService.getLockedTokens();
-		const totalTransfered =
-			await this.lockedTokensService.sumTransferredTokensPerChain(
-				allowedBridgingModes,
-			);
-
-		return {
-			chains: lockedTokens.chains,
-			totalTransferred: totalTransfered.totalTransferred,
-		};
+		return await this.lockedTokensService.fillTokensData(allowedBridgingModes);
 	}
 
 	@ApiOperation({
@@ -70,7 +57,7 @@ export class LockedTokensController {
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		type: LockedTokensResponse,
+		type: TransferredTokensByDay,
 		description: 'OK - Returns the sum of transferred tokens per chain.',
 	})
 	@ApiQuery({
@@ -135,7 +122,7 @@ export class LockedTokensController {
 			);
 		}
 
-		return this.lockedTokensService.sumOfTransferredTokenByDate(
+		return await this.lockedTokensService.sumOfTransferredTokenByDate(
 			startDate,
 			endDate,
 			groupBy,

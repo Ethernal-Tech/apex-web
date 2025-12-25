@@ -13,10 +13,15 @@ const tabletMediaQuery = '@media (max-width:800px)';
 
 type NewTransactionProps = {
 	txInProgress: boolean;
+	tokenID?: number;
 	children: React.ReactNode;
 };
 
-function NewTransaction({ txInProgress, children }: NewTransactionProps) {
+function NewTransaction({
+	txInProgress,
+	tokenID,
+	children,
+}: NewTransactionProps) {
 	const chain = useSelector((state: RootState) => state.chain.chain);
 	const destinationChain = useSelector(
 		(state: RootState) => state.chain.destinationChain,
@@ -97,7 +102,7 @@ function NewTransaction({ txInProgress, children }: NewTransactionProps) {
 							'linear-gradient(180deg, #052531 57.87%, rgba(5, 37, 49, 0.936668) 63.14%, rgba(5, 37, 49, 0.1) 132.68%)',
 					}}
 				>
-					<TotalBalance />
+					<TotalBalance tokenID={tokenID} />
 
 					<Typography sx={{ color: 'white', mt: 4, mb: 2 }}>
 						Address

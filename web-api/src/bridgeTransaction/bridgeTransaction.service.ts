@@ -35,6 +35,8 @@ import {
 } from 'src/common/enum';
 import { getBridgingMode } from 'src/utils/chainUtils';
 import { SettingsService } from 'src/settings/settings.service';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
+import { getRealTokenIDFromEntity } from './utils';
 
 @Injectable()
 export class BridgeTransactionService {
@@ -43,6 +45,7 @@ export class BridgeTransactionService {
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly settingsService: SettingsService,
 		private readonly schedulerRegistry: SchedulerRegistry,
+		private readonly appConfig: AppConfigService,
 	) {}
 
 	async get(id: number): Promise<BridgeTransactionDto> {
@@ -104,6 +107,8 @@ export class BridgeTransactionService {
 					ChainEnum.Nexus,
 				]);
 			}
+
+			where.tokenID = 0;
 		}
 
 		const page = model.page || 0;
@@ -136,13 +141,13 @@ export class BridgeTransactionService {
 	// every 10 seconds
 	@Cron('*/10 * * * * *', { name: 'updateStatusesJob' })
 	async updateStatuses(): Promise<void> {
-		if (!process.env.STATUS_UPDATE_MODES_SUPPORTED) {
+		if (this.appConfig.features.statusUpdateModesSupported.length === 0) {
 			Logger.warn('cronjob CRONJOB_MODES_SUPPORTED not set');
 			return;
 		}
 
 		const modesSupported = new Set<string>(
-			process.env.STATUS_UPDATE_MODES_SUPPORTED.split(','),
+			this.appConfig.features.statusUpdateModesSupported,
 		);
 
 		const job = this.schedulerRegistry.getCronJob('updateStatusesJob');
@@ -185,9 +190,22 @@ export class BridgeTransactionService {
 								modelsCentralized.push(model);
 							}
 						} else {
+							const tokenID = getRealTokenIDFromEntity(
+								this.settingsService.SettingsResponse.directionConfig,
+								entity,
+							);
+							if (!tokenID) {
+								Logger.error(
+									`failed to get real tokenID for entity: ${entity.originChain} ${entity.sourceTxHash}`,
+								);
+
+								return;
+							}
+
 							const bridgingMode = getBridgingMode(
 								entity.originChain,
 								entity.destinationChain,
+								tokenID,
 								this.settingsService.SettingsResponse,
 							);
 							if (!bridgingMode) {

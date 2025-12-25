@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"slices"
 
 	commonRequest "github.com/Ethernal-Tech/cardano-api/api/model/common/request"
 	commonResponse "github.com/Ethernal-Tech/cardano-api/api/model/common/response"
@@ -21,9 +22,10 @@ import (
 )
 
 type ReactorTxControllerImpl struct {
-	appConfig      *core.AppConfig
-	usedUtxoCacher *utxotransformer.UsedUtxoCacher
-	logger         hclog.Logger
+	appConfig              *core.AppConfig
+	usedUtxoCacher         *utxotransformer.UsedUtxoCacher
+	logger                 hclog.Logger
+	validatorChangeTracker core.ValidatorChangeTracker
 }
 
 var _ core.APIController = (*ReactorTxControllerImpl)(nil)
@@ -31,11 +33,13 @@ var _ core.APIController = (*ReactorTxControllerImpl)(nil)
 func NewReactorTxController(
 	appConfig *core.AppConfig,
 	logger hclog.Logger,
+	validatorChange core.ValidatorChangeTracker,
 ) *ReactorTxControllerImpl {
 	return &ReactorTxControllerImpl{
-		appConfig:      appConfig,
-		usedUtxoCacher: utxotransformer.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
-		logger:         logger,
+		appConfig:              appConfig,
+		usedUtxoCacher:         utxotransformer.NewUsedUtxoCacher(appConfig.UtxoCacheTimeout),
+		logger:                 logger,
+		validatorChangeTracker: validatorChange,
 	}
 }
 
@@ -52,6 +56,16 @@ func (c *ReactorTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 }
 
 func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *http.Request) {
+	if c.validatorChangeTracker.IsValidatorChangeInProgress() {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf(
+				"validator change is in progress, getting the bridging tx fee is not possible at the moment"),
+			c.logger)
+
+		return
+	}
+
 	requestBody, ok := utils.DecodeModel[commonRequest.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
@@ -76,10 +90,18 @@ func (c *ReactorTxControllerImpl) getBridgingTxFee(w http.ResponseWriter, r *htt
 	}
 
 	utils.WriteResponse(w, r, http.StatusOK,
-		commonResponse.NewBridgingTxFeeResponse(txFeeInfo.Fee, requestBody.BridgingFee), c.logger)
+		commonResponse.NewBridgingTxFeeResponse(txFeeInfo.Fee, requestBody.BridgingFee, 0), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *http.Request) {
+	if c.validatorChangeTracker.IsValidatorChangeInProgress() {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("validator change is in progress, creating a bridge tx is not possible at the moment"), c.logger)
+
+		return
+	}
+
 	requestBody, ok := utils.DecodeModel[commonRequest.CreateBridgingTxRequest](w, r, c.logger)
 	if !ok {
 		return
@@ -110,31 +132,36 @@ func (c *ReactorTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		commonResponse.NewBridgingTxResponse(txInfo.TxRaw, txInfo.TxHash, requestBody.BridgingFee, amount, 0), c.logger)
+		commonResponse.NewBridgingTxResponse(txInfo.TxRaw, txInfo.TxHash, requestBody.BridgingFee, 0, amount, nil), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Request) {
 	utils.WriteResponse(
 		w, r, http.StatusOK,
-		commonResponse.NewSettingsResponse(c.appConfig), c.logger)
+		commonResponse.NewReactorSettingsResponse(c.appConfig), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody *commonRequest.CreateBridgingTxRequest,
 ) error {
-	cardanoSrcConfig, _ := core.GetChainConfig(c.appConfig, requestBody.SourceChainID)
+	cardanoSrcConfig, _ := c.appConfig.GetChainConfig(requestBody.SourceChainID)
 	if cardanoSrcConfig == nil {
 		return fmt.Errorf("origin chain not registered: %v", requestBody.SourceChainID)
 	}
 
-	cardanoDestConfig, ethDestConfig := core.GetChainConfig(c.appConfig, requestBody.DestinationChainID)
+	cardanoDestConfig, ethDestConfig := c.appConfig.GetChainConfig(requestBody.DestinationChainID)
 	if cardanoDestConfig == nil && ethDestConfig == nil {
 		return fmt.Errorf("destination chain not registered: %v", requestBody.DestinationChainID)
 	}
 
-	if len(requestBody.Transactions) > c.appConfig.BridgingSettings.MaxReceiversPerBridgingRequest {
+	allowedDestinations, ok := c.appConfig.ReactorBridgingSettings.AllowedDirections[requestBody.SourceChainID]
+	if !ok || !slices.Contains(allowedDestinations, requestBody.DestinationChainID) {
+		return fmt.Errorf("direction: %s -> %s not supported", requestBody.SourceChainID, requestBody.DestinationChainID)
+	}
+
+	if len(requestBody.Transactions) > c.appConfig.ReactorBridgingSettings.MaxReceiversPerBridgingRequest {
 		return fmt.Errorf("number of receivers in metadata greater than maximum allowed - no: %v, max: %v, requestBody: %v",
-			len(requestBody.Transactions), c.appConfig.BridgingSettings.MaxReceiversPerBridgingRequest, requestBody)
+			len(requestBody.Transactions), c.appConfig.ReactorBridgingSettings.MaxReceiversPerBridgingRequest, requestBody)
 	}
 
 	receiverAmountSum := big.NewInt(0)
@@ -145,7 +172,7 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 	for _, receiver := range requestBody.Transactions {
 		if cardanoDestConfig != nil {
-			if receiver.Amount < c.appConfig.BridgingSettings.MinValueToBridge {
+			if receiver.Amount < c.appConfig.ReactorBridgingSettings.MinValueToBridge {
 				foundAUtxoValueBelowMinimumValue = true
 
 				break
@@ -192,7 +219,7 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody.BridgingFee += feeSum
 	requestBody.Transactions = transactions
 
-	minFee, found := c.appConfig.BridgingSettings.GetMinBridgingFee(requestBody.SourceChainID, false)
+	minFee, found := c.appConfig.ReactorBridgingSettings.MinChainFeeForBridging[requestBody.SourceChainID]
 	if !found {
 		return fmt.Errorf("no minimal fee for chain: %s", requestBody.SourceChainID)
 	}
@@ -202,11 +229,11 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		requestBody.BridgingFee = minFee
 	}
 
-	if c.appConfig.BridgingSettings.MaxAmountAllowedToBridge != nil &&
-		c.appConfig.BridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 &&
-		receiverAmountSum.Cmp(c.appConfig.BridgingSettings.MaxAmountAllowedToBridge) == 1 {
+	if c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge != nil &&
+		c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 &&
+		receiverAmountSum.Cmp(c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge) == 1 {
 		return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
-			c.appConfig.BridgingSettings.MaxAmountAllowedToBridge, requestBody)
+			c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge, requestBody)
 	}
 
 	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))
@@ -300,14 +327,17 @@ func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(
 		return nil, nil, fmt.Errorf("failed to generate configuration")
 	}
 
-	txSender := sendtx.NewTxSender(txSenderChainsConfig, sendtx.WithUtxosTransformer(utxosTransformer))
+	txSender := sendtx.NewTxSender(
+		txSenderChainsConfig,
+		sendtx.WithUtxosTransformer(utxosTransformer),
+		sendtx.WithMinAmountToBridge(c.appConfig.ReactorBridgingSettings.MinValueToBridge),
+	)
 
 	receivers := make([]sendtx.BridgingTxReceiver, len(requestBody.Transactions))
 	for i, tx := range requestBody.Transactions {
 		receivers[i] = sendtx.BridgingTxReceiver{
-			Addr:         tx.Addr,
-			Amount:       tx.Amount,
-			BridgingType: sendtx.BridgingTypeNormal,
+			Addr:   tx.Addr,
+			Amount: tx.Amount,
 		}
 	}
 

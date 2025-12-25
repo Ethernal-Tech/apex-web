@@ -1,3 +1,4 @@
+import { captureAndThrowError } from '../sentry';
 import { CardanoAddress } from './interfaces';
 import {
 	StakeCredential,
@@ -187,7 +188,7 @@ export class EnterpriseAddress implements CardanoAddress {
 		return this.Payment;
 	}
 	GetStake(): StakeCredential {
-		throw new Error('not available');
+		captureAndThrowError('not available', 'addreses.ts', 'GetStake');
 	}
 	GetNetwork(): CardanoNetworkType {
 		return this.Network;
@@ -215,7 +216,7 @@ export class RewardAddress implements CardanoAddress {
 	) {}
 
 	GetPayment(): StakeCredential {
-		throw new Error('not available');
+		captureAndThrowError('not available', 'addreses.ts', 'GetPayment');
 	}
 	GetStake(): StakeCredential {
 		return this.Stake;

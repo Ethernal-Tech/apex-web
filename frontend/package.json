@@ -12,6 +12,7 @@
     "@mui/icons-material": "^5.15.15",
     "@mui/material": "^5.15.10",
     "@reduxjs/toolkit": "^2.2.2",
+    "@sentry/react": "^10.23.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -36,7 +37,8 @@
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "eject": "react-scripts eject",
-    "lint": "npx eslint ./src --ext .ts --ext .tsx --config .eslintrc.js"
+    "lint": "npx eslint ./src --ext .ts --ext .tsx --config .eslintrc.js",
+    "swagger": "npx nswag run ./src/swagger/apexBridgeService.nswag"
   },
   "eslintConfig": {
     "extends": [

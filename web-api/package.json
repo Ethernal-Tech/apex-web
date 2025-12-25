@@ -15,8 +15,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "lint": "npx eslint ./src --ext .ts --config .eslintrc.js",
-    "migration:generate": "npm run build && typeorm-ts-node-esm migration:generate ./src/database/migrations/$npm_config_name --d ./src/database/data.source.ts",
-    "migration:run": "npm run build && typeorm-ts-node-esm migration:run --d ./src/database/data.source.ts",
+    "migration:generate": "npm run build && npx typeorm-ts-node-esm migration:generate ./src/database/migrations/$npm_config_name --d ./src/database/data.source.ts",
+    "migration:run": "npm run build && npx typeorm-ts-node-esm migration:run --d ./src/database/data.source.ts",
     "swagger:generate": "ts-node -r tsconfig-paths/register generate-swagger.ts"
   },
   "dependencies": {
@@ -48,6 +48,9 @@
     "web3": "^4.11.1",
     "web3-validator": "^2.0.6",
     "winston": "^3.15.0",
+    "envalid": "^8.1.1",
+    "lodash": "^4.17.21",
+    "lodash.merge": "^4.6.2",
     "winston-daily-rotate-file": "^5.0.0"
   },
   "overrides": {
@@ -68,6 +71,7 @@
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
+    "@types/lodash.merge": "^4.6.9",
     "eslint": "^8.42.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",

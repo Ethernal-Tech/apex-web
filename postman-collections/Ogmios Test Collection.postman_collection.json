@@ -1,0 +1,295 @@
+{
+	"info": {
+		"_postman_id": "4e9bbdf8-ae43-4610-b583-68f474b8e7f5",
+		"name": "Ogmios Test Collection",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "50715205",
+		"_collection_link": "https://zoltan-babinski-6513521.postman.co/workspace/Zoltan-Babinski's-Workspace~6397d4ec-10c6-4750-8c5f-7025d4f152b1/collection/50715205-4e9bbdf8-ae43-4610-b583-68f474b8e7f5?action=share&source=collection_link&creator=50715205"
+	},
+	"item": [
+		{
+			"name": "frequent calls",
+			"item": [
+				{
+					"name": "GetProtocolParameters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Protocol parameters contain version\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.result.version.major).to.be.a(\"number\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"queryLedgerState/protocolParameters\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ogmios_base_url}}",
+							"host": [
+								"{{ogmios_base_url}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetBlockHeight",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Block height OK\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.result).to.be.a(\"number\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"queryNetwork/blockHeight\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ogmios_base_url}}",
+							"host": [
+								"{{ogmios_base_url}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetTip",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Tip OK\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.result).to.be.a(\"object\");",
+									"    pm.expect(json.result.slot).to.be.a(\"number\");",
+									"    pm.expect(json.result.id).to.be.a(\"string\");",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"queryLedgerState/tip\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ogmios_base_url}}",
+							"host": [
+								"{{ogmios_base_url}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetUtxos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", () => {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"UTxOs array exists\", () => {",
+									"    const json = pm.response.json();",
+									"    pm.expect(json.result).to.be.an(\"array\");",
+									"});",
+									"",
+									"pm.test(\"Each UTxO has transaction and value\", () => {",
+									"    const json = pm.response.json();",
+									"    json.result.forEach(utxo => {",
+									"        pm.expect(utxo.transaction.id).to.be.a(\"string\");",
+									"        pm.expect(utxo.value).to.be.an(\"object\");",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"queryLedgerState/utxo\",\n  \"params\": {\n    \"addresses\": [\n      \"{{example_address}}\"\n    ]\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ogmios_base_url}}",
+							"host": [
+								"{{ogmios_base_url}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SubmitTx",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 because validity interval of the transaction passed\", () => {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Transaction is valid or expired TTL\", function () {",
+									"    const jsonData = pm.response.json();",
+									"",
+									"    if(pm.response.code === 400) {",
+									"        pm.expect(jsonData.error.code).to.be.oneOf([3118, 3124]); // expired TTL or vector testnet address missmach",
+									"    } else {",
+									"        pm.expect(pm.response.code).to.eql(200);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"submitTransaction\",\n  \"params\": {\n    \"transaction\": {\n      \"cbor\": \"{{valid_tx_cbor}}\"\n    }\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{ogmios_base_url}}",
+							"host": [
+								"{{ogmios_base_url}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"value": ""
+		}
+	]
+}

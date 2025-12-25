@@ -1,3 +1,4 @@
+import { captureException } from './sentry';
 import appSettings from '../settings/appSettings';
 import { isEvmChain } from '../settings/chain';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
@@ -28,10 +29,28 @@ export const getUtxoRetrieverType = (chain: ChainEnum): UtxoRetrieverEnum => {
 				console.log(
 					`Unknown utxo retriever type: ${utxoRetrieverConfig.type}`,
 				);
+				captureException(
+					`Unknown utxo retriever type: ${utxoRetrieverConfig.type}`,
+					{
+						tags: {
+							component: 'utils.ts',
+							action: 'getUtxoRetrieverType',
+						},
+					},
+				);
 			}
 		} else {
 			console.log(
 				`utxo retriever url not provided for: ${utxoRetrieverConfig.type}`,
+			);
+			captureException(
+				`utxo retriever url not provided for: ${utxoRetrieverConfig.type}`,
+				{
+					tags: {
+						component: 'utils.ts',
+						action: 'getUtxoRetrieverType',
+					},
+				},
 			);
 		}
 	}

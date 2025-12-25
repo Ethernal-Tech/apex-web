@@ -1,21 +1,18 @@
 import { Box, Typography } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { ChainEnum } from '../../swagger/apexBridgeApiService';
 import './lockedTokens.css';
-import { getTokenInfo } from '../../settings/token';
-import { toChainEnum } from '../../settings/chain';
-import { fetchAndUpdateLockedTokensAction } from '../../actions/lockedTokens';
 import {
-	correlateTokenToACurrency,
-	decodeTokenKey,
-	isApexChain,
-} from '../../utils/tokenUtils';
+	getTokenInfo,
+	apexID,
+	adaID,
+	getCurrencyID,
+} from '../../settings/token';
+import { toChainEnum } from '../../settings/chain';
 import { convertWeiToDfmBig } from '../../utils/generalUtils';
-import { LovelaceTokenName } from '../../utils/chainUtils';
-import { BridgingModeEnum } from '../../settings/chain';
-import { TokenEnum } from '../../features/enums';
+import { isAdaToken, isApexToken } from '../Audit/token';
 
 const powBigInt = (base: bigint, exp: number): bigint => {
 	let result = BigInt(1);
@@ -46,25 +43,7 @@ export const formatBigIntDecimalString = (value: bigint, decimals = 6) => {
 
 const LockedTokensComponent = () => {
 	const lockedTokens = useSelector((state: RootState) => state.lockedTokens);
-	const { layerZeroChains, settingsPerMode } = useSelector(
-		(state: RootState) => state.settings,
-	);
-	const dispatch = useDispatch();
-
-	useEffect(() => {
-		// Call once immediately on mount
-		fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
-
-		// Then call periodically every 30 seconds
-		const interval = setInterval(() => {
-			fetchAndUpdateLockedTokensAction(dispatch, layerZeroChains);
-		}, 30_000); // 30,000 ms = 30 seconds
-
-		// Cleanup on component unmount
-		return () => clearInterval(interval);
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [layerZeroChains]);
+	const settings = useSelector((state: RootState) => state.settings);
 
 	const lockedTokensLZFormatted = useMemo(() => {
 		return convertWeiToDfmBig(lockedTokens.layerZeroLockedTokens);
@@ -100,97 +79,77 @@ const LockedTokensComponent = () => {
 
 		const chunks: string[] = [];
 
-		const getBalanceSafe = (chain: ChainEnum, tokenKey: string) => {
+		const getBalanceSafe = (chain: ChainEnum, tokenKey: number) => {
 			if (!balances[chain]) return BigInt(0);
 
 			return balances[chain][tokenKey] || BigInt(0);
 		};
 
 		const apexTotal =
-			getBalanceSafe(ChainEnum.Prime, LovelaceTokenName) +
-			getBalanceSafe(ChainEnum.Vector, LovelaceTokenName) +
+			getBalanceSafe(ChainEnum.Prime, apexID) +
+			getBalanceSafe(ChainEnum.Vector, apexID) +
 			lockedTokensLZFormatted;
 		if (apexTotal > BigInt(0)) {
 			chunks.push(
-				`${formatBigIntDecimalString(apexTotal, 6)} ${decodeTokenKey(LovelaceTokenName)}`,
+				`${formatBigIntDecimalString(apexTotal, 6)} ${getTokenInfo(apexID).label}`,
 			);
 		}
 
-		const adaTotal = getBalanceSafe(ChainEnum.Cardano, LovelaceTokenName);
+		const cardanoCurrency =
+			getCurrencyID(settings, ChainEnum.Cardano) || adaID;
+
+		// temporarily disable display of ada
+		delete balances[ChainEnum.Cardano];
+
+		const adaTotal = getBalanceSafe(ChainEnum.Cardano, cardanoCurrency);
 		if (adaTotal > BigInt(0)) {
 			chunks.push(
-				`${formatBigIntDecimalString(adaTotal, 6)} ${decodeTokenKey(LovelaceTokenName, ChainEnum.Cardano)}`,
+				`${formatBigIntDecimalString(adaTotal, 6)} ${getTokenInfo(cardanoCurrency).label}`,
 			);
 		}
 
 		return chunks.join(' | ').trim();
-	}, [lockedTokens.chains, lockedTokensLZFormatted]);
-
-	const skylineSettings = useMemo(
-		() => settingsPerMode[BridgingModeEnum.Skyline],
-		[settingsPerMode],
-	);
+	}, [lockedTokens.chains, lockedTokensLZFormatted, settings]);
 
 	const transferredData = useMemo(() => {
-		const tvb: { [key: string]: bigint } = {};
+		const grandTotals = Object.values(lockedTokens.totalTransferred).reduce(
+			(accumulator, perTokenMap) => {
+				for (const [tokenKey, value] of Object.entries(perTokenMap)) {
+					const amount = BigInt(value || '0');
 
-		const addToTvbSafe = (tokenLabel: string, value: bigint) => {
-			if (!tvb[tokenLabel]) {
-				tvb[tokenLabel] = BigInt(0);
-			}
-
-			tvb[tokenLabel] += value;
-		};
-
-		Object.entries(lockedTokens.totalTransferred).forEach(
-			([chainKey, innerObj]) => {
-				const chain = toChainEnum(chainKey);
-				const perToken = innerObj as unknown as Record<
-					string,
-					string | number | bigint
-				>;
-
-				if (layerZeroChains[chain] && !isApexChain(chain)) {
-					addToTvbSafe(
-						getTokenInfo(TokenEnum.APEX).label,
-						BigInt(
-							Object.entries(perToken).find(
-								(x) => x[0] !== 'amount',
-							)?.[1] || '0',
-						),
-					);
-
-					return;
-				}
-
-				Object.entries(perToken).forEach(([tokenKey, value]) => {
-					const currencyInfo = correlateTokenToACurrency(
-						skylineSettings.cardanoChainsNativeTokens,
-						chain,
-						tokenKey,
-					);
-
-					if (currencyInfo) {
-						addToTvbSafe(currencyInfo.label, BigInt(value || '0'));
+					if (isApexToken(+tokenKey)) {
+						accumulator[apexID] += amount;
+					} else if (isAdaToken(+tokenKey)) {
+						accumulator[adaID] += amount;
 					}
-				});
+				}
+				return accumulator;
+			},
+			{
+				[apexID]: BigInt(0),
+				[adaID]: BigInt(0),
 			},
 		);
 
-		const chunks: string[] = Object.entries(tvb)
-			.map(([tokenLabel, value]) =>
-				value > BigInt(0)
-					? `${formatBigIntDecimalString(value, 6)} ${tokenLabel}`
-					: '',
-			)
-			.filter((x) => !!x);
+		// temporarily disable display of ada
+		delete grandTotals[adaID];
 
-		return chunks.join(' | ').trim();
-	}, [
-		layerZeroChains,
-		lockedTokens.totalTransferred,
-		skylineSettings.cardanoChainsNativeTokens,
-	]);
+		const chunks = Object.entries(grandTotals)
+			.map(([tokenKey, totalValue]) => {
+				if (totalValue > BigInt(0)) {
+					const label = getTokenInfo(+tokenKey).label;
+					const formattedAmount = formatBigIntDecimalString(
+						totalValue,
+						6,
+					);
+					return `${formattedAmount} ${label}`;
+				}
+				return null; // Return null for zero-value entries
+			})
+			.filter((chunk): chunk is string => !!chunk); // Filter out the null entries
+
+		return chunks.join(' | ');
+	}, [lockedTokens.totalTransferred]);
 
 	return (
 		<Box className="banner-container">
