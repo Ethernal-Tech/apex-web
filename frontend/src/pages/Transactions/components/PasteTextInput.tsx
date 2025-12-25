@@ -12,9 +12,8 @@ const CustomTextField = styled(TextField)({
 		'&.Mui-focused fieldset': {
 			borderColor: 'transparent',
 		},
-		backgroundColor: '#19232d',
+		backgroundColor: '#424543',
 		borderRadius: '8px',
-		border: '1px solid #435F69',
 		color: 'white',
 		padding: '0 8px',
 		width: '100%',
@@ -68,15 +67,8 @@ const PasteTextInput: React.FC<PasteTextInputProps> = ({
 	};
 
 	return (
-		<Box
-			display="flex"
-			alignItems="center"
-			width="100%"
-			position="relative"
-			sx={sx}
-		>
+		<Box display="flex" alignItems="center" position="relative" sx={sx}>
 			<CustomTextField
-				variant="outlined"
 				fullWidth
 				value={text}
 				onChange={(e) => setText(e.target.value)}

@@ -1,8 +1,4 @@
-import { Box, Tooltip, Typography } from '@mui/material';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-
-import { ReactComponent as WalletIcon } from '../../../assets/icons/moneyWallet.svg';
-import { ReactComponent as ApexIcon } from '../../../assets/icons/apexTransferIcon.svg';
+import { Box, Typography } from '@mui/material';
 import { convertDfmToApex, toFixed } from '../../../utils/generalUtils';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
@@ -21,85 +17,57 @@ const TotalBalance = () => {
 	const chainCurrency = getChainInfo(chain).currencyToken;
 
 	return (
-		<Box
-			px={'17px'}
-			py="20px"
-			sx={{
-				border: '1px solid #077368',
-				color: '#A1B3A0',
-				background: '#075159',
-				borderRadius: '4px',
-				fontWeight: '500',
-			}}
-		>
-			<Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-				<Typography
-					textTransform={'uppercase'}
-					color={'white'}
-					sx={{ display: 'flex', alignItems: 'center' }}
-				>
-					<WalletIcon />
-					<Box component="span" ml={1}>
-						Available Balance
-					</Box>
-					<Tooltip
-						title={
-							<Typography
-								color={'white'}
-								sx={{ fontSize: '14px' }}
-							>
-								This balance reflects the total value of all
-								UTXOs associated with your address. It does not
-								include any additional funds, such as rewards
-								held in your staking (reward) account.
-							</Typography>
-						}
-						placement="right-start"
-					>
-						<HelpOutlineIcon
-							sx={{ marginLeft: '6px', fontSize: '16px' }}
-						/>
-					</Tooltip>
-				</Typography>
-
-				<Typography
-					textTransform={'uppercase'}
-					sx={{ display: 'flex', alignItems: 'center' }}
-				>
-					<ApexIcon />
-					<Box component="span" ml={1}>
-						{getTokenInfo(chainCurrency).label}
-					</Box>
-				</Typography>
-			</Box>
-
+		<Box>
 			{totalBalanceInApex && (
-				<Typography>
+				<Box
+					display="flex"
+					flexDirection="column"
+					alignItems="end"
+					color="#828282"
+				>
 					<Box
-						component="span"
 						sx={{
-							color: '#F25041',
-							fontWeight: '600',
-							fontSize: '32px',
-							lineheight: '32px',
+							display: 'flex',
+							justifyContent: 'end',
+							alignItems: 'center',
 						}}
 					>
-						{totalBalanceInApex.split('.')[0]}
-					</Box>
+						<Box>
+							<Typography
+								component="span"
+								color="#828282"
+								fontSize="13px"
+							>
+								Balance:
+							</Typography>
+							<Typography
+								component="span"
+								color="#fff"
+								fontWeight="700"
+								fontSize="13px"
+							>
+								{' ' + totalBalanceInApex.split('.')[0]}
+							</Typography>
 
-					{/* show decimals if applicable */}
-					{totalBalanceInApex.includes('.') && (
-						<Box
-							component="span"
-							sx={{ fontSize: '20px', lineheight: '24px' }}
-						>
-							.{totalBalanceInApex.split('.')[1]}
+							{/* show decimals if applicable */}
+							{totalBalanceInApex.includes('.') && (
+								<Typography
+									component="span"
+									fontWeight="400"
+									fontSize="13px"
+								>
+									.{totalBalanceInApex.split('.')[1]}
+								</Typography>
+							)}
+
+							<Typography component="span" fontSize="13px">
+								{' ' + getTokenInfo(chainCurrency).label}
+							</Typography>
 						</Box>
-					)}
-				</Typography>
+					</Box>
+					{/* <Typography>&#36;5,000.00</Typography> */}
+				</Box>
 			)}
-
-			{/* <Typography>&#36;5,000.00</Typography> */}
 		</Box>
 	);
 };
