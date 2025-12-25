@@ -16,7 +16,6 @@ const CustomTextField = styled(TextField)({
 		backgroundColor: '#424543',
 		borderRadius: '8px',
 		color: 'white',
-		padding: '0 8px',
 		width: '100%',
 		caretColor: primaryAccentColor,
 	},
@@ -24,6 +23,7 @@ const CustomTextField = styled(TextField)({
 		color: 'white',
 		caretColor: primaryAccentColor,
 		fonteight: 500,
+		padding: '13px 15px',
 	},
 });
 
