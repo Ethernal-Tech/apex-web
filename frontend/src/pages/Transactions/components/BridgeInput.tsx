@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, SelectChangeEvent } from '@mui/material';
 import PasteTextInput from '../components/PasteTextInput';
 import PasteApexAmountInput from './PasteApexAmountInput';
 import ButtonCustom from '../../../components/Buttons/ButtonCustom';
@@ -24,12 +24,16 @@ import {
 	isEvmChain,
 	getChainInfo,
 	getSrcChains,
+	getDstChains,
 } from '../../../settings/chain';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
 import InfoBox from './InfoBox';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
-import { setChainAction } from '../../../redux/slices/chainSlice';
+import {
+	setChainAction,
+	setDestinationChainAction,
+} from '../../../redux/slices/chainSlice';
 
 type BridgeInputType = {
 	bridgeTxFee: string;
@@ -107,7 +111,9 @@ const BridgeInput = ({
 	const totalDfmBalance = useSelector(
 		(state: RootState) => state.accountInfo.balance,
 	);
-	const { chain } = useSelector((state: RootState) => state.chain);
+	const { chain, destinationChain } = useSelector(
+		(state: RootState) => state.chain,
+	);
 	const wallet = useSelector((state: RootState) => state.wallet.wallet);
 	const account = useSelector(
 		(state: RootState) => state.accountInfo.account,
@@ -124,12 +130,18 @@ const BridgeInput = ({
 	);
 
 	const srcChain = chain;
+	const dstChain = destinationChain;
 	const isLoggedInMemo = !!wallet && !!account;
 	const srcChainOptions = useMemo(
 		() => getSrcChains(settings).map((x) => getChainInfo(x)),
 		[settings],
 	);
+	const dstChainOptions = useMemo(
+		() => getDstChains(srcChain, settings).map((x) => getChainInfo(x)),
+		[srcChain, settings],
+	);
 	const srcChainInfo = useMemo(() => getChainInfo(srcChain), [srcChain]);
+	const dstChainInfo = useMemo(() => getChainInfo(dstChain), [dstChain]);
 
 	const fetchWalletFee = useCallback(async () => {
 		if (!destinationAddr || !amount) {
@@ -191,10 +203,20 @@ const BridgeInput = ({
 		}
 	}, [srcChain, srcChainOptions, dispatch]);
 
-	/* const onDiscard = () => {
-		setDestinationAddr('');
-		setAmount('');
-	}; */
+	useEffect(() => {
+		if (
+			(!dstChain || !dstChainOptions.some((x) => x.value === dstChain)) &&
+			dstChainOptions.length > 0
+		) {
+			dispatch(setDestinationChainAction(dstChainOptions[0].value));
+		}
+	}, [dstChain, dstChainOptions, dispatch]);
+
+	const onChangeDstChain = useCallback(
+		(evnt: SelectChangeEvent<string>) =>
+			dispatch(setDestinationChainAction(evnt.target.value as ChainEnum)),
+		[dispatch],
+	);
 
 	const changeMinUtxo = useMemo(
 		() =>
@@ -254,19 +276,6 @@ const BridgeInput = ({
 				)}
 			</Box>
 			<Box marginY={2}>
-				<Typography sx={{ color: 'white', mb: 1, fontSize: '13px' }}>
-					Destination Address
-				</Typography>
-				{/* validate inputs */}
-				<PasteTextInput
-					text={destinationAddr}
-					setText={setDestinationAddr}
-					disabled={!!loadingState}
-					id="dest-addr"
-				/>
-			</Box>
-
-			<Box marginY={2}>
 				<Box display="flex" justifyContent="space-between">
 					<Typography
 						sx={{ color: 'white', mb: 1, fontSize: '13px' }}
@@ -285,6 +294,7 @@ const BridgeInput = ({
 						id="bridge-amount"
 					/>
 
+					{/* @todo check what this is about */}
 					{!!loadingState && (
 						<Box
 							sx={{
@@ -298,35 +308,68 @@ const BridgeInput = ({
 							<SubmitLoading loadingState={loadingState} />
 						</Box>
 					)}
-					<Box display="flex" justifyContent="center" gap={2}>
-						<ButtonCustom
-							onClick={onSubmit}
-							variant="primary"
-							disabled={
-								validatorChangeInProgress !== false ||
-								!!loadingState ||
-								BigInt(maxAmount) <= 0 ||
-								hasInsufficientBalance ||
-								overMaxAllowed
-							}
-							sx={{
-								gridColumn: 'span 1',
-								textTransform: 'uppercase',
-							}}
-							id="bridge-tx"
-						>
-							Move funds
-						</ButtonCustom>
-					</Box>
-
-					<InfoBox
-						userWalletFee={userWalletFee || '0'}
-						bridgeTxFee={bridgeTxFee}
-						chain={chain}
-						isFeeInformation={!validatorChangeInProgress}
-					/>
 				</Box>
 			</Box>
+			<Box display="flex" flexDirection="column">
+				<Typography
+					mb={'4px'}
+					fontWeight={400}
+					sx={{ color: '#fff', fontSize: '13px' }}
+				>
+					To
+				</Typography>
+
+				{dstChainOptions.length > 0 && (
+					<CustomSelect
+						label="Destination"
+						icon={dstChainInfo.icon}
+						value={dstChain}
+						disabled={dstChainOptions.length < 2}
+						onChange={onChangeDstChain}
+						options={dstChainOptions}
+					/>
+				)}
+			</Box>
+			<Box marginY={2}>
+				<Typography sx={{ color: 'white', mb: 1, fontSize: '13px' }}>
+					Destination Address
+				</Typography>
+				{/* validate inputs */}
+				<PasteTextInput
+					text={destinationAddr}
+					setText={setDestinationAddr}
+					disabled={!!loadingState}
+					id="dest-addr"
+				/>
+			</Box>
+
+			{/* 'Move funds' button */}
+			<Box marginTop={2} display="flex" justifyContent="center" gap={2}>
+				<ButtonCustom
+					onClick={onSubmit}
+					variant="primary"
+					disabled={
+						validatorChangeInProgress !== false ||
+						!!loadingState ||
+						BigInt(maxAmount) <= 0 ||
+						hasInsufficientBalance ||
+						overMaxAllowed
+					}
+					sx={{
+						gridColumn: 'span 1',
+						textTransform: 'uppercase',
+					}}
+					id="bridge-tx"
+				>
+					Move funds
+				</ButtonCustom>
+			</Box>
+			<InfoBox
+				userWalletFee={userWalletFee || '0'}
+				bridgeTxFee={bridgeTxFee}
+				chain={chain}
+				isFeeInformation={!validatorChangeInProgress}
+			/>
 		</Box>
 	);
 };
