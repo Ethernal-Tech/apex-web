@@ -1,5 +1,6 @@
 import React from 'react';
 import { TextField, Button, Box, styled, SxProps, Theme } from '@mui/material';
+import { primaryAccentColor } from '../../../containers/theme';
 
 const CustomTextField = styled(TextField)({
 	'& .MuiOutlinedInput-root': {
@@ -17,18 +18,19 @@ const CustomTextField = styled(TextField)({
 		color: 'white',
 		padding: '0 8px',
 		width: '100%',
-		caretColor: '#FF5E5E',
+		caretColor: primaryAccentColor,
 	},
 	input: {
 		color: 'white',
-		caretColor: '#FF5E5E',
+		caretColor: primaryAccentColor,
+		fonteight: 500,
 	},
 });
 
 const CustomButton = styled(Button)({
 	backgroundColor: 'transparent',
 	boxShadow: 'none',
-	color: '#FF5E5E',
+	color: primaryAccentColor,
 	borderRadius: 4,
 	marginLeft: 8,
 	textTransform: 'none',
