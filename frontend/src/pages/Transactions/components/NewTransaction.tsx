@@ -4,7 +4,6 @@ import { Box, Typography } from '@mui/material';
 // import { useSelector } from 'react-redux';
 // import { RootState } from '../../../redux/store';
 import React from 'react';
-import { white } from '../../../containers/theme';
 // import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 // import ReputationSystemWidget from '../RepSystem/ReputationSystemWidget';
 // import { getChainInfo } from '../../../settings/chain';
@@ -43,7 +42,7 @@ function NewTransaction({ children }: NewTransactionProps) {
 			<Typography
 				mb={'7px'}
 				fontWeight={600}
-				sx={{ color: white, fontSize: '18px', textAlign: 'center' }}
+				sx={{ color: '#fff', fontSize: '18px', textAlign: 'center' }}
 			>
 				Bridge your tokens
 			</Typography>

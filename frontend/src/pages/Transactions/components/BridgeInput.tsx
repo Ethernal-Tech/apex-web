@@ -160,10 +160,10 @@ const BridgeInput = ({
 		};
 	}, [fetchWalletFee]);
 
-	const onDiscard = () => {
+	/* const onDiscard = () => {
 		setDestinationAddr('');
 		setAmount('');
-	};
+	}; */
 
 	const changeMinUtxo = useMemo(
 		() =>
@@ -249,21 +249,21 @@ const BridgeInput = ({
 						</Box>
 					)}
 					<Box display="flex" justifyContent="center" gap={2}>
-						<ButtonCustom
+						{/* <ButtonCustom
 							onClick={onDiscard}
 							disabled={!!loadingState}
-							variant="red"
+							variant="secondary"
 							sx={{
 								gridColumn: 'span 1',
 								textTransform: 'uppercase',
 							}}
 						>
 							Discard
-						</ButtonCustom>
+						</ButtonCustom> */}
 
 						<ButtonCustom
 							onClick={onSubmit}
-							variant="white"
+							variant="primary"
 							disabled={
 								validatorChangeInProgress !== false ||
 								!!loadingState ||

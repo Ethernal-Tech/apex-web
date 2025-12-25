@@ -429,7 +429,7 @@ const TransactionDetailPage = () => {
 								>
 									{/* {transaction && <VerticalStepper steps={transaction?.steps}/>} */}
 									<ButtonCustom
-										variant="red"
+										variant="secondary"
 										sx={{
 											gridColumn: 'span 1',
 											textTransform: 'uppercase',

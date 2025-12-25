@@ -22,7 +22,6 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { ReactComponent as ApexFusionLogo } from '../../assets/apex-fusion-logo.svg';
-import { white } from '../../containers/theme';
 import ButtonCustom from '../Buttons/ButtonCustom';
 import { RootState } from '../../redux/store';
 import { formatAddress } from '../../utils/generalUtils';
@@ -170,7 +169,7 @@ const AppBarComponent = () => {
 									px: '24px',
 									py: '10px',
 									borderRadius: '8px',
-									color: white,
+									color: '#fff',
 									textTransform: 'lowercase',
 								}}
 							>
@@ -192,7 +191,7 @@ const AppBarComponent = () => {
 									px: '24px',
 									py: '10px',
 									borderRadius: '100px',
-									color: white,
+									color: '#fff',
 									textTransform: 'lowercase',
 								}}
 								endIcon={<ExpandMoreIcon />}

@@ -11,7 +11,6 @@ import CustomSelect from '../../components/customSelect/CustomSelect';
 import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
 import { ReactComponent as OneDirectionArrowIcon } from '../../assets/oneDirectionArrow.svg';
 import BasePage from '../base/BasePage';
-import { white } from '../../containers/theme';
 import ButtonCustom from '../../components/Buttons/ButtonCustom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
@@ -129,7 +128,11 @@ const HomePage: React.FC = () => {
 				<Typography
 					mb={'7px'}
 					fontWeight={600}
-					sx={{ color: white, fontSize: '18px', textAlign: 'center' }}
+					sx={{
+						color: '#fff',
+						fontSize: '18px',
+						textAlign: 'center',
+					}}
 				>
 					Bridge your tokens
 				</Typography>
@@ -148,7 +151,7 @@ const HomePage: React.FC = () => {
 					<Typography
 						mb={'4px'}
 						fontWeight={400}
-						sx={{ color: white, fontSize: '13px' }}
+						sx={{ color: '#fff', fontSize: '13px' }}
 					>
 						From
 					</Typography>
@@ -204,7 +207,7 @@ const HomePage: React.FC = () => {
 					<Typography
 						mb={'4px'}
 						fontWeight={400}
-						sx={{ color: white, fontSize: '13px' }}
+						sx={{ color: '#fff', fontSize: '13px' }}
 					>
 						To
 					</Typography>
@@ -222,7 +225,7 @@ const HomePage: React.FC = () => {
 				<Box display="flex" justifyContent="center" mt={5}>
 					{loginConnecting ? (
 						<ButtonCustom
-							variant="white"
+							variant="primary"
 							sx={{ textTransform: 'uppercase' }}
 						>
 							Connect Wallet
@@ -234,7 +237,7 @@ const HomePage: React.FC = () => {
 					) : !isLoggedInMemo ? (
 						<ButtonCustom
 							id="bridge-connect"
-							variant="white"
+							variant="primary"
 							sx={{ textTransform: 'uppercase' }}
 							onClick={handleConnectClick}
 						>
@@ -242,7 +245,7 @@ const HomePage: React.FC = () => {
 						</ButtonCustom>
 					) : (
 						<ButtonCustom
-							variant="white"
+							variant="primary"
 							sx={{ textTransform: 'uppercase' }}
 							onClick={() => navigate(NEW_TRANSACTION_ROUTE)}
 							id="move-funds"
