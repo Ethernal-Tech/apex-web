@@ -256,113 +256,129 @@ const BridgeInput = ({
 
 	return (
 		<Box sx={{ width: '100%' }}>
-			<Box display="flex" flexDirection="column">
-				<Typography
-					mb={'4px'}
-					fontWeight={400}
-					sx={{ color: '#fff', fontSize: '13px' }}
-				>
-					From
-				</Typography>
+			<Box
+				p={4}
+				mt={2}
+				borderRadius={5}
+				sx={{
+					backgroundColor: '#242625',
+				}}
+			>
+				<Box display="flex" flexDirection="column">
+					<Typography
+						mb={'4px'}
+						fontWeight={400}
+						sx={{ color: '#fff', fontSize: '13px' }}
+					>
+						From
+					</Typography>
 
-				{srcChainOptions.length > 0 && (
-					<CustomSelect
-						label="Source"
-						icon={srcChainInfo.icon}
-						value={srcChain}
-						disabled={isLoggedInMemo}
-						options={srcChainOptions}
-					/>
-				)}
-			</Box>
-			<Box marginY={2}>
-				<Box display="flex" justifyContent="space-between">
+					{srcChainOptions.length > 0 && (
+						<CustomSelect
+							label="Source"
+							icon={srcChainInfo.icon}
+							value={srcChain}
+							disabled={isLoggedInMemo}
+							options={srcChainOptions}
+						/>
+					)}
+				</Box>
+				<Box marginY={2}>
+					<Box display="flex" justifyContent="space-between">
+						<Typography
+							sx={{ color: 'white', mb: 1, fontSize: '13px' }}
+						>
+							Enter amount
+						</Typography>
+
+						<TotalBalance />
+					</Box>
+					<Box>
+						<PasteApexAmountInput
+							maxAmounts={maxAmounts}
+							text={amount}
+							setAmount={setAmount}
+							disabled={!!loadingState}
+							id="bridge-amount"
+						/>
+
+						{/* @todo check what this is about */}
+						{!!loadingState && (
+							<Box
+								sx={{
+									gridColumn: 'span 2',
+									display: 'flex',
+									flexDirection: 'column',
+									justifyContent: 'center',
+									alignItems: 'center',
+								}}
+							>
+								<SubmitLoading loadingState={loadingState} />
+							</Box>
+						)}
+					</Box>
+				</Box>
+				<Box display="flex" flexDirection="column">
+					<Typography
+						mb={'4px'}
+						fontWeight={400}
+						sx={{ color: '#fff', fontSize: '13px' }}
+					>
+						To
+					</Typography>
+
+					{dstChainOptions.length > 0 && (
+						<CustomSelect
+							label="Destination"
+							icon={dstChainInfo.icon}
+							value={dstChain}
+							disabled={dstChainOptions.length < 2}
+							onChange={onChangeDstChain}
+							options={dstChainOptions}
+						/>
+					)}
+				</Box>
+				<Box marginY={2}>
 					<Typography
 						sx={{ color: 'white', mb: 1, fontSize: '13px' }}
 					>
-						Enter amount
+						Destination Address
 					</Typography>
-
-					<TotalBalance />
-				</Box>
-				<Box>
-					<PasteApexAmountInput
-						maxAmounts={maxAmounts}
-						text={amount}
-						setAmount={setAmount}
+					{/* validate inputs */}
+					<PasteTextInput
+						text={destinationAddr}
+						setText={setDestinationAddr}
 						disabled={!!loadingState}
-						id="bridge-amount"
+						id="dest-addr"
 					/>
-
-					{/* @todo check what this is about */}
-					{!!loadingState && (
-						<Box
-							sx={{
-								gridColumn: 'span 2',
-								display: 'flex',
-								flexDirection: 'column',
-								justifyContent: 'center',
-								alignItems: 'center',
-							}}
-						>
-							<SubmitLoading loadingState={loadingState} />
-						</Box>
-					)}
 				</Box>
-			</Box>
-			<Box display="flex" flexDirection="column">
-				<Typography
-					mb={'4px'}
-					fontWeight={400}
-					sx={{ color: '#fff', fontSize: '13px' }}
-				>
-					To
-				</Typography>
 
-				{dstChainOptions.length > 0 && (
-					<CustomSelect
-						label="Destination"
-						icon={dstChainInfo.icon}
-						value={dstChain}
-						disabled={dstChainOptions.length < 2}
-						onChange={onChangeDstChain}
-						options={dstChainOptions}
-					/>
-				)}
-			</Box>
-			<Box marginY={2}>
-				<Typography sx={{ color: 'white', mb: 1, fontSize: '13px' }}>
-					Destination Address
-				</Typography>
-				{/* validate inputs */}
-				<PasteTextInput
-					text={destinationAddr}
-					setText={setDestinationAddr}
-					disabled={!!loadingState}
-					id="dest-addr"
-				/>
-			</Box>
-
-			{/* 'Move funds' button */}
-			<Box marginTop={2} display="flex" justifyContent="center" gap={2}>
-				<ButtonCustom
-					onClick={onSubmit}
-					variant="primary"
-					disabled={
-						validatorChangeInProgress !== false ||
-						!!loadingState ||
-						BigInt(maxAmount) <= 0 ||
-						hasInsufficientBalance ||
-						overMaxAllowed
-					}
-					sx={{
-						gridColumn: 'span 1',
-						textTransform: 'uppercase',
-					}}
-					id="bridge-tx"
+				{/* 'Move funds' button */}
+				<Box
+					marginTop={2}
+					display="flex"
+					justifyContent="center"
+					gap={2}
 				>
-					Move funds
-				</ButtonCustom>
+					<ButtonCustom
+						onClick={onSubmit}
+						variant="primary"
+						disabled={
+							validatorChangeInProgress !== false ||
+							!!loadingState ||
+							BigInt(maxAmount) <= 0 ||
+							hasInsufficientBalance ||
+							overMaxAllowed
+						}
+						sx={{
+							gridColumn: 'span 1',
+							textTransform: 'uppercase',
+						}}
+						id="bridge-tx"
+					>
+						Move funds
+					</ButtonCustom>
+				</Box>
 			</Box>
 			<InfoBox
 				userWalletFee={userWalletFee || '0'}

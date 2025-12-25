@@ -110,13 +110,9 @@ const HomePage: React.FC = () => {
 	return (
 		<BasePage>
 			<Box
-				display="flex"
-				flexDirection="column"
-				alignItems="center"
-				justifyContent="space-between"
 				border="1px solid #372B2B"
 				borderRadius={5}
-				px={8}
+				px={4}
 				py={4}
 				mt={10}
 				sx={{
@@ -145,7 +141,6 @@ const HomePage: React.FC = () => {
 					flexDirection="column"
 					sx={{
 						backgroundColor: '#242625',
-						minWidth: '100%',
 					}}
 				>
 					<Typography

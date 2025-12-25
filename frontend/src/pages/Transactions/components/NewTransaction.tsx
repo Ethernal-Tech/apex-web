@@ -24,15 +24,10 @@ function NewTransaction({ children }: NewTransactionProps) {
 	// const DestinationIcon = getChainInfo(destinationChain).icon;
 	return (
 		<Box
-			display="flex"
-			flexDirection="column"
-			alignItems="center"
-			justifyContent="space-between"
 			border="1px solid #372B2B"
 			borderRadius={5}
-			px={8}
+			px={4}
 			py={4}
-			mt={10}
 			sx={{
 				backdropFilter: 'blur(14px)',
 				maxWidth: '470px',
@@ -46,19 +41,8 @@ function NewTransaction({ children }: NewTransactionProps) {
 			>
 				Bridge your tokens
 			</Typography>
-			<Box
-				p={4}
-				mt={2}
-				borderRadius={5}
-				display="flex"
-				flexDirection="column"
-				sx={{
-					backgroundColor: '#242625',
-					minWidth: '100%',
-				}}
-			>
-				{children}
-			</Box>
+
+			<Box>{children}</Box>
 		</Box>
 	);
 }
