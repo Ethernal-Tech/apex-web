@@ -9,6 +9,7 @@ import { RootState } from '../../../redux/store';
 import appSettings from '../../../settings/appSettings';
 import { apexID, getCurrencyID, getTokenInfo } from '../../../settings/token';
 import { BridgingModeEnum, getBridgingMode } from '../../../settings/chain';
+import { formatBalance } from '../../../utils/tokenUtils';
 
 interface TotalBalanceProps {
 	tokenID?: number;
@@ -126,7 +127,7 @@ const TotalBalance = ({ tokenID }: TotalBalanceProps) => {
 									fontSize: '32px',
 								}}
 							>
-								{currencyBalance.split('.')[0]}
+								{formatBalance(currencyBalance.split('.')[0])}
 							</Box>
 
 							{/* show decimals if applicable */}
@@ -162,7 +163,7 @@ const TotalBalance = ({ tokenID }: TotalBalanceProps) => {
 									fontSize: '32px',
 								}}
 							>
-								{tokenBalance.split('.')[0]}
+								{formatBalance(tokenBalance.split('.')[0])}
 							</Box>
 
 							{/* show decimals if applicable */}
@@ -245,7 +246,7 @@ const TotalBalance = ({ tokenID }: TotalBalanceProps) => {
 							lineheight: '32px',
 						}}
 					>
-						{currencyBalance.split('.')[0]}
+						{formatBalance(currencyBalance.split('.')[0])}
 					</Box>
 
 					{/* show decimals if applicable */}

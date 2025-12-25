@@ -13,6 +13,7 @@ import {
 import { toChainEnum } from '../../settings/chain';
 import { convertWeiToDfmBig } from '../../utils/generalUtils';
 import { isAdaToken, isApexToken } from '../Audit/token';
+import { formatBalance } from '../../utils/tokenUtils';
 
 const powBigInt = (base: bigint, exp: number): bigint => {
 	let result = BigInt(1);
@@ -27,18 +28,13 @@ export const formatBigIntDecimalString = (value: bigint, decimals = 6) => {
 	const whole = value / divisor;
 	const fraction = value % divisor;
 
-	// Format whole part (e.g., "1.000.000")
-	const formattedWhole = whole
-		.toString()
-		.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
 	// Pad fractional part to correct length (e.g., "01")
 	const paddedFraction = fraction
 		.toString()
 		.padStart(decimals, '0')
 		.slice(0, 2); // show only 2 decimals
 
-	return `${formattedWhole}.${paddedFraction}`;
+	return `${formatBalance(whole.toString())}.${paddedFraction}`;
 };
 
 const LockedTokensComponent = () => {
