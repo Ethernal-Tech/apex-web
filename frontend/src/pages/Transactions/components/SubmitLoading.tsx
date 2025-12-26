@@ -22,7 +22,7 @@ const SubmitLoading = ({ loadingState }: SubmitLoadingType) => {
 				}}
 			>
 				<CircularProgress
-					size={40}
+					size={30}
 					sx={{
 						color: 'white',
 						mr: 3,
@@ -54,7 +54,7 @@ const SubmitLoading = ({ loadingState }: SubmitLoadingType) => {
 						)}
 				</Typography>
 			</Box>
-			<Typography sx={{ color: 'white', mt: 2 }}>
+			<Typography sx={{ color: 'white', mt: 2, fontSize: '13px' }}>
 				Please do not leave this page during this process.
 			</Typography>
 		</>
