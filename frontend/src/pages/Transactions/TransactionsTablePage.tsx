@@ -37,6 +37,7 @@ import {
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { getChainInfo } from '../../settings/chain';
+import { primaryAccentColor } from '../../containers/theme';
 
 const TransactionsTablePage = () => {
 	const [transactions, setTransactions] = useState<
@@ -174,10 +175,11 @@ const TransactionsTablePage = () => {
 				component={Paper}
 				ref={tableRef}
 				sx={{
-					background:
-						'linear-gradient(180deg, #052531 0%, rgba(5, 37, 49, 0.1) 100%)',
-					border: '1px solid #435F69',
-					borderRadius: '4px',
+					border: '1px solid #34363b',
+					background: 'transparent',
+					backdropFilter: 'blur(14px)',
+					borderRadius: '12px',
+					padding: '10px 16px',
 				}}
 			>
 				<Table>
@@ -196,6 +198,9 @@ const TransactionsTablePage = () => {
 										cursor: 'default',
 										color: 'white',
 										borderBottom: '1px solid #435F694D',
+										fontSize: '14px',
+										fontWeight: 500,
+										textTransform: 'uppercase',
 									}}
 								>
 									{headCell.id === 'actions' ? (
@@ -251,11 +256,19 @@ const TransactionsTablePage = () => {
 					</TableHead>
 					<TableBody>
 						{transactions?.items.map((transaction) => (
-							<TableRow key={`tx-${transaction.id}`}>
+							<TableRow
+								key={`tx-${transaction.id}`}
+								sx={{
+									borderBottom: '1px solid #435F694D',
+									'&:last-child': {
+										borderBottom: 'none',
+									},
+								}}
+							>
 								<TableCell
 									sx={{
 										color: 'white',
-										borderBottom: '1px solid #435F694D',
+										borderBottom: 'none',
 									}}
 								>
 									<Box
@@ -285,7 +298,7 @@ const TransactionsTablePage = () => {
 								<TableCell
 									sx={{
 										color: 'white',
-										borderBottom: '1px solid #435F694D',
+										borderBottom: 'none',
 									}}
 								>
 									<Box
@@ -317,7 +330,7 @@ const TransactionsTablePage = () => {
 								<TableCell
 									sx={{
 										color: 'white',
-										borderBottom: '1px solid #435F694D',
+										borderBottom: 'none',
 									}}
 								>
 									{toFixed(
@@ -333,7 +346,7 @@ const TransactionsTablePage = () => {
 								<TableCell
 									sx={{
 										color: 'white',
-										borderBottom: '1px solid #435F694D',
+										borderBottom: 'none',
 									}}
 								>
 									{formatAddress(
@@ -344,7 +357,7 @@ const TransactionsTablePage = () => {
 								<TableCell
 									sx={{
 										color: 'white',
-										borderBottom: '1px solid #435F694D',
+										borderBottom: 'none',
 									}}
 								>
 									{transaction.createdAt.toLocaleString()}
@@ -355,7 +368,7 @@ const TransactionsTablePage = () => {
 											? 'left'
 											: 'center',
 										color: 'white',
-										borderBottom: '1px solid #435F694D',
+										borderBottom: 'none',
 									}}
 								>
 									{transaction.finishedAt?.toLocaleString() ||
@@ -364,7 +377,7 @@ const TransactionsTablePage = () => {
 								<TableCell
 									sx={{
 										color: 'white',
-										borderBottom: '1px solid #435F694D',
+										borderBottom: 'none',
 									}}
 								>
 									<Box sx={{ display: 'flex' }}>
@@ -383,6 +396,7 @@ const TransactionsTablePage = () => {
 											sx={{
 												textTransform: 'capitalize',
 												display: 'inline-block',
+												fontSize: '14px',
 											}}
 										>
 											{
@@ -394,14 +408,14 @@ const TransactionsTablePage = () => {
 										</Typography>
 									</Box>
 								</TableCell>
-								<TableCell
-									sx={{ borderBottom: '1px solid #435F694D' }}
-								>
+								<TableCell sx={{ borderBottom: 'none' }}>
 									<Link
 										style={{
-											color: 'red',
+											color: primaryAccentColor,
 											background: 'none',
 											textDecoration: 'none',
+											fontSize: '14px',
+											fontWeight: 500,
 										}}
 										to={formatTxDetailUrl(transaction)}
 									>
