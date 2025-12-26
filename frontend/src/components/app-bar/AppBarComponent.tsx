@@ -41,11 +41,6 @@ const CustomMenu = styled(Menu)({
 	'& .MuiTypography-root': {
 		fontSize: '14px',
 	},
-
-	// @todo check this
-	/* '& .MuiSvgIcon-root': {
-		marginRight: '0px',
-	}, */
 });
 
 const CustomMenuItem = styled(MenuItem)({
