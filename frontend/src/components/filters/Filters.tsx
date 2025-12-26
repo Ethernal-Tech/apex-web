@@ -51,13 +51,12 @@ const style = {
 	top: '50%',
 	left: '50%',
 	transform: 'translate(-50%, -50%)',
-	bgcolor: '#052531',
-	boxShadow: 24,
+	backgroundColor: '#242625',
 	p: 4,
 	color: 'white',
 	width: '400px',
-	border: '1px solid #435F69',
-	borderRadius: '4px',
+	border: '1px solid #383a40',
+	borderRadius: '12px',
 };
 
 const receiverAddressStyle = {
