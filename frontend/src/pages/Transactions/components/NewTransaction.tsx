@@ -1,14 +1,5 @@
-import { Box, Typography } from '@mui/material';
-// import AddressBalance from './AddressBalance';
-// import TotalBalance from './TotalBalance';
-// import { useSelector } from 'react-redux';
-// import { RootState } from '../../../redux/store';
 import React from 'react';
-// import { ChainEnum } from '../../../swagger/apexBridgeApiService';
-// import ReputationSystemWidget from '../RepSystem/ReputationSystemWidget';
-// import { getChainInfo } from '../../../settings/chain';
-
-// const tabletMediaQuery = '@media (max-width:800px)';
+import { Box, Typography } from '@mui/material';
 
 type NewTransactionProps = {
 	txInProgress?: boolean;
@@ -16,12 +7,6 @@ type NewTransactionProps = {
 };
 
 function NewTransaction({ children }: NewTransactionProps) {
-	// const chain = useSelector((state: RootState) => state.chain.chain);
-	// const destinationChain = useSelector(
-	// 	(state: RootState) => state.chain.destinationChain,
-	// );
-	// const SourceIcon = getChainInfo(chain).icon;
-	// const DestinationIcon = getChainInfo(destinationChain).icon;
 	return (
 		<Box
 			border="1px solid #372B2B"
