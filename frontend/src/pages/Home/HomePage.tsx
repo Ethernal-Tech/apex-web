@@ -112,8 +112,7 @@ const HomePage: React.FC = () => {
 			<Box
 				border="1px solid #372B2B"
 				borderRadius={5}
-				px={4}
-				py={4}
+				p={4}
 				mt={10}
 				sx={{
 					backdropFilter: 'blur(14px)',
@@ -134,7 +133,7 @@ const HomePage: React.FC = () => {
 				</Typography>
 
 				<Box
-					p={4}
+					p={3}
 					mt={2}
 					borderRadius={5}
 					display="flex"
@@ -186,9 +185,6 @@ const HomePage: React.FC = () => {
 								zIndex: 1,
 								minWidth: '0',
 								borderRadius: '100%',
-								'&:hover': {
-									// backgroundColor: 'transparent',
-								},
 							}}
 						>
 							{!isLoggedInMemo ? (

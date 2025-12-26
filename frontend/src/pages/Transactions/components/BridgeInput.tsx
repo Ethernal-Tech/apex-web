@@ -3,6 +3,7 @@ import PasteTextInput from '../components/PasteTextInput';
 import PasteApexAmountInput from './PasteApexAmountInput';
 import ButtonCustom from '../../../components/Buttons/ButtonCustom';
 import TotalBalance from './TotalBalance';
+import { ReactComponent as OneDirectionArrowIcon } from '../../../assets/oneDirectionArrow.svg';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	calculateChangeMinUtxo,
@@ -257,7 +258,7 @@ const BridgeInput = ({
 	return (
 		<Box sx={{ width: '100%' }}>
 			<Box
-				p={4}
+				p={3}
 				mt={2}
 				borderRadius={5}
 				sx={{
@@ -283,7 +284,7 @@ const BridgeInput = ({
 						/>
 					)}
 				</Box>
-				<Box marginY={2}>
+				<Box marginTop={2.5}>
 					<Box display="flex" justifyContent="space-between">
 						<Typography
 							sx={{ color: 'white', mb: 1, fontSize: '13px' }}
@@ -317,6 +318,24 @@ const BridgeInput = ({
 							</Box>
 						)}
 					</Box>
+				</Box>
+				<Box
+					sx={{
+						position: 'relative',
+						display: 'flex',
+						justifyContent: 'center',
+						alignItems: 'center',
+						'&::before': {
+							content: '""',
+							position: 'absolute',
+							width: '100%',
+							height: '1px',
+							backgroundColor: '#4B4A4A',
+							zIndex: 0,
+						},
+					}}
+				>
+					<OneDirectionArrowIcon style={{ zIndex: 1 }} />
 				</Box>
 				<Box display="flex" flexDirection="column">
 					<Typography
@@ -352,34 +371,30 @@ const BridgeInput = ({
 						id="dest-addr"
 					/>
 				</Box>
-
-				{/* 'Move funds' button */}
-				<Box
-					marginTop={2}
-					display="flex"
-					justifyContent="center"
-					gap={2}
-				>
-					<ButtonCustom
-						onClick={onSubmit}
-						variant="primary"
-						disabled={
-							validatorChangeInProgress !== false ||
-							!!loadingState ||
-							BigInt(maxAmount) <= 0 ||
-							hasInsufficientBalance ||
-							overMaxAllowed
-						}
-						sx={{
-							gridColumn: 'span 1',
-							textTransform: 'uppercase',
-						}}
-						id="bridge-tx"
-					>
-						Move funds
-					</ButtonCustom>
-				</Box>
 			</Box>
+
+			{/* 'Move funds' button */}
+			<Box marginTop={3} display="flex" justifyContent="center" gap={2}>
+				<ButtonCustom
+					onClick={onSubmit}
+					variant="primary"
+					disabled={
+						validatorChangeInProgress !== false ||
+						!!loadingState ||
+						BigInt(maxAmount) <= 0 ||
+						hasInsufficientBalance ||
+						overMaxAllowed
+					}
+					sx={{
+						gridColumn: 'span 1',
+						textTransform: 'uppercase',
+					}}
+					id="bridge-tx"
+				>
+					Move funds
+				</ButtonCustom>
+			</Box>
+
 			<InfoBox
 				userWalletFee={userWalletFee || '0'}
 				bridgeTxFee={bridgeTxFee}
