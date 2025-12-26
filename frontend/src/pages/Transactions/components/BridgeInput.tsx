@@ -279,7 +279,7 @@ const BridgeInput = ({
 							label="Source"
 							icon={srcChainInfo.icon}
 							value={srcChain}
-							disabled={isLoggedInMemo}
+							disabled={isLoggedInMemo || !!loadingState}
 							options={srcChainOptions}
 						/>
 					)}
@@ -302,21 +302,6 @@ const BridgeInput = ({
 							disabled={!!loadingState}
 							id="bridge-amount"
 						/>
-
-						{/* @todo check what this is about */}
-						{!!loadingState && (
-							<Box
-								sx={{
-									gridColumn: 'span 2',
-									display: 'flex',
-									flexDirection: 'column',
-									justifyContent: 'center',
-									alignItems: 'center',
-								}}
-							>
-								<SubmitLoading loadingState={loadingState} />
-							</Box>
-						)}
 					</Box>
 				</Box>
 				<Box
@@ -351,7 +336,9 @@ const BridgeInput = ({
 							label="Destination"
 							icon={dstChainInfo.icon}
 							value={dstChain}
-							disabled={dstChainOptions.length < 2}
+							disabled={
+								dstChainOptions.length < 2 || !!loadingState
+							}
 							onChange={onChangeDstChain}
 							options={dstChainOptions}
 						/>
@@ -375,24 +362,38 @@ const BridgeInput = ({
 
 			{/* 'Move funds' button */}
 			<Box marginTop={3} display="flex" justifyContent="center" gap={2}>
-				<ButtonCustom
-					onClick={onSubmit}
-					variant="primary"
-					disabled={
-						validatorChangeInProgress !== false ||
-						!!loadingState ||
-						BigInt(maxAmount) <= 0 ||
-						hasInsufficientBalance ||
-						overMaxAllowed
-					}
-					sx={{
-						gridColumn: 'span 1',
-						textTransform: 'uppercase',
-					}}
-					id="bridge-tx"
-				>
-					Move funds
-				</ButtonCustom>
+				{loadingState ? (
+					<Box
+						sx={{
+							gridColumn: 'span 2',
+							display: 'flex',
+							flexDirection: 'column',
+							justifyContent: 'center',
+							alignItems: 'center',
+						}}
+					>
+						<SubmitLoading loadingState={loadingState} />
+					</Box>
+				) : (
+					<ButtonCustom
+						onClick={onSubmit}
+						variant="primary"
+						disabled={
+							validatorChangeInProgress !== false ||
+							!!loadingState ||
+							BigInt(maxAmount) <= 0 ||
+							hasInsufficientBalance ||
+							overMaxAllowed
+						}
+						sx={{
+							gridColumn: 'span 1',
+							textTransform: 'uppercase',
+						}}
+						id="bridge-tx"
+					>
+						Move funds
+					</ButtonCustom>
+				)}
 			</Box>
 
 			<InfoBox
