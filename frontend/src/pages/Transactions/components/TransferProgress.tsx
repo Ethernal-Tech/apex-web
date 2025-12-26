@@ -20,6 +20,7 @@ import {
 } from 'react';
 import { capitalizeWord } from '../../../utils/generalUtils';
 import { getExplorerUrl, openExplorer } from '../../../utils/chainUtils';
+import { isStatusFinal } from '../../../utils/statusUtils';
 
 // asset svgs
 
@@ -285,7 +286,9 @@ const TransferStep = ({ step, id }: TransferStepProps) => {
 				)}
 			</Box>
 
-			<Typography sx={{ color: 'white', marginTop: '30px' }}>
+			<Typography
+				sx={{ color: 'white', marginTop: '30px', fontSize: '13px' }}
+			>
 				{step.text}
 			</Typography>
 		</Box>
@@ -359,62 +362,76 @@ const TransferProgress = ({ tx }: TransferProgressProps) => {
 	}, [tx.destinationChain, tx.originChain, txStatusToShow, tx.isRefund]);
 
 	const onOpenExplorer = () => openExplorer(tx);
+
+	// Styles to be applied either in inner or outer box should be applied to inner or outer box
+	const boxStyles = {
+		p: 2,
+		background: '#242625',
+		borderRadius: '12px',
+	};
+
+	const applyStylesToOuterBox = isStatusFinal(tx.status);
 	return (
 		<Box
 			sx={{
-				display: 'flex',
-				flexDirection: 'column',
-				justifyContent: 'space-between',
-				height: '100%',
+				...(applyStylesToOuterBox && boxStyles),
 			}}
 		>
-			<Typography
-				variant="h3"
-				fontSize="14px"
-				fontWeight={600}
-				sx={{
-					color: 'white',
-					mt: '32px',
-					mb: 2,
-					textAlign: 'center',
-					textTransform: 'uppercase',
-				}}
-			>
-				{transferProgress}
-
-				{transferProgress !== TRANSFER_PROGRESS_TEXT.DONE &&
-					transferProgress !== TRANSFER_PROGRESS_TEXT.ERROR &&
-					transferProgress !==
-						TRANSFER_PROGRESS_TEXT.REFUND_IS_DONE && (
-						<CircularProgress
-							sx={{
-								marginLeft: 2,
-								color: 'white',
-								position: 'relative',
-								top: '5px',
-							}}
-							size={22}
-						/>
-					)}
-			</Typography>
-
 			<Box
 				sx={{
-					mt: 4,
 					display: 'flex',
-					justifyContent: 'space-evenly',
-					gap: '40px',
+					flexDirection: 'column',
+					justifyContent: 'space-between',
+					...(!applyStylesToOuterBox && boxStyles),
 				}}
 			>
-				{steps.map((step) => (
-					<TransferStep
-						key={step.number}
-						step={step}
-						id={stepIds[step.number - 1]}
-					/>
-				))}
-			</Box>
+				<Typography
+					variant="h3"
+					fontSize="14px"
+					fontWeight={600}
+					sx={{
+						color: 'white',
+						mt: '32px',
+						mb: 2,
+						textAlign: 'center',
+						textTransform: 'uppercase',
+					}}
+				>
+					{transferProgress}
 
+					{transferProgress !== TRANSFER_PROGRESS_TEXT.DONE &&
+						transferProgress !== TRANSFER_PROGRESS_TEXT.ERROR &&
+						transferProgress !==
+							TRANSFER_PROGRESS_TEXT.REFUND_IS_DONE && (
+							<CircularProgress
+								sx={{
+									marginLeft: 2,
+									color: 'white',
+									position: 'relative',
+									top: '5px',
+								}}
+								size={22}
+							/>
+						)}
+				</Typography>
+
+				<Box
+					sx={{
+						mt: 4,
+						display: 'flex',
+						justifyContent: 'space-evenly',
+						gap: '40px',
+					}}
+				>
+					{steps.map((step) => (
+						<TransferStep
+							key={step.number}
+							step={step}
+							id={stepIds[step.number - 1]}
+						/>
+					))}
+				</Box>
+			</Box>
 			<Box
 				sx={{
 					display: 'grid',
@@ -443,8 +460,8 @@ const TransferProgress = ({ tx }: TransferProgressProps) => {
 
 				{/* TODO af - removed for now as bridge doesn't currently support refunds */}
 				{/* <ButtonCustom  variant="primary" sx={{ gridColumn:'span 1', textTransform:'uppercase' }}>
-                    request a refund
-                </ButtonCustom> */}
+				request a refund
+			</ButtonCustom> */}
 			</Box>
 		</Box>
 	);
