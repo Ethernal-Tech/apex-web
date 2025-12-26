@@ -5,10 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FullPageSpinner from '../../components/spinner/Spinner';
 import { TRANSACTIONS_ROUTE } from '../PageRouter';
-import {
-	BridgeTransactionDto,
-	// ChainEnum,
-} from '../../swagger/apexBridgeApiService';
+import { BridgeTransactionDto } from '../../swagger/apexBridgeApiService';
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getAction } from './action';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
@@ -18,7 +15,6 @@ import {
 	formatAddress,
 	toFixed,
 } from '../../utils/generalUtils';
-// import { menuDark } from '../../containers/theme';
 import TransferProgress from './components/TransferProgress';
 import NewTransaction from './components/NewTransaction';
 import ButtonCustom from '../../components/Buttons/ButtonCustom';
