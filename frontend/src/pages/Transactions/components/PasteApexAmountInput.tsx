@@ -8,6 +8,7 @@ import {
 	Theme,
 	Typography,
 } from '@mui/material';
+import { primaryAccentColor } from '../../../containers/theme';
 import {
 	convertApexToDfm,
 	convertDfmToApex,
@@ -42,7 +43,9 @@ const CustomTextField = styled(TextField)({
 	input: {
 		fontSize: '1.5rem',
 		color: 'white',
+		fontWeight: 500,
 		paddingLeft: 0,
+		paddingTop: 0,
 		caretColor: '#FF5E5E',
 		'&::placeholder': {
 			color: '#a3a3a3',
@@ -63,7 +66,7 @@ const CustomTextField = styled(TextField)({
 const CustomButton = styled(Button)({
 	backgroundColor: 'transparent',
 	boxShadow: 'none',
-	color: '#FF5E5E',
+	color: primaryAccentColor,
 	borderRadius: 4,
 	marginLeft: 8,
 	textTransform: 'none',

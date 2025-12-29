@@ -12,11 +12,7 @@ const containerStyles = {
 	position: 'fixed',
 	bottom: 0,
 	left: 0,
-	background: '#051D26',
-	borderTop: '1px solid',
-	borderImageSource:
-		'linear-gradient(90deg, rgba(67, 95, 105, 0) 0%, #435F69 50%, rgba(67, 95, 105, 0) 100%)',
-	borderImageSlice: 1,
+	background: `linear-gradient(360deg, rgba(0,0,0,0.2) 60%, transparent 100%)`,
 	minHeight: '56px',
 	display: 'flex',
 	padding: '10px 0',

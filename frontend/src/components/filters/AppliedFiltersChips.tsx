@@ -1,6 +1,7 @@
 import { Box, Button, Chip } from '@mui/material';
 import { useMemo } from 'react';
 import { BridgeTransactionFilterDto } from '../../swagger/apexBridgeApiService';
+import { primaryAccentColor } from '../../containers/theme';
 
 type Props = {
 	filters: BridgeTransactionFilterDto;
@@ -43,13 +44,14 @@ function AppliedFiltersChips({ filters, removeFilter, resetFilters }: Props) {
 							variant="outlined"
 							size="small"
 							sx={{
-								color: 'white',
-								border: '1px solid #435F69',
-								background: '#0751594D',
+								color: '#fff',
+								border: '1px solid #383a40',
+								backdropFilter: 'blur(14px)',
+								padding: '2px 8px',
 								'& .MuiChip-deleteIcon': {
-									color: '#051D26',
+									color: '#fff',
 									'&:hover': {
-										color: 'white',
+										color: '#c9c7c7',
 									},
 								},
 								'& .MuiChip-label': {
@@ -78,7 +80,10 @@ function AppliedFiltersChips({ filters, removeFilter, resetFilters }: Props) {
 					{chips}
 					<Button
 						variant="text"
-						sx={{ textTransform: 'none', color: 'red' }}
+						sx={{
+							textTransform: 'none',
+							color: primaryAccentColor,
+						}}
 						onClick={resetFilters}
 					>
 						Clear all

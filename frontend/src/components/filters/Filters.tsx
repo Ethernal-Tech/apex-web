@@ -6,6 +6,7 @@ import FilterList from '@mui/icons-material/FilterList';
 import {
 	FormControl,
 	InputLabel,
+	lighten,
 	MenuItem,
 	Select,
 	SelectChangeEvent,
@@ -39,10 +40,9 @@ const StyledFormControl = styled(FormControl)({
 });
 
 const CustomMenuItem = styled(MenuItem)({
-	backgroundColor: '#1a2e3b',
 	color: '#ffffff',
 	'&:hover': {
-		backgroundColor: '#2b4a5a',
+		backgroundColor: lighten('#424543', 0.1),
 	},
 });
 
@@ -51,19 +51,19 @@ const style = {
 	top: '50%',
 	left: '50%',
 	transform: 'translate(-50%, -50%)',
-	bgcolor: '#052531',
-	boxShadow: 24,
+	backgroundColor: '#242625',
 	p: 4,
 	color: 'white',
 	width: '400px',
-	border: '1px solid #435F69',
-	borderRadius: '4px',
+	border: '1px solid #383a40',
+	borderRadius: '12px',
 };
 
 const receiverAddressStyle = {
 	'& .MuiOutlinedInput-root': {
 		'& fieldset': {
 			borderColor: '#435F69',
+			borderRadius: '12px',
 		},
 		'&:hover fieldset': {
 			borderColor: '#435F69',
@@ -101,6 +101,7 @@ const amountStyle = {
 		backgroundColor: 'transparent',
 		'& fieldset': {
 			borderColor: '#435F69',
+			borderRadius: '12px',
 		},
 		'&:hover fieldset': {
 			borderColor: '#435F69',
@@ -250,14 +251,13 @@ export default function Filters({ filters, onFilterChange }: Props) {
 					variant="outlined"
 					onClick={() => setOpen(true)}
 					sx={{
-						color: 'white',
-						borderColor: 'white',
+						color: '#d4d4d4',
+						borderColor: '#34363b',
 						minWidth: 'unset',
 						padding: '5px',
-						borderRadius: '100px',
+						borderRadius: '12px',
 						'&:hover': {
-							borderColor: '#a6a6a6',
-							color: '#a6a6a6',
+							borderColor: '#adadad',
 						},
 					}}
 				>
@@ -271,31 +271,22 @@ export default function Filters({ filters, onFilterChange }: Props) {
 				aria-describedby="modal-modal-description"
 			>
 				<Box sx={style}>
-					<Box
-						sx={{
-							display: 'flex',
-							alignItems: 'left',
-							justifyContent: 'space-between',
-							flexDirection: 'column',
-							gap: 2,
-							mb: 2,
-						}}
-					>
-						<Typography
-							variant="h6"
-							sx={{ textTransform: 'uppercase' }}
-						>
-							Filter
-						</Typography>
+					<Box sx={{ mb: 2 }}>
+						<Typography variant="h6">Filter</Typography>
 
 						<InputLabel
-							sx={{ color: 'white' }}
+							sx={{
+								color: 'white',
+								fontSize: '14px',
+								mb: 0.5,
+								mt: 2,
+							}}
 							id="destination-chain-label"
 						>
 							Destination Chain
 						</InputLabel>
 						<StyledFormControl
-							sx={{ minWidth: 220 }}
+							sx={{ width: '100%' }}
 							variant="outlined"
 							size="small"
 						>
@@ -306,10 +297,24 @@ export default function Filters({ filters, onFilterChange }: Props) {
 								variant="outlined"
 								value={values.destinationChain}
 								onChange={changeCallback}
+								sx={{
+									borderRadius: '12px',
+									'& .MuiSelect-select': {
+										backgroundColor: '#424543',
+										borderRadius: '12px',
+									},
+									'& .MuiOutlinedInput-root': {
+										'& fieldset': {
+											borderRadius: '12px',
+											backgroundColor: '#424543',
+										},
+									},
+								}}
 								MenuProps={{
 									PaperProps: {
 										sx: {
-											bgcolor: '#1a2e3b',
+											bgcolor: '#242625',
+											borderRadius: '12px',
 											'& .MuiMenuItem-root': {
 												color: '#ffffff',
 											},
@@ -326,7 +331,12 @@ export default function Filters({ filters, onFilterChange }: Props) {
 						</StyledFormControl>
 
 						<InputLabel
-							sx={{ color: 'white' }}
+							sx={{
+								color: 'white',
+								fontSize: '14px',
+								mb: 0.5,
+								mt: 2,
+							}}
 							id="receiver-address"
 						>
 							Receiver Address
@@ -378,10 +388,14 @@ export default function Filters({ filters, onFilterChange }: Props) {
 								display: 'flex',
 								alignItems: 'center',
 								gap: 2,
+								mt: 2,
+								mb: 0.5,
 							}}
 						>
 							<Box>
-								<Typography>Amount From</Typography>
+								<Typography sx={{ fontSize: '14px' }}>
+									Amount From
+								</Typography>
 								<TextField
 									id="amount-from"
 									name="amountFrom"
@@ -394,7 +408,9 @@ export default function Filters({ filters, onFilterChange }: Props) {
 								/>
 							</Box>
 							<Box>
-								<Typography>Amount To</Typography>
+								<Typography sx={{ fontSize: '14px' }}>
+									Amount To
+								</Typography>
 								<TextField
 									id="amount-to"
 									name="amountTo"
@@ -420,6 +436,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
 							sx={{
 								color: 'white',
 								borderColor: '#f0a500',
+								borderRadius: '12px',
 								'&:hover': {
 									backgroundColor: 'transparent',
 									borderColor: '#f0a500',
@@ -432,6 +449,7 @@ export default function Filters({ filters, onFilterChange }: Props) {
 							variant="contained"
 							sx={{
 								backgroundColor: '#F27B50',
+								borderRadius: '12px',
 								'&:hover': {
 									backgroundColor: '#ed8a66',
 								},
