@@ -13,10 +13,7 @@ body {
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
-  /* min-height: calc(100vh - 64px); 64px is the height of the navbar */
-  /* padding-bottom: 56px; to compensate for fixed footer */
   min-height: 100vh;
-  /* @todo confirm this is doable */
 }
 
 code {

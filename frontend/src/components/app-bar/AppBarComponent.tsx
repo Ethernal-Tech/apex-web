@@ -31,6 +31,7 @@ const CustomMenu = styled(Menu)({
 	'.MuiPaper-root': {
 		backgroundColor: '#424543',
 		border: '1px solid #435F69',
+		borderRadius: '12px',
 	},
 
 	'& .MuiMenu-list': {
