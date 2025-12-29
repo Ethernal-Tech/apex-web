@@ -14,7 +14,7 @@ const CustomTextField = styled(TextField)({
 			borderColor: 'transparent',
 		},
 		backgroundColor: '#424543',
-		borderRadius: '8px',
+		borderRadius: '12px',
 		color: 'white',
 		width: '100%',
 		caretColor: primaryAccentColor,

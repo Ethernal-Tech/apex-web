@@ -7,7 +7,12 @@ const PrivacyPolicyPage: React.FC = () => {
 	return (
 		<BasePage>
 			<Box
-				sx={{ color: 'white' }}
+				sx={{
+					color: 'white',
+					height: '100vh',
+					overflowY: 'scroll',
+					paddingBottom: '80px',
+				}}
 				dangerouslySetInnerHTML={{ __html: privacyPolicyHtml }}
 			/>
 		</BasePage>

@@ -322,41 +322,44 @@ const BridgeInput = ({
 				>
 					<OneDirectionArrowIcon style={{ zIndex: 1 }} />
 				</Box>
-				<Box display="flex" flexDirection="column">
-					<Typography
-						mb={'4px'}
-						fontWeight={400}
-						sx={{ color: '#fff', fontSize: '13px' }}
-					>
-						To
-					</Typography>
+				<Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
+					<Box display="flex" flexDirection="column">
+						<Typography
+							mb={'4px'}
+							fontWeight={400}
+							sx={{ color: '#fff', fontSize: '13px' }}
+						>
+							To
+						</Typography>
 
-					{dstChainOptions.length > 0 && (
-						<CustomSelect
-							label="Destination"
-							icon={dstChainInfo.icon}
-							value={dstChain}
-							disabled={
-								dstChainOptions.length < 2 || !!loadingState
-							}
-							onChange={onChangeDstChain}
-							options={dstChainOptions}
+						{dstChainOptions.length > 0 && (
+							<CustomSelect
+								label="Destination"
+								icon={dstChainInfo.icon}
+								value={dstChain}
+								disabled={
+									dstChainOptions.length < 2 || !!loadingState
+								}
+								onChange={onChangeDstChain}
+								options={dstChainOptions}
+							/>
+						)}
+					</Box>
+					<Box>
+						<Typography
+							mb={'4px'}
+							sx={{ color: 'white', fontSize: '13px' }}
+						>
+							Destination Address
+						</Typography>
+						{/* validate inputs */}
+						<PasteTextInput
+							text={destinationAddr}
+							setText={setDestinationAddr}
+							disabled={!!loadingState}
+							id="dest-addr"
 						/>
-					)}
-				</Box>
-				<Box marginY={2}>
-					<Typography
-						sx={{ color: 'white', mb: 1, fontSize: '13px' }}
-					>
-						Destination Address
-					</Typography>
-					{/* validate inputs */}
-					<PasteTextInput
-						text={destinationAddr}
-						setText={setDestinationAddr}
-						disabled={!!loadingState}
-						id="dest-addr"
-					/>
+					</Box>
 				</Box>
 			</Box>
 
