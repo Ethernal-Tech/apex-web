@@ -35,6 +35,7 @@ import {
 	getTokenInfo,
 	getRealTokenIDFromEntity,
 } from '../../settings/token';
+import { formatBalance } from '../../utils/tokenUtils';
 
 const tabletMediaQuery = '@media (max-width:800px)';
 
@@ -315,12 +316,14 @@ const TransactionDetailPage = () => {
 											sx={{ fontWeight: '500' }}
 										>
 											{transaction &&
-												toFixed(
-													convertDfmToApex(
-														transaction?.amount,
-														transaction?.originChain,
+												formatBalance(
+													toFixed(
+														convertDfmToApex(
+															transaction?.amount,
+															transaction?.originChain,
+														),
+														6,
 													),
-													6,
 												)}{' '}
 											{transaction &&
 												getTokenInfo(currencyID).label}
@@ -354,12 +357,14 @@ const TransactionDetailPage = () => {
 												) : (
 													<>
 														{transaction &&
-															toFixed(
-																convertDfmToApex(
-																	transaction?.nativeTokenAmount,
-																	transaction?.originChain,
+															formatBalance(
+																toFixed(
+																	convertDfmToApex(
+																		transaction?.nativeTokenAmount,
+																		transaction?.originChain,
+																	),
+																	6,
 																),
-																6,
 															)}{' '}
 														{transaction &&
 															getTokenInfo(
