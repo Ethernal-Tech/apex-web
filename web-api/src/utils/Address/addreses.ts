@@ -1,3 +1,4 @@
+import { isAddress } from 'web3-validator';
 import { CardanoAddress } from './interfaces';
 import {
 	StakeCredential,
@@ -12,6 +13,7 @@ import {
 	GetStakePrefix,
 	IsAddressWithValidPrefix,
 } from './utils';
+import { BadRequestException } from '@nestjs/common';
 
 const NewStakeCredential = (
 	data: Uint8Array,
@@ -135,6 +137,23 @@ export const NewAddressFromBytes = (
 			return;
 	}
 };
+
+export function ValidateCardanoAddress(rawAddress: string) {
+	const addr = NewAddress(rawAddress);
+	if (!addr || addr instanceof RewardAddress || rawAddress !== addr.String()) {
+		throw new BadRequestException(
+			`Invalid cardano destination address: ${rawAddress}`,
+		);
+	}
+}
+
+export function ValidateEVMAddress(rawAddress: string) {
+	if (!isAddress(rawAddress)) {
+		throw new BadRequestException(
+			`Invalid EVM destination address: ${rawAddress}`,
+		);
+	}
+}
 
 export class BaseAddress implements CardanoAddress {
 	constructor(
