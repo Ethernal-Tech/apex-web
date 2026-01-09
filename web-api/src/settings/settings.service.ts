@@ -160,6 +160,18 @@ export class SettingsService {
 				},
 			};
 		}
+		if (!directionConfig[ChainEnum.Polygon]) {
+			directionConfig[ChainEnum.Polygon] = {
+				destChain: {},
+				tokens: {
+					[apexID]: {
+						chainSpecific: Lovelace,
+						lockUnlock: true,
+						isWrappedCurrency: false,
+					},
+				},
+			};
+		}
 
 		for (const [srcChain, dstChains] of Object.entries(
 			reactorSettings.bridgingSettings.allowedDirections,

@@ -128,6 +128,12 @@ const chainStatusIcons: {
 		done: NexusSuccessIcon,
 		error: NexusErrorIcon,
 	},
+	// TODO: Set desired icons
+	[ChainEnum.Polygon]: {
+		inProgress: NexusInProgressIcon,
+		done: NexusSuccessIcon,
+		error: NexusErrorIcon,
+	},
 };
 
 const getDefaultSteps = (

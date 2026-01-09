@@ -14,6 +14,7 @@ export class AppSettings {
 		prime: 0,
 		vector: 0,
 		cardano: 0,
+		polygon: 0,
 	};
 
 	private _minOperationFee: { [key: string]: number } = {
@@ -21,6 +22,7 @@ export class AppSettings {
 		prime: 0,
 		vector: 0,
 		cardano: 0,
+		polygon: 0,
 	};
 
 	private _utxoRetriever: UtxoRetrieverConfig = {};

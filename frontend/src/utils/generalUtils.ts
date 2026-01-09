@@ -76,7 +76,7 @@ export const convertEvmDfmToApex = (dfm: string | number): string => {
 	return fromWei(dfm, 'ether');
 };
 
-// convert eth to wei (nexus)
+// convert eth to wei (evm)
 const convertApexToEvmDfm = (apex: string | number): string => {
 	return toWei(apex, 'ether');
 };
