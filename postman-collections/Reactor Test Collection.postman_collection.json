@@ -50,7 +50,8 @@
 									"listen": "prerequest",
 									"script": {
 										"exec": [
-											"const txID = 28456;",
+											"// const txID = 28456;",
+											"const txID = 4;",
 											"",
 											"pm.variables.set(\"transaction_id\", txID);",
 											"console.log(`🔍 Testing with transaction ID: ${txID}`);"
@@ -63,7 +64,13 @@
 							],
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"url": {
 									"raw": "{{web_api_base_url}}/bridgeTransaction/{{transaction_id}}",
 									"host": [
@@ -135,7 +142,13 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"senderAddress\": \"0xcCB2dDA531690E0eacf03338116Ea214c6379cD4\",\n  \"originChain\": \"nexus\",\n  \"receiverAddresses\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"amountFrom\": \"21000010000000000000\",\n  \"amountTo\": \"31000010000000000000\"\n}",
@@ -186,14 +199,24 @@
 								{
 									"listen": "prerequest",
 									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
 										"packages": {},
-										"type": "text/javascript"
+										"requests": {}
 									}
 								}
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"name\": \"postman test name\",\n  \"email\": \"test@gmail.com\",\n  \"message\": \"test message\"\n}",
@@ -284,7 +307,13 @@
 							},
 							"request": {
 								"method": "GET",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "",
@@ -350,7 +379,13 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"senderAddress\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"originChain\": \"prime\",\n  \"destinationChain\": \"vector\",\n  \"destinationAddress\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n  \"amount\": \"1000000\",\n  \"bridgingFee\": \"1000010\",\n  \"utxoCacheKey\": \"testCacheKey123\"\n}",
@@ -427,7 +462,13 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"senderAddress\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"originChain\": \"prime\",\n  \"destinationChain\": \"vector\",\n  \"destinationAddress\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n  \"amount\": \"1000000\",\n  \"bridgingFee\": \"1000010\",\n  \"utxoCacheKey\": \"testCacheKey123\"\n}",
@@ -523,7 +564,13 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"senderAddress\": \"0xcCB2dDA531690E0eacf03338116Ea214c6379cD4\",\n  \"originChain\": \"nexus\",\n  \"destinationChain\": \"vector\",\n  \"destinationAddress\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n  \"amount\": \"2500000000000000000\",\n  \"bridgingFee\": \"1000010\",\n  \"utxoCacheKey\": \"my-cache-key\"\n}",
@@ -625,7 +672,13 @@
 							],
 							"request": {
 								"method": "POST",
-								"header": [],
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
 								"body": {
 									"mode": "raw",
 									"raw": "{\n  \"originChain\": \"nexus\",\n  \"destinationChain\": \"prime\",\n  \"originTxHash\": \"0x1f80a397469c55bf3e8c2ef0b3ca765dde7bc668198376b8963e74951caf2943\",\n  \"senderAddress\": \"0xcCB2dDA531690E0eacf03338116Ea214c6379cD4\",\n  \"receiverAddrs\": [\"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\"],\n  \"amount\": \"21000010000000000000\",\n  \"txRaw\": \"0xAAA_rawTxHash\",\n  \"isFallback\": false\n}",
@@ -1449,6 +1502,16 @@
 	"variable": [
 		{
 			"key": "web_api_base_url",
+			"value": "",
+			"disabled": true
+		},
+		{
+			"key": "cardano_api_base_url",
+			"value": "",
+			"disabled": true
+		},
+		{
+			"key": "oracle_api_base_url",
 			"value": ""
 		},
 		{
@@ -1456,7 +1519,7 @@
 			"value": ""
 		},
 		{
-			"key": "oracle_api_base_url",
+			"key": "web_api_base_url",
 			"value": ""
 		}
 	]

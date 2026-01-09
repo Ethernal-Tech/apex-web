@@ -71,6 +71,8 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 		CONTACT_EMAIL: str({ default: undefined }),
 		SMTP_HOST: str({ default: undefined }),
 		SMTP_PORT: num({ default: undefined }),
+
+		WEB_API_API_KEYS: list({ default: undefined }),
 	});
 
 	return {
@@ -112,6 +114,9 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			contactEmail: env.CONTACT_EMAIL,
 			smtpHost: env.SMTP_HOST,
 			smtpPort: env.SMTP_PORT,
+		},
+		secrets: {
+			apiKeys: env.WEB_API_API_KEYS,
 		},
 	};
 };

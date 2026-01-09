@@ -8,6 +8,8 @@ import { SettingsModule } from './settings/settings.module';
 import { MailerConfigModule } from './mailer/mailer.module';
 import { ContactModule } from './contact/contact.module';
 import { AppConfigModule } from './appConfig/appConfig.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ApiKeyGuard } from './common/guards/api-key.guard';
 
 @Module({
 	imports: [
@@ -23,7 +25,12 @@ import { AppConfigModule } from './appConfig/appConfig.module';
 		AppConfigModule,
 	],
 	controllers: [],
-	providers: [],
+	providers: [
+		{
+			provide: APP_GUARD,
+			useClass: ApiKeyGuard,
+		},
+	],
 	exports: [],
 })
 export class AppModule {}
