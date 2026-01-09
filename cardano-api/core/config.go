@@ -132,6 +132,7 @@ type AppConfig struct {
 	RunMode common.VCRunMode `json:"runMode"`
 
 	cardanoChainsMu         sync.RWMutex
+	evmChainsMu             sync.RWMutex
 	CardanoChains           map[string]*CardanoChainConfig `json:"cardanoChains"`
 	EthChains               map[string]*EthChainConfig     `json:"ethChains"`
 	UtxoCacheTimeout        time.Duration                  `json:"utxoCacheTimeout"`
@@ -153,9 +154,13 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 
 	appConfig.cardanoChainsMu.Unlock()
 
+	appConfig.evmChainsMu.Lock()
+
 	for chainID, ethChainConfig := range appConfig.EthChains {
 		ethChainConfig.ChainID = chainID
 	}
+
+	appConfig.evmChainsMu.Unlock()
 
 	settingsRequestURL := fmt.Sprintf("%s/api/Settings/Get", appConfig.OracleAPI.URL)
 
@@ -277,9 +282,13 @@ func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig,
 
 	appConfig.cardanoChainsMu.RUnlock()
 
+	appConfig.evmChainsMu.RLock()
+
 	if ethChainConfig, exists := appConfig.EthChains[chainID]; exists && ethChainConfig.IsEnabled {
 		return nil, ethChainConfig
 	}
+
+	appConfig.evmChainsMu.RUnlock()
 
 	return nil, nil
 }
@@ -300,6 +309,8 @@ func (appConfig *AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]s
 
 	appConfig.cardanoChainsMu.RUnlock()
 
+	appConfig.evmChainsMu.RLock()
+
 	for chainID, config := range appConfig.EthChains {
 		cfg, err := config.ToSendTxChainConfig(appConfig)
 		if err != nil {
@@ -308,6 +319,8 @@ func (appConfig *AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]s
 
 		result[chainID] = cfg
 	}
+
+	appConfig.evmChainsMu.RUnlock()
 
 	return result, nil
 }
@@ -361,11 +374,15 @@ func (appConfig *AppConfig) CreateEnabledChains() []string {
 
 	appConfig.cardanoChainsMu.RUnlock()
 
+	appConfig.evmChainsMu.RLock()
+
 	for chainID, cfg := range appConfig.EthChains {
 		if cfg.IsEnabled {
 			enabledChains = append(enabledChains, chainID)
 		}
 	}
+
+	appConfig.evmChainsMu.RUnlock()
 
 	return enabledChains
 }

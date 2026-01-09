@@ -103,6 +103,16 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 		mainColor: '#F3BA2F',
 		order: 6,
 	},
+	// TODO: set desired icon and design
+	[ChainEnum.Polygon]: {
+		value: ChainEnum.Polygon,
+		label: 'Polygon',
+		icon: NexusIcon,
+		borderColor: '#F27B50',
+		letter: 'P',
+		mainColor: '#F27B50',
+		order: 7,
+	},
 };
 
 const getChainDirections = function (
@@ -158,7 +168,8 @@ export const isEvmChain = function (chain: ChainEnum): boolean {
 	return (
 		chain === ChainEnum.Nexus ||
 		chain === ChainEnum.Base ||
-		chain === ChainEnum.Bsc
+		chain === ChainEnum.Bsc ||
+		chain === ChainEnum.Polygon
 	);
 };
 
@@ -197,6 +208,7 @@ export function isApexBridgeChain(chain: ChainEnum): boolean {
 		case ChainEnum.Vector:
 		case ChainEnum.Nexus:
 		case ChainEnum.Cardano:
+		case ChainEnum.Polygon:
 			return true;
 		default:
 			return false; // sepolia / ethereum → false

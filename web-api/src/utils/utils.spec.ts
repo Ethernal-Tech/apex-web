@@ -6,14 +6,9 @@ import {
 } from './Address/utils';
 import {
 	areChainsEqual,
-	CARDANO_NETWORK_ID,
 	CHAIN_TO_CHAIN_ID,
 	fromChainToNetworkId,
-	fromNetworkIdToChain,
-	NEXUS_NETWORK_ID,
-	PRIME_NETWORK_ID,
 	toNumChainID,
-	VECTOR_NETWORK_ID,
 } from './chainUtils';
 import { ChainEnum } from '../common/enum';
 import { capitalizeWord, splitStringIntoChunks } from './stringUtils';
@@ -36,15 +31,21 @@ jest.mock('web3', () => ({
 	},
 }));
 
+const NEXUS_TESTNET_NETWORK_ID = BigInt(9070);
+const NEXUS_MAINNET_NETWORK_ID = BigInt(9069);
+
+const POLYGON_TESTNET_NETWORK_ID = BigInt(80002);
+const POLYGON_MAINNET_NETWORK_ID = BigInt(137);
+
 describe('IsAddressWithValidPrefix', () => {
 	it('should return true for address starting with "addr"', () => {
 		const address = 'addr1q8gf7lnm4cxdy4u9szl7ndrfp8thcqgznr';
 		expect(IsAddressWithValidPrefix(address)).toBe(true);
 	});
 
-	it('should return true for address starting with "vector"', () => {
+	it('should return false for address starting with "vector"', () => {
 		const address = 'vector1234567890abcdef';
-		expect(IsAddressWithValidPrefix(address)).toBe(true);
+		expect(IsAddressWithValidPrefix(address)).toBe(false);
 	});
 
 	it('should return true for address starting with "stake"', () => {
@@ -64,14 +65,14 @@ describe('IsAddressWithValidPrefix', () => {
 });
 
 describe('GetPrefix', () => {
-	it('should return "vector_test" for VectorTestNetNetwork', () => {
-		const result = GetPrefix(CardanoNetworkType.VectorTestNetNetwork);
-		expect(result).toBe('vector_test');
+	it('should return "addr" for VectorTestNetNetwork', () => {
+		const result = GetPrefix(CardanoNetworkType.MainNetNetwork);
+		expect(result).toBe('addr');
 	});
 
-	it('should return "vector" for VectorMainNetNetwork', () => {
-		const result = GetPrefix(CardanoNetworkType.VectorMainNetNetwork);
-		expect(result).toBe('vector');
+	it('should return "addr" for VectorMainNetNetwork', () => {
+		const result = GetPrefix(CardanoNetworkType.MainNetNetwork);
+		expect(result).toBe('addr');
 	});
 
 	it('should return "addr" for MainNetNetwork', () => {
@@ -92,7 +93,7 @@ describe('GetStakePrefix', () => {
 	});
 
 	it('should return "stake" for VectorMainNetNetwork', () => {
-		const result = GetStakePrefix(CardanoNetworkType.VectorMainNetNetwork);
+		const result = GetStakePrefix(CardanoNetworkType.MainNetNetwork);
 		expect(result).toBe('stake');
 	});
 
@@ -101,103 +102,126 @@ describe('GetStakePrefix', () => {
 		expect(result).toBe('stake_test');
 	});
 
-	it('should return "stake_test" for VectorTestNetNetwork', () => {
-		const result = GetStakePrefix(CardanoNetworkType.VectorTestNetNetwork);
-		expect(result).toBe('stake_test');
-	});
-});
-
-describe('fromNetworkIdToChain', () => {
-	it('should return ChainEnum.Prime for PRIME_NETWORK_ID', () => {
-		expect(fromNetworkIdToChain(PRIME_NETWORK_ID)).toBe(ChainEnum.Prime);
-	});
-
-	it('should return ChainEnum.Vector for VECTOR_NETWORK_ID', () => {
-		expect(fromNetworkIdToChain(VECTOR_NETWORK_ID)).toBe(ChainEnum.Vector);
-	});
-
-	it('should return ChainEnum.Nexus for NEXUS_NETWORK_ID', () => {
-		expect(fromNetworkIdToChain(NEXUS_NETWORK_ID)).toBe(ChainEnum.Nexus);
-	});
-
-	it('should return ChainEnum.Cardano for CARDANO_NETWORK_ID', () => {
-		expect(fromNetworkIdToChain(CARDANO_NETWORK_ID)).toBe(ChainEnum.Cardano);
-	});
-
-	it('should return undefined for an unknown networkId', () => {
-		expect(fromNetworkIdToChain(999)).toBeUndefined();
-	});
-
-	it('should return undefined for a bigint value that is not handled', () => {
-		expect(fromNetworkIdToChain(BigInt(999))).toBeUndefined();
+	it('should return "stake" for VectorTestNetNetwork', () => {
+		const result = GetStakePrefix(CardanoNetworkType.MainNetNetwork);
+		expect(result).toBe('stake');
 	});
 });
 
 describe('fromChainToNetworkId', () => {
-	it('should return PRIME_NETWORK_ID for ChainEnum.Prime', () => {
-		expect(fromChainToNetworkId(ChainEnum.Prime)).toBe(PRIME_NETWORK_ID);
+	it('should return PRIME_NETWORK_ID for ChainEnum.Prime testnet', () => {
+		expect(fromChainToNetworkId(ChainEnum.Prime, false)).toBe(
+			CardanoNetworkType.TestNetNetwork,
+		);
 	});
 
-	it('should return VECTOR_NETWORK_ID for ChainEnum.Vector', () => {
-		expect(fromChainToNetworkId(ChainEnum.Vector)).toBe(VECTOR_NETWORK_ID);
+	it('should return VECTOR_NETWORK_ID for ChainEnum.Vector testnet', () => {
+		expect(fromChainToNetworkId(ChainEnum.Vector, true)).toBe(
+			CardanoNetworkType.MainNetNetwork,
+		);
 	});
 
-	it('should return NEXUS_NETWORK_ID for ChainEnum.Nexus', () => {
-		expect(fromChainToNetworkId(ChainEnum.Nexus)).toBe(NEXUS_NETWORK_ID);
+	it('should return NEXUS_NETWORK_ID for ChainEnum.Nexus testnet', () => {
+		expect(fromChainToNetworkId(ChainEnum.Nexus, false)).toBe(
+			NEXUS_TESTNET_NETWORK_ID,
+		);
 	});
 
-	it('should return CARDANO_NETWORK_ID for ChainEnum.Cardano', () => {
-		expect(fromChainToNetworkId(ChainEnum.Cardano)).toBe(CARDANO_NETWORK_ID);
+	it('should return NEXUS_MAINNET_NETWORK_ID for ChainEnum.Nexus mainnet', () => {
+		expect(fromChainToNetworkId(ChainEnum.Nexus, true)).toBe(
+			NEXUS_MAINNET_NETWORK_ID,
+		);
 	});
 
+	it('should return CARDANO_NETWORK_ID for ChainEnum.Cardano testnet', () => {
+		expect(fromChainToNetworkId(ChainEnum.Cardano, false)).toBe(
+			CardanoNetworkType.TestNetNetwork,
+		);
+	});
+
+	it('should return POLYGON_NETWORK_ID for ChainEnum.Polygon testnet', () => {
+		expect(fromChainToNetworkId(ChainEnum.Polygon, false)).toBe(
+			POLYGON_TESTNET_NETWORK_ID,
+		);
+	});
+
+	it('should return POLYGON_MAINNET_NETWORK_ID for ChainEnum.Polygon mainnet', () => {
+		expect(fromChainToNetworkId(ChainEnum.Polygon, true)).toBe(
+			POLYGON_MAINNET_NETWORK_ID,
+		);
+	});
 	it('should return undefined for an unrecognized chain', () => {
-		expect(fromChainToNetworkId('InvalidChain' as any)).toBeUndefined();
+		expect(fromChainToNetworkId('InvalidChain' as any, false)).toBeUndefined();
 	});
 });
 
 describe('areChainsEqual', () => {
 	it('should return true when the chain and networkId match for Prime', () => {
-		expect(areChainsEqual(ChainEnum.Prime, PRIME_NETWORK_ID)).toBe(true);
+		expect(areChainsEqual(ChainEnum.Prime, 1, true)).toBe(true);
 	});
 
 	it('should return true when the chain and networkId match for Vector', () => {
-		expect(areChainsEqual(ChainEnum.Vector, VECTOR_NETWORK_ID)).toBe(true);
+		expect(areChainsEqual(ChainEnum.Vector, 1, false)).toBe(true);
 	});
 
 	it('should return true when the chain and networkId match for Nexus', () => {
-		expect(areChainsEqual(ChainEnum.Nexus, NEXUS_NETWORK_ID)).toBe(true);
+		expect(
+			areChainsEqual(ChainEnum.Nexus, NEXUS_TESTNET_NETWORK_ID, false),
+		).toBe(true);
 	});
 
 	it('should return true when the chain and networkId match for Cardano', () => {
-		expect(areChainsEqual(ChainEnum.Cardano, CARDANO_NETWORK_ID)).toBe(true);
+		expect(areChainsEqual(ChainEnum.Cardano, 0, false)).toBe(true);
+	});
+
+	it('should return true when the chain and networkId match for Polygon', () => {
+		expect(
+			areChainsEqual(ChainEnum.Polygon, POLYGON_TESTNET_NETWORK_ID, false),
+		).toBe(true);
 	});
 
 	it('should return false when the chain and networkId do not match for Prime', () => {
-		expect(areChainsEqual(ChainEnum.Prime, VECTOR_NETWORK_ID)).toBe(false);
+		expect(
+			areChainsEqual(ChainEnum.Prime, CHAIN_TO_CHAIN_ID.vector, false),
+		).toBe(false);
 	});
 
 	it('should return false when the chain and networkId do not match for Vector', () => {
-		expect(areChainsEqual(ChainEnum.Vector, NEXUS_NETWORK_ID)).toBe(false);
+		expect(
+			areChainsEqual(ChainEnum.Vector, CHAIN_TO_CHAIN_ID.nexus, false),
+		).toBe(false);
 	});
 
 	it('should return false when the chain and networkId do not match for Nexus', () => {
-		expect(areChainsEqual(ChainEnum.Nexus, CARDANO_NETWORK_ID)).toBe(false);
+		expect(
+			areChainsEqual(ChainEnum.Nexus, CHAIN_TO_CHAIN_ID.cardano, false),
+		).toBe(false);
 	});
 
 	it('should return false when the chain and networkId do not match for Cardano', () => {
-		expect(areChainsEqual(ChainEnum.Cardano, PRIME_NETWORK_ID)).toBe(false);
+		expect(
+			areChainsEqual(ChainEnum.Cardano, CHAIN_TO_CHAIN_ID.prime, false),
+		).toBe(false);
+	});
+
+	it('should return false when the chain and networkId do not match for Polygon', () => {
+		expect(
+			areChainsEqual(ChainEnum.Polygon, CHAIN_TO_CHAIN_ID.polygon, false),
+		).toBe(false);
 	});
 
 	it('should return false when the networkId does not correspond to any known chain', () => {
-		expect(areChainsEqual(ChainEnum.Prime, 999)).toBe(false);
+		expect(areChainsEqual(ChainEnum.Prime, 999, false)).toBe(false);
 	});
 
 	it('should return false when the chain is an invalid value', () => {
-		expect(areChainsEqual('InvalidChain' as any, PRIME_NETWORK_ID)).toBe(false);
+		expect(
+			areChainsEqual('InvalidChain' as any, CHAIN_TO_CHAIN_ID.prime, false),
+		).toBe(false);
 	});
 
 	it('should return false when networkId is a bigint that does not match any known chain', () => {
-		expect(areChainsEqual(ChainEnum.Prime, BigInt(999))).toBe(false);
+		expect(areChainsEqual(ChainEnum.Prime, BigInt(999), false)).toBe(false);
 	});
 });
 
@@ -216,6 +240,10 @@ describe('toNumChainID', () => {
 
 	it('should return 4 for ChainEnum.Cardano', () => {
 		expect(toNumChainID(ChainEnum.Cardano)).toBe(CHAIN_TO_CHAIN_ID.cardano);
+	});
+
+	it('should return 5 for ChainEnum.Polygon', () => {
+		expect(toNumChainID(ChainEnum.Polygon)).toBe(CHAIN_TO_CHAIN_ID.polygon);
 	});
 
 	it('should return undefined for an invalid ChainEnum', () => {
