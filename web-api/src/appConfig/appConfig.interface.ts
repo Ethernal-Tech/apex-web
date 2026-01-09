@@ -62,6 +62,9 @@ export interface AppConfig {
 		scanUrl: string;
 		networks: LayerZeroNetworkConfig[];
 	};
+	secrets: {
+		apiKeys: string[];
+	};
 }
 
 export type DeepPartial<T> = T extends object
