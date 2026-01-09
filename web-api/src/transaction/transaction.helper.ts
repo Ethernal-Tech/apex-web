@@ -1,4 +1,8 @@
-import { BridgingModeEnum, ChainApexBridgeEnum } from 'src/common/enum';
+import {
+	BridgingModeEnum,
+	ChainApexBridgeEnum,
+	ChainEnum,
+} from 'src/common/enum';
 import {
 	CreateCardanoTransactionResponseDto,
 	ErrorResponseDto,
@@ -15,8 +19,7 @@ import {
 } from '@nestjs/common';
 import web3, { Web3 } from 'web3';
 import { isAddress } from 'web3-validator';
-import { NewAddress, RewardAddress } from 'src/utils/Address/addreses';
-import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
+import { isCardanoChain, isEvmChain, toNumChainID } from 'src/utils/chainUtils';
 import {
 	erc20ABI,
 	reactorGatewayABI,
@@ -30,6 +33,10 @@ import { convertDfmToWei, getUrlAndApiKey } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
+import {
+	ValidateCardanoAddress,
+	ValidateEVMAddress,
+} from 'src/utils/Address/addreses';
 
 const prepareCreateCardanoBridgingTx = (
 	dto: CreateTransactionDto,
@@ -188,27 +195,15 @@ export const createEthBridgingTx = (
 		);
 	}
 
-	// wTODO: support eth destinations also
-	const addr = NewAddress(dto.destinationAddress);
-	if (
-		!addr ||
-		addr instanceof RewardAddress ||
-		dto.destinationAddress !== addr.String()
-	) {
-		throw new BadRequestException(
-			`Invalid destination address: ${dto.destinationAddress}`,
-		);
-	}
+	const destChain = dto.destinationAddress as ChainEnum;
 
-	if (
-		!areChainsEqual(
-			dto.destinationChain,
-			addr.GetNetwork(),
-			appConfig.app.isMainnet,
-		)
-	) {
+	if (isCardanoChain(destChain)) {
+		ValidateCardanoAddress(dto.destinationAddress);
+	} else if (isEvmChain(destChain)) {
+		ValidateEVMAddress(dto.destinationAddress);
+	} else {
 		throw new BadRequestException(
-			`Destination address: ${dto.destinationAddress} not compatible with destination chain: ${dto.destinationChain}`,
+			`Unknown destination chain: ${dto.destinationChain}`,
 		);
 	}
 

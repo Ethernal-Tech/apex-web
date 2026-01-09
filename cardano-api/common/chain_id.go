@@ -10,11 +10,13 @@ const (
 	ChainIDStrVector  = "vector"
 	ChainIDStrNexus   = "nexus"
 	ChainIDStrCardano = "cardano"
+	ChainIDStrPolygon = "polygon"
 
 	ChainIDIntPrime   = chainIDNum(1)
 	ChainIDIntVector  = chainIDNum(2)
 	ChainIDIntNexus   = chainIDNum(3)
 	ChainIDIntCardano = chainIDNum(4)
+	ChainIDIntPolygon = chainIDNum(5)
 )
 
 var (
@@ -23,12 +25,14 @@ var (
 		ChainIDStrVector:  ChainIDIntVector,
 		ChainIDStrNexus:   ChainIDIntNexus,
 		ChainIDStrCardano: ChainIDIntCardano,
+		ChainIDStrPolygon: ChainIDIntPolygon,
 	}
 	intToStr = map[chainIDNum]string{
 		ChainIDIntPrime:   ChainIDStrPrime,
 		ChainIDIntVector:  ChainIDStrVector,
 		ChainIDIntNexus:   ChainIDStrNexus,
 		ChainIDIntCardano: ChainIDStrCardano,
+		ChainIDIntPolygon: ChainIDStrPolygon,
 	}
 )
 

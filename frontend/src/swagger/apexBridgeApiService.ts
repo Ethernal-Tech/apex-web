@@ -1505,6 +1505,7 @@ export enum ChainApexBridgeEnum {
     Vector = "vector",
     Nexus = "nexus",
     Cardano = "cardano",
+    Polygon = "polygon",
 }
 
 export class CreateTransactionDto implements ICreateTransactionDto {
@@ -2013,6 +2014,7 @@ export enum ChainEnum {
     Cardano = "cardano",
     Base = "base",
     Bsc = "bsc",
+    Polygon = "polygon",
 }
 
 export class TransactionSubmittedDto implements ITransactionSubmittedDto {
