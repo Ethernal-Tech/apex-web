@@ -13,6 +13,14 @@ export class ApiKeyGuard implements CanActivate {
 	canActivate(context: ExecutionContext): boolean {
 		const request = context.switchToHttp().getRequest();
 
+		// if there are no api keys defined, just let the request pass through
+		if (
+			this.appConfigService.secrets.apiKeys === undefined ||
+			this.appConfigService.secrets.apiKeys.length === 0
+		) {
+			return true;
+		}
+
 		const apiKey = request.headers['x-api-key'];
 
 		if (!apiKey) {
