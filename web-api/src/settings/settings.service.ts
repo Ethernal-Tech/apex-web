@@ -135,6 +135,16 @@ export class SettingsService {
 			);
 		}
 
+		const polygonID = getCurrencyIDFromDirectionConfig(
+			directionConfig,
+			ChainEnum.Polygon,
+		);
+		if (!polygonID) {
+			throw new Error(
+				`failed to find currencyID for chain: ${ChainEnum.Polygon}`,
+			);
+		}
+
 		const apexEcosystemToken = ecosystemTokens.find(
 			(x: BridgingSettingsEcosystemTokenDto) => x.id === apexID,
 		);
@@ -164,7 +174,7 @@ export class SettingsService {
 			directionConfig[ChainEnum.Polygon] = {
 				destChain: {},
 				tokens: {
-					[apexID]: {
+					[polygonID]: {
 						chainSpecific: Lovelace,
 						lockUnlock: true,
 						isWrappedCurrency: false,

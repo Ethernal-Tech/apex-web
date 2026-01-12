@@ -195,7 +195,7 @@ export const createEthBridgingTx = (
 		);
 	}
 
-	const destChain = dto.destinationAddress as ChainEnum;
+	const destChain = dto.destinationChain as ChainEnum;
 
 	if (isCardanoChain(destChain)) {
 		ValidateCardanoAddress(dto.destinationAddress);
@@ -203,7 +203,7 @@ export const createEthBridgingTx = (
 		ValidateEVMAddress(dto.destinationAddress);
 	} else {
 		throw new BadRequestException(
-			`Unknown destination chain: ${dto.destinationChain}`,
+			`Unsupported destination chain: ${dto.destinationChain}`,
 		);
 	}
 

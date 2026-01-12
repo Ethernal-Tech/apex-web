@@ -264,16 +264,13 @@ export const getExplorerTxUrl = (
 		}
 		case ChainEnum.Base:
 		case ChainEnum.Bsc:
+		case ChainEnum.Polygon:
 		case ChainEnum.Nexus: {
 			url = `${base}/tx/${txHash}`;
 			break;
 		}
 		case ChainEnum.Cardano: {
 			url = `${base}/transaction/${txHash}`;
-			break;
-		}
-		case ChainEnum.Polygon: {
-			url = `${base}/tx/${txHash}`;
 			break;
 		}
 		default:
@@ -334,11 +331,8 @@ export const getExplorerAddressUrl = (
 		case ChainEnum.Cardano:
 		case ChainEnum.Prime:
 		case ChainEnum.Vector:
+		case ChainEnum.Polygon:
 		case ChainEnum.Nexus: {
-			url = `${base}/address/${address}`;
-			break;
-		}
-		case ChainEnum.Polygon: {
 			url = `${base}/address/${address}`;
 			break;
 		}

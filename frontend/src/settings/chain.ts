@@ -12,6 +12,7 @@ import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
 import { ReactComponent as BaseIcon } from '../assets/chain-icons/base.svg';
 import { ReactComponent as BNBIcon } from '../assets/chain-icons/bsc.svg';
+import { ReactComponent as PolygonIcon } from '../assets/chain-icons/polygon.svg';
 import { ISettingsState } from './settingsRedux';
 import appSettings from './appSettings';
 import { captureAndThrowError } from '../features/sentry';
@@ -103,14 +104,13 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 		mainColor: '#F3BA2F',
 		order: 6,
 	},
-	// TODO: set desired icon and design
 	[ChainEnum.Polygon]: {
 		value: ChainEnum.Polygon,
 		label: 'Polygon',
-		icon: NexusIcon,
-		borderColor: '#F27B50',
+		icon: PolygonIcon,
+		borderColor: '#7B3FE4',
 		letter: 'P',
-		mainColor: '#F27B50',
+		mainColor: '#7B3FE4',
 		order: 7,
 	},
 };
