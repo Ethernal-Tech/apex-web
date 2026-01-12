@@ -135,11 +135,11 @@ export class SettingsService {
 			);
 		}
 
-		const polygonID = getCurrencyIDFromDirectionConfig(
+		const polTokenID = getCurrencyIDFromDirectionConfig(
 			directionConfig,
 			ChainEnum.Polygon,
 		);
-		if (!polygonID) {
+		if (!polTokenID) {
 			throw new Error(
 				`failed to find currencyID for chain: ${ChainEnum.Polygon}`,
 			);
@@ -174,7 +174,7 @@ export class SettingsService {
 			directionConfig[ChainEnum.Polygon] = {
 				destChain: {},
 				tokens: {
-					[polygonID]: {
+					[polTokenID]: {
 						chainSpecific: Lovelace,
 						lockUnlock: true,
 						isWrappedCurrency: false,
