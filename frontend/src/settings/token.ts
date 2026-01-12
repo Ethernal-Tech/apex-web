@@ -2,6 +2,7 @@ import { FunctionComponent, SVGProps } from 'react';
 import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg';
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg';
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg';
+import { ReactComponent as PolygonIcon } from '../assets/chain-icons/polygon.svg';
 import { ReactComponent as UnknownTokenIcon } from '../assets/token-icons/unknown.svg';
 import {
 	BridgeTransactionDto,
@@ -38,6 +39,7 @@ const tokC3ID = 10;
 const tokV1ID = 11;
 const tokV2ID = 12;
 const tokV3ID = 13;
+const polID = 14;
 
 export const ethID = 1000001;
 export const bapexID = 1000002;
@@ -154,6 +156,12 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 		label: 'BNB',
 		borderColor: '#F3BA2F',
 	},
+	[polID]: {
+		tokenID: polID,
+		icon: PolygonIcon,
+		label: 'MATIC',
+		borderColor: '#7B3FE4',
+	},
 };
 
 const mainnetTokenInfos: Record<number, TokenInfo> = {
@@ -210,6 +218,12 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 		icon: UnknownTokenIcon,
 		label: 'BNB',
 		borderColor: '#F3BA2F',
+	},
+	[polID]: {
+		tokenID: polID,
+		icon: PolygonIcon,
+		label: 'MATIC',
+		borderColor: '#7B3FE4',
 	},
 };
 
