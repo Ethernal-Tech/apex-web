@@ -85,4 +85,7 @@ export class AppConfigService {
 	get email() {
 		return this.config.email;
 	}
+	get secrets() {
+		return this.config.secrets;
+	}
 }

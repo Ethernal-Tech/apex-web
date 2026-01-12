@@ -47,6 +47,9 @@ export interface AppConfig {
 		smtpHost: string;
 		smtpPort: number;
 	};
+	secrets: {
+		apiKeys: string[];
+	};
 }
 
 export type DeepPartial<T> = T extends object
