@@ -98,4 +98,7 @@ export class AppConfigService {
 	get layerZero() {
 		return this.config.layerzero;
 	}
+	get secrets() {
+		return this.config.secrets;
+	}
 }

@@ -6,18 +6,21 @@ import { join } from 'path';
 import * as yaml from 'js-yaml';
 
 async function generateSwagger() {
-    const app = await NestFactory.create(AppModule);
+	const app = await NestFactory.create(AppModule);
 
-    const config = new DocumentBuilder()
-        .setTitle('Web API')
-        .setVersion('1.0')
-        .build();
+	const config = new DocumentBuilder()
+		.setTitle('Web API')
+		.setVersion('1.0')
+		.build();
 
-    const document = SwaggerModule.createDocument(app, config);
-    const yamlPath = join(__dirname, '../../apex-bridge/docs/web-api/swagger.yaml');
-    writeFileSync(yamlPath, yaml.dump(document));
+	const document = SwaggerModule.createDocument(app, config);
+	const yamlPath = join(
+		__dirname,
+		'../../apex-bridge/docs/web-api/swagger.yaml',
+	);
+	writeFileSync(yamlPath, yaml.dump(document));
 
-    await app.close();
+	await app.close();
 }
 
 generateSwagger();
