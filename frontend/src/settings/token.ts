@@ -72,7 +72,7 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 	},
 	[xadaID]: {
 		tokenID: xadaID,
-		icon: AdaIcon,
+		icon: UnknownTokenIcon,
 		label: 'xADA',
 		borderColor: '#0538AF',
 	},
@@ -177,7 +177,7 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 	},
 	[xadaID]: {
 		tokenID: xadaID,
-		icon: AdaIcon,
+		icon: UnknownTokenIcon,
 		label: 'xADA',
 		borderColor: '#0538AF',
 	},
