@@ -701,7 +701,7 @@ func (c *SkylineTxControllerImpl) getAddressToBridgeTo(
 	chainID := requestBody.SourceChainID
 	containsNativeTokens := utils.ContainsNativeTokens(currencyID, requestBody)
 
-	if c.appConfig.SkylineBridgingSettings.UseOracleForBridgingAddressRetrieval {
+	if c.appConfig.Settings.UseOracleForBridgingAddressRetrieval {
 		response, err := utils.GetAddressToBridgeTo(
 			ctx,
 			c.appConfig.OracleAPI.URL,
