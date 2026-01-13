@@ -159,7 +159,7 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 	[polID]: {
 		tokenID: polID,
 		icon: PolygonIcon,
-		label: 'MATIC',
+		label: 'POL',
 		borderColor: '#7B3FE4',
 	},
 };
@@ -222,7 +222,7 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 	[polID]: {
 		tokenID: polID,
 		icon: PolygonIcon,
-		label: 'MATIC',
+		label: 'POL',
 		borderColor: '#7B3FE4',
 	},
 };
