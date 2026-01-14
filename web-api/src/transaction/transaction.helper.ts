@@ -32,7 +32,11 @@ import {
 import { convertDfmToWei, getUrlAndApiKey } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
 import { getAppConfig } from 'src/appConfig/appConfig';
-import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
+import {
+	getCurrencyIDFromDirectionConfig,
+	getSkylineGatewayAddress,
+	getSkylineNativeTokenWalletAddress,
+} from 'src/settings/utils';
 import {
 	ValidateCardanoAddress,
 	ValidateEVMAddress,
@@ -309,7 +313,7 @@ const skylineEthBridgingTx = (
 
 		const calldata = erc20Contract.methods
 			.approve(
-				getAppConfig().bridge.addresses.skylineNexusNativeTokenWallet,
+				getSkylineNativeTokenWalletAddress(dto.destinationChain),
 				web3.utils.toHex(BigInt(dto.amount)),
 			)
 			.encodeABI();
@@ -322,7 +326,7 @@ const skylineEthBridgingTx = (
 		};
 	}
 
-	const to = getAppConfig().bridge.addresses.skylineNexusGateway;
+	const to = getSkylineGatewayAddress(dto.destinationChain);
 	if (!to) {
 		throw new BadRequestException('Empty to address');
 	}

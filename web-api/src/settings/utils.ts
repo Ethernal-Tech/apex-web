@@ -1,3 +1,4 @@
+import { getAppConfig } from 'src/appConfig/appConfig';
 import {
 	BridgingSettingsDirectionConfigDto,
 	BridgingSettingsEcosystemTokenDto,
@@ -67,4 +68,25 @@ export function getTokenNameById(
 	const token = ecosystemTokens.find((t) => t.id === id);
 
 	return token ? token.name : null;
+}
+
+export function getSkylineGatewayAddress(destChain: string): string {
+	const evmGatewayAddressCfg = getAppConfig().bridge.addresses.skylineGateway;
+	for (const cfg of evmGatewayAddressCfg) {
+		if (cfg.chain === destChain) {
+			return cfg.address;
+		}
+	}
+	return '';
+}
+
+export function getSkylineNativeTokenWalletAddress(destChain: string): string {
+	const evmNativeTokenWalletAddressCfg =
+		getAppConfig().bridge.addresses.skylineNativeTokenWallet;
+	for (const cfg of evmNativeTokenWalletAddressCfg) {
+		if (cfg.chain === destChain) {
+			return cfg.address;
+		}
+	}
+	return '';
 }

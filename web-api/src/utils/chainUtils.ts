@@ -65,13 +65,6 @@ export const areChainsEqual = (
 	networkId: number | bigint,
 	isMainnet: boolean,
 ): boolean => {
-	// const chainNetworkId = fromChainToNetworkId(chain, isMainnet);
-	// if (chainNetworkId === undefined) {
-	// 	return false;
-	// }
-	// console.log('WRITING TO OUTPUT:\n');
-	// console.log(Number(networkId), Number(chainNetworkId));
-	// return Number(networkId) === Number(chainNetworkId);
 	return networkId === fromChainToNetworkId(chain, isMainnet);
 };
 
