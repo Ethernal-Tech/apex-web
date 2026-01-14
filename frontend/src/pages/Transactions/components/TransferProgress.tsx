@@ -41,7 +41,7 @@ import { ReactComponent as CardanoSuccessIcon } from '../../../assets/bridge-sta
 import { ReactComponent as CardanoErrorIcon } from '../../../assets/bridge-status-assets/cardano-error.svg';
 
 // polygon icons
-import { ReactComponent as PolygonInProgressIcon } from '../../../assets/bridge-status-assets/polygon-progress.svg';
+import { ReactComponent as PolygonInProgressIcon } from '../../../assets/bridge-status-assets/polygon.svg';
 import { ReactComponent as PolygonSuccessIcon } from '../../../assets/bridge-status-assets/polygon-success.svg';
 import { ReactComponent as PolygonErrorIcon } from '../../../assets/bridge-status-assets/polygon-error.svg';
 

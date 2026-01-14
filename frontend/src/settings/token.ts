@@ -1,5 +1,5 @@
 import { FunctionComponent, SVGProps } from 'react';
-import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg';
+// import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg';
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg';
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg';
 import { ReactComponent as PolygonIcon } from '../assets/chain-icons/polygon.svg';
@@ -62,7 +62,7 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 	},
 	[adaID]: {
 		tokenID: adaID,
-		icon: AdaIcon,
+		icon: UnknownTokenIcon, //AdaIcon,
 		label: 'ADA',
 		borderColor: '#077368',
 	},
@@ -74,7 +74,7 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 	},
 	[xadaID]: {
 		tokenID: xadaID,
-		icon: AdaIcon,
+		icon: UnknownTokenIcon, //AdaIcon,
 		label: 'xADA',
 		borderColor: '#0538AF',
 	},
@@ -173,7 +173,7 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 	},
 	[adaID]: {
 		tokenID: adaID,
-		icon: AdaIcon,
+		icon: UnknownTokenIcon, //AdaIcon,
 		label: 'ADA',
 		borderColor: '#077368',
 	},
@@ -185,7 +185,7 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 	},
 	[xadaID]: {
 		tokenID: xadaID,
-		icon: AdaIcon,
+		icon: UnknownTokenIcon, //AdaIcon,
 		label: 'xADA',
 		borderColor: '#0538AF',
 	},

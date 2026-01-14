@@ -313,7 +313,7 @@ const skylineEthBridgingTx = (
 
 		const calldata = erc20Contract.methods
 			.approve(
-				getSkylineNativeTokenWalletAddress(dto.destinationChain),
+				getSkylineNativeTokenWalletAddress(dto.originChain),
 				web3.utils.toHex(BigInt(dto.amount)),
 			)
 			.encodeABI();
@@ -326,7 +326,7 @@ const skylineEthBridgingTx = (
 		};
 	}
 
-	const to = getSkylineGatewayAddress(dto.destinationChain);
+	const to = getSkylineGatewayAddress(dto.originChain);
 	if (!to) {
 		throw new BadRequestException('Empty to address');
 	}
