@@ -70,21 +70,21 @@ export function getTokenNameById(
 	return token ? token.name : null;
 }
 
-export function getSkylineGatewayAddress(destChain: string): string {
+export function getSkylineGatewayAddress(srcChain: string): string {
 	const evmGatewayAddressCfg = getAppConfig().bridge.addresses.skylineGateway;
 	for (const cfg of evmGatewayAddressCfg) {
-		if (cfg.chain === destChain) {
+		if (cfg.chain === srcChain) {
 			return cfg.address;
 		}
 	}
 	return '';
 }
 
-export function getSkylineNativeTokenWalletAddress(destChain: string): string {
+export function getSkylineNativeTokenWalletAddress(srcChain: string): string {
 	const evmNativeTokenWalletAddressCfg =
 		getAppConfig().bridge.addresses.skylineNativeTokenWallet;
 	for (const cfg of evmNativeTokenWalletAddressCfg) {
-		if (cfg.chain === destChain) {
+		if (cfg.chain === srcChain) {
 			return cfg.address;
 		}
 	}
