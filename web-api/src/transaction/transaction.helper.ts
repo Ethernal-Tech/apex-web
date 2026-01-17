@@ -183,11 +183,16 @@ export const createEthBridgingTx = (
 	const isWrappedCurrencyBridging =
 		!isCurrencyBridging && tokenPair.dstTokenID === dstCurrencyID;
 
+	const destChain = dto.destinationChain as ChainEnum;
+
 	let minValue = bridgingSettings.minColCoinsAllowedToBridge;
-	if (isWrappedCurrencyBridging) {
-		minValue = bridgingSettings.minUtxoChainValue[dto.destinationChain];
-	} else if (isCurrencyBridging) {
-		minValue = bridgingSettings.minValueToBridge;
+
+	if (isCardanoChain(destChain)) {
+		if (isWrappedCurrencyBridging) {
+			minValue = bridgingSettings.minUtxoChainValue[dto.destinationChain];
+		} else if (isCurrencyBridging) {
+			minValue = bridgingSettings.minValueToBridge;
+		}
 	}
 
 	const minValueToBridge = BigInt(convertDfmToWei(minValue || '0'));
@@ -198,8 +203,6 @@ export const createEthBridgingTx = (
 			`Amount: ${amount} less than minimum: ${minValueToBridge}`,
 		);
 	}
-
-	const destChain = dto.destinationChain as ChainEnum;
 
 	if (isCardanoChain(destChain)) {
 		ValidateCardanoAddress(dto.destinationAddress);
