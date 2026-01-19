@@ -54,6 +54,9 @@ type OracleAPISettings struct {
 }
 
 type AppSettings struct {
+	// Whether to use the oracle to retrieve bridging addresses or use txprovider
+	UseOracleForBridgingAddressRetrieval bool `json:"useOracleForBridgingAddressRetrieval"`
+	// Logger configuration
 	Logger logger.LoggerConfig `json:"logger"`
 }
 

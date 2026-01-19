@@ -100,6 +100,8 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 		LAYERZERO_API_URL: str({ default: undefined }),
 		LAYERZERO_SCAN_URL: str({ default: undefined }),
 		LAYERZERO_CONFIG: layerZeroConfig({ default: undefined }),
+
+		WEB_API_API_KEYS: list({ default: undefined }),
 	});
 
 	return {
@@ -150,6 +152,9 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			apiUrl: env.LAYERZERO_API_URL,
 			scanUrl: env.LAYERZERO_SCAN_URL,
 			networks: env.LAYERZERO_CONFIG,
+		},
+		secrets: {
+			apiKeys: env.WEB_API_API_KEYS,
 		},
 	};
 };

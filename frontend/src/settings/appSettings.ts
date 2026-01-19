@@ -32,6 +32,7 @@ export class AppSettings {
 	private _disableSentry = false;
 	private _isMainnet = false;
 	private _isSkyline = false;
+	private _balanceFormatting = false;
 
 	private _enabledChains: string[] = [];
 
@@ -58,6 +59,7 @@ export class AppSettings {
 		this._disableSentry = settingsJson.disableSentry;
 		this._isMainnet = settingsJson.isMainnet;
 		this._isSkyline = settingsJson.isSkyline;
+		this._balanceFormatting = settingsJson.balanceFormatting;
 	}
 
 	get apiUrl(): string {
@@ -118,6 +120,10 @@ export class AppSettings {
 
 	get enabledChains(): string[] {
 		return this._enabledChains;
+	}
+
+	get balanceFormatting(): boolean {
+		return this._balanceFormatting;
 	}
 }
 

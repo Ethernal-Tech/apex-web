@@ -1,6 +1,7 @@
 import Web3 from 'web3';
 import { isHex } from 'web3-validator';
 import { captureAndThrowError } from '../features/sentry';
+import appSettings from '../settings/appSettings';
 
 export const normalizeNativeTokenKey = (k: string) => {
 	if (!k.includes('.')) return k;
@@ -23,4 +24,19 @@ export const normalizeNativeTokenKey = (k: string) => {
 	}
 
 	return `${kParts[0]}${name}`;
+};
+
+export const formatBalance = (value: string | number | undefined): string => {
+	if (!value) return '0';
+
+	const stringValue = value.toString();
+
+	if (!appSettings.balanceFormatting) {
+		return stringValue;
+	}
+
+	const parts = stringValue.split('.');
+	parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+	return parts.join('.');
 };
