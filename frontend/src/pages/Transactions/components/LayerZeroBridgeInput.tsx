@@ -159,15 +159,21 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 
 			const totalTxFee = approvalTxFee + baseTxFee;
 
-			const lzAmount = BigInt(lzResponse.metadata.properties.amount);
-			const valueBig = BigInt(
-				lzResponse.transactionData.populatedTransaction.value,
-			);
-			const bridgeTxFee = valueBig - lzAmount;
+			let bridgeTxFee = '0';
+			if (sourceTokenID === currencyID) {
+				const lzAmount = BigInt(lzResponse.metadata.properties.amount);
+				const valueBig = BigInt(
+					lzResponse.transactionData.populatedTransaction.value,
+				);
+				bridgeTxFee = (valueBig - lzAmount).toString(10);
+			} else {
+				bridgeTxFee =
+					lzResponse.transactionData.populatedTransaction.value;
+			}
 
 			return {
 				totalTxFee: totalTxFee.toString(10),
-				bridgeTxFee: bridgeTxFee.toString(10),
+				bridgeTxFee: bridgeTxFee,
 			};
 		},
 		[account, chain, currencyID, destinationChain, settings, sourceTokenID],
