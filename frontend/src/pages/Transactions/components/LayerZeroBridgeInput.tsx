@@ -56,16 +56,7 @@ const calculateMaxAmountCurrency = (
 	}
 
 	const balance = BigInt(totalDfmBalance[currencyID] || '0');
-	// If sending the chain currency (native token), the sender must also cover:
-	// - `bridgeTxFee` (LayerZero msg.value portion beyond the sent amount)
-	// - `userWalletFee` (estimated gas/network fee for submitting the transaction)
-	if (sourceTokenID === currencyID) {
-		return (
-			balance - BigInt(bridgeTxFee || '0') - BigInt(userWalletFee || '0')
-		);
-	}
-
-	return balance;
+	return balance - BigInt(bridgeTxFee || '0') - BigInt(userWalletFee || '0');
 };
 
 const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
@@ -115,8 +106,15 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 
 	const calculateFees = useCallback(
 		async (toAddr: string, amountDfm: string, isEstimate: boolean) => {
-			if (!sourceTokenID || !currencyID)
-				return { totalTxFee: '0', bridgeTxFee: '0' };
+			// Order of operations is important here
+			// First we need to calculate the lz fees, because if the user has insufficient amount
+			// of currency the estimateEthTxFee will fail with "insufficient funds" error.
+
+			if (!sourceTokenID || !currencyID) {
+				setUserWalletFee('0');
+				setBridgeTxFee('0');
+				return;
+			}
 
 			const lzResponse = await getLayerZeroTransferResponse(
 				settings,
@@ -143,6 +141,20 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 				);
 			}
 
+			let bridgeTxFee = '0';
+			if (sourceTokenID === currencyID) {
+				const lzAmount = BigInt(lzResponse.metadata.properties.amount);
+				const valueBig = BigInt(
+					lzResponse.transactionData.populatedTransaction.value,
+				);
+				bridgeTxFee = (valueBig - lzAmount).toString(10);
+			} else {
+				bridgeTxFee =
+					lzResponse.transactionData.populatedTransaction.value;
+			}
+
+			setBridgeTxFee(bridgeTxFee);
+
 			const rawBaseTxFee = await estimateEthTxFee(
 				{
 					...lzResponse.transactionData.populatedTransaction,
@@ -159,22 +171,7 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 
 			const totalTxFee = approvalTxFee + baseTxFee;
 
-			let bridgeTxFee = '0';
-			if (sourceTokenID === currencyID) {
-				const lzAmount = BigInt(lzResponse.metadata.properties.amount);
-				const valueBig = BigInt(
-					lzResponse.transactionData.populatedTransaction.value,
-				);
-				bridgeTxFee = (valueBig - lzAmount).toString(10);
-			} else {
-				bridgeTxFee =
-					lzResponse.transactionData.populatedTransaction.value;
-			}
-
-			return {
-				totalTxFee: totalTxFee.toString(10),
-				bridgeTxFee: bridgeTxFee,
-			};
+			setUserWalletFee(totalTxFee.toString(10));
 		},
 		[account, chain, currencyID, destinationChain, settings, sourceTokenID],
 	);
@@ -185,13 +182,11 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 		if (!sourceTokenID || !currencyID) return;
 
 		try {
-			const { totalTxFee, bridgeTxFee } = await calculateFees(
+			await calculateFees(
 				'0x0000000000000000000000000000000000000001',
 				'1000000000000',
 				true,
 			);
-			setBridgeTxFee(bridgeTxFee);
-			setUserWalletFee(totalTxFee);
 		} catch (e) {
 			// If estimation fails (RPC limitations, wrong network), keep defaults.
 			captureException(e, {
@@ -213,14 +208,7 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 
 		try {
 			const amountDfm = convertApexToDfm(amount || '0', chain);
-			const { totalTxFee, bridgeTxFee } = await calculateFees(
-				destinationAddr,
-				amountDfm,
-				false,
-			);
-
-			setBridgeTxFee(bridgeTxFee);
-			setUserWalletFee(totalTxFee);
+			await calculateFees(destinationAddr, amountDfm, false);
 		} catch (e) {
 			captureException(e, {
 				tags: {
@@ -329,7 +317,8 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 		!!loadingState ||
 		maxAmount < 0 || // you already had this
 		isZero || // prevent empty/zero submits
-		overByBalance; // entered > wallet balance (minus fees)
+		overByBalance || // entered > wallet balance (minus fees)
+		currencyMaxAmount < 0; // user has insufficient amount of currency
 
 	return (
 		<Box sx={{ width: '100%' }}>
