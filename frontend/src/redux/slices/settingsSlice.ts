@@ -16,8 +16,11 @@ const initialState: ISettingsState = {
 			bridgingSettings: new BridgingSettingsDto({
 				minUtxoChainValue: appSettings.minUtxoChainValue,
 				minChainFeeForBridging: appSettings.minChainFeeForBridging,
-				minChainFeeForBridgingTokens:
-					appSettings.minChainFeeForBridging,
+				minChainFeeForBridgingTokens: Object.fromEntries(
+					Object.entries(
+						appSettings.minChainFeeForBridging,
+					).map(([chain, fee]) => [chain, Number(fee)]),
+				),
 				minOperationFee: appSettings.minOperationFee,
 				maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,
 				maxTokenAmountAllowedToBridge:
@@ -38,9 +41,9 @@ const initialState: ISettingsState = {
 				minChainFeeForBridgingTokens: {},
 				minOperationFee: {},
 				maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,
-				maxTokenAmountAllowedToBridge: '0',
+				maxTokenAmountAllowedToBridge: BigInt(0).toString(),
 				minValueToBridge: appSettings.minValueToBridge,
-				minColCoinsAllowedToBridge: 0,
+				minColCoinsAllowedToBridge: {},
 				maxReceiversPerBridgingRequest: 0,
 				directionConfig: {},
 				ecosystemTokens: [],

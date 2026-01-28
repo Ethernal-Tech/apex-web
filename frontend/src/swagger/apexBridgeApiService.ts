@@ -935,11 +935,11 @@ export interface IBridgingSettingsEcosystemTokenDto {
 
 export class BridgingSettingsDto implements IBridgingSettingsDto {
     /** For each chain, the minimum fee required to cover the submission of the currency transaction on the destination chain */
-    minChainFeeForBridging!: { [key: string]: number; };
+    minChainFeeForBridging!: { [key: string]: string; };
     /** For each chain, the minimum fee required to cover the submission of the native token transaction on the destination chain */
     minChainFeeForBridgingTokens!: { [key: string]: number; };
     /** For each chain, the minimum fee required to cover operational costs */
-    minOperationFee!: { [key: string]: number; };
+    minOperationFee!: { [key: string]: string; };
     /** For each chain, the minimum allowed UTXO value */
     minUtxoChainValue!: { [key: string]: number; };
     /** Minimum value allowed to be bridged */
@@ -949,7 +949,7 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
     /** Maximum amount of native tokens allowed to be bridged */
     maxTokenAmountAllowedToBridge!: string;
     /** Minimum amount of colored tokens allowed to be bridged */
-    minColCoinsAllowedToBridge!: number;
+    minColCoinsAllowedToBridge!: { [key: string]: string; };
     /** Maximum number of receivers allowed in a bridging request */
     maxReceiversPerBridgingRequest!: number;
     /** For each chain, the configuration of tokens and bridging directions */
@@ -1010,10 +1010,16 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
                         (this.minUtxoChainValue as any)![key] = _data["minUtxoChainValue"][key];
                 }
             }
+            if (_data["minColCoinsAllowedToBridge"]) {
+                this.minColCoinsAllowedToBridge = {} as any;
+                for (let key in _data["minColCoinsAllowedToBridge"]) {
+                    if (_data["minColCoinsAllowedToBridge"].hasOwnProperty(key))
+                        (this.minColCoinsAllowedToBridge as any)![key] = _data["minColCoinsAllowedToBridge"][key];
+                }
+            }
             this.minValueToBridge = _data["minValueToBridge"];
             this.maxAmountAllowedToBridge = _data["maxAmountAllowedToBridge"];
             this.maxTokenAmountAllowedToBridge = _data["maxTokenAmountAllowedToBridge"];
-            this.minColCoinsAllowedToBridge = _data["minColCoinsAllowedToBridge"];
             this.maxReceiversPerBridgingRequest = _data["maxReceiversPerBridgingRequest"];
             if (_data["directionConfig"]) {
                 this.directionConfig = {} as any;
@@ -1071,10 +1077,16 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
                     (data["minUtxoChainValue"] as any)[key] = (this.minUtxoChainValue as any)[key];
             }
         }
+        if (data["minColCoinsAllowedToBridge"]) {
+                this.minColCoinsAllowedToBridge = {} as any;
+                for (let key in data["minColCoinsAllowedToBridge"]) {
+                    if (data["minColCoinsAllowedToBridge"].hasOwnProperty(key))
+                        (this.minColCoinsAllowedToBridge as any)![key] = data["minColCoinsAllowedToBridge"][key];
+                }
+            }
         data["minValueToBridge"] = this.minValueToBridge;
         data["maxAmountAllowedToBridge"] = this.maxAmountAllowedToBridge;
         data["maxTokenAmountAllowedToBridge"] = this.maxTokenAmountAllowedToBridge;
-        data["minColCoinsAllowedToBridge"] = this.minColCoinsAllowedToBridge;
         data["maxReceiversPerBridgingRequest"] = this.maxReceiversPerBridgingRequest;
         if (this.directionConfig) {
             data["directionConfig"] = {};
@@ -1094,11 +1106,11 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
 
 export interface IBridgingSettingsDto {
     /** For each chain, the minimum fee required to cover the submission of the currency transaction on the destination chain */
-    minChainFeeForBridging: { [key: string]: number; };
+    minChainFeeForBridging: { [key: string]: string; };
     /** For each chain, the minimum fee required to cover the submission of the native token transaction on the destination chain */
     minChainFeeForBridgingTokens: { [key: string]: number; };
     /** For each chain, the minimum fee required to cover operational costs */
-    minOperationFee: { [key: string]: number; };
+    minOperationFee: { [key: string]: string; };
     /** For each chain, the minimum allowed UTXO value */
     minUtxoChainValue: { [key: string]: number; };
     /** Minimum value allowed to be bridged */
@@ -1108,7 +1120,7 @@ export interface IBridgingSettingsDto {
     /** Maximum amount of native tokens allowed to be bridged */
     maxTokenAmountAllowedToBridge: string;
     /** Minimum amount of colored tokens allowed to be bridged */
-    minColCoinsAllowedToBridge: number;
+    minColCoinsAllowedToBridge: { [key: string]: string; };
     /** Maximum number of receivers allowed in a bridging request */
     maxReceiversPerBridgingRequest: number;
     /** For each chain, the configuration of tokens and bridging directions */

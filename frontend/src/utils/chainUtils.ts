@@ -228,7 +228,7 @@ const EXPLORER_URLS: {
 };
 
 export const CHAIN_RPC_URLS: { [key: string]: string } = {
-	[ChainEnum.Nexus]: 'https://partner-rpc-1.nexus.route3.dev',
+	[ChainEnum.Nexus]: 'https://rpc.nexus.mainnet.apexfusion.org/',
 	[ChainEnum.Base]: 'https://mainnet.base.org',
 	[ChainEnum.Bsc]: 'https://bsc-dataseed.bnbchain.org',
 };

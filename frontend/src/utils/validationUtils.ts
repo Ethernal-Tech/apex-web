@@ -14,6 +14,7 @@ import { NewAddress, RewardAddress } from '../features/Address/addreses';
 import { checkCardanoAddressCompatibility } from './chainUtils';
 import {
 	convertDfmToWei,
+	convertWeiToDfm,
 	convertEvmDfmToApex,
 	convertUtxoDfmToApex,
 	shouldUseMainnet,
@@ -90,7 +91,7 @@ function reactorValidation(
 		}
 
 		const maxAllowedToBridgeDfm = BigInt(
-			settings.bridgingSettings.maxAmountAllowedToBridge,
+			convertWeiToDfm(settings.bridgingSettings.maxAmountAllowedToBridge),
 		);
 		if (maxAllowedToBridgeDfm > 0 && amount > maxAllowedToBridgeDfm) {
 			return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
@@ -104,7 +105,7 @@ function reactorValidation(
 		}
 
 		const maxAllowedToBridgeWei = BigInt(
-			convertDfmToWei(settings.bridgingSettings.maxAmountAllowedToBridge),
+			settings.bridgingSettings.maxAmountAllowedToBridge,
 		);
 		if (maxAllowedToBridgeWei > 0 && amount > maxAllowedToBridgeWei) {
 			return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedToBridgeWei.toString(10))} ${tokenInfo.label}`;
@@ -164,15 +165,27 @@ function skylineValidaton(
 	const isWrappedCurrencyBridging =
 		!isCurrencyBridging && tokenPair.dstTokenID === dstCurrencyID;
 
-	let minValue = settings.bridgingSettings.minColCoinsAllowedToBridge;
+	let minValue: bigint;
+
 	if (isWrappedCurrencyBridging) {
-		minValue =
-			settings.bridgingSettings.minUtxoChainValue[dstChain] ||
-			settings.bridgingSettings.minValueToBridge;
+		minValue = BigInt(settings.bridgingSettings.minUtxoChainValue[dstChain] ||
+			settings.bridgingSettings.minValueToBridge);
 	} else if (isCurrencyBridging) {
-		minValue =
-			settings.bridgingSettings.minUtxoChainValue[srcChain] ||
-			settings.bridgingSettings.minValueToBridge;
+		minValue = BigInt(settings.bridgingSettings.minUtxoChainValue[srcChain] ||
+			settings.bridgingSettings.minValueToBridge);
+	} else {
+		const minColCoinsAllowedSrc = BigInt(settings.bridgingSettings.minColCoinsAllowedToBridge[srcChain] || '0');
+		const minColCoinsAllowedDest = BigInt(settings.bridgingSettings.minColCoinsAllowedToBridge[dstChain] || '0');
+
+		const minValueSrc = isEvmChain(srcChain)
+			? minColCoinsAllowedSrc
+			: BigInt(convertDfmToWei(minColCoinsAllowedSrc));
+
+		const minValueDst = isEvmChain(dstChain)
+			? minColCoinsAllowedDest
+			: BigInt(convertDfmToWei(minColCoinsAllowedDest));
+
+		minValue = minValueSrc > minValueDst ? minValueSrc : minValueDst;
 	}
 
 	const maxAllowed = isCurrencyBridging
@@ -180,22 +193,22 @@ function skylineValidaton(
 		: settings.bridgingSettings.maxTokenAmountAllowedToBridge;
 
 	if (isCardanoChain(srcChain)) {
-		const minValueBN = BigInt(minValue || '0');
+		const minValueBN = BigInt(convertWeiToDfm(minValue || '0'));
 		if (amount < minValueBN) {
 			return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(minValueBN.toString(10))} ${tokenInfo.label}`;
 		}
 
-		const maxAllowedToBridgeDfm = BigInt(maxAllowed || '0');
+		const maxAllowedToBridgeDfm = BigInt(convertWeiToDfm(maxAllowed || '0'));
 		if (maxAllowedToBridgeDfm > 0 && amount > maxAllowedToBridgeDfm) {
 			return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
 		}
 	} else if (isEvmChain(srcChain)) {
-		const minValueWei = BigInt(convertDfmToWei(minValue || '0'));
+		const minValueWei = BigInt(minValue || '0');
 		if (amount < minValueWei) {
-			return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(minValue || '0')} ${tokenInfo.label}`;
+			return `Amount too low. The minimum amount is ${convertEvmDfmToApex(minValueWei .toString(10))} ${tokenInfo.label}`;
 		}
 
-		const maxAllowedWei = BigInt(convertDfmToWei(maxAllowed || '0'));
+		const maxAllowedWei = BigInt(maxAllowed || '0');
 		if (maxAllowedWei > 0 && amount > maxAllowedWei) {
 			return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedWei.toString(10))} ${tokenInfo.label}`;
 		}

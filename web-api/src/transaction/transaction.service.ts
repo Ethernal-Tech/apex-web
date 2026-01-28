@@ -46,6 +46,7 @@ import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
 import { isAddress } from 'web3-validator';
+import { convertWeiToDfm } from 'src/utils/generalUtils';
 
 @Injectable()
 export class TransactionService {
@@ -102,7 +103,7 @@ export class TransactionService {
 			);
 		}
 
-		const minBridgingFee = BigInt(srcMinFee);
+		const minBridgingFee = BigInt(srcMinFee || '0');
 		const bridgingFee = BigInt(dto.bridgingFee || '0');
 		if (bridgingFee !== BigInt(0) && bridgingFee < minBridgingFee) {
 			throw new BadRequestException(

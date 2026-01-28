@@ -81,11 +81,11 @@ const convertApexToEvmDfm = (apex: string | number): string => {
 	return toWei(apex, 'ether');
 };
 
-export const convertWeiToDfm = (wei: string | number): string => {
+export const convertWeiToDfm = (wei: Numbers): string => {
 	return fromWei(wei, 12);
 };
 
-export const convertDfmToWei = (dfm: string | number): string => {
+export const convertDfmToWei = (dfm: Numbers): string => {
 	return toWei(dfm, 12);
 };
 

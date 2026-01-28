@@ -58,7 +58,7 @@ export class CreateTransactionDto {
 
 	@ApiProperty({
 		description:
-			'Fee covering the submission of the transaction on the destination chain, expressed in Lovelace',
+			'Fee covering the submission of the transaction on the destination chain',
 		nullable: true,
 		required: false,
 	})
@@ -66,7 +66,7 @@ export class CreateTransactionDto {
 
 	@ApiProperty({
 		description:
-			'Fee covering the operational cost of processing the bridging request, expressed in Lovelace',
+			'Fee covering the operational cost of processing the bridging request',
 		nullable: true,
 		required: false,
 	})

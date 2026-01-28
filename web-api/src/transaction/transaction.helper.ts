@@ -185,17 +185,21 @@ export const createEthBridgingTx = (
 
 	const destChain = dto.destinationChain as ChainEnum;
 
-	let minValue = bridgingSettings.minColCoinsAllowedToBridge;
+	let minValue: bigint;
+	if (isCardanoChain(destChain) && isWrappedCurrencyBridging) {
+		minValue = BigInt(bridgingSettings.minUtxoChainValue[dto.destinationChain]);
+	} else if (isCardanoChain(destChain) && isCurrencyBridging) {
+		minValue = BigInt(bridgingSettings.minValueToBridge);
+	} else {
+		const minValueSrc = BigInt(bridgingSettings.minColCoinsAllowedToBridge[dto.originChain] || '0');
+		const minValueDst = isEvmChain(destChain)
+			? BigInt(bridgingSettings.minColCoinsAllowedToBridge[destChain] || '0')
+			: BigInt(convertDfmToWei(bridgingSettings.minColCoinsAllowedToBridge[destChain]));
 
-	if (isCardanoChain(destChain)) {
-		if (isWrappedCurrencyBridging) {
-			minValue = bridgingSettings.minUtxoChainValue[dto.destinationChain];
-		} else if (isCurrencyBridging) {
-			minValue = bridgingSettings.minValueToBridge;
-		}
+		minValue = minValueSrc > minValueDst ? minValueSrc : minValueDst;
 	}
 
-	const minValueToBridge = BigInt(convertDfmToWei(minValue || '0'));
+	const minValueToBridge = BigInt(minValue || '0');
 	const amount = BigInt(dto.amount);
 
 	if (amount < minValueToBridge) {
@@ -224,19 +228,18 @@ export const createEthBridgingTx = (
 			`No minFee for chain: ${chainForMinFee}`,
 		);
 	}
-	const minBridgingFee = BigInt(convertDfmToWei(minFee || '0'));
+	const minBridgingFee = BigInt(minFee || '0');
 	let bridgingFee = BigInt(dto.bridgingFee || '0');
 	bridgingFee = bridgingFee < minBridgingFee ? minBridgingFee : bridgingFee;
 
-	const minOpFee = bridgingSettings.minOperationFee[dto.originChain];
-	const minOperationFee = BigInt(convertDfmToWei(minOpFee || '0'));
+	const minOperationFee = BigInt(bridgingSettings.minOperationFee[dto.originChain] || '0');
 	let operationFee = BigInt(dto.operationFee || '0');
 	operationFee =
 		operationFee < minOperationFee ? minOperationFee : operationFee;
 
 	if (isCurrencyBridging) {
 		const maxAllowedToBridge = BigInt(
-			convertDfmToWei(bridgingSettings.maxAmountAllowedToBridge) || '0',
+			bridgingSettings.maxAmountAllowedToBridge || '0',
 		);
 
 		if (
@@ -249,7 +252,7 @@ export const createEthBridgingTx = (
 		}
 	} else {
 		const maxTokenAmountAllowedToBridge = BigInt(
-			convertDfmToWei(bridgingSettings.maxTokenAmountAllowedToBridge) || '0',
+			bridgingSettings.maxTokenAmountAllowedToBridge || '0',
 		);
 
 		if (

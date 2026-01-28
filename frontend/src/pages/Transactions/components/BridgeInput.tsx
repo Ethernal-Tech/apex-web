@@ -9,6 +9,7 @@ import {
 	calculateTokenUtxoMinValue,
 	convertApexToDfm,
 	convertDfmToWei,
+	convertWeiToDfm,
 	createUtxo,
 	minBigInt,
 } from '../../../utils/generalUtils';
@@ -56,14 +57,14 @@ type BridgeInputType = {
 };
 
 const calculateMaxAmountToken = (
-	totalDfmBalance: { [key: string]: string },
+	totalBalance: { [key: string]: string },
 	sourceTokenID: number | undefined,
 	currencyID: number | undefined,
 	maxTokenAmountAllowedToBridge: string,
 	chain: ChainEnum,
 ): { maxByBalance: bigint; maxByAllowed: bigint } => {
 	if (
-		!totalDfmBalance ||
+		!totalBalance ||
 		!sourceTokenID ||
 		!currencyID ||
 		sourceTokenID === currencyID ||
@@ -72,19 +73,19 @@ const calculateMaxAmountToken = (
 		return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
 	}
 
-	const maxTokenAmountAllowedToBridgeDfm =
+	const maxTokenAmountAllowedToBridgeConverted =
 		BigInt(maxTokenAmountAllowedToBridge || '0') !== BigInt(0)
 			? isEvmChain(chain)
-				? BigInt(convertDfmToWei(maxTokenAmountAllowedToBridge))
-				: BigInt(maxTokenAmountAllowedToBridge)
+				? BigInt(maxTokenAmountAllowedToBridge)
+				: BigInt(convertWeiToDfm(maxTokenAmountAllowedToBridge))
 			: BigInt(0);
 
-	const tokenBalance = BigInt(totalDfmBalance[sourceTokenID] || '0');
+	const tokenBalance = BigInt(totalBalance[sourceTokenID] || '0');
 
 	const tokenBalanceAllowedToUse =
-		BigInt(maxTokenAmountAllowedToBridgeDfm || '0') !== BigInt(0) &&
-		tokenBalance > BigInt(maxTokenAmountAllowedToBridgeDfm || '0')
-			? BigInt(maxTokenAmountAllowedToBridgeDfm || '0')
+		BigInt(maxTokenAmountAllowedToBridgeConverted || '0') !== BigInt(0) &&
+		tokenBalance > BigInt(maxTokenAmountAllowedToBridgeConverted || '0')
+			? BigInt(maxTokenAmountAllowedToBridgeConverted || '0')
 			: tokenBalance;
 
 	return {
@@ -94,7 +95,7 @@ const calculateMaxAmountToken = (
 };
 
 const calculateMaxAmountCurrency = (
-	totalDfmBalance: { [key: string]: string },
+	totalBalance: { [key: string]: string },
 	sourceTokenID: number | undefined,
 	currencyID: number | undefined,
 	maxAmountAllowedToBridge: string,
@@ -104,33 +105,33 @@ const calculateMaxAmountCurrency = (
 	bridgeTxFee: string,
 	operationFee: string,
 ): { maxByBalance: bigint; maxByAllowed: bigint } => {
-	if (!totalDfmBalance || !sourceTokenID || !currencyID || !chain) {
+	if (!totalBalance || !sourceTokenID || !currencyID || !chain) {
 		return { maxByAllowed: BigInt(0), maxByBalance: BigInt(0) };
 	}
 
-	const maxAmountAllowedToBridgeDfm =
+	const maxAmountAllowedToBridgeConverted =
 		BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
 			? isEvmChain(chain)
-				? BigInt(convertDfmToWei(maxAmountAllowedToBridge))
-				: BigInt(maxAmountAllowedToBridge)
+				? BigInt(maxAmountAllowedToBridge)
+				: BigInt(convertWeiToDfm(maxAmountAllowedToBridge))
 			: BigInt(0);
 
 	const balanceAllowedToUse =
-		maxAmountAllowedToBridgeDfm !== BigInt(0) &&
-		BigInt(totalDfmBalance[currencyID] || '0') > maxAmountAllowedToBridgeDfm
-			? maxAmountAllowedToBridgeDfm
-			: BigInt(totalDfmBalance[currencyID] || '0');
+		maxAmountAllowedToBridgeConverted !== BigInt(0) &&
+		BigInt(totalBalance[currencyID] || '0') > maxAmountAllowedToBridgeConverted
+			? maxAmountAllowedToBridgeConverted
+			: BigInt(totalBalance[currencyID] || '0');
 
 	let maxByBalance;
 	if (isEvmChain(chain)) {
 		maxByBalance =
-			BigInt(totalDfmBalance[currencyID] || '0') -
+			BigInt(totalBalance[currencyID] || '0') -
 			BigInt(bridgeTxFee) -
 			BigInt(minEvmWeiValue) -
 			BigInt(operationFee);
 	} else {
 		maxByBalance =
-			BigInt(totalDfmBalance[currencyID] || '0') -
+			BigInt(totalBalance[currencyID] || '0') -
 			BigInt(appSettings.potentialWalletFee) -
 			BigInt(bridgeTxFee) -
 			BigInt(changeMinUtxo) -
@@ -209,12 +210,12 @@ const BridgeInput = ({
 		minOperationFee,
 	} = bridgingModeInfo?.settings?.bridgingSettings || {
 		minValueToBridge: 0,
-		maxAmountAllowedToBridge: '0',
-		maxTokenAmountAllowedToBridge: '0',
+		maxAmountAllowedToBridge: BigInt(0).toString(),
+		maxTokenAmountAllowedToBridge: BigInt(0).toString(),
 		minUtxoChainValue: {} as { [key: string]: number },
-		minChainFeeForBridging: {} as { [key: string]: number },
+		minChainFeeForBridging: {} as { [key: string]: string },
 		minChainFeeForBridgingTokens: {} as { [key: string]: number },
-		minOperationFee: {} as { [key: string]: number },
+		minOperationFee: {} as { [key: string]: string },
 	};
 
 	const currencyID = useMemo(
@@ -228,9 +229,7 @@ const BridgeInput = ({
 
 	const defaultOperationFee = useMemo(
 		() =>
-			isEvmChain(chain)
-				? convertDfmToWei(minOperationFee[chain] || '0')
-				: (minOperationFee[chain] || '0') + '',
+			(minOperationFee[chain] || '0'),
 		[chain, minOperationFee],
 	);
 
@@ -247,12 +246,10 @@ const BridgeInput = ({
 	}, [defaultOperationFee, setOperationFee]);
 
 	const defaultBridgeTxFee = useMemo(
-		() =>
-			isEvmChain(chain)
-				? convertDfmToWei(minChainFeeForBridging[chain] || '0')
-				: !sourceTokenID || !currencyID || sourceTokenID === currencyID
-					? (minChainFeeForBridging[chain] || '0') + ''
-					: (minChainFeeForBridgingTokens[chain] || '0') + '',
+		() => 
+			isEvmChain(chain) || !sourceTokenID || !currencyID || sourceTokenID === currencyID
+				? (minChainFeeForBridging[chain] || '0')
+				: (minChainFeeForBridgingTokens[chain] || BigInt(0)).toString(),
 		[
 			chain,
 			minChainFeeForBridging,
