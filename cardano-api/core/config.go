@@ -193,7 +193,7 @@ func (appConfig *AppConfig) fillOutReactorSpecific(
 		minChainFeeForBridging := make(map[string]*big.Int, len(settingsResponse.MinChainFeeForBridging))
 
 		for chainID, minFeeDfm := range settingsResponse.MinChainFeeForBridging {
-			if chainID == "nexus" {
+			if chainID == common.ChainIDStrNexus {
 				minChainFeeForBridging[chainID] = common.DfmToWei(new(big.Int).SetUint64(minFeeDfm))
 			} else {
 				minChainFeeForBridging[chainID] = new(big.Int).SetUint64(minFeeDfm)
@@ -235,63 +235,35 @@ func (appConfig *AppConfig) fillOutSkylineSpecific(
 			return err
 		}
 
-		minChainFeeForBridging := make(map[string]*big.Int, len(settingsResponse.MinChainFeeForBridging))
+		minChainFeeForBridging := parseBigIntMap(
+			logger,
+			settingsResponse.MinChainFeeForBridging,
+			"failed to convert MinChainFeeForBridging to big.Int",
+		)
 
-		for chainID, minFeeStr := range settingsResponse.MinChainFeeForBridging {
-			minFeeBigInt, ok := new(big.Int).SetString(minFeeStr, 10)
-			if !ok {
-				logger.Error("failed to convert MinChainFeeForBridging to big.Int",
-					"chainID", chainID, "minChainFeeForBridging", minFeeStr)
+		minOperationFee := parseBigIntMap(
+			logger,
+			settingsResponse.MinOperationFee,
+			"failed to convert MinOperationFee to big.Int",
+		)
 
-				minFeeBigInt = big.NewInt(0)
-			}
+		maxAmountAllowedToBridge := parseBigInt(
+			logger,
+			settingsResponse.MaxAmountAllowedToBridge,
+			"failed to convert MaxAmountAllowedToBridge to big.Int",
+		)
 
-			minChainFeeForBridging[chainID] = minFeeBigInt
-		}
+		maxTokenAmountAllowedToBridge := parseBigInt(
+			logger,
+			settingsResponse.MaxTokenAmountAllowedToBridge,
+			"failed to convert MaxTokenAmountAllowedToBridge to big.Int",
+		)
 
-		minOperationFee := make(map[string]*big.Int, len(settingsResponse.MinOperationFee))
-
-		for chainID, minOpFeeStr := range settingsResponse.MinOperationFee {
-			minOpFeeBigInt, ok := new(big.Int).SetString(minOpFeeStr, 10)
-			if !ok {
-				logger.Error("failed to convert MinOperationFee to big.Int",
-					"chainID", chainID, "minOperationFee", minOpFeeStr)
-
-				minOpFeeBigInt = big.NewInt(0)
-			}
-
-			minOperationFee[chainID] = minOpFeeBigInt
-		}
-
-		maxAmountAllowedToBridge, ok := new(big.Int).SetString(settingsResponse.MaxAmountAllowedToBridge, 10)
-		if !ok {
-			logger.Error("failed to convert MaxAmountAllowedToBridge to big.Int",
-				"MaxAmountAllowedToBridge", settingsResponse.MaxAmountAllowedToBridge)
-
-			maxAmountAllowedToBridge = big.NewInt(0)
-		}
-
-		maxTokenAmountAllowedToBridge, ok := new(big.Int).SetString(settingsResponse.MaxTokenAmountAllowedToBridge, 10)
-		if !ok {
-			logger.Error("failed to convert MaxTokenAmountAllowedToBridge to big.Int",
-				"MaxTokenAmountAllowedToBridge", settingsResponse.MaxTokenAmountAllowedToBridge)
-
-			maxTokenAmountAllowedToBridge = big.NewInt(0)
-		}
-
-		minColCoinsAllowedToBridge := make(map[string]*big.Int, len(settingsResponse.MinColCoinsAllowedToBridge))
-
-		for chainID, minColCoinsStr := range settingsResponse.MinColCoinsAllowedToBridge {
-			minColCoinsBigInt, ok := new(big.Int).SetString(minColCoinsStr, 10)
-			if !ok {
-				logger.Error("failed to convert MinColCoinsAllowedToBridge to big.Int",
-					"chainID", chainID, "minColCoinsAllowedToBridge", minColCoinsStr)
-
-				minColCoinsBigInt = big.NewInt(0)
-			}
-
-			minColCoinsAllowedToBridge[chainID] = minColCoinsBigInt
-		}
+		minColCoinsAllowedToBridge := parseBigIntMap(
+			logger,
+			settingsResponse.MinColCoinsAllowedToBridge,
+			"failed to convert MinColCoinsAllowedToBridge to big.Int",
+		)
 
 		if _, ok := settingsResponse.DirectionConfig["polygon"]; !ok {
 			type DirectionConfigFile struct {
@@ -526,18 +498,14 @@ func (config EthChainConfig) ToSendTxChainConfig(
 	switch appConfig.RunMode {
 	case common.ReactorMode:
 		feeValue = appConfig.ReactorBridgingSettings.MinChainFeeForBridging[config.ChainID]
-
-		if len(feeValue.String()) == common.WeiDecimals {
-			feeValue = common.WeiToDfm(feeValue)
-		}
 	case common.SkylineMode:
-		feeValue = common.WeiToDfmCeil(appConfig.SkylineBridgingSettings.MinChainFeeForBridging[config.ChainID])
+		feeValue = appConfig.SkylineBridgingSettings.MinChainFeeForBridging[config.ChainID]
 	default:
 		return sendtx.ChainConfig{}, fmt.Errorf("run mode not supported: %v", appConfig.RunMode)
 	}
 
 	return sendtx.ChainConfig{
-		DefaultMinFeeForBridging: feeValue.Uint64(),
+		DefaultMinFeeForBridging: common.WeiToDfmCeil(feeValue).Uint64(),
 	}, nil
 }
 
@@ -728,4 +696,32 @@ func (appConfig *AppConfig) validateDirectionConfig() error {
 	}
 
 	return nil
+}
+
+func parseBigInt(
+	logger hclog.Logger, value string, logMsg string, logFields ...any,
+) *big.Int {
+	if bigIntValue, ok := new(big.Int).SetString(value, 10); ok {
+		return bigIntValue
+	}
+
+	logger.Error(logMsg, append(logFields, "value", value)...)
+
+	return big.NewInt(0)
+}
+
+func parseBigIntMap(
+	logger hclog.Logger,
+	input map[string]string,
+	logMsg string,
+) map[string]*big.Int {
+	result := make(map[string]*big.Int, len(input))
+
+	for chainID, value := range input {
+		result[chainID] = parseBigInt(
+			logger, value, logMsg, "chainID", chainID,
+		)
+	}
+
+	return result
 }
