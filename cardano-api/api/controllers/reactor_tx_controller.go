@@ -238,7 +238,6 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
 				maxAmountAllowedToBridgeDfm, requestBody)
 		}
-
 	}
 
 	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))

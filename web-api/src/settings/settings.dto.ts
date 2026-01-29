@@ -198,7 +198,6 @@ export class ReactorOnlyBridgingSettingsDto {
 		type: Object,
 		additionalProperties: { type: 'number' },
 	})
-
 	minChainFeeForBridging: { [key: string]: string };
 
 	@IsNotEmpty()
