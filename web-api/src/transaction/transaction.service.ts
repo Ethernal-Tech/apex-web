@@ -1,7 +1,9 @@
 import {
 	BadRequestException,
+	Inject,
 	Injectable,
 	InternalServerErrorException,
+	NotFoundException,
 } from '@nestjs/common';
 import {
 	createCardanoBridgingTx,
@@ -14,6 +16,8 @@ import {
 	TransactionSubmittedDto,
 	CardanoTransactionFeeResponseDto,
 	CreateEthTransactionFullResponseDto,
+	TransactionDeleteDto,
+	TransactionUpdateDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import {
@@ -46,10 +50,13 @@ import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
 import { isAddress } from 'web3-validator';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class TransactionService {
 	constructor(
+		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly settingsService: SettingsService,
@@ -279,19 +286,22 @@ export class TransactionService {
 		return tx;
 	}
 
-	async transactionSubmitted({
-		originChain,
-		destinationChain,
-		originTxHash,
-		senderAddress,
-		receiverAddrs,
-		amount,
-		nativeTokenAmount,
-		tokenID,
-		txRaw,
-		isFallback,
-		isLayerZero,
-	}: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
+	async transactionSubmitted(
+		{
+			originChain,
+			destinationChain,
+			originTxHash,
+			senderAddress,
+			receiverAddrs,
+			amount,
+			nativeTokenAmount,
+			tokenID,
+			txRaw,
+			isFallback,
+			isLayerZero,
+		}: TransactionSubmittedDto,
+		ip: string,
+	): Promise<BridgeTransactionDto> {
 		const entity = new BridgeTransaction();
 
 		const receiverAddresses = receiverAddrs
@@ -335,8 +345,16 @@ export class TransactionService {
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
 
+		console.log('ACRIVEFROM', this.appConfig.activeFrom);
+
 		try {
 			await this.bridgeTransactionRepository.save(newBridgeTransaction);
+			await this.cacheManager.set(
+				entity.sourceTxHash,
+				ip,
+				this.appConfig.activeFrom,
+			);
+
 			return mapBridgeTransactionToResponse(newBridgeTransaction);
 		} catch (e) {
 			const dbTxs = await this.bridgeTransactionRepository.find({
@@ -354,6 +372,69 @@ export class TransactionService {
 				);
 			}
 		}
+	}
+	async updateTxRaw(
+		{ originChain, originTxHash, txRaw }: TransactionUpdateDto,
+		ip: string,
+	): Promise<BridgeTransactionDto> {
+		const cleanHash = (originTxHash ?? '').trim();
+
+		const cachedIp = await this.cacheManager.get<string>(cleanHash);
+
+		console.log('IP IS', ip, 'CACHED IP', cachedIp);
+
+		if (ip === cachedIp) {
+			const entity = await this.bridgeTransactionRepository.findOne({
+				where: { sourceTxHash: cleanHash, originChain: originChain },
+			});
+
+			if (!entity) {
+				throw new NotFoundException(
+					`Transaction with hash ${cleanHash} not found`,
+				);
+			}
+
+			entity.txRaw = txRaw;
+
+			const savedEntity = await this.bridgeTransactionRepository.save(entity);
+
+			await this.cacheManager.del(originTxHash);
+
+			return mapBridgeTransactionToResponse(savedEntity);
+		}
+
+		throw new BadRequestException('unauthorized update of txRaw');
+	}
+
+	async removeTransaction(
+		{ originChain, originTxHash }: TransactionDeleteDto,
+		ip: string,
+	): Promise<void> {
+		const cleanHash = (originTxHash ?? '').trim();
+
+		if (!cleanHash) {
+			throw new BadRequestException('sourceTxHash is required');
+		}
+
+		const cachedIp = await this.cacheManager.get<string>(cleanHash);
+
+		if (ip === cachedIp) {
+			const result = await this.bridgeTransactionRepository.delete({
+				sourceTxHash: cleanHash,
+				originChain: originChain,
+			});
+
+			await this.cacheManager.del(originTxHash);
+			if (result.affected === 0) {
+				throw new NotFoundException(
+					`Transaction with hash ${cleanHash} not found`,
+				);
+			}
+
+			return;
+		}
+
+		throw new BadRequestException('unauthorized deletion of tx');
 	}
 
 	async transferLayerZero(

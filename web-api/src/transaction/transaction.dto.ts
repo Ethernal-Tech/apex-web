@@ -154,6 +154,46 @@ export class TransactionSubmittedDto {
 	isLayerZero: boolean;
 }
 
+export class TransactionUpdateDto {
+	@IsNotEmpty()
+	@IsEnum(ChainEnum)
+	@ApiProperty({
+		description: 'Source chain ID',
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
+	})
+	originChain: ChainEnum;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Transaction hash on source chain',
+	})
+	originTxHash: string;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Transaction raw data on source chain',
+	})
+	txRaw: string;
+}
+
+export class TransactionDeleteDto {
+	@IsNotEmpty()
+	@IsEnum(ChainEnum)
+	@ApiProperty({
+		description: 'Source chain ID',
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
+	})
+	originChain: ChainEnum;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Transaction hash on source chain',
+	})
+	originTxHash: string;
+}
+
 export class CreateCardanoTransactionResponseTokenAmountDto {
 	@IsNotEmpty()
 	@ApiProperty({

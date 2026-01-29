@@ -401,6 +401,102 @@ export class TransactionControllerClient extends BaseClient {
         }
         return Promise.resolve<LayerZeroTransferResponseDto>(null as any);
     }
+
+    /**
+     * Confirm the bridging transaction submission on the source chain
+     * @return OK - Returns confirmed bridging transaction.
+     */
+    bridgingTransactionUpdate(body: TransactionUpdateDto): Promise<BridgeTransactionDto> {
+        let url_ = this.baseUrl + "/transaction/bridgingTransactionUpdate";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processBridgingTransactionUpdate(_response);
+        });
+    }
+
+    protected processBridgingTransactionUpdate(response: Response): Promise<BridgeTransactionDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BridgeTransactionDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request - Error while confirming transaction submittion.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BridgeTransactionDto>(null as any);
+    }
+
+    /**
+     * Confirm the bridging transaction submission on the source chain
+     * @return OK - Returns confirmed bridging transaction.
+     */
+    bridgingTransactionDelete(body: TransactionDeleteDto): Promise<BridgeTransactionDto> {
+        let url_ = this.baseUrl + "/transaction/bridgingTransactionDelete";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processBridgingTransactionDelete(_response);
+        });
+    }
+
+    protected processBridgingTransactionDelete(response: Response): Promise<BridgeTransactionDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BridgeTransactionDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request - Error while confirming transaction submittion.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BridgeTransactionDto>(null as any);
+    }
 }
 
 export class BridgeTransactionControllerClient extends BaseClient {
@@ -2799,6 +2895,120 @@ export interface ILayerZeroTransferResponseDto {
     transactionData: TransactionDataDto;
     /** Type of transaction being executed */
     transactionType: string;
+
+    [key: string]: any;
+}
+
+export class TransactionUpdateDto implements ITransactionUpdateDto {
+    originChain!: ChainEnum;
+    /** Transaction hash on source chain */
+    originTxHash!: string;
+    /** Transaction raw data on source chain */
+    txRaw!: string;
+
+    [key: string]: any;
+
+    constructor(data?: ITransactionUpdateDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.originChain = _data["originChain"];
+            this.originTxHash = _data["originTxHash"];
+            this.txRaw = _data["txRaw"];
+        }
+    }
+
+    static fromJS(data: any): TransactionUpdateDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TransactionUpdateDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["originChain"] = this.originChain;
+        data["originTxHash"] = this.originTxHash;
+        data["txRaw"] = this.txRaw;
+        return data;
+    }
+}
+
+export interface ITransactionUpdateDto {
+    originChain: ChainEnum;
+    /** Transaction hash on source chain */
+    originTxHash: string;
+    /** Transaction raw data on source chain */
+    txRaw: string;
+
+    [key: string]: any;
+}
+
+export class TransactionDeleteDto implements ITransactionDeleteDto {
+    originChain!: ChainEnum;
+    /** Transaction hash on source chain */
+    originTxHash!: string;
+
+    [key: string]: any;
+
+    constructor(data?: ITransactionDeleteDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.originChain = _data["originChain"];
+            this.originTxHash = _data["originTxHash"];
+        }
+    }
+
+    static fromJS(data: any): TransactionDeleteDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new TransactionDeleteDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["originChain"] = this.originChain;
+        data["originTxHash"] = this.originTxHash;
+        return data;
+    }
+}
+
+export interface ITransactionDeleteDto {
+    originChain: ChainEnum;
+    /** Transaction hash on source chain */
+    originTxHash: string;
 
     [key: string]: any;
 }

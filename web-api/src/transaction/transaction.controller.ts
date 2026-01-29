@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	HttpCode,
+	HttpStatus,
+	Ip,
+	Post,
+} from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import {
 	CreateCardanoTransactionResponseDto,
@@ -6,6 +13,8 @@ import {
 	CreateTransactionDto,
 	CreateEthTransactionFullResponseDto,
 	CardanoTransactionFeeResponseDto,
+	TransactionUpdateDto,
+	TransactionDeleteDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
@@ -107,8 +116,9 @@ export class TransactionController {
 	@Post('bridgingTransactionSubmitted')
 	async bridgingTransactionSubmitted(
 		@Body() model: TransactionSubmittedDto,
+		@Ip() ip: string,
 	): Promise<BridgeTransactionDto> {
-		return this.transactionService.transactionSubmitted(model);
+		return this.transactionService.transactionSubmitted(model, ip);
 	}
 
 	@ApiOperation({
@@ -130,5 +140,51 @@ export class TransactionController {
 		@Body() model: LayerZeroTransferDto,
 	): Promise<LayerZeroTransferResponseDto> {
 		return this.transactionService.transferLayerZero(model);
+	}
+
+	@ApiOperation({
+		summary: 'Confirm the bridging transaction submission on the source chain',
+		description:
+			'Returns a confirmed bridging transaction along with its associated data.',
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: BridgeTransactionDto,
+		description: 'OK - Returns confirmed bridging transaction.',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request - Error while confirming transaction submittion.',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('bridgingTransactionUpdate')
+	async bridgingTransactionUpdate(
+		@Body() model: TransactionUpdateDto,
+		@Ip() ip: string,
+	): Promise<BridgeTransactionDto> {
+		return this.transactionService.updateTxRaw(model, ip);
+	}
+
+	@ApiOperation({
+		summary: 'Confirm the bridging transaction submission on the source chain',
+		description:
+			'Returns a confirmed bridging transaction along with its associated data.',
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: BridgeTransactionDto,
+		description: 'OK - Returns confirmed bridging transaction.',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request - Error while confirming transaction submittion.',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('bridgingTransactionDelete')
+	bridgingTransactionDelete(
+		@Body() model: TransactionDeleteDto,
+		@Ip() ip: string,
+	): void {
+		this.transactionService.removeTransaction(model, ip);
 	}
 }
