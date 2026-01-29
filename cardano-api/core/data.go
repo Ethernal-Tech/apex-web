@@ -16,7 +16,7 @@ type APIEndpoint struct {
 type ReactorSettingsResponse struct {
 	// For each chain, the minimum fee required to cover the submission of the currency transaction
 	// on the destination chain
-	MinChainFeeForBridging map[string]string `json:"minChainFeeForBridging"`
+	MinChainFeeForBridging map[string]uint64 `json:"minChainFeeForBridging"`
 	// For each chain, the minimum allowed UTXO value
 	MinUtxoChainValue map[string]uint64 `json:"minUtxoChainValue"`
 	// Minimum value allowed to be bridged

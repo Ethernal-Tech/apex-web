@@ -167,15 +167,19 @@ function skylineValidaton(
 
 	let minValue: bigint;
 
-	if (isWrappedCurrencyBridging) {
+	if (isWrappedCurrencyBridging && isCardanoChain(dstChain)) {
 		minValue = BigInt(
-			settings.bridgingSettings.minUtxoChainValue[dstChain] ||
-				settings.bridgingSettings.minValueToBridge,
+			convertDfmToWei(
+				settings.bridgingSettings.minUtxoChainValue[dstChain] ||
+					settings.bridgingSettings.minValueToBridge,
+			),
 		);
-	} else if (isCurrencyBridging) {
+	} else if (isCurrencyBridging && isCardanoChain(srcChain)) {
 		minValue = BigInt(
-			settings.bridgingSettings.minUtxoChainValue[srcChain] ||
-				settings.bridgingSettings.minValueToBridge,
+			convertDfmToWei(
+				settings.bridgingSettings.minUtxoChainValue[srcChain] ||
+					settings.bridgingSettings.minValueToBridge,
+			),
 		);
 	} else {
 		const minColCoinsAllowedSrc = BigInt(

@@ -192,16 +192,12 @@ func (appConfig *AppConfig) fillOutReactorSpecific(
 
 		minChainFeeForBridging := make(map[string]*big.Int, len(settingsResponse.MinChainFeeForBridging))
 
-		for chainID, minFeeStr := range settingsResponse.MinChainFeeForBridging {
-			minFeeBigInt, ok := new(big.Int).SetString(minFeeStr, 10)
-			if !ok {
-				logger.Error("failed to convert MinChainFeeForBridging to big.Int",
-					"chainID", chainID, "minChainFeeForBridging", minFeeStr)
-
-				minFeeBigInt = big.NewInt(0)
+		for chainID, minFeeDfm := range settingsResponse.MinChainFeeForBridging {
+			if chainID == "nexus" {
+				minChainFeeForBridging[chainID] = common.DfmToWei(new(big.Int).SetUint64(minFeeDfm))
+			} else {
+				minChainFeeForBridging[chainID] = new(big.Int).SetUint64(minFeeDfm)
 			}
-
-			minChainFeeForBridging[chainID] = minFeeBigInt
 		}
 
 		maxAmountAllowedToBridge, ok := new(big.Int).SetString(settingsResponse.MaxAmountAllowedToBridge, 10)
@@ -216,7 +212,7 @@ func (appConfig *AppConfig) fillOutReactorSpecific(
 			MinChainFeeForBridging:         minChainFeeForBridging,
 			MinUtxoChainValue:              settingsResponse.MinUtxoChainValue,
 			MinValueToBridge:               settingsResponse.MinValueToBridge,
-			MaxAmountAllowedToBridge:       maxAmountAllowedToBridge,
+			MaxAmountAllowedToBridge:       common.DfmToWei(maxAmountAllowedToBridge),
 			MaxReceiversPerBridgingRequest: settingsResponse.MaxReceiversPerBridgingRequest,
 			AllowedDirections:              settingsResponse.AllowedDirections,
 		}

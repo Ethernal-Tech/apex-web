@@ -187,9 +187,11 @@ export const createEthBridgingTx = (
 
 	let minValue: bigint;
 	if (isCardanoChain(destChain) && isWrappedCurrencyBridging) {
-		minValue = BigInt(bridgingSettings.minUtxoChainValue[dto.destinationChain]);
+		minValue = BigInt(
+			convertDfmToWei(bridgingSettings.minUtxoChainValue[dto.destinationChain]),
+		);
 	} else if (isCardanoChain(destChain) && isCurrencyBridging) {
-		minValue = BigInt(bridgingSettings.minValueToBridge);
+		minValue = BigInt(convertDfmToWei(bridgingSettings.minValueToBridge));
 	} else {
 		const minValueSrc = BigInt(
 			bridgingSettings.minColCoinsAllowedToBridge[dto.originChain] || '0',
