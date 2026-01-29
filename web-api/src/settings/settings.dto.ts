@@ -198,7 +198,7 @@ export class ReactorOnlyBridgingSettingsDto {
 		type: Object,
 		additionalProperties: { type: 'number' },
 	})
-	// TODO check if number is ok here, maybe it should be string
+
 	minChainFeeForBridging: { [key: string]: string };
 
 	@IsNotEmpty()

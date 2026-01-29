@@ -168,14 +168,24 @@ function skylineValidaton(
 	let minValue: bigint;
 
 	if (isWrappedCurrencyBridging) {
-		minValue = BigInt(settings.bridgingSettings.minUtxoChainValue[dstChain] ||
-			settings.bridgingSettings.minValueToBridge);
+		minValue = BigInt(
+			settings.bridgingSettings.minUtxoChainValue[dstChain] ||
+				settings.bridgingSettings.minValueToBridge,
+		);
 	} else if (isCurrencyBridging) {
-		minValue = BigInt(settings.bridgingSettings.minUtxoChainValue[srcChain] ||
-			settings.bridgingSettings.minValueToBridge);
+		minValue = BigInt(
+			settings.bridgingSettings.minUtxoChainValue[srcChain] ||
+				settings.bridgingSettings.minValueToBridge,
+		);
 	} else {
-		const minColCoinsAllowedSrc = BigInt(settings.bridgingSettings.minColCoinsAllowedToBridge[srcChain] || '0');
-		const minColCoinsAllowedDest = BigInt(settings.bridgingSettings.minColCoinsAllowedToBridge[dstChain] || '0');
+		const minColCoinsAllowedSrc = BigInt(
+			settings.bridgingSettings.minColCoinsAllowedToBridge[srcChain] ||
+				'0',
+		);
+		const minColCoinsAllowedDest = BigInt(
+			settings.bridgingSettings.minColCoinsAllowedToBridge[dstChain] ||
+				'0',
+		);
 
 		const minValueSrc = isEvmChain(srcChain)
 			? minColCoinsAllowedSrc
@@ -198,14 +208,16 @@ function skylineValidaton(
 			return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(minValueBN.toString(10))} ${tokenInfo.label}`;
 		}
 
-		const maxAllowedToBridgeDfm = BigInt(convertWeiToDfm(maxAllowed || '0'));
+		const maxAllowedToBridgeDfm = BigInt(
+			convertWeiToDfm(maxAllowed || '0'),
+		);
 		if (maxAllowedToBridgeDfm > 0 && amount > maxAllowedToBridgeDfm) {
 			return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
 		}
 	} else if (isEvmChain(srcChain)) {
 		const minValueWei = BigInt(minValue || '0');
 		if (amount < minValueWei) {
-			return `Amount too low. The minimum amount is ${convertEvmDfmToApex(minValueWei .toString(10))} ${tokenInfo.label}`;
+			return `Amount too low. The minimum amount is ${convertEvmDfmToApex(minValueWei.toString(10))} ${tokenInfo.label}`;
 		}
 
 		const maxAllowedWei = BigInt(maxAllowed || '0');

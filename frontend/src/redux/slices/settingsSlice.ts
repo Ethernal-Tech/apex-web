@@ -17,9 +17,9 @@ const initialState: ISettingsState = {
 				minUtxoChainValue: appSettings.minUtxoChainValue,
 				minChainFeeForBridging: appSettings.minChainFeeForBridging,
 				minChainFeeForBridgingTokens: Object.fromEntries(
-					Object.entries(
-						appSettings.minChainFeeForBridging,
-					).map(([chain, fee]) => [chain, Number(fee)]),
+					Object.entries(appSettings.minChainFeeForBridging).map(
+						([chain, fee]) => [chain, Number(fee)],
+					),
 				),
 				minOperationFee: appSettings.minOperationFee,
 				maxAmountAllowedToBridge: appSettings.maxAmountAllowedToBridge,

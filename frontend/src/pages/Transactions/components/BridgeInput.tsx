@@ -118,7 +118,8 @@ const calculateMaxAmountCurrency = (
 
 	const balanceAllowedToUse =
 		maxAmountAllowedToBridgeConverted !== BigInt(0) &&
-		BigInt(totalBalance[currencyID] || '0') > maxAmountAllowedToBridgeConverted
+		BigInt(totalBalance[currencyID] || '0') >
+			maxAmountAllowedToBridgeConverted
 			? maxAmountAllowedToBridgeConverted
 			: BigInt(totalBalance[currencyID] || '0');
 
@@ -228,8 +229,7 @@ const BridgeInput = ({
 		appSettings.minUtxoChainValue[chain];
 
 	const defaultOperationFee = useMemo(
-		() =>
-			(minOperationFee[chain] || '0'),
+		() => minOperationFee[chain] || '0',
 		[chain, minOperationFee],
 	);
 
@@ -246,9 +246,12 @@ const BridgeInput = ({
 	}, [defaultOperationFee, setOperationFee]);
 
 	const defaultBridgeTxFee = useMemo(
-		() => 
-			isEvmChain(chain) || !sourceTokenID || !currencyID || sourceTokenID === currencyID
-				? (minChainFeeForBridging[chain] || '0')
+		() =>
+			isEvmChain(chain) ||
+			!sourceTokenID ||
+			!currencyID ||
+			sourceTokenID === currencyID
+				? minChainFeeForBridging[chain] || '0'
 				: (minChainFeeForBridgingTokens[chain] || BigInt(0)).toString(),
 		[
 			chain,

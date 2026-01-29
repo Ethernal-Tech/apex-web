@@ -191,10 +191,16 @@ export const createEthBridgingTx = (
 	} else if (isCardanoChain(destChain) && isCurrencyBridging) {
 		minValue = BigInt(bridgingSettings.minValueToBridge);
 	} else {
-		const minValueSrc = BigInt(bridgingSettings.minColCoinsAllowedToBridge[dto.originChain] || '0');
+		const minValueSrc = BigInt(
+			bridgingSettings.minColCoinsAllowedToBridge[dto.originChain] || '0',
+		);
 		const minValueDst = isEvmChain(destChain)
 			? BigInt(bridgingSettings.minColCoinsAllowedToBridge[destChain] || '0')
-			: BigInt(convertDfmToWei(bridgingSettings.minColCoinsAllowedToBridge[destChain]));
+			: BigInt(
+					convertDfmToWei(
+						bridgingSettings.minColCoinsAllowedToBridge[destChain],
+					),
+				);
 
 		minValue = minValueSrc > minValueDst ? minValueSrc : minValueDst;
 	}
@@ -232,7 +238,9 @@ export const createEthBridgingTx = (
 	let bridgingFee = BigInt(dto.bridgingFee || '0');
 	bridgingFee = bridgingFee < minBridgingFee ? minBridgingFee : bridgingFee;
 
-	const minOperationFee = BigInt(bridgingSettings.minOperationFee[dto.originChain] || '0');
+	const minOperationFee = BigInt(
+		bridgingSettings.minOperationFee[dto.originChain] || '0',
+	);
 	let operationFee = BigInt(dto.operationFee || '0');
 	operationFee =
 		operationFee < minOperationFee ? minOperationFee : operationFee;

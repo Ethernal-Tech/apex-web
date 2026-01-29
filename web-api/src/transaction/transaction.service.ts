@@ -46,7 +46,6 @@ import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
 import { isAddress } from 'web3-validator';
-import { convertWeiToDfm } from 'src/utils/generalUtils';
 
 @Injectable()
 export class TransactionService {
