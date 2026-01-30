@@ -265,25 +265,6 @@ func (appConfig *AppConfig) fillOutSkylineSpecific(
 			"failed to convert MinColCoinsAllowedToBridge to big.Int",
 		)
 
-		// testing
-		if settingsResponse.DirectionConfig == nil {
-			type DirectionConfigFile struct {
-				Directions      map[string]DirectionConfig `json:"directions"`
-				EcosystemTokens []EcosystemToken           `json:"ecosystemTokens"`
-			}
-
-			dirConfig, err := common.LoadConfig[DirectionConfigFile]("./directionsConfig.json", "")
-			if err != nil {
-				return err
-			}
-
-			settingsResponse.DirectionConfig = dirConfig.Directions
-			settingsResponse.EcosystemTokens = dirConfig.EcosystemTokens
-			minColCoinsAllowedToBridge = 1
-			settingsResponse.MinChainFeeForBridging["nexus"] = 4000000
-			settingsResponse.MinOperationFee["nexus"] = 0
-		}
-
 		appConfig.SkylineBridgingSettings = SkylineBridgingSettings{
 			MinChainFeeForBridging:         minChainFeeForBridging,
 			MinChainFeeForBridgingTokens:   settingsResponse.MinChainFeeForBridgingTokens,
