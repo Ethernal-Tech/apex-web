@@ -11,7 +11,7 @@ import {
 const defaultUrl = 'http://localhost:40000';
 
 const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
-	app: { port: 3500, isMainnet: false, activeFrom: 600 },
+	app: { port: 3500, isMainnet: false, txValidityPeriod: 60000 }, //in milliseconds
 	bridge: { recentInputsThresholdMinutes: 5, ethTxTtlInc: 50 },
 	services: {
 		oracleSkylineUrl: defaultUrl,
@@ -101,7 +101,7 @@ export class AppConfigService {
 	get secrets() {
 		return this.config.secrets;
 	}
-	get activeFrom() {
-		return this.config.app.activeFrom;
+	get txValidityPeriod() {
+		return this.config.app.txValidityPeriod;
 	}
 }

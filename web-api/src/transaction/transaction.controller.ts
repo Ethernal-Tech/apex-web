@@ -171,11 +171,6 @@ export class TransactionController {
 			'Returns a confirmed bridging transaction along with its associated data.',
 	})
 	@ApiResponse({
-		status: HttpStatus.OK,
-		type: BridgeTransactionDto,
-		description: 'OK - Returns confirmed bridging transaction.',
-	})
-	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Bad Request - Error while confirming transaction submittion.',
 	})

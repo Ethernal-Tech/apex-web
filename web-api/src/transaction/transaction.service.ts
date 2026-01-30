@@ -345,14 +345,12 @@ export class TransactionService {
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
 
-		console.log('ACRIVEFROM', this.appConfig.activeFrom);
-
 		try {
 			await this.bridgeTransactionRepository.save(newBridgeTransaction);
 			await this.cacheManager.set(
 				entity.sourceTxHash,
 				ip,
-				this.appConfig.activeFrom,
+				this.appConfig.txValidityPeriod,
 			);
 
 			return mapBridgeTransactionToResponse(newBridgeTransaction);
@@ -377,21 +375,17 @@ export class TransactionService {
 		{ originChain, originTxHash, txRaw }: TransactionUpdateDto,
 		ip: string,
 	): Promise<BridgeTransactionDto> {
-		const cleanHash = (originTxHash ?? '').trim();
+		const hash = (originTxHash ?? '').trim();
 
-		const cachedIp = await this.cacheManager.get<string>(cleanHash);
-
-		console.log('IP IS', ip, 'CACHED IP', cachedIp);
+		const cachedIp = await this.cacheManager.get<string>(hash);
 
 		if (ip === cachedIp) {
 			const entity = await this.bridgeTransactionRepository.findOne({
-				where: { sourceTxHash: cleanHash, originChain: originChain },
+				where: { sourceTxHash: hash, originChain: originChain },
 			});
 
 			if (!entity) {
-				throw new NotFoundException(
-					`Transaction with hash ${cleanHash} not found`,
-				);
+				throw new NotFoundException(`Transaction with hash ${hash} not found`);
 			}
 
 			entity.txRaw = txRaw;
@@ -410,25 +404,23 @@ export class TransactionService {
 		{ originChain, originTxHash }: TransactionDeleteDto,
 		ip: string,
 	): Promise<void> {
-		const cleanHash = (originTxHash ?? '').trim();
+		const hash = (originTxHash ?? '').trim();
 
-		if (!cleanHash) {
+		if (!hash) {
 			throw new BadRequestException('sourceTxHash is required');
 		}
 
-		const cachedIp = await this.cacheManager.get<string>(cleanHash);
+		const cachedIp = await this.cacheManager.get<string>(hash);
 
 		if (ip === cachedIp) {
 			const result = await this.bridgeTransactionRepository.delete({
-				sourceTxHash: cleanHash,
+				sourceTxHash: hash,
 				originChain: originChain,
 			});
 
 			await this.cacheManager.del(originTxHash);
 			if (result.affected === 0) {
-				throw new NotFoundException(
-					`Transaction with hash ${cleanHash} not found`,
-				);
+				throw new NotFoundException(`Transaction with hash ${hash} not found`);
 			}
 
 			return;

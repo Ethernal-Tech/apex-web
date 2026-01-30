@@ -26,7 +26,7 @@ export interface AppConfig {
 		port: number;
 		corsAllowList: string[];
 		isMainnet: boolean;
-		activeFrom: number;
+		txValidityPeriod: number;
 	};
 	features: {
 		useCentralizedBridge: boolean;

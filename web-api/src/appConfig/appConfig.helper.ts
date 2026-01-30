@@ -88,7 +88,7 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			default: undefined,
 		}),
 		IS_MAINNET: bool({ default: undefined }),
-		ACTIVE_FROM: num({ default: undefined }),
+		TX_VALIDITY_PERIOD: num({ default: undefined }),
 
 		USE_CENTRALIZED_BRIDGE: bool({ default: undefined }),
 		STATUS_UPDATE_MODES_SUPPORTED: list({ default: undefined }),
@@ -131,7 +131,7 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			port: env.PORT,
 			corsAllowList: env.CORS_ALLOW_LIST,
 			isMainnet: env.IS_MAINNET,
-			activeFrom: env.ACTIVE_FROM,
+			txValidityPeriod: env.TX_VALIDITY_PERIOD,
 		},
 		features: {
 			useCentralizedBridge: env.USE_CENTRALIZED_BRIDGE,
