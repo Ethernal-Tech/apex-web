@@ -6,10 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { convertApexToDfm } from '../../../utils/generalUtils';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
-import {
-	TxTypeEnum,
-	TransactionDataDto,
-} from '../../../swagger/apexBridgeApiService';
+import { TxTypeEnum } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { useSupportedSourceTokenOptions } from '../utils';
@@ -51,12 +48,15 @@ const calculateMaxAmountCurrency = (
 	totalDfmBalance: { [key: string]: string },
 	sourceTokenID: number | undefined,
 	currencyID: number | undefined,
+	bridgeTxFee: string,
+	userWalletFee: string,
 ): bigint => {
 	if (!totalDfmBalance || !sourceTokenID || !currencyID) {
 		return BigInt(0);
 	}
 
-	return BigInt(totalDfmBalance[currencyID] || '0');
+	const balance = BigInt(totalDfmBalance[currencyID] || '0');
+	return balance - BigInt(bridgeTxFee || '0') - BigInt(userWalletFee || '0');
 };
 
 const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
@@ -104,77 +104,112 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 
 	const [bridgeTxFee, setBridgeTxFee] = useState<string>('0');
 
-	const resetBridgeTxFee = useCallback(() => setBridgeTxFee('0'), []);
+	const calculateFees = useCallback(
+		async (toAddr: string, amountDfm: string, isEstimate: boolean) => {
+			// Order of operations is important here
+			// First we need to calculate the lz fees, because if the user has insufficient amount
+			// of currency the estimateEthTxFee will fail with "insufficient funds" error.
 
-	const fetchWalletFee = useCallback(async () => {
-		if (!destinationAddr || !amount || !sourceTokenID || !currencyID) {
-			setUserWalletFee(undefined);
-			resetBridgeTxFee();
+			if (!sourceTokenID || !currencyID) {
+				setUserWalletFee('0');
+				setBridgeTxFee('0');
+				return;
+			}
 
-			return;
-		}
-
-		let transactionData: TransactionDataDto;
-
-		try {
-			const amountDfm = convertApexToDfm(amount || '0', chain);
 			const lzResponse = await getLayerZeroTransferResponse(
 				settings,
 				chain,
 				destinationChain,
 				account,
-				destinationAddr,
+				toAddr,
 				amountDfm,
 				sourceTokenID,
 			);
 
-			transactionData = lzResponse.transactionData;
+			const txType =
+				settings.layerZeroChains[chain]?.txType || TxTypeEnum.Legacy;
 
-			if (sourceTokenID === currencyID) {
-				const amount = BigInt(lzResponse.metadata.properties.amount);
-				const valueBig = BigInt(
-					transactionData.populatedTransaction.value,
+			let approvalTxFee = BigInt(0);
+			if (lzResponse.transactionData.approvalTransaction) {
+				approvalTxFee = await estimateEthTxFee(
+					{
+						...lzResponse.transactionData.approvalTransaction,
+						from: account,
+					},
+					txType,
+					false,
 				);
-				setBridgeTxFee((valueBig - amount).toString(10));
-			} else {
-				setBridgeTxFee(transactionData.populatedTransaction.value);
 			}
+
+			let bridgeTxFee = '0';
+			if (sourceTokenID === currencyID) {
+				const lzAmount = BigInt(lzResponse.metadata.properties.amount);
+				const valueBig = BigInt(
+					lzResponse.transactionData.populatedTransaction.value,
+				);
+				bridgeTxFee = (valueBig - lzAmount).toString(10);
+			} else {
+				bridgeTxFee =
+					lzResponse.transactionData.populatedTransaction.value;
+			}
+
+			setBridgeTxFee(bridgeTxFee);
+
+			const rawBaseTxFee = await estimateEthTxFee(
+				{
+					...lzResponse.transactionData.populatedTransaction,
+					from: account,
+				},
+				txType,
+				false,
+			);
+
+			// Add a buffer to the estimate to account for fee volatility.
+			const baseTxFee = isEstimate
+				? BigInt(Math.floor(Number(rawBaseTxFee) * 1.5))
+				: rawBaseTxFee;
+
+			const totalTxFee = approvalTxFee + baseTxFee;
+
+			setUserWalletFee(totalTxFee.toString(10));
+		},
+		[account, chain, currencyID, destinationChain, settings, sourceTokenID],
+	);
+
+	const resetBridgeTxFee = useCallback(async () => {
+		// Pre-fill with an estimate so validations can account for fees even before the user enters an amount.
+		// Uses a small amount + dummy recipient; this is approximate.
+		if (!sourceTokenID || !currencyID) return;
+
+		try {
+			await calculateFees(
+				'0x0000000000000000000000000000000000000001',
+				'1000000000000',
+				true,
+			);
 		} catch (e) {
-			console.log('error while calculating bridging fee', e);
+			// If estimation fails (RPC limitations, wrong network), keep defaults.
 			captureException(e, {
 				tags: {
 					component: 'LayerZeroBridgeInput.ts',
-					action: 'fetchWalletFee',
+					action: 'resetBridgeTxFee',
 				},
 			});
+		}
+	}, [calculateFees, currencyID, sourceTokenID]);
+
+	const fetchWalletFee = useCallback(async () => {
+		if (!destinationAddr || !amount || !sourceTokenID || !currencyID) {
 			setUserWalletFee(undefined);
-			resetBridgeTxFee();
+			await resetBridgeTxFee();
 
 			return;
 		}
 
 		try {
-			let approvalTxFee = BigInt(0);
-
-			if (transactionData.approvalTransaction) {
-				approvalTxFee = await estimateEthTxFee(
-					{ ...transactionData.approvalTransaction, from: account },
-					settings.layerZeroChains[chain]?.txType ||
-						TxTypeEnum.Legacy,
-					false,
-				);
-			}
-
-			const baseTxFee = await estimateEthTxFee(
-				{ ...transactionData.populatedTransaction, from: account },
-				settings.layerZeroChains[chain]?.txType || TxTypeEnum.Legacy,
-				false,
-			);
-			const totalTxFee = approvalTxFee + baseTxFee;
-
-			setUserWalletFee(totalTxFee.toString(10));
+			const amountDfm = convertApexToDfm(amount || '0', chain);
+			await calculateFees(destinationAddr, amountDfm, false);
 		} catch (e) {
-			console.log('error while calculating wallet fee', e);
 			captureException(e, {
 				tags: {
 					component: 'LayerZeroBridgeInput.ts',
@@ -185,13 +220,11 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 	}, [
 		destinationAddr,
 		amount,
-		sourceTokenID,
-		resetBridgeTxFee,
+		calculateFees,
 		chain,
-		settings,
-		destinationChain,
-		account,
 		currencyID,
+		resetBridgeTxFee,
+		sourceTokenID,
 	]);
 
 	const setSourceTokenCallback = useCallback(
@@ -251,6 +284,8 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 		totalDfmBalance,
 		sourceTokenID,
 		currencyID,
+		bridgeTxFee || '0',
+		userWalletFee || '0',
 	);
 	const tokenMaxAmounts = calculateMaxAmountToken(
 		totalDfmBalance,
@@ -282,7 +317,8 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 		!!loadingState ||
 		maxAmount < 0 || // you already had this
 		isZero || // prevent empty/zero submits
-		overByBalance; // entered > wallet balance (minus fees)
+		overByBalance || // entered > wallet balance (minus fees)
+		currencyMaxAmount < 0; // user has insufficient amount of currency
 
 	return (
 		<Box sx={{ width: '100%' }}>
@@ -343,7 +379,7 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 				<PasteApexAmountInput
 					maxAmounts={{
 						maxByBalance: maxAmount,
-						maxByAllowed: BigInt(0),
+						maxByAllowed: maxAmount,
 					}}
 					currencyMaxAmount={currencyMaxAmount}
 					text={amount}
