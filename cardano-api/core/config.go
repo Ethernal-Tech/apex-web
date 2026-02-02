@@ -497,7 +497,9 @@ func (settings SkylineBridgingSettings) GetMinBridgingFee(chainID string, isNati
 	if isNativeToken {
 		fee, found = settings.MinChainFeeForBridgingTokens[chainID]
 	} else {
-		feeBigInt, found := settings.MinChainFeeForBridging[chainID]
+		var feeBigInt *big.Int
+
+		feeBigInt, found = settings.MinChainFeeForBridging[chainID]
 		if found {
 			fee = feeBigInt.Uint64()
 		}
