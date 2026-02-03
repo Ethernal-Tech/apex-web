@@ -354,8 +354,14 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody.Transactions = transactions
 
 	currencyAmount, currencyFound := amountSums[srcCurrencyID]
+
+	maxAllowedBigInt, success := new(big.Int).SetString(c.appConfig.SkylineBridgingSettings.MaxAmountAllowedToBridge, 10)
+	if !success {
+		return fmt.Errorf("failed to parse MaxAmountAllowedToBridge as big.Int")
+	}
+
 	if currencyFound {
-		maxCurrAmt := common.WeiToDfm(c.appConfig.SkylineBridgingSettings.MaxAmountAllowedToBridge)
+		maxCurrAmt := common.WeiToDfm(maxAllowedBigInt)
 		if maxCurrAmt != nil && maxCurrAmt.Sign() == 1 && currencyAmount.Cmp(maxCurrAmt) == 1 {
 			return fmt.Errorf("sum of receiver currency amounts greater than maximum allowed: %v, for request: %v",
 				maxCurrAmt, requestBody)
@@ -365,7 +371,13 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	// Remove currency entry from the map
 	delete(amountSums, srcCurrencyID)
 
-	maxTokAmnt := common.WeiToDfm(c.appConfig.SkylineBridgingSettings.MaxTokenAmountAllowedToBridge)
+	maxAllowedBigInt, success = new(big.Int).SetString(
+		c.appConfig.SkylineBridgingSettings.MaxTokenAmountAllowedToBridge, 10)
+	if !success {
+		return fmt.Errorf("failed to parse MaxTokenAmountAllowedToBridge as big.Int")
+	}
+
+	maxTokAmnt := common.WeiToDfm(maxAllowedBigInt)
 	if maxTokAmnt != nil && maxTokAmnt.Sign() > 0 {
 		for tokID, tokAmnt := range amountSums {
 			if tokAmnt.Cmp(maxTokAmnt) == 1 {

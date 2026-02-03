@@ -96,7 +96,7 @@ type ReactorBridgingSettings struct {
 	// Minimum value allowed to be bridged
 	MinValueToBridge uint64 `json:"minValueToBridge"`
 	// Maximum amount of currency allowed to be bridged
-	MaxAmountAllowedToBridge *big.Int `json:"maxAmountAllowedToBridge" swaggertype:"string"`
+	MaxAmountAllowedToBridge string `json:"maxAmountAllowedToBridge" swaggertype:"string"`
 	// Maximum number of receivers allowed in a bridging request
 	MaxReceiversPerBridgingRequest int `json:"maxReceiversPerBridgingRequest"`
 	// Reactor Allowed directions map [src chain] => list of dst chains
@@ -117,9 +117,9 @@ type SkylineBridgingSettings struct {
 	// Minimum value allowed to be bridged
 	MinValueToBridge uint64 `json:"minValueToBridge"`
 	// Maximum amount of currency allowed to be bridged
-	MaxAmountAllowedToBridge *big.Int `json:"maxAmountAllowedToBridge" swaggertype:"string"`
+	MaxAmountAllowedToBridge string `json:"maxAmountAllowedToBridge" swaggertype:"string"`
 	// Maximum amount of native tokens allowed to be bridged
-	MaxTokenAmountAllowedToBridge *big.Int `json:"maxTokenAmountAllowedToBridge" swaggertype:"string"`
+	MaxTokenAmountAllowedToBridge string `json:"maxTokenAmountAllowedToBridge" swaggertype:"string"`
 	// Minimum amount of colored tokens allowed to be bridged
 	MinColCoinsAllowedToBridge map[string]*big.Int `json:"minColCoinsAllowedToBridge"`
 	// Maximum number of receivers allowed in a bridging request
@@ -212,7 +212,7 @@ func (appConfig *AppConfig) fillOutReactorSpecific(
 			MinChainFeeForBridging:         minChainFeeForBridging,
 			MinUtxoChainValue:              settingsResponse.MinUtxoChainValue,
 			MinValueToBridge:               settingsResponse.MinValueToBridge,
-			MaxAmountAllowedToBridge:       common.DfmToWei(maxAmountAllowedToBridge),
+			MaxAmountAllowedToBridge:       common.DfmToWei(maxAmountAllowedToBridge).String(),
 			MaxReceiversPerBridgingRequest: settingsResponse.MaxReceiversPerBridgingRequest,
 			AllowedDirections:              settingsResponse.AllowedDirections,
 		}
@@ -271,8 +271,8 @@ func (appConfig *AppConfig) fillOutSkylineSpecific(
 			MinOperationFee:                minOperationFee,
 			MinUtxoChainValue:              settingsResponse.MinUtxoChainValue,
 			MinValueToBridge:               settingsResponse.MinValueToBridge,
-			MaxAmountAllowedToBridge:       maxAmountAllowedToBridge,
-			MaxTokenAmountAllowedToBridge:  maxTokenAmountAllowedToBridge,
+			MaxAmountAllowedToBridge:       maxAmountAllowedToBridge.String(),
+			MaxTokenAmountAllowedToBridge:  maxTokenAmountAllowedToBridge.String(),
 			MinColCoinsAllowedToBridge:     minColCoinsAllowedToBridge,
 			MaxReceiversPerBridgingRequest: settingsResponse.MaxReceiversPerBridgingRequest,
 			DirectionConfig:                settingsResponse.DirectionConfig,

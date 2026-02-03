@@ -231,9 +231,13 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		requestBody.BridgingFee = minFee
 	}
 
-	if c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge != nil &&
-		c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 {
-		maxAmountAllowedToBridgeDfm := common.WeiToDfm(c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge)
+	maxAllowedBigInt, success := new(big.Int).SetString(c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge, 10)
+	if !success {
+		return fmt.Errorf("failed to parse MaxAmountAllowedToBridge")
+	}
+
+	if maxAllowedBigInt != nil && maxAllowedBigInt.Sign() == 1 {
+		maxAmountAllowedToBridgeDfm := common.WeiToDfm(maxAllowedBigInt)
 		if receiverAmountSum.Cmp(maxAmountAllowedToBridgeDfm) == 1 {
 			return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
 				maxAmountAllowedToBridgeDfm, requestBody)

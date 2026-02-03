@@ -22,12 +22,8 @@ import { isCardanoChain, isEvmChain, isLZBridging } from '../settings/chain';
 import appSettings from '../settings/appSettings';
 import { normalizeNativeTokenKey } from './tokenUtils';
 import { captureAndThrowError, captureException } from '../features/sentry';
-import { Decimal } from 'decimal.js';
 import Web3 from 'web3';
 import { EtherUnits } from 'web3-utils';
-
-const DFM_DECIMALS = 12;
-const WEI_DECIMALS = 18;
 
 export const SKYLINE_DOCUMENTATION_URL =
 	'https://ethernal-5.gitbook.io/skyline';
@@ -86,21 +82,11 @@ const convertApexToEvmDfm = (apex: string | number): string => {
 };
 
 export const convertWeiToDfm = (wei: Numbers): string => {
-	const weiDecimal = new Decimal(wei.toString());
-
-	const conversionFactor = Decimal.pow(10, DFM_DECIMALS - WEI_DECIMALS);
-	const dfmSmallest = weiDecimal.times(conversionFactor);
-
-	return dfmSmallest.toDecimalPlaces(0, Decimal.ROUND_DOWN).toString();
+	return fromWei(wei, 12);
 };
 
 export const convertDfmToWei = (dfm: Numbers): string => {
-	const dfmDecimal = new Decimal(dfm.toString());
-
-	const conversionFactor = Decimal.pow(10, WEI_DECIMALS - DFM_DECIMALS);
-	const weiSmallest = dfmDecimal.times(conversionFactor);
-
-	return weiSmallest.toDecimalPlaces(0, Decimal.ROUND_DOWN).toString();
+	return toWei(dfm, 12);
 };
 
 export const convertWeiToDfmBig = (wei: bigint) => {
