@@ -135,15 +135,16 @@ export class SettingsService {
 			);
 		}
 
-		const polTokenID = getCurrencyIDFromDirectionConfig(
-			directionConfig,
-			ChainEnum.Polygon,
-		);
-		if (!polTokenID) {
-			throw new Error(
-				`failed to find currencyID for chain: ${ChainEnum.Polygon}`,
-			);
-		}
+		// TODO: polygon disabled for now
+		// const polTokenID = getCurrencyIDFromDirectionConfig(
+		// 	directionConfig,
+		// 	ChainEnum.Polygon,
+		// );
+		// if (!polTokenID) {
+		// 	throw new Error(
+		// 		`failed to find currencyID for chain: ${ChainEnum.Polygon}`,
+		// 	);
+		// }
 
 		const apexEcosystemToken = ecosystemTokens.find(
 			(x: BridgingSettingsEcosystemTokenDto) => x.id === apexID,
@@ -170,18 +171,19 @@ export class SettingsService {
 				},
 			};
 		}
-		if (!directionConfig[ChainEnum.Polygon]) {
-			directionConfig[ChainEnum.Polygon] = {
-				destChain: {},
-				tokens: {
-					[polTokenID]: {
-						chainSpecific: Lovelace,
-						lockUnlock: true,
-						isWrappedCurrency: false,
-					},
-				},
-			};
-		}
+		// TODO: polygon disabled for now
+		// if (!directionConfig[ChainEnum.Polygon]) {
+		// 	directionConfig[ChainEnum.Polygon] = {
+		// 		destChain: {},
+		// 		tokens: {
+		// 			[polTokenID]: {
+		// 				chainSpecific: Lovelace,
+		// 				lockUnlock: true,
+		// 				isWrappedCurrency: false,
+		// 			},
+		// 		},
+		// 	};
+		// }
 
 		for (const [srcChain, dstChains] of Object.entries(
 			reactorSettings.bridgingSettings.allowedDirections,
