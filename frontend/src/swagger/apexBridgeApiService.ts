@@ -307,8 +307,8 @@ export class TransactionControllerClient extends BaseClient {
     }
 
     /**
-     * Confirm the bridging transaction submission on the source chain
-     * @return OK - Returns confirmed bridging transaction.
+     * Save non-active transactions to the database, with desired activation offset
+     * @return OK - Returns non-active bridging transaction.
      */
     bridgingTransactionSubmitted(body: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
         let url_ = this.baseUrl + "/transaction/bridgingTransactionSubmitted";
@@ -344,7 +344,7 @@ export class TransactionControllerClient extends BaseClient {
             });
         } else if (status === 400) {
             return response.text().then((_responseText) => {
-            return throwException("Bad Request - Error while confirming transaction submittion.", status, _responseText, _headers);
+            return throwException("Bad Request - Error while non-active transaction submittion.", status, _responseText, _headers);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -403,8 +403,8 @@ export class TransactionControllerClient extends BaseClient {
     }
 
     /**
-     * Confirm the bridging transaction submission on the source chain
-     * @return OK - Returns confirmed bridging transaction.
+     * Update the txRaw field in the database transaction and activate it
+     * @return OK - Returns activated bridging transaction.
      */
     bridgingTransactionUpdate(body: TransactionUpdateDto): Promise<BridgeTransactionDto> {
         let url_ = this.baseUrl + "/transaction/bridgingTransactionUpdate";
@@ -451,11 +451,50 @@ export class TransactionControllerClient extends BaseClient {
     }
 
     /**
-     * Confirm the bridging transaction submission on the source chain
-     * @return OK - Returns confirmed bridging transaction.
+     * Delete unconfirmed transaction from database
      */
-    bridgingTransactionDelete(body: TransactionDeleteDto): Promise<BridgeTransactionDto> {
+    bridgingTransactionDelete(body: TransactionActivateDeleteDto): Promise<void> {
         let url_ = this.baseUrl + "/transaction/bridgingTransactionDelete";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processBridgingTransactionDelete(_response);
+        });
+    }
+
+    protected processBridgingTransactionDelete(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request - Error while confirming transaction submittion.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * Confirm the bridging transaction submission on the source chain
+     * @return OK - Returns activated bridging transaction.
+     */
+    bridgingTransactionActivate(body: TransactionActivateDeleteDto): Promise<BridgeTransactionDto> {
+        let url_ = this.baseUrl + "/transaction/bridgingTransactionActivate";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -472,11 +511,11 @@ export class TransactionControllerClient extends BaseClient {
         return this.transformOptions(options_).then(transformedOptions_ => {
             return this.http.fetch(url_, transformedOptions_);
         }).then((_response: Response) => {
-            return this.processBridgingTransactionDelete(_response);
+            return this.processBridgingTransactionActivate(_response);
         });
     }
 
-    protected processBridgingTransactionDelete(response: Response): Promise<BridgeTransactionDto> {
+    protected processBridgingTransactionActivate(response: Response): Promise<BridgeTransactionDto> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
@@ -2959,14 +2998,14 @@ export interface ITransactionUpdateDto {
     [key: string]: any;
 }
 
-export class TransactionDeleteDto implements ITransactionDeleteDto {
+export class TransactionActivateDeleteDto implements ITransactionActivateDeleteDto {
     originChain!: ChainEnum;
     /** Transaction hash on source chain */
     originTxHash!: string;
 
     [key: string]: any;
 
-    constructor(data?: ITransactionDeleteDto) {
+    constructor(data?: ITransactionActivateDeleteDto) {
         if (data) {
             for (var property in data) {
                 if (data.hasOwnProperty(property))
@@ -2986,9 +3025,9 @@ export class TransactionDeleteDto implements ITransactionDeleteDto {
         }
     }
 
-    static fromJS(data: any): TransactionDeleteDto {
+    static fromJS(data: any): TransactionActivateDeleteDto {
         data = typeof data === 'object' ? data : {};
-        let result = new TransactionDeleteDto();
+        let result = new TransactionActivateDeleteDto();
         result.init(data);
         return result;
     }
@@ -3005,7 +3044,7 @@ export class TransactionDeleteDto implements ITransactionDeleteDto {
     }
 }
 
-export interface ITransactionDeleteDto {
+export interface ITransactionActivateDeleteDto {
     originChain: ChainEnum;
     /** Transaction hash on source chain */
     originTxHash: string;

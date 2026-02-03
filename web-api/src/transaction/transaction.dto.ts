@@ -177,7 +177,7 @@ export class TransactionUpdateDto {
 	txRaw: string;
 }
 
-export class TransactionDeleteDto {
+export class TransactionActivateDeleteDto {
 	@IsNotEmpty()
 	@IsEnum(ChainEnum)
 	@ApiProperty({

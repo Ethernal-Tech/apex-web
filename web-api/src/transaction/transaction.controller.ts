@@ -14,7 +14,7 @@ import {
 	CreateEthTransactionFullResponseDto,
 	CardanoTransactionFeeResponseDto,
 	TransactionUpdateDto,
-	TransactionDeleteDto,
+	TransactionActivateDeleteDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
@@ -99,18 +99,19 @@ export class TransactionController {
 	}
 
 	@ApiOperation({
-		summary: 'Confirm the bridging transaction submission on the source chain',
+		summary:
+			'Save non-active transactions to the database, with desired activation offset',
 		description:
-			'Returns a confirmed bridging transaction along with its associated data.',
+			'Returns a non active bridging transaction along with its associated data.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: BridgeTransactionDto,
-		description: 'OK - Returns confirmed bridging transaction.',
+		description: 'OK - Returns non-active bridging transaction.',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Bad Request - Error while confirming transaction submittion.',
+		description: 'Bad Request - Error while non-active transaction submittion.',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Post('bridgingTransactionSubmitted')
@@ -143,14 +144,15 @@ export class TransactionController {
 	}
 
 	@ApiOperation({
-		summary: 'Confirm the bridging transaction submission on the source chain',
+		summary:
+			'Update the txRaw field in the database transaction and activate it',
 		description:
-			'Returns a confirmed bridging transaction along with its associated data.',
+			'Returns a activated bridging transaction along with its associated data.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: BridgeTransactionDto,
-		description: 'OK - Returns confirmed bridging transaction.',
+		description: 'OK - Returns activated bridging transaction.',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -162,13 +164,16 @@ export class TransactionController {
 		@Body() model: TransactionUpdateDto,
 		@Ip() ip: string,
 	): Promise<BridgeTransactionDto> {
-		return this.transactionService.updateTxRaw(model, ip);
+		return this.transactionService.updateTransactionInternal(
+			model.originChain,
+			model.originTxHash,
+			ip,
+			model.txRaw,
+		);
 	}
 
 	@ApiOperation({
-		summary: 'Confirm the bridging transaction submission on the source chain',
-		description:
-			'Returns a confirmed bridging transaction along with its associated data.',
+		summary: 'Delete unconfirmed transaction from database',
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -177,9 +182,36 @@ export class TransactionController {
 	@HttpCode(HttpStatus.OK)
 	@Post('bridgingTransactionDelete')
 	bridgingTransactionDelete(
-		@Body() model: TransactionDeleteDto,
+		@Body() model: TransactionActivateDeleteDto,
 		@Ip() ip: string,
 	): void {
 		this.transactionService.removeTransaction(model, ip);
+	}
+
+	@ApiOperation({
+		summary: 'Confirm the bridging transaction submission on the source chain',
+		description:
+			'Returns a confirmed bridging transaction along with its associated data.',
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: BridgeTransactionDto,
+		description: 'OK - Returns activated bridging transaction.',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request - Error while confirming transaction submittion.',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('bridgingTransactionActivate')
+	bridgingTransactionActivate(
+		@Body() model: TransactionActivateDeleteDto,
+		@Ip() ip: string,
+	): Promise<BridgeTransactionDto> {
+		return this.transactionService.updateTransactionInternal(
+			model.originChain,
+			model.originTxHash,
+			ip,
+		);
 	}
 }

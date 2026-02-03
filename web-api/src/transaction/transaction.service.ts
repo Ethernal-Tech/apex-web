@@ -16,13 +16,13 @@ import {
 	TransactionSubmittedDto,
 	CardanoTransactionFeeResponseDto,
 	CreateEthTransactionFullResponseDto,
-	TransactionDeleteDto,
-	TransactionUpdateDto,
+	TransactionActivateDeleteDto as TransactionActivateDeleteDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import {
 	BridgingModeEnum,
 	ChainApexBridgeEnum,
+	ChainEnum,
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -341,6 +341,7 @@ export class TransactionService {
 		entity.txRaw = txRaw;
 		entity.isCentralized = isFallback;
 		entity.isLayerZero = isLayerZero;
+		entity.activeFrom = new Date(Date.now() + this.appConfig.txValidityPeriod);
 
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
@@ -371,37 +372,43 @@ export class TransactionService {
 			}
 		}
 	}
-	async updateTxRaw(
-		{ originChain, originTxHash, txRaw }: TransactionUpdateDto,
+	async updateTransactionInternal(
+		originChain: ChainEnum,
+		originTxHash: string,
 		ip: string,
+		txRaw?: string,
 	): Promise<BridgeTransactionDto> {
-		const hash = (originTxHash ?? '').trim();
+		const hash = originTxHash.trim();
 
 		const cachedIp = await this.cacheManager.get<string>(hash);
 
-		if (ip === cachedIp) {
-			const entity = await this.bridgeTransactionRepository.findOne({
-				where: { sourceTxHash: hash, originChain: originChain },
-			});
-
-			if (!entity) {
-				throw new NotFoundException(`Transaction with hash ${hash} not found`);
-			}
-
-			entity.txRaw = txRaw;
-
-			const savedEntity = await this.bridgeTransactionRepository.save(entity);
-
-			await this.cacheManager.del(originTxHash);
-
-			return mapBridgeTransactionToResponse(savedEntity);
+		if (ip !== cachedIp) {
+			throw new BadRequestException('unauthorized transaction update');
 		}
 
-		throw new BadRequestException('unauthorized update of txRaw');
+		const entity = await this.bridgeTransactionRepository.findOne({
+			where: { sourceTxHash: hash, originChain: originChain },
+		});
+
+		if (!entity) {
+			throw new NotFoundException(`Transaction with hash ${hash} not found`);
+		}
+
+		// Apply updates
+		if (txRaw !== undefined) {
+			entity.txRaw = txRaw;
+		}
+		entity.activeFrom = new Date();
+
+		const savedEntity = await this.bridgeTransactionRepository.save(entity);
+
+		await this.cacheManager.del(originTxHash);
+
+		return mapBridgeTransactionToResponse(savedEntity);
 	}
 
 	async removeTransaction(
-		{ originChain, originTxHash }: TransactionDeleteDto,
+		{ originChain, originTxHash }: TransactionActivateDeleteDto,
 		ip: string,
 	): Promise<void> {
 		const hash = (originTxHash ?? '').trim();
