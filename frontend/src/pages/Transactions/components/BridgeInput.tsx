@@ -160,7 +160,7 @@ const BridgeInput = ({
 	const walletUTxOs = useSelector(
 		(state: RootState) => state.accountInfo.utxos,
 	);
-	const totalDfmBalance = useSelector(
+	const totalBalance = useSelector(
 		(state: RootState) => state.accountInfo.balance,
 	);
 	const { chain, destinationChain } = useSelector(
@@ -466,7 +466,7 @@ const BridgeInput = ({
 	]);
 
 	const currencyMaxAmounts = calculateMaxAmountCurrency(
-		totalDfmBalance,
+		totalBalance,
 		sourceTokenID,
 		currencyID,
 		maxAmountAllowedToBridge,
@@ -477,7 +477,7 @@ const BridgeInput = ({
 		operationFee,
 	);
 	const tokenMaxAmounts = calculateMaxAmountToken(
-		totalDfmBalance,
+		totalBalance,
 		sourceTokenID,
 		currencyID,
 		maxTokenAmountAllowedToBridge,

@@ -28,12 +28,12 @@ type BridgeInputType = {
 };
 
 const calculateMaxAmountToken = (
-	totalDfmBalance: { [key: string]: string },
+	totalBalance: { [key: string]: string },
 	sourceTokenID: number | undefined,
 	currencyID: number | undefined,
 ): bigint => {
 	if (
-		!totalDfmBalance ||
+		!totalBalance ||
 		!sourceTokenID ||
 		!currencyID ||
 		sourceTokenID === currencyID
@@ -41,21 +41,21 @@ const calculateMaxAmountToken = (
 		return BigInt(0);
 	}
 
-	return BigInt(totalDfmBalance[sourceTokenID] || '0');
+	return BigInt(totalBalance[sourceTokenID] || '0');
 };
 
 const calculateMaxAmountCurrency = (
-	totalDfmBalance: { [key: string]: string },
+	totalBalance: { [key: string]: string },
 	sourceTokenID: number | undefined,
 	currencyID: number | undefined,
 	bridgeTxFee: string,
 	userWalletFee: string,
 ): bigint => {
-	if (!totalDfmBalance || !sourceTokenID || !currencyID) {
+	if (!totalBalance || !sourceTokenID || !currencyID) {
 		return BigInt(0);
 	}
 
-	const balance = BigInt(totalDfmBalance[currencyID] || '0');
+	const balance = BigInt(totalBalance[currencyID] || '0');
 	return balance - BigInt(bridgeTxFee || '0') - BigInt(userWalletFee || '0');
 };
 
@@ -72,7 +72,7 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 	const account = useSelector(
 		(state: RootState) => state.accountInfo.account,
 	);
-	const totalDfmBalance = useSelector(
+	const totalBalance = useSelector(
 		(state: RootState) => state.accountInfo.balance,
 	);
 	const { chain, destinationChain } = useSelector(
@@ -281,14 +281,14 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 	);
 
 	const currencyMaxAmount = calculateMaxAmountCurrency(
-		totalDfmBalance,
+		totalBalance,
 		sourceTokenID,
 		currencyID,
 		bridgeTxFee || '0',
 		userWalletFee || '0',
 	);
 	const tokenMaxAmounts = calculateMaxAmountToken(
-		totalDfmBalance,
+		totalBalance,
 		sourceTokenID,
 		currencyID,
 	);
