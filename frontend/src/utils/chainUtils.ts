@@ -18,6 +18,9 @@ const TESTNET_BASE_NETWORK_ID = BigInt(84532); // for Base testnet
 const MAINNET_BSC_NETWORK_ID = BigInt(56); // for BNB Smart Chain mainnet
 const TESTNET_BSC_NETWORK_ID = BigInt(97); // for BNB Smart Chain testnet(check for this)
 
+const TESTNET_POLYGON_NETWORK_ID = BigInt(80002);
+const MAINNET_POLYGON_NETWORK_ID = BigInt(137);
+
 type ChainData = {
 	mainnet: { networkID: number | bigint; network: ApexBridgeNetwork };
 	testnet: { networkID: number | bigint; network: ApexBridgeNetwork };
@@ -84,6 +87,16 @@ const CHAIN_DATA: { [key: string]: ChainData } = {
 			network: ApexBridgeNetwork.TestnetBsc,
 		},
 	},
+	[ChainEnum.Polygon]: {
+		mainnet: {
+			networkID: MAINNET_POLYGON_NETWORK_ID,
+			network: ApexBridgeNetwork.MainnetPolygon,
+		},
+		testnet: {
+			networkID: TESTNET_POLYGON_NETWORK_ID,
+			network: ApexBridgeNetwork.TestnetPolygon,
+		},
+	},
 };
 
 const NETWORK_TO_CHAIN: {
@@ -97,6 +110,7 @@ const NETWORK_TO_CHAIN: {
 		[ApexBridgeNetwork.MainnetCardano]: ChainEnum.Cardano,
 		[ApexBridgeNetwork.MainnetBase]: ChainEnum.Base,
 		[ApexBridgeNetwork.MainnetBsc]: ChainEnum.Bsc,
+		[ApexBridgeNetwork.MainnetPolygon]: ChainEnum.Polygon,
 	},
 	testnet: {
 		[ApexBridgeNetwork.TestnetPrime]: ChainEnum.Prime,
@@ -105,6 +119,7 @@ const NETWORK_TO_CHAIN: {
 		[ApexBridgeNetwork.PreviewCardano]: ChainEnum.Cardano,
 		[ApexBridgeNetwork.TestnetBase]: ChainEnum.Base,
 		[ApexBridgeNetwork.TestnetBsc]: ChainEnum.Bsc,
+		[ApexBridgeNetwork.TestnetPolygon]: ChainEnum.Polygon,
 	},
 };
 
@@ -149,6 +164,9 @@ export const fromEvmNetworkIdToNetwork = (
 		if (networkId === MAINNET_BSC_NETWORK_ID) {
 			return ApexBridgeNetwork.MainnetBsc;
 		}
+		if (networkId === MAINNET_POLYGON_NETWORK_ID) {
+			return ApexBridgeNetwork.MainnetPolygon;
+		}
 	} else {
 		if (networkId === TESTNET_NEXUS_NETWORK_ID) {
 			return ApexBridgeNetwork.TestnetNexus;
@@ -158,6 +176,9 @@ export const fromEvmNetworkIdToNetwork = (
 		}
 		if (networkId === TESTNET_BSC_NETWORK_ID) {
 			return ApexBridgeNetwork.TestnetBsc;
+		}
+		if (networkId === TESTNET_POLYGON_NETWORK_ID) {
+			return ApexBridgeNetwork.TestnetPolygon;
 		}
 	}
 	return undefined;
@@ -194,6 +215,7 @@ const EXPLORER_URLS: {
 		[ChainEnum.Cardano]: 'https://cardanoscan.io',
 		[ChainEnum.Base]: 'https://basescan.org',
 		[ChainEnum.Bsc]: 'https://bscscan.com',
+		[ChainEnum.Polygon]: 'https://polygonscan.com/',
 	},
 	testnet: {
 		[ChainEnum.Prime]:
@@ -201,11 +223,12 @@ const EXPLORER_URLS: {
 		[ChainEnum.Vector]: 'https://explorer.vector.testnet.apexfusion.org',
 		[ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
 		[ChainEnum.Cardano]: 'https://preview.cardanoscan.io',
+		[ChainEnum.Polygon]: 'https://amoy.polygonscan.com/',
 	},
 };
 
 export const CHAIN_RPC_URLS: { [key: string]: string } = {
-	[ChainEnum.Nexus]: 'https://partner-rpc-1.nexus.route3.dev',
+	[ChainEnum.Nexus]: 'https://rpc.nexus.mainnet.apexfusion.org/',
 	[ChainEnum.Base]: 'https://mainnet.base.org',
 	[ChainEnum.Bsc]: 'https://bsc-dataseed.bnbchain.org',
 };
@@ -241,6 +264,7 @@ export const getExplorerTxUrl = (
 		}
 		case ChainEnum.Base:
 		case ChainEnum.Bsc:
+		case ChainEnum.Polygon:
 		case ChainEnum.Nexus: {
 			url = `${base}/tx/${txHash}`;
 			break;
@@ -307,6 +331,7 @@ export const getExplorerAddressUrl = (
 		case ChainEnum.Cardano:
 		case ChainEnum.Prime:
 		case ChainEnum.Vector:
+		case ChainEnum.Polygon:
 		case ChainEnum.Nexus: {
 			url = `${base}/address/${address}`;
 			break;

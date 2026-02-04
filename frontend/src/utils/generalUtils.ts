@@ -2,9 +2,7 @@ import {
 	BridgeTransactionDto,
 	ChainEnum,
 } from '../swagger/apexBridgeApiService';
-import Web3 from 'web3';
 import { Numbers } from 'web3-types';
-import { EtherUnits } from 'web3-utils';
 
 // chain icons
 import { UTxO } from '../features/WalletHandler';
@@ -24,6 +22,8 @@ import { isCardanoChain, isEvmChain, isLZBridging } from '../settings/chain';
 import appSettings from '../settings/appSettings';
 import { normalizeNativeTokenKey } from './tokenUtils';
 import { captureAndThrowError, captureException } from '../features/sentry';
+import Web3 from 'web3';
+import { EtherUnits } from 'web3-utils';
 
 export const SKYLINE_DOCUMENTATION_URL =
 	'https://ethernal-5.gitbook.io/skyline';
@@ -76,16 +76,16 @@ export const convertEvmDfmToApex = (dfm: string | number): string => {
 	return fromWei(dfm, 'ether');
 };
 
-// convert eth to wei (nexus)
+// convert eth to wei (evm)
 const convertApexToEvmDfm = (apex: string | number): string => {
 	return toWei(apex, 'ether');
 };
 
-export const convertWeiToDfm = (wei: string | number): string => {
+export const convertWeiToDfm = (wei: Numbers): string => {
 	return fromWei(wei, 12);
 };
 
-export const convertDfmToWei = (dfm: string | number): string => {
+export const convertDfmToWei = (dfm: Numbers): string => {
 	return toWei(dfm, 12);
 };
 

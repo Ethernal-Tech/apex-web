@@ -102,7 +102,7 @@ export class TransactionService {
 			);
 		}
 
-		const minBridgingFee = BigInt(srcMinFee);
+		const minBridgingFee = BigInt(srcMinFee || '0');
 		const bridgingFee = BigInt(dto.bridgingFee || '0');
 		if (bridgingFee !== BigInt(0) && bridgingFee < minBridgingFee) {
 			throw new BadRequestException(

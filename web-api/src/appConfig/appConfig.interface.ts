@@ -15,6 +15,11 @@ export interface LayerZeroNetworkConfig {
 	txType: string;
 }
 
+export interface EvmAddressConfig {
+	chain: string;
+	address: `0x${string}`;
+}
+
 export interface AppConfig {
 	app: {
 		logLevel: LogLevel;
@@ -30,8 +35,8 @@ export interface AppConfig {
 		ethTxTtlInc: number;
 		recentInputsThresholdMinutes: number;
 		addresses: {
-			skylineNexusGateway: `0x${string}`;
-			skylineNexusNativeTokenWallet: `0x${string}`;
+			skylineGateway: EvmAddressConfig[];
+			skylineNativeTokenWallet: EvmAddressConfig[];
 			reactorNexusGateway: `0x${string}`;
 			reactorNexusCentralizedGateway: `0x${string}`;
 		};

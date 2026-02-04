@@ -32,12 +32,12 @@ type ReactorSettingsResponse struct {
 type SkylineSettingsResponse struct {
 	// For each chain, the minimum fee required to cover the submission of the currency transaction
 	// on the destination chain
-	MinChainFeeForBridging map[string]uint64 `json:"minChainFeeForBridging"`
+	MinChainFeeForBridging map[string]string `json:"minChainFeeForBridging"`
 	// For each chain, the minimum fee required to cover the submission of the native token transaction
 	// on the destination chain
 	MinChainFeeForBridgingTokens map[string]uint64 `json:"minChainFeeForBridgingTokens"`
 	// For each chain, the minimum fee required to cover operational costs
-	MinOperationFee map[string]uint64 `json:"minOperationFee"`
+	MinOperationFee map[string]string `json:"minOperationFee"`
 	// For each chain, the minimum allowed UTXO value
 	MinUtxoChainValue map[string]uint64 `json:"minUtxoChainValue"`
 	// For each chain, the direction config
@@ -51,7 +51,7 @@ type SkylineSettingsResponse struct {
 	// Maximum amount of native tokens allowed to be bridged
 	MaxTokenAmountAllowedToBridge string `json:"maxTokenAmountAllowedToBridge"`
 	// Minimum amount of colored tokens allowed to be bridged
-	MinColCoinsAllowedToBridge string `json:"minColCoinsAllowedToBridge"`
+	MinColCoinsAllowedToBridge map[string]string `json:"minColCoinsAllowedToBridge"`
 	// Maximum number of receivers allowed in a bridging request
 	MaxReceiversPerBridgingRequest int `json:"maxReceiversPerBridgingRequest"`
 }

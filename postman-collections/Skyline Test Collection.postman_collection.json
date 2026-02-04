@@ -677,7 +677,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"senderAddress\": \"0xcCB2dDA531690E0eacf03338116Ea214c6379cD4\",\n  \"originChain\": \"nexus\",\n  \"destinationChain\": \"vector\",\n  \"destinationAddress\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n  \"amount\": \"2500000000000000000\",\n  \"tokenID\": 1,\n  \"bridgingFee\": \"1000010\",\n  \"operationFee\": \"1000010\",\n  \"utxoCacheKey\": \"testCacheKey123\"\n}",
+									"raw": "{\n  \"senderAddress\": \"0xcCB2dDA531690E0eacf03338116Ea214c6379cD4\",\n  \"originChain\": \"nexus\",\n  \"destinationChain\": \"vector\",\n  \"destinationAddress\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n  \"amount\": \"2500000000000000000\",\n  \"tokenID\": 1,\n  \"bridgingFee\": \"1000010000000000000\",\n  \"operationFee\": \"1000010\",\n  \"utxoCacheKey\": \"testCacheKey123\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"

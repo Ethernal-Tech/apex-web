@@ -14,11 +14,15 @@ import {
 const NEXUS_TESTNET_CHAIN_ID = BigInt(9070);
 const NEXUS_MAINNET_CHAIN_ID = BigInt(9069);
 
+const POLYGON_TESTNET_CHAIN_ID = BigInt(80002);
+const POLYGON_MAINNET_CHAIN_ID = BigInt(137);
+
 export const CHAIN_TO_CHAIN_ID = {
 	[ChainApexBridgeEnum.Prime]: 1,
 	[ChainApexBridgeEnum.Vector]: 2,
 	[ChainApexBridgeEnum.Nexus]: 3,
 	[ChainApexBridgeEnum.Cardano]: 4,
+	[ChainApexBridgeEnum.Polygon]: 5,
 };
 
 export type BridgingDirectionInfo = {
@@ -27,7 +31,7 @@ export type BridgingDirectionInfo = {
 	bridgingMode: BridgingModeEnum;
 };
 
-const fromChainToNetworkId = (
+export const fromChainToNetworkId = (
 	chain: ChainApexBridgeEnum,
 	isMainnet: boolean,
 ): number | bigint | undefined => {
@@ -47,6 +51,9 @@ const fromChainToNetworkId = (
 			return isMainnet
 				? CardanoNetworkType.MainNetNetwork
 				: CardanoNetworkType.TestNetNetwork;
+		}
+		case ChainApexBridgeEnum.Polygon: {
+			return isMainnet ? POLYGON_MAINNET_CHAIN_ID : POLYGON_TESTNET_CHAIN_ID;
 		}
 		default:
 			return;
@@ -69,7 +76,8 @@ export const isCardanoChain = (chain: ChainEnum) =>
 	chain === ChainEnum.Prime ||
 	chain === ChainEnum.Vector;
 
-export const isEvmChain = (chain: ChainEnum) => chain === ChainEnum.Nexus;
+export const isEvmChain = (chain: ChainEnum) =>
+	chain === ChainEnum.Nexus || chain === ChainEnum.Polygon;
 
 const isAllowedDirection = function (
 	srcChain: ChainEnum,

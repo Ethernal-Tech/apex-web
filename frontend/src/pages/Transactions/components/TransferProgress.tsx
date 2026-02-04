@@ -40,6 +40,11 @@ import { ReactComponent as CardanoInProgressIcon } from '../../../assets/bridge-
 import { ReactComponent as CardanoSuccessIcon } from '../../../assets/bridge-status-assets/Cardano.svg';
 import { ReactComponent as CardanoErrorIcon } from '../../../assets/bridge-status-assets/cardano-error.svg';
 
+// polygon icons
+import { ReactComponent as PolygonInProgressIcon } from '../../../assets/bridge-status-assets/polygon.svg';
+import { ReactComponent as PolygonSuccessIcon } from '../../../assets/bridge-status-assets/polygon-success.svg';
+import { ReactComponent as PolygonErrorIcon } from '../../../assets/bridge-status-assets/polygon-error.svg';
+
 // bridge icons
 import { ReactComponent as BridgeInProgressIcon } from '../../../assets/bridge-status-assets/Bridge-Wallet.svg';
 import { ReactComponent as BridgeSuccessIcon } from '../../../assets/bridge-status-assets/bridge-success.svg';
@@ -127,6 +132,11 @@ const chainStatusIcons: {
 		inProgress: NexusInProgressIcon,
 		done: NexusSuccessIcon,
 		error: NexusErrorIcon,
+	},
+	[ChainEnum.Polygon]: {
+		inProgress: PolygonInProgressIcon,
+		done: PolygonSuccessIcon,
+		error: PolygonErrorIcon,
 	},
 };
 

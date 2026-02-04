@@ -1,7 +1,1 @@
-<svg width="32" height="33" viewBox="0 0 32 33" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="BNB Chain logo">
-  <!-- Round badge background -->
-  <circle cx="16" cy="16.5" r="16" fill="#F3BA2F"></circle>
-  <!-- BNB Chain white symbol -->
-  <path fill="white" d="M16 7.5l3.9 3.9-1.45 1.45L16 10.4l-2.45 2.45L12.1 11.4 16 7.5Zm7.5 7.5L27 18.5l-3.5 3.5-1.45-1.45 2.05-2.05-2.05-2.05L23.5 15Zm-15 0 1.45 1.45-2.05 2.05 2.05 2.05L8.5 22 5 18.5l3.5-3.5Zm7.5 2.5 2.45 2.45-1.45 1.45L16 20.4l-2.05 2.05-1.45-1.45L16 17.5Z"></path>
-  <title>BNB Chain logo</title>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" aria-label="BNB Chain logo" width="32" height="33" viewBox="0 0 32 33"><circle cx="16" cy="16.5" r="16" fill="#F3BA2F"/><g fill="#fff"><path d="m22.848 20.776-.002.001-6.843 6.844-6.842-6.841-.003-.004 2.52-2.513 4.325 4.325 4.327-4.327zM22.846 12.195 20.33 14.71l-4.327-4.327-4.326 4.325-2.516-2.517 6.842-6.841zM22.105 16.487l2.517-2.516 2.516 2.516-2.516 2.517zM4.868 16.487l2.516-2.517 2.517 2.517-2.517 2.516z"/><path d="m18.556 16.485-2.553-2.554-2.554 2.554 2.555 2.555 2.555-2.555h-.003"/></g></svg>

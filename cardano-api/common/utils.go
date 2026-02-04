@@ -211,6 +211,26 @@ func WeiToDfm(wei *big.Int) *big.Int {
 	return dfm
 }
 
+func WeiToDfmCeil(wei *big.Int) *big.Int {
+	dfm := new(big.Int).Set(wei)
+	base := big.NewInt(10)
+	mod := new(big.Int)
+	dfm.DivMod(dfm, base.Exp(base, big.NewInt(WeiDecimals-DfmDecimals), nil), mod)
+
+	if mod.BitLen() > 0 { // for zero big.Int BitLen() == 0
+		dfm.Add(dfm, big.NewInt(1))
+	}
+
+	return dfm
+}
+
+func DfmToWei(dfm *big.Int) *big.Int {
+	wei := new(big.Int).Set(dfm)
+	base := big.NewInt(10)
+
+	return wei.Mul(wei, base.Exp(base, big.NewInt(WeiDecimals-DfmDecimals), nil))
+}
+
 func executeHTTPCall[TResponse any](req *http.Request, apiKey string) (t TResponse, err error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-KEY", apiKey)
@@ -235,4 +255,12 @@ func executeHTTPCall[TResponse any](req *http.Request, apiKey string) (t TRespon
 	}
 
 	return responseModel, nil
+}
+
+func MaxBigInt(a, b *big.Int) *big.Int {
+	if a.Cmp(b) >= 0 { // a >= b
+		return a
+	}
+
+	return b
 }

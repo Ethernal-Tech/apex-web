@@ -60,6 +60,26 @@ export const layerZeroConfig = makeValidator((x) => {
 		});
 });
 
+export const evmAddressConfig = makeValidator((x) => {
+	if (!x) return [];
+
+	return x
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean)
+		.map((item) => {
+			const parts = item.split('::');
+			if (parts.length !== 2) {
+				throw new Error(`Invalid evm address config item format: "${item}"`);
+			}
+			const [chain, address] = parts;
+			return {
+				chain,
+				address: address as `0x${string}`,
+			};
+		});
+});
+
 export const envOverrides = (): DeepPartial<AppConfig> => {
 	const env = cleanEnv(process.env, {
 		LOG_LEVEL: str({ default: undefined }),
@@ -74,8 +94,8 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 
 		ETH_TX_TTL_INC: num({ default: undefined }),
 		RECENT_INPUTS_THRESHOLD_MINUTES: num({ default: undefined }),
-		SKYLINE_NEXUS_GATEWAY_ADDR: str({ default: undefined }),
-		SKYLINE_NEXUS_NT_WALLET_ADDR: str({ default: undefined }),
+		SKYLINE_GATEWAY_ADDRS: evmAddressConfig({ default: undefined }),
+		SKYLINE_NT_WALLET_ADDRS: evmAddressConfig({ default: undefined }),
 		REACTOR_NEXUS_GATEWAY_ADDR: str({ default: undefined }),
 		REACTOR_NEXUS_CENTRALIZED_GATEWAY_ADDR: str({ default: undefined }),
 
@@ -119,9 +139,8 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			ethTxTtlInc: env.ETH_TX_TTL_INC,
 			recentInputsThresholdMinutes: env.RECENT_INPUTS_THRESHOLD_MINUTES,
 			addresses: {
-				skylineNexusGateway: env.SKYLINE_NEXUS_GATEWAY_ADDR as `0x${string}`,
-				skylineNexusNativeTokenWallet:
-					env.SKYLINE_NEXUS_NT_WALLET_ADDR as `0x${string}`,
+				skylineGateway: env.SKYLINE_GATEWAY_ADDRS,
+				skylineNativeTokenWallet: env.SKYLINE_NT_WALLET_ADDRS,
 				reactorNexusGateway: env.REACTOR_NEXUS_GATEWAY_ADDR as `0x${string}`,
 				reactorNexusCentralizedGateway:
 					env.REACTOR_NEXUS_CENTRALIZED_GATEWAY_ADDR as `0x${string}`,
