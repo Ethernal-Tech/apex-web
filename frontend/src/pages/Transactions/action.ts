@@ -37,13 +37,7 @@ export const createEthTransactionAction = (model: CreateTransactionDto) => {
 export const bridgingTransactionSubmittedAction = (
 	model: TransactionSubmittedDto,
 ) => {
-	const keepAliveHttp = {
-		fetch: (url: RequestInfo, init?: RequestInit) => {
-			return window.fetch(url, { ...init, keepalive: true });
-		},
-	};
-
-	const client = new TransactionControllerClient(undefined, keepAliveHttp);
+	const client = new TransactionControllerClient();
 
 	return client.bridgingTransactionSubmitted(model);
 };
