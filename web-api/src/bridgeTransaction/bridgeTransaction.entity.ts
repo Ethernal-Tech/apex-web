@@ -57,6 +57,6 @@ export class BridgeTransaction {
 	@Column({ nullable: true })
 	activeFrom?: Date;
 
-	@Column({ nullable: true })
-	clientID?: string;
+	@Column({ type: 'varchar', nullable: true })
+	clientID?: string | null;
 }

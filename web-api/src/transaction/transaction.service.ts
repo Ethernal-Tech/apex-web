@@ -389,7 +389,7 @@ export class TransactionService {
 				.update(ip + (getAppConfig().hashSecret ?? ''))
 				.digest('hex') !== entity?.clientID ||
 			!entity?.activeFrom ||
-			entity.activeFrom > new Date()
+			entity.activeFrom < new Date()
 		) {
 			throw new BadRequestException('unauthorized transaction update');
 		}
@@ -429,7 +429,7 @@ export class TransactionService {
 				.update(ip + (getAppConfig().hashSecret ?? ''))
 				.digest('hex') === entity?.clientID ||
 			!entity?.activeFrom ||
-			entity.activeFrom > new Date()
+			entity.activeFrom < new Date()
 		) {
 			const result = await this.bridgeTransactionRepository.delete({
 				sourceTxHash: hash,

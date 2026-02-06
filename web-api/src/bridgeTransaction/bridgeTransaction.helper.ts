@@ -415,7 +415,7 @@ const updateBridgeTransactionState = (
 	}
 
 	if (state.status !== TransactionStatusEnum.Pending && entity.clientID) {
-		entity.clientID = undefined;
+		entity.clientID = null;
 	}
 };
 
