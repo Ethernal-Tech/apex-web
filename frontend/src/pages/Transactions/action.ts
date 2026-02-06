@@ -66,6 +66,14 @@ export const bridgingTransactionActivateAction = (
 	return client.bridgingTransactionActivate(model);
 };
 
+export const bridgingTransactionSubmittedActivatedAction = (
+	model: TransactionSubmittedDto,
+) => {
+	const client = new TransactionControllerClient();
+
+	return client.bridgingTransactionSubmittedActivated(model);
+};
+
 export const layerZeroTransferAction = (model: LayerZeroTransferDto) => {
 	const client = new TransactionControllerClient();
 	return client.layerZeroTransfer(model);

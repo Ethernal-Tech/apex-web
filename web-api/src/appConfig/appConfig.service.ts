@@ -104,4 +104,7 @@ export class AppConfigService {
 	get txValidityPeriod() {
 		return this.config.app.txValidityPeriod;
 	}
+	get hashSecret() {
+		return this.config.app.hashSecret;
+	}
 }

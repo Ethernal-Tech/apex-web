@@ -2,6 +2,7 @@ import {
 	bridgingTransactionActivateAction,
 	bridgingTransactionDeleteAction,
 	bridgingTransactionSubmittedAction,
+	bridgingTransactionSubmittedActivatedAction,
 	bridgingTransactionUpdateAction,
 	layerZeroTransferAction,
 } from '../pages/Transactions/action';
@@ -137,6 +138,7 @@ export const signAndSubmitCardanoTx = async (
 			}),
 		);
 
+		// we dont await on purpose, because we want this to execute in the background, without blocking the user
 		void retryForever(async () => {
 			const res = await tryCatchJsonByAction(bindedDeleteAction, false);
 
@@ -240,7 +242,7 @@ export const signAndSubmitEthTx = async (
 
 		console.log('submitting eth approval tx...', tx);
 		const receipt = await evmWalletHandler.submitTx(tx);
-		if (receipt.status !== BigInt(1)) {
+		if (receipt.status !== TX_SUCCESS) {
 			captureAndThrowError(
 				'approval transaction has failed. receipt status unsuccessful',
 				'submitTx.ts',
@@ -319,9 +321,10 @@ export const signAndSubmitEthTx = async (
 	const submitPromise = evmWalletHandler.submitTx(tx);
 	submitPromise.on('transactionHash', onTxHash);
 
-	const response = await submitActionPromise;
-
-	const receipt = await submitPromise;
+	const [response, receipt] = await Promise.all([
+		submitActionPromise,
+		submitPromise,
+	]);
 
 	updateLoadingState({
 		content: 'Recording the transaction...',
@@ -347,6 +350,7 @@ export const signAndSubmitEthTx = async (
 			}),
 		);
 
+		// we dont await on purpose, because we want this to execute in the background, without blocking the user
 		void retryForever(async () => {
 			const res = await tryCatchJsonByAction(bindedDeleteAction, false);
 
@@ -364,8 +368,8 @@ export const signAndSubmitEthTx = async (
 
 	if (response instanceof ErrorResponse) {
 		try {
-			const bindedSubmittedAction =
-				bridgingTransactionSubmittedAction.bind(
+			const bindedSubmittedActivatedAction =
+				bridgingTransactionSubmittedActivatedAction.bind(
 					null,
 					new TransactionSubmittedDto({
 						...baseSubmittedDto,
@@ -377,9 +381,9 @@ export const signAndSubmitEthTx = async (
 					}),
 				);
 
-			await retry(async () => {
+			const submittedResponse = await retry(async () => {
 				const res = await tryCatchJsonByAction(
-					bindedSubmittedAction,
+					bindedSubmittedActivatedAction,
 					false,
 				);
 
@@ -388,28 +392,7 @@ export const signAndSubmitEthTx = async (
 				}
 			}, tryCount);
 
-			const bindedActivateAction = bridgingTransactionActivateAction.bind(
-				null,
-				new TransactionActivateDeleteDto({
-					originChain: values.originChain as unknown as ChainEnum,
-					originTxHash: receipt.transactionHash.toString(),
-				}),
-			);
-
-			const activateResponse = await retry(async () => {
-				const res = await tryCatchJsonByAction(
-					bindedActivateAction,
-					false,
-				);
-
-				if (res instanceof ErrorResponse) {
-					throw new Error(res.err ?? 'ErrorResponse');
-				}
-
-				return res;
-			}, tryCount);
-
-			return activateResponse;
+			return submittedResponse;
 		} catch (err) {
 			captureAndThrowError(
 				err instanceof Error ? err : new Error(String(err)),
@@ -512,7 +495,7 @@ export const signAndSubmitLayerZeroTx = async (
 
 		console.log('submitting layer zero approval tx...', tx);
 		const receipt = await evmWalletHandler.submitTx(tx, opts);
-		if (receipt.status !== BigInt(1)) {
+		if (receipt.status !== TX_SUCCESS) {
 			captureAndThrowError(
 				'approval transaction has failed. receipt status unsuccessful',
 				'submitTx.ts',
@@ -560,8 +543,9 @@ export const signAndSubmitLayerZeroTx = async (
 
 	const latestBlock = await evmWalletHandler.getBlock();
 
-	let actionPromise: Promise<BridgeTransactionDto | ErrorResponse | void> =
-		Promise.resolve();
+	let submitActionPromise: Promise<
+		BridgeTransactionDto | ErrorResponse | void
+	> = Promise.resolve();
 
 	const onTxHash = (txHash: any) => {
 		updateLoadingState({
@@ -581,16 +565,19 @@ export const signAndSubmitLayerZeroTx = async (
 			}),
 		);
 
-		actionPromise = tryCatchJsonByAction(bindedSubmittedAction, false);
+		submitActionPromise = tryCatchJsonByAction(
+			bindedSubmittedAction,
+			false,
+		);
 	};
 
 	const submitPromise = evmWalletHandler.submitTx(sendTx, opts);
 	submitPromise.on('transactionHash', onTxHash);
 
-	const response = await actionPromise;
-
-	// Return the receipt from the actual send
-	const receipt = await submitPromise;
+	const [response, receipt] = await Promise.all([
+		submitActionPromise,
+		submitPromise,
+	]);
 
 	updateLoadingState({
 		content: 'Recording the bridging transaction...',
@@ -599,7 +586,7 @@ export const signAndSubmitLayerZeroTx = async (
 
 	submitPromise.off('transactionHash', onTxHash);
 
-	if (receipt.status !== BigInt(1)) {
+	if (receipt.status !== TX_SUCCESS) {
 		if (response instanceof ErrorResponse) {
 			captureAndThrowError(
 				response.err,
@@ -616,6 +603,7 @@ export const signAndSubmitLayerZeroTx = async (
 			}),
 		);
 
+		// we dont await on purpose, because we want this to execute in the background, without blocking the user
 		void retryForever(async () => {
 			const res = await tryCatchJsonByAction(bindedDeleteAction, false);
 
@@ -635,8 +623,8 @@ export const signAndSubmitLayerZeroTx = async (
 
 	if (response instanceof ErrorResponse) {
 		try {
-			const bindedSubmittedAction =
-				bridgingTransactionSubmittedAction.bind(
+			const bindedSubmittedActivatedAction =
+				bridgingTransactionSubmittedActivatedAction.bind(
 					null,
 					new TransactionSubmittedDto({
 						...baseSubmittedDto,
@@ -651,9 +639,9 @@ export const signAndSubmitLayerZeroTx = async (
 					}),
 				);
 
-			await retry(async () => {
+			const submittedActivatedResponse = await retry(async () => {
 				const res = await tryCatchJsonByAction(
-					bindedSubmittedAction,
+					bindedSubmittedActivatedAction,
 					false,
 				);
 
@@ -662,28 +650,7 @@ export const signAndSubmitLayerZeroTx = async (
 				}
 			}, tryCount);
 
-			const bindedActivateAction = bridgingTransactionActivateAction.bind(
-				null,
-				new TransactionActivateDeleteDto({
-					originChain: originalSrcChain,
-					originTxHash: receipt.transactionHash.toString(),
-				}),
-			);
-
-			const activateResponse = await retry(async () => {
-				const res = await tryCatchJsonByAction(
-					bindedActivateAction,
-					false,
-				);
-
-				if (res instanceof ErrorResponse) {
-					throw new Error(res.err ?? 'ErrorResponse');
-				}
-
-				return res;
-			}, tryCount);
-
-			return activateResponse;
+			return submittedActivatedResponse;
 		} catch (err) {
 			captureAndThrowError(
 				err instanceof Error ? err : new Error(String(err)),

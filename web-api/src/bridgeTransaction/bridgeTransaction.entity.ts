@@ -56,4 +56,7 @@ export class BridgeTransaction {
 
 	@Column({ nullable: true })
 	activeFrom?: Date;
+
+	@Column({ nullable: true })
+	clientID?: string;
 }

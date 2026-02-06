@@ -164,7 +164,7 @@ export class TransactionController {
 		@Body() model: TransactionUpdateDto,
 		@Ip() ip: string,
 	): Promise<BridgeTransactionDto> {
-		return this.transactionService.updateTransactionInternal(
+		return this.transactionService.updateTransaction(
 			model.originChain,
 			model.originTxHash,
 			ip,
@@ -208,10 +208,34 @@ export class TransactionController {
 		@Body() model: TransactionActivateDeleteDto,
 		@Ip() ip: string,
 	): Promise<BridgeTransactionDto> {
-		return this.transactionService.updateTransactionInternal(
+		return this.transactionService.updateTransaction(
 			model.originChain,
 			model.originTxHash,
 			ip,
 		);
+	}
+
+	@ApiOperation({
+		summary:
+			'Save non-active transactions to the database, with desired activation offset',
+		description:
+			'Returns a non active bridging transaction along with its associated data.',
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: BridgeTransactionDto,
+		description: 'OK - Returns non-active bridging transaction.',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request - Error while non-active transaction submittion.',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('bridgingTransactionSubmittedActivated')
+	async bridgingTransactionSubmittedActivated(
+		@Body() model: TransactionSubmittedDto,
+		@Ip() ip: string,
+	): Promise<BridgeTransactionDto> {
+		return this.transactionService.transactionSubmitted(model, ip, true);
 	}
 }

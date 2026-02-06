@@ -1,6 +1,5 @@
 import {
 	BadRequestException,
-	Inject,
 	Injectable,
 	InternalServerErrorException,
 	NotFoundException,
@@ -50,13 +49,11 @@ import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
 import { isAddress } from 'web3-validator';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import type { Cache } from 'cache-manager';
+import { createHash } from 'crypto';
 
 @Injectable()
 export class TransactionService {
 	constructor(
-		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly settingsService: SettingsService,
@@ -301,6 +298,7 @@ export class TransactionService {
 			isLayerZero,
 		}: TransactionSubmittedDto,
 		ip: string,
+		activate = false,
 	): Promise<BridgeTransactionDto> {
 		const entity = new BridgeTransaction();
 
@@ -341,18 +339,20 @@ export class TransactionService {
 		entity.txRaw = txRaw;
 		entity.isCentralized = isFallback;
 		entity.isLayerZero = isLayerZero;
-		entity.activeFrom = new Date(Date.now() + this.appConfig.txValidityPeriod);
+		entity.activeFrom = activate
+			? new Date()
+			: new Date(Date.now() + this.appConfig.txValidityPeriod);
+		entity.clientID = activate
+			? undefined
+			: createHash('sha256')
+					.update(ip + (getAppConfig().hashSecret ?? ''))
+					.digest('hex');
 
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
 
 		try {
 			await this.bridgeTransactionRepository.save(newBridgeTransaction);
-			await this.cacheManager.set(
-				entity.sourceTxHash,
-				ip,
-				this.appConfig.txValidityPeriod,
-			);
 
 			return mapBridgeTransactionToResponse(newBridgeTransaction);
 		} catch (e) {
@@ -372,7 +372,7 @@ export class TransactionService {
 			}
 		}
 	}
-	async updateTransactionInternal(
+	async updateTransaction(
 		originChain: ChainEnum,
 		originTxHash: string,
 		ip: string,
@@ -380,18 +380,22 @@ export class TransactionService {
 	): Promise<BridgeTransactionDto> {
 		const hash = originTxHash.trim();
 
-		const cachedIp = await this.cacheManager.get<string>(hash);
-
-		if (ip !== cachedIp) {
-			throw new BadRequestException('unauthorized transaction update');
-		}
-
 		const entity = await this.bridgeTransactionRepository.findOne({
 			where: { sourceTxHash: hash, originChain: originChain },
 		});
 
+		if (
+			createHash('sha256')
+				.update(ip + (getAppConfig().hashSecret ?? ''))
+				.digest('hex') !== entity?.clientID ||
+			!entity?.activeFrom ||
+			entity.activeFrom > new Date()
+		) {
+			throw new BadRequestException('unauthorized transaction update');
+		}
+
 		if (!entity) {
-			throw new NotFoundException(`Transaction with hash ${hash} not found`);
+			throw new NotFoundException(`transaction with hash ${hash} not found`);
 		}
 
 		// Apply updates
@@ -399,10 +403,9 @@ export class TransactionService {
 			entity.txRaw = txRaw;
 		}
 		entity.activeFrom = new Date();
+		entity.clientID = undefined;
 
 		const savedEntity = await this.bridgeTransactionRepository.save(entity);
-
-		await this.cacheManager.del(originTxHash);
 
 		return mapBridgeTransactionToResponse(savedEntity);
 	}
@@ -417,15 +420,22 @@ export class TransactionService {
 			throw new BadRequestException('sourceTxHash is required');
 		}
 
-		const cachedIp = await this.cacheManager.get<string>(hash);
+		const entity = await this.bridgeTransactionRepository.findOne({
+			where: { sourceTxHash: hash, originChain: originChain },
+		});
 
-		if (ip === cachedIp) {
+		if (
+			createHash('sha256')
+				.update(ip + (getAppConfig().hashSecret ?? ''))
+				.digest('hex') === entity?.clientID ||
+			!entity?.activeFrom ||
+			entity.activeFrom > new Date()
+		) {
 			const result = await this.bridgeTransactionRepository.delete({
 				sourceTxHash: hash,
 				originChain: originChain,
 			});
 
-			await this.cacheManager.del(originTxHash);
 			if (result.affected === 0) {
 				throw new NotFoundException(`Transaction with hash ${hash} not found`);
 			}

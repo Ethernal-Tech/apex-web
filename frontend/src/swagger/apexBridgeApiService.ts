@@ -536,6 +536,54 @@ export class TransactionControllerClient extends BaseClient {
         }
         return Promise.resolve<BridgeTransactionDto>(null as any);
     }
+
+    /**
+     * Save non-active transactions to the database, with desired activation offset
+     * @return OK - Returns non-active bridging transaction.
+     */
+    bridgingTransactionSubmittedActivated(body: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
+        let url_ = this.baseUrl + "/transaction/bridgingTransactionSubmittedActivated";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processBridgingTransactionSubmittedActivated(_response);
+        });
+    }
+
+    protected processBridgingTransactionSubmittedActivated(response: Response): Promise<BridgeTransactionDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BridgeTransactionDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request - Error while non-active transaction submittion.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BridgeTransactionDto>(null as any);
+    }
 }
 
 export class BridgeTransactionControllerClient extends BaseClient {
@@ -1106,6 +1154,7 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
             this.minChainFeeForBridgingTokens = {};
             this.minOperationFee = {};
             this.minUtxoChainValue = {};
+            this.minColCoinsAllowedToBridge = {};
             this.directionConfig = {};
             this.ecosystemTokens = [];
         }
@@ -1145,6 +1194,9 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
                         (this.minUtxoChainValue as any)![key] = _data["minUtxoChainValue"][key];
                 }
             }
+            this.minValueToBridge = _data["minValueToBridge"];
+            this.maxAmountAllowedToBridge = _data["maxAmountAllowedToBridge"];
+            this.maxTokenAmountAllowedToBridge = _data["maxTokenAmountAllowedToBridge"];
             if (_data["minColCoinsAllowedToBridge"]) {
                 this.minColCoinsAllowedToBridge = {} as any;
                 for (let key in _data["minColCoinsAllowedToBridge"]) {
@@ -1152,9 +1204,6 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
                         (this.minColCoinsAllowedToBridge as any)![key] = _data["minColCoinsAllowedToBridge"][key];
                 }
             }
-            this.minValueToBridge = _data["minValueToBridge"];
-            this.maxAmountAllowedToBridge = _data["maxAmountAllowedToBridge"];
-            this.maxTokenAmountAllowedToBridge = _data["maxTokenAmountAllowedToBridge"];
             this.maxReceiversPerBridgingRequest = _data["maxReceiversPerBridgingRequest"];
             if (_data["directionConfig"]) {
                 this.directionConfig = {} as any;
@@ -1212,16 +1261,16 @@ export class BridgingSettingsDto implements IBridgingSettingsDto {
                     (data["minUtxoChainValue"] as any)[key] = (this.minUtxoChainValue as any)[key];
             }
         }
-        if (data["minColCoinsAllowedToBridge"]) {
-                this.minColCoinsAllowedToBridge = {} as any;
-                for (let key in data["minColCoinsAllowedToBridge"]) {
-                    if (data["minColCoinsAllowedToBridge"].hasOwnProperty(key))
-                        (this.minColCoinsAllowedToBridge as any)![key] = data["minColCoinsAllowedToBridge"][key];
-                }
-            }
         data["minValueToBridge"] = this.minValueToBridge;
         data["maxAmountAllowedToBridge"] = this.maxAmountAllowedToBridge;
         data["maxTokenAmountAllowedToBridge"] = this.maxTokenAmountAllowedToBridge;
+        if (this.minColCoinsAllowedToBridge) {
+            data["minColCoinsAllowedToBridge"] = {};
+            for (let key in this.minColCoinsAllowedToBridge) {
+                if (this.minColCoinsAllowedToBridge.hasOwnProperty(key))
+                    (data["minColCoinsAllowedToBridge"] as any)[key] = (this.minColCoinsAllowedToBridge as any)[key];
+            }
+        }
         data["maxReceiversPerBridgingRequest"] = this.maxReceiversPerBridgingRequest;
         if (this.directionConfig) {
             data["directionConfig"] = {};
@@ -1666,9 +1715,9 @@ export class CreateTransactionDto implements ICreateTransactionDto {
     amount!: string;
     /** id of the token */
     tokenID!: number;
-    /** Fee covering the submission of the transaction on the destination chain, expressed in Lovelace */
+    /** Fee covering the submission of the transaction on the destination chain */
     bridgingFee?: string | undefined;
-    /** Fee covering the operational cost of processing the bridging request, expressed in Lovelace */
+    /** Fee covering the operational cost of processing the bridging request */
     operationFee?: string | undefined;
     /** Key used to enable caching of spent UTXOs */
     utxoCacheKey?: string | undefined;
@@ -1739,9 +1788,9 @@ export interface ICreateTransactionDto {
     amount: string;
     /** id of the token */
     tokenID: number;
-    /** Fee covering the submission of the transaction on the destination chain, expressed in Lovelace */
+    /** Fee covering the submission of the transaction on the destination chain */
     bridgingFee?: string | undefined;
-    /** Fee covering the operational cost of processing the bridging request, expressed in Lovelace */
+    /** Fee covering the operational cost of processing the bridging request */
     operationFee?: string | undefined;
     /** Key used to enable caching of spent UTXOs */
     utxoCacheKey?: string | undefined;
@@ -2159,9 +2208,9 @@ export enum ChainEnum {
     Vector = "vector",
     Nexus = "nexus",
     Cardano = "cardano",
+    Polygon = "polygon",
     Base = "base",
     Bsc = "bsc",
-    Polygon = "polygon",
 }
 
 export class TransactionSubmittedDto implements ITransactionSubmittedDto {
@@ -3486,6 +3535,7 @@ export enum LayerZeroChainSettingsDtoChain {
     Vector = "vector",
     Nexus = "nexus",
     Cardano = "cardano",
+    Polygon = "polygon",
     Base = "base",
     Bsc = "bsc",
 }
