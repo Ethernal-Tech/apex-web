@@ -226,14 +226,15 @@ export const createEthBridgingTx = (
 		);
 	}
 
-	const chainForMinFee =
+	const minFee =
 		bridgingMode === BridgingModeEnum.Reactor
-			? dto.destinationChain
-			: dto.originChain;
-	const minFee = bridgingSettings.minChainFeeForBridging[chainForMinFee];
+			? convertDfmToWei(
+					bridgingSettings.minChainFeeForBridging[dto.destinationChain],
+				)
+			: bridgingSettings.minChainFeeForBridging[dto.originChain];
 	if (!minFee) {
 		throw new InternalServerErrorException(
-			`No minFee for chain: ${chainForMinFee}`,
+			`No minFee for chain: ${bridgingMode === BridgingModeEnum.Reactor ? dto.destinationChain : dto.originChain}`,
 		);
 	}
 	const minBridgingFee = BigInt(minFee || '0');
