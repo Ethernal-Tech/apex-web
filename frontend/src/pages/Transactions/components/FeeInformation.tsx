@@ -36,12 +36,18 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 						color: 'rgba(255,255,255,0.6)',
 					}}
 				>
-					User Wallet Fee:
+					<Typography
+						component={'span'}
+						color="white"
+						fontSize="13px"
+					>
+						User Wallet Fee
+					</Typography>
 					<Tooltip
 						title={
 							<Typography
 								color={'white'}
-								sx={{ fontSize: '14px' }}
+								sx={{ fontSize: '13px' }}
 							>
 								This is the fee paid to process your transaction
 								on the {capitalizeWord(chain)} blockchain.
@@ -55,11 +61,20 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 						/>
 					</Tooltip>
 				</Box>
-				<Box component="span" sx={{ whiteSpace: 'nowrap' }}>
+				<Box
+					component="span"
+					sx={{ whiteSpace: 'nowrap', fontSize: '13px' }}
+				>
 					{BigInt(userWalletFee) > 0
 						? toFixed(convertDfmToApex(userWalletFee, chain), 6)
 						: '0'}{' '}
-					AP3X
+					<Typography
+						component={'span'}
+						color="#828282"
+						fontSize="13px"
+					>
+						AP3X
+					</Typography>
 				</Box>
 			</Typography>
 
@@ -78,12 +93,18 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 						color: 'rgba(255,255,255,0.6)',
 					}}
 				>
-					Bridge Transaction Fee:
+					<Typography
+						component={'span'}
+						color="white"
+						fontSize="13px"
+					>
+						Bridge Transaction Fee
+					</Typography>
 					<Tooltip
 						title={
 							<Typography
 								color={'white'}
-								sx={{ fontSize: '14px' }}
+								sx={{ fontSize: '13px' }}
 							>
 								This fee covers the bridge blockchain
 								transaction costs. This fee is set to the
@@ -97,11 +118,20 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 						/>
 					</Tooltip>
 				</Box>
-				<Box component="span" sx={{ whiteSpace: 'nowrap' }}>
+				<Box
+					component="span"
+					sx={{ whiteSpace: 'nowrap', fontSize: '13px' }}
+				>
 					{BigInt(bridgeTxFee) > 0
 						? toFixed(convertDfmToApex(bridgeTxFee, chain), 6)
 						: '0'}{' '}
-					AP3X
+					<Typography
+						component={'span'}
+						color="#828282"
+						fontSize="13px"
+					>
+						AP3X
+					</Typography>
 				</Box>
 			</Typography>
 
@@ -118,9 +148,17 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 						color: 'rgba(255,255,255,0.6)',
 					}}
 				>
-					Estimated time
+					<Typography
+						component={'span'}
+						color="white"
+						fontSize="13px"
+					>
+						Estimated time
+					</Typography>
 				</Box>
-				<Box component="span">16-20 minutes</Box>
+				<Box component="span" fontSize="13px">
+					16-20 minutes
+				</Box>
 			</Typography>
 		</>
 	);

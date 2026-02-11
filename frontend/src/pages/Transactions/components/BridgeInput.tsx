@@ -1,8 +1,9 @@
-import { Box, Typography } from '@mui/material';
-import TotalBalance from '../components/TotalBalance';
+import { Box, Typography, SelectChangeEvent } from '@mui/material';
 import PasteTextInput from '../components/PasteTextInput';
 import PasteApexAmountInput from './PasteApexAmountInput';
 import ButtonCustom from '../../../components/Buttons/ButtonCustom';
+import TotalBalance from './TotalBalance';
+import { ReactComponent as OneDirectionArrowIcon } from '../../../assets/oneDirectionArrow.svg';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	calculateChangeMinUtxo,
@@ -10,7 +11,7 @@ import {
 	convertDfmToWei,
 	minBigInt,
 } from '../../../utils/generalUtils';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../../redux/store';
 import {
 	CardanoTransactionFeeResponseDto,
@@ -19,10 +20,21 @@ import {
 } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
 import { estimateEthGas } from '../../../actions/submitTx';
-import { isCardanoChain, isEvmChain } from '../../../settings/chain';
+import {
+	isCardanoChain,
+	isEvmChain,
+	getChainInfo,
+	getSrcChains,
+	getDstChains,
+} from '../../../settings/chain';
 import SubmitLoading from './SubmitLoading';
 import { SubmitLoadingState } from '../../../utils/statusUtils';
 import InfoBox from './InfoBox';
+import CustomSelect from '../../../components/customSelect/CustomSelect';
+import {
+	setChainAction,
+	setDestinationChainAction,
+} from '../../../redux/slices/chainSlice';
 
 type BridgeInputType = {
 	bridgeTxFee: string;
@@ -92,13 +104,22 @@ const BridgeInput = ({
 	const [userWalletFee, setUserWalletFee] = useState<string | undefined>();
 	const fetchCreateTxTimeoutRef = useRef<NodeJS.Timeout | undefined>();
 
+	const dispatch = useDispatch();
+
 	const walletUTxOs = useSelector(
 		(state: RootState) => state.accountInfo.utxos,
 	);
 	const totalDfmBalance = useSelector(
 		(state: RootState) => state.accountInfo.balance,
 	);
-	const { chain } = useSelector((state: RootState) => state.chain);
+	const { chain, destinationChain } = useSelector(
+		(state: RootState) => state.chain,
+	);
+	const wallet = useSelector((state: RootState) => state.wallet.wallet);
+	const account = useSelector(
+		(state: RootState) => state.accountInfo.account,
+	);
+	const settings = useSelector((state: RootState) => state.settings);
 	const minValueToBridge = useSelector(
 		(state: RootState) => state.settings.minValueToBridge,
 	);
@@ -108,6 +129,20 @@ const BridgeInput = ({
 	const validatorChangeInProgress = useSelector(
 		(state: RootState) => state.settings.validatorStatus,
 	);
+
+	const srcChain = chain;
+	const dstChain = destinationChain;
+	const isLoggedInMemo = !!wallet && !!account;
+	const srcChainOptions = useMemo(
+		() => getSrcChains(settings).map((x) => getChainInfo(x)),
+		[settings],
+	);
+	const dstChainOptions = useMemo(
+		() => getDstChains(srcChain, settings).map((x) => getChainInfo(x)),
+		[srcChain, settings],
+	);
+	const srcChainInfo = useMemo(() => getChainInfo(srcChain), [srcChain]);
+	const dstChainInfo = useMemo(() => getChainInfo(dstChain), [dstChain]);
 
 	const fetchWalletFee = useCallback(async () => {
 		if (!destinationAddr || !amount) {
@@ -160,10 +195,29 @@ const BridgeInput = ({
 		};
 	}, [fetchWalletFee]);
 
-	const onDiscard = () => {
-		setDestinationAddr('');
-		setAmount('');
-	};
+	useEffect(() => {
+		if (
+			(!srcChain || !srcChainOptions.some((x) => x.value === srcChain)) &&
+			srcChainOptions.length > 0
+		) {
+			dispatch(setChainAction(srcChainOptions[0].value));
+		}
+	}, [srcChain, srcChainOptions, dispatch]);
+
+	useEffect(() => {
+		if (
+			(!dstChain || !dstChainOptions.some((x) => x.value === dstChain)) &&
+			dstChainOptions.length > 0
+		) {
+			dispatch(setDestinationChainAction(dstChainOptions[0].value));
+		}
+	}, [dstChain, dstChainOptions, dispatch]);
+
+	const onChangeDstChain = useCallback(
+		(evnt: SelectChangeEvent<string>) =>
+			dispatch(setDestinationChainAction(evnt.target.value as ChainEnum)),
+		[dispatch],
+	);
 
 	const changeMinUtxo = useMemo(
 		() =>
@@ -203,62 +257,115 @@ const BridgeInput = ({
 
 	return (
 		<Box sx={{ width: '100%' }}>
-			<TotalBalance />
-
-			<Typography sx={{ color: 'white', mt: 4, mb: 2 }}>
-				Destination Address
-			</Typography>
-			{/* validate inputs */}
-			<PasteTextInput
-				sx={{ width: '50%' }}
-				text={destinationAddr}
-				setText={setDestinationAddr}
-				disabled={!!loadingState}
-				id="dest-addr"
-			/>
-
-			<Typography sx={{ color: 'white', mt: 4, mb: 1 }}>
-				Enter amount to send
-			</Typography>
 			<Box
+				p={3}
+				mt={2}
+				borderRadius={5}
 				sx={{
-					display: 'grid',
-					gridTemplateColumns: 'repeat(2,1fr)',
-					gap: '20px',
+					backgroundColor: '#242625',
 				}}
 			>
-				{/* validate inputs */}
-				<PasteApexAmountInput
-					maxAmounts={maxAmounts}
-					text={amount}
-					setAmount={setAmount}
-					disabled={!!loadingState}
-					id="bridge-amount"
-					sx={{
-						gridColumn: 'span 1',
-						borderBottom: '2px solid',
-						borderImageSource:
-							'linear-gradient(180deg, #435F69 10.63%, rgba(67, 95, 105, 0) 130.31%)',
-						borderImageSlice: 1,
-						paddingBottom: 2,
-						paddingTop: 2,
-					}}
-				/>
+				<Box display="flex" flexDirection="column">
+					<Typography
+						mb={'4px'}
+						fontWeight={400}
+						sx={{ color: '#fff', fontSize: '13px' }}
+					>
+						From
+					</Typography>
 
-				<InfoBox
-					userWalletFee={userWalletFee || '0'}
-					bridgeTxFee={bridgeTxFee}
-					chain={chain}
-					sx={{
-						gridColumn: 'span 1',
-						border: '1px solid #077368',
-						borderRadius: '8px',
-						padding: 2,
-					}}
-					isFeeInformation={!validatorChangeInProgress}
-				/>
+					{srcChainOptions.length > 0 && (
+						<CustomSelect
+							label="Source"
+							icon={srcChainInfo.icon}
+							value={srcChain}
+							disabled={isLoggedInMemo || !!loadingState}
+							options={srcChainOptions}
+						/>
+					)}
+				</Box>
+				<Box marginTop={2.5}>
+					<Box display="flex" justifyContent="space-between">
+						<Typography
+							sx={{ color: 'white', mb: 1, fontSize: '13px' }}
+						>
+							Enter amount
+						</Typography>
 
-				{!!loadingState && (
+						<TotalBalance />
+					</Box>
+					<Box>
+						<PasteApexAmountInput
+							maxAmounts={maxAmounts}
+							text={amount}
+							setAmount={setAmount}
+							disabled={!!loadingState}
+							id="bridge-amount"
+						/>
+					</Box>
+				</Box>
+				<Box
+					sx={{
+						position: 'relative',
+						display: 'flex',
+						justifyContent: 'center',
+						alignItems: 'center',
+						'&::before': {
+							content: '""',
+							position: 'absolute',
+							width: '100%',
+							height: '1px',
+							backgroundColor: '#4B4A4A',
+							zIndex: 0,
+						},
+					}}
+				>
+					<OneDirectionArrowIcon style={{ zIndex: 1 }} />
+				</Box>
+				<Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
+					<Box display="flex" flexDirection="column">
+						<Typography
+							mb={'4px'}
+							fontWeight={400}
+							sx={{ color: '#fff', fontSize: '13px' }}
+						>
+							To
+						</Typography>
+
+						{dstChainOptions.length > 0 && (
+							<CustomSelect
+								label="Destination"
+								icon={dstChainInfo.icon}
+								value={dstChain}
+								disabled={
+									dstChainOptions.length < 2 || !!loadingState
+								}
+								onChange={onChangeDstChain}
+								options={dstChainOptions}
+							/>
+						)}
+					</Box>
+					<Box>
+						<Typography
+							mb={'4px'}
+							sx={{ color: 'white', fontSize: '13px' }}
+						>
+							Destination Address
+						</Typography>
+						{/* validate inputs */}
+						<PasteTextInput
+							text={destinationAddr}
+							setText={setDestinationAddr}
+							disabled={!!loadingState}
+							id="dest-addr"
+						/>
+					</Box>
+				</Box>
+			</Box>
+
+			{/* 'Move funds' button */}
+			<Box marginTop={3} display="flex" justifyContent="center" gap={2}>
+				{loadingState ? (
 					<Box
 						sx={{
 							gridColumn: 'span 2',
@@ -270,39 +377,34 @@ const BridgeInput = ({
 					>
 						<SubmitLoading loadingState={loadingState} />
 					</Box>
+				) : (
+					<ButtonCustom
+						onClick={onSubmit}
+						variant="primary"
+						disabled={
+							validatorChangeInProgress !== false ||
+							!!loadingState ||
+							BigInt(maxAmount) <= 0 ||
+							hasInsufficientBalance ||
+							overMaxAllowed
+						}
+						sx={{
+							gridColumn: 'span 1',
+							textTransform: 'uppercase',
+						}}
+						id="bridge-tx"
+					>
+						Move funds
+					</ButtonCustom>
 				)}
-
-				<ButtonCustom
-					onClick={onDiscard}
-					disabled={!!loadingState}
-					variant="red"
-					sx={{
-						gridColumn: 'span 1',
-						textTransform: 'uppercase',
-					}}
-				>
-					Discard
-				</ButtonCustom>
-
-				<ButtonCustom
-					onClick={onSubmit}
-					variant="white"
-					disabled={
-						validatorChangeInProgress !== false ||
-						!!loadingState ||
-						BigInt(maxAmount) <= 0 ||
-						hasInsufficientBalance ||
-						overMaxAllowed
-					}
-					sx={{
-						gridColumn: 'span 1',
-						textTransform: 'uppercase',
-					}}
-					id="bridge-tx"
-				>
-					Move funds
-				</ButtonCustom>
 			</Box>
+
+			<InfoBox
+				userWalletFee={userWalletFee || '0'}
+				bridgeTxFee={bridgeTxFee}
+				chain={chain}
+				isFeeInformation={!validatorChangeInProgress}
+			/>
 		</Box>
 	);
 };

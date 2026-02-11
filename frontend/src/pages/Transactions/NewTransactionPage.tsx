@@ -303,7 +303,7 @@ function NewTransactionPage() {
 
 	return (
 		<BasePage>
-			<NewTransaction txInProgress={false}>
+			<NewTransaction>
 				<BridgeInput
 					bridgeTxFee={bridgeTxFee}
 					getCardanoTxFee={getCardanoTxFee}

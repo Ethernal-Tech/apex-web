@@ -11,8 +11,6 @@ import CustomSelect from '../../components/customSelect/CustomSelect';
 import { ReactComponent as SwitcherIcon } from '../../assets/switcher.svg';
 import { ReactComponent as OneDirectionArrowIcon } from '../../assets/oneDirectionArrow.svg';
 import BasePage from '../base/BasePage';
-import BridgeGraph from '../../assets/Bridge-Graph.svg';
-import { white } from '../../containers/theme';
 import ButtonCustom from '../../components/Buttons/ButtonCustom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
@@ -111,34 +109,45 @@ const HomePage: React.FC = () => {
 
 	return (
 		<BasePage>
-			<Typography
-				variant="h1"
-				sx={{ color: '#F25041', lineHeight: '', fontSize: '44px' }}
-				fontFamily={'Major Mono Display, sans-serif'}
-			>
-				ReactoR bRidge
-			</Typography>
-
-			<img
-				src={BridgeGraph}
-				alt="apex bridge graph"
-				style={{ width: '280px', marginTop: '32px' }}
-			/>
-
 			<Box
-				display="flex"
-				alignItems="center"
-				justifyContent="space-between"
-				pt={2}
-				pb={4}
+				border="1px solid #372B2B"
+				borderRadius={5}
+				p={4}
+				mt={10}
+				sx={{
+					backdropFilter: 'blur(14px)',
+					maxWidth: '470px',
+					width: '100%',
+				}}
 			>
-				<Box>
+				<Typography
+					mb={'7px'}
+					fontWeight={600}
+					sx={{
+						color: '#fff',
+						fontSize: '18px',
+						textAlign: 'center',
+					}}
+				>
+					Bridge your tokens
+				</Typography>
+
+				<Box
+					p={3}
+					mt={2}
+					borderRadius={5}
+					display="flex"
+					flexDirection="column"
+					sx={{
+						backgroundColor: '#242625',
+					}}
+				>
 					<Typography
-						mb={'7px'}
-						fontWeight={500}
-						sx={{ color: white, fontSize: '13px' }}
+						mb={'4px'}
+						fontWeight={400}
+						sx={{ color: '#fff', fontSize: '13px' }}
 					>
-						SOURCE
+						From
 					</Typography>
 					<CustomSelect
 						label="Source"
@@ -147,32 +156,51 @@ const HomePage: React.FC = () => {
 						disabled={isLoggedInMemo}
 						onChange={onChangeSrcChain}
 						options={srcChainOptions}
-						sx={{ width: '240px' }} // Setting minWidth via sx prop
 					/>
-				</Box>
-				<Button
-					onClick={switchValues}
-					disabled={!isSwitchBtnEnabled}
-					sx={{
-						mt: '20px',
-						mx: '28px',
-						boxShadow: 'none',
-						background: 'none',
-					}}
-				>
-					{!isLoggedInMemo ? (
-						<SwitcherIcon />
-					) : (
-						<OneDirectionArrowIcon />
-					)}
-				</Button>
-				<Box>
-					<Typography
-						mb={'7px'}
-						fontWeight={500}
-						sx={{ color: white, fontSize: '13px' }}
+
+					<Box
+						sx={{
+							position: 'relative',
+							display: 'flex',
+							justifyContent: 'center',
+							alignItems: 'center',
+							mt: '20px',
+							'&::before': {
+								content: '""',
+								position: 'absolute',
+								width: '100%',
+								height: '1px',
+								backgroundColor: '#4B4A4A',
+								zIndex: 0,
+							},
+						}}
 					>
-						DESTINATION
+						<Button
+							onClick={switchValues}
+							disabled={!isSwitchBtnEnabled}
+							sx={{
+								margin: 0,
+								padding: 0,
+								boxShadow: 'none',
+								zIndex: 1,
+								minWidth: '0',
+								borderRadius: '100%',
+							}}
+						>
+							{!isLoggedInMemo ? (
+								<SwitcherIcon />
+							) : (
+								<OneDirectionArrowIcon />
+							)}
+						</Button>
+					</Box>
+
+					<Typography
+						mb={'4px'}
+						fontWeight={400}
+						sx={{ color: '#fff', fontSize: '13px' }}
+					>
+						To
 					</Typography>
 					<CustomSelect
 						label="Destination"
@@ -181,37 +209,43 @@ const HomePage: React.FC = () => {
 						disabled={dstChainOptions.length < 2}
 						onChange={onChangeDstChain}
 						options={dstChainOptions}
-						sx={{ width: '240px' }} // Setting minWidth via sx prop
 					/>
 				</Box>
+
+				{/* Connect | Move funds button */}
+				<Box display="flex" justifyContent="center" mt={5}>
+					{loginConnecting ? (
+						<ButtonCustom
+							variant="primary"
+							sx={{ textTransform: 'uppercase' }}
+						>
+							Connect Wallet
+							<CircularProgress
+								sx={{ marginLeft: 1 }}
+								size={20}
+							/>
+						</ButtonCustom>
+					) : !isLoggedInMemo ? (
+						<ButtonCustom
+							id="bridge-connect"
+							variant="primary"
+							sx={{ textTransform: 'uppercase' }}
+							onClick={handleConnectClick}
+						>
+							Connect Wallet
+						</ButtonCustom>
+					) : (
+						<ButtonCustom
+							variant="primary"
+							sx={{ textTransform: 'uppercase' }}
+							onClick={() => navigate(NEW_TRANSACTION_ROUTE)}
+							id="move-funds"
+						>
+							Move funds
+						</ButtonCustom>
+					)}
+				</Box>
 			</Box>
-			{loginConnecting ? (
-				<ButtonCustom
-					variant="white"
-					sx={{ textTransform: 'uppercase' }}
-				>
-					Connect Wallet
-					<CircularProgress sx={{ marginLeft: 1 }} size={20} />
-				</ButtonCustom>
-			) : !isLoggedInMemo ? (
-				<ButtonCustom
-					id="bridge-connect"
-					variant="white"
-					sx={{ textTransform: 'uppercase' }}
-					onClick={handleConnectClick}
-				>
-					Connect Wallet
-				</ButtonCustom>
-			) : (
-				<ButtonCustom
-					variant="white"
-					sx={{ textTransform: 'uppercase' }}
-					onClick={() => navigate(NEW_TRANSACTION_ROUTE)}
-					id="move-funds"
-				>
-					Move funds
-				</ButtonCustom>
-			)}
 		</BasePage>
 	);
 };

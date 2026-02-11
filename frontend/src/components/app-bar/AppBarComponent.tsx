@@ -1,7 +1,9 @@
 import {
 	AppBar,
+	Box,
 	Button,
 	CircularProgress,
+	lighten,
 	ListItemIcon,
 	ListItemText,
 	Menu,
@@ -19,25 +21,35 @@ import {
 } from '../../pages/PageRouter';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LogoutIcon from '@mui/icons-material/Logout';
-import ApexFusionLogo from '../../assets/apex-fusion-logo.svg';
-import { menuDark, white } from '../../containers/theme';
+import { ReactComponent as ApexFusionLogo } from '../../assets/apex-fusion-logo.svg';
 import ButtonCustom from '../Buttons/ButtonCustom';
 import { RootState } from '../../redux/store';
 import { formatAddress } from '../../utils/generalUtils';
 import { logout } from '../../actions/logout';
 
 const CustomMenu = styled(Menu)({
-	// backgroundColor: 'rgba(0,0,0, 0.4)',
 	'.MuiPaper-root': {
-		backgroundColor: '#051D26',
+		backgroundColor: '#424543',
 		border: '1px solid #435F69',
+		borderRadius: '12px',
+	},
+
+	'& .MuiMenu-list': {
+		paddingTop: '0',
+		paddingBottom: '0',
+	},
+
+	'& .MuiTypography-root': {
+		fontSize: '14px',
 	},
 });
 
 const CustomMenuItem = styled(MenuItem)({
-	backgroundColor: '#051D26',
+	paddingTop: '10px',
+	paddingBottom: '10px',
+	backgroundColor: '#424543',
 	'&:hover': {
-		backgroundColor: '#073B4C',
+		backgroundColor: lighten('#424543', 0.1),
 	},
 	color: '#ffffff',
 });
@@ -80,7 +92,11 @@ const AppBarComponent = () => {
 		<>
 			<AppBar
 				position="fixed"
-				sx={{ zIndex: 20, boxShadow: 'none', background: menuDark }}
+				sx={{
+					zIndex: 20,
+					boxShadow: 'none',
+					background: 'transparent',
+				}}
 			>
 				<Toolbar
 					sx={{
@@ -89,14 +105,22 @@ const AppBarComponent = () => {
 						flexDirection: 'row',
 						justifyContent: 'space-between',
 						marginLeft: '10px',
+						background: `linear-gradient(180deg, rgba(0,0,0,0.1) 60%, transparent 100%)`,
 					}}
 				>
-					<Button onClick={() => handleOptionClick(HOME_ROUTE)}>
-						{/* Logo svg */}
-						<img src={ApexFusionLogo} alt="apex fusion logo" />
-					</Button>
+					<Box sx={{ flex: 1 }}>
+						<Button onClick={() => handleOptionClick(HOME_ROUTE)}>
+							<ApexFusionLogo />
+						</Button>
+					</Box>
 
-					<div>
+					<Box
+						sx={{
+							flex: 1,
+							display: 'flex',
+							justifyContent: 'center',
+						}}
+					>
 						{isLoggedInMemo && (
 							<>
 								<ButtonCustom
@@ -125,7 +149,14 @@ const AppBarComponent = () => {
 								</ButtonCustom>
 							</>
 						)}
-
+					</Box>
+					<Box
+						sx={{
+							flex: 1,
+							display: 'flex',
+							justifyContent: 'flex-end',
+						}}
+					>
 						{loginConnecting ? (
 							<Button
 								sx={{
@@ -134,7 +165,7 @@ const AppBarComponent = () => {
 									px: '24px',
 									py: '10px',
 									borderRadius: '8px',
-									color: white,
+									color: '#fff',
 									textTransform: 'lowercase',
 								}}
 							>
@@ -152,11 +183,11 @@ const AppBarComponent = () => {
 								onClick={handleClick}
 								sx={{
 									border: '1px solid',
-									borderColor: '#435F69',
+									borderColor: '#424543',
 									px: '24px',
 									py: '10px',
-									borderRadius: '8px',
-									color: white,
+									borderRadius: '100px',
+									color: '#fff',
 									textTransform: 'lowercase',
 								}}
 								endIcon={<ExpandMoreIcon />}
@@ -164,7 +195,7 @@ const AppBarComponent = () => {
 								{formatAddress(account)}
 							</Button>
 						) : null}
-					</div>
+					</Box>
 					<CustomMenu
 						id="basic-menu"
 						anchorEl={anchorEl}

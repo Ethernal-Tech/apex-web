@@ -13,7 +13,6 @@ import {
 	Typography,
 } from '@mui/material';
 import { styled } from '@mui/system';
-import { menuDark } from '../../containers/theme';
 
 interface Option {
 	value: string;
@@ -27,7 +26,7 @@ interface CustomSelectProps {
 	icon: React.FC;
 	value: string;
 	disabled?: boolean;
-	onChange: (event: SelectChangeEvent<string>) => void;
+	onChange?: (event: SelectChangeEvent<string>) => void;
 	options: Option[];
 	sx?: SxProps<Theme>;
 }
@@ -40,16 +39,12 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	options,
 }) => {
 	const StyledFormControl = styled(FormControl)(() => ({
-		borderRadius: '4px',
-		border: '1px solid',
-		borderColor: options.find((option) => option.value === value)
-			?.borderColor,
 		'& .MuiSelect-select': {
-			padding: '12px 15px',
+			backgroundColor: '#424543',
+			padding: '8px 15px',
+			borderRadius: '12px!important',
 		},
-		'& .MuiTypography-root': {
-			color: 'white',
-		},
+		// handled disabled state
 		'& .Mui-disabled': {
 			'& .MuiSvgIcon-root': {
 				display: 'none',
@@ -57,39 +52,43 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			'& .MuiTypography-root': {
 				WebkitTextFillColor: 'white',
 			},
+
+			'&:hover fieldset': {
+				border: '2px solid transparent!important',
+			},
 		},
+
 		'& .MuiOutlinedInput-root': {
 			backgroundColor: 'transparent',
+
 			'& fieldset': {
-				borderColor: 'none',
+				border: '2px solid transparent',
+				transition: 'border-color 0.3s ease',
+				borderRadius: '12px',
 			},
+
 			'&:hover fieldset': {
-				borderColor: 'none',
+				backgroundColor: 'transparent',
+				border: '2px solid #858c88',
 			},
-			'&.Mui-focused fieldset': {
-				borderColor: 'none',
-			},
-			'&.Mui-focused': {
-				outline: 'none',
+			'& .MuiSvgIcon-root': {
+				fill: 'white',
 			},
 		},
-		'& .MuiSvgIcon-root': {
-			fill: 'white',
-		},
-		width: '260px', // TODO AF - see if this can be passed in from parent prop, might be more managable
 	}));
 
 	const StyledMenuItem = styled(MenuItem)(() => ({
-		backgroundColor: menuDark,
+		backgroundColor: '#424543',
+		padding: '8px 15px',
 		color: 'white',
 		'&.Mui-selected': {
-			backgroundColor: menuDark,
+			backgroundColor: '#424543',
 			'&:hover': {
-				backgroundColor: lighten(menuDark, 0.1),
+				backgroundColor: lighten('#424543', 0.1),
 			},
 		},
 		'&:hover': {
-			backgroundColor: lighten(menuDark, 0.1),
+			backgroundColor: lighten('#424543', 0.1),
 		},
 	}));
 
@@ -110,7 +109,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 						>
 							<IconComponent />
 						</ListItemIcon>
-						<Typography>
+						<Typography sx={{ fontWeight: 500 }}>
 							{
 								options.find(
 									(option) => option.value === selected,
@@ -122,17 +121,16 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 				MenuProps={{
 					PaperProps: {
 						sx: {
-							backgroundColor: menuDark,
+							backgroundColor: '#424543',
 							color: 'white',
+							'& .MuiMenu-list': {
+								paddingTop: '0',
+								paddingBottom: '0',
+							},
 						},
 					},
 				}}
-				sx={{
-					backgroundColor: options.find(
-						(option) => option.value === value,
-					)?.borderColor, // Full color for selected
-					color: 'white',
-				}}
+				sx={{ color: 'white' }}
 			>
 				{options.map((option) => (
 					<StyledMenuItem
