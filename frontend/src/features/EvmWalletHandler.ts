@@ -247,6 +247,18 @@ class EvmWalletHandler {
 			return '0';
 		}
 	};
+
+	getBlock = async (
+		blockNumberOrHash: BlockNumberOrTag | string = 'latest',
+		returnTransactionObjects = false,
+	) => {
+		this._checkWalletAndThrow();
+
+		return await this.getWeb3()!.eth.getBlock(
+			blockNumberOrHash,
+			returnTransactionObjects,
+		);
+	};
 }
 
 const parseChainId = (chainId: string | number): bigint => {

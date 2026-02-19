@@ -2,11 +2,13 @@ import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
+	NotFoundException,
 } from '@nestjs/common';
 import {
 	createCardanoBridgingTx,
 	createEthBridgingTx,
 	getCardanoBridgingTxFee,
+	isAuthorizedOrNonActive,
 } from 'src/transaction/transaction.helper';
 import {
 	CreateTransactionDto,
@@ -14,11 +16,13 @@ import {
 	TransactionSubmittedDto,
 	CardanoTransactionFeeResponseDto,
 	CreateEthTransactionFullResponseDto,
+	TransactionActivateDeleteDto as TransactionActivateDeleteDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import {
 	BridgingModeEnum,
 	ChainApexBridgeEnum,
+	ChainEnum,
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -46,6 +50,7 @@ import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
 import { isAddress } from 'web3-validator';
+import { createHash } from 'crypto';
 
 @Injectable()
 export class TransactionService {
@@ -279,19 +284,23 @@ export class TransactionService {
 		return tx;
 	}
 
-	async transactionSubmitted({
-		originChain,
-		destinationChain,
-		originTxHash,
-		senderAddress,
-		receiverAddrs,
-		amount,
-		nativeTokenAmount,
-		tokenID,
-		txRaw,
-		isFallback,
-		isLayerZero,
-	}: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
+	async transactionSubmitted(
+		{
+			originChain,
+			destinationChain,
+			originTxHash,
+			senderAddress,
+			receiverAddrs,
+			amount,
+			nativeTokenAmount,
+			tokenID,
+			txRaw,
+			isFallback,
+			isLayerZero,
+		}: TransactionSubmittedDto,
+		ip: string,
+		activate = false,
+	): Promise<BridgeTransactionDto> {
 		const entity = new BridgeTransaction();
 
 		const receiverAddresses = receiverAddrs
@@ -331,12 +340,21 @@ export class TransactionService {
 		entity.txRaw = txRaw;
 		entity.isCentralized = isFallback;
 		entity.isLayerZero = isLayerZero;
+		entity.activeFrom = activate
+			? new Date()
+			: new Date(Date.now() + this.appConfig.txValidityPeriod);
+		entity.clientID = activate
+			? undefined
+			: createHash('sha256')
+					.update(ip + (getAppConfig().hashSecret ?? ''))
+					.digest('hex');
 
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
 
 		try {
 			await this.bridgeTransactionRepository.save(newBridgeTransaction);
+
 			return mapBridgeTransactionToResponse(newBridgeTransaction);
 		} catch (e) {
 			const dbTxs = await this.bridgeTransactionRepository.find({
@@ -354,6 +372,71 @@ export class TransactionService {
 				);
 			}
 		}
+	}
+	async updateTransaction(
+		originChain: ChainEnum,
+		originTxHash: string,
+		ip: string,
+		txRaw?: string,
+	): Promise<BridgeTransactionDto> {
+		const hash = originTxHash.trim();
+
+		const entity = await this.bridgeTransactionRepository.findOne({
+			where: { sourceTxHash: hash, originChain: originChain },
+		});
+
+		if (!entity) {
+			throw new NotFoundException(`transaction with hash ${hash} not found`);
+		}
+
+		if (!isAuthorizedOrNonActive(ip, entity.clientID, entity.activeFrom)) {
+			throw new BadRequestException('unauthorized transaction update');
+		}
+
+		// Apply updates
+		if (txRaw !== undefined) {
+			entity.txRaw = txRaw;
+		}
+		entity.activeFrom = new Date();
+		entity.clientID = null;
+
+		const savedEntity = await this.bridgeTransactionRepository.save(entity);
+
+		return mapBridgeTransactionToResponse(savedEntity);
+	}
+
+	async removeTransaction(
+		{ originChain, originTxHash }: TransactionActivateDeleteDto,
+		ip: string,
+	): Promise<void> {
+		const hash = (originTxHash ?? '').trim();
+
+		if (!hash) {
+			throw new BadRequestException('originTxHash is required');
+		}
+
+		const entity = await this.bridgeTransactionRepository.findOne({
+			where: { sourceTxHash: hash, originChain: originChain },
+		});
+
+		if (!entity) {
+			throw new NotFoundException(`transaction with hash ${hash} not found`);
+		}
+
+		if (isAuthorizedOrNonActive(ip, entity?.clientID, entity.activeFrom)) {
+			const result = await this.bridgeTransactionRepository.delete({
+				sourceTxHash: hash,
+				originChain: originChain,
+			});
+
+			if (result.affected === 0) {
+				throw new NotFoundException(`Transaction with hash ${hash} not found`);
+			}
+
+			return;
+		}
+
+		throw new BadRequestException('unauthorized deletion of tx');
 	}
 
 	async transferLayerZero(

@@ -3,8 +3,10 @@ import {
 	BridgeTransactionFilterDto,
 	CreateTransactionDto,
 	LayerZeroTransferDto,
+	TransactionActivateDeleteDto,
 	TransactionControllerClient,
 	TransactionSubmittedDto,
+	TransactionUpdateDto,
 } from '../../swagger/apexBridgeApiService';
 
 export const getAction = (id: number) => {
@@ -36,7 +38,40 @@ export const bridgingTransactionSubmittedAction = (
 	model: TransactionSubmittedDto,
 ) => {
 	const client = new TransactionControllerClient();
+
 	return client.bridgingTransactionSubmitted(model);
+};
+
+export const bridgingTransactionUpdateAction = (
+	model: TransactionUpdateDto,
+) => {
+	const client = new TransactionControllerClient();
+
+	return client.bridgingTransactionUpdate(model);
+};
+
+export const bridgingTransactionDeleteAction = (
+	model: TransactionActivateDeleteDto,
+) => {
+	const client = new TransactionControllerClient();
+
+	return client.bridgingTransactionDelete(model);
+};
+
+export const bridgingTransactionActivateAction = (
+	model: TransactionActivateDeleteDto,
+) => {
+	const client = new TransactionControllerClient();
+
+	return client.bridgingTransactionActivate(model);
+};
+
+export const bridgingTransactionSubmittedActivatedAction = (
+	model: TransactionSubmittedDto,
+) => {
+	const client = new TransactionControllerClient();
+
+	return client.bridgingTransactionSubmittedActivated(model);
 };
 
 export const layerZeroTransferAction = (model: LayerZeroTransferDto) => {

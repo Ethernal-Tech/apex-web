@@ -53,4 +53,10 @@ export class BridgeTransaction {
 
 	@Column({ default: false })
 	isRefund: boolean;
+
+	@Column({ nullable: true })
+	activeFrom?: Date;
+
+	@Column({ type: 'varchar', nullable: true })
+	clientID?: string | null;
 }
