@@ -458,7 +458,7 @@ const ethCentralizedBridgingTx = (
 	};
 };
 
-export function isAuthorizedOrActive(
+export function isAuthorizedOrNonActive(
 	ip: string,
 	clientID?: string | null,
 	activeFrom?: Date,
@@ -467,5 +467,5 @@ export function isAuthorizedOrActive(
 		.update(ip + (getAppConfig().hashSecret ?? ''))
 		.digest('hex');
 
-	return hash === clientID || !activeFrom || activeFrom < new Date();
+	return hash === clientID && (!activeFrom || activeFrom > new Date());
 }
