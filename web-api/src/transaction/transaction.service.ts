@@ -8,6 +8,7 @@ import {
 	createCardanoBridgingTx,
 	createEthBridgingTx,
 	getCardanoBridgingTxFee,
+	isAuthorizedOrActive,
 } from 'src/transaction/transaction.helper';
 import {
 	CreateTransactionDto,
@@ -384,18 +385,12 @@ export class TransactionService {
 			where: { sourceTxHash: hash, originChain: originChain },
 		});
 
-		if (
-			createHash('sha256')
-				.update(ip + (getAppConfig().hashSecret ?? ''))
-				.digest('hex') !== entity?.clientID ||
-			!entity?.activeFrom ||
-			entity.activeFrom < new Date()
-		) {
-			throw new BadRequestException('unauthorized transaction update');
-		}
-
 		if (!entity) {
 			throw new NotFoundException(`transaction with hash ${hash} not found`);
+		}
+
+		if (isAuthorizedOrActive(ip, entity.clientID, entity.activeFrom)) {
+			throw new BadRequestException('unauthorized transaction update');
 		}
 
 		// Apply updates
@@ -417,20 +412,18 @@ export class TransactionService {
 		const hash = (originTxHash ?? '').trim();
 
 		if (!hash) {
-			throw new BadRequestException('sourceTxHash is required');
+			throw new BadRequestException('originTxHash is required');
 		}
 
 		const entity = await this.bridgeTransactionRepository.findOne({
 			where: { sourceTxHash: hash, originChain: originChain },
 		});
 
-		if (
-			createHash('sha256')
-				.update(ip + (getAppConfig().hashSecret ?? ''))
-				.digest('hex') === entity?.clientID ||
-			!entity?.activeFrom ||
-			entity.activeFrom < new Date()
-		) {
+		if (!entity) {
+			throw new NotFoundException(`transaction with hash ${hash} not found`);
+		}
+
+		if (isAuthorizedOrActive(ip, entity?.clientID, entity.activeFrom)) {
 			const result = await this.bridgeTransactionRepository.delete({
 				sourceTxHash: hash,
 				originChain: originChain,

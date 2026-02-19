@@ -217,9 +217,9 @@ export class TransactionController {
 
 	@ApiOperation({
 		summary:
-			'Save non-active transactions to the database, with desired activation offset',
+			'Save transactions to the database, the transaction is activated immediately',
 		description:
-			'Returns a non active bridging transaction along with its associated data.',
+			'Returns active bridging transaction along with its associated data.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,

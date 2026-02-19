@@ -94,21 +94,23 @@ export const signAndSubmitCardanoTx = async (
 		txHash: createResponse.txHash,
 	});
 
+	const transactionSubmittedDto = new TransactionSubmittedDto({
+		originChain: values.originChain as unknown as ChainEnum,
+		senderAddress: values.senderAddress,
+		destinationChain: values.destinationChain as unknown as ChainEnum,
+		receiverAddrs: [values.destinationAddress],
+		amount: amount.toString(),
+		originTxHash: createResponse.txHash,
+		txRaw: createResponse.txRaw,
+		isFallback: createResponse.isFallback,
+		nativeTokenAmount: nativeTokenAmount.toString(10),
+		tokenID,
+		isLayerZero: false,
+	});
+
 	const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
 		null,
-		new TransactionSubmittedDto({
-			originChain: values.originChain as unknown as ChainEnum,
-			senderAddress: values.senderAddress,
-			destinationChain: values.destinationChain as unknown as ChainEnum,
-			receiverAddrs: [values.destinationAddress],
-			amount: amount.toString(),
-			originTxHash: createResponse.txHash,
-			txRaw: createResponse.txRaw,
-			isFallback: createResponse.isFallback,
-			nativeTokenAmount: nativeTokenAmount.toString(10),
-			tokenID,
-			isLayerZero: false,
-		}),
+		transactionSubmittedDto,
 	);
 
 	const [txResult, response] = await Promise.allSettled([
@@ -165,16 +167,25 @@ export const signAndSubmitCardanoTx = async (
 
 		if (response.value instanceof ErrorResponse) {
 			try {
-				await retry(async () => {
+				const bindedSubmittedActivateAction =
+					bridgingTransactionSubmittedActivatedAction.bind(
+						null,
+						transactionSubmittedDto,
+					);
+				const submittedResponse = await retry(async () => {
 					const res = await tryCatchJsonByAction(
-						bindedSubmittedAction,
+						bindedSubmittedActivateAction,
 						false,
 					);
 
 					if (res instanceof ErrorResponse) {
 						throw new Error(res.err ?? 'ErrorResponse');
 					}
+
+					return res;
 				}, tryCount);
+
+				return submittedResponse;
 			} catch (err) {
 				captureAndThrowError(
 					err instanceof Error ? err : new Error(String(err)),
