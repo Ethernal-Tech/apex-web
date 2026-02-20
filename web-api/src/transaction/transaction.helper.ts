@@ -458,7 +458,7 @@ const ethCentralizedBridgingTx = (
 	};
 };
 
-export function isAuthorizedOrNonActive(
+export function canUpdateTx(
 	ip: string,
 	clientID?: string | null,
 	activeFrom?: Date,

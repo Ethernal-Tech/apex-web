@@ -8,7 +8,7 @@ import {
 	createCardanoBridgingTx,
 	createEthBridgingTx,
 	getCardanoBridgingTxFee,
-	isAuthorizedOrNonActive,
+	canUpdateTx,
 } from 'src/transaction/transaction.helper';
 import {
 	CreateTransactionDto,
@@ -389,7 +389,7 @@ export class TransactionService {
 			throw new NotFoundException(`transaction with hash ${hash} not found`);
 		}
 
-		if (!isAuthorizedOrNonActive(ip, entity.clientID, entity.activeFrom)) {
+		if (!canUpdateTx(ip, entity.clientID, entity.activeFrom)) {
 			throw new BadRequestException('unauthorized transaction update');
 		}
 
@@ -423,7 +423,7 @@ export class TransactionService {
 			throw new NotFoundException(`transaction with hash ${hash} not found`);
 		}
 
-		if (isAuthorizedOrNonActive(ip, entity?.clientID, entity.activeFrom)) {
+		if (canUpdateTx(ip, entity?.clientID, entity.activeFrom)) {
 			const result = await this.bridgeTransactionRepository.delete({
 				sourceTxHash: hash,
 				originChain: originChain,
