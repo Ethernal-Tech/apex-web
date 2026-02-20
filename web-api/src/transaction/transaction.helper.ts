@@ -467,5 +467,5 @@ export function isAuthorizedOrNonActive(
 		.update(ip + (getAppConfig().hashSecret ?? ''))
 		.digest('hex');
 
-	return hash === clientID && (!activeFrom || activeFrom > new Date());
+	return hash === clientID && !!activeFrom && activeFrom > new Date();
 }
