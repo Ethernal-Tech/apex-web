@@ -38,8 +38,7 @@ const (
 	vectorTTLSlotIncFlag              = "vector-ttl-slot-inc"
 	vectorIsEnabledFlag               = "vector-is-enabled"
 
-	nexusIsEnabledFlag       = "nexus-is-enabled"
-	nexusTreasuryAddressFlag = "nexus-treasury-address"
+	nexusIsEnabledFlag = "nexus-is-enabled"
 
 	logsPathFlag = "logs-path"
 
@@ -78,8 +77,7 @@ const (
 	vectorTTLSlotIncFlagDesc              = "TTL slot increment for vector"
 	vectorIsEnabledFlagDesc               = "chain enable flag for vector"
 
-	nexusIsEnabledFlagDesc       = "chain enable flag for nexus"
-	nexusTreasuryAddressFlagDesc = "nexus treasury address"
+	nexusIsEnabledFlagDesc = "chain enable flag for nexus"
 
 	logsPathFlagDesc = "path to where logs will be stored"
 
