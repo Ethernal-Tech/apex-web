@@ -231,10 +231,12 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		return err
 	}
 
-	operationFee, found := c.appConfig.SkylineBridgingSettings.MinOperationFee[requestBody.SourceChainID]
+	operationFeeBigInt, found := c.appConfig.SkylineBridgingSettings.MinOperationFee[requestBody.SourceChainID]
 	if !found {
 		return fmt.Errorf("no operation fee for chain: %s", requestBody.SourceChainID)
 	}
+
+	operationFee := operationFeeBigInt.Uint64()
 
 	// this is just convenient way to setup default operation fee
 	if requestBody.OperationFee == 0 {
@@ -305,10 +307,14 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			}
 
 			if tokenPair.SourceTokenID != srcCurrencyID && tokenPair.DestinationTokenID != destCurrencyID {
-				if receiver.Amount < c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge {
+				minColCoinsAllowedToBridge := common.MaxBigInt(
+					c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.SourceChainID],
+					c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.DestinationChainID],
+				).Uint64()
+				if receiver.Amount < minColCoinsAllowedToBridge {
 					return fmt.Errorf(
 						"found an value below minimum value in receivers, receiver: %v. min: %v",
-						receiver, c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge)
+						receiver, minColCoinsAllowedToBridge)
 				}
 			}
 		} else {
@@ -322,10 +328,17 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 						"found an value below minimum value in receivers, receiver: %v. min: %v",
 						receiver, c.appConfig.SkylineBridgingSettings.MinValueToBridge)
 				}
-			} else if receiver.Amount < c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge {
-				return fmt.Errorf(
-					"found an value below minimum value in receivers, receiver: %v. min: %v",
-					receiver, c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge)
+			} else {
+				// eth destination
+				minColCoinsAllowedToBridge := common.MaxBigInt(
+					c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.SourceChainID],
+					common.WeiToDfm(c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.DestinationChainID]),
+				)
+				if receiver.Amount < minColCoinsAllowedToBridge.Uint64() {
+					return fmt.Errorf(
+						"found an value below minimum value in receivers, receiver: %v. min: %v",
+						receiver, minColCoinsAllowedToBridge)
+				}
 			}
 		}
 
@@ -341,8 +354,14 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody.Transactions = transactions
 
 	currencyAmount, currencyFound := amountSums[srcCurrencyID]
+
+	maxAllowedBigInt, success := new(big.Int).SetString(c.appConfig.SkylineBridgingSettings.MaxAmountAllowedToBridge, 10)
+	if !success {
+		return fmt.Errorf("failed to parse MaxAmountAllowedToBridge as big.Int")
+	}
+
 	if currencyFound {
-		maxCurrAmt := c.appConfig.SkylineBridgingSettings.MaxAmountAllowedToBridge
+		maxCurrAmt := common.WeiToDfm(maxAllowedBigInt)
 		if maxCurrAmt != nil && maxCurrAmt.Sign() == 1 && currencyAmount.Cmp(maxCurrAmt) == 1 {
 			return fmt.Errorf("sum of receiver currency amounts greater than maximum allowed: %v, for request: %v",
 				maxCurrAmt, requestBody)
@@ -352,7 +371,13 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	// Remove currency entry from the map
 	delete(amountSums, srcCurrencyID)
 
-	maxTokAmnt := c.appConfig.SkylineBridgingSettings.MaxTokenAmountAllowedToBridge
+	maxAllowedBigInt, success = new(big.Int).SetString(
+		c.appConfig.SkylineBridgingSettings.MaxTokenAmountAllowedToBridge, 10)
+	if !success {
+		return fmt.Errorf("failed to parse MaxTokenAmountAllowedToBridge as big.Int")
+	}
+
+	maxTokAmnt := common.WeiToDfm(maxAllowedBigInt)
 	if maxTokAmnt != nil && maxTokAmnt.Sign() > 0 {
 		for tokID, tokAmnt := range amountSums {
 			if tokAmnt.Cmp(maxTokAmnt) == 1 {

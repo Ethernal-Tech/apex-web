@@ -7,6 +7,8 @@ import { Repository } from 'typeorm';
 import { ChainApexBridgeEnum, TransactionStatusEnum } from '../common/enum';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { BridgeTransactionFilterDto } from './bridgeTransaction.dto';
+import { SettingsService } from 'src/settings/settings.service';
+import { AppConfigService } from 'src/appConfig/appConfig.service';
 
 describe('BridgeTransactionService', () => {
 	let service: BridgeTransactionService;
@@ -21,7 +23,15 @@ describe('BridgeTransactionService', () => {
 					useClass: Repository,
 				},
 				{
+					provide: SettingsService,
+					useValue: { getCronJob: jest.fn() },
+				},
+				{
 					provide: SchedulerRegistry,
+					useValue: { getCronJob: jest.fn() },
+				},
+				{
+					provide: AppConfigService,
 					useValue: { getCronJob: jest.fn() },
 				},
 			],

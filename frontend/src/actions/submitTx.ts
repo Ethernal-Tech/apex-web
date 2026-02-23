@@ -1,5 +1,9 @@
 import {
+	bridgingTransactionActivateAction,
+	bridgingTransactionDeleteAction,
 	bridgingTransactionSubmittedAction,
+	bridgingTransactionSubmittedActivatedAction,
+	bridgingTransactionUpdateAction,
 	layerZeroTransferAction,
 } from '../pages/Transactions/action';
 import {
@@ -11,6 +15,9 @@ import {
 	LayerZeroTransferDto,
 	TxTypeEnum,
 	CreateEthTransactionFullResponseDto,
+	TransactionUpdateDto,
+	BridgeTransactionDto,
+	TransactionActivateDeleteDto,
 } from '../swagger/apexBridgeApiService';
 import { ErrorResponse, tryCatchJsonByAction } from '../utils/fetchUtils';
 import walletHandler from '../features/WalletHandler';
@@ -18,7 +25,7 @@ import evmWalletHandler from '../features/EvmWalletHandler';
 import { Transaction } from 'web3-types';
 import { toApexBridgeName, toLayerZeroChainName } from '../settings/chain';
 import { ISettingsState } from '../settings/settingsRedux';
-import { longRetryOptions, retry } from '../utils/generalUtils';
+import { longRetryOptions, retry, retryForever } from '../utils/generalUtils';
 import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
 import { UpdateSubmitLoadingState } from '../utils/statusUtils';
 import { validateSubmitTxInputs } from '../utils/validationUtils';
@@ -33,6 +40,15 @@ type TxDetailsOptions = {
 };
 
 const defaultGasLimitEstimation = 30000;
+
+const TX_SUCCESS = BigInt(1);
+
+const blockOffset = BigInt(1000);
+
+const tryCount = 60;
+
+const bigintReplacer = (_: string, value: unknown) =>
+	typeof value === 'bigint' ? `bigint:${value}` : value;
 
 const defaultTxDetailsOptions: TxDetailsOptions = {
 	// Max Fee = (2 * Base Fee) + Max Priority Fee https://www.blocknative.com/blog/eip-1559-fees
@@ -55,19 +71,6 @@ export const signAndSubmitCardanoTx = async (
 		);
 	}
 
-	updateLoadingState({ content: 'Signing the transaction...' });
-
-	const signedTxRaw = await walletHandler.signTx(createResponse.txRaw);
-
-	updateLoadingState({
-		content: 'Submitting the transaction...',
-		txHash: createResponse.txHash,
-	});
-
-	await walletHandler.submitTx(signedTxRaw);
-
-	updateLoadingState({ content: 'Recording the transaction...' });
-
 	const amount =
 		BigInt(createResponse.bridgingFee || '0') +
 		BigInt(createResponse.operationFee || '0') +
@@ -82,33 +85,139 @@ export const signAndSubmitCardanoTx = async (
 	const nativeTokenAmount = BigInt(nativeToken?.amount || '0');
 	const tokenID = nativeTokenAmount > BigInt(0) ? nativeToken!.tokenID : 0;
 
+	updateLoadingState({ content: 'Signing the transaction...' });
+
+	const signedTxRaw = await walletHandler.signTx(createResponse.txRaw);
+
+	updateLoadingState({
+		content: 'Submitting the transaction...',
+		txHash: createResponse.txHash,
+	});
+
+	const transactionSubmittedDto = new TransactionSubmittedDto({
+		originChain: values.originChain as unknown as ChainEnum,
+		senderAddress: values.senderAddress,
+		destinationChain: values.destinationChain as unknown as ChainEnum,
+		receiverAddrs: [values.destinationAddress],
+		amount: amount.toString(),
+		originTxHash: createResponse.txHash,
+		txRaw: createResponse.txRaw,
+		isFallback: createResponse.isFallback,
+		nativeTokenAmount: nativeTokenAmount.toString(10),
+		tokenID,
+		isLayerZero: false,
+	});
+
 	const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
 		null,
-		new TransactionSubmittedDto({
-			originChain: values.originChain as unknown as ChainEnum,
-			senderAddress: values.senderAddress,
-			destinationChain: values.destinationChain as unknown as ChainEnum,
-			receiverAddrs: [values.destinationAddress],
-			amount: amount.toString(),
-			originTxHash: createResponse.txHash,
-			txRaw: createResponse.txRaw,
-			isFallback: createResponse.isFallback,
-			nativeTokenAmount: nativeTokenAmount.toString(10),
-			tokenID,
-			isLayerZero: false,
-		}),
+		transactionSubmittedDto,
 	);
 
-	const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
-	if (response instanceof ErrorResponse) {
+	const [txResult, response] = await Promise.allSettled([
+		walletHandler.submitTx(signedTxRaw),
+		tryCatchJsonByAction(bindedSubmittedAction, false),
+	]);
+
+	updateLoadingState({ content: 'Recording the transaction...' });
+
+	if (txResult.status === 'rejected') {
+		if (
+			response.status === 'rejected' ||
+			response.value instanceof ErrorResponse
+		) {
+			captureAndThrowError(
+				'cant submit tx to the chain and the database',
+				'submitTx.ts',
+				'signAndSubmitCardanoTx',
+			);
+		}
+
+		const bindedDeleteAction = bridgingTransactionDeleteAction.bind(
+			null,
+			new TransactionActivateDeleteDto({
+				originChain: values.originChain as unknown as ChainEnum,
+				originTxHash: createResponse.txHash,
+			}),
+		);
+
+		// we dont await on purpose, because we want this to execute in the background, without blocking the user
+		void retryForever(async () => {
+			const res = await tryCatchJsonByAction(bindedDeleteAction, false);
+
+			if (res instanceof ErrorResponse) {
+				throw new Error(res.err ?? 'ErrorResponse');
+			}
+		});
+
 		captureAndThrowError(
-			response.err,
+			'transaction cant be submitted',
 			'submitTx.ts',
 			'signAndSubmitCardanoTx',
 		);
 	}
 
-	return response;
+	if (response.status === 'fulfilled') {
+		const bindedActivateAction = bridgingTransactionActivateAction.bind(
+			null,
+			new TransactionActivateDeleteDto({
+				originChain: values.originChain as unknown as ChainEnum,
+				originTxHash: createResponse.txHash,
+			}),
+		);
+
+		if (response.value instanceof ErrorResponse) {
+			try {
+				const bindedSubmittedActivateAction =
+					bridgingTransactionSubmittedActivatedAction.bind(
+						null,
+						transactionSubmittedDto,
+					);
+				const submittedResponse = await retry(async () => {
+					const res = await tryCatchJsonByAction(
+						bindedSubmittedActivateAction,
+						false,
+					);
+
+					if (res instanceof ErrorResponse) {
+						throw new Error(res.err ?? 'ErrorResponse');
+					}
+
+					return res;
+				}, tryCount);
+
+				return submittedResponse;
+			} catch (err) {
+				captureAndThrowError(
+					err instanceof Error ? err : new Error(String(err)),
+					'submitTx.ts',
+					'signAndSubmitCardanoTx',
+				);
+			}
+		}
+
+		try {
+			const activateResponse = await retry(async () => {
+				const res = await tryCatchJsonByAction(
+					bindedActivateAction,
+					false,
+				);
+
+				if (res instanceof ErrorResponse) {
+					throw new Error(res.err ?? 'ErrorResponse');
+				}
+
+				return res;
+			}, tryCount);
+
+			return activateResponse;
+		} catch (err) {
+			captureAndThrowError(
+				err instanceof Error ? err : new Error(String(err)),
+				'submitTx.ts',
+				'signAndSubmitCardanoTx',
+			);
+		}
+	}
 };
 
 export const signAndSubmitEthTx = async (
@@ -144,7 +253,7 @@ export const signAndSubmitEthTx = async (
 
 		console.log('submitting eth approval tx...', tx);
 		const receipt = await evmWalletHandler.submitTx(tx);
-		if (receipt.status !== BigInt(1)) {
+		if (receipt.status !== TX_SUCCESS) {
 			captureAndThrowError(
 				'approval transaction has failed. receipt status unsuccessful',
 				'submitTx.ts',
@@ -166,15 +275,56 @@ export const signAndSubmitEthTx = async (
 		longRetryOptions.waitTime,
 	);
 
+	const latestBlock = await evmWalletHandler.getBlock();
+
 	updateLoadingState({
 		content: 'Signing and submitting the bridging transaction...',
 	});
+
+	const enTokenAmount = BigInt(createResponse.bridgingTx.tokenAmount || '0');
+	const enTokenID =
+		enTokenAmount > BigInt(0) ? createResponse.bridgingTx.tokenID : 0;
+
+	let submitActionPromise: Promise<
+		BridgeTransactionDto | ErrorResponse | void
+	> = Promise.resolve();
+
+	const baseSubmittedDto = {
+		originChain: values.originChain as unknown as ChainEnum,
+		destinationChain: values.destinationChain as unknown as ChainEnum,
+		senderAddress: values.senderAddress,
+		receiverAddrs: [values.destinationAddress],
+		amount: BigInt(createResponse.bridgingTx.ethTx.value || '0').toString(
+			10,
+		),
+		tokenID: enTokenID,
+		nativeTokenAmount: enTokenAmount.toString(10),
+		isFallback: createResponse.isFallback,
+		isLayerZero: false,
+	};
 
 	const onTxHash = (txHash: any) => {
 		updateLoadingState({
 			content: 'Waiting for transaction receipt...',
 			txHash: txHash.toString(),
 		});
+
+		const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
+			null,
+			new TransactionSubmittedDto({
+				...baseSubmittedDto,
+				originTxHash: txHash.toString(),
+				txRaw: JSON.stringify(
+					{ ...tx, block: latestBlock.number + blockOffset },
+					bigintReplacer,
+				),
+			}),
+		);
+
+		submitActionPromise = tryCatchJsonByAction(
+			bindedSubmittedAction,
+			false,
+		);
 	};
 
 	console.log('submitting eth tx...', tx);
@@ -182,57 +332,118 @@ export const signAndSubmitEthTx = async (
 	const submitPromise = evmWalletHandler.submitTx(tx);
 	submitPromise.on('transactionHash', onTxHash);
 
-	const receipt = await submitPromise;
-	submitPromise.off('transactionHash', onTxHash);
-
-	if (receipt.status !== BigInt(1)) {
-		captureAndThrowError(
-			'send transaction has failed. receipt status unsuccessful',
-			'submitTx.ts',
-			'signAndSubmitEthTx',
-		);
-	}
+	const [response, receipt] = await Promise.all([
+		submitActionPromise,
+		submitPromise,
+	]);
 
 	updateLoadingState({
 		content: 'Recording the transaction...',
 		txHash: receipt.transactionHash.toString(),
 	});
 
-	const enTokenAmount = BigInt(createResponse.bridgingTx.tokenAmount || '0');
-	const enTokenID =
-		enTokenAmount > BigInt(0) ? createResponse.bridgingTx.tokenID : 0;
+	submitPromise.off('transactionHash', onTxHash);
 
-	const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
+	if (receipt.status !== TX_SUCCESS) {
+		if (response instanceof ErrorResponse) {
+			captureAndThrowError(
+				response.err,
+				'submitTx.ts',
+				'signAndSubmitEthTx',
+			);
+		}
+
+		const bindedDeleteAction = bridgingTransactionDeleteAction.bind(
+			null,
+			new TransactionActivateDeleteDto({
+				originChain: values.originChain as unknown as ChainEnum,
+				originTxHash: receipt.transactionHash.toString(),
+			}),
+		);
+
+		// we dont await on purpose, because we want this to execute in the background, without blocking the user
+		void retryForever(async () => {
+			const res = await tryCatchJsonByAction(bindedDeleteAction, false);
+
+			if (res instanceof ErrorResponse) {
+				throw new Error(res.err ?? 'ErrorResponse');
+			}
+		});
+
+		captureAndThrowError(
+			'transaction cant be submitted',
+			'submitTx.ts',
+			'signAndSubmitEthTx',
+		);
+	}
+
+	if (response instanceof ErrorResponse) {
+		try {
+			const bindedSubmittedActivatedAction =
+				bridgingTransactionSubmittedActivatedAction.bind(
+					null,
+					new TransactionSubmittedDto({
+						...baseSubmittedDto,
+						originTxHash: receipt.transactionHash.toString(),
+						txRaw: JSON.stringify(
+							{ ...tx, block: receipt.blockNumber },
+							bigintReplacer,
+						),
+					}),
+				);
+
+			const submittedResponse = await retry(async () => {
+				const res = await tryCatchJsonByAction(
+					bindedSubmittedActivatedAction,
+					false,
+				);
+
+				if (res instanceof ErrorResponse) {
+					throw new Error(res.err ?? 'ErrorResponse');
+				}
+			}, tryCount);
+
+			return submittedResponse;
+		} catch (err) {
+			captureAndThrowError(
+				err instanceof Error ? err : new Error(String(err)),
+				'submitTx.ts',
+				'signAndSubmitLayerZeroTx',
+			);
+		}
+	}
+
+	const bindedUpdateAction = bridgingTransactionUpdateAction.bind(
 		null,
-		new TransactionSubmittedDto({
+		new TransactionUpdateDto({
 			originChain: values.originChain as unknown as ChainEnum,
-			destinationChain: values.destinationChain as unknown as ChainEnum,
 			originTxHash: receipt.transactionHash.toString(),
-			senderAddress: values.senderAddress,
-			receiverAddrs: [values.destinationAddress],
 			txRaw: JSON.stringify(
 				{ ...tx, block: receipt.blockNumber.toString() },
-				(_: string, value: any) =>
-					typeof value === 'bigint'
-						? `bigint:${value.toString()}`
-						: value,
+				bigintReplacer,
 			),
-			amount: BigInt(
-				createResponse.bridgingTx.ethTx.value || '0',
-			).toString(10),
-			tokenID: enTokenID,
-			nativeTokenAmount: enTokenAmount.toString(10),
-			isFallback: createResponse.isFallback,
-			isLayerZero: false,
 		}),
 	);
 
-	const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
-	if (response instanceof ErrorResponse) {
-		captureAndThrowError(response.err, 'submitTx.ts', 'signAndSubmitEthTx');
-	}
+	try {
+		const updateResponse = await retry(async () => {
+			const res = await tryCatchJsonByAction(bindedUpdateAction, false);
 
-	return response;
+			if (res instanceof ErrorResponse) {
+				throw new Error(res.err ?? 'ErrorResponse');
+			}
+
+			return res;
+		}, tryCount);
+
+		return updateResponse;
+	} catch (err) {
+		captureAndThrowError(
+			err instanceof Error ? err : new Error(String(err)),
+			'submitTx.ts',
+			'signAndSubmitEthTx',
+		);
+	}
 };
 
 export const signAndSubmitLayerZeroTx = async (
@@ -295,7 +506,7 @@ export const signAndSubmitLayerZeroTx = async (
 
 		console.log('submitting layer zero approval tx...', tx);
 		const receipt = await evmWalletHandler.submitTx(tx, opts);
-		if (receipt.status !== BigInt(1)) {
+		if (receipt.status !== TX_SUCCESS) {
 			captureAndThrowError(
 				'approval transaction has failed. receipt status unsuccessful',
 				'submitTx.ts',
@@ -326,42 +537,145 @@ export const signAndSubmitLayerZeroTx = async (
 	});
 
 	console.log('submitting layer zero send tx...', sendTx);
+
+	const baseSubmittedDto = {
+		originChain: originalSrcChain,
+		destinationChain: originalDstChain,
+		senderAddress: account,
+		receiverAddrs: [receiverAddr],
+		amount: transactionData.populatedTransaction.value,
+		nativeTokenAmount: isCurrency
+			? '0'
+			: createResponse.metadata.properties.amount,
+		tokenID: isCurrency ? 0 : tokenID,
+		isFallback: false,
+		isLayerZero: true,
+	};
+
+	const latestBlock = await evmWalletHandler.getBlock();
+
+	let submitActionPromise: Promise<
+		BridgeTransactionDto | ErrorResponse | void
+	> = Promise.resolve();
+
 	const onTxHash = (txHash: any) => {
 		updateLoadingState({
 			content: 'Waiting for transaction receipt...',
 			txHash: txHash.toString(),
 		});
+
+		const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
+			null,
+			new TransactionSubmittedDto({
+				...baseSubmittedDto,
+				originTxHash: txHash,
+				txRaw: JSON.stringify(
+					{ ...sendTx, block: latestBlock.number + blockOffset },
+					bigintReplacer,
+				),
+			}),
+		);
+
+		submitActionPromise = tryCatchJsonByAction(
+			bindedSubmittedAction,
+			false,
+		);
 	};
 
 	const submitPromise = evmWalletHandler.submitTx(sendTx, opts);
 	submitPromise.on('transactionHash', onTxHash);
 
-	// Return the receipt from the actual send
-	const receipt = await submitPromise;
-	submitPromise.off('transactionHash', onTxHash);
-	if (receipt.status !== BigInt(1)) {
-		captureAndThrowError(
-			'send transaction has failed. receipt status unsuccessful',
-			'submitTx.ts',
-			'signAndSubmitLayerZeroTx',
-		);
-	}
+	const [response, receipt] = await Promise.all([
+		submitActionPromise,
+		submitPromise,
+	]);
 
 	updateLoadingState({
 		content: 'Recording the bridging transaction...',
 		txHash: receipt.transactionHash.toString(),
 	});
 
+	submitPromise.off('transactionHash', onTxHash);
+
+	if (receipt.status !== TX_SUCCESS) {
+		if (response instanceof ErrorResponse) {
+			captureAndThrowError(
+				response.err,
+				'submitTx.ts',
+				'signAndSubmitEthTx',
+			);
+		}
+
+		const bindedDeleteAction = bridgingTransactionDeleteAction.bind(
+			null,
+			new TransactionActivateDeleteDto({
+				originChain: originalSrcChain,
+				originTxHash: receipt.transactionHash.toString(),
+			}),
+		);
+
+		// we dont await on purpose, because we want this to execute in the background, without blocking the user
+		void retryForever(async () => {
+			const res = await tryCatchJsonByAction(bindedDeleteAction, false);
+
+			if (res instanceof ErrorResponse) {
+				throw new Error(res.err ?? 'ErrorResponse');
+			}
+		});
+
+		captureAndThrowError(
+			'transaction cant be submitted',
+			'submitTx.ts',
+			'signAndSubmitLayerZeroTx',
+		);
+	}
+
 	console.log('layer zero send tx has been submitted', sendTx.value);
 
-	const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
+	if (response instanceof ErrorResponse) {
+		try {
+			const bindedSubmittedActivatedAction =
+				bridgingTransactionSubmittedActivatedAction.bind(
+					null,
+					new TransactionSubmittedDto({
+						...baseSubmittedDto,
+						originTxHash: receipt.transactionHash.toString(),
+						txRaw: JSON.stringify(
+							{
+								...sendTx,
+								block: receipt.blockNumber.toString(),
+							},
+							bigintReplacer,
+						),
+					}),
+				);
+
+			const submittedActivatedResponse = await retry(async () => {
+				const res = await tryCatchJsonByAction(
+					bindedSubmittedActivatedAction,
+					false,
+				);
+
+				if (res instanceof ErrorResponse) {
+					throw new Error(res.err ?? 'ErrorResponse');
+				}
+			}, tryCount);
+
+			return submittedActivatedResponse;
+		} catch (err) {
+			captureAndThrowError(
+				err instanceof Error ? err : new Error(String(err)),
+				'submitTx.ts',
+				'signAndSubmitLayerZeroTx',
+			);
+		}
+	}
+
+	const bindedUpdateAction = bridgingTransactionUpdateAction.bind(
 		null,
-		new TransactionSubmittedDto({
+		new TransactionUpdateDto({
 			originChain: originalSrcChain,
-			destinationChain: originalDstChain,
 			originTxHash: receipt.transactionHash.toString(),
-			senderAddress: account,
-			receiverAddrs: [receiverAddr],
 			txRaw: JSON.stringify(
 				{ ...sendTx, block: receipt.blockNumber.toString() },
 				(_: string, value: any) =>
@@ -369,26 +683,28 @@ export const signAndSubmitLayerZeroTx = async (
 						? `bigint:${value.toString()}`
 						: value,
 			),
-			amount: transactionData.populatedTransaction.value,
-			nativeTokenAmount: isCurrency
-				? '0'
-				: createResponse.metadata.properties.amount,
-			tokenID: isCurrency ? 0 : tokenID,
-			isFallback: false,
-			isLayerZero: true,
 		}),
 	);
 
-	const response = await tryCatchJsonByAction(bindedSubmittedAction, false);
-	if (response instanceof ErrorResponse) {
+	try {
+		const updateResponse = await retry(async () => {
+			const res = await tryCatchJsonByAction(bindedUpdateAction, false);
+
+			if (res instanceof ErrorResponse) {
+				throw new Error(res.err ?? 'ErrorResponse');
+			}
+
+			return res;
+		}, tryCount);
+
+		return updateResponse;
+	} catch (err) {
 		captureAndThrowError(
-			response.err,
+			err instanceof Error ? err : new Error(String(err)),
 			'submitTx.ts',
-			'submitBridgingTransaction',
+			'signAndSubmitLayerZeroTx',
 		);
 	}
-
-	return response;
 };
 
 export const populateTxDetails = async (

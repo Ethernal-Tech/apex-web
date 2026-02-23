@@ -296,7 +296,7 @@ export class SettingsService {
 					...reactorSettings.bridgingSettings.minChainFeeForBridging,
 				},
 				minChainFeeForBridgingTokens: {},
-				minColCoinsAllowedToBridge: 0,
+				minColCoinsAllowedToBridge: {},
 				minOperationFee: {},
 				minUtxoChainValue: {
 					...reactorSettings.bridgingSettings.minUtxoChainValue,

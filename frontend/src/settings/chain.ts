@@ -12,6 +12,7 @@ import { ReactComponent as NexusIcon } from '../assets/chain-icons/nexus.svg';
 import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg';
 import { ReactComponent as BaseIcon } from '../assets/chain-icons/base.svg';
 import { ReactComponent as BNBIcon } from '../assets/chain-icons/bsc.svg';
+import { ReactComponent as PolygonIcon } from '../assets/chain-icons/polygon.svg';
 import { ISettingsState } from './settingsRedux';
 import appSettings from './appSettings';
 import { captureAndThrowError } from '../features/sentry';
@@ -103,6 +104,15 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 		mainColor: '#F3BA2F',
 		order: 6,
 	},
+	[ChainEnum.Polygon]: {
+		value: ChainEnum.Polygon,
+		label: 'Polygon',
+		icon: PolygonIcon,
+		borderColor: '#7B3FE4',
+		letter: 'P',
+		mainColor: '#7B3FE4',
+		order: 7,
+	},
 };
 
 const getChainDirections = function (
@@ -158,7 +168,8 @@ export const isEvmChain = function (chain: ChainEnum): boolean {
 	return (
 		chain === ChainEnum.Nexus ||
 		chain === ChainEnum.Base ||
-		chain === ChainEnum.Bsc
+		chain === ChainEnum.Bsc ||
+		chain === ChainEnum.Polygon
 	);
 };
 
@@ -197,6 +208,7 @@ export function isApexBridgeChain(chain: ChainEnum): boolean {
 		case ChainEnum.Vector:
 		case ChainEnum.Nexus:
 		case ChainEnum.Cardano:
+		case ChainEnum.Polygon:
 			return true;
 		default:
 			return false; // sepolia / ethereum → false

@@ -97,9 +97,9 @@ export class BridgingSettingsDto {
 		description:
 			'For each chain, the minimum fee required to cover the submission of the currency transaction on the destination chain',
 		type: Object,
-		additionalProperties: { type: 'number' },
+		additionalProperties: { type: 'string' },
 	})
-	minChainFeeForBridging: { [key: string]: number };
+	minChainFeeForBridging: { [key: string]: string };
 
 	@IsNotEmpty()
 	@IsPositive()
@@ -117,9 +117,9 @@ export class BridgingSettingsDto {
 		description:
 			'For each chain, the minimum fee required to cover operational costs',
 		type: Object,
-		additionalProperties: { type: 'number' },
+		additionalProperties: { type: 'string' },
 	})
-	minOperationFee: { [key: string]: number };
+	minOperationFee: { [key: string]: string };
 
 	@IsNotEmpty()
 	@IsPositive()
@@ -153,8 +153,10 @@ export class BridgingSettingsDto {
 	@IsPositive()
 	@ApiProperty({
 		description: 'Minimum amount of colored tokens allowed to be bridged',
+		type: Object,
+		additionalProperties: { type: 'string' },
 	})
-	minColCoinsAllowedToBridge: number;
+	minColCoinsAllowedToBridge: { [key: string]: string };
 
 	@IsNotEmpty()
 	@IsPositive()
@@ -196,7 +198,7 @@ export class ReactorOnlyBridgingSettingsDto {
 		type: Object,
 		additionalProperties: { type: 'number' },
 	})
-	minChainFeeForBridging: { [key: string]: number };
+	minChainFeeForBridging: { [key: string]: string };
 
 	@IsNotEmpty()
 	@IsPositive()

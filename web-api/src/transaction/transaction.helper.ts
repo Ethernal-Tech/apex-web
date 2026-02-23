@@ -1,4 +1,8 @@
-import { BridgingModeEnum, ChainApexBridgeEnum } from 'src/common/enum';
+import {
+	BridgingModeEnum,
+	ChainApexBridgeEnum,
+	ChainEnum,
+} from 'src/common/enum';
 import {
 	CreateCardanoTransactionResponseDto,
 	ErrorResponseDto,
@@ -15,8 +19,7 @@ import {
 } from '@nestjs/common';
 import web3, { Web3 } from 'web3';
 import { isAddress } from 'web3-validator';
-import { NewAddress, RewardAddress } from 'src/utils/Address/addreses';
-import { areChainsEqual, toNumChainID } from 'src/utils/chainUtils';
+import { isCardanoChain, isEvmChain, toNumChainID } from 'src/utils/chainUtils';
 import {
 	erc20ABI,
 	reactorGatewayABI,
@@ -29,7 +32,16 @@ import {
 import { convertDfmToWei, getUrlAndApiKey } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
 import { getAppConfig } from 'src/appConfig/appConfig';
-import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
+import {
+	getCurrencyIDFromDirectionConfig,
+	getSkylineGatewayAddress,
+	getSkylineNativeTokenWalletAddress,
+} from 'src/settings/utils';
+import {
+	ValidateCardanoAddress,
+	ValidateEVMAddress,
+} from 'src/utils/Address/addreses';
+import { createHash } from 'crypto';
 
 const prepareCreateCardanoBridgingTx = (
 	dto: CreateTransactionDto,
@@ -172,14 +184,31 @@ export const createEthBridgingTx = (
 	const isWrappedCurrencyBridging =
 		!isCurrencyBridging && tokenPair.dstTokenID === dstCurrencyID;
 
-	let minValue = bridgingSettings.minColCoinsAllowedToBridge;
-	if (isWrappedCurrencyBridging) {
-		minValue = bridgingSettings.minUtxoChainValue[dto.destinationChain];
-	} else if (isCurrencyBridging) {
-		minValue = bridgingSettings.minValueToBridge;
+	const destChain = dto.destinationChain as ChainEnum;
+
+	let minValue: bigint;
+	if (isCardanoChain(destChain) && isWrappedCurrencyBridging) {
+		minValue = BigInt(
+			convertDfmToWei(bridgingSettings.minUtxoChainValue[dto.destinationChain]),
+		);
+	} else if (isCardanoChain(destChain) && isCurrencyBridging) {
+		minValue = BigInt(convertDfmToWei(bridgingSettings.minValueToBridge));
+	} else {
+		const minValueSrc = BigInt(
+			bridgingSettings.minColCoinsAllowedToBridge[dto.originChain] || '0',
+		);
+		const minValueDst = isEvmChain(destChain)
+			? BigInt(bridgingSettings.minColCoinsAllowedToBridge[destChain] || '0')
+			: BigInt(
+					convertDfmToWei(
+						bridgingSettings.minColCoinsAllowedToBridge[destChain],
+					),
+				);
+
+		minValue = minValueSrc > minValueDst ? minValueSrc : minValueDst;
 	}
 
-	const minValueToBridge = BigInt(convertDfmToWei(minValue || '0'));
+	const minValueToBridge = BigInt(minValue || '0');
 	const amount = BigInt(dto.amount);
 
 	if (amount < minValueToBridge) {
@@ -188,53 +217,41 @@ export const createEthBridgingTx = (
 		);
 	}
 
-	// wTODO: support eth destinations also
-	const addr = NewAddress(dto.destinationAddress);
-	if (
-		!addr ||
-		addr instanceof RewardAddress ||
-		dto.destinationAddress !== addr.String()
-	) {
+	if (isCardanoChain(destChain)) {
+		ValidateCardanoAddress(dto.destinationAddress);
+	} else if (isEvmChain(destChain)) {
+		ValidateEVMAddress(dto.destinationAddress);
+	} else {
 		throw new BadRequestException(
-			`Invalid destination address: ${dto.destinationAddress}`,
+			`Unsupported destination chain: ${dto.destinationChain}`,
 		);
 	}
 
-	if (
-		!areChainsEqual(
-			dto.destinationChain,
-			addr.GetNetwork(),
-			appConfig.app.isMainnet,
-		)
-	) {
-		throw new BadRequestException(
-			`Destination address: ${dto.destinationAddress} not compatible with destination chain: ${dto.destinationChain}`,
-		);
-	}
-
-	const chainForMinFee =
+	const minFee =
 		bridgingMode === BridgingModeEnum.Reactor
-			? dto.destinationChain
-			: dto.originChain;
-	const minFee = bridgingSettings.minChainFeeForBridging[chainForMinFee];
+			? convertDfmToWei(
+					bridgingSettings.minChainFeeForBridging[dto.destinationChain],
+				)
+			: bridgingSettings.minChainFeeForBridging[dto.originChain];
 	if (!minFee) {
 		throw new InternalServerErrorException(
-			`No minFee for chain: ${chainForMinFee}`,
+			`No minFee for chain: ${bridgingMode === BridgingModeEnum.Reactor ? dto.destinationChain : dto.originChain}`,
 		);
 	}
-	const minBridgingFee = BigInt(convertDfmToWei(minFee || '0'));
+	const minBridgingFee = BigInt(minFee || '0');
 	let bridgingFee = BigInt(dto.bridgingFee || '0');
 	bridgingFee = bridgingFee < minBridgingFee ? minBridgingFee : bridgingFee;
 
-	const minOpFee = bridgingSettings.minOperationFee[dto.originChain];
-	const minOperationFee = BigInt(convertDfmToWei(minOpFee || '0'));
+	const minOperationFee = BigInt(
+		bridgingSettings.minOperationFee[dto.originChain] || '0',
+	);
 	let operationFee = BigInt(dto.operationFee || '0');
 	operationFee =
 		operationFee < minOperationFee ? minOperationFee : operationFee;
 
 	if (isCurrencyBridging) {
 		const maxAllowedToBridge = BigInt(
-			convertDfmToWei(bridgingSettings.maxAmountAllowedToBridge) || '0',
+			bridgingSettings.maxAmountAllowedToBridge || '0',
 		);
 
 		if (
@@ -247,7 +264,7 @@ export const createEthBridgingTx = (
 		}
 	} else {
 		const maxTokenAmountAllowedToBridge = BigInt(
-			convertDfmToWei(bridgingSettings.maxTokenAmountAllowedToBridge) || '0',
+			bridgingSettings.maxTokenAmountAllowedToBridge || '0',
 		);
 
 		if (
@@ -314,7 +331,7 @@ const skylineEthBridgingTx = (
 
 		const calldata = erc20Contract.methods
 			.approve(
-				getAppConfig().bridge.addresses.skylineNexusNativeTokenWallet,
+				getSkylineNativeTokenWalletAddress(dto.originChain),
 				web3.utils.toHex(BigInt(dto.amount)),
 			)
 			.encodeABI();
@@ -327,7 +344,7 @@ const skylineEthBridgingTx = (
 		};
 	}
 
-	const to = getAppConfig().bridge.addresses.skylineNexusGateway;
+	const to = getSkylineGatewayAddress(dto.originChain);
 	if (!to) {
 		throw new BadRequestException('Empty to address');
 	}
@@ -440,3 +457,15 @@ const ethCentralizedBridgingTx = (
 		},
 	};
 };
+
+export function canUpdateTx(
+	ip: string,
+	clientID?: string | null,
+	activeFrom?: Date,
+): boolean {
+	const hash = createHash('sha256')
+		.update(ip + (getAppConfig().hashSecret ?? ''))
+		.digest('hex');
+
+	return hash === clientID && !!activeFrom && activeFrom > new Date();
+}

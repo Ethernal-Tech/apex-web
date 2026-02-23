@@ -76,7 +76,8 @@ type skylineGenerateConfigsParams struct {
 	vectorTTLSlotInc              uint64
 	vectorIsEnabled               bool
 
-	nexusIsEnabled bool
+	nexusIsEnabled   bool
+	polygonIsEnabled bool
 
 	logsPath         string
 	utxoCacheTimeout time.Duration
@@ -409,6 +410,13 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		nexusIsEnabledFlagDesc,
 	)
 
+	cmd.Flags().BoolVar(
+		&p.polygonIsEnabled,
+		polygonIsEnabledFlag,
+		false,
+		polygonIsEnabledFlagDesc,
+	)
+
 	cmd.Flags().StringVar(
 		&p.logsPath,
 		logsPathFlag,
@@ -537,6 +545,9 @@ func (p *skylineGenerateConfigsParams) Execute(
 		EthChains: map[string]*core.EthChainConfig{
 			common.ChainIDStrNexus: {
 				IsEnabled: p.nexusIsEnabled,
+			},
+			common.ChainIDStrPolygon: {
+				IsEnabled: p.polygonIsEnabled,
 			},
 		},
 		UtxoCacheTimeout: p.utxoCacheTimeout,

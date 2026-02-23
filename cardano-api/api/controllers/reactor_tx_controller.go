@@ -219,21 +219,29 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody.BridgingFee += feeSum
 	requestBody.Transactions = transactions
 
-	minFee, found := c.appConfig.ReactorBridgingSettings.MinChainFeeForBridging[requestBody.SourceChainID]
+	minFeeBigInt, found := c.appConfig.ReactorBridgingSettings.MinChainFeeForBridging[requestBody.SourceChainID]
 	if !found {
 		return fmt.Errorf("no minimal fee for chain: %s", requestBody.SourceChainID)
 	}
+
+	minFee := minFeeBigInt.Uint64()
 
 	// this is just convinient way to setup default min fee
 	if requestBody.BridgingFee == 0 {
 		requestBody.BridgingFee = minFee
 	}
 
-	if c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge != nil &&
-		c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge.Sign() == 1 &&
-		receiverAmountSum.Cmp(c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge) == 1 {
-		return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
-			c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge, requestBody)
+	maxAllowedBigInt, success := new(big.Int).SetString(c.appConfig.ReactorBridgingSettings.MaxAmountAllowedToBridge, 10)
+	if !success {
+		return fmt.Errorf("failed to parse MaxAmountAllowedToBridge")
+	}
+
+	if maxAllowedBigInt != nil && maxAllowedBigInt.Sign() == 1 {
+		maxAmountAllowedToBridgeDfm := common.WeiToDfm(maxAllowedBigInt)
+		if receiverAmountSum.Cmp(maxAmountAllowedToBridgeDfm) == 1 {
+			return fmt.Errorf("sum of receiver amounts + fee greater than maximum allowed: %v, for request: %v",
+				maxAmountAllowedToBridgeDfm, requestBody)
+		}
 	}
 
 	receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(requestBody.BridgingFee))

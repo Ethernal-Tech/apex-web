@@ -58,7 +58,7 @@ export class CreateTransactionDto {
 
 	@ApiProperty({
 		description:
-			'Fee covering the submission of the transaction on the destination chain, expressed in Lovelace',
+			'Fee covering the submission of the transaction on the destination chain',
 		nullable: true,
 		required: false,
 	})
@@ -66,7 +66,7 @@ export class CreateTransactionDto {
 
 	@ApiProperty({
 		description:
-			'Fee covering the operational cost of processing the bridging request, expressed in Lovelace',
+			'Fee covering the operational cost of processing the bridging request',
 		nullable: true,
 		required: false,
 	})
@@ -152,6 +152,46 @@ export class TransactionSubmittedDto {
 		description: 'Indicates if Layer Zero bridging is used',
 	})
 	isLayerZero: boolean;
+}
+
+export class TransactionUpdateDto {
+	@IsNotEmpty()
+	@IsEnum(ChainEnum)
+	@ApiProperty({
+		description: 'Source chain ID',
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
+	})
+	originChain: ChainEnum;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Transaction hash on source chain',
+	})
+	originTxHash: string;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Transaction raw data on source chain',
+	})
+	txRaw: string;
+}
+
+export class TransactionActivateDeleteDto {
+	@IsNotEmpty()
+	@IsEnum(ChainEnum)
+	@ApiProperty({
+		description: 'Source chain ID',
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
+	})
+	originChain: ChainEnum;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Transaction hash on source chain',
+	})
+	originTxHash: string;
 }
 
 export class CreateCardanoTransactionResponseTokenAmountDto {
