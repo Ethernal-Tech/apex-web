@@ -109,7 +109,7 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 	}
 
 	err = validateAddress(
-		false, p.primeTreasuryAddress, primeTreasuryAddressFlag,
+		true, p.primeTreasuryAddress, primeTreasuryAddressFlag,
 		wallet.CardanoNetworkType(p.primeNetworkID))
 	if err != nil {
 		return err
@@ -143,7 +143,7 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 	}
 
 	err = validateAddress(
-		false, p.cardanoTreasuryAddress, cardanoTreasuryAddressFlag,
+		true, p.cardanoTreasuryAddress, cardanoTreasuryAddressFlag,
 		wallet.CardanoNetworkType(p.cardanoNetworkID))
 	if err != nil {
 		return err
@@ -177,7 +177,7 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 	}
 
 	err = validateAddress(
-		false, p.vectorTreasuryAddress, vectorTreasuryAddressFlag,
+		true, p.vectorTreasuryAddress, vectorTreasuryAddressFlag,
 		wallet.CardanoNetworkType(p.vectorNetworkID))
 	if err != nil {
 		return err
