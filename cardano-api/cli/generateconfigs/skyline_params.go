@@ -19,6 +19,7 @@ const (
 	cardanoNetworkMagicFlag            = "cardano-network-magic"
 	cardanoBridgingFeeAddressFlag      = "cardano-bridging-fee-address"
 	cardanoBridgingFallbackAddressFlag = "cardano-bridging-fallback-address"
+	cardanoTreasuryAddressFlag         = "cardano-treasury-address"
 	cardanoOgmiosURLFlag               = "cardano-ogmios-url"
 	cardanoBlockfrostURLFlag           = "cardano-blockfrost-url"
 	cardanoBlockfrostAPIKeyFlag        = "cardano-blockfrost-api-key" //nolint:gosec
@@ -29,6 +30,7 @@ const (
 	cardanoNetworkMagicFlagDesc            = "cardano network magic (default 0)"
 	cardanoBridgingFeeAddressFlagDesc      = "cardano bridging fee address"
 	cardanoBridgingFallbackAddressFlagDesc = "cardano bridging fallback address"
+	cardanoTreasuryAddressFlagDesc         = "cardano treasury address"
 	cardanoOgmiosURLFlagDesc               = "ogmios URL for cardano network"
 	cardanoBlockfrostURLFlagDesc           = "blockfrost URL for cardano network"
 	cardanoBlockfrostAPIKeyFlagDesc        = "blockfrost API key for cardano network" //nolint:gosec
@@ -44,6 +46,7 @@ type skylineGenerateConfigsParams struct {
 	primeNetworkMagic            uint32
 	primeBridgingFeeAddress      string
 	primeBridgingFallbackAddress string
+	primeTreasuryAddress         string
 	primeOgmiosURL               string
 	primeBlockfrostURL           string
 	primeBlockfrostAPIKey        string
@@ -54,6 +57,7 @@ type skylineGenerateConfigsParams struct {
 	cardanoNetworkMagic            uint32
 	cardanoBridgingFeeAddress      string
 	cardanoBridgingFallbackAddress string
+	cardanoTreasuryAddress         string
 	cardanoOgmiosURL               string
 	cardanoBlockfrostURL           string
 	cardanoBlockfrostAPIKey        string
@@ -64,6 +68,7 @@ type skylineGenerateConfigsParams struct {
 	vectorNetworkMagic            uint32
 	vectorBridgingFeeAddress      string
 	vectorBridgingFallbackAddress string
+	vectorTreasuryAddress         string
 	vectorOgmiosURL               string
 	vectorBlockfrostURL           string
 	vectorBlockfrostAPIKey        string
@@ -102,6 +107,13 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 		return err
 	}
 
+	err = validateAddress(
+		true, p.primeTreasuryAddress, primeTreasuryAddressFlag,
+		wallet.CardanoNetworkType(p.primeNetworkID))
+	if err != nil {
+		return err
+	}
+
 	if p.primeBlockfrostURL == "" && p.primeSocketPath == "" && p.primeOgmiosURL == "" {
 		return fmt.Errorf("specify at least one of: %s, %s, %s",
 			primeBlockfrostURLFlag, primeSocketPathFlag, primeOgmiosURLFlag)
@@ -129,6 +141,13 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 		return err
 	}
 
+	err = validateAddress(
+		true, p.cardanoTreasuryAddress, cardanoTreasuryAddressFlag,
+		wallet.CardanoNetworkType(p.cardanoNetworkID))
+	if err != nil {
+		return err
+	}
+
 	if p.cardanoBlockfrostURL == "" && p.cardanoSocketPath == "" && p.cardanoOgmiosURL == "" {
 		return fmt.Errorf("specify at least one of: %s, %s, %s",
 			cardanoBlockfrostURLFlag, cardanoSocketPathFlag, cardanoOgmiosURLFlag)
@@ -151,6 +170,13 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 
 	err = validateAddress(
 		false, p.vectorBridgingFallbackAddress, vectorBridgingFallbackAddressFlag,
+		wallet.CardanoNetworkType(p.vectorNetworkID))
+	if err != nil {
+		return err
+	}
+
+	err = validateAddress(
+		true, p.vectorTreasuryAddress, vectorTreasuryAddressFlag,
 		wallet.CardanoNetworkType(p.vectorNetworkID))
 	if err != nil {
 		return err
@@ -202,6 +228,12 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		primeBridgingFeeAddressFlag,
 		"",
 		primeBridgingFeeAddressFlagDesc,
+	)
+	cmd.Flags().StringVar(
+		&p.primeTreasuryAddress,
+		primeTreasuryAddressFlag,
+		"",
+		primeTreasuryAddressFlagDesc,
 	)
 	cmd.Flags().StringVar(
 		&p.primeBridgingFallbackAddress,
@@ -265,6 +297,12 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		cardanoBridgingFallbackAddressFlagDesc,
 	)
 	cmd.Flags().StringVar(
+		&p.cardanoTreasuryAddress,
+		cardanoTreasuryAddressFlag,
+		"",
+		cardanoTreasuryAddressFlagDesc,
+	)
+	cmd.Flags().StringVar(
 		&p.cardanoOgmiosURL,
 		cardanoOgmiosURLFlag,
 		"",
@@ -319,6 +357,13 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		"",
 		vectorBridgingFallbackAddressFlagDesc,
 	)
+	cmd.Flags().StringVar(
+		&p.vectorTreasuryAddress,
+		vectorTreasuryAddressFlag,
+		"",
+		vectorTreasuryAddressFlagDesc,
+	)
+
 	cmd.Flags().StringVar(
 		&p.vectorOgmiosURL,
 		vectorOgmiosURLFlag,
@@ -440,6 +485,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 					FeeAddress:      p.primeBridgingFeeAddress,
 					FallbackAddress: p.primeBridgingFallbackAddress,
 				},
+				TreasuryAddress: p.primeTreasuryAddress,
 				ChainSpecific: &cardanotx.CardanoChainConfig{
 					OgmiosURL:        p.primeOgmiosURL,
 					BlockfrostURL:    p.primeBlockfrostURL,
@@ -457,6 +503,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 					FeeAddress:      p.cardanoBridgingFeeAddress,
 					FallbackAddress: p.cardanoBridgingFallbackAddress,
 				},
+				TreasuryAddress: p.cardanoTreasuryAddress,
 				ChainSpecific: &cardanotx.CardanoChainConfig{
 					OgmiosURL:        p.cardanoOgmiosURL,
 					BlockfrostURL:    p.cardanoBlockfrostURL,

@@ -19,6 +19,7 @@ const (
 	primeNetworkMagicFlag            = "prime-network-magic"
 	primeBridgingFeeAddressFlag      = "prime-bridging-fee-address"
 	primeBridgingFallbackAddressFlag = "prime-bridging-fallback-address"
+	primeTreasuryAddressFlag         = "prime-treasury-address"
 	primeOgmiosURLFlag               = "prime-ogmios-url"
 	primeBlockfrostURLFlag           = "prime-blockfrost-url"
 	primeBlockfrostAPIKeyFlag        = "prime-blockfrost-api-key"
@@ -29,6 +30,7 @@ const (
 	vectorNetworkMagicFlag            = "vector-network-magic"
 	vectorBridgingFeeAddressFlag      = "vector-bridging-fee-address"
 	vectorBridgingFallbackAddressFlag = "vector-bridging-fallback-address"
+	vectorTreasuryAddressFlag         = "vector-treasury-address"
 	vectorOgmiosURLFlag               = "vector-ogmios-url"
 	vectorBlockfrostURLFlag           = "vector-blockfrost-url"
 	vectorBlockfrostAPIKeyFlag        = "vector-blockfrost-api-key"
@@ -36,7 +38,8 @@ const (
 	vectorTTLSlotIncFlag              = "vector-ttl-slot-inc"
 	vectorIsEnabledFlag               = "vector-is-enabled"
 
-	nexusIsEnabledFlag = "nexus-is-enabled"
+	nexusIsEnabledFlag       = "nexus-is-enabled"
+	nexusTreasuryAddressFlag = "nexus-treasury-address"
 
 	logsPathFlag = "logs-path"
 
@@ -54,8 +57,9 @@ const (
 
 	primeNetworkIDFlagDesc               = "prime network id"
 	primeNetworkMagicFlagDesc            = "prime network magic (default 0)"
-	primeBridgingFeeAddressFlagDesc      = "prime bridging feeaddress"
+	primeBridgingFeeAddressFlagDesc      = "prime bridging fee address"
 	primeBridgingFallbackAddressFlagDesc = "prime bridging fallback address"
+	primeTreasuryAddressFlagDesc         = "prime treasury address"
 	primeOgmiosURLFlagDesc               = "ogmios URL for prime network"
 	primeBlockfrostURLFlagDesc           = "blockfrost URL for prime network"
 	primeBlockfrostAPIKeyFlagDesc        = "blockfrost API key for prime network" //nolint:gosec
@@ -66,6 +70,7 @@ const (
 	vectorNetworkMagicFlagDesc            = "vector network magic (default 0)"
 	vectorBridgingFeeAddressFlagDesc      = "vector bridging fee address"
 	vectorBridgingFallbackAddressFlagDesc = "vector bridging fallback address"
+	vectorTreasuryAddressFlagDesc         = "vector treasury address"
 	vectorOgmiosURLFlagDesc               = "ogmios URL for vector network"
 	vectorBlockfrostURLFlagDesc           = "blockfrost URL for vector network"
 	vectorBlockfrostAPIKeyFlagDesc        = "blockfrost API key for vector network" //nolint:gosec
@@ -73,7 +78,8 @@ const (
 	vectorTTLSlotIncFlagDesc              = "TTL slot increment for vector"
 	vectorIsEnabledFlagDesc               = "chain enable flag for vector"
 
-	nexusIsEnabledFlagDesc = "chain enable flag for nexus"
+	nexusIsEnabledFlagDesc       = "chain enable flag for nexus"
+	nexusTreasuryAddressFlagDesc = "nexus treasury address"
 
 	logsPathFlagDesc = "path to where logs will be stored"
 

@@ -44,6 +44,7 @@ type CardanoChainConfig struct {
 	NetworkMagic      uint32                           `json:"networkMagic"`
 	NetworkID         cardanowallet.CardanoNetworkType `json:"networkID"`
 	BridgingAddresses BridgingAddresses                `json:"bridgingAddresses"`
+	TreasuryAddress   string                           `json:"treasuryAddress"`
 	ChainSpecific     *cardanotx.CardanoChainConfig    `json:"chainSpecific"`
 	IsEnabled         bool                             `json:"isEnabled"`
 }
@@ -435,6 +436,7 @@ func (config CardanoChainConfig) ToSendTxChainConfig(
 		MinColCoinsAllowedToBridge: minColCoinsAllowedToBridge,
 		Tokens:                     tokens,
 		ProtocolParameters:         nil,
+		TreasuryAddress:            config.TreasuryAddress,
 	}, nil
 }
 
