@@ -277,6 +277,10 @@ const updateBridgeTransactionState = (
 		entity.destinationTxHash = state.destinationTxHash;
 		entity.finishedAt = new Date();
 	}
+
+	if (state.status !== TransactionStatusEnum.Pending && entity.clientID) {
+		entity.clientID = null;
+	}
 };
 
 export const mapBridgeTransactionToResponse = (

@@ -6,6 +6,8 @@ import {
 	FindOptionsOrder,
 	FindOptionsWhere,
 	In,
+	IsNull,
+	LessThan,
 	LessThanOrEqual,
 	Like,
 	MoreThanOrEqual,
@@ -56,7 +58,7 @@ export class BridgeTransactionService {
 	async getAllFiltered(
 		model: BridgeTransactionFilterDto,
 	): Promise<BridgeTransactionResponseDto> {
-		const where: FindOptionsWhere<BridgeTransaction> = {
+		const baseWhere: FindOptionsWhere<BridgeTransaction> = {
 			destinationChain: model.destinationChain,
 			senderAddress: model.senderAddress,
 			originChain: model.originChain,
@@ -64,20 +66,20 @@ export class BridgeTransactionService {
 		};
 
 		if (model.amountFrom && model.amountTo) {
-			where.amount = Between(model.amountFrom, model.amountTo);
+			baseWhere.amount = Between(model.amountFrom, model.amountTo);
 		} else if (model.amountFrom) {
-			where.amount = MoreThanOrEqual(model.amountFrom);
+			baseWhere.amount = MoreThanOrEqual(model.amountFrom);
 		} else if (model.amountTo) {
-			where.amount = LessThanOrEqual(model.amountTo);
+			baseWhere.amount = LessThanOrEqual(model.amountTo);
 		}
 
 		if (model.receiverAddress) {
-			where.receiverAddresses = Like(model.receiverAddress);
+			baseWhere.receiverAddresses = Like(model.receiverAddress);
 		}
 
 		// because we are using same db as skyline - additional filtering needed
 		if (!model.destinationChain) {
-			where.destinationChain = In([
+			baseWhere.destinationChain = In([
 				ChainEnum.Prime,
 				ChainEnum.Vector,
 				ChainEnum.Nexus,
@@ -85,12 +87,23 @@ export class BridgeTransactionService {
 		}
 
 		if (!model.originChain) {
-			where.originChain = In([
+			baseWhere.originChain = In([
 				ChainEnum.Prime,
 				ChainEnum.Vector,
 				ChainEnum.Nexus,
 			]);
 		}
+
+		const where: FindOptionsWhere<BridgeTransaction>[] = [
+			{
+				...baseWhere,
+				activeFrom: IsNull(),
+			},
+			{
+				...baseWhere,
+				activeFrom: LessThan(new Date()),
+			},
+		];
 
 		const page = model.page || 0;
 		const take = model.perPage || 10;
@@ -105,7 +118,7 @@ export class BridgeTransactionService {
 
 		const [entities, total] =
 			await this.bridgeTransactionRepository.findAndCount({
-				where,
+				where: where,
 				take,
 				skip,
 				order,

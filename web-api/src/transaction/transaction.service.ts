@@ -2,8 +2,10 @@ import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
+	NotFoundException,
 } from '@nestjs/common';
 import {
+	canUpdateTx,
 	createCardanoBridgingTx,
 	createEthBridgingTx,
 	getCardanoBridgingTxFee,
@@ -14,6 +16,7 @@ import {
 	TransactionSubmittedDto,
 	CreateEthTransactionResponseDto,
 	CardanoTransactionFeeResponseDto,
+	TransactionActivateDeleteDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
@@ -33,6 +36,7 @@ import {
 	isEvmChain,
 } from 'src/utils/chainUtils';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
+import { createHash } from 'crypto';
 
 @Injectable()
 export class TransactionService {
@@ -205,16 +209,20 @@ export class TransactionService {
 		return tx;
 	}
 
-	async transactionSubmitted({
-		originChain,
-		destinationChain,
-		originTxHash,
-		senderAddress,
-		receiverAddrs,
-		amount,
-		txRaw,
-		isFallback,
-	}: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
+	async transactionSubmitted(
+		{
+			originChain,
+			destinationChain,
+			originTxHash,
+			senderAddress,
+			receiverAddrs,
+			amount,
+			txRaw,
+			isFallback,
+		}: TransactionSubmittedDto,
+		ip: string,
+		activate = false,
+	): Promise<BridgeTransactionDto> {
 		const entity = new BridgeTransaction();
 
 		const receiverAddresses = receiverAddrs
@@ -234,6 +242,14 @@ export class TransactionService {
 		entity.status = TransactionStatusEnum.Pending;
 		entity.txRaw = txRaw;
 		entity.isCentralized = isFallback;
+		entity.activeFrom = activate
+			? new Date()
+			: new Date(Date.now() + this.appConfig.txValidityPeriod);
+		entity.clientID = activate
+			? undefined
+			: createHash('sha256')
+					.update(ip + (this.appConfig.hashSecret ?? ''))
+					.digest('hex');
 
 		const newBridgeTransaction =
 			this.bridgeTransactionRepository.create(entity);
@@ -257,5 +273,71 @@ export class TransactionService {
 				);
 			}
 		}
+	}
+
+	async updateTransaction(
+		originChain: ChainEnum,
+		originTxHash: string,
+		ip: string,
+		txRaw?: string,
+	): Promise<BridgeTransactionDto> {
+		const hash = originTxHash.trim();
+
+		const entity = await this.bridgeTransactionRepository.findOne({
+			where: { sourceTxHash: hash, originChain: originChain },
+		});
+
+		if (!entity) {
+			throw new NotFoundException(`transaction with hash ${hash} not found`);
+		}
+
+		if (!canUpdateTx(ip, entity.clientID, entity.activeFrom)) {
+			throw new BadRequestException('unauthorized transaction update');
+		}
+
+		// Apply updates
+		if (txRaw !== undefined) {
+			entity.txRaw = txRaw;
+		}
+		entity.activeFrom = new Date();
+		entity.clientID = null;
+
+		const savedEntity = await this.bridgeTransactionRepository.save(entity);
+
+		return mapBridgeTransactionToResponse(savedEntity);
+	}
+
+	async removeTransaction(
+		{ originChain, originTxHash }: TransactionActivateDeleteDto,
+		ip: string,
+	): Promise<void> {
+		const hash = (originTxHash ?? '').trim();
+
+		if (!hash) {
+			throw new BadRequestException('originTxHash is required');
+		}
+
+		const entity = await this.bridgeTransactionRepository.findOne({
+			where: { sourceTxHash: hash, originChain: originChain },
+		});
+
+		if (!entity) {
+			throw new NotFoundException(`transaction with hash ${hash} not found`);
+		}
+
+		if (canUpdateTx(ip, entity?.clientID, entity.activeFrom)) {
+			const result = await this.bridgeTransactionRepository.delete({
+				sourceTxHash: hash,
+				originChain: originChain,
+			});
+
+			if (result.affected === 0) {
+				throw new NotFoundException(`Transaction with hash ${hash} not found`);
+			}
+
+			return;
+		}
+
+		throw new BadRequestException('unauthorized deletion of tx');
 	}
 }
