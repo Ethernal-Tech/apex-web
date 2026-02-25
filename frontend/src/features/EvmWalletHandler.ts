@@ -1,5 +1,5 @@
 import Web3 from 'web3';
-import { Transaction } from 'web3-types';
+import { BlockNumberOrTag, Transaction } from 'web3-types';
 import { toHex } from 'web3-utils';
 import { wait } from '../utils/generalUtils';
 import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
@@ -186,6 +186,18 @@ class EvmWalletHandler {
 	getGasPrice = async () => {
 		this._checkWalletAndThrow();
 		return await this.getWeb3()!.eth.getGasPrice();
+	};
+
+	getBlock = async (
+		blockNumberOrHash: BlockNumberOrTag | string = 'latest',
+		returnTransactionObjects = false,
+	) => {
+		this._checkWalletAndThrow();
+
+		return await this.getWeb3()!.eth.getBlock(
+			blockNumberOrHash,
+			returnTransactionObjects,
+		);
 	};
 }
 

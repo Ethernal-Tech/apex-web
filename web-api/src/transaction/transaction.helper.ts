@@ -21,6 +21,7 @@ import { BridgingSettingsDto } from 'src/settings/settings.dto';
 import { convertDfmToWei } from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
 import { getAppConfig } from 'src/appConfig/appConfig';
+import { createHash } from 'crypto';
 
 const prepareCreateCardanoBridgingTx = (
 	dto: CreateTransactionDto,
@@ -257,3 +258,15 @@ const ethCentralizedBridgingTx = (
 		isFallback: true,
 	};
 };
+
+export function canUpdateTx(
+	ip: string,
+	clientID?: string | null,
+	activeFrom?: Date,
+): boolean {
+	const hash = createHash('sha256')
+		.update(ip + (getAppConfig().hashSecret ?? ''))
+		.digest('hex');
+
+	return hash === clientID && !!activeFrom && activeFrom > new Date();
+}
