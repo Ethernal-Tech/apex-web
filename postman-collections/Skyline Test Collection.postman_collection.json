@@ -1273,7 +1273,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"senderAddr\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"cardano\",\n  \"destinationChainId\": \"prime\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n      \"amount\": 2000000,\n      \"tokenID\": 3\n    }\n  ],\n  \"bridgingFee\": 3000100,\n  \"operationFee\": 1000100,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
+									"raw": "{\n  \"senderAddr\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"cardano\",\n  \"destinationChainId\": \"prime\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n      \"amount\": 2000000,\n      \"tokenID\": 3\n    }\n  ],\n  \"bridgingFee\": 3000000,\n  \"operationFee\": 1000000,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1336,7 +1336,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"senderAddr\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"cardano\",\n  \"destinationChainId\": \"prime\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n      \"amount\": 2000000,\n      \"tokenID\": 3\n    }\n  ],\n  \"bridgingFee\": 3000100,\n  \"operationFee\": 1000100,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
+									"raw": "{\n  \"senderAddr\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"cardano\",\n  \"destinationChainId\": \"prime\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n      \"amount\": 2000000,\n      \"tokenID\": 3\n    }\n  ],\n  \"bridgingFee\": 3000000,\n  \"operationFee\": 1000100,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2526,7 +2526,7 @@
 													"    pm.expect(json.minValueToBridge).to.be.a(\"number\");",
 													"    pm.expect(json.maxAmountAllowedToBridge).to.be.a(\"string\");",
 													"    pm.expect(json.maxTokenAmountAllowedToBridge).to.be.a(\"string\");",
-													"    pm.expect(json.minColCoinsAllowedToBridge).to.be.an(\"string\");",
+													"    pm.expect(json.minColCoinsAllowedToBridge).to.be.an(\"object\");",
 													"    pm.expect(json.maxReceiversPerBridgingRequest).to.be.a(\"number\");",
 													"});"
 												],
