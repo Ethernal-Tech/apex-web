@@ -84,6 +84,7 @@ $ go run ./main.go generate-configs skyline \
 		--prime-bridging-address "<bridging address for prime network>" \
 		--prime-bridging-fee-address "<bridging fee address for prime network>" \
 		--prime-bridging-fallback-address "<bridging fallback address for prime network>" \
+		--prime-treasury-address "<treasury address for prime network>" \
 		--prime-ogmios-url "<ogmios URL for prime network>" \
 		--prime-blockfrost-url "<blockfrost URL for prime network>" \
 		--prime-blockfrost-api-key "<blockfrost API key for prime network>" \
@@ -94,6 +95,7 @@ $ go run ./main.go generate-configs skyline \
 		--cardano-bridging-address "<bridging address for cardano network>" \
 		--cardano-bridging-fee-address "<bridging fee address for cardano network>" \
 		--cardano-bridging-fallback-address "<bridging fallback address for cardano network>" \
+		--cardano-treasury-address "<treasury address for cardano network>" \
 		--cardano-ogmios-url "<ogmios URL for cardano network>" \
 		--cardano-blockfrost-url "<blockfrost URL for cardano network>" \
 		--cardano-blockfrost-api-key "<blockfrost API key for cardano network>" \
@@ -104,6 +106,7 @@ $ go run ./main.go generate-configs skyline \
 		--vector-bridging-address "<bridging address for vector network>" \
 		--vector-bridging-fee-address "<bridging fee address for vector network>" \
 		--vector-bridging-fallback-address "<bridging fallback address for vector network>" \
+		--vector-treasury-address "<treasury address for vector network>" \
 		--vector-ogmios-url "<ogmios URL for vector network>" \
 		--vector-blockfrost-url "<blockfrost URL for vector network>" \
 		--vector-blockfrost-api-key "<blockfrost API key for vector network>" \
@@ -129,16 +132,19 @@ $ go run ./main.go generate-configs skyline \
 		--prime-network-magic 3311 \
 		--prime-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv" \
 		--prime-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq" \
+		--prime-treasury-address "<treasury address for prime network>" \
 		--prime-blockfrost-url "https://cardano-preview.blockfrost.io/api/v0" \
 		--cardano-network-id 0\
 		--cardano-network-magic 3311 \
 		--cardano-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv" \
 		--cardano-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq" \
+		--cardano-treasury-address "<treasury address for cardano network>" \
 		--cardano-blockfrost-url "https://cardano-preview.blockfrost.io/api/v0" \
 		--vector-network-id 0\
 		--vector-network-magic 3311 \
 		--vector-bridging-address "addr_test1wrz24vv4tvfqsywkxn36rv5zagys2d7euafcgt50gmpgqpq4ju9uv" \
 		--vector-bridging-fee-address "addr_test1wq5dw0g9mpmjy0xd6g58kncapdf6vgcka9el4llhzwy5vhqz80tcq" \
+		--vector-treasury-address "<treasury address for vector network>" \
 		--vector-blockfrost-url "https://cardano-preview.blockfrost.io/api/v0" \
 		--oracle-api-url "http://bridge-api-testnet.apexfusion.org:10003" \
 		--oracle-api-key "oracle_api_key_1" \
@@ -157,17 +163,20 @@ $ go run main.go generate-configs skyline \
 		--prime-network-magic 3311\
 		--prime-bridging-fee-address "addr_test1wpp9wrzm5249ksfucal6f9rdth9y0rlwecu0r608gysjmcsf764mj"\
 		--prime-bridging-fallback-address "addr_test1wr943cc3l8hxhjcnh8mjrh67yshksw2ugydx0r9a4k7xrfqsp4p7y"\
+		--prime-treasury-address "<treasury address for prime network>" \
 		--prime-blockfrost-url "https://blockfrost-m1.demeter.run"\
 		--prime-blockfrost-api-key "test_demeter_api_key_1"\
 		--cardano-network-id 0\
 		--cardano-network-magic 2\
 		--cardano-bridging-fee-address "addr_test1wz3q8gnjsuyf7etplmcuw8rfusckmn5dmjwnhwdsap6savqcx8xg3"\
 		--cardano-bridging-fallback-address "addr_test1wrntyxdelrw98ps0vrpuf4rr2mmknem83y9ywxfn0a3jeasxtsjz5"\
+		--cardano-treasury-address "<treasury address for cardano network>" \
 		--cardano-ogmios-url "http://preview-services-skyline.testnet.ethernal.work:1733"\
 		--vector-network-id 0\
 		--vector-network-magic 2\
 		--vector-bridging-fee-address "addr_test1wz3q8gnjsuyf7etplmcuw8rfusckmn5dmjwnhwdsap6savqcx8xg3"\
 		--vector-bridging-fallback-address "addr_test1wrntyxdelrw98ps0vrpuf4rr2mmknem83y9ywxfn0a3jeasxtsjz5"\
+		--vector-treasury-address "<treasury address for vector network>" \
 		--vector-ogmios-url "http://preview-services-skyline.testnet.ethernal.work:1733"\
 		--vector-is-enabled\
 		--nexus-is-enabled\
