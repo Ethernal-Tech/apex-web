@@ -278,7 +278,12 @@ const updateBridgeTransactionState = (
 		entity.finishedAt = new Date();
 	}
 
-	if (state.status !== TransactionStatusEnum.Pending && entity.clientID) {
+	if (state.status !== TransactionStatusEnum.Pending) {
+		const now = new Date();
+		if (!entity.activeFrom || entity.activeFrom > now) {
+			entity.activeFrom = now;
+		}
+
 		entity.clientID = null;
 	}
 };
