@@ -9,7 +9,7 @@ import {
 } from './appConfig.helper';
 
 const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
-	app: { port: 3500, isMainnet: false, txValidityPeriod: 600000 }, // in milliseconds
+	app: { port: 3500, isMainnet: false, txValidityPeriod: 10000 }, // in milliseconds
 	bridge: { recentInputsThresholdMinutes: 5, ethTxTtlInc: 50 },
 	services: {
 		oracleUrl: 'http://localhost:40000',
