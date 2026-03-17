@@ -1,0 +1,49 @@
+name: Github Container Registry
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker:
+    name: Docker
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: cardano-api
+            context: cardano-api
+            dockerfile: cardano-api/Dockerfile
+          - service: web-api
+            context: web-api
+            dockerfile: web-api/Dockerfile
+          - service: frontend
+            context: frontend
+            dockerfile: frontend/Dockerfile
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - name: Get short SHA
+        id: short_sha
+        run: echo "value=`git rev-parse HEAD | cut -c1-7`" >> $GITHUB_OUTPUT
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
+      - name: Build and Push | ${{ matrix.service }}
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/amd64
+          tags: ghcr.io/${{ github.repository }}/${{ matrix.service }}:${{ steps.short_sha.outputs.value }}-amd64
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
