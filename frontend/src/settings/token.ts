@@ -40,6 +40,8 @@ const tokV1ID = 11;
 const tokV2ID = 12;
 const tokV3ID = 13;
 const polID = 14;
+const xpolID = 15;
+const papexID = 16;
 
 export const ethID = 1000001;
 export const bapexID = 1000002;
@@ -162,6 +164,18 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 		label: 'POL',
 		borderColor: '#7B3FE4',
 	},
+	[xpolID]: {
+		tokenID: xpolID,
+		icon: PolygonIcon,
+		label: 'xPOL',
+		borderColor: '#7B3FE4',
+	},
+	[papexID]: {
+		tokenID: papexID,
+		icon: ApexIcon,
+		label: 'pAP3X',
+		borderColor: '#0538AF',
+	},
 };
 
 const mainnetTokenInfos: Record<number, TokenInfo> = {
@@ -218,12 +232,6 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 		icon: UnknownTokenIcon,
 		label: 'BNB',
 		borderColor: '#F3BA2F',
-	},
-	[polID]: {
-		tokenID: polID,
-		icon: PolygonIcon,
-		label: 'POL',
-		borderColor: '#7B3FE4',
 	},
 };
 
