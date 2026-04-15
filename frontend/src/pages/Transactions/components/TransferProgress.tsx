@@ -138,6 +138,36 @@ const chainStatusIcons: {
 		done: PolygonSuccessIcon,
 		error: PolygonErrorIcon,
 	},
+	[ChainEnum.Ethereum]: {
+		inProgress: PolygonInProgressIcon,
+		done: PolygonSuccessIcon,
+		error: PolygonErrorIcon,
+	},
+	[ChainEnum.Katana]: {
+		inProgress: PolygonInProgressIcon,
+		done: PolygonSuccessIcon,
+		error: PolygonErrorIcon,
+	},
+	[ChainEnum.Sei]: {
+		inProgress: PolygonInProgressIcon,
+		done: PolygonSuccessIcon,
+		error: PolygonErrorIcon,
+	},
+	[ChainEnum.Arbitrum]: {
+		inProgress: PolygonInProgressIcon,
+		done: PolygonSuccessIcon,
+		error: PolygonErrorIcon,
+	},
+	[ChainEnum.Scroll]: {
+		inProgress: PolygonInProgressIcon,
+		done: PolygonSuccessIcon,
+		error: PolygonErrorIcon,
+	},
+	[ChainEnum.Unichain]: {
+		inProgress: PolygonInProgressIcon,
+		done: PolygonSuccessIcon,
+		error: PolygonErrorIcon,
+	},
 };
 
 const getDefaultSteps = (

@@ -21,6 +21,24 @@ const TESTNET_BSC_NETWORK_ID = BigInt(97); // for BNB Smart Chain testnet(check 
 const TESTNET_POLYGON_NETWORK_ID = BigInt(80002);
 const MAINNET_POLYGON_NETWORK_ID = BigInt(137);
 
+const TESTNET_ETHEREUM_NETWORK_ID = BigInt(11155111);
+const MAINNET_ETHEREUM_NETWORK_ID = BigInt(1);
+
+const TESTNET_KATANA_NETWORK_ID = BigInt(737373);
+const MAINNET_KATANA_NETWORK_ID = BigInt(747474);
+
+const TESTNET_SEI_NETWORK_ID = BigInt(1328);
+const MAINNET_SEI_NETWORK_ID = BigInt(1329);
+
+const TESTNET_ARBITRUM_NETWORK_ID = BigInt(421614);
+const MAINNET_ARBITRUM_NETWORK_ID = BigInt(42161);
+
+const TESTNET_SCROLL_NETWORK_ID = BigInt(534351);
+const MAINNET_SCROLL_NETWORK_ID = BigInt(534352);
+
+const TESTNET_UNICHAIN_NETWORK_ID = BigInt(1301);
+const MAINNET_UNICHAIN_NETWORK_ID = BigInt(130);
+
 type ChainData = {
 	mainnet: { networkID: number | bigint; network: ApexBridgeNetwork };
 	testnet: { networkID: number | bigint; network: ApexBridgeNetwork };
@@ -97,6 +115,66 @@ const CHAIN_DATA: { [key: string]: ChainData } = {
 			network: ApexBridgeNetwork.TestnetPolygon,
 		},
 	},
+	[ChainEnum.Ethereum]: {
+		mainnet: {
+			networkID: MAINNET_ETHEREUM_NETWORK_ID,
+			network: ApexBridgeNetwork.MainnetEthereum,
+		},
+		testnet: {
+			networkID: TESTNET_ETHEREUM_NETWORK_ID,
+			network: ApexBridgeNetwork.TestnetEthereum,
+		},
+	},
+	[ChainEnum.Katana]: {
+		mainnet: {
+			networkID: MAINNET_KATANA_NETWORK_ID,
+			network: ApexBridgeNetwork.MainnetKatana,
+		},
+		testnet: {
+			networkID: TESTNET_KATANA_NETWORK_ID,
+			network: ApexBridgeNetwork.TestnetKatana,
+		},
+	},
+	[ChainEnum.Sei]: {
+		mainnet: {
+			networkID: MAINNET_SEI_NETWORK_ID,
+			network: ApexBridgeNetwork.MainnetSei,
+		},
+		testnet: {
+			networkID: TESTNET_SEI_NETWORK_ID,
+			network: ApexBridgeNetwork.TestnetSei,
+		},
+	},
+	[ChainEnum.Arbitrum]: {
+		mainnet: {
+			networkID: MAINNET_ARBITRUM_NETWORK_ID,
+			network: ApexBridgeNetwork.MainnetArbitrum,
+		},
+		testnet: {
+			networkID: TESTNET_ARBITRUM_NETWORK_ID,
+			network: ApexBridgeNetwork.TestnetArbitrum,
+		},
+	},
+	[ChainEnum.Scroll]: {
+		mainnet: {
+			networkID: MAINNET_SCROLL_NETWORK_ID,
+			network: ApexBridgeNetwork.MainnetScroll,
+		},
+		testnet: {
+			networkID: TESTNET_SCROLL_NETWORK_ID,
+			network: ApexBridgeNetwork.TestnetScroll,
+		},
+	},
+	[ChainEnum.Unichain]: {
+		mainnet: {
+			networkID: MAINNET_UNICHAIN_NETWORK_ID,
+			network: ApexBridgeNetwork.MainnetUnichain,
+		},
+		testnet: {
+			networkID: TESTNET_UNICHAIN_NETWORK_ID,
+			network: ApexBridgeNetwork.TestnetUnichain,
+		},
+	},
 };
 
 const NETWORK_TO_CHAIN: {
@@ -111,6 +189,12 @@ const NETWORK_TO_CHAIN: {
 		[ApexBridgeNetwork.MainnetBase]: ChainEnum.Base,
 		[ApexBridgeNetwork.MainnetBsc]: ChainEnum.Bsc,
 		[ApexBridgeNetwork.MainnetPolygon]: ChainEnum.Polygon,
+		[ApexBridgeNetwork.MainnetEthereum]: ChainEnum.Ethereum,
+		[ApexBridgeNetwork.MainnetKatana]: ChainEnum.Katana,
+		[ApexBridgeNetwork.MainnetSei]: ChainEnum.Sei,
+		[ApexBridgeNetwork.MainnetArbitrum]: ChainEnum.Arbitrum,
+		[ApexBridgeNetwork.MainnetScroll]: ChainEnum.Scroll,
+		[ApexBridgeNetwork.MainnetUnichain]: ChainEnum.Unichain,
 	},
 	testnet: {
 		[ApexBridgeNetwork.TestnetPrime]: ChainEnum.Prime,
@@ -120,6 +204,12 @@ const NETWORK_TO_CHAIN: {
 		[ApexBridgeNetwork.TestnetBase]: ChainEnum.Base,
 		[ApexBridgeNetwork.TestnetBsc]: ChainEnum.Bsc,
 		[ApexBridgeNetwork.TestnetPolygon]: ChainEnum.Polygon,
+		[ApexBridgeNetwork.TestnetEthereum]: ChainEnum.Ethereum,
+		[ApexBridgeNetwork.TestnetKatana]: ChainEnum.Katana,
+		[ApexBridgeNetwork.TestnetSei]: ChainEnum.Sei,
+		[ApexBridgeNetwork.TestnetArbitrum]: ChainEnum.Arbitrum,
+		[ApexBridgeNetwork.TestnetScroll]: ChainEnum.Scroll,
+		[ApexBridgeNetwork.TestnetUnichain]: ChainEnum.Unichain,
 	},
 };
 
@@ -167,6 +257,24 @@ export const fromEvmNetworkIdToNetwork = (
 		if (networkId === MAINNET_POLYGON_NETWORK_ID) {
 			return ApexBridgeNetwork.MainnetPolygon;
 		}
+		if (networkId === MAINNET_ETHEREUM_NETWORK_ID) {
+			return ApexBridgeNetwork.MainnetEthereum;
+		}
+		if (networkId === MAINNET_KATANA_NETWORK_ID) {
+			return ApexBridgeNetwork.MainnetKatana;
+		}
+		if (networkId === MAINNET_SEI_NETWORK_ID) {
+			return ApexBridgeNetwork.MainnetSei;
+		}
+		if (networkId === MAINNET_ARBITRUM_NETWORK_ID) {
+			return ApexBridgeNetwork.MainnetArbitrum;
+		}
+		if (networkId === MAINNET_SCROLL_NETWORK_ID) {
+			return ApexBridgeNetwork.MainnetScroll;
+		}
+		if (networkId === MAINNET_UNICHAIN_NETWORK_ID) {
+			return ApexBridgeNetwork.MainnetUnichain;
+		}
 	} else {
 		if (networkId === TESTNET_NEXUS_NETWORK_ID) {
 			return ApexBridgeNetwork.TestnetNexus;
@@ -179,6 +287,24 @@ export const fromEvmNetworkIdToNetwork = (
 		}
 		if (networkId === TESTNET_POLYGON_NETWORK_ID) {
 			return ApexBridgeNetwork.TestnetPolygon;
+		}
+		if (networkId === TESTNET_ETHEREUM_NETWORK_ID) {
+			return ApexBridgeNetwork.TestnetEthereum;
+		}
+		if (networkId === TESTNET_KATANA_NETWORK_ID) {
+			return ApexBridgeNetwork.TestnetKatana;
+		}
+		if (networkId === TESTNET_SEI_NETWORK_ID) {
+			return ApexBridgeNetwork.TestnetSei;
+		}
+		if (networkId === TESTNET_ARBITRUM_NETWORK_ID) {
+			return ApexBridgeNetwork.TestnetArbitrum;
+		}
+		if (networkId === TESTNET_SCROLL_NETWORK_ID) {
+			return ApexBridgeNetwork.TestnetScroll;
+		}
+		if (networkId === TESTNET_UNICHAIN_NETWORK_ID) {
+			return ApexBridgeNetwork.TestnetUnichain;
 		}
 	}
 	return undefined;
@@ -216,6 +342,12 @@ const EXPLORER_URLS: {
 		[ChainEnum.Base]: 'https://basescan.org',
 		[ChainEnum.Bsc]: 'https://bscscan.com',
 		[ChainEnum.Polygon]: 'https://polygonscan.com/',
+		[ChainEnum.Ethereum]: 'https://etherscan.io/',
+		[ChainEnum.Katana]: 'https://katanascan.com/',
+		[ChainEnum.Sei]: 'https://seiscan.io/',
+		[ChainEnum.Arbitrum]: 'https://arbiscan.io/',
+		[ChainEnum.Scroll]: 'https://scrollscan.com/',
+		[ChainEnum.Unichain]: 'https://unichain.blockscout.com/',
 	},
 	testnet: {
 		[ChainEnum.Prime]:
@@ -224,6 +356,12 @@ const EXPLORER_URLS: {
 		[ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
 		[ChainEnum.Cardano]: 'https://preview.cardanoscan.io',
 		[ChainEnum.Polygon]: 'https://amoy.polygonscan.com/',
+		[ChainEnum.Ethereum]: 'https://sepolia.etherscan.io/',
+		[ChainEnum.Katana]: 'https://bokuto.katanascan.com/',
+		[ChainEnum.Sei]: 'https://testnet.seiscan.io/',
+		[ChainEnum.Arbitrum]: 'https://sepolia.arbiscan.io/',
+		[ChainEnum.Scroll]: 'https://sepolia.scrollscan.com/',
+		[ChainEnum.Unichain]: 'https://unichain-sepolia.blockscout.com/',
 	},
 };
 
@@ -265,6 +403,12 @@ export const getExplorerTxUrl = (
 		case ChainEnum.Base:
 		case ChainEnum.Bsc:
 		case ChainEnum.Polygon:
+		case ChainEnum.Ethereum:
+		case ChainEnum.Katana:
+		case ChainEnum.Sei:
+		case ChainEnum.Arbitrum:
+		case ChainEnum.Scroll:
+		case ChainEnum.Unichain:
 		case ChainEnum.Nexus: {
 			url = `${base}/tx/${txHash}`;
 			break;
@@ -332,6 +476,12 @@ export const getExplorerAddressUrl = (
 		case ChainEnum.Prime:
 		case ChainEnum.Vector:
 		case ChainEnum.Polygon:
+		case ChainEnum.Ethereum:
+		case ChainEnum.Katana:
+		case ChainEnum.Sei:
+		case ChainEnum.Arbitrum:
+		case ChainEnum.Scroll:
+		case ChainEnum.Unichain:
 		case ChainEnum.Nexus: {
 			url = `${base}/address/${address}`;
 			break;

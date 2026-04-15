@@ -30,20 +30,8 @@ export const apexID = 1;
 export const adaID = 2;
 export const capexID = 3;
 export const xadaID = 4;
-const myTestTokenID = 5;
-const tokN2ID = 6;
-const tokN3ID = 7;
-const tokC1ID = 8;
-const tokC2ID = 9;
-const tokC3ID = 10;
-const tokV1ID = 11;
-const tokV2ID = 12;
-const tokV3ID = 13;
-const polID = 14;
-const xpolID = 15;
-const papexID = 16;
 
-export const ethID = 1000001;
+export const lzEthID = 1000001;
 export const bapexID = 1000002;
 export const bnapexID = 1000003;
 export const bnbID = 1000004;
@@ -80,62 +68,62 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 		label: 'xADA',
 		borderColor: '#0538AF',
 	},
-	[myTestTokenID]: {
-		tokenID: myTestTokenID,
+	5: {
+		tokenID: 5,
 		icon: UnknownTokenIcon,
 		label: 'myTestToken',
 		borderColor: '#0538AF',
 	},
-	[tokN2ID]: {
-		tokenID: tokN2ID,
+	6: {
+		tokenID: 6,
 		icon: UnknownTokenIcon,
 		label: 'TokN2',
 		borderColor: '#0538AF',
 	},
-	[tokN3ID]: {
-		tokenID: tokN3ID,
+	7: {
+		tokenID: 7,
 		icon: UnknownTokenIcon,
 		label: 'TokN3',
 		borderColor: '#0538AF',
 	},
-	[tokC1ID]: {
-		tokenID: tokC1ID,
+	8: {
+		tokenID: 8,
 		icon: UnknownTokenIcon,
 		label: 'TokC1',
 		borderColor: '#0538AF',
 	},
-	[tokC2ID]: {
-		tokenID: tokC2ID,
+	9: {
+		tokenID: 9,
 		icon: UnknownTokenIcon,
 		label: 'TokC2',
 		borderColor: '#0538AF',
 	},
-	[tokC3ID]: {
-		tokenID: tokC3ID,
+	10: {
+		tokenID: 10,
 		icon: UnknownTokenIcon,
 		label: 'TokC3',
 		borderColor: '#0538AF',
 	},
-	[tokV1ID]: {
-		tokenID: tokV1ID,
+	11: {
+		tokenID: 11,
 		icon: UnknownTokenIcon,
 		label: 'TokV1',
 		borderColor: '#0538AF',
 	},
-	[tokV2ID]: {
-		tokenID: tokV2ID,
+	12: {
+		tokenID: 12,
 		icon: UnknownTokenIcon,
 		label: 'TokV2',
 		borderColor: '#0538AF',
 	},
-	[tokV3ID]: {
-		tokenID: tokV3ID,
+	13: {
+		tokenID: 13,
 		icon: UnknownTokenIcon,
 		label: 'TokV3',
 		borderColor: '#0538AF',
 	},
-	[ethID]: {
-		tokenID: ethID,
+	[lzEthID]: {
+		tokenID: lzEthID,
 		icon: EthIcon,
 		label: 'ETH',
 		borderColor: '#8A92B2',
@@ -158,22 +146,46 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 		label: 'BNB',
 		borderColor: '#F3BA2F',
 	},
-	[polID]: {
-		tokenID: polID,
+	14: {
+		tokenID: 14,
 		icon: PolygonIcon,
 		label: 'POL',
 		borderColor: '#7B3FE4',
 	},
-	[xpolID]: {
-		tokenID: xpolID,
+	15: {
+		tokenID: 15,
 		icon: PolygonIcon,
 		label: 'xPOL',
 		borderColor: '#7B3FE4',
 	},
-	[papexID]: {
-		tokenID: papexID,
+	16: {
+		tokenID: 16,
 		icon: ApexIcon,
 		label: 'pAP3X',
+		borderColor: '#0538AF',
+	},
+	17: {
+		tokenID: 17,
+		icon: PolygonIcon,
+		label: 'cPOL',
+		borderColor: '#7B3FE4',
+	},
+	18: {
+		tokenID: 18,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	19: {
+		tokenID: 19,
+		icon: EthIcon,
+		label: 'cETH',
+		borderColor: '#8A92B2',
+	},
+	20: {
+		tokenID: 20,
+		icon: UnknownTokenIcon,
+		label: 'SEI',
 		borderColor: '#0538AF',
 	},
 };
@@ -203,14 +215,8 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 		label: 'xADA',
 		borderColor: '#0538AF',
 	},
-	[myTestTokenID]: {
-		tokenID: myTestTokenID,
-		icon: UnknownTokenIcon,
-		label: 'myTestToken',
-		borderColor: '#0538AF',
-	},
-	[ethID]: {
-		tokenID: ethID,
+	[lzEthID]: {
+		tokenID: lzEthID,
 		icon: EthIcon,
 		label: 'ETH',
 		borderColor: '#8A92B2',
