@@ -322,23 +322,15 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 				return fmt.Errorf("found an invalid receiver addr in request body. receiver: %v", receiver)
 			}
 
-			if tokenPair.DestinationTokenID == destCurrencyID {
-				if receiver.Amount < c.appConfig.SkylineBridgingSettings.MinValueToBridge {
-					return fmt.Errorf(
-						"found an value below minimum value in receivers, receiver: %v. min: %v",
-						receiver, c.appConfig.SkylineBridgingSettings.MinValueToBridge)
-				}
-			} else {
-				// eth destination
-				minColCoinsAllowedToBridge := common.MaxBigInt(
-					c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.SourceChainID],
-					common.WeiToDfm(c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.DestinationChainID]),
-				)
-				if receiver.Amount < minColCoinsAllowedToBridge.Uint64() {
-					return fmt.Errorf(
-						"found an value below minimum value in receivers, receiver: %v. min: %v",
-						receiver, minColCoinsAllowedToBridge)
-				}
+			// eth destination
+			minColCoinsAllowedToBridge := common.MaxBigInt(
+				c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.SourceChainID],
+				common.WeiToDfm(c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.DestinationChainID]),
+			)
+			if receiver.Amount < minColCoinsAllowedToBridge.Uint64() {
+				return fmt.Errorf(
+					"found an value below minimum value in receivers, receiver: %v. min: %v",
+					receiver, minColCoinsAllowedToBridge)
 			}
 		}
 

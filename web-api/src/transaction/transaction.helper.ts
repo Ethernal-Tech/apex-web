@@ -191,7 +191,11 @@ export const createEthBridgingTx = (
 		minValue = BigInt(
 			convertDfmToWei(bridgingSettings.minUtxoChainValue[dto.destinationChain]),
 		);
-	} else if (isCardanoChain(destChain) && isCurrencyBridging) {
+	} else if (
+		isCardanoChain(destChain) &&
+		isCurrencyBridging &&
+		bridgingMode == BridgingModeEnum.Reactor
+	) {
 		minValue = BigInt(convertDfmToWei(bridgingSettings.minValueToBridge));
 	} else {
 		const minValueSrc = BigInt(

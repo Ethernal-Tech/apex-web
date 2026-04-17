@@ -13,6 +13,7 @@ import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg
 import { ReactComponent as BaseIcon } from '../assets/chain-icons/base.svg';
 import { ReactComponent as BNBIcon } from '../assets/chain-icons/bsc.svg';
 import { ReactComponent as PolygonIcon } from '../assets/chain-icons/polygon.svg';
+import { ReactComponent as KatanaIcon } from '../assets/chain-icons/katana.svg';
 import { ISettingsState } from './settingsRedux';
 import appSettings from './appSettings';
 import { captureAndThrowError } from '../features/sentry';
@@ -125,10 +126,10 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 	[ChainEnum.Katana]: {
 		value: ChainEnum.Katana,
 		label: 'Katana',
-		icon: PolygonIcon,
-		borderColor: '#7B3FE4',
-		letter: 'P',
-		mainColor: '#7B3FE4',
+		icon: KatanaIcon,
+		borderColor: '#F6FF0D',
+		letter: 'K',
+		mainColor: '#1546AE',
 		order: 9,
 	},
 	[ChainEnum.Sei]: {
