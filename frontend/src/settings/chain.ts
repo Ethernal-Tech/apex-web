@@ -13,6 +13,7 @@ import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg
 import { ReactComponent as BaseIcon } from '../assets/chain-icons/base.svg';
 import { ReactComponent as BNBIcon } from '../assets/chain-icons/bsc.svg';
 import { ReactComponent as PolygonIcon } from '../assets/chain-icons/polygon.svg';
+import { ReactComponent as KatanaIcon } from '../assets/chain-icons/katana.svg';
 import { ISettingsState } from './settingsRedux';
 import appSettings from './appSettings';
 import { captureAndThrowError } from '../features/sentry';
@@ -113,6 +114,60 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 		mainColor: '#7B3FE4',
 		order: 7,
 	},
+	[ChainEnum.Ethereum]: {
+		value: ChainEnum.Ethereum,
+		label: 'Ethereum',
+		icon: PolygonIcon,
+		borderColor: '#7B3FE4',
+		letter: 'P',
+		mainColor: '#7B3FE4',
+		order: 8,
+	},
+	[ChainEnum.Katana]: {
+		value: ChainEnum.Katana,
+		label: 'Katana',
+		icon: KatanaIcon,
+		borderColor: '#F6FF0D',
+		letter: 'K',
+		mainColor: '#1546AE',
+		order: 9,
+	},
+	[ChainEnum.Sei]: {
+		value: ChainEnum.Sei,
+		label: 'Sei',
+		icon: PolygonIcon,
+		borderColor: '#7B3FE4',
+		letter: 'P',
+		mainColor: '#7B3FE4',
+		order: 10,
+	},
+	[ChainEnum.Arbitrum]: {
+		value: ChainEnum.Arbitrum,
+		label: 'Arbitrum',
+		icon: PolygonIcon,
+		borderColor: '#7B3FE4',
+		letter: 'P',
+		mainColor: '#7B3FE4',
+		order: 11,
+	},
+	[ChainEnum.Scroll]: {
+		value: ChainEnum.Scroll,
+		label: 'Scroll',
+		icon: PolygonIcon,
+		borderColor: '#7B3FE4',
+		letter: 'P',
+		mainColor: '#7B3FE4',
+		order: 12,
+	},
+	[ChainEnum.Unichain]: {
+		value: ChainEnum.Unichain,
+		label: 'Unichain',
+		icon: PolygonIcon,
+		borderColor: '#7B3FE4',
+		letter: 'P',
+		mainColor: '#7B3FE4',
+		order: 13,
+	},
 };
 
 const getChainDirections = function (
@@ -169,7 +224,13 @@ export const isEvmChain = function (chain: ChainEnum): boolean {
 		chain === ChainEnum.Nexus ||
 		chain === ChainEnum.Base ||
 		chain === ChainEnum.Bsc ||
-		chain === ChainEnum.Polygon
+		chain === ChainEnum.Polygon ||
+		chain === ChainEnum.Ethereum ||
+		chain === ChainEnum.Katana ||
+		chain === ChainEnum.Sei ||
+		chain === ChainEnum.Arbitrum ||
+		chain === ChainEnum.Scroll ||
+		chain === ChainEnum.Unichain
 	);
 };
 
@@ -209,9 +270,15 @@ export function isApexBridgeChain(chain: ChainEnum): boolean {
 		case ChainEnum.Nexus:
 		case ChainEnum.Cardano:
 		case ChainEnum.Polygon:
+		case ChainEnum.Ethereum:
+		case ChainEnum.Katana:
+		case ChainEnum.Sei:
+		case ChainEnum.Arbitrum:
+		case ChainEnum.Scroll:
+		case ChainEnum.Unichain:
 			return true;
 		default:
-			return false; // sepolia / ethereum → false
+			return false; // bsc / base → false
 	}
 }
 

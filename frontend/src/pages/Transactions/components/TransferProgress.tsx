@@ -45,6 +45,11 @@ import { ReactComponent as PolygonInProgressIcon } from '../../../assets/bridge-
 import { ReactComponent as PolygonSuccessIcon } from '../../../assets/bridge-status-assets/polygon-success.svg';
 import { ReactComponent as PolygonErrorIcon } from '../../../assets/bridge-status-assets/polygon-error.svg';
 
+// polygon icons
+import { ReactComponent as KatanaInProgressIcon } from '../../../assets/bridge-status-assets/katana.svg';
+import { ReactComponent as KatanaSuccessIcon } from '../../../assets/bridge-status-assets/katana-success.svg';
+import { ReactComponent as KatanaErrorIcon } from '../../../assets/bridge-status-assets/katana-error.svg';
+
 // bridge icons
 import { ReactComponent as BridgeInProgressIcon } from '../../../assets/bridge-status-assets/Bridge-Wallet.svg';
 import { ReactComponent as BridgeSuccessIcon } from '../../../assets/bridge-status-assets/bridge-success.svg';
@@ -134,6 +139,36 @@ const chainStatusIcons: {
 		error: NexusErrorIcon,
 	},
 	[ChainEnum.Polygon]: {
+		inProgress: PolygonInProgressIcon,
+		done: PolygonSuccessIcon,
+		error: PolygonErrorIcon,
+	},
+	[ChainEnum.Ethereum]: {
+		inProgress: PolygonInProgressIcon,
+		done: PolygonSuccessIcon,
+		error: PolygonErrorIcon,
+	},
+	[ChainEnum.Katana]: {
+		inProgress: KatanaInProgressIcon,
+		done: KatanaSuccessIcon,
+		error: KatanaErrorIcon,
+	},
+	[ChainEnum.Sei]: {
+		inProgress: PolygonInProgressIcon,
+		done: PolygonSuccessIcon,
+		error: PolygonErrorIcon,
+	},
+	[ChainEnum.Arbitrum]: {
+		inProgress: PolygonInProgressIcon,
+		done: PolygonSuccessIcon,
+		error: PolygonErrorIcon,
+	},
+	[ChainEnum.Scroll]: {
+		inProgress: PolygonInProgressIcon,
+		done: PolygonSuccessIcon,
+		error: PolygonErrorIcon,
+	},
+	[ChainEnum.Unichain]: {
 		inProgress: PolygonInProgressIcon,
 		done: PolygonSuccessIcon,
 		error: PolygonErrorIcon,

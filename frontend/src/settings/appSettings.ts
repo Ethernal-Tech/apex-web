@@ -15,6 +15,12 @@ export class AppSettings {
 		vector: '0',
 		cardano: '0',
 		polygon: '0',
+		ethereum: '0',
+		katana: '0',
+		sei: '0',
+		arbitrum: '0',
+		scroll: '0',
+		unichain: '0',
 	};
 
 	private _minOperationFee: { [key: string]: string } = {
@@ -23,6 +29,12 @@ export class AppSettings {
 		vector: '0',
 		cardano: '0',
 		polygon: '0',
+		ethereum: '0',
+		katana: '0',
+		sei: '0',
+		arbitrum: '0',
+		scroll: '0',
+		unichain: '0',
 	};
 
 	private _minColCoinsAllowedToBridge: { [key: string]: string } = {
@@ -31,6 +43,12 @@ export class AppSettings {
 		vector: '0',
 		cardano: '0',
 		polygon: '0',
+		ethereum: '0',
+		katana: '0',
+		sei: '0',
+		arbitrum: '0',
+		scroll: '0',
+		unichain: '0',
 	};
 
 	private _utxoRetriever: UtxoRetrieverConfig = {};

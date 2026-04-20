@@ -15,6 +15,12 @@ export enum ChainApexBridgeEnum {
 	Nexus = 'nexus',
 	Cardano = 'cardano',
 	Polygon = 'polygon',
+	Ethereum = 'ethereum',
+	Katana = 'katana',
+	Sei = 'sei',
+	Arbitrum = 'arbitrum',
+	Scroll = 'scroll',
+	Unichain = 'unichain',
 }
 
 export const ChainEnum = {

@@ -1,45 +1,15 @@
 package common
 
-type chainIDNum = uint8
-
 const (
-	ChainTypeCardano = iota
-	ChainTypeEVM
-
-	ChainIDStrPrime   = "prime"
-	ChainIDStrVector  = "vector"
-	ChainIDStrNexus   = "nexus"
-	ChainIDStrCardano = "cardano"
-	ChainIDStrPolygon = "polygon"
-
-	ChainIDIntPrime   = chainIDNum(1)
-	ChainIDIntVector  = chainIDNum(2)
-	ChainIDIntNexus   = chainIDNum(3)
-	ChainIDIntCardano = chainIDNum(4)
-	ChainIDIntPolygon = chainIDNum(5)
+	ChainIDStrPrime    = "prime"
+	ChainIDStrVector   = "vector"
+	ChainIDStrNexus    = "nexus"
+	ChainIDStrCardano  = "cardano"
+	ChainIDStrPolygon  = "polygon"
+	ChainIDStrEthereum = "ethereum"
+	ChainIDStrKatana   = "katana"
+	ChainIDStrSei      = "sei"
+	ChainIDStrArbitrum = "arbitrum"
+	ChainIDStrScroll   = "scroll"
+	ChainIDStrUnichain = "unichain"
 )
-
-var (
-	strToInt = map[string]chainIDNum{
-		ChainIDStrPrime:   ChainIDIntPrime,
-		ChainIDStrVector:  ChainIDIntVector,
-		ChainIDStrNexus:   ChainIDIntNexus,
-		ChainIDStrCardano: ChainIDIntCardano,
-		ChainIDStrPolygon: ChainIDIntPolygon,
-	}
-	intToStr = map[chainIDNum]string{
-		ChainIDIntPrime:   ChainIDStrPrime,
-		ChainIDIntVector:  ChainIDStrVector,
-		ChainIDIntNexus:   ChainIDStrNexus,
-		ChainIDIntCardano: ChainIDStrCardano,
-		ChainIDIntPolygon: ChainIDStrPolygon,
-	}
-)
-
-func ToNumChainID(chainIDStr string) chainIDNum {
-	return strToInt[chainIDStr]
-}
-
-func ToStrChainID(chainIDNum chainIDNum) string {
-	return intToStr[chainIDNum]
-}

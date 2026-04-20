@@ -76,8 +76,14 @@ type skylineGenerateConfigsParams struct {
 	vectorTTLSlotInc              uint64
 	vectorIsEnabled               bool
 
-	nexusIsEnabled   bool
-	polygonIsEnabled bool
+	nexusIsEnabled    bool
+	polygonIsEnabled  bool
+	ethereumIsEnabled bool
+	katanaIsEnabled   bool
+	seiIsEnabled      bool
+	arbitrumIsEnabled bool
+	scrollIsEnabled   bool
+	unichainIsEnabled bool
 
 	logsPath         string
 	utxoCacheTimeout time.Duration
@@ -409,12 +415,47 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		false,
 		nexusIsEnabledFlagDesc,
 	)
-
 	cmd.Flags().BoolVar(
 		&p.polygonIsEnabled,
 		polygonIsEnabledFlag,
 		false,
 		polygonIsEnabledFlagDesc,
+	)
+	cmd.Flags().BoolVar(
+		&p.ethereumIsEnabled,
+		ethereumIsEnabledFlag,
+		false,
+		ethereumIsEnabledFlagDesc,
+	)
+	cmd.Flags().BoolVar(
+		&p.katanaIsEnabled,
+		katanaIsEnabledFlag,
+		false,
+		katanaIsEnabledFlagDesc,
+	)
+	cmd.Flags().BoolVar(
+		&p.seiIsEnabled,
+		seiIsEnabledFlag,
+		false,
+		seiIsEnabledFlagDesc,
+	)
+	cmd.Flags().BoolVar(
+		&p.arbitrumIsEnabled,
+		arbitrumIsEnabledFlag,
+		false,
+		arbitrumIsEnabledFlagDesc,
+	)
+	cmd.Flags().BoolVar(
+		&p.scrollIsEnabled,
+		scrollIsEnabledFlag,
+		false,
+		scrollIsEnabledFlagDesc,
+	)
+	cmd.Flags().BoolVar(
+		&p.unichainIsEnabled,
+		unichainIsEnabledFlag,
+		false,
+		unichainIsEnabledFlagDesc,
 	)
 
 	cmd.Flags().StringVar(
@@ -549,6 +590,24 @@ func (p *skylineGenerateConfigsParams) Execute(
 			},
 			common.ChainIDStrPolygon: {
 				IsEnabled: p.polygonIsEnabled,
+			},
+			common.ChainIDStrEthereum: {
+				IsEnabled: p.ethereumIsEnabled,
+			},
+			common.ChainIDStrKatana: {
+				IsEnabled: p.katanaIsEnabled,
+			},
+			common.ChainIDStrSei: {
+				IsEnabled: p.seiIsEnabled,
+			},
+			common.ChainIDStrArbitrum: {
+				IsEnabled: p.arbitrumIsEnabled,
+			},
+			common.ChainIDStrScroll: {
+				IsEnabled: p.scrollIsEnabled,
+			},
+			common.ChainIDStrUnichain: {
+				IsEnabled: p.unichainIsEnabled,
 			},
 		},
 		UtxoCacheTimeout: p.utxoCacheTimeout,

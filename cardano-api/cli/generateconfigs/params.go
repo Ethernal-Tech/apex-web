@@ -38,8 +38,14 @@ const (
 	vectorTTLSlotIncFlag              = "vector-ttl-slot-inc"
 	vectorIsEnabledFlag               = "vector-is-enabled"
 
-	nexusIsEnabledFlag   = "nexus-is-enabled"
-	polygonIsEnabledFlag = "polygon-is-enabled"
+	nexusIsEnabledFlag    = "nexus-is-enabled"
+	polygonIsEnabledFlag  = "polygon-is-enabled"
+	ethereumIsEnabledFlag = "ethereum-is-enabled"
+	katanaIsEnabledFlag   = "katana-is-enabled"
+	seiIsEnabledFlag      = "sei-is-enabled"
+	arbitrumIsEnabledFlag = "arbitrum-is-enabled"
+	scrollIsEnabledFlag   = "scroll-is-enabled"
+	unichainIsEnabledFlag = "unichain-is-enabled"
 
 	logsPathFlag = "logs-path"
 
@@ -78,8 +84,14 @@ const (
 	vectorTTLSlotIncFlagDesc              = "TTL slot increment for vector"
 	vectorIsEnabledFlagDesc               = "chain enable flag for vector"
 
-	nexusIsEnabledFlagDesc   = "chain enable flag for nexus"
-	polygonIsEnabledFlagDesc = "chain enable flag for polygon"
+	nexusIsEnabledFlagDesc    = "chain enable flag for nexus"
+	polygonIsEnabledFlagDesc  = "chain enable flag for polygon"
+	ethereumIsEnabledFlagDesc = "chain enable flag for ethereum"
+	katanaIsEnabledFlagDesc   = "chain enable flag for katana"
+	seiIsEnabledFlagDesc      = "chain enable flag for sei"
+	arbitrumIsEnabledFlagDesc = "chain enable flag for arbitrum"
+	scrollIsEnabledFlagDesc   = "chain enable flag for scroll"
+	unichainIsEnabledFlagDesc = "chain enable flag for unichain"
 
 	logsPathFlagDesc = "path to where logs will be stored"
 

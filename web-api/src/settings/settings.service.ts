@@ -20,7 +20,7 @@ import { getCurrencyIDFromDirectionConfig, Lovelace } from './utils';
 
 const RETRY_DELAY_MS = 5000;
 const settingsApiPath = `/api/CardanoTx/GetSettings`;
-const ethID = 1000001;
+const lzEthID = 1000001;
 const bapexID = 1000002;
 const bnapexID = 1000003;
 const bnbID = 1000004;
@@ -203,7 +203,7 @@ export class SettingsService {
 
 		// layer zero
 		ecosystemTokens.push(
-			{ id: ethID, name: 'ETH' },
+			{ id: lzEthID, name: 'ETH' },
 			{ id: bapexID, name: 'BAP3X' },
 			{ id: bnapexID, name: 'BNAP3X' },
 			{ id: bnbID, name: 'BNB' },
@@ -215,7 +215,7 @@ export class SettingsService {
 				[ChainEnum.BNB]: [{ srcTokenID: bapexID, dstTokenID: bnapexID }],
 			},
 			tokens: {
-				[ethID]: {
+				[lzEthID]: {
 					chainSpecific: Lovelace,
 					lockUnlock: true,
 					isWrappedCurrency: false,
