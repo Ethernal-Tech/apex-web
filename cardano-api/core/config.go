@@ -282,6 +282,7 @@ func (appConfig *AppConfig) fillOutSkylineSpecific(
 			"failed to convert MinColCoinsAllowedToBridge to big.Int",
 		)
 
+		// TODO: remove this once the oracle API provides the direction config for solana as well
 		_, ok := settingsResponse.DirectionConfig["solana"]
 		if !ok {
 			type DirectionConfigFile struct {
