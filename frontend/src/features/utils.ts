@@ -1,6 +1,6 @@
 import { captureException } from './sentry';
 import appSettings from '../settings/appSettings';
-import { isEvmChain } from '../settings/chain';
+import { isEvmChain, isSolanaChain } from '../settings/chain';
 import { ChainEnum } from '../swagger/apexBridgeApiService';
 import { UtxoRetrieverEnum } from './enums';
 import walletHandler from './WalletHandler';
@@ -8,7 +8,11 @@ import walletHandler from './WalletHandler';
 const supportedWalletVersion = { major: 2, minor: 0, patch: 9, build: 14 };
 
 export const getUtxoRetrieverType = (chain: ChainEnum): UtxoRetrieverEnum => {
-	if (isEvmChain(chain)) {
+	if (isEvmChain(chain) || isSolanaChain(chain)) {
+		return UtxoRetrieverEnum.Wallet;
+	}
+
+	if (!walletHandler.checkWallet()) {
 		return UtxoRetrieverEnum.Wallet;
 	}
 

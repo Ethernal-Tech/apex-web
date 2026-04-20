@@ -45,6 +45,11 @@ import { ReactComponent as PolygonInProgressIcon } from '../../../assets/bridge-
 import { ReactComponent as PolygonSuccessIcon } from '../../../assets/bridge-status-assets/polygon-success.svg';
 import { ReactComponent as PolygonErrorIcon } from '../../../assets/bridge-status-assets/polygon-error.svg';
 
+// solana icons
+import { ReactComponent as SolanaInProgressIcon } from '../../../assets/bridge-status-assets/solana.svg';
+import { ReactComponent as SolanaSuccessIcon } from '../../../assets/bridge-status-assets/solana-success.svg';
+import { ReactComponent as SolanaErrorIcon } from '../../../assets/bridge-status-assets/solana-error.svg';
+
 // bridge icons
 import { ReactComponent as BridgeInProgressIcon } from '../../../assets/bridge-status-assets/Bridge-Wallet.svg';
 import { ReactComponent as BridgeSuccessIcon } from '../../../assets/bridge-status-assets/bridge-success.svg';
@@ -137,6 +142,11 @@ const chainStatusIcons: {
 		inProgress: PolygonInProgressIcon,
 		done: PolygonSuccessIcon,
 		error: PolygonErrorIcon,
+	},
+	[ChainEnum.Solana]: {
+		inProgress: SolanaInProgressIcon,
+		done: SolanaSuccessIcon,
+		error: SolanaErrorIcon,
 	},
 };
 

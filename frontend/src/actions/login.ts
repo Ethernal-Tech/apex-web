@@ -13,12 +13,16 @@ import {
 import evmWalletHandler, {
 	EVM_SUPPORTED_WALLETS,
 } from '../features/EvmWalletHandler';
+import solWalletHandler, {
+	SOL_SUPPORTED_WALLETS,
+	SolWalletType,
+} from '../features/SolWalletHandler';
 import { setConnectingAction } from '../redux/slices/loginSlice';
 import { setChainAction } from '../redux/slices/chainSlice';
 import { NavigateFunction } from 'react-router-dom';
 import { HOME_ROUTE } from '../pages/PageRouter';
 import { setAccountInfoAction } from '../redux/slices/accountInfoSlice';
-import { getSrcChains, isEvmChain } from '../settings/chain';
+import { getSrcChains, isEvmChain, isSolanaChain } from '../settings/chain';
 import { ISettingsState } from '../settings/settingsRedux';
 import {
 	retry,
@@ -244,6 +248,60 @@ const enableCardanoWallet = async (
 	return true;
 };
 
+const enableSolanaWallet = async (
+	selectedWalletName: string,
+	walletType: SolWalletType,
+	srcChain: ChainEnum,
+	dstChain: ChainEnum,
+	settings: ISettingsState,
+	dispatch: Dispatch,
+) => {
+	const useMainnet = shouldUseMainnet(srcChain, dstChain);
+
+	if (!getSrcChains(settings).some((x) => x === srcChain)) {
+		captureAndThrowError(
+			`Chain: ${srcChain} not supported.`,
+			'login.ts',
+			'enableSolanaWallet',
+		);
+	}
+
+	await solWalletHandler.enable(walletType, useMainnet);
+	const success = solWalletHandler.checkWallet();
+
+	if (!success) {
+		captureAndThrowError(
+			'Failed to connect to wallet.',
+			'login.ts',
+			'enableSolanaWallet',
+		);
+	}
+
+	const account = await solWalletHandler.getAddress();
+	const networkId = fromChainToNetworkId(srcChain, useMainnet);
+	const network = fromChainToNetwork(srcChain, useMainnet);
+
+	if (networkId === undefined || network === undefined) {
+		captureAndThrowError(
+			`Missing Solana network mapping for chain=${srcChain}, useMainnet=${useMainnet}.`,
+			'login.ts',
+			'enableSolanaWallet',
+		);
+	}
+
+	dispatch(setWalletAction(selectedWalletName));
+	dispatch(
+		setAccountInfoAction({
+			account,
+			networkId,
+			network,
+			balance: {},
+		}),
+	);
+
+	return true;
+};
+
 const enableWallet = async (
 	selectedWalletName: string,
 	srcChain: ChainEnum,
@@ -276,7 +334,38 @@ const enableWallet = async (
 		return false;
 	}
 
-	// 2. prime and vector (cardano eternl) wallet login handling
+	// 2. solana wallet login handling
+	if (isSolanaChain(srcChain)) {
+		const solWallet = SOL_SUPPORTED_WALLETS.find(
+			(w) => w.name === selectedWalletName,
+		);
+		const walletType: SolWalletType = solWallet?.type ?? 'metamask';
+
+		try {
+			return await enableSolanaWallet(
+				selectedWalletName,
+				walletType,
+				srcChain,
+				dstChain,
+				settings,
+				dispatch,
+			);
+		} catch (e) {
+			console.log(e);
+			captureException(e, {
+				tags: {
+					component: 'login.ts',
+					action: 'enableWallet',
+				},
+			});
+			toast.error(`${e}`);
+		}
+
+		void solWalletHandler.disconnect();
+		return false;
+	}
+
+	// 3. prime and vector (cardano eternl) wallet login handling
 	try {
 		return await enableCardanoWallet(
 			selectedWalletName,
@@ -355,6 +444,9 @@ export const login = async (
 	if (isEvmChain(srcChain)) {
 		const wallets = evmWalletHandler.getInstalledWallets();
 		wallet = wallets.length > 0 ? wallets[0].name : undefined;
+	} else if (isSolanaChain(srcChain)) {
+		const solWallets = solWalletHandler.getInstalledWallets();
+		wallet = solWallets.length > 0 ? solWallets[0].name : undefined;
 	} else {
 		const wallets = walletHandler.getInstalledWallets();
 		wallet = wallets.length > 0 ? wallets[0].name : undefined;
@@ -363,7 +455,9 @@ export const login = async (
 	if (!wallet) {
 		const supportedWallets = isEvmChain(srcChain)
 			? EVM_SUPPORTED_WALLETS
-			: SUPPORTED_WALLETS;
+			: isSolanaChain(srcChain)
+				? SOL_SUPPORTED_WALLETS.map((w) => w.name)
+				: SUPPORTED_WALLETS;
 		toast.error(
 			`Can not find any supported wallets installed. Supported wallets: ${supportedWallets}`,
 		);

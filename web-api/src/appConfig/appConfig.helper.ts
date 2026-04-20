@@ -98,6 +98,9 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 		RECENT_INPUTS_THRESHOLD_MINUTES: num({ default: undefined }),
 		SKYLINE_GATEWAY_ADDRS: evmAddressConfig({ default: undefined }),
 		SKYLINE_NT_WALLET_ADDRS: evmAddressConfig({ default: undefined }),
+		SKYLINE_SOLANA_PROGRAM_ADDRS: str({ default: undefined }),
+		SKYLINE_SOLANA_TREASURY_ADDRS: str({ default: undefined }),
+		SKYLINE_SOLANA_RELAYER_ADDRS: str({ default: undefined }),
 		REACTOR_NEXUS_GATEWAY_ADDR: str({ default: undefined }),
 		REACTOR_NEXUS_CENTRALIZED_GATEWAY_ADDR: str({ default: undefined }),
 
@@ -145,6 +148,9 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			addresses: {
 				skylineGateway: env.SKYLINE_GATEWAY_ADDRS,
 				skylineNativeTokenWallet: env.SKYLINE_NT_WALLET_ADDRS,
+				skylineSolanaProgram: env.SKYLINE_SOLANA_PROGRAM_ADDRS,
+				skylineSolanaTreasury: env.SKYLINE_SOLANA_TREASURY_ADDRS,
+				skylineSolanaRelayer: env.SKYLINE_SOLANA_RELAYER_ADDRS,
 				reactorNexusGateway: env.REACTOR_NEXUS_GATEWAY_ADDR as `0x${string}`,
 				reactorNexusCentralizedGateway:
 					env.REACTOR_NEXUS_CENTRALIZED_GATEWAY_ADDR as `0x${string}`,

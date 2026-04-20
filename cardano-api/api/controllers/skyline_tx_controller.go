@@ -26,6 +26,7 @@ import (
 	infracommon "github.com/Ethernal-Tech/cardano-infrastructure/common"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
+	solanawallet "github.com/Ethernal-Tech/solana-infrastructure/wallet"
 	cache "github.com/dgraph-io/ristretto"
 	goEthCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/hashicorp/go-hclog"
@@ -202,13 +203,13 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	srcCurrencyID uint16,
 	requestBody *commonRequest.CreateBridgingTxRequest,
 ) error {
-	cardanoSrcConfig, _ := c.appConfig.GetChainConfig(requestBody.SourceChainID)
+	cardanoSrcConfig, _, _ := c.appConfig.GetChainConfig(requestBody.SourceChainID)
 	if cardanoSrcConfig == nil {
 		return fmt.Errorf("origin chain not registered: %v", requestBody.SourceChainID)
 	}
 
-	cardanoDestConfig, ethDestConfig := c.appConfig.GetChainConfig(requestBody.DestinationChainID)
-	if cardanoDestConfig == nil && ethDestConfig == nil {
+	cardanoDestConfig, ethDestConfig, solanaDestConfig := c.appConfig.GetChainConfig(requestBody.DestinationChainID)
+	if cardanoDestConfig == nil && ethDestConfig == nil && solanaDestConfig == nil {
 		return fmt.Errorf("destination chain not registered: %v", requestBody.DestinationChainID)
 	}
 
@@ -287,6 +288,7 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			}
 		}
 
+		//nolint:gocritic
 		if cardanoDestConfig != nil {
 			if !cardanotx.IsValidOutputAddress(receiver.Addr, cardanoDestConfig.NetworkID) {
 				return fmt.Errorf("found an invalid receiver addr in request body. receiver: %v", receiver)
@@ -317,7 +319,7 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 						receiver, minColCoinsAllowedToBridge)
 				}
 			}
-		} else {
+		} else if ethDestConfig != nil {
 			if !goEthCommon.IsHexAddress(receiver.Addr) {
 				return fmt.Errorf("found an invalid receiver addr in request body. receiver: %v", receiver)
 			}
@@ -338,6 +340,19 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 					return fmt.Errorf(
 						"found an value below minimum value in receivers, receiver: %v. min: %v",
 						receiver, minColCoinsAllowedToBridge)
+				}
+			}
+		} else {
+			err := solanawallet.ValidateAddress(receiver.Addr, false)
+			if err != nil {
+				return fmt.Errorf("found an invalid receiver addr in request body. receiver: %v", receiver)
+			}
+
+			if tokenPair.DestinationTokenID == destCurrencyID {
+				if receiver.Amount < c.appConfig.SkylineBridgingSettings.MinValueToBridge {
+					return fmt.Errorf(
+						"found an value below minimum value in receivers, receiver: %v. min: %v",
+						receiver, c.appConfig.SkylineBridgingSettings.MinValueToBridge)
 				}
 			}
 		}

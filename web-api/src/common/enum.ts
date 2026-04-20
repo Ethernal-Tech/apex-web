@@ -15,6 +15,7 @@ export enum ChainApexBridgeEnum {
 	Nexus = 'nexus',
 	Cardano = 'cardano',
 	Polygon = 'polygon',
+	Solana = 'solana',
 }
 
 export const ChainEnum = {

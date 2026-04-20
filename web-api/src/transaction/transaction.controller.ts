@@ -15,6 +15,7 @@ import {
 	CardanoTransactionFeeResponseDto,
 	TransactionUpdateDto,
 	TransactionActivateDeleteDto,
+	CreateSolanaTransactionFullResponseDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
@@ -96,6 +97,23 @@ export class TransactionController {
 		@Body() model: CreateTransactionDto,
 	): CreateEthTransactionFullResponseDto {
 		return this.transactionService.createEth(model);
+	}
+
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: CreateSolanaTransactionFullResponseDto,
+		description: 'Success',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('createSolana')
+	async createSolana(
+		@Body() model: CreateTransactionDto,
+	): Promise<CreateSolanaTransactionFullResponseDto> {
+		return await this.transactionService.createSolana(model);
 	}
 
 	@ApiOperation({

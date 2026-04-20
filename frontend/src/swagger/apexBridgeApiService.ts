@@ -306,6 +306,49 @@ export class TransactionControllerClient extends BaseClient {
         return Promise.resolve<CreateEthTransactionFullResponseDto>(null as any);
     }
 
+    createSolana(body: CreateTransactionDto): Promise<CreateSolanaTransactionFullResponseDto> {
+        let url_ = this.baseUrl + "/transaction/createSolana";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processCreateSolana(_response);
+        });
+    }
+
+    protected processCreateSolana(response: Response): Promise<CreateSolanaTransactionFullResponseDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateSolanaTransactionFullResponseDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CreateSolanaTransactionFullResponseDto>(null as any);
+    }
     /**
      * Save non-active transactions to the database, with desired activation offset
      * @return OK - Returns non-active bridging transaction.
@@ -1702,6 +1745,7 @@ export enum ChainApexBridgeEnum {
     Nexus = "nexus",
     Cardano = "cardano",
     Polygon = "polygon",
+    Solana = "solana",
 }
 
 export class CreateTransactionDto implements ICreateTransactionDto {
@@ -2202,6 +2246,188 @@ export interface ICreateEthTransactionFullResponseDto {
     [key: string]: any;
 }
 
+export class SolanaTransactionResponseDto implements ISolanaTransactionResponseDto {
+    /** Unsigned Solana transaction, encoded as base64 */
+    txRaw!: string;
+
+    [key: string]: any;
+
+    constructor(data?: ISolanaTransactionResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.txRaw = _data["txRaw"];
+        }
+    }
+
+    static fromJS(data: any): SolanaTransactionResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new SolanaTransactionResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["txRaw"] = this.txRaw;
+        return data;
+    }
+}
+
+export interface ISolanaTransactionResponseDto {
+    /** Unsigned Solana transaction, encoded as base64 */
+    txRaw: string;
+
+    [key: string]: any;
+}
+
+export class BridgingSolanaTransactionResponseDto implements IBridgingSolanaTransactionResponseDto {
+    /** Solana tx to be executed */
+    solTx!: SolanaTransactionResponseDto;
+    bridgingFee!: string;
+    operationFee!: string;
+    tokenAmount!: string;
+    tokenID!: number;
+    isFallback!: boolean;
+
+    [key: string]: any;
+
+    constructor(data?: IBridgingSolanaTransactionResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+        if (!data) {
+            this.solTx = new SolanaTransactionResponseDto();
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.solTx = _data["solTx"] ? SolanaTransactionResponseDto.fromJS(_data["solTx"]) : new SolanaTransactionResponseDto();
+            this.bridgingFee = _data["bridgingFee"];
+            this.operationFee = _data["operationFee"];
+            this.tokenAmount = _data["tokenAmount"];
+            this.tokenID = _data["tokenID"];
+            this.isFallback = _data["isFallback"];
+        }
+    }
+
+    static fromJS(data: any): BridgingSolanaTransactionResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new BridgingSolanaTransactionResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["solTx"] = this.solTx ? this.solTx.toJSON() : undefined as any;
+        data["bridgingFee"] = this.bridgingFee;
+        data["operationFee"] = this.operationFee;
+        data["tokenAmount"] = this.tokenAmount;
+        data["tokenID"] = this.tokenID;
+        data["isFallback"] = this.isFallback;
+        return data;
+    }
+}
+
+export interface IBridgingSolanaTransactionResponseDto {
+    /** Solana tx to be executed */
+    solTx: SolanaTransactionResponseDto;
+    bridgingFee: string;
+    operationFee: string;
+    tokenAmount: string;
+    tokenID: number;
+    isFallback: boolean;
+
+    [key: string]: any;
+}
+
+export class CreateSolanaTransactionFullResponseDto implements ICreateSolanaTransactionFullResponseDto {
+    /** Approval tx for the bridging tx */
+    approvalTx!: SolanaTransactionResponseDto | undefined;
+    /** Solana Bridging tx */
+    bridgingTx!: BridgingSolanaTransactionResponseDto;
+
+    [key: string]: any;
+
+    constructor(data?: ICreateSolanaTransactionFullResponseDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+        if (!data) {
+            this.bridgingTx = new BridgingSolanaTransactionResponseDto();
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            for (var property in _data) {
+                if (_data.hasOwnProperty(property))
+                    this[property] = _data[property];
+            }
+            this.approvalTx = _data["approvalTx"] ? SolanaTransactionResponseDto.fromJS(_data["approvalTx"]) : undefined as any;
+            this.bridgingTx = _data["bridgingTx"] ? BridgingSolanaTransactionResponseDto.fromJS(_data["bridgingTx"]) : new BridgingSolanaTransactionResponseDto();
+        }
+    }
+
+    static fromJS(data: any): CreateSolanaTransactionFullResponseDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateSolanaTransactionFullResponseDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        for (var property in this) {
+            if (this.hasOwnProperty(property))
+                data[property] = this[property];
+        }
+        data["approvalTx"] = this.approvalTx ? this.approvalTx.toJSON() : undefined as any;
+        data["bridgingTx"] = this.bridgingTx ? this.bridgingTx.toJSON() : undefined as any;
+        return data;
+    }
+}
+
+export interface ICreateSolanaTransactionFullResponseDto {
+    /** Approval tx for the bridging tx */
+    approvalTx: SolanaTransactionResponseDto | undefined;
+    /** Solana Bridging tx */
+    bridgingTx: BridgingSolanaTransactionResponseDto;
+
+    [key: string]: any;
+}
+
 /** Destination chain ID */
 export enum ChainEnum {
     Prime = "prime",
@@ -2211,6 +2437,7 @@ export enum ChainEnum {
     Polygon = "polygon",
     Base = "base",
     Bsc = "bsc",
+    Solana = "solana",
 }
 
 export class TransactionSubmittedDto implements ITransactionSubmittedDto {
@@ -3536,6 +3763,7 @@ export enum LayerZeroChainSettingsDtoChain {
     Nexus = "nexus",
     Cardano = "cardano",
     Polygon = "polygon",
+    Solana = "solana",
     Base = "base",
     Bsc = "bsc",
 }

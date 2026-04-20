@@ -15,6 +15,7 @@ export class AppSettings {
 		vector: '0',
 		cardano: '0',
 		polygon: '0',
+		solana: '0',
 	};
 
 	private _minOperationFee: { [key: string]: string } = {
@@ -23,6 +24,7 @@ export class AppSettings {
 		vector: '0',
 		cardano: '0',
 		polygon: '0',
+		solana: '0',
 	};
 
 	private _minColCoinsAllowedToBridge: { [key: string]: string } = {
@@ -31,6 +33,7 @@ export class AppSettings {
 		vector: '0',
 		cardano: '0',
 		polygon: '0',
+		solana: '0',
 	};
 
 	private _utxoRetriever: UtxoRetrieverConfig = {};

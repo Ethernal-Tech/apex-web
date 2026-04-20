@@ -17,10 +17,11 @@ import BlockfrostRetriever from '../features/BlockfrostRetriever';
 import OgmiosRetriever from '../features/OgmiosRetriever';
 import { getUtxoRetrieverType } from '../features/utils';
 import { UtxoRetrieverEnum } from '../features/enums';
-import { isEvmChain } from '../settings/chain';
+import { isEvmChain, isSolanaChain } from '../settings/chain';
 import { shouldUseMainnet } from '../utils/generalUtils';
 import { ISettingsState } from '../settings/settingsRedux';
 import { captureException } from '../features/sentry';
+import solWalletHandler from '../features/SolWalletHandler';
 import {
 	getCurrencyID,
 	getTokenConfig,
@@ -68,6 +69,21 @@ const getWalletBalanceAction = async (
 		}
 
 		return { balance: balancesMap };
+	}
+
+	if (isSolanaChain(srcChain)) {
+		const lamports = await solWalletHandler.getBalanceLamports();
+
+		const finalBalance: { [key: string]: string } = dirTokens.reduce(
+			(acc: { [key: string]: string }, cv: number) => {
+				acc[cv.toString()] =
+					cv === currencyID ? lamports.toString(10) : '0';
+				return acc;
+			},
+			{},
+		);
+
+		return { balance: finalBalance };
 	}
 
 	let utxoRetriever: UtxoRetriever = walletHandler;

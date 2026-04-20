@@ -346,6 +346,69 @@ export class CreateEthTransactionFullResponseDto {
 	bridgingTx: BridgingEthTransactionResponseDto;
 }
 
+export class SolanaTransactionResponseDto {
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Unsigned Solana transaction, encoded as base64',
+	})
+	txRaw: string;
+}
+
+@ApiExtraModels(SolanaTransactionResponseDto)
+export class BridgingSolanaTransactionResponseDto {
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@Type(() => SolanaTransactionResponseDto)
+	@ApiProperty({
+		description: 'Solana tx to be executed',
+		type: SolanaTransactionResponseDto,
+	})
+	solTx: SolanaTransactionResponseDto;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	bridgingFee: string;
+
+	@ApiProperty()
+	operationFee: string;
+
+	@ApiProperty()
+	tokenAmount: string;
+
+	@ApiProperty()
+	tokenID: number;
+
+	@ApiProperty()
+	isFallback: boolean;
+}
+
+@ApiExtraModels(
+	SolanaTransactionResponseDto,
+	BridgingSolanaTransactionResponseDto,
+)
+export class CreateSolanaTransactionFullResponseDto {
+	@IsObject()
+	@ValidateNested()
+	@Type(() => SolanaTransactionResponseDto)
+	@ApiProperty({
+		description: 'Approval tx for the bridging tx',
+		type: SolanaTransactionResponseDto,
+		nullable: true,
+	})
+	approvalTx?: SolanaTransactionResponseDto;
+
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@Type(() => BridgingSolanaTransactionResponseDto)
+	@ApiProperty({
+		description: 'Solana Bridging tx',
+		type: BridgingSolanaTransactionResponseDto,
+	})
+	bridgingTx: BridgingSolanaTransactionResponseDto;
+}
+
 export class ErrorResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()

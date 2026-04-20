@@ -10,12 +10,14 @@ import walletHandler from '../../features/WalletHandler';
 import {
 	createCardanoTransactionAction,
 	createEthTransactionAction,
+	createSolanaTransactionAction,
 	getCardanoTransactionFeeAction,
 } from './action';
 import {
 	BridgeTransactionDto,
 	CardanoTransactionFeeResponseDto,
 	CreateEthTransactionFullResponseDto,
+	CreateSolanaTransactionFullResponseDto,
 	CreateTransactionDto,
 	TxTypeEnum,
 } from '../../swagger/apexBridgeApiService';
@@ -24,16 +26,19 @@ import {
 	signAndSubmitCardanoTx,
 	signAndSubmitEthTx,
 	signAndSubmitLayerZeroTx,
+	signAndSubmitSolanaTx,
 } from '../../actions/submitTx';
 import {
 	CreateCardanoTxResponse,
 	CreateEthTxResponse,
+	CreateSolanaTxResponse,
 } from './components/types';
 import NewTransaction from './components/NewTransaction';
 import { useNavigate } from 'react-router-dom';
 import {
 	isCardanoChain,
 	isEvmChain,
+	isSolanaChain,
 	isLZBridging,
 	toApexBridge,
 } from '../../settings/chain';
@@ -287,6 +292,38 @@ function NewTransactionPage() {
 		[prepareCreateEthTx],
 	);
 
+	const createSolanaTx = useCallback(
+		async (
+			address: string,
+			amount: string,
+			tokenID: number,
+		): Promise<CreateSolanaTxResponse> => {
+			const createTxDto = prepareCreateEthTx(address, amount, tokenID);
+			const bindedCreateAction = createSolanaTransactionAction.bind(
+				null,
+				createTxDto,
+			);
+			const createResponse = await tryCatchJsonByAction(
+				bindedCreateAction,
+				false,
+			);
+			if (createResponse instanceof ErrorResponse) {
+				captureAndThrowError(
+					createResponse.err,
+					'NewTransactionPage.tsx',
+					'createSolanaTx',
+				);
+			}
+
+			return {
+				createTxDto,
+				createResponse:
+					createResponse as CreateSolanaTransactionFullResponseDto,
+			};
+		},
+		[prepareCreateEthTx],
+	);
+
 	const handleSubmitCallback = useCallback(
 		async (address: string, amount: string, tokenID: number) => {
 			setLoadingState({
@@ -322,6 +359,20 @@ function NewTransactionPage() {
 					);
 
 					response && goToDetails(response);
+				} else if (isSolanaChain(chain)) {
+					const createTxResp = await createSolanaTx(
+						address,
+						amount,
+						tokenID,
+					);
+
+					const response = await signAndSubmitSolanaTx(
+						createTxResp.createTxDto,
+						createTxResp.createResponse,
+						updateLoadingState,
+					);
+
+					response && goToDetails(response);
 				} else {
 					captureAndThrowError(
 						`Unsupported source chain: ${chain}`,
@@ -351,7 +402,14 @@ function NewTransactionPage() {
 				setLoadingState(undefined);
 			}
 		},
-		[chain, createCardanoTx, createEthTx, goToDetails, updateLoadingState],
+		[
+			chain,
+			createCardanoTx,
+			createEthTx,
+			createSolanaTx,
+			goToDetails,
+			updateLoadingState,
+		],
 	);
 
 	const handleLZSubmitCallback = useCallback(

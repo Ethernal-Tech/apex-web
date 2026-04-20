@@ -9,6 +9,7 @@ import {
 	createEthBridgingTx,
 	getCardanoBridgingTxFee,
 	canUpdateTx,
+	createSolanaBridgingTx,
 } from 'src/transaction/transaction.helper';
 import {
 	CreateTransactionDto,
@@ -17,6 +18,7 @@ import {
 	CardanoTransactionFeeResponseDto,
 	CreateEthTransactionFullResponseDto,
 	TransactionActivateDeleteDto as TransactionActivateDeleteDto,
+	CreateSolanaTransactionFullResponseDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import {
@@ -45,6 +47,7 @@ import {
 	getBridgingSettings,
 	isCardanoChain,
 	isEvmChain,
+	isSolanaChain,
 } from 'src/utils/chainUtils';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
@@ -102,6 +105,7 @@ export class TransactionService {
 					]
 				: settings.bridgingSettings.minChainFeeForBridging[dto.originChain];
 		if (!srcMinFee) {
+			console.log('settings', settings.bridgingSettings);
 			throw new InternalServerErrorException(
 				`No minFee for source chain: ${dto.originChain}`,
 			);
@@ -142,6 +146,16 @@ export class TransactionService {
 		if (!isEvmChain(dto.originChain)) {
 			throw new BadRequestException(
 				`Chain ${dto.originChain} is not EVM chain`,
+			);
+		}
+
+		return this.validateCreateTx(dto);
+	}
+
+	private validateCreateSolanaTx(dto: CreateTransactionDto) {
+		if (!isSolanaChain(dto.originChain)) {
+			throw new BadRequestException(
+				`Chain ${dto.originChain} is not Solana chain`,
 			);
 		}
 
@@ -277,6 +291,31 @@ export class TransactionService {
 			bridgingMode!,
 			settings.bridgingSettings,
 		);
+		if (!tx) {
+			throw new BadRequestException('error while creating bridging tx');
+		}
+
+		return tx;
+	}
+
+	async createSolana(
+		dto: CreateTransactionDto,
+	): Promise<CreateSolanaTransactionFullResponseDto> {
+		this.validateCreateSolanaTx(dto);
+
+		const settings = getBridgingSettings(
+			dto.originChain,
+			dto.destinationChain,
+			dto.tokenID,
+			this.settingsService.SettingsResponse,
+		);
+		if (!settings) {
+			throw new BadRequestException(
+				`Bridging token ${dto.tokenID} from ${dto.originChain} to ${dto.destinationChain} not supported`,
+			);
+		}
+
+		const tx = await createSolanaBridgingTx(dto, settings.bridgingSettings);
 		if (!tx) {
 			throw new BadRequestException('error while creating bridging tx');
 		}

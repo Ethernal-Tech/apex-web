@@ -41,6 +41,8 @@ const (
 	nexusIsEnabledFlag   = "nexus-is-enabled"
 	polygonIsEnabledFlag = "polygon-is-enabled"
 
+	solanaIsEnabledFlag = "solana-is-enabled"
+
 	logsPathFlag = "logs-path"
 
 	utxoCacheTimeoutFlag = "utxo-cache-timeout"
@@ -80,6 +82,8 @@ const (
 
 	nexusIsEnabledFlagDesc   = "chain enable flag for nexus"
 	polygonIsEnabledFlagDesc = "chain enable flag for polygon"
+
+	solanaIsEnabledFlagDesc = "chain enable flag for solana"
 
 	logsPathFlagDesc = "path to where logs will be stored"
 

@@ -9,6 +9,7 @@ import {
 import {
 	CreateTransactionDto,
 	CreateCardanoTransactionResponseDto,
+	CreateSolanaTransactionFullResponseDto,
 	TransactionSubmittedDto,
 	ChainEnum,
 	LayerZeroTransferResponseDto,
@@ -31,6 +32,8 @@ import { UpdateSubmitLoadingState } from '../utils/statusUtils';
 import { validateSubmitTxInputs } from '../utils/validationUtils';
 import { captureAndThrowError } from '../features/sentry';
 import { getCurrencyID } from '../settings/token';
+import solWalletHandler from '../features/SolWalletHandler';
+import { Transaction as SolanaTransaction } from '@solana/web3.js';
 
 type TxDetailsOptions = {
 	feePercMult: bigint;
@@ -444,6 +447,111 @@ export const signAndSubmitEthTx = async (
 			'signAndSubmitEthTx',
 		);
 	}
+};
+
+export const signAndSubmitSolanaTx = async (
+	values: CreateTransactionDto,
+	createResponse: CreateSolanaTransactionFullResponseDto,
+	updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
+) => {
+	if (!solWalletHandler.checkWallet()) {
+		captureAndThrowError(
+			'Wallet not connected.',
+			'submitTx.ts',
+			'signAndSubmitSolanaTx',
+		);
+	}
+
+	const txRaw = createResponse.bridgingTx?.solTx?.txRaw;
+	if (!txRaw) {
+		captureAndThrowError(
+			'Missing Solana txRaw in create response.',
+			'submitTx.ts',
+			'signAndSubmitSolanaTx',
+		);
+	}
+
+	const tokenAmount = BigInt(createResponse.bridgingTx.tokenAmount || '0');
+	const tokenID =
+		tokenAmount > BigInt(0) ? createResponse.bridgingTx.tokenID : 0;
+	const amount =
+		BigInt(createResponse.bridgingTx.bridgingFee || '0') +
+		BigInt(createResponse.bridgingTx.operationFee || '0') +
+		tokenAmount;
+
+	const txBuffer = Buffer.from(txRaw, 'base64');
+	const tx = SolanaTransaction.from(txBuffer);
+
+	updateLoadingState({
+		content: 'Signing and submitting the bridging transaction...',
+	});
+
+	const signature = await solWalletHandler.signAndSendTransaction(tx);
+
+	updateLoadingState({
+		content: 'Recording the transaction...',
+		txHash: signature,
+	});
+
+	const transactionSubmittedDto = new TransactionSubmittedDto({
+		originChain: values.originChain as unknown as ChainEnum,
+		destinationChain: values.destinationChain as unknown as ChainEnum,
+		senderAddress: values.senderAddress,
+		receiverAddrs: [values.destinationAddress],
+		amount: amount.toString(10),
+		originTxHash: signature,
+		txRaw,
+		isFallback: createResponse.bridgingTx.isFallback,
+		nativeTokenAmount: tokenAmount.toString(10),
+		tokenID,
+		isLayerZero: false,
+	});
+
+	const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
+		null,
+		transactionSubmittedDto,
+	);
+	const submittedResponse = await tryCatchJsonByAction(
+		bindedSubmittedAction,
+		false,
+	);
+
+	if (submittedResponse instanceof ErrorResponse) {
+		const bindedSubmittedActivatedAction =
+			bridgingTransactionSubmittedActivatedAction.bind(
+				null,
+				transactionSubmittedDto,
+			);
+		const submittedActivatedResponse = await retry(async () => {
+			const res = await tryCatchJsonByAction(
+				bindedSubmittedActivatedAction,
+				false,
+			);
+			if (res instanceof ErrorResponse) {
+				throw new Error(res.err ?? 'ErrorResponse');
+			}
+			return res;
+		}, tryCount);
+
+		return submittedActivatedResponse;
+	}
+
+	const bindedActivateAction = bridgingTransactionActivateAction.bind(
+		null,
+		new TransactionActivateDeleteDto({
+			originChain: values.originChain as unknown as ChainEnum,
+			originTxHash: signature,
+		}),
+	);
+	const activateResponse = await retry(async () => {
+		const res = await tryCatchJsonByAction(bindedActivateAction, false);
+		if (res instanceof ErrorResponse) {
+			throw new Error(res.err ?? 'ErrorResponse');
+		}
+		return res;
+	}, tryCount);
+
+	return activateResponse;
 };
 
 export const signAndSubmitLayerZeroTx = async (

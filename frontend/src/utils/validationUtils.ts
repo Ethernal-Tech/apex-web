@@ -1,9 +1,11 @@
 import { isAddress } from 'web3-validator';
+import { PublicKey } from '@solana/web3.js';
 import {
 	BridgingModeEnum,
 	getBridgingMode,
 	isCardanoChain,
 	isEvmChain,
+	isSolanaChain,
 } from '../settings/chain';
 import {
 	BridgingSettingsTokenPairDto,
@@ -17,7 +19,10 @@ import {
 	convertWeiToDfm,
 	convertEvmDfmToApex,
 	convertUtxoDfmToApex,
+	convertWeiToDfmByChain,
 	shouldUseMainnet,
+	convertDfmToApex,
+	convertLamportsToWei,
 } from './generalUtils';
 import { ISettingsState } from '../settings/settingsRedux';
 import { getCurrencyID, getTokenInfo } from '../settings/token';
@@ -67,6 +72,15 @@ function layerZeroValidation(
 		return `Invalid destination address: ${dstAddr}`;
 	}
 }
+
+const isValidSolanaOnCurveAddress = (address: string): boolean => {
+	try {
+		const publicKey = new PublicKey(address);
+		return PublicKey.isOnCurve(publicKey.toBytes());
+	} catch {
+		return false;
+	}
+};
 
 function reactorValidation(
 	srcChain: ChainEnum,
@@ -165,15 +179,24 @@ function skylineValidaton(
 	const isWrappedCurrencyBridging =
 		!isCurrencyBridging && tokenPair.dstTokenID === dstCurrencyID;
 
-	let minValue: bigint;
+	let minValue = BigInt(0);
 
 	if (isWrappedCurrencyBridging && isCardanoChain(dstChain)) {
-		minValue = BigInt(
-			convertDfmToWei(
-				settings.bridgingSettings.minUtxoChainValue[dstChain] ||
-					settings.bridgingSettings.minValueToBridge,
-			),
-		);
+		if (isCardanoChain(dstChain)) {
+			minValue = BigInt(
+				convertDfmToWei(
+					settings.bridgingSettings.minUtxoChainValue[dstChain] ||
+						settings.bridgingSettings.minValueToBridge,
+				),
+			);
+		} else if (isSolanaChain(dstChain)) {
+			minValue = BigInt(
+				convertLamportsToWei(
+					settings.bridgingSettings.minUtxoChainValue[dstChain] ||
+						settings.bridgingSettings.minValueToBridge,
+				),
+			);
+		}
 	} else if (isCurrencyBridging && isCardanoChain(srcChain)) {
 		minValue = BigInt(
 			convertDfmToWei(
@@ -206,28 +229,44 @@ function skylineValidaton(
 		? settings.bridgingSettings.maxAmountAllowedToBridge
 		: settings.bridgingSettings.maxTokenAmountAllowedToBridge;
 
-	if (isCardanoChain(srcChain)) {
-		const minValueBN = BigInt(convertWeiToDfm(minValue || '0'));
-		if (amount < minValueBN) {
-			return `Amount too low. The minimum amount is ${convertUtxoDfmToApex(minValueBN.toString(10))} ${tokenInfo.label}`;
-		}
+	// if chain is not evm, it means it's cardano or solana, so we need to convert the min value and max allowed to dfm because we use wei for validation
+	// if (!isEvmChain(srcChain)) {
+	// 	const minValueBN = BigInt(convertWeiToDfmByChain(minValue || '0', srcChain));
+	// 	if (amount < minValueBN) {
+	// 		return `Amount too low. The minimum amount is ${convertDfmToApex(minValueBN.toString(10), srcChain)} ${tokenInfo.label}`;
+	// 	}
 
-		const maxAllowedToBridgeDfm = BigInt(
-			convertWeiToDfm(maxAllowed || '0'),
-		);
-		if (maxAllowedToBridgeDfm > 0 && amount > maxAllowedToBridgeDfm) {
-			return `Amount more than maximum allowed: ${convertUtxoDfmToApex(maxAllowedToBridgeDfm.toString(10))} ${tokenInfo.label}`;
-		}
-	} else if (isEvmChain(srcChain)) {
-		const minValueWei = BigInt(minValue || '0');
-		if (amount < minValueWei) {
-			return `Amount too low. The minimum amount is ${convertEvmDfmToApex(minValueWei.toString(10))} ${tokenInfo.label}`;
-		}
+	// 	const maxAllowedToBridgeDfm = BigInt(
+	// 		convertWeiToDfmByChain(maxAllowed || '0', srcChain),
+	// 	);
+	// 	if (maxAllowedToBridgeDfm > 0 && amount > maxAllowedToBridgeDfm) {
+	// 		return `Amount more than maximum allowed: ${convertDfmToApex(maxAllowedToBridgeDfm.toString(10), srcChain)} ${tokenInfo.label}`;
+	// 	}
+	// } else {
+	// 	const minValueWei = BigInt(minValue || '0');
+	// 	if (amount < minValueWei) {
+	// 		return `Amount too low. The minimum amount is ${convertEvmDfmToApex(minValueWei.toString(10))} ${tokenInfo.label}`;
+	// 	}
 
-		const maxAllowedWei = BigInt(maxAllowed || '0');
-		if (maxAllowedWei > 0 && amount > maxAllowedWei) {
-			return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedWei.toString(10))} ${tokenInfo.label}`;
-		}
+	// 	const maxAllowedWei = BigInt(maxAllowed || '0');
+	// 	if (maxAllowedWei > 0 && amount > maxAllowedWei) {
+	// 		return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedWei.toString(10))} ${tokenInfo.label}`;
+	// 	}
+	// }
+
+	// returns wei for evm chains
+	const minValueWei = BigInt(
+		convertWeiToDfmByChain(minValue || '0', srcChain),
+	);
+	if (amount < minValueWei) {
+		return `Amount too low. The minimum amount is ${convertDfmToApex(minValueWei.toString(10), srcChain)} ${tokenInfo.label}`;
+	}
+
+	const maxAllowedToBridgeDfm = BigInt(
+		convertWeiToDfmByChain(maxAllowed || '0', srcChain), // returns wei for evm chains
+	);
+	if (maxAllowedToBridgeDfm > 0 && amount > maxAllowedToBridgeDfm) {
+		return `Amount more than maximum allowed: ${convertDfmToApex(maxAllowedToBridgeDfm.toString(10), srcChain)} ${tokenInfo.label}`;
 	}
 
 	if (isCardanoChain(dstChain)) {
@@ -251,6 +290,10 @@ function skylineValidaton(
 		}
 	} else if (isEvmChain(dstChain)) {
 		if (!isAddress(dstAddr)) {
+			return `Invalid destination address: ${dstAddr}`;
+		}
+	} else if (isSolanaChain(dstChain)) {
+		if (!isValidSolanaOnCurveAddress(dstAddr)) {
 			return `Invalid destination address: ${dstAddr}`;
 		}
 	}

@@ -3,7 +3,7 @@ import {
 	ChainApexBridgeEnum,
 	ChainEnum,
 } from 'src/common/enum';
-import { CardanoNetworkType } from './Address/types';
+import { CardanoNetworkType, SolanaNetworkType } from './Address/types';
 import {
 	BridgingSettingsDirectionConfigDto,
 	BridgingSettingsTokenPairDto,
@@ -23,6 +23,7 @@ export const CHAIN_TO_CHAIN_ID = {
 	[ChainApexBridgeEnum.Nexus]: 3,
 	[ChainApexBridgeEnum.Cardano]: 4,
 	[ChainApexBridgeEnum.Polygon]: 5,
+	[ChainApexBridgeEnum.Solana]: 6,
 };
 
 export type BridgingDirectionInfo = {
@@ -55,6 +56,11 @@ export const fromChainToNetworkId = (
 		case ChainApexBridgeEnum.Polygon: {
 			return isMainnet ? POLYGON_MAINNET_CHAIN_ID : POLYGON_TESTNET_CHAIN_ID;
 		}
+		case ChainApexBridgeEnum.Solana: {
+			return isMainnet
+				? SolanaNetworkType.MainNetNetwork
+				: SolanaNetworkType.TestNetNetwork;
+		}
 		default:
 			return;
 	}
@@ -78,6 +84,8 @@ export const isCardanoChain = (chain: ChainEnum) =>
 
 export const isEvmChain = (chain: ChainEnum) =>
 	chain === ChainEnum.Nexus || chain === ChainEnum.Polygon;
+
+export const isSolanaChain = (chain: ChainEnum) => chain === ChainEnum.Solana;
 
 const isAllowedDirection = function (
 	srcChain: ChainEnum,

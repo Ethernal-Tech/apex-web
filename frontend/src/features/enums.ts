@@ -18,6 +18,7 @@ export enum ApexBridgeNetwork {
 	MainnetBase = 'MainnetBase',
 	MainnetBsc = 'MainnetBsc',
 	MainnetPolygon = 'MainnetPolygon',
+	MainnetSolana = 'MainnetSolana',
 	TestnetPrime = 'TestnetPrime',
 	TestnetVector = 'TestnetVector',
 	TestnetNexus = 'TestnetNexus',
@@ -25,6 +26,7 @@ export enum ApexBridgeNetwork {
 	TestnetBase = 'TestnetBase',
 	TestnetBsc = 'TestnetBsc',
 	TestnetPolygon = 'TestnetPolygon',
+	TestnetSolana = 'TestnetSolana',
 }
 
 export enum UtxoRetrieverEnum {

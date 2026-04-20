@@ -31,6 +31,7 @@ import {
 	getBridgingMode,
 	isCardanoChain,
 	isEvmChain,
+	isSolanaChain,
 } from '../../../settings/chain';
 import { getCurrencyID, getTokenInfo } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
@@ -130,6 +131,11 @@ const calculateMaxAmountCurrency = (
 			BigInt(bridgeTxFee) -
 			BigInt(minEvmWeiValue) -
 			BigInt(operationFee);
+	} else if (isSolanaChain(chain)) {
+		maxByBalance =
+			BigInt(totalBalance[currencyID] || '0') -
+			BigInt(bridgeTxFee || '0') -
+			BigInt(operationFee || '0');
 	} else {
 		maxByBalance =
 			BigInt(totalBalance[currencyID] || '0') -

@@ -79,6 +79,8 @@ type skylineGenerateConfigsParams struct {
 	nexusIsEnabled   bool
 	polygonIsEnabled bool
 
+	solanaIsEnabled bool
+
 	logsPath         string
 	utxoCacheTimeout time.Duration
 	utxoCacheKeys    []string
@@ -417,6 +419,13 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		polygonIsEnabledFlagDesc,
 	)
 
+	cmd.Flags().BoolVar(
+		&p.solanaIsEnabled,
+		solanaIsEnabledFlag,
+		false,
+		solanaIsEnabledFlagDesc,
+	)
+
 	cmd.Flags().StringVar(
 		&p.logsPath,
 		logsPathFlag,
@@ -549,6 +558,11 @@ func (p *skylineGenerateConfigsParams) Execute(
 			},
 			common.ChainIDStrPolygon: {
 				IsEnabled: p.polygonIsEnabled,
+			},
+		},
+		SolanaChains: map[string]*core.SolanaChainConfig{
+			common.ChainIDStrSolana: {
+				IsEnabled: p.solanaIsEnabled,
 			},
 		},
 		UtxoCacheTimeout: p.utxoCacheTimeout,

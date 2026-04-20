@@ -18,7 +18,12 @@ import {
 	min_ada_for_output,
 	DataCost,
 } from '@emurgo/cardano-serialization-lib-browser';
-import { isCardanoChain, isEvmChain, isLZBridging } from '../settings/chain';
+import {
+	isCardanoChain,
+	isEvmChain,
+	isLZBridging,
+	isSolanaChain,
+} from '../settings/chain';
 import appSettings from '../settings/appSettings';
 import { normalizeNativeTokenKey } from './tokenUtils';
 import { captureAndThrowError, captureException } from '../features/sentry';
@@ -27,6 +32,8 @@ import { EtherUnits } from 'web3-utils';
 
 export const SKYLINE_DOCUMENTATION_URL =
 	'https://ethernal-5.gitbook.io/skyline';
+
+const WEI_PER_LAMPORT = BigInt(1_000_000_000);
 
 export const capitalizeWord = (word: string): string => {
 	if (!word || word.length === 0) {
@@ -81,6 +88,14 @@ const convertApexToEvmDfm = (apex: string | number): string => {
 	return toWei(apex, 'ether');
 };
 
+export const convertSolanaDfmToApex = (dfm: string | number): string => {
+	return fromWei(dfm, 9);
+};
+
+export const convertApexToSolanaDfm = (apex: string | number): string => {
+	return toWei(apex, 9);
+};
+
 export const convertWeiToDfm = (wei: Numbers): string => {
 	return fromWei(wei, 12);
 };
@@ -89,9 +104,38 @@ export const convertDfmToWei = (dfm: Numbers): string => {
 	return toWei(dfm, 12);
 };
 
+export const convertWeiToDfmByChain = (wei: Numbers, chain: ChainEnum) => {
+	if (isCardanoChain(chain)) {
+		return convertWeiToDfm(wei);
+	} else if (isSolanaChain(chain)) {
+		return convertWeiToLamports(wei);
+	} else {
+		return wei;
+	}
+};
+
+export const convertDfmToWeiByChain = (dfm: Numbers, chain: ChainEnum) => {
+	if (isCardanoChain(chain)) {
+		return convertDfmToWei(dfm);
+	} else if (isSolanaChain(chain)) {
+		return convertLamportsToWei(dfm);
+	} else {
+		return dfm;
+	}
+};
+
 export const convertWeiToDfmBig = (wei: bigint) => {
 	const DIV = BigInt(1_000_000_000_000);
 	return wei / DIV;
+};
+
+// 1 lamport = 10^9 wei (9 decimals vs 18 decimals).
+export const convertWeiToLamports = (wei: bigint | Numbers): bigint => {
+	return BigInt(wei) / WEI_PER_LAMPORT;
+};
+
+export const convertLamportsToWei = (lamports: bigint | Numbers): bigint => {
+	return BigInt(lamports) * WEI_PER_LAMPORT;
 };
 
 export const shouldUseMainnet = (src: ChainEnum, dst: ChainEnum): boolean =>
@@ -106,6 +150,8 @@ export const convertDfmToApex = (dfm: string | number, network: ChainEnum) => {
 		return convertEvmDfmToApex(dfm);
 	} else if (isCardanoChain(network)) {
 		return convertUtxoDfmToApex(dfm);
+	} else if (isSolanaChain(network)) {
+		return convertSolanaDfmToApex(dfm);
 	} else {
 		return dfm; // should we throw exception here?
 	}
@@ -119,6 +165,8 @@ export const convertApexToDfm = (apex: string | number, network: ChainEnum) => {
 		return convertApexToEvmDfm(apex);
 	} else if (isCardanoChain(network)) {
 		return convertApexToUtxoDfm(apex);
+	} else if (isSolanaChain(network)) {
+		return convertApexToSolanaDfm(apex);
 	} else {
 		return apex; // should we throw exception here?
 	}

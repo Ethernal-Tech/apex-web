@@ -3,6 +3,7 @@ import { FunctionComponent, SVGProps } from 'react';
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg';
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg';
 import { ReactComponent as PolygonIcon } from '../assets/chain-icons/polygon.svg';
+import { ReactComponent as SolanaIcon } from '../assets/chain-icons/solana.svg';
 import { ReactComponent as UnknownTokenIcon } from '../assets/token-icons/unknown.svg';
 import {
 	BridgeTransactionDto,
@@ -42,6 +43,9 @@ const tokV3ID = 13;
 const polID = 14;
 const xpolID = 15;
 const papexID = 16;
+const solID = 17;
+const xsolID = 18;
+const sapexID = 19;
 
 export const ethID = 1000001;
 export const bapexID = 1000002;
@@ -176,6 +180,24 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 		label: 'pAP3X',
 		borderColor: '#0538AF',
 	},
+	[solID]: {
+		tokenID: solID,
+		icon: SolanaIcon,
+		label: 'SOL',
+		borderColor: '#1C1C1E',
+	},
+	[xsolID]: {
+		tokenID: xsolID,
+		icon: SolanaIcon,
+		label: 'xSOL',
+		borderColor: '#1C1C1E',
+	},
+	[sapexID]: {
+		tokenID: sapexID,
+		icon: ApexIcon,
+		label: 'sAP3X',
+		borderColor: '#0538AF',
+	},
 };
 
 const mainnetTokenInfos: Record<number, TokenInfo> = {
@@ -232,6 +254,18 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 		icon: UnknownTokenIcon,
 		label: 'BNB',
 		borderColor: '#F3BA2F',
+	},
+	[polID]: {
+		tokenID: polID,
+		icon: PolygonIcon,
+		label: 'POL',
+		borderColor: '#7B3FE4',
+	},
+	[solID]: {
+		tokenID: solID,
+		icon: SolanaIcon,
+		label: 'SOL',
+		borderColor: '#1C1C1E',
 	},
 };
 

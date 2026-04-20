@@ -1,5 +1,8 @@
 import { CardanoAddress } from '../features/Address/interfaces';
-import { CardanoNetworkType } from '../features/Address/types';
+import {
+	CardanoNetworkType,
+	SolanaNetworkType,
+} from '../features/Address/types';
 import { ApexBridgeNetwork } from '../features/enums';
 import appSettings from '../settings/appSettings';
 import { isEvmChain } from '../settings/chain';
@@ -97,6 +100,16 @@ const CHAIN_DATA: { [key: string]: ChainData } = {
 			network: ApexBridgeNetwork.TestnetPolygon,
 		},
 	},
+	[ChainEnum.Solana]: {
+		mainnet: {
+			networkID: SolanaNetworkType.MainNetNetwork,
+			network: ApexBridgeNetwork.MainnetSolana,
+		},
+		testnet: {
+			networkID: SolanaNetworkType.TestNetNetwork,
+			network: ApexBridgeNetwork.TestnetSolana,
+		},
+	},
 };
 
 const NETWORK_TO_CHAIN: {
@@ -111,6 +124,7 @@ const NETWORK_TO_CHAIN: {
 		[ApexBridgeNetwork.MainnetBase]: ChainEnum.Base,
 		[ApexBridgeNetwork.MainnetBsc]: ChainEnum.Bsc,
 		[ApexBridgeNetwork.MainnetPolygon]: ChainEnum.Polygon,
+		[ApexBridgeNetwork.MainnetSolana]: ChainEnum.Solana,
 	},
 	testnet: {
 		[ApexBridgeNetwork.TestnetPrime]: ChainEnum.Prime,
@@ -120,6 +134,7 @@ const NETWORK_TO_CHAIN: {
 		[ApexBridgeNetwork.TestnetBase]: ChainEnum.Base,
 		[ApexBridgeNetwork.TestnetBsc]: ChainEnum.Bsc,
 		[ApexBridgeNetwork.TestnetPolygon]: ChainEnum.Polygon,
+		[ApexBridgeNetwork.TestnetSolana]: ChainEnum.Solana,
 	},
 };
 
@@ -216,6 +231,7 @@ const EXPLORER_URLS: {
 		[ChainEnum.Base]: 'https://basescan.org',
 		[ChainEnum.Bsc]: 'https://bscscan.com',
 		[ChainEnum.Polygon]: 'https://polygonscan.com/',
+		[ChainEnum.Solana]: 'https://explorer.solana.com/',
 	},
 	testnet: {
 		[ChainEnum.Prime]:
@@ -224,6 +240,7 @@ const EXPLORER_URLS: {
 		[ChainEnum.Nexus]: 'https://explorer.nexus.testnet.apexfusion.org',
 		[ChainEnum.Cardano]: 'https://preview.cardanoscan.io',
 		[ChainEnum.Polygon]: 'https://amoy.polygonscan.com/',
+		[ChainEnum.Solana]: 'https://explorer.solana.com/?cluster=testnet',
 	},
 };
 
@@ -271,6 +288,12 @@ export const getExplorerTxUrl = (
 		}
 		case ChainEnum.Cardano: {
 			url = `${base}/transaction/${txHash}`;
+			break;
+		}
+		case ChainEnum.Solana: {
+			url = appSettings.isMainnet
+				? `${base}/tx/${txHash}`
+				: `${base}/tx/${txHash}?cluster=testnet`;
 			break;
 		}
 		default:
@@ -334,6 +357,12 @@ export const getExplorerAddressUrl = (
 		case ChainEnum.Polygon:
 		case ChainEnum.Nexus: {
 			url = `${base}/address/${address}`;
+			break;
+		}
+		case ChainEnum.Solana: {
+			url = appSettings.isMainnet
+				? `${base}/address/${address}`
+				: `${base}/address/${address}?cluster=testnet`;
 			break;
 		}
 		default:

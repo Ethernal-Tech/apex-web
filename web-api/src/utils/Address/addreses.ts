@@ -14,6 +14,7 @@ import {
 	IsAddressWithValidPrefix,
 } from './utils';
 import { BadRequestException } from '@nestjs/common';
+import { PublicKey } from '@solana/web3.js';
 
 const NewStakeCredential = (
 	data: Uint8Array,
@@ -151,6 +152,23 @@ export function ValidateEVMAddress(rawAddress: string) {
 	if (!isAddress(rawAddress)) {
 		throw new BadRequestException(
 			`Invalid EVM destination address: ${rawAddress}`,
+		);
+	}
+}
+
+export const isValidSolanaOnCurveAddress = (address: string): boolean => {
+	try {
+		const publicKey = new PublicKey(address);
+		return PublicKey.isOnCurve(publicKey.toBytes());
+	} catch {
+		return false;
+	}
+};
+
+export function ValidateSolanaAddress(rawAddress: string) {
+	if (!isValidSolanaOnCurveAddress(rawAddress)) {
+		throw new BadRequestException(
+			`Invalid Solana destination address: ${rawAddress}`,
 		);
 	}
 }
