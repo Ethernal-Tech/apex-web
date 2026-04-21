@@ -84,8 +84,7 @@ const chainTxDetailsOverrides: Partial<
 	Record<ChainEnum, Partial<TxDetailsOptions>>
 > = {
 	[ChainEnum.Polygon]: {
-		feePercMult: BigInt(300),
-		minTipCap: BigInt(5000000000), // 5 gwei
+		minTipCap: BigInt(25000000000), // 25 gwei
 	},
 };
 
