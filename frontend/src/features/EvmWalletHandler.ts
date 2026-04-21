@@ -248,6 +248,11 @@ class EvmWalletHandler {
 		}
 	};
 
+	getTransactionReceipt = async (txHash: string) => {
+		this._checkWalletAndThrow();
+		return await this.getWeb3()!.eth.getTransactionReceipt(txHash);
+	};
+
 	getBlock = async (
 		blockNumberOrHash: BlockNumberOrTag | string = 'latest',
 		returnTransactionObjects = false,

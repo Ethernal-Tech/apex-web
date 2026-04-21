@@ -43,6 +43,28 @@ const defaultGasLimitEstimation = 30000;
 
 const TX_SUCCESS = BigInt(1);
 
+const waitForEvmReceipt = async (
+	txHash: string,
+	maxAttempts = 20,
+	intervalMs = 3000,
+) => {
+	for (let i = 0; i < maxAttempts; i++) {
+		try {
+			const receipt =
+				await evmWalletHandler.getTransactionReceipt(txHash);
+			if (receipt) {
+				return receipt;
+			}
+		} catch (e) {
+			console.warn(`Receipt poll attempt ${i + 1} failed, retrying...`);
+		}
+
+		await new Promise((resolve) => setTimeout(resolve, intervalMs));
+	}
+
+	throw new Error('Transaction not confirmed after max attempts');
+};
+
 const blockOffset = BigInt(1000);
 
 const tryCount = 60;
@@ -57,6 +79,20 @@ const defaultTxDetailsOptions: TxDetailsOptions = {
 	fixedGasLimit: undefined,
 	minTipCap: BigInt(2000000000), // 2 gwei
 };
+
+const chainTxDetailsOverrides: Partial<
+	Record<ChainEnum, Partial<TxDetailsOptions>>
+> = {
+	[ChainEnum.Polygon]: {
+		feePercMult: BigInt(300),
+		minTipCap: BigInt(5000000000), // 5 gwei
+	},
+};
+
+const getTxDetailsOptions = (chain: ChainEnum): TxDetailsOptions => ({
+	...defaultTxDetailsOptions,
+	...chainTxDetailsOverrides[chain],
+});
 
 export const signAndSubmitCardanoTx = async (
 	values: CreateTransactionDto,
@@ -233,16 +269,14 @@ export const signAndSubmitEthTx = async (
 		);
 	}
 
+	const originChain = values.originChain as unknown as ChainEnum;
+	const txOpts = getTxDetailsOptions(originChain);
+
 	const { approvalTx } = createResponse;
 	if (approvalTx) {
 		console.log('processing eth approval tx...');
 		const tx: Transaction = await retry(
-			() =>
-				populateTxDetails(
-					approvalTx,
-					TxTypeEnum.London,
-					defaultTxDetailsOptions,
-				),
+			() => populateTxDetails(approvalTx, TxTypeEnum.London, txOpts),
 			longRetryOptions.retryCnt,
 			longRetryOptions.waitTime,
 		);
@@ -269,7 +303,7 @@ export const signAndSubmitEthTx = async (
 			populateTxDetails(
 				createResponse.bridgingTx.ethTx,
 				TxTypeEnum.London,
-				defaultTxDetailsOptions,
+				txOpts,
 			),
 		longRetryOptions.retryCnt,
 		longRetryOptions.waitTime,
@@ -332,9 +366,32 @@ export const signAndSubmitEthTx = async (
 	const submitPromise = evmWalletHandler.submitTx(tx);
 	submitPromise.on('transactionHash', onTxHash);
 
+	const txHashPromise = new Promise<string>((resolve) => {
+		submitPromise.on('transactionHash', (txHash) => {
+			resolve(txHash.toString());
+		});
+	});
+
+	const receiptPromise = txHashPromise.then((hash) =>
+		waitForEvmReceipt(hash),
+	);
+
+	submitPromise.on('error', (error) => {
+		console.warn(
+			'Wallet RPC error (suppressed, polling receipt directly):',
+			error,
+		);
+	});
+	submitPromise.catch((error: unknown) => {
+		console.warn(
+			'Wallet RPC promise rejected (suppressed, polling receipt directly):',
+			error,
+		);
+	});
+
 	const [response, receipt] = await Promise.all([
 		submitActionPromise,
-		submitPromise,
+		receiptPromise,
 	]);
 
 	updateLoadingState({
@@ -484,6 +541,8 @@ export const signAndSubmitLayerZeroTx = async (
 		checkRevertBeforeSending: false,
 	};
 
+	const txOpts = getTxDetailsOptions(originalSrcChain);
+
 	if (transactionData.approvalTransaction) {
 		console.log('processing layer zero approval tx...');
 		const tx: Transaction = await retry(
@@ -494,7 +553,7 @@ export const signAndSubmitLayerZeroTx = async (
 						...transactionData.transactionData.approvalTransaction,
 					},
 					txType,
-					defaultTxDetailsOptions,
+					txOpts,
 				),
 			longRetryOptions.retryCnt,
 			longRetryOptions.waitTime,
@@ -526,7 +585,7 @@ export const signAndSubmitLayerZeroTx = async (
 					...transactionData.populatedTransaction,
 				},
 				txType,
-				defaultTxDetailsOptions,
+				txOpts,
 			),
 		longRetryOptions.retryCnt,
 		longRetryOptions.waitTime,
@@ -585,9 +644,32 @@ export const signAndSubmitLayerZeroTx = async (
 	const submitPromise = evmWalletHandler.submitTx(sendTx, opts);
 	submitPromise.on('transactionHash', onTxHash);
 
+	const txHashPromise = new Promise<string>((resolve) => {
+		submitPromise.on('transactionHash', (txHash) => {
+			resolve(txHash.toString());
+		});
+	});
+
+	const receiptPromise = txHashPromise.then((hash) =>
+		waitForEvmReceipt(hash),
+	);
+
+	submitPromise.on('error', (error) => {
+		console.warn(
+			'Wallet RPC error (suppressed, polling receipt directly):',
+			error,
+		);
+	});
+	submitPromise.catch((error: unknown) => {
+		console.warn(
+			'Wallet RPC promise rejected (suppressed, polling receipt directly):',
+			error,
+		);
+	});
+
 	const [response, receipt] = await Promise.all([
 		submitActionPromise,
-		submitPromise,
+		receiptPromise,
 	]);
 
 	updateLoadingState({
