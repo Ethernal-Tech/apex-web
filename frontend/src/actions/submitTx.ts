@@ -329,17 +329,20 @@ export const signAndSubmitEthTx = async (
 		isLayerZero: false,
 	};
 
+	let resolvedTxHash: string;
 	const onTxHash = (txHash: any) => {
+		resolvedTxHash = txHash.toString();
+
 		updateLoadingState({
 			content: 'Waiting for transaction receipt...',
-			txHash: txHash.toString(),
+			txHash: resolvedTxHash,
 		});
 
 		const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
 			null,
 			new TransactionSubmittedDto({
 				...baseSubmittedDto,
-				originTxHash: txHash.toString(),
+				originTxHash: resolvedTxHash,
 				txRaw: JSON.stringify(
 					{ ...tx, block: latestBlock.number + blockOffset },
 					bigintReplacer,
@@ -358,11 +361,7 @@ export const signAndSubmitEthTx = async (
 	const submitPromise = evmWalletHandler.submitTx(tx);
 	submitPromise.on('transactionHash', onTxHash);
 
-	let resolvedTxHash: string | undefined;
-	submitPromise.on('transactionHash', (txHash) => {
-		resolvedTxHash = txHash.toString();
-	});
-
+	// if submitPromise succeeds, receipt promise will resolve that, but if submitPromise fails, this callback will be executed
 	const receiptPromise = submitPromise.catch(async (error: unknown) => {
 		if (!resolvedTxHash) {
 			throw error;
@@ -600,17 +599,20 @@ export const signAndSubmitLayerZeroTx = async (
 		BridgeTransactionDto | ErrorResponse | void
 	> = Promise.resolve();
 
+	let resolvedTxHash: string;
 	const onTxHash = (txHash: any) => {
+		resolvedTxHash = txHash.toString();
+
 		updateLoadingState({
 			content: 'Waiting for transaction receipt...',
-			txHash: txHash.toString(),
+			txHash: resolvedTxHash,
 		});
 
 		const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
 			null,
 			new TransactionSubmittedDto({
 				...baseSubmittedDto,
-				originTxHash: txHash,
+				originTxHash: resolvedTxHash,
 				txRaw: JSON.stringify(
 					{ ...sendTx, block: latestBlock.number + blockOffset },
 					bigintReplacer,
@@ -626,11 +628,6 @@ export const signAndSubmitLayerZeroTx = async (
 
 	const submitPromise = evmWalletHandler.submitTx(sendTx, opts);
 	submitPromise.on('transactionHash', onTxHash);
-
-	let resolvedTxHash: string | undefined;
-	submitPromise.on('transactionHash', (txHash) => {
-		resolvedTxHash = txHash.toString();
-	});
 
 	const receiptPromise = submitPromise.catch(async (error: unknown) => {
 		if (!resolvedTxHash) {
