@@ -43,6 +43,21 @@ const defaultGasLimitEstimation = 30000;
 
 const TX_SUCCESS = BigInt(1);
 
+const waitForEvmReceipt = async (txHash: string) =>
+	retry(
+		async () => {
+			const receipt =
+				await evmWalletHandler.getTransactionReceipt(txHash);
+			if (!receipt) {
+				throw new Error('Receipt not available yet');
+			}
+
+			return receipt;
+		},
+		longRetryOptions.retryCnt,
+		longRetryOptions.waitTime,
+	);
+
 const blockOffset = BigInt(1000);
 
 const tryCount = 60;
@@ -57,6 +72,19 @@ const defaultTxDetailsOptions: TxDetailsOptions = {
 	fixedGasLimit: undefined,
 	minTipCap: BigInt(2000000000), // 2 gwei
 };
+
+const chainTxDetailsOverrides: Partial<
+	Record<ChainEnum, Partial<TxDetailsOptions>>
+> = {
+	[ChainEnum.Polygon]: {
+		minTipCap: BigInt(25000000000), // 25 gwei
+	},
+};
+
+const getTxDetailsOptions = (chain: ChainEnum): TxDetailsOptions => ({
+	...defaultTxDetailsOptions,
+	...chainTxDetailsOverrides[chain],
+});
 
 export const signAndSubmitCardanoTx = async (
 	values: CreateTransactionDto,
@@ -233,16 +261,14 @@ export const signAndSubmitEthTx = async (
 		);
 	}
 
+	const originChain = values.originChain as unknown as ChainEnum;
+	const txOpts = getTxDetailsOptions(originChain);
+
 	const { approvalTx } = createResponse;
 	if (approvalTx) {
 		console.log('processing eth approval tx...');
 		const tx: Transaction = await retry(
-			() =>
-				populateTxDetails(
-					approvalTx,
-					TxTypeEnum.London,
-					defaultTxDetailsOptions,
-				),
+			() => populateTxDetails(approvalTx, TxTypeEnum.London, txOpts),
 			longRetryOptions.retryCnt,
 			longRetryOptions.waitTime,
 		);
@@ -269,7 +295,7 @@ export const signAndSubmitEthTx = async (
 			populateTxDetails(
 				createResponse.bridgingTx.ethTx,
 				TxTypeEnum.London,
-				defaultTxDetailsOptions,
+				txOpts,
 			),
 		longRetryOptions.retryCnt,
 		longRetryOptions.waitTime,
@@ -303,17 +329,20 @@ export const signAndSubmitEthTx = async (
 		isLayerZero: false,
 	};
 
+	let resolvedTxHash: string;
 	const onTxHash = (txHash: any) => {
+		resolvedTxHash = txHash.toString();
+
 		updateLoadingState({
 			content: 'Waiting for transaction receipt...',
-			txHash: txHash.toString(),
+			txHash: resolvedTxHash,
 		});
 
 		const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
 			null,
 			new TransactionSubmittedDto({
 				...baseSubmittedDto,
-				originTxHash: txHash.toString(),
+				originTxHash: resolvedTxHash,
 				txRaw: JSON.stringify(
 					{ ...tx, block: latestBlock.number + blockOffset },
 					bigintReplacer,
@@ -332,9 +361,19 @@ export const signAndSubmitEthTx = async (
 	const submitPromise = evmWalletHandler.submitTx(tx);
 	submitPromise.on('transactionHash', onTxHash);
 
+	// if submitPromise succeeds, receipt promise will resolve that, but if submitPromise fails, this callback will be executed
+	const receiptPromise = submitPromise.catch(async (error: unknown) => {
+		if (!resolvedTxHash) {
+			throw error;
+		}
+
+		console.warn('Wallet receipt fetch failed, polling directly:', error);
+		return waitForEvmReceipt(resolvedTxHash);
+	});
+
 	const [response, receipt] = await Promise.all([
 		submitActionPromise,
-		submitPromise,
+		receiptPromise,
 	]);
 
 	updateLoadingState({
@@ -484,6 +523,8 @@ export const signAndSubmitLayerZeroTx = async (
 		checkRevertBeforeSending: false,
 	};
 
+	const txOpts = getTxDetailsOptions(originalSrcChain);
+
 	if (transactionData.approvalTransaction) {
 		console.log('processing layer zero approval tx...');
 		const tx: Transaction = await retry(
@@ -494,7 +535,7 @@ export const signAndSubmitLayerZeroTx = async (
 						...transactionData.transactionData.approvalTransaction,
 					},
 					txType,
-					defaultTxDetailsOptions,
+					txOpts,
 				),
 			longRetryOptions.retryCnt,
 			longRetryOptions.waitTime,
@@ -526,7 +567,7 @@ export const signAndSubmitLayerZeroTx = async (
 					...transactionData.populatedTransaction,
 				},
 				txType,
-				defaultTxDetailsOptions,
+				txOpts,
 			),
 		longRetryOptions.retryCnt,
 		longRetryOptions.waitTime,
@@ -558,17 +599,20 @@ export const signAndSubmitLayerZeroTx = async (
 		BridgeTransactionDto | ErrorResponse | void
 	> = Promise.resolve();
 
+	let resolvedTxHash: string;
 	const onTxHash = (txHash: any) => {
+		resolvedTxHash = txHash.toString();
+
 		updateLoadingState({
 			content: 'Waiting for transaction receipt...',
-			txHash: txHash.toString(),
+			txHash: resolvedTxHash,
 		});
 
 		const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
 			null,
 			new TransactionSubmittedDto({
 				...baseSubmittedDto,
-				originTxHash: txHash,
+				originTxHash: resolvedTxHash,
 				txRaw: JSON.stringify(
 					{ ...sendTx, block: latestBlock.number + blockOffset },
 					bigintReplacer,
@@ -585,9 +629,19 @@ export const signAndSubmitLayerZeroTx = async (
 	const submitPromise = evmWalletHandler.submitTx(sendTx, opts);
 	submitPromise.on('transactionHash', onTxHash);
 
+	// if submitPromise succeeds, receipt promise will resolve that, but if submitPromise fails, this callback will be executed
+	const receiptPromise = submitPromise.catch(async (error: unknown) => {
+		if (!resolvedTxHash) {
+			throw error;
+		}
+
+		console.warn('Wallet receipt fetch failed, polling directly:', error);
+		return waitForEvmReceipt(resolvedTxHash);
+	});
+
 	const [response, receipt] = await Promise.all([
 		submitActionPromise,
-		submitPromise,
+		receiptPromise,
 	]);
 
 	updateLoadingState({
