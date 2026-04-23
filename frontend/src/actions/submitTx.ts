@@ -629,6 +629,7 @@ export const signAndSubmitLayerZeroTx = async (
 	const submitPromise = evmWalletHandler.submitTx(sendTx, opts);
 	submitPromise.on('transactionHash', onTxHash);
 
+	// if submitPromise succeeds, receipt promise will resolve that, but if submitPromise fails, this callback will be executed
 	const receiptPromise = submitPromise.catch(async (error: unknown) => {
 		if (!resolvedTxHash) {
 			throw error;
