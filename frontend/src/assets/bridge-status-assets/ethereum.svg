@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg fill="none" width="119" height="133" viewBox="0 0 119 133" xmlns="http://www.w3.org/2000/svg">
+<circle cx="54.5" cy="69.5" r="44.5" stroke="#627EEA" stroke-width="2"/>
+<circle cx="32" cy="32" r="31.5" fill="url(#d)" stroke="url(#c)"/>
+<circle cx="87" cy="101" r="31.5" fill="url(#b)" stroke="url(#a)"/>
+<g clip-path="url(#e)" fill="#fff" opacity=".9">
+<path d="m93.297 106.5c-0.5127-1e-3 -1.0187-0.117-1.4811-0.338s-0.8695-0.543-1.1918-0.942-0.5516-0.864-0.6712-1.363c-0.1196-0.498-0.1265-1.017-0.0201-1.519 0.1729-0.787 0.612-1.49 1.2433-1.991 0.6312-0.5011 1.4159-0.769 2.2217-0.7587h2.1908c0.1216 0 0.2382-0.0483 0.3241-0.1342 0.086-0.086 0.1343-0.2025 0.1343-0.3241v-2.0625c-0.0025-0.607-0.2447-1.1885-0.6739-1.6178-0.4293-0.4292-1.0108-0.6715-1.6178-0.6739h-12.833c-0.1824 0-0.3572-0.0724-0.4862-0.2013-0.1289-0.129-0.2013-0.3038-0.2013-0.4862 0-0.1823 0.0724-0.3572 0.2013-0.4861 0.129-0.1289 0.3038-0.2014 0.4862-0.2014h12.146c0.0608 0 0.1191-0.0241 0.162-0.0671 0.043-0.043 0.0672-0.1013 0.0672-0.162v-0.1925c0-1.265-1.4392-2.2917-3.2084-2.2917h-10.083c-0.4213 0-0.8385 0.083-1.2278 0.2442-0.3892 0.1613-0.7429 0.3976-1.0408 0.6955-0.6017 0.6017-0.9397 1.4177-0.9397 2.2686v14.208c0 0.851 0.338 1.667 0.9397 2.269 0.2979 0.298 0.6516 0.534 1.0408 0.695 0.3893 0.162 0.8065 0.244 1.2278 0.244h13.75c0.3009 0 0.5989-0.059 0.877-0.174 0.278-0.115 0.5306-0.284 0.7435-0.497 0.2128-0.213 0.3816-0.465 0.4967-0.743 0.1152-0.278 0.1745-0.576 0.1745-0.877v-2.292c0-0.061-0.0242-0.119-0.0672-0.162-0.0429-0.043-0.1012-0.067-0.162-0.067h-2.5208z"/>
+<path d="m96.047 101h-2.75c-0.547 0-1.0716 0.217-1.4584 0.604s-0.6041 0.911-0.6041 1.458c0 0.548 0.2173 1.072 0.6041 1.459s0.9114 0.604 1.4584 0.604h2.75c0.3237-0.055 0.6171-0.223 0.8273-0.476 0.2101-0.252 0.3231-0.571 0.3186-0.899v-1.375c0.0045-0.328-0.1085-0.647-0.3186-0.899-0.2102-0.253-0.5036-0.421-0.8273-0.476z"/>
+</g>
+<!-- Ethereum icon in top-left circle -->
+<g clip-path="url(#eth_clip)">
+  <g transform="translate(32,32)">
+    <polygon points="0,-20 -11.5,2 0,-3.5 11.5,2" fill="white" opacity="0.9"/>
+    <polygon points="0,-20 0,-3.5 -11.5,2" fill="white" opacity="0.6"/>
+    <polygon points="0,-3.5 -11.5,2 0,7 11.5,2" fill="white" opacity="0.9"/>
+    <polygon points="0,-3.5 0,7 -11.5,2" fill="white" opacity="0.6"/>
+    <polygon points="0,7 -11.5,2 0,21" fill="white" opacity="0.9"/>
+    <polygon points="0,7 0,21 11.5,2" fill="white" opacity="0.6"/>
+  </g>
+</g>
+<defs>
+<linearGradient id="d" x1="32" x2="32" y1="43.978" y2="73.512" gradientUnits="userSpaceOnUse">
+<stop stop-color="#052531" offset="0"/>
+<stop stop-color="#052531" stop-opacity=".1" offset="1"/>
+</linearGradient>
+<linearGradient id="c" x1="32" x2="32" y2="64" gradientUnits="userSpaceOnUse">
+<stop stop-color="#435F69" offset="0"/>
+<stop stop-color="#435F69" stop-opacity="0" offset="1"/>
+</linearGradient>
+<linearGradient id="b" x1="87" x2="87" y1="58" y2="142.51" gradientUnits="userSpaceOnUse">
+<stop stop-color="#052531" offset="0"/>
+<stop stop-color="#052531" stop-opacity=".1" offset="1"/>
+</linearGradient>
+<linearGradient id="a" x1="87" x2="87" y1="69" y2="133" gradientUnits="userSpaceOnUse">
+<stop stop-color="#435F69" offset="0"/>
+<stop stop-color="#435F69" stop-opacity="0" offset="1"/>
+</linearGradient>
+<clipPath id="e">
+<rect transform="translate(76 90)" width="22" height="22" fill="#fff"/>
+</clipPath>
+<clipPath id="eth_clip"><circle cx="32" cy="32" r="31.5"/></clipPath>
+</defs>
+</svg>

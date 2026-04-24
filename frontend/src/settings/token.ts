@@ -2,7 +2,8 @@ import { FunctionComponent, SVGProps } from 'react';
 // import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg';
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg';
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg';
-import { ReactComponent as PolygonIcon } from '../assets/chain-icons/polygon.svg';
+import { ReactComponent as PolygonIcon } from '../assets/token-icons/polygon.svg';
+import { ReactComponent as SeiIcon } from '../assets/token-icons/sei.svg';
 import { ReactComponent as UnknownTokenIcon } from '../assets/token-icons/unknown.svg';
 import {
 	BridgeTransactionDto,
@@ -172,13 +173,13 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 	},
 	22: {
 		tokenID: 22,
-		icon: UnknownTokenIcon,
+		icon: SeiIcon,
 		label: 'SEI',
 		borderColor: '#0538AF',
 	},
 	23: {
 		tokenID: 23,
-		icon: UnknownTokenIcon,
+		icon: SeiIcon,
 		label: 'cSEI',
 		borderColor: '#0538AF',
 	},
