@@ -8,7 +8,6 @@ import {
 	calculateChangeUtxoMinValue,
 	calculateTokenUtxoMinValue,
 	convertApexToDfm,
-	convertDfmToWei,
 	convertWeiToDfm,
 	createUtxo,
 	minBigInt,
@@ -101,7 +100,7 @@ const calculateMaxAmountCurrency = (
 	maxAmountAllowedToBridge: string,
 	chain: ChainEnum,
 	changeMinUtxo: number,
-	minEvmWeiValue: string,
+	evmWalletFeeWeiValue: string,
 	bridgeTxFee: string,
 	operationFee: string,
 ): { maxByBalance: bigint; maxByAllowed: bigint } => {
@@ -128,7 +127,7 @@ const calculateMaxAmountCurrency = (
 		maxByBalance =
 			BigInt(totalBalance[currencyID] || '0') -
 			BigInt(bridgeTxFee) -
-			BigInt(minEvmWeiValue) -
+			BigInt(evmWalletFeeWeiValue) -
 			BigInt(operationFee);
 	} else {
 		maxByBalance =
@@ -202,7 +201,6 @@ const BridgeInput = ({
 	);
 
 	const {
-		minValueToBridge,
 		maxAmountAllowedToBridge,
 		maxTokenAmountAllowedToBridge,
 		minUtxoChainValue,
@@ -411,12 +409,6 @@ const BridgeInput = ({
 		[sourceTokenID],
 	);
 
-	const minEvmWeiValue =
-		isEvmChain(chain) &&
-		(!sourceTokenID || !currencyID || sourceTokenID === currencyID)
-			? convertDfmToWei(minValueToBridge)
-			: '0';
-
 	// when bridging native tokens, the lovelace that must also be given to the bridge for carrying native tokens
 	// is calculated later. in case for example insufficient lovelace balance, the call where the calculation
 	// takes place fails, bridgingFee never gets updated, and the `Insufficient ADA` is never shown
@@ -472,7 +464,7 @@ const BridgeInput = ({
 		maxAmountAllowedToBridge,
 		chain,
 		changeMinUtxo,
-		minEvmWeiValue,
+		userWalletFee || '0',
 		adjustedBridgeTxFee,
 		operationFee,
 	);
