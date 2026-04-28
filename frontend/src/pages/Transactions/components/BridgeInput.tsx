@@ -271,8 +271,20 @@ const BridgeInput = ({
 		setBridgeTxFee(defaultBridgeTxFee);
 	}, [defaultBridgeTxFee, setBridgeTxFee]);
 
+	const roughCurrencyMaxByBalance = useMemo(() => {
+		if (!currencyID) {
+			return BigInt(0);
+		}
+
+		return (
+			BigInt(totalBalance[currencyID] || '0') -
+			BigInt(bridgeTxFee) -
+			BigInt(operationFee)
+		);
+	}, [bridgeTxFee, currencyID, operationFee, totalBalance]);
+
 	const fetchWalletFee = useCallback(async () => {
-		if (!destinationAddr || !amount || !sourceTokenID || !currencyID) {
+		if (!destinationAddr || !sourceTokenID || !currencyID) {
 			setUserWalletFee(undefined);
 			resetBridgeTxFee();
 			resetOperationFee();
@@ -282,6 +294,13 @@ const BridgeInput = ({
 
 		try {
 			if (isCardanoChain(chain)) {
+				if (!amount) {
+					setUserWalletFee(undefined);
+					resetBridgeTxFee();
+					resetOperationFee();
+
+					return;
+				}
 				const feeResp = await getCardanoTxFee(
 					destinationAddr,
 					convertApexToDfm(amount || '0', chain),
@@ -297,9 +316,15 @@ const BridgeInput = ({
 
 				return;
 			} else if (isEvmChain(chain)) {
+				if (roughCurrencyMaxByBalance <= BigInt(0)) {
+					return;
+				}
+
 				const feeResp = await getEthTxFee(
 					destinationAddr,
-					convertApexToDfm(amount || '0', chain),
+					amount
+						? convertApexToDfm(amount, chain)
+						: roughCurrencyMaxByBalance.toString(10),
 					sourceTokenID,
 				);
 
@@ -351,25 +376,16 @@ const BridgeInput = ({
 		setUserWalletFee(undefined);
 	}, [
 		destinationAddr,
-		amount,
 		sourceTokenID,
 		currencyID,
 		resetBridgeTxFee,
 		resetOperationFee,
 		chain,
+		amount,
 		getCardanoTxFee,
+		roughCurrencyMaxByBalance,
 		getEthTxFee,
 	]);
-
-	const setSourceTokenCallback = useCallback(
-		(tokenID: number) => {
-			setSourceTokenID(tokenID);
-			setAmount('');
-			resetBridgeTxFee();
-			resetOperationFee();
-		},
-		[resetBridgeTxFee, resetOperationFee, setSourceTokenID],
-	);
 
 	useEffect(() => {
 		if (fetchCreateTxTimeoutRef.current) {
@@ -386,6 +402,16 @@ const BridgeInput = ({
 			}
 		};
 	}, [fetchWalletFee]);
+
+	const setSourceTokenCallback = useCallback(
+		(tokenID: number) => {
+			setSourceTokenID(tokenID);
+			setAmount('');
+			resetBridgeTxFee();
+			resetOperationFee();
+		},
+		[resetBridgeTxFee, resetOperationFee, setSourceTokenID],
+	);
 
 	const onDiscard = () => {
 		setDestinationAddr('');
