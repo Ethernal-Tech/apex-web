@@ -136,6 +136,7 @@ const isAllowedDirection = function (
 ): boolean {
 	if (
 		!directionConfig[srcChain] ||
+		!directionConfig[srcChain].destChain ||
 		!directionConfig[srcChain].destChain[dstChain]
 	) {
 		return false;
