@@ -160,7 +160,8 @@ const PasteApexAmountInput: React.FC<PasteApexAmountInputProps> = ({
 	const isMaxAmountEntered =
 		maxSendable &&
 		BigInt(maxSendable) > 0 &&
-		convertApexToDfm(text, chain) !== maxSendable.toString();
+		text !==
+			toFixedFloor(convertDfmToApex(maxSendable.toString(), chain), 6);
 
 	// Returns true if entered value to send exceedes the maximum amount a user can send (balance - fees)
 	const hasInsufficientBalance =

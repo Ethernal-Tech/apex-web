@@ -2,7 +2,8 @@ import { FunctionComponent, SVGProps } from 'react';
 // import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg';
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg';
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg';
-import { ReactComponent as PolygonIcon } from '../assets/chain-icons/polygon.svg';
+import { ReactComponent as PolygonIcon } from '../assets/token-icons/polygon.svg';
+import { ReactComponent as SeiIcon } from '../assets/token-icons/sei.svg';
 import { ReactComponent as UnknownTokenIcon } from '../assets/token-icons/unknown.svg';
 import {
 	BridgeTransactionDto,
@@ -122,30 +123,6 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 		label: 'TokV3',
 		borderColor: '#0538AF',
 	},
-	[lzEthID]: {
-		tokenID: lzEthID,
-		icon: EthIcon,
-		label: 'ETH',
-		borderColor: '#8A92B2',
-	},
-	[bapexID]: {
-		tokenID: bapexID,
-		icon: ApexIcon,
-		label: 'bAP3X',
-		borderColor: '#8A92B2',
-	},
-	[bnapexID]: {
-		tokenID: bnapexID,
-		icon: ApexIcon,
-		label: 'bnAP3X',
-		borderColor: '#F3BA2F',
-	},
-	[bnbID]: {
-		tokenID: bnbID,
-		icon: UnknownTokenIcon,
-		label: 'BNB',
-		borderColor: '#F3BA2F',
-	},
 	14: {
 		tokenID: 14,
 		icon: PolygonIcon,
@@ -179,14 +156,92 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 	19: {
 		tokenID: 19,
 		icon: EthIcon,
-		label: 'cETH',
+		label: 'cKatanaETH',
 		borderColor: '#8A92B2',
 	},
 	20: {
 		tokenID: 20,
-		icon: UnknownTokenIcon,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	21: {
+		tokenID: 21,
+		icon: EthIcon,
+		label: 'cETH',
+		borderColor: '#8A92B2',
+	},
+	22: {
+		tokenID: 22,
+		icon: SeiIcon,
 		label: 'SEI',
 		borderColor: '#0538AF',
+	},
+	23: {
+		tokenID: 23,
+		icon: SeiIcon,
+		label: 'cSEI',
+		borderColor: '#0538AF',
+	},
+	24: {
+		tokenID: 24,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	25: {
+		tokenID: 25,
+		icon: EthIcon,
+		label: 'cArbitrumETH',
+		borderColor: '#8A92B2',
+	},
+	26: {
+		tokenID: 26,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	27: {
+		tokenID: 27,
+		icon: EthIcon,
+		label: 'cScrollETH',
+		borderColor: '#8A92B2',
+	},
+	28: {
+		tokenID: 28,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	29: {
+		tokenID: 29,
+		icon: EthIcon,
+		label: 'cUnichainETH',
+		borderColor: '#8A92B2',
+	},
+	[lzEthID]: {
+		tokenID: lzEthID,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	[bapexID]: {
+		tokenID: bapexID,
+		icon: ApexIcon,
+		label: 'bAP3X',
+		borderColor: '#8A92B2',
+	},
+	[bnapexID]: {
+		tokenID: bnapexID,
+		icon: ApexIcon,
+		label: 'bnAP3X',
+		borderColor: '#F3BA2F',
+	},
+	[bnbID]: {
+		tokenID: bnbID,
+		icon: UnknownTokenIcon,
+		label: 'BNB',
+		borderColor: '#F3BA2F',
 	},
 };
 

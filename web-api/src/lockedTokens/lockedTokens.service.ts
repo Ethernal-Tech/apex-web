@@ -117,7 +117,7 @@ export class LockedTokensService {
 		result.totalTransferred = {};
 
 		for (const [srcChain, config] of Object.entries(directionConfig)) {
-			for (const dstChain of Object.keys(config.destChain)) {
+			for (const dstChain of Object.keys(config.destChain || {})) {
 				const tokenIds = getDirectionTokenIDsFromDirectionConfig(
 					directionConfig,
 					srcChain,
@@ -300,7 +300,7 @@ export class LockedTokensService {
 		const settings = this.settingsService.SettingsResponse; // Cache reference for readability
 
 		for (const [srcChain, config] of Object.entries(settings.directionConfig)) {
-			for (const dstChain of Object.keys(config.destChain)) {
+			for (const dstChain of Object.keys(config.destChain || {})) {
 				const allTokenIds = getDirectionTokenIDsFromDirectionConfig(
 					settings.directionConfig,
 					srcChain,
