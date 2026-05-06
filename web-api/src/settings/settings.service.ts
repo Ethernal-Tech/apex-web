@@ -100,7 +100,7 @@ export class SettingsService {
 			}
 
 			const dir = skylineSettings.bridgingSettings.directionConfig[srcChain];
-			for (const dstChain of Object.keys(dir.destChain)) {
+			for (const dstChain of Object.keys(dir.destChain || {})) {
 				if (!directionConfig[srcChain].destChain) {
 					directionConfig[srcChain].destChain = {};
 				}

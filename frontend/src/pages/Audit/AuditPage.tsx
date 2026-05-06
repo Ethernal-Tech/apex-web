@@ -13,6 +13,7 @@ import LayerZeroPanel from '../../components/Audit/LayerZeroAudit';
 import '../../audit.css';
 import { isAdaToken, isApexToken } from '../../components/Audit/token';
 import { adaID, apexID, bnbID, lzEthID } from '../../settings/token';
+import { isCardanoChain } from '../../settings/chain';
 
 const sumToken = (m: Record<string, bigint>): bigint =>
 	Object.values(m).reduce((a, b) => a + b, BigInt(0));
@@ -83,7 +84,7 @@ const AuditPage: React.FC = () => {
 				.directionConfig,
 		) as unknown as ChainEnum[];
 
-		return chains.filter((chain) => chain !== ChainEnum.Nexus); // nexus isn’t a UTXO chain, so we need to exclude it
+		return chains.filter(isCardanoChain);
 	}, [settings]);
 
 	const { tvbPerChainTotals, tvbTokenTotalsAllChains, tvbGrandTotal } =

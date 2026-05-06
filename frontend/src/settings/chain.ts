@@ -13,7 +13,12 @@ import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg
 import { ReactComponent as BaseIcon } from '../assets/chain-icons/base.svg';
 import { ReactComponent as BNBIcon } from '../assets/chain-icons/bsc.svg';
 import { ReactComponent as PolygonIcon } from '../assets/chain-icons/polygon.svg';
+import { ReactComponent as SeiIcon } from '../assets/chain-icons/sei.svg';
 import { ReactComponent as KatanaIcon } from '../assets/chain-icons/katana.svg';
+import { ReactComponent as EthIcon } from '../assets/chain-icons/eth.svg';
+import { ReactComponent as ArbitrumIcon } from '../assets/chain-icons/arbitrum.svg';
+import { ReactComponent as ScrollIcon } from '../assets/chain-icons/scroll.svg';
+import { ReactComponent as UnichainIcon } from '../assets/chain-icons/unichain.svg';
 import { ISettingsState } from './settingsRedux';
 import appSettings from './appSettings';
 import { captureAndThrowError } from '../features/sentry';
@@ -117,10 +122,10 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 	[ChainEnum.Ethereum]: {
 		value: ChainEnum.Ethereum,
 		label: 'Ethereum',
-		icon: PolygonIcon,
-		borderColor: '#7B3FE4',
-		letter: 'P',
-		mainColor: '#7B3FE4',
+		icon: EthIcon,
+		borderColor: '#000000',
+		letter: 'E',
+		mainColor: '#aaaaaa',
 		order: 8,
 	},
 	[ChainEnum.Katana]: {
@@ -135,37 +140,37 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 	[ChainEnum.Sei]: {
 		value: ChainEnum.Sei,
 		label: 'Sei',
-		icon: PolygonIcon,
-		borderColor: '#7B3FE4',
-		letter: 'P',
-		mainColor: '#7B3FE4',
+		icon: SeiIcon,
+		borderColor: '#000000',
+		letter: 'S',
+		mainColor: '#be1212',
 		order: 10,
 	},
 	[ChainEnum.Arbitrum]: {
 		value: ChainEnum.Arbitrum,
 		label: 'Arbitrum',
-		icon: PolygonIcon,
-		borderColor: '#7B3FE4',
-		letter: 'P',
-		mainColor: '#7B3FE4',
+		icon: ArbitrumIcon,
+		borderColor: '#98BCDB',
+		letter: 'A',
+		mainColor: '#24A2EF',
 		order: 11,
 	},
 	[ChainEnum.Scroll]: {
 		value: ChainEnum.Scroll,
 		label: 'Scroll',
-		icon: PolygonIcon,
-		borderColor: '#7B3FE4',
-		letter: 'P',
-		mainColor: '#7B3FE4',
+		icon: ScrollIcon,
+		borderColor: '#000000',
+		letter: 'S',
+		mainColor: '#ebc28e',
 		order: 12,
 	},
 	[ChainEnum.Unichain]: {
 		value: ChainEnum.Unichain,
 		label: 'Unichain',
-		icon: PolygonIcon,
-		borderColor: '#7B3FE4',
-		letter: 'P',
-		mainColor: '#7B3FE4',
+		icon: UnichainIcon,
+		borderColor: '#ffffff',
+		letter: 'U',
+		mainColor: '#F50DB4',
 		order: 13,
 	},
 };
