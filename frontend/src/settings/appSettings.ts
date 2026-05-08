@@ -15,6 +15,12 @@ export class AppSettings {
 		vector: '0',
 		cardano: '0',
 		polygon: '0',
+		ethereum: '0',
+		katana: '0',
+		sei: '0',
+		arbitrum: '0',
+		scroll: '0',
+		unichain: '0',
 		solana: '0',
 	};
 
@@ -24,6 +30,12 @@ export class AppSettings {
 		vector: '0',
 		cardano: '0',
 		polygon: '0',
+		ethereum: '0',
+		katana: '0',
+		sei: '0',
+		arbitrum: '0',
+		scroll: '0',
+		unichain: '0',
 		solana: '0',
 	};
 
@@ -33,6 +45,12 @@ export class AppSettings {
 		vector: '0',
 		cardano: '0',
 		polygon: '0',
+		ethereum: '0',
+		katana: '0',
+		sei: '0',
+		arbitrum: '0',
+		scroll: '0',
+		unichain: '0',
 		solana: '0',
 	};
 

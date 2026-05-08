@@ -264,6 +264,34 @@ function NewTransactionPage() {
 		[prepareCreateEthTx],
 	);
 
+	const getSolanaTxFee = useCallback(
+		async (
+			address: string,
+			amount: string,
+			tokenID: number,
+		): Promise<CreateSolanaTransactionFullResponseDto> => {
+			const createTxDto = prepareCreateEthTx(address, amount, tokenID);
+			const bindedCreateAction = createSolanaTransactionAction.bind(
+				null,
+				createTxDto,
+			);
+			const feeResponse = await tryCatchJsonByAction(
+				bindedCreateAction,
+				false,
+			);
+			if (feeResponse instanceof ErrorResponse) {
+				captureAndThrowError(
+					feeResponse.err,
+					'NewTransactionPage.tsx',
+					'getSolanaTxFee',
+				);
+			}
+
+			return feeResponse as CreateSolanaTransactionFullResponseDto;
+		},
+		[prepareCreateEthTx],
+	);
+
 	const createEthTx = useCallback(
 		async (
 			address: string,
@@ -485,6 +513,7 @@ function NewTransactionPage() {
 					<BridgeInput
 						getCardanoTxFee={getCardanoTxFee}
 						getEthTxFee={getEthTxFee}
+						getSolanaTxFee={getSolanaTxFee}
 						submit={handleSubmitCallback}
 						loadingState={loadingState}
 					/>

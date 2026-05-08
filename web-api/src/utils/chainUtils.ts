@@ -17,13 +17,37 @@ const NEXUS_MAINNET_CHAIN_ID = BigInt(9069);
 const POLYGON_TESTNET_CHAIN_ID = BigInt(80002);
 const POLYGON_MAINNET_CHAIN_ID = BigInt(137);
 
+const ETHEREUM_TESTNET_CHAIN_ID = BigInt(11155111);
+const ETHEREUM_MAINNET_CHAIN_ID = BigInt(1);
+
+const KATANA_TESTNET_CHAIN_ID = BigInt(737373);
+const KATANA_MAINNET_CHAIN_ID = BigInt(747474);
+
+const SEI_TESTNET_CHAIN_ID = BigInt(1328);
+const SEI_MAINNET_CHAIN_ID = BigInt(1329);
+
+const ARBITRUM_TESTNET_CHAIN_ID = BigInt(421614);
+const ARBITRUM_MAINNET_CHAIN_ID = BigInt(42161);
+
+const SCROLL_TESTNET_CHAIN_ID = BigInt(534351);
+const SCROLL_MAINNET_CHAIN_ID = BigInt(534352);
+
+const UNICHAIN_TESTNET_CHAIN_ID = BigInt(1301);
+const UNICHAIN_MAINNET_CHAIN_ID = BigInt(130);
+
 export const CHAIN_TO_CHAIN_ID = {
 	[ChainApexBridgeEnum.Prime]: 1,
 	[ChainApexBridgeEnum.Vector]: 2,
 	[ChainApexBridgeEnum.Nexus]: 3,
 	[ChainApexBridgeEnum.Cardano]: 4,
 	[ChainApexBridgeEnum.Polygon]: 5,
-	[ChainApexBridgeEnum.Solana]: 6,
+	[ChainApexBridgeEnum.Ethereum]: 6,
+	[ChainApexBridgeEnum.Katana]: 7,
+	[ChainApexBridgeEnum.Sei]: 8,
+	[ChainApexBridgeEnum.Arbitrum]: 9,
+	[ChainApexBridgeEnum.Scroll]: 10,
+	[ChainApexBridgeEnum.Unichain]: 11,
+	[ChainApexBridgeEnum.Solana]: 12,
 };
 
 export type BridgingDirectionInfo = {
@@ -56,6 +80,24 @@ export const fromChainToNetworkId = (
 		case ChainApexBridgeEnum.Polygon: {
 			return isMainnet ? POLYGON_MAINNET_CHAIN_ID : POLYGON_TESTNET_CHAIN_ID;
 		}
+		case ChainApexBridgeEnum.Ethereum: {
+			return isMainnet ? ETHEREUM_MAINNET_CHAIN_ID : ETHEREUM_TESTNET_CHAIN_ID;
+		}
+		case ChainApexBridgeEnum.Katana: {
+			return isMainnet ? KATANA_MAINNET_CHAIN_ID : KATANA_TESTNET_CHAIN_ID;
+		}
+		case ChainApexBridgeEnum.Sei: {
+			return isMainnet ? SEI_MAINNET_CHAIN_ID : SEI_TESTNET_CHAIN_ID;
+		}
+		case ChainApexBridgeEnum.Arbitrum: {
+			return isMainnet ? ARBITRUM_MAINNET_CHAIN_ID : ARBITRUM_TESTNET_CHAIN_ID;
+		}
+		case ChainApexBridgeEnum.Scroll: {
+			return isMainnet ? SCROLL_MAINNET_CHAIN_ID : SCROLL_TESTNET_CHAIN_ID;
+		}
+		case ChainApexBridgeEnum.Unichain: {
+			return isMainnet ? UNICHAIN_MAINNET_CHAIN_ID : UNICHAIN_TESTNET_CHAIN_ID;
+		}
 		case ChainApexBridgeEnum.Solana: {
 			return isMainnet
 				? SolanaNetworkType.MainNetNetwork
@@ -83,7 +125,14 @@ export const isCardanoChain = (chain: ChainEnum) =>
 	chain === ChainEnum.Vector;
 
 export const isEvmChain = (chain: ChainEnum) =>
-	chain === ChainEnum.Nexus || chain === ChainEnum.Polygon;
+	chain === ChainEnum.Nexus ||
+	chain === ChainEnum.Polygon ||
+	chain === ChainEnum.Ethereum ||
+	chain === ChainEnum.Katana ||
+	chain === ChainEnum.Sei ||
+	chain === ChainEnum.Arbitrum ||
+	chain === ChainEnum.Scroll ||
+	chain === ChainEnum.Unichain;
 
 export const isSolanaChain = (chain: ChainEnum) => chain === ChainEnum.Solana;
 
@@ -95,6 +144,7 @@ const isAllowedDirection = function (
 ): boolean {
 	if (
 		!directionConfig[srcChain] ||
+		!directionConfig[srcChain].destChain ||
 		!directionConfig[srcChain].destChain[dstChain]
 	) {
 		return false;

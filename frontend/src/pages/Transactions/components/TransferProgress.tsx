@@ -45,6 +45,36 @@ import { ReactComponent as PolygonInProgressIcon } from '../../../assets/bridge-
 import { ReactComponent as PolygonSuccessIcon } from '../../../assets/bridge-status-assets/polygon-success.svg';
 import { ReactComponent as PolygonErrorIcon } from '../../../assets/bridge-status-assets/polygon-error.svg';
 
+// katana icons
+import { ReactComponent as KatanaInProgressIcon } from '../../../assets/bridge-status-assets/katana.svg';
+import { ReactComponent as KatanaSuccessIcon } from '../../../assets/bridge-status-assets/katana-success.svg';
+import { ReactComponent as KatanaErrorIcon } from '../../../assets/bridge-status-assets/katana-error.svg';
+
+// ethereum icons
+import { ReactComponent as EthereumInProgressIcon } from '../../../assets/bridge-status-assets/ethereum.svg';
+import { ReactComponent as EthereumSuccessIcon } from '../../../assets/bridge-status-assets/ethereum-success.svg';
+import { ReactComponent as EthereumErrorIcon } from '../../../assets/bridge-status-assets/ethereum-error.svg';
+
+// sei icons
+import { ReactComponent as SeiInProgressIcon } from '../../../assets/bridge-status-assets/sei.svg';
+import { ReactComponent as SeiSuccessIcon } from '../../../assets/bridge-status-assets/sei-success.svg';
+import { ReactComponent as SeiErrorIcon } from '../../../assets/bridge-status-assets/sei-error.svg';
+
+// arbitrum icons
+import { ReactComponent as ArbitrumInProgressIcon } from '../../../assets/bridge-status-assets/arbitrum.svg';
+import { ReactComponent as ArbitrumSuccessIcon } from '../../../assets/bridge-status-assets/arbitrum-success.svg';
+import { ReactComponent as ArbitrumErrorIcon } from '../../../assets/bridge-status-assets/arbitrum-error.svg';
+
+// scroll icons
+import { ReactComponent as ScrollInProgressIcon } from '../../../assets/bridge-status-assets/scroll.svg';
+import { ReactComponent as ScrollSuccessIcon } from '../../../assets/bridge-status-assets/scroll-success.svg';
+import { ReactComponent as ScrollErrorIcon } from '../../../assets/bridge-status-assets/scroll-error.svg';
+
+// unichain icons
+import { ReactComponent as UnichainInProgressIcon } from '../../../assets/bridge-status-assets/unichain.svg';
+import { ReactComponent as UnichainSuccessIcon } from '../../../assets/bridge-status-assets/unichain-success.svg';
+import { ReactComponent as UnichainErrorIcon } from '../../../assets/bridge-status-assets/unichain-error.svg';
+
 // solana icons
 import { ReactComponent as SolanaInProgressIcon } from '../../../assets/bridge-status-assets/solana.svg';
 import { ReactComponent as SolanaSuccessIcon } from '../../../assets/bridge-status-assets/solana-success.svg';
@@ -142,6 +172,36 @@ const chainStatusIcons: {
 		inProgress: PolygonInProgressIcon,
 		done: PolygonSuccessIcon,
 		error: PolygonErrorIcon,
+	},
+	[ChainEnum.Ethereum]: {
+		inProgress: EthereumInProgressIcon,
+		done: EthereumSuccessIcon,
+		error: EthereumErrorIcon,
+	},
+	[ChainEnum.Katana]: {
+		inProgress: KatanaInProgressIcon,
+		done: KatanaSuccessIcon,
+		error: KatanaErrorIcon,
+	},
+	[ChainEnum.Sei]: {
+		inProgress: SeiInProgressIcon,
+		done: SeiSuccessIcon,
+		error: SeiErrorIcon,
+	},
+	[ChainEnum.Arbitrum]: {
+		inProgress: ArbitrumInProgressIcon,
+		done: ArbitrumSuccessIcon,
+		error: ArbitrumErrorIcon,
+	},
+	[ChainEnum.Scroll]: {
+		inProgress: ScrollInProgressIcon,
+		done: ScrollSuccessIcon,
+		error: ScrollErrorIcon,
+	},
+	[ChainEnum.Unichain]: {
+		inProgress: UnichainInProgressIcon,
+		done: UnichainSuccessIcon,
+		error: UnichainErrorIcon,
 	},
 	[ChainEnum.Solana]: {
 		inProgress: SolanaInProgressIcon,

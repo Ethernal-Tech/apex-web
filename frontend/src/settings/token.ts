@@ -2,7 +2,8 @@ import { FunctionComponent, SVGProps } from 'react';
 // import { ReactComponent as AdaIcon } from '../assets/token-icons/ada.svg';
 import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg';
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg';
-import { ReactComponent as PolygonIcon } from '../assets/chain-icons/polygon.svg';
+import { ReactComponent as PolygonIcon } from '../assets/token-icons/polygon.svg';
+import { ReactComponent as SeiIcon } from '../assets/token-icons/sei.svg';
 import { ReactComponent as SolanaIcon } from '../assets/chain-icons/solana.svg';
 import { ReactComponent as UnknownTokenIcon } from '../assets/token-icons/unknown.svg';
 import {
@@ -31,23 +32,8 @@ export const apexID = 1;
 export const adaID = 2;
 export const capexID = 3;
 export const xadaID = 4;
-const myTestTokenID = 5;
-const tokN2ID = 6;
-const tokN3ID = 7;
-const tokC1ID = 8;
-const tokC2ID = 9;
-const tokC3ID = 10;
-const tokV1ID = 11;
-const tokV2ID = 12;
-const tokV3ID = 13;
-const polID = 14;
-const xpolID = 15;
-const papexID = 16;
-const solID = 17;
-const xsolID = 18;
-const sapexID = 19;
 
-export const ethID = 1000001;
+export const lzEthID = 1000001;
 export const bapexID = 1000002;
 export const bnapexID = 1000003;
 export const bnbID = 1000004;
@@ -84,62 +70,176 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 		label: 'xADA',
 		borderColor: '#0538AF',
 	},
-	[myTestTokenID]: {
-		tokenID: myTestTokenID,
+	5: {
+		tokenID: 5,
 		icon: UnknownTokenIcon,
 		label: 'myTestToken',
 		borderColor: '#0538AF',
 	},
-	[tokN2ID]: {
-		tokenID: tokN2ID,
+	6: {
+		tokenID: 6,
 		icon: UnknownTokenIcon,
 		label: 'TokN2',
 		borderColor: '#0538AF',
 	},
-	[tokN3ID]: {
-		tokenID: tokN3ID,
+	7: {
+		tokenID: 7,
 		icon: UnknownTokenIcon,
 		label: 'TokN3',
 		borderColor: '#0538AF',
 	},
-	[tokC1ID]: {
-		tokenID: tokC1ID,
+	8: {
+		tokenID: 8,
 		icon: UnknownTokenIcon,
 		label: 'TokC1',
 		borderColor: '#0538AF',
 	},
-	[tokC2ID]: {
-		tokenID: tokC2ID,
+	9: {
+		tokenID: 9,
 		icon: UnknownTokenIcon,
 		label: 'TokC2',
 		borderColor: '#0538AF',
 	},
-	[tokC3ID]: {
-		tokenID: tokC3ID,
+	10: {
+		tokenID: 10,
 		icon: UnknownTokenIcon,
 		label: 'TokC3',
 		borderColor: '#0538AF',
 	},
-	[tokV1ID]: {
-		tokenID: tokV1ID,
+	11: {
+		tokenID: 11,
 		icon: UnknownTokenIcon,
 		label: 'TokV1',
 		borderColor: '#0538AF',
 	},
-	[tokV2ID]: {
-		tokenID: tokV2ID,
+	12: {
+		tokenID: 12,
 		icon: UnknownTokenIcon,
 		label: 'TokV2',
 		borderColor: '#0538AF',
 	},
-	[tokV3ID]: {
-		tokenID: tokV3ID,
+	13: {
+		tokenID: 13,
 		icon: UnknownTokenIcon,
 		label: 'TokV3',
 		borderColor: '#0538AF',
 	},
-	[ethID]: {
-		tokenID: ethID,
+	14: {
+		tokenID: 14,
+		icon: PolygonIcon,
+		label: 'POL',
+		borderColor: '#7B3FE4',
+	},
+	15: {
+		tokenID: 15,
+		icon: PolygonIcon,
+		label: 'xPOL',
+		borderColor: '#7B3FE4',
+	},
+	16: {
+		tokenID: 16,
+		icon: ApexIcon,
+		label: 'pAP3X',
+		borderColor: '#0538AF',
+	},
+	17: {
+		tokenID: 17,
+		icon: PolygonIcon,
+		label: 'cPOL',
+		borderColor: '#7B3FE4',
+	},
+	18: {
+		tokenID: 18,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	19: {
+		tokenID: 19,
+		icon: EthIcon,
+		label: 'cKatanaETH',
+		borderColor: '#8A92B2',
+	},
+	20: {
+		tokenID: 20,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	21: {
+		tokenID: 21,
+		icon: EthIcon,
+		label: 'cETH',
+		borderColor: '#8A92B2',
+	},
+	22: {
+		tokenID: 22,
+		icon: SeiIcon,
+		label: 'SEI',
+		borderColor: '#0538AF',
+	},
+	23: {
+		tokenID: 23,
+		icon: SeiIcon,
+		label: 'cSEI',
+		borderColor: '#0538AF',
+	},
+	24: {
+		tokenID: 24,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	25: {
+		tokenID: 25,
+		icon: EthIcon,
+		label: 'cArbitrumETH',
+		borderColor: '#8A92B2',
+	},
+	26: {
+		tokenID: 26,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	27: {
+		tokenID: 27,
+		icon: EthIcon,
+		label: 'cScrollETH',
+		borderColor: '#8A92B2',
+	},
+	28: {
+		tokenID: 28,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	29: {
+		tokenID: 29,
+		icon: EthIcon,
+		label: 'cUnichainETH',
+		borderColor: '#8A92B2',
+	},
+	30: {
+		tokenID: 30,
+		icon: SolanaIcon,
+		label: 'SOL',
+		borderColor: '#1C1C1E',
+	},
+	31: {
+		tokenID: 31,
+		icon: SolanaIcon,
+		label: 'xSOL',
+		borderColor: '#1C1C1E',
+	},
+	32: {
+		tokenID: 32,
+		icon: ApexIcon,
+		label: 'sAP3X',
+		borderColor: '#0538AF',
+	},
+	[lzEthID]: {
+		tokenID: lzEthID,
 		icon: EthIcon,
 		label: 'ETH',
 		borderColor: '#8A92B2',
@@ -161,42 +261,6 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 		icon: UnknownTokenIcon,
 		label: 'BNB',
 		borderColor: '#F3BA2F',
-	},
-	[polID]: {
-		tokenID: polID,
-		icon: PolygonIcon,
-		label: 'POL',
-		borderColor: '#7B3FE4',
-	},
-	[xpolID]: {
-		tokenID: xpolID,
-		icon: PolygonIcon,
-		label: 'xPOL',
-		borderColor: '#7B3FE4',
-	},
-	[papexID]: {
-		tokenID: papexID,
-		icon: ApexIcon,
-		label: 'pAP3X',
-		borderColor: '#0538AF',
-	},
-	[solID]: {
-		tokenID: solID,
-		icon: SolanaIcon,
-		label: 'SOL',
-		borderColor: '#1C1C1E',
-	},
-	[xsolID]: {
-		tokenID: xsolID,
-		icon: SolanaIcon,
-		label: 'xSOL',
-		borderColor: '#1C1C1E',
-	},
-	[sapexID]: {
-		tokenID: sapexID,
-		icon: ApexIcon,
-		label: 'sAP3X',
-		borderColor: '#0538AF',
 	},
 };
 
@@ -225,14 +289,8 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 		label: 'xADA',
 		borderColor: '#0538AF',
 	},
-	[myTestTokenID]: {
-		tokenID: myTestTokenID,
-		icon: UnknownTokenIcon,
-		label: 'myTestToken',
-		borderColor: '#0538AF',
-	},
-	[ethID]: {
-		tokenID: ethID,
+	[lzEthID]: {
+		tokenID: lzEthID,
 		icon: EthIcon,
 		label: 'ETH',
 		borderColor: '#8A92B2',
@@ -255,14 +313,14 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 		label: 'BNB',
 		borderColor: '#F3BA2F',
 	},
-	[polID]: {
-		tokenID: polID,
+	14: {
+		tokenID: 14,
 		icon: PolygonIcon,
 		label: 'POL',
 		borderColor: '#7B3FE4',
 	},
-	[solID]: {
-		tokenID: solID,
+	21: {
+		tokenID: 21,
 		icon: SolanaIcon,
 		label: 'SOL',
 		borderColor: '#1C1C1E',

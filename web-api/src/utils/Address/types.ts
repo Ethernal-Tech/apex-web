@@ -23,5 +23,5 @@ export enum SolanaNetworkType {
 
 export const SolanaNetworkTypeMap = {
 	[SolanaNetworkType.MainNetNetwork]: 'https://api.mainnet.solana.com',
-	[SolanaNetworkType.TestNetNetwork]: 'https://api.testnet.solana.com',
+	[SolanaNetworkType.TestNetNetwork]: 'https://api.devnet.solana.com',
 };

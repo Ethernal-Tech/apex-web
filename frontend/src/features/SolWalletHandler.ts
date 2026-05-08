@@ -78,7 +78,7 @@ class SolWalletHandler {
 		this._mmWallet = this._mmClient.getWallet();
 		this._mmChainId = isMainnet
 			? SOLANA_CHAIN_IDS.mainnet
-			: SOLANA_CHAIN_IDS.testnet;
+			: SOLANA_CHAIN_IDS.devnet;
 
 		const connectFeature = this._mmWallet.features[
 			'standard:connect'

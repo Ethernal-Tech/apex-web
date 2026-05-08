@@ -13,6 +13,12 @@ import { ReactComponent as CardanoIcon } from '../assets/chain-icons/cardano.svg
 import { ReactComponent as BaseIcon } from '../assets/chain-icons/base.svg';
 import { ReactComponent as BNBIcon } from '../assets/chain-icons/bsc.svg';
 import { ReactComponent as PolygonIcon } from '../assets/chain-icons/polygon.svg';
+import { ReactComponent as SeiIcon } from '../assets/chain-icons/sei.svg';
+import { ReactComponent as KatanaIcon } from '../assets/chain-icons/katana.svg';
+import { ReactComponent as EthIcon } from '../assets/chain-icons/eth.svg';
+import { ReactComponent as ArbitrumIcon } from '../assets/chain-icons/arbitrum.svg';
+import { ReactComponent as ScrollIcon } from '../assets/chain-icons/scroll.svg';
+import { ReactComponent as UnichainIcon } from '../assets/chain-icons/unichain.svg';
 import { ReactComponent as SolanaIcon } from '../assets/chain-icons/solana.svg';
 import { ISettingsState } from './settingsRedux';
 import appSettings from './appSettings';
@@ -114,6 +120,60 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 		mainColor: '#7B3FE4',
 		order: 7,
 	},
+	[ChainEnum.Ethereum]: {
+		value: ChainEnum.Ethereum,
+		label: 'Ethereum',
+		icon: EthIcon,
+		borderColor: '#000000',
+		letter: 'E',
+		mainColor: '#aaaaaa',
+		order: 8,
+	},
+	[ChainEnum.Katana]: {
+		value: ChainEnum.Katana,
+		label: 'Katana',
+		icon: KatanaIcon,
+		borderColor: '#F6FF0D',
+		letter: 'K',
+		mainColor: '#1546AE',
+		order: 9,
+	},
+	[ChainEnum.Sei]: {
+		value: ChainEnum.Sei,
+		label: 'Sei',
+		icon: SeiIcon,
+		borderColor: '#000000',
+		letter: 'S',
+		mainColor: '#be1212',
+		order: 10,
+	},
+	[ChainEnum.Arbitrum]: {
+		value: ChainEnum.Arbitrum,
+		label: 'Arbitrum',
+		icon: ArbitrumIcon,
+		borderColor: '#98BCDB',
+		letter: 'A',
+		mainColor: '#24A2EF',
+		order: 11,
+	},
+	[ChainEnum.Scroll]: {
+		value: ChainEnum.Scroll,
+		label: 'Scroll',
+		icon: ScrollIcon,
+		borderColor: '#000000',
+		letter: 'S',
+		mainColor: '#ebc28e',
+		order: 12,
+	},
+	[ChainEnum.Unichain]: {
+		value: ChainEnum.Unichain,
+		label: 'Unichain',
+		icon: UnichainIcon,
+		borderColor: '#ffffff',
+		letter: 'U',
+		mainColor: '#F50DB4',
+		order: 13,
+	},
 	[ChainEnum.Solana]: {
 		value: ChainEnum.Solana,
 		label: 'Solana',
@@ -179,7 +239,13 @@ export const isEvmChain = function (chain: ChainEnum): boolean {
 		chain === ChainEnum.Nexus ||
 		chain === ChainEnum.Base ||
 		chain === ChainEnum.Bsc ||
-		chain === ChainEnum.Polygon
+		chain === ChainEnum.Polygon ||
+		chain === ChainEnum.Ethereum ||
+		chain === ChainEnum.Katana ||
+		chain === ChainEnum.Sei ||
+		chain === ChainEnum.Arbitrum ||
+		chain === ChainEnum.Scroll ||
+		chain === ChainEnum.Unichain
 	);
 };
 
@@ -223,10 +289,16 @@ export function isApexBridgeChain(chain: ChainEnum): boolean {
 		case ChainEnum.Nexus:
 		case ChainEnum.Cardano:
 		case ChainEnum.Polygon:
+		case ChainEnum.Ethereum:
+		case ChainEnum.Katana:
+		case ChainEnum.Sei:
+		case ChainEnum.Arbitrum:
+		case ChainEnum.Scroll:
+		case ChainEnum.Unichain:
 		case ChainEnum.Solana:
 			return true;
 		default:
-			return false; // sepolia / ethereum → false
+			return false; // bsc / base → false
 	}
 }
 

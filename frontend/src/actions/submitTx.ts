@@ -33,7 +33,12 @@ import { validateSubmitTxInputs } from '../utils/validationUtils';
 import { captureAndThrowError } from '../features/sentry';
 import { getCurrencyID } from '../settings/token';
 import solWalletHandler from '../features/SolWalletHandler';
-import { Transaction as SolanaTransaction } from '@solana/web3.js';
+import appSettings from '../settings/appSettings';
+import {
+	SolanaNetworkType,
+	SolanaNetworkTypeMap,
+} from '../features/Address/types';
+import { Connection, Transaction as SolanaTransaction } from '@solana/web3.js';
 
 type TxDetailsOptions = {
 	feePercMult: bigint;
@@ -50,6 +55,21 @@ const blockOffset = BigInt(1000);
 
 const tryCount = 60;
 
+const waitForEvmReceipt = async (txHash: string) =>
+	retry(
+		async () => {
+			const receipt =
+				await evmWalletHandler.getTransactionReceipt(txHash);
+			if (!receipt) {
+				throw new Error('Receipt not available yet');
+			}
+
+			return receipt;
+		},
+		longRetryOptions.retryCnt,
+		longRetryOptions.waitTime,
+	);
+
 const bigintReplacer = (_: string, value: unknown) =>
 	typeof value === 'bigint' ? `bigint:${value}` : value;
 
@@ -60,6 +80,19 @@ const defaultTxDetailsOptions: TxDetailsOptions = {
 	fixedGasLimit: undefined,
 	minTipCap: BigInt(2000000000), // 2 gwei
 };
+
+const chainTxDetailsOverrides: Partial<
+	Record<ChainEnum, Partial<TxDetailsOptions>>
+> = {
+	[ChainEnum.Polygon]: {
+		minTipCap: BigInt(25000000000), // 25 gwei
+	},
+};
+
+const getTxDetailsOptions = (chain: ChainEnum): TxDetailsOptions => ({
+	...defaultTxDetailsOptions,
+	...chainTxDetailsOverrides[chain],
+});
 
 export const signAndSubmitCardanoTx = async (
 	values: CreateTransactionDto,
@@ -236,16 +269,14 @@ export const signAndSubmitEthTx = async (
 		);
 	}
 
+	const originChain = values.originChain as unknown as ChainEnum;
+	const txOpts = getTxDetailsOptions(originChain);
+
 	const { approvalTx } = createResponse;
 	if (approvalTx) {
 		console.log('processing eth approval tx...');
 		const tx: Transaction = await retry(
-			() =>
-				populateTxDetails(
-					approvalTx,
-					TxTypeEnum.London,
-					defaultTxDetailsOptions,
-				),
+			() => populateTxDetails(approvalTx, TxTypeEnum.London, txOpts),
 			longRetryOptions.retryCnt,
 			longRetryOptions.waitTime,
 		);
@@ -272,7 +303,7 @@ export const signAndSubmitEthTx = async (
 			populateTxDetails(
 				createResponse.bridgingTx.ethTx,
 				TxTypeEnum.London,
-				defaultTxDetailsOptions,
+				txOpts,
 			),
 		longRetryOptions.retryCnt,
 		longRetryOptions.waitTime,
@@ -306,17 +337,20 @@ export const signAndSubmitEthTx = async (
 		isLayerZero: false,
 	};
 
+	let resolvedTxHash: string;
 	const onTxHash = (txHash: any) => {
+		resolvedTxHash = txHash.toString();
+
 		updateLoadingState({
 			content: 'Waiting for transaction receipt...',
-			txHash: txHash.toString(),
+			txHash: resolvedTxHash,
 		});
 
 		const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
 			null,
 			new TransactionSubmittedDto({
 				...baseSubmittedDto,
-				originTxHash: txHash.toString(),
+				originTxHash: resolvedTxHash,
 				txRaw: JSON.stringify(
 					{ ...tx, block: latestBlock.number + blockOffset },
 					bigintReplacer,
@@ -335,9 +369,19 @@ export const signAndSubmitEthTx = async (
 	const submitPromise = evmWalletHandler.submitTx(tx);
 	submitPromise.on('transactionHash', onTxHash);
 
+	// if submitPromise succeeds, receipt promise will resolve that, but if submitPromise fails, this callback will be executed
+	const receiptPromise = submitPromise.catch(async (error: unknown) => {
+		if (!resolvedTxHash) {
+			throw error;
+		}
+
+		console.warn('Wallet receipt fetch failed, polling directly:', error);
+		return waitForEvmReceipt(resolvedTxHash);
+	});
+
 	const [response, receipt] = await Promise.all([
 		submitActionPromise,
-		submitPromise,
+		receiptPromise,
 	]);
 
 	updateLoadingState({
@@ -592,6 +636,8 @@ export const signAndSubmitLayerZeroTx = async (
 		checkRevertBeforeSending: false,
 	};
 
+	const txOpts = getTxDetailsOptions(originalSrcChain);
+
 	if (transactionData.approvalTransaction) {
 		console.log('processing layer zero approval tx...');
 		const tx: Transaction = await retry(
@@ -602,7 +648,7 @@ export const signAndSubmitLayerZeroTx = async (
 						...transactionData.transactionData.approvalTransaction,
 					},
 					txType,
-					defaultTxDetailsOptions,
+					txOpts,
 				),
 			longRetryOptions.retryCnt,
 			longRetryOptions.waitTime,
@@ -634,7 +680,7 @@ export const signAndSubmitLayerZeroTx = async (
 					...transactionData.populatedTransaction,
 				},
 				txType,
-				defaultTxDetailsOptions,
+				txOpts,
 			),
 		longRetryOptions.retryCnt,
 		longRetryOptions.waitTime,
@@ -666,7 +712,10 @@ export const signAndSubmitLayerZeroTx = async (
 		BridgeTransactionDto | ErrorResponse | void
 	> = Promise.resolve();
 
+	let resolvedTxHash: string;
 	const onTxHash = (txHash: any) => {
+		resolvedTxHash = txHash.toString();
+
 		updateLoadingState({
 			content: 'Waiting for transaction receipt...',
 			txHash: txHash.toString(),
@@ -676,7 +725,7 @@ export const signAndSubmitLayerZeroTx = async (
 			null,
 			new TransactionSubmittedDto({
 				...baseSubmittedDto,
-				originTxHash: txHash,
+				originTxHash: resolvedTxHash,
 				txRaw: JSON.stringify(
 					{ ...sendTx, block: latestBlock.number + blockOffset },
 					bigintReplacer,
@@ -693,9 +742,19 @@ export const signAndSubmitLayerZeroTx = async (
 	const submitPromise = evmWalletHandler.submitTx(sendTx, opts);
 	submitPromise.on('transactionHash', onTxHash);
 
+	// if submitPromise succeeds, receipt promise will resolve that, but if submitPromise fails, this callback will be executed
+	const receiptPromise = submitPromise.catch(async (error: unknown) => {
+		if (!resolvedTxHash) {
+			throw error;
+		}
+
+		console.warn('Wallet receipt fetch failed, polling directly:', error);
+		return waitForEvmReceipt(resolvedTxHash);
+	});
+
 	const [response, receipt] = await Promise.all([
 		submitActionPromise,
-		submitPromise,
+		receiptPromise,
 	]);
 
 	updateLoadingState({
@@ -925,6 +984,30 @@ export const estimateEthTxFee = async (
 	}
 
 	return BigInt(tx.gasPrice!) * gasLimit;
+};
+
+/** Estimates network fee in lamports for a legacy base64-encoded transaction from the bridge API. */
+export const estimateSolanaTxFeeLamports = async (
+	txRawBase64: string,
+): Promise<bigint> => {
+	const rpcUrl =
+		SolanaNetworkTypeMap[
+			appSettings.isMainnet
+				? SolanaNetworkType.MainNetNetwork
+				: SolanaNetworkType.TestNetNetwork
+		];
+	const connection = new Connection(rpcUrl, 'confirmed');
+	const tx = SolanaTransaction.from(Buffer.from(txRawBase64, 'base64'));
+	const feeResult = await connection.getFeeForMessage(tx.compileMessage());
+	if (feeResult.value == null) {
+		captureAndThrowError(
+			'Solana fee estimation returned no value.',
+			'submitTx.ts',
+			'estimateSolanaTxFeeLamports',
+		);
+	}
+
+	return BigInt(feeResult.value);
 };
 
 export const getLayerZeroTransferResponse = async function (
