@@ -16,7 +16,7 @@ require (
 )
 
 require (
-	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20260227101447-e2aad57265a5
+	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20260415110044-7a9f89bd3813
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
@@ -30,7 +30,7 @@ require (
 	github.com/ethereum/go-ethereum v1.14.7
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/ryanuber/columnize v2.1.2+incompatible
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
 )
 
 require (
