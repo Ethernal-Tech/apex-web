@@ -51,21 +51,6 @@ const defaultGasLimitEstimation = 30000;
 
 const TX_SUCCESS = BigInt(1);
 
-const waitForEvmReceipt = async (txHash: string) =>
-	retry(
-		async () => {
-			const receipt =
-				await evmWalletHandler.getTransactionReceipt(txHash);
-			if (!receipt) {
-				throw new Error('Receipt not available yet');
-			}
-
-			return receipt;
-		},
-		longRetryOptions.retryCnt,
-		longRetryOptions.waitTime,
-	);
-
 const blockOffset = BigInt(1000);
 
 const tryCount = 60;

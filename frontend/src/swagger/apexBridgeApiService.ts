@@ -2449,12 +2449,6 @@ export enum ChainEnum {
     Unichain = "unichain",
     Base = "base",
     Bsc = "bsc",
-    Ethereum = "ethereum",
-    Katana = "katana",
-    Sei = "sei",
-    Arbitrum = "arbitrum",
-    Scroll = "scroll",
-    Unichain = "unichain",
     Solana = "solana",
 }
 
