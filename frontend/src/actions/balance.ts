@@ -40,7 +40,7 @@ const getWalletBalanceAction = async (
 	const dirTokens = (
 		(settings.directionConfig[srcChain] || { destChain: {} }).destChain[
 			dstChain
-		] || {}
+		] || []
 	).map((x: BridgingSettingsTokenPairDto) => x.srcTokenID);
 
 	if (currencyID && !dirTokens.includes(currencyID)) {

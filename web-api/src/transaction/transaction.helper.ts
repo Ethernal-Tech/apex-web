@@ -177,7 +177,7 @@ export const createEthBridgingTx = (
 
 	const tokenPair = (
 		(bridgingSettings.directionConfig[dto.originChain] || { destChain: {} })
-			.destChain[dto.destinationChain] || {}
+			.destChain[dto.destinationChain] || []
 	).find((x) => x.srcTokenID === dto.tokenID)!;
 
 	const isCurrencyBridging = dto.tokenID === srcCurrencyID;
