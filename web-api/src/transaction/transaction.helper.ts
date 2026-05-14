@@ -222,7 +222,11 @@ export const createEthBridgingTx = (
 	}
 
 	if (isCardanoChain(destChain)) {
-		ValidateCardanoAddress(dto.destinationAddress);
+		ValidateCardanoAddress(
+			destChain,
+			dto.destinationAddress,
+			appConfig.app.isMainnet,
+		);
 	} else if (isEvmChain(destChain)) {
 		ValidateEVMAddress(dto.destinationAddress);
 	} else {
