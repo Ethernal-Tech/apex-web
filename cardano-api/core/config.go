@@ -455,7 +455,7 @@ func (config CardanoChainConfig) ToSendTxChainConfig(
 	}
 
 	return sendtx.ChainConfig{
-		CardanoCliBinary:           cardanowallet.ResolveCardanoCliBinary(config.NetworkID),
+		CardanoCliBinary:           cardanowallet.ResolveCardanoCliBinary(config.ChainSpecific.CardanoCliBinaryName),
 		TxProvider:                 txProvider,
 		MultiSigAddr:               bridgingAddress,
 		TestNetMagic:               uint(config.NetworkMagic),

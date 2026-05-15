@@ -14,6 +14,8 @@ import {
 	IsAddressWithValidPrefix,
 } from './utils';
 import { BadRequestException } from '@nestjs/common';
+import { areChainsEqual } from '../chainUtils';
+import { ChainApexBridgeEnum } from '../../common/enum';
 
 const NewStakeCredential = (
 	data: Uint8Array,
@@ -138,11 +140,21 @@ export const NewAddressFromBytes = (
 	}
 };
 
-export function ValidateCardanoAddress(rawAddress: string) {
+export function ValidateCardanoAddress(
+	chain: ChainApexBridgeEnum,
+	rawAddress: string,
+	isMainnet: boolean,
+) {
 	const addr = NewAddress(rawAddress);
 	if (!addr || addr instanceof RewardAddress || rawAddress !== addr.String()) {
 		throw new BadRequestException(
 			`Invalid cardano destination address: ${rawAddress}`,
+		);
+	}
+
+	if (!areChainsEqual(chain, addr.GetNetwork(), isMainnet)) {
+		throw new BadRequestException(
+			`Destination address: ${rawAddress} not compatible with chain: ${chain}`,
 		);
 	}
 }

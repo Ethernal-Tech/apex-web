@@ -177,7 +177,7 @@ export const createEthBridgingTx = (
 
 	const tokenPair = (
 		(bridgingSettings.directionConfig[dto.originChain] || { destChain: {} })
-			.destChain[dto.destinationChain] || {}
+			.destChain[dto.destinationChain] || []
 	).find((x) => x.srcTokenID === dto.tokenID)!;
 
 	const isCurrencyBridging = dto.tokenID === srcCurrencyID;
@@ -222,7 +222,11 @@ export const createEthBridgingTx = (
 	}
 
 	if (isCardanoChain(destChain)) {
-		ValidateCardanoAddress(dto.destinationAddress);
+		ValidateCardanoAddress(
+			destChain,
+			dto.destinationAddress,
+			appConfig.app.isMainnet,
+		);
 	} else if (isEvmChain(destChain)) {
 		ValidateEVMAddress(dto.destinationAddress);
 	} else {

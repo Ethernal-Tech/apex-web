@@ -25,6 +25,7 @@ const (
 	primeBlockfrostAPIKeyFlag        = "prime-blockfrost-api-key"
 	primeSocketPathFlag              = "prime-socket-path"
 	primeTTLSlotIncFlag              = "prime-ttl-slot-inc"
+	primeCardanoCliBinaryNameFlag    = "prime-cardano-cli-binary-name"
 
 	vectorNetworkIDFlag               = "vector-network-id"
 	vectorNetworkMagicFlag            = "vector-network-magic"
@@ -37,6 +38,7 @@ const (
 	vectorSocketPathFlag              = "vector-socket-path"
 	vectorTTLSlotIncFlag              = "vector-ttl-slot-inc"
 	vectorIsEnabledFlag               = "vector-is-enabled"
+	vectorCardanoCliBinaryNameFlag    = "vector-cardano-cli-binary-name"
 
 	nexusIsEnabledFlag    = "nexus-is-enabled"
 	polygonIsEnabledFlag  = "polygon-is-enabled"
@@ -71,6 +73,7 @@ const (
 	primeBlockfrostAPIKeyFlagDesc        = "blockfrost API key for prime network" //nolint:gosec
 	primeSocketPathFlagDesc              = "socket path for prime network"
 	primeTTLSlotIncFlagDesc              = "TTL slot increment for prime"
+	primeCardanoCliBinaryNameFlagDesc    = "name of the cardano-cli binary to use for the prime chain"
 
 	vectorNetworkIDFlagDesc               = "vector network id"
 	vectorNetworkMagicFlagDesc            = "vector network magic (default 0)"
@@ -83,6 +86,7 @@ const (
 	vectorSocketPathFlagDesc              = "socket path for vector network"
 	vectorTTLSlotIncFlagDesc              = "TTL slot increment for vector"
 	vectorIsEnabledFlagDesc               = "chain enable flag for vector"
+	vectorCardanoCliBinaryNameFlagDesc    = "name of the cardano-cli binary to use for the vector chain"
 
 	nexusIsEnabledFlagDesc    = "chain enable flag for nexus"
 	polygonIsEnabledFlagDesc  = "chain enable flag for polygon"
