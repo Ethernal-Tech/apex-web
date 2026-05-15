@@ -26,7 +26,7 @@ import Web3 from 'web3';
 import { EtherUnits } from 'web3-utils';
 
 export const SKYLINE_DOCUMENTATION_URL =
-	'https://ethernal-5.gitbook.io/skyline';
+	'https://ethernal-6.gitbook.io/skyline';
 
 export const capitalizeWord = (word: string): string => {
 	if (!word || word.length === 0) {
