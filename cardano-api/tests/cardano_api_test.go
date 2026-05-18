@@ -102,7 +102,7 @@ func TestCardanoAPI(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	cliBinary := infra.ResolveCardanoCliBinary(srcChainConfig.NetworkID)
+	cliBinary := infra.ResolveCardanoCliBinary()
 	cliUtils := infra.NewCliUtils(cliBinary)
 
 	receiverAddr, err := infra.NewEnterpriseAddress(dstChainConfig.NetworkID, wallets[0].VerificationKey)

@@ -9,15 +9,16 @@ import (
 )
 
 type CardanoChainConfig struct {
-	NetworkID        cardanowallet.CardanoNetworkType `json:"-"`
-	NetworkMagic     uint32                           `json:"-"`
-	OgmiosURL        string                           `json:"ogmiosUrl,omitempty"`
-	BlockfrostURL    string                           `json:"blockfrostUrl,omitempty"`
-	BlockfrostAPIKey string                           `json:"blockfrostApiKey,omitempty"`
-	UseDemeter       bool                             `json:"useDemeter,omitempty"`
-	SocketPath       string                           `json:"socketPath,omitempty"`
-	PotentialFee     uint64                           `json:"potentialFee"`
-	TTLSlotNumberInc uint64                           `json:"ttlSlotNumberIncrement"`
+	NetworkID            cardanowallet.CardanoNetworkType `json:"-"`
+	NetworkMagic         uint32                           `json:"-"`
+	OgmiosURL            string                           `json:"ogmiosUrl,omitempty"`
+	BlockfrostURL        string                           `json:"blockfrostUrl,omitempty"`
+	BlockfrostAPIKey     string                           `json:"blockfrostApiKey,omitempty"`
+	UseDemeter           bool                             `json:"useDemeter,omitempty"`
+	SocketPath           string                           `json:"socketPath,omitempty"`
+	PotentialFee         uint64                           `json:"potentialFee"`
+	TTLSlotNumberInc     uint64                           `json:"ttlSlotNumberIncrement"`
+	CardanoCliBinaryName string                           `json:"cardanoCliBinaryName,omitempty"`
 }
 
 func NewCardanoChainConfig(rawMessage json.RawMessage) (*CardanoChainConfig, error) {
@@ -40,7 +41,7 @@ func (config CardanoChainConfig) CreateTxProvider() (cardanowallet.ITxProvider, 
 
 	if config.SocketPath != "" {
 		return cardanowallet.NewTxProviderCli(
-			uint(config.NetworkMagic), config.SocketPath, cardanowallet.ResolveCardanoCliBinary(config.NetworkID))
+			uint(config.NetworkMagic), config.SocketPath, cardanowallet.ResolveCardanoCliBinary(config.CardanoCliBinaryName))
 	}
 
 	if config.BlockfrostURL != "" {

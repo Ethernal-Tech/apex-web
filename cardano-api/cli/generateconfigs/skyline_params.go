@@ -25,6 +25,7 @@ const (
 	cardanoBlockfrostAPIKeyFlag        = "cardano-blockfrost-api-key" //nolint:gosec
 	cardanoSocketPathFlag              = "cardano-socket-path"
 	cardanoTTLSlotIncFlag              = "cardano-ttl-slot-inc"
+	cardanoCardanoCliBinaryNameFlag    = "cardano-cardano-cli-binary-name"
 
 	cardanoNetworkIDFlagDesc               = "cardano network id"
 	cardanoNetworkMagicFlagDesc            = "cardano network magic (default 0)"
@@ -36,6 +37,7 @@ const (
 	cardanoBlockfrostAPIKeyFlagDesc        = "blockfrost API key for cardano network" //nolint:gosec
 	cardanoSocketPathFlagDesc              = "socket path for cardano network"
 	cardanoTTLSlotIncFlagDesc              = "TTL slot increment for cardano"
+	cardanoCardanoCliBinaryNameFlagDesc    = "name of the cardano-cli binary to use for the cardano chain"
 
 	defaultCardanoBlockConfirmationCount = 10
 	defaultCardanoTTLSlotNumberInc       = 1800 + defaultCardanoBlockConfirmationCount*10 // BlockTimeSeconds
@@ -52,6 +54,7 @@ type skylineGenerateConfigsParams struct {
 	primeBlockfrostAPIKey        string
 	primeSocketPath              string
 	primeTTLSlotInc              uint64
+	primeCardanoCliBinaryName    string
 
 	cardanoNetworkID               uint32
 	cardanoNetworkMagic            uint32
@@ -63,6 +66,7 @@ type skylineGenerateConfigsParams struct {
 	cardanoBlockfrostAPIKey        string
 	cardanoSocketPath              string
 	cardanoTTLSlotInc              uint64
+	cardanoCardanoCliBinaryName    string
 
 	vectorNetworkID               uint32
 	vectorNetworkMagic            uint32
@@ -75,6 +79,7 @@ type skylineGenerateConfigsParams struct {
 	vectorSocketPath              string
 	vectorTTLSlotInc              uint64
 	vectorIsEnabled               bool
+	vectorCardanoCliBinaryName    string
 
 	nexusIsEnabled    bool
 	polygonIsEnabled  bool
@@ -280,6 +285,12 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		defaultPrimeTTLSlotNumberInc,
 		primeTTLSlotIncFlagDesc,
 	)
+	cmd.Flags().StringVar(
+		&p.primeCardanoCliBinaryName,
+		primeCardanoCliBinaryNameFlag,
+		"",
+		primeCardanoCliBinaryNameFlagDesc,
+	)
 
 	cmd.Flags().Uint32Var(
 		&p.cardanoNetworkID,
@@ -340,6 +351,12 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		cardanoTTLSlotIncFlag,
 		defaultCardanoTTLSlotNumberInc,
 		cardanoTTLSlotIncFlagDesc,
+	)
+	cmd.Flags().StringVar(
+		&p.cardanoCardanoCliBinaryName,
+		cardanoCardanoCliBinaryNameFlag,
+		"",
+		cardanoCardanoCliBinaryNameFlagDesc,
 	)
 
 	cmd.Flags().Uint32Var(
@@ -402,6 +419,12 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		vectorTTLSlotIncFlag,
 		defaultVectorTTLSlotNumberInc,
 		vectorTTLSlotIncFlagDesc,
+	)
+	cmd.Flags().StringVar(
+		&p.vectorCardanoCliBinaryName,
+		vectorCardanoCliBinaryNameFlag,
+		"",
+		vectorCardanoCliBinaryNameFlagDesc,
 	)
 
 	cmd.Flags().BoolVar(
@@ -545,12 +568,13 @@ func (p *skylineGenerateConfigsParams) Execute(
 				},
 				TreasuryAddress: p.primeTreasuryAddress,
 				ChainSpecific: &cardanotx.CardanoChainConfig{
-					OgmiosURL:        p.primeOgmiosURL,
-					BlockfrostURL:    p.primeBlockfrostURL,
-					BlockfrostAPIKey: p.primeBlockfrostAPIKey,
-					SocketPath:       p.primeSocketPath,
-					PotentialFee:     500000,
-					TTLSlotNumberInc: p.primeTTLSlotInc,
+					OgmiosURL:            p.primeOgmiosURL,
+					BlockfrostURL:        p.primeBlockfrostURL,
+					BlockfrostAPIKey:     p.primeBlockfrostAPIKey,
+					SocketPath:           p.primeSocketPath,
+					PotentialFee:         500000,
+					TTLSlotNumberInc:     p.primeTTLSlotInc,
+					CardanoCliBinaryName: p.primeCardanoCliBinaryName,
 				},
 				IsEnabled: true,
 			},
@@ -563,13 +587,14 @@ func (p *skylineGenerateConfigsParams) Execute(
 				},
 				TreasuryAddress: p.cardanoTreasuryAddress,
 				ChainSpecific: &cardanotx.CardanoChainConfig{
-					OgmiosURL:        p.cardanoOgmiosURL,
-					BlockfrostURL:    p.cardanoBlockfrostURL,
-					BlockfrostAPIKey: p.cardanoBlockfrostAPIKey,
-					UseDemeter:       defaultUseDemeter,
-					SocketPath:       p.cardanoSocketPath,
-					PotentialFee:     500000,
-					TTLSlotNumberInc: p.cardanoTTLSlotInc,
+					OgmiosURL:            p.cardanoOgmiosURL,
+					BlockfrostURL:        p.cardanoBlockfrostURL,
+					BlockfrostAPIKey:     p.cardanoBlockfrostAPIKey,
+					UseDemeter:           defaultUseDemeter,
+					SocketPath:           p.cardanoSocketPath,
+					PotentialFee:         500000,
+					TTLSlotNumberInc:     p.cardanoTTLSlotInc,
+					CardanoCliBinaryName: p.cardanoCardanoCliBinaryName,
 				},
 				IsEnabled: true,
 			},
@@ -582,13 +607,14 @@ func (p *skylineGenerateConfigsParams) Execute(
 				},
 				TreasuryAddress: p.vectorTreasuryAddress,
 				ChainSpecific: &cardanotx.CardanoChainConfig{
-					OgmiosURL:        p.vectorOgmiosURL,
-					BlockfrostURL:    p.vectorBlockfrostURL,
-					BlockfrostAPIKey: p.vectorBlockfrostAPIKey,
-					UseDemeter:       defaultUseDemeter,
-					SocketPath:       p.vectorSocketPath,
-					PotentialFee:     500000,
-					TTLSlotNumberInc: p.vectorTTLSlotInc,
+					OgmiosURL:            p.vectorOgmiosURL,
+					BlockfrostURL:        p.vectorBlockfrostURL,
+					BlockfrostAPIKey:     p.vectorBlockfrostAPIKey,
+					UseDemeter:           defaultUseDemeter,
+					SocketPath:           p.vectorSocketPath,
+					PotentialFee:         500000,
+					TTLSlotNumberInc:     p.vectorTTLSlotInc,
+					CardanoCliBinaryName: p.vectorCardanoCliBinaryName,
 				},
 				IsEnabled: p.vectorIsEnabled,
 			},
