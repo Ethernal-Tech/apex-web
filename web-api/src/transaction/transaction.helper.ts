@@ -417,6 +417,8 @@ export const createSolanaBridgingTx = async (
 	dto: CreateTransactionDto,
 	bridgingSettings: BridgingSettingsDto,
 ): Promise<CreateSolanaTransactionFullResponseDto> => {
+	const appConfig = getAppConfig();
+
 	if (!isValidSolanaOnCurveAddress(dto.senderAddress)) {
 		throw new BadRequestException('Invalid sender address');
 	}
@@ -461,7 +463,11 @@ export const createSolanaBridgingTx = async (
 
 	// validate destination address
 	if (isCardanoChain(destChain)) {
-		ValidateCardanoAddress(dto.destinationAddress);
+		ValidateCardanoAddress(
+			destChain,
+			dto.destinationAddress,
+			appConfig.app.isMainnet,
+		);
 	} else if (isEvmChain(destChain)) {
 		ValidateEVMAddress(dto.destinationAddress);
 	} else {
