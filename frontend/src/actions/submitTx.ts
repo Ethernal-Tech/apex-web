@@ -986,7 +986,6 @@ export const estimateEthTxFee = async (
 	return BigInt(tx.gasPrice!) * gasLimit;
 };
 
-/** Estimates network fee in lamports for a legacy base64-encoded transaction from the bridge API. */
 export const estimateSolanaTxFeeLamports = async (
 	txRawBase64: string,
 ): Promise<bigint> => {

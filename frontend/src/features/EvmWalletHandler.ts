@@ -37,7 +37,7 @@ class EvmWalletHandler {
 			return (
 				injected.providers.find(
 					(p: any) => p.isMetaMask && !p.isPhantom,
-				) || undefined
+				) ?? undefined
 			);
 		}
 
@@ -108,6 +108,8 @@ class EvmWalletHandler {
 			);
 			this.provider.removeListener('chainChanged', this.chainChanged);
 		}
+		this.provider = undefined;
+		this.web3 = undefined;
 	};
 
 	private _isEnabled = () => !!this._enabled && !!this.getWeb3();

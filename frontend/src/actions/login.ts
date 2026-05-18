@@ -15,7 +15,6 @@ import evmWalletHandler, {
 } from '../features/EvmWalletHandler';
 import solWalletHandler, {
 	SOL_SUPPORTED_WALLETS,
-	SolWalletType,
 } from '../features/SolWalletHandler';
 import { setConnectingAction } from '../redux/slices/loginSlice';
 import { setChainAction } from '../redux/slices/chainSlice';
@@ -250,7 +249,6 @@ const enableCardanoWallet = async (
 
 const enableSolanaWallet = async (
 	selectedWalletName: string,
-	walletType: SolWalletType,
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
 	settings: ISettingsState,
@@ -266,7 +264,7 @@ const enableSolanaWallet = async (
 		);
 	}
 
-	await solWalletHandler.enable(walletType, useMainnet);
+	await solWalletHandler.enable(useMainnet);
 	const success = solWalletHandler.checkWallet();
 
 	if (!success) {
@@ -334,17 +332,11 @@ const enableWallet = async (
 		return false;
 	}
 
-	// 2. solana wallet login handling
+	// 2. solana wallet login handling (Phantom only)
 	if (isSolanaChain(srcChain)) {
-		const solWallet = SOL_SUPPORTED_WALLETS.find(
-			(w) => w.name === selectedWalletName,
-		);
-		const walletType: SolWalletType = solWallet?.type ?? 'metamask';
-
 		try {
 			return await enableSolanaWallet(
 				selectedWalletName,
-				walletType,
 				srcChain,
 				dstChain,
 				settings,
@@ -445,8 +437,8 @@ export const login = async (
 		const wallets = evmWalletHandler.getInstalledWallets();
 		wallet = wallets.length > 0 ? wallets[0].name : undefined;
 	} else if (isSolanaChain(srcChain)) {
-		const solWallets = solWalletHandler.getInstalledWallets();
-		wallet = solWallets.length > 0 ? solWallets[0].name : undefined;
+		const wallets = solWalletHandler.getInstalledWallets();
+		wallet = wallets.length > 0 ? wallets[0].name : undefined;
 	} else {
 		const wallets = walletHandler.getInstalledWallets();
 		wallet = wallets.length > 0 ? wallets[0].name : undefined;
@@ -456,7 +448,7 @@ export const login = async (
 		const supportedWallets = isEvmChain(srcChain)
 			? EVM_SUPPORTED_WALLETS
 			: isSolanaChain(srcChain)
-				? SOL_SUPPORTED_WALLETS.map((w) => w.name)
+				? SOL_SUPPORTED_WALLETS
 				: SUPPORTED_WALLETS;
 		toast.error(
 			`Can not find any supported wallets installed. Supported wallets: ${supportedWallets}`,
