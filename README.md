@@ -1,6 +1,7 @@
 # Apex Web documentation
 
 ## Prerequisites
+
 node v16.x.x
 
 postgres v14.x
@@ -54,7 +55,6 @@ Owner - apexuser
 
 Save
 
-
 ### Step 5
 
 Instal npm packages for backend and frontend
@@ -86,12 +86,18 @@ $ npm start
 # Newest setup
 
 - Start two `cardano-api` instances, one for `Skyline` and one for `Reactor`:
+
 ```bash
 $ go run main.go run-cardano-api --config config_skyline.json
 $ go run main.go run-cardano-api --config config_reactor.json
 ```
+
 - Start one `web-api` instance. This instance communicates with both `Skyline` and `Reactor` `cardano-api` instances, as well as with both `Oracles`.
-Configure it using the following environment variables:
-ORACLE_SKYLINE_URL, ORACLE_SKYLINE_API_KEY, ORACLE_REACTOR_URL, ORACLE_REACTOR_API_KEY, CARDANO_API_SKYLINE_URL, CARDANO_API_SKYLINE_API_KEY,
-CARDANO_API_REACTOR_URL, CARDANO_API_REACTOR_API_KEY
+  Configure it using the following environment variables:
+  ORACLE_SKYLINE_URL, ORACLE_SKYLINE_API_KEY, ORACLE_REACTOR_URL, ORACLE_REACTOR_API_KEY, CARDANO_API_SKYLINE_URL, CARDANO_API_SKYLINE_API_KEY,
+  CARDANO_API_REACTOR_URL, CARDANO_API_REACTOR_API_KEY
 - Start the `frontend`, which communicates with the `web-api` as usual.
+
+# Deployment AI Agent Notes
+
+Depending on deployment type, move llm.txt for mainnet or llm_testnet.txt for testnet, from /frontent/public/example to /frontent/public/ folder.

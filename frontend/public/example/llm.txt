@@ -31,14 +31,7 @@ All paths in this document are relative to this base URL.
 | `prime`     | UTXO    | Apex Fusion – Prime chain        |
 | `vector`    | UTXO    | Apex Fusion – Vector chain       |
 | `nexus`     | EVM     | Apex Fusion – Nexus chain        |
-| `polygon`   | EVM     | Polygon                          |
-| `ethereum`  | EVM     | Ethereum mainnet                 |
-| `arbitrum`  | EVM     | Arbitrum                         |
 | `base`      | EVM     | Base                             |
-| `scroll`    | EVM     | Scroll                           |
-| `unichain`  | EVM     | Unichain                         |
-| `sei`       | EVM     | Sei                              |
-| `katana`    | EVM     | Katana                           |
 | `bsc`       | EVM     | BNB Smart Chain                  |
 
 > **Note:** `prime` and `vector` are Apex Fusion chains that use Cardano-style UTXO addresses (e.g. `addr_test1...`) and lovelace denomination — treat them as UTXO chains, not EVM. Use `POST /transaction/createCardano` for them.
@@ -54,6 +47,8 @@ Use these to broadcast signed transactions and poll for receipts without asking 
 | Chain ID   | RPC URL                                        | EVM Chain ID |
 |------------|------------------------------------------------|--------------|
 | `nexus`    | `https://rpc.nexus.mainnet.apexfusion.org`     | `9069`       |
+| `base`     | `https://mainnet.base.org`                     | `8453`       |
+| `bsc`      | `https://bsc-dataseed.bnbchain.org`            | `56`         |
 
 For EVM chains not listed here, ask the user to provide the RPC URL before proceeding. If the EVM chain ID is not listed above, fetch it via `eth_chainId` before presenting `RAW_TX` to the user — signing scripts require it to protect against replay attacks.
 
@@ -126,6 +121,7 @@ The agent never controls the user's private key. The workflow is a **four-phase 
 - For **EVM source chains**: once the user returns `signedTxRaw`, the agent broadcasts it to the chain RPC, waits for it to be mined, then registers with Skyline and polls to completion — without any further input from the user.
 - For **UTXO source chains** (cardano, prime, vector): if the chain has a known Ogmios URL (see the Ogmios table), the agent submits the signed transaction on the user's behalf via `submitTransaction` and extracts `txHash` from `result.transaction.id`. If the chain is not listed, ask the user to provide the Ogmios URL before proceeding.
 - Calling `/transaction/bridgingTransactionSubmittedActivated` is what triggers the bridge validators to execute the cross-chain transfer.
+- For **LayerZero routes** (where the source chain is listed in `layerZeroChains` in the settings response): use `POST /transaction/layerZeroTransfer` instead of `createEth`. The rest of the workflow (signing, broadcasting, registration, polling) is identical, with `isLayerZero: true` in Phase 4.
 - The user must provide their addresses before the agent can proceed.
 
 ---
@@ -191,22 +187,22 @@ The workflow has 4 phases and is **identical for every chain combination**. The 
 GET [API URL]/settings
 ```
 
-From the response, **always read from `settingsPerMode.skyline`** — this is the only mode used. Do not read from `settingsPerMode.reactor` or the top-level `directionConfig` / `ecosystemTokens` / `enabledChains` fields.
+From the response, **always read from the top-level fields** — `enabledChains`, `ecosystemTokens`, and `directionConfig`. Do not read from `settingsPerMode.reactor` or `settingsPerMode.skyline`.
 
 Extract and validate the following **in order**:
 
 **1. Confirm chains are enabled**
-Check `settingsPerMode.skyline.enabledChains` contains both `originChain` and `destinationChain`. If either is missing, stop and inform the user that the route is not supported.
+Check the top-level `enabledChains` contains both `originChain` and `destinationChain`. If either is missing, stop and inform the user that the route is not supported.
 
 **2. Resolve and validate the token**
-- Find the requested token by name in `settingsPerMode.skyline.bridgingSettings.ecosystemTokens` to get its `id`.
-- Check that this `id` appears in `settingsPerMode.skyline.bridgingSettings.directionConfig[originChain].tokens` — this confirms the token exists on the source chain.
-- Check that `settingsPerMode.skyline.bridgingSettings.directionConfig[originChain].destChain[destinationChain]` contains an entry with this `srcTokenID` — this confirms the token can be bridged on this specific route.
+- Find the requested token by name in the top-level `ecosystemTokens` to get its `id`.
+- Check that this `id` appears in `directionConfig[originChain].tokens` — this confirms the token exists on the source chain.
+- Check that `directionConfig[originChain].destChain[destinationChain]` contains an entry with this `srcTokenID` — this confirms the token can be bridged on this specific route.
 - **If the token is not found on this route**, do not proceed. Instead:
-  - List all tokens available for the route by reading `directionConfig[originChain].destChain[destinationChain]` (under `settingsPerMode.skyline.bridgingSettings`) and resolving each `srcTokenID` back to a name via `ecosystemTokens`.
+  - List all tokens available for the route by reading `directionConfig[originChain].destChain[destinationChain]` and resolving each `srcTokenID` back to a name via the top-level `ecosystemTokens`.
   - Present the list to the user and ask them to choose one.
 
-> Example: A user asks to bridge "ETH" from Nexus to Cardano. ETH (id: 20) exists in `ecosystemTokens` but does not appear in `directionConfig.nexus.destChain.cardano`. The agent must not call the build endpoint — instead it should list the tokens that ARE available on that route (e.g. xADA, myTestToken, etc.) and ask the user to pick one.
+> Example: A user asks to bridge "ADA" from Nexus to Cardano. ADA (id: 2) exists in `ecosystemTokens` but does not appear in `directionConfig.nexus.destChain.cardano`. The agent must not call the build endpoint — instead it should list the tokens that ARE available on that route (e.g. AP3X, xADA) and ask the user to pick one.
 
 **3. Validate the amount**
 Check `minValueToBridge` and `maxAmountAllowedToBridge` from `settingsPerMode.skyline.bridgingSettings`. Reject amounts outside this range before calling the build endpoint.
@@ -214,44 +210,53 @@ Check `minValueToBridge` and `maxAmountAllowedToBridge` from `settingsPerMode.sk
 **Response shape (relevant parts):**
 ```json
 {
+  "enabledChains": ["cardano", "prime", "vector", "nexus", "base", "bsc"],
+  "ecosystemTokens": [
+    { "id": 1, "name": "AP3X" },
+    { "id": 2, "name": "ADA" },
+    { "id": 3, "name": "cAP3X" },
+    { "id": 4, "name": "xADA" },
+    { "id": 1000002, "name": "BAP3X" },
+    { "id": 1000003, "name": "BNAP3X" }
+  ],
+  "directionConfig": {
+    "<originChain>": {
+      "destChain": {
+        "<destinationChain>": [{ "srcTokenID": 1, "dstTokenID": 2 }]
+      },
+      "tokens": {
+        "1": { "chainSpecific": "...", "lockUnlock": true, "isWrappedCurrency": false }
+      }
+    }
+  },
   "settingsPerMode": {
     "skyline": {
-      "enabledChains": ["cardano", "prime", "vector", "nexus", ...],
       "bridgingSettings": {
-        "minValueToBridge": 0,
-        "maxAmountAllowedToBridge": "...",
+        "minValueToBridge": 1000000,
+        "maxAmountAllowedToBridge": "1000000000000000000000000",
         "minChainFeeForBridging": { "<originChain>": "...", "<destinationChain>": "..." },
-        "minOperationFee":        { "<originChain>": "...", "<destinationChain>": "..." },
-        "directionConfig": {
-          "<originChain>": {
-            "destChain": {
-              "<destinationChain>": [{ "srcTokenID": 1, "dstTokenID": 2 }]
-            },
-            "tokens": {
-              "1": { "chainSpecific": "...", "lockUnlock": true, "isWrappedCurrency": false }
-            }
-          }
-        },
-        "ecosystemTokens": [{ "id": 1, "name": "ADA" }]
+        "minOperationFee":        { "<originChain>": "...", "<destinationChain>": "..." }
       }
     }
   }
 }
 ```
 
-> **Note:** The response also contains a top-level `directionConfig`, `ecosystemTokens`, and `enabledChains` as well as a `settingsPerMode.reactor` section. Ignore all of these — only `settingsPerMode.skyline` is authoritative.
-```
+> **Note:** Use the top-level `enabledChains`, `ecosystemTokens`, and `directionConfig` for route and token validation. Use `settingsPerMode.skyline.bridgingSettings` only for fee and amount limit values (`minValueToBridge`, `maxAmountAllowedToBridge`, `minChainFeeForBridging`, `minOperationFee`) — but note these only contain entries for non-LayerZero chains (`cardano`, `nexus`, `prime`, `vector`). For LayerZero routes (`base`, `bsc`), fee validation is not possible from settings; rely on the `value` field returned by `POST /transaction/layerZeroTransfer` as the total cost. Ignore `settingsPerMode.reactor`.
 
 ---
 
 #### Step 2 — Build the Transaction
 
-**Choose the endpoint based on the source chain type:**
+**Choose the endpoint based on the source chain type and route:**
 
-| Source chain         | Endpoint                          |
-|----------------------|-----------------------------------|
-| `cardano`            | `POST /transaction/createCardano` |
-| Any EVM chain        | `POST /transaction/createEth`     |
+| Source chain                        | Endpoint                                   |
+|-------------------------------------|--------------------------------------------|
+| `cardano`, `prime`, `vector`        | `POST /transaction/createCardano`          |
+| EVM chain, **non-LayerZero route**  | `POST /transaction/createEth`              |
+| EVM chain, **LayerZero route**      | `POST /transaction/layerZeroTransfer`      |
+
+**Determining if a route is LayerZero:** check `layerZeroChains` in the settings response. If the source chain appears there, use `POST /transaction/layerZeroTransfer` for that route.
 
 Both endpoints accept the same request body:
 
@@ -313,6 +318,46 @@ Always compute and show the total cost to the user before they sign.
 
 - If `approvalTx` is **non-null**: the user must sign and submit it first (ERC-20 allowance), wait for confirmation, then sign and submit `bridgingTx.ethTx`. This applies to ERC-20 tokens. The `approvalTx.to` field is the token contract; the spender encoded in `approvalTx.data` is the bridge gateway contract. Users can independently verify this spender address against `GET /settings/getBridgingAddresses?chainId=<originChain>`.
 - If `approvalTx` is **null or absent entirely**: only `bridgingTx.ethTx` needs to be signed. Treat a missing `approvalTx` key the same as `null`. This is the case for native tokens and some ERC-20 tokens (e.g. xADA on Nexus).
+
+**LayerZero response** (`POST /transaction/layerZeroTransfer`):
+
+Request body:
+```json
+{
+  "srcChainName":  "<source chain ID>",
+  "dstChainName":  "<destination chain ID>",
+  "oftAddress":    "<OFT contract address from layerZeroChains[srcChain].oftAddress>",
+  "amount":        "<amount in smallest unit as string>",
+  "from":          "<sender address>",
+  "to":            "<destination address>"
+}
+```
+
+Response:
+```json
+{
+  "transactionData": {
+    "populatedTransaction": {
+      "data":  "0xc7c7f5b3...",
+      "to":    "0x9208d82F...",
+      "value": "526925647656479822"
+    }
+  },
+  "metadata": {
+    "properties": {
+      "amount":         "<bridged amount in smallest unit>",
+      "sharedDecimals": 6,
+      "localDecimals":  18
+    }
+  }
+}
+```
+
+- Extract `transactionData.populatedTransaction` — this is the unsigned EVM transaction (`data`, `to`, `value`).
+- There is no `approvalTx` for LayerZero transfers — only one transaction is needed.
+- `value` covers the LayerZero messaging fee and any native token being bridged. Present it as the total cost to the user.
+- There is no separate `bridgingFee` / `operationFee` breakdown in the response; label `value` as "Total (messaging fee + amount)" when presenting.
+- Use `txType` from `layerZeroChains` for the source chain (e.g. `London` or `Legacy`) to determine which gas fields to populate in `RAW_TX`.
 
 **Cardano response** (`POST /transaction/createCardano`):
 ```json
@@ -476,7 +521,7 @@ Content-Type: application/json
 | `isFallback`        | Copy from the `isFallback` field in the build response              |
 | `nativeTokenAmount` | `"0"` for lovelace bridges and for all EVM source chain bridges. For native UTXO token bridges (non-lovelace), extract from the build response `nativeTokenAmount` array: `nativeTokenAmount[0].amount` |
 | `amount`            | For EVM source chains: the full token amount in smallest unit (e.g. wei). For UTXO native token bridges: `"0"` (amount is in `nativeTokenAmount`). For UTXO lovelace bridges: the lovelace amount. |
-| `isLayerZero`       | `false` for standard Skyline bridge; `true` for LayerZero path      |
+| `isLayerZero`       | `false` for standard Skyline bridge; `true` for LayerZero path (when `POST /transaction/layerZeroTransfer` was used) |
 
 **Response** — save the `id` field for polling:
 ```json
@@ -640,17 +685,20 @@ Agent collects (if not provided):
 ──── Phase 1: Build ────────────────────────────────────────────────
 
 1. GET  /settings
-        Validate: originChain + destinationChain in enabledChains
-        Validate: amount within [minValueToBridge, maxAmountAllowedToBridge]
-        Extract:  tokenID for the requested token + direction
+        Validate: originChain + destinationChain in top-level enabledChains
+        Validate: amount within [minValueToBridge, maxAmountAllowedToBridge] (from settingsPerMode.skyline.bridgingSettings)
+        Extract:  tokenID for the requested token + direction (from top-level ecosystemTokens + directionConfig)
 
 2. if originChain in {cardano, prime, vector}:
        POST /transaction/createCardano
+   elif originChain in layerZeroChains (from settings):
+       POST /transaction/layerZeroTransfer
+       Body: { srcChainName, dstChainName, oftAddress (from layerZeroChains), amount, from, to }
    else:
        POST /transaction/createEth
-   Body: { senderAddress, originChain, destinationChain,
+   Body (createCardano/createEth): { senderAddress, originChain, destinationChain,
            destinationAddress, amount (in smallest unit), tokenID }
-   Extract: txRaw / bridgingTx, approvalTx (EVM only), isFallback
+   Extract: txRaw / bridgingTx / populatedTransaction, approvalTx (createEth only), isFallback
 
 ──── Phase 2: User signs ───────────────────────────────────────────
 
@@ -703,10 +751,10 @@ Agent collects (if not provided):
 ## Agent Rules
 
 1. **Never handle private keys.** Build unsigned transactions; the user signs them.
-2. **Always fetch `tokenID` from `/settings` — read from `settingsPerMode.skyline` only.** The response also contains a top-level `directionConfig` and `settingsPerMode.reactor` — ignore both. Only `settingsPerMode.skyline` is authoritative. Never hardcode token IDs.
+2. **Always fetch `tokenID` from `/settings` — read `ecosystemTokens` and `directionConfig` from the top-level fields.** The response also contains `settingsPerMode.reactor` — ignore it. Use `settingsPerMode.skyline.bridgingSettings` only for fee and amount limit values. Never hardcode token IDs.
 3. **Always fetch bridging addresses from the API.** Never hardcode them.
 4. **Validate the amount** against `minValueToBridge` / `maxAmountAllowedToBridge` before calling the build endpoint. Both values are in the token's smallest unit (wei for EVM, lovelace for UTXO).
-5. **Source chain type selects the endpoint.** `cardano`, `prime`, `vector` → `createCardano`; all other EVM chains → `createEth`.
+5. **Source chain type and route selects the endpoint.** `cardano`, `prime`, `vector` → `createCardano`; EVM chains on LayerZero routes (source chain listed in `layerZeroChains`) → `layerZeroTransfer`; all other EVM chains → `createEth`.
 6. **Handle the two-tx EVM case.** If `approvalTx` is non-null, the user must submit it first and confirm before the bridge tx. If null, it is a native token — one transaction only.
 7. **Convert amounts correctly.** EVM = wei (10^18 per token for 18-decimal), Cardano/UTXO = Lovelace (10^6 per token).
 8. **For EVM source chains: broadcast on behalf of the user.** Once `signedTxRaw` is received, submit it via `eth_sendRawTransaction` using the known RPC, wait for the receipt, then register with Skyline and poll to completion — no further input needed from the user.
