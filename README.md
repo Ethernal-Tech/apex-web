@@ -100,4 +100,5 @@ $ go run main.go run-cardano-api --config config_reactor.json
 
 # Deployment AI Agent Notes
 
-Depending on deployment type, move llms.txt for mainnet or llms_testnet.txt for testnet, from /frontent/public_example to /frontent/public/ folder.
+Depending on deployment type, move llms.txt and llm.txt for mainnet or llms_testnet.txt for testnet, from /frontent/public_example to /frontent/public/ folder.
+Two files, llm.txt and llms.txt should be exactly the same.
