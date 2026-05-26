@@ -1,3 +1,31 @@
 # https://www.robotstxt.org/robotstxt.html
+
+# Allow all crawlers
 User-agent: *
 Disallow:
+
+# AI/LLM crawler declarations
+User-agent: GPTBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# LLM discovery files
+LLMs: https://skylinebridge.tech/llms.txt
+LLMs: https://skylinebridge.tech/llm.txt
