@@ -7,6 +7,7 @@ import { useCallback, useState } from 'react';
 import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { toast } from 'react-toastify';
 import walletHandler from '../../features/WalletHandler';
+import solWalletHandler from '../../features/SolWalletHandler';
 import {
 	createCardanoTransactionAction,
 	createEthTransactionAction,
@@ -236,6 +237,55 @@ function NewTransactionPage() {
 		[account, chain, destinationChain, settings],
 	);
 
+	const prepareCreateSolanaTx = useCallback(
+		(
+			address: string,
+			amount: string,
+			tokenID: number,
+		): CreateTransactionDto => {
+			const walletAddress = solWalletHandler.getAddress();
+			if (walletAddress !== account) {
+				captureAndThrowError(
+					'Wallet account changed. It looks like you switched accounts in your wallet.',
+					'NewTransactionPage.tsx',
+					'prepareCreateSolanaTx',
+				);
+			}
+
+			const validationErr = validateSubmitTxInputs(
+				settings,
+				chain,
+				destinationChain,
+				address,
+				amount,
+				tokenID,
+			);
+			if (validationErr) {
+				captureAndThrowError(
+					validationErr,
+					'NewTransactionPage.tsx',
+					'prepareCreateSolanaTx',
+				);
+			}
+
+			const destChain = toApexBridge(destinationChain);
+			const originChain = toApexBridge(chain);
+
+			return new CreateTransactionDto({
+				bridgingFee: '0', // will be set on backend
+				operationFee: '0', // will be set on backend
+				destinationChain: destChain!,
+				originChain: originChain!,
+				senderAddress: account,
+				destinationAddress: address,
+				amount,
+				tokenID,
+				utxoCacheKey: undefined,
+			});
+		},
+		[account, chain, destinationChain, settings],
+	);
+
 	const getEthTxFee = useCallback(
 		async (
 			address: string,
@@ -270,7 +320,7 @@ function NewTransactionPage() {
 			amount: string,
 			tokenID: number,
 		): Promise<CreateSolanaTransactionFullResponseDto> => {
-			const createTxDto = prepareCreateEthTx(address, amount, tokenID);
+			const createTxDto = prepareCreateSolanaTx(address, amount, tokenID);
 			const bindedCreateAction = createSolanaTransactionAction.bind(
 				null,
 				createTxDto,
@@ -289,7 +339,7 @@ function NewTransactionPage() {
 
 			return feeResponse as CreateSolanaTransactionFullResponseDto;
 		},
-		[prepareCreateEthTx],
+		[prepareCreateSolanaTx],
 	);
 
 	const createEthTx = useCallback(
@@ -326,7 +376,7 @@ function NewTransactionPage() {
 			amount: string,
 			tokenID: number,
 		): Promise<CreateSolanaTxResponse> => {
-			const createTxDto = prepareCreateEthTx(address, amount, tokenID);
+			const createTxDto = prepareCreateSolanaTx(address, amount, tokenID);
 			const bindedCreateAction = createSolanaTransactionAction.bind(
 				null,
 				createTxDto,
@@ -349,7 +399,7 @@ function NewTransactionPage() {
 					createResponse as CreateSolanaTransactionFullResponseDto,
 			};
 		},
-		[prepareCreateEthTx],
+		[prepareCreateSolanaTx],
 	);
 
 	const handleSubmitCallback = useCallback(

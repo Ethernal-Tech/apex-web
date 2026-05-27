@@ -72,16 +72,29 @@ const getWalletBalanceAction = async (
 	}
 
 	if (isSolanaChain(srcChain)) {
-		const lamports = await solWalletHandler.getBalanceLamports();
+		const promises = dirTokens.map((tokenID) => {
+			const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
+			if (!tokenConfig) {
+				return Promise.resolve('0');
+			}
 
-		const finalBalance: { [key: string]: string } = dirTokens.reduce(
-			(acc: { [key: string]: string }, cv: number) => {
-				acc[cv.toString()] =
-					cv === currencyID ? lamports.toString(10) : '0';
-				return acc;
-			},
-			{},
-		);
+			if (tokenConfig.chainSpecific === LovelaceTokenName) {
+				return solWalletHandler
+					.getBalanceLamports()
+					.then((lamports) => lamports.toString(10));
+			}
+
+			return solWalletHandler
+				.getSplTokenBalance(tokenConfig.chainSpecific)
+				.then((balance) => balance.toString(10));
+		});
+
+		const balances = await Promise.all(promises);
+
+		const finalBalance: { [key: string]: string } = {};
+		for (let i = 0; i < dirTokens.length; ++i) {
+			finalBalance[dirTokens[i].toString()] = balances[i];
+		}
 
 		return { balance: finalBalance };
 	}

@@ -12,11 +12,6 @@
 		{ 
 			"include": "mailer/templates/**/*", 
 			"outDir": "dist/src" 
-		},
-		{
-			"include": "transaction/solana/**/*.json",
-			"outDir": "dist/src",
-			"watchAssets": true
 		}
 		],
 		"deleteOutDir": true

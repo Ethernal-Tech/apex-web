@@ -229,11 +229,17 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 	31: {
 		tokenID: 31,
 		icon: SolanaIcon,
-		label: 'xSOL',
+		label: 'wSOL',
 		borderColor: '#1C1C1E',
 	},
 	32: {
 		tokenID: 32,
+		icon: SolanaIcon,
+		label: 'aSOL',
+		borderColor: '#1C1C1E',
+	},
+	33: {
+		tokenID: 33,
 		icon: ApexIcon,
 		label: 'sAP3X',
 		borderColor: '#0538AF',

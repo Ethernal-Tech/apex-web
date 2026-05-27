@@ -1,5 +1,5 @@
 import { isAddress } from 'web3-validator';
-import { PublicKey } from '@solana/web3.js';
+import { isValidSolanaOnCurveAddress } from './solanaAddress';
 import {
 	BridgingModeEnum,
 	getBridgingMode,
@@ -72,15 +72,6 @@ function layerZeroValidation(
 		return `Invalid destination address: ${dstAddr}`;
 	}
 }
-
-const isValidSolanaOnCurveAddress = (address: string): boolean => {
-	try {
-		const publicKey = new PublicKey(address);
-		return PublicKey.isOnCurve(publicKey.toBytes());
-	} catch {
-		return false;
-	}
-};
 
 function reactorValidation(
 	srcChain: ChainEnum,

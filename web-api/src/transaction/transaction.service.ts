@@ -52,6 +52,7 @@ import {
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
+import { serializeSolanaTxRawStorage } from 'src/utils/solanaTxRaw';
 import { isAddress } from 'web3-validator';
 import { createHash } from 'crypto';
 
@@ -315,7 +316,14 @@ export class TransactionService {
 			);
 		}
 
-		const tx = await createSolanaBridgingTx(dto, settings.bridgingSettings);
+		const bridgingMode = getBridgingMode(
+			dto.originChain,
+			dto.destinationChain,
+			dto.tokenID,
+			this.settingsService.SettingsResponse,
+		);
+
+		const tx = await createSolanaBridgingTx(dto, bridgingMode!);
 		if (!tx) {
 			throw new BadRequestException('error while creating bridging tx');
 		}
@@ -334,6 +342,7 @@ export class TransactionService {
 			nativeTokenAmount,
 			tokenID,
 			txRaw,
+			blockHash,
 			isFallback,
 			isLayerZero,
 		}: TransactionSubmittedDto,
@@ -376,7 +385,10 @@ export class TransactionService {
 		entity.originChain = originChain;
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;
-		entity.txRaw = txRaw;
+		entity.txRaw =
+			isSolanaChain(originChain) && blockHash
+				? serializeSolanaTxRawStorage(txRaw, blockHash)
+				: txRaw;
 		entity.isCentralized = isFallback;
 		entity.isLayerZero = isLayerZero;
 		entity.activeFrom = activate

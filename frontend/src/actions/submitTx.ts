@@ -33,12 +33,12 @@ import { validateSubmitTxInputs } from '../utils/validationUtils';
 import { captureAndThrowError } from '../features/sentry';
 import { getCurrencyID } from '../settings/token';
 import solWalletHandler from '../features/SolWalletHandler';
-import appSettings from '../settings/appSettings';
+import { getFeeForMessageLamports } from '../utils/solanaRpc';
 import {
-	SolanaNetworkType,
-	SolanaNetworkTypeMap,
-} from '../features/Address/types';
-import { Connection, Transaction as SolanaTransaction } from '@solana/web3.js';
+	base64ToUint8Array,
+	extractMessageFromLegacyTransaction,
+	uint8ArrayToBase64,
+} from '../utils/solanaTx';
 
 type TxDetailsOptions = {
 	feePercMult: bigint;
@@ -523,14 +523,11 @@ export const signAndSubmitSolanaTx = async (
 		BigInt(createResponse.bridgingTx.operationFee || '0') +
 		tokenAmount;
 
-	const txBuffer = Buffer.from(txRaw, 'base64');
-	const tx = SolanaTransaction.from(txBuffer);
-
 	updateLoadingState({
 		content: 'Signing and submitting the bridging transaction...',
 	});
 
-	const signature = await solWalletHandler.signAndSendTransaction(tx);
+	const signature = await solWalletHandler.signAndSendTransaction(txRaw);
 
 	updateLoadingState({
 		content: 'Recording the transaction...',
@@ -545,6 +542,7 @@ export const signAndSubmitSolanaTx = async (
 		amount: amount.toString(10),
 		originTxHash: signature,
 		txRaw,
+		blockHash: createResponse.bridgingTx?.solTx?.blockHash,
 		isFallback: createResponse.bridgingTx.isFallback,
 		nativeTokenAmount: tokenAmount.toString(10),
 		tokenID,
@@ -989,24 +987,10 @@ export const estimateEthTxFee = async (
 export const estimateSolanaTxFeeLamports = async (
 	txRawBase64: string,
 ): Promise<bigint> => {
-	const rpcUrl =
-		SolanaNetworkTypeMap[
-			appSettings.isMainnet
-				? SolanaNetworkType.MainNetNetwork
-				: SolanaNetworkType.TestNetNetwork
-		];
-	const connection = new Connection(rpcUrl, 'confirmed');
-	const tx = SolanaTransaction.from(Buffer.from(txRawBase64, 'base64'));
-	const feeResult = await connection.getFeeForMessage(tx.compileMessage());
-	if (feeResult.value == null) {
-		captureAndThrowError(
-			'Solana fee estimation returned no value.',
-			'submitTx.ts',
-			'estimateSolanaTxFeeLamports',
-		);
-	}
-
-	return BigInt(feeResult.value);
+	const message = extractMessageFromLegacyTransaction(
+		base64ToUint8Array(txRawBase64),
+	);
+	return getFeeForMessageLamports(uint8ArrayToBase64(message));
 };
 
 export const getLayerZeroTransferResponse = async function (

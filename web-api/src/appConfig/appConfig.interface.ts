@@ -39,9 +39,6 @@ export interface AppConfig {
 		addresses: {
 			skylineGateway: EvmAddressConfig[];
 			skylineNativeTokenWallet: EvmAddressConfig[];
-			skylineSolanaProgram: string;
-			skylineSolanaTreasury: string;
-			skylineSolanaRelayer: string;
 			reactorNexusGateway: `0x${string}`;
 			reactorNexusCentralizedGateway: `0x${string}`;
 		};
