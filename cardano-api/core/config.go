@@ -288,27 +288,6 @@ func (appConfig *AppConfig) fillOutSkylineSpecific(
 			"failed to convert MinColCoinsAllowedToBridge to big.Int",
 		)
 
-		// TODO: remove this once the oracle API provides the direction config for solana as well
-		_, ok := settingsResponse.DirectionConfig["solana"]
-		if !ok {
-			type DirectionConfigFile struct {
-				Directions      map[string]DirectionConfig `json:"directions"`
-				EcosystemTokens []EcosystemToken           `json:"ecosystemTokens"`
-			}
-
-			dirConfig, err := common.LoadConfig[DirectionConfigFile]("./directionsConfig.json", "")
-			if err != nil {
-				return err
-			}
-
-			settingsResponse.DirectionConfig = dirConfig.Directions
-			settingsResponse.EcosystemTokens = dirConfig.EcosystemTokens
-			minColCoinsAllowedToBridge["solana"] = big.NewInt(1)
-			minChainFeeForBridging["solana"] = big.NewInt(1000000000)
-			minChainFeeForBridgingTokens["solana"] = 1000000000
-			minOperationFee["solana"] = big.NewInt(1000000000)
-		}
-
 		appConfig.SkylineBridgingSettings = SkylineBridgingSettings{
 			MinChainFeeForBridging:         minChainFeeForBridging,
 			MinChainFeeForBridgingTokens:   minChainFeeForBridgingTokens,

@@ -263,7 +263,8 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	}
 
 	if solanaSrcConfig != nil && solanaDestConfig != nil {
-		return fmt.Errorf("bridging from %s to %s is not supported", requestBody.SourceChainID, requestBody.DestinationChainID)
+		return fmt.Errorf(
+			"bridging from %s to %s is not supported", requestBody.SourceChainID, requestBody.DestinationChainID)
 	}
 
 	if len(requestBody.Transactions) == 0 {
@@ -527,6 +528,7 @@ func (c *SkylineTxControllerImpl) createSolanaTx(
 	txSender := solTxSender.NewTxSender(txProvider, &sendTxChainConfig)
 
 	txReceivers := make([]solTxSender.BridgingTxReceiver, 0, len(requestBody.Transactions))
+
 	for _, tx := range requestBody.Transactions {
 		tokenID := tx.TokenID
 		if tokenID == 0 {
