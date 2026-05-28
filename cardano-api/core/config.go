@@ -41,11 +41,10 @@ type EthChainConfig struct {
 }
 
 type SolanaChainConfig struct {
-	ChainID            string                      `json:"-"`
-	BridgingFeeAddress string                      `json:"bridgingFeeAddress"`
-	TreasuryAddress    string                      `json:"treasuryAddress"`
-	ChainSpecific      *solanatx.SolanaChainConfig `json:"chainSpecific"`
-	IsEnabled          bool                        `json:"isEnabled"`
+	ChainID         string                      `json:"-"`
+	TreasuryAddress string                      `json:"treasuryAddress"`
+	ChainSpecific   *solanatx.SolanaChainConfig `json:"chainSpecific"`
+	IsEnabled       bool                        `json:"isEnabled"`
 }
 
 type CardanoChainConfig struct {
