@@ -299,7 +299,7 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 	operationFeeBigInt, found := c.appConfig.SkylineBridgingSettings.MinOperationFee[requestBody.SourceChainID]
 	if !found {
-		return fmt.Errorf("no operation fee for chain: %s", requestBody.SourceChainID)
+		return fmt.Errorf("no min operation fee for chain: %s", requestBody.SourceChainID)
 	}
 
 	operationFee := operationFeeBigInt.Uint64()
@@ -601,7 +601,7 @@ func (c *SkylineTxControllerImpl) solanaSendTxChainConfig(
 
 	operationFeeBigInt, found := c.appConfig.SkylineBridgingSettings.MinOperationFee[srcChainID]
 	if !found {
-		return solTxSender.ChainConfig{}, fmt.Errorf("no operation fee for chain: %s", srcChainID)
+		return solTxSender.ChainConfig{}, fmt.Errorf("no min operation fee for chain: %s", srcChainID)
 	}
 
 	minAmountToBridge := c.appConfig.SkylineBridgingSettings.MinValueToBridge
