@@ -14,8 +14,8 @@ import {
 	IsAddressWithValidPrefix,
 } from './utils';
 import { BadRequestException } from '@nestjs/common';
-import { PublicKey } from '@solana/web3.js';
 import { areChainsEqual } from '../chainUtils';
+import { isValidSolanaOnCurveAddress } from '../solanaAddress';
 import { ChainApexBridgeEnum } from '../../common/enum';
 
 const NewStakeCredential = (
@@ -167,15 +167,6 @@ export function ValidateEVMAddress(rawAddress: string) {
 		);
 	}
 }
-
-export const isValidSolanaOnCurveAddress = (address: string): boolean => {
-	try {
-		const publicKey = new PublicKey(address);
-		return PublicKey.isOnCurve(publicKey.toBytes());
-	} catch {
-		return false;
-	}
-};
 
 export function ValidateSolanaAddress(rawAddress: string) {
 	if (!isValidSolanaOnCurveAddress(rawAddress)) {

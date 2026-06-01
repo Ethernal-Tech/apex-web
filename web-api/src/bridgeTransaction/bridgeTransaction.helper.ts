@@ -11,7 +11,12 @@ import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization
 import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
-import { isCardanoChain } from 'src/utils/chainUtils';
+import { isCardanoChain, isSolanaChain } from 'src/utils/chainUtils';
+import { parseSolanaTxRawStorage } from 'src/utils/solanaTxRaw';
+import {
+	isSolanaBlockhashValidSafe,
+	isSolanaTransactionConfirmed,
+} from 'src/utils/solanaRpc';
 import { getUrlAndApiKey } from 'src/utils/generalUtils';
 import { getAppConfig } from 'src/appConfig/appConfig';
 
@@ -252,6 +257,26 @@ export const getHasTxFailedRequestState = async (
 	let ttl: bigint | undefined;
 	if (isCardanoChain(chainId as ChainEnum)) {
 		ttl = getCardanoTTL(model.txRaw);
+	} else if (isSolanaChain(chainId as ChainEnum)) {
+		const { blockHash } = parseSolanaTxRawStorage(model.txRaw);
+		if (!blockHash) {
+			return;
+		}
+
+		const isConfirmed = await isSolanaTransactionConfirmed(model.txHash);
+		if (isConfirmed === undefined || isConfirmed) {
+			return;
+		}
+
+		const blockhashStillValid = await isSolanaBlockhashValidSafe(blockHash);
+		if (blockhashStillValid === undefined || blockhashStillValid) {
+			return;
+		}
+
+		return {
+			sourceTxHash: model.txHash,
+			status: TransactionStatusEnum.InvalidRequest,
+		} as BridgingRequestState;
 	} else {
 		ttl = getEthTTL(model.txRaw);
 	}

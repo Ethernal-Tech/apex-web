@@ -1,6 +1,7 @@
 package request
 
 import (
+	"github.com/Ethernal-Tech/cardano-api/common"
 	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
 )
 
@@ -42,3 +43,26 @@ type CreateBridgingTxRequest struct {
 	// Specifies the UTXO to skip during transaction creation on the source chain
 	SkipUtxos []UtxoRequest `json:"skipUtxos"`
 } // @name CreateBridgingTxRequest
+
+type CreateSolanaBridgingTxRequest struct {
+	SenderAddr string `json:"senderAddr" validate:"required"`
+	// Destination chain ID
+	DestinationChainID string `json:"destinationChainId" validate:"required"`
+	// Array of transactions requested by the sender
+	Transactions []CreateBridgingTxTransactionRequest `json:"transactions" validate:"required"`
+	// Fee covering the submission of the transaction on the destination chain, expressed in SOL
+	BridgingFee uint64 `json:"bridgingFee"`
+	// Fee covering the operational cost of processing the bridging request, expressed in SOL
+	OperationFee uint64 `json:"operationFee"`
+} // @name CreateSolanaBridgingTxRequest
+
+func (r CreateSolanaBridgingTxRequest) ToCreateBridgingTxRequest() CreateBridgingTxRequest {
+	return CreateBridgingTxRequest{
+		SenderAddr:         r.SenderAddr,
+		SourceChainID:      common.ChainIDStrSolana,
+		DestinationChainID: r.DestinationChainID,
+		Transactions:       r.Transactions,
+		BridgingFee:        r.BridgingFee,
+		OperationFee:       r.OperationFee,
+	}
+}

@@ -90,15 +90,3 @@ export function getSkylineNativeTokenWalletAddress(srcChain: string): string {
 	}
 	return '';
 }
-
-export function getSkylineSolanaProgramAddress(): string {
-	return getAppConfig().bridge.addresses.skylineSolanaProgram;
-}
-
-export function getSkylineSolanaTreasuryAddress(): string {
-	return getAppConfig().bridge.addresses.skylineSolanaTreasury;
-}
-
-export function getSkylineSolanaRelayerAddress(): string {
-	return getAppConfig().bridge.addresses.skylineSolanaRelayer;
-}

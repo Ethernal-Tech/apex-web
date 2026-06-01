@@ -5,6 +5,7 @@ import {
 	IsEnum,
 	IsNotEmpty,
 	IsObject,
+	IsOptional,
 	IsPositive,
 	ValidateNested,
 } from 'class-validator';
@@ -142,6 +143,14 @@ export class TransactionSubmittedDto {
 		description: 'Transaction raw data on source chain',
 	})
 	txRaw: string;
+
+	@IsOptional()
+	@ApiProperty({
+		description:
+			'Solana recent blockhash from create tx (base58); stored with txRaw for expiry checks',
+		required: false,
+	})
+	blockHash?: string;
 
 	@ApiProperty({
 		description: 'Indicates is fallback mechanism used',
@@ -352,6 +361,12 @@ export class SolanaTransactionResponseDto {
 		description: 'Unsigned Solana transaction, encoded as base64',
 	})
 	txRaw: string;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Recent blockhash used when building the transaction (base58)',
+	})
+	blockHash: string;
 }
 
 @ApiExtraModels(SolanaTransactionResponseDto)

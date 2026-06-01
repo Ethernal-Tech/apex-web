@@ -1,7 +1,16 @@
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
 import appSettings from '../settings/appSettings';
-import { SolanaNetworkType, SolanaNetworkTypeMap } from './Address/types';
-import { captureAndThrowError } from './sentry';
+import { captureAndThrowError, captureException } from './sentry';
+import {
+	confirmTransactionSignature,
+	getBalanceLamports,
+	getSplTokenBalanceLamports,
+	sendRawTransactionBase64,
+} from '../utils/solanaRpc';
+import {
+	base64ToUint8Array,
+	createPhantomTransactionAdapter,
+	uint8ArrayToBase64,
+} from '../utils/solanaTx';
 
 type Wallet = {
 	name: string;
@@ -19,8 +28,8 @@ export const SOL_SUPPORTED_WALLETS: Wallet[] = [
 
 class SolWalletHandler {
 	private _provider: any | undefined;
-	private _publicKey: PublicKey | undefined;
-	private _connection: Connection | undefined;
+	private _address: string | undefined;
+	private _useMainnet: boolean | undefined;
 
 	private resolvePhantomProvider(): any {
 		const provider = (window as any)?.phantom?.solana;
@@ -34,37 +43,17 @@ class SolWalletHandler {
 		return provider;
 	}
 
-	private getConnection(useMainnet?: boolean): Connection {
-		const isMainnet = useMainnet ?? appSettings.isMainnet;
-		const rpcUrl =
-			SolanaNetworkTypeMap[
-				isMainnet
-					? SolanaNetworkType.MainNetNetwork
-					: SolanaNetworkType.TestNetNetwork
-			];
-
-		if (!rpcUrl) {
-			captureAndThrowError(
-				'Missing Solana RPC URL for selected network.',
-				'SolWalletHandler.ts',
-				'getConnection',
-			);
-		}
-
-		return new Connection(rpcUrl, 'confirmed');
-	}
-
 	getInstalledWallets = (): Wallet[] => {
 		if (!(window as any)?.phantom?.solana) return [];
 		return SOL_SUPPORTED_WALLETS;
 	};
 
 	checkWallet = (): boolean => {
-		return !!this._provider && !!this._publicKey;
+		return !!this._provider && !!this._address;
 	};
 
 	enable = async (useMainnet?: boolean): Promise<boolean> => {
-		this._connection = this.getConnection(useMainnet);
+		this._useMainnet = useMainnet ?? appSettings.isMainnet;
 		this._provider = this.resolvePhantomProvider();
 
 		const resp = await this._provider.connect();
@@ -78,10 +67,10 @@ class SolWalletHandler {
 			);
 		}
 
-		this._publicKey =
-			publicKey instanceof PublicKey
+		this._address =
+			typeof publicKey === 'string'
 				? publicKey
-				: new PublicKey(String(publicKey));
+				: (publicKey?.toBase58?.() ?? String(publicKey));
 
 		return true;
 	};
@@ -93,35 +82,24 @@ class SolWalletHandler {
 			}
 		} finally {
 			this._provider = undefined;
-			this._publicKey = undefined;
-			this._connection = undefined;
+			this._address = undefined;
+			this._useMainnet = undefined;
 		}
 	};
 
 	getAddress = (): string => {
-		if (!this._publicKey) {
+		if (!this._address) {
 			captureAndThrowError(
 				'Wallet not enabled.',
 				'SolWalletHandler.ts',
 				'getAddress',
 			);
 		}
-		return this._publicKey.toBase58();
-	};
-
-	getPublicKey = (): PublicKey => {
-		if (!this._publicKey) {
-			captureAndThrowError(
-				'Wallet not enabled.',
-				'SolWalletHandler.ts',
-				'getPublicKey',
-			);
-		}
-		return this._publicKey;
+		return this._address;
 	};
 
 	getBalanceLamports = async (): Promise<bigint> => {
-		if (!this._connection || !this._publicKey) {
+		if (!this._address) {
 			captureAndThrowError(
 				'Wallet not enabled.',
 				'SolWalletHandler.ts',
@@ -129,16 +107,42 @@ class SolWalletHandler {
 			);
 		}
 
-		const lamports = await this._connection.getBalance(
-			this._publicKey,
-			'confirmed',
-		);
-
-		return BigInt(String(lamports));
+		return getBalanceLamports(this._address, this._useMainnet);
 	};
 
-	signAndSendTransaction = async (tx: Transaction): Promise<string> => {
-		if (!this._publicKey || !this._connection || !this._provider) {
+	getSplTokenBalance = async (mintAddress: string): Promise<bigint> => {
+		if (!this._address) {
+			captureAndThrowError(
+				'Wallet not enabled.',
+				'SolWalletHandler.ts',
+				'getSplTokenBalance',
+			);
+		}
+
+		try {
+			return await getSplTokenBalanceLamports(
+				this._address,
+				mintAddress,
+				this._useMainnet,
+			);
+		} catch (err) {
+			captureException(err, {
+				tags: {
+					component: 'SolWalletHandler.ts',
+					action: 'getSplTokenBalance',
+					mintAddress,
+				},
+			});
+
+			return BigInt(0);
+		}
+	};
+
+	/**
+	 * Signs and submits a server-built legacy transaction (base64) via Phantom.
+	 */
+	signAndSendTransaction = async (txRawBase64: string): Promise<string> => {
+		if (!this._address || !this._provider) {
 			captureAndThrowError(
 				'Wallet not enabled.',
 				'SolWalletHandler.ts',
@@ -146,29 +150,42 @@ class SolWalletHandler {
 			);
 		}
 
-		tx.feePayer = this._publicKey;
-
-		const connection = this._connection;
+		const serializedTx = base64ToUint8Array(txRawBase64);
+		const adapter = createPhantomTransactionAdapter(serializedTx);
 
 		try {
-			const signedTx = await this._provider.signTransaction(tx);
+			if (this._provider.signAndSendTransaction) {
+				const result =
+					await this._provider.signAndSendTransaction(adapter);
+				const signature =
+					typeof result === 'string' ? result : result?.signature;
 
-			const signature = await connection.sendRawTransaction(
-				signedTx.serialize(),
-				{ skipPreflight: false, preflightCommitment: 'confirmed' },
+				if (!signature) {
+					throw new Error(
+						'Phantom did not return a transaction signature',
+					);
+				}
+
+				await confirmTransactionSignature(signature, this._useMainnet);
+				return signature;
+			}
+
+			const signedTx = await this._provider.signTransaction(adapter);
+			const signedBytes =
+				typeof signedTx?.serialize === 'function'
+					? signedTx.serialize()
+					: signedTx;
+
+			const signedBase64 = uint8ArrayToBase64(
+				signedBytes instanceof Uint8Array
+					? signedBytes
+					: new Uint8Array(signedBytes),
 			);
-
-			const latestBlockhash =
-				await connection.getLatestBlockhash('confirmed');
-			await connection.confirmTransaction(
-				{
-					signature,
-					blockhash: latestBlockhash.blockhash,
-					lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
-				},
-				'confirmed',
+			const signature = await sendRawTransactionBase64(
+				signedBase64,
+				this._useMainnet,
 			);
-
+			await confirmTransactionSignature(signature, this._useMainnet);
 			return signature;
 		} catch (err: any) {
 			console.error('Full error:', JSON.stringify(err, null, 2));

@@ -8,6 +8,7 @@ package controllers
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"math"
@@ -26,9 +27,12 @@ import (
 	infracommon "github.com/Ethernal-Tech/cardano-infrastructure/common"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
+	solTxSender "github.com/Ethernal-Tech/solana-infrastructure/sendtx"
+
 	solanawallet "github.com/Ethernal-Tech/solana-infrastructure/wallet"
 	cache "github.com/dgraph-io/ristretto"
 	goEthCommon "github.com/ethereum/go-ethereum/common"
+	"github.com/gagliardetto/solana-go"
 	"github.com/hashicorp/go-hclog"
 )
 
@@ -75,6 +79,7 @@ func (c *SkylineTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	return []*core.APIEndpoint{
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
+		{Path: "CreateSolanaBridgingTx", Method: http.MethodPost, Handler: c.createSolanaBridgingTx},
 		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
 		{Path: "GetLockedTokens", Method: http.MethodGet, Handler: c.getLockedAmountOfTokens},
 		{Path: "GetBridgingAddresses", Method: http.MethodGet, Handler: c.getBridgingAddresses},
@@ -183,6 +188,44 @@ func (c *SkylineTxControllerImpl) createBridgingTx(w http.ResponseWriter, r *htt
 	)
 }
 
+func (c *SkylineTxControllerImpl) createSolanaBridgingTx(w http.ResponseWriter, r *http.Request) {
+	requestBody, ok := utils.DecodeModel[commonRequest.CreateSolanaBridgingTxRequest](w, r, c.logger)
+	if !ok {
+		return
+	}
+
+	c.logger.Debug("createSolanaBridgingTx request", "body", requestBody, "url", r.URL)
+
+	currencyID, err := c.appConfig.SkylineBridgingSettings.GetCurrencyID(common.ChainIDStrSolana)
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("validation error. err: %w", err), c.logger)
+
+		return
+	}
+
+	bridgingReq := requestBody.ToCreateBridgingTxRequest()
+
+	err = c.validateAndFillOutCreateBridgingTxRequest(currencyID, &bridgingReq)
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("validation error. err: %w", err), c.logger)
+
+		return
+	}
+
+	txInfo, err := c.createSolanaTx(r.Context(), currencyID, bridgingReq)
+	if err != nil {
+		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, err, c.logger)
+
+		return
+	}
+
+	utils.WriteResponse(w, r, http.StatusOK, txInfo, c.logger)
+}
+
 // @Summary Get bridge settings
 // @Description Returns the participating chains with their specific settings, global bridge configuration (such as minimum and maximum allowed bridging amounts), and, for each source chain, the native token that will be received on the destination chain.
 // @Tags CardanoTx
@@ -203,14 +246,25 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	srcCurrencyID uint16,
 	requestBody *commonRequest.CreateBridgingTxRequest,
 ) error {
-	cardanoSrcConfig, _, _ := c.appConfig.GetChainConfig(requestBody.SourceChainID)
-	if cardanoSrcConfig == nil {
+	cardanoSrcConfig, _, solanaSrcConfig := c.appConfig.GetChainConfig(requestBody.SourceChainID)
+	if cardanoSrcConfig == nil && solanaSrcConfig == nil {
 		return fmt.Errorf("origin chain not registered: %v", requestBody.SourceChainID)
+	}
+
+	if solanaSrcConfig != nil {
+		if err := solanawallet.ValidateAddress(requestBody.SenderAddr, false); err != nil {
+			return fmt.Errorf("invalid sender address: %w", err)
+		}
 	}
 
 	cardanoDestConfig, ethDestConfig, solanaDestConfig := c.appConfig.GetChainConfig(requestBody.DestinationChainID)
 	if cardanoDestConfig == nil && ethDestConfig == nil && solanaDestConfig == nil {
 		return fmt.Errorf("destination chain not registered: %v", requestBody.DestinationChainID)
+	}
+
+	if solanaSrcConfig != nil && solanaDestConfig != nil {
+		return fmt.Errorf(
+			"bridging from %s to %s is not supported", requestBody.SourceChainID, requestBody.DestinationChainID)
 	}
 
 	if len(requestBody.Transactions) == 0 {
@@ -222,9 +276,20 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			len(requestBody.Transactions), c.appConfig.SkylineBridgingSettings.MaxReceiversPerBridgingRequest, requestBody)
 	}
 
-	srcMinUtxoChainValue, srcFound := c.appConfig.SkylineBridgingSettings.MinUtxoChainValue[requestBody.SourceChainID]
-	if !srcFound {
-		return fmt.Errorf("no MinUtxoChainValue for source chain: %s", requestBody.SourceChainID)
+	var srcMinAmount uint64
+
+	if cardanoSrcConfig != nil {
+		srcMinUtxoChainValue, srcFound := c.appConfig.SkylineBridgingSettings.MinUtxoChainValue[requestBody.SourceChainID]
+		if !srcFound {
+			return fmt.Errorf("no MinUtxoChainValue for source chain: %s", requestBody.SourceChainID)
+		}
+
+		srcMinAmount = srcMinUtxoChainValue
+	} else {
+		srcMinAmount = c.appConfig.SkylineBridgingSettings.MinValueToBridge
+		if srcMinAmount == 0 {
+			return fmt.Errorf("no min value to bridge for source chain: %s", requestBody.SourceChainID)
+		}
 	}
 
 	destCurrencyID, err := c.appConfig.SkylineBridgingSettings.GetCurrencyID(requestBody.DestinationChainID)
@@ -234,7 +299,7 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 	operationFeeBigInt, found := c.appConfig.SkylineBridgingSettings.MinOperationFee[requestBody.SourceChainID]
 	if !found {
-		return fmt.Errorf("no operation fee for chain: %s", requestBody.SourceChainID)
+		return fmt.Errorf("no min operation fee for chain: %s", requestBody.SourceChainID)
 	}
 
 	operationFee := operationFeeBigInt.Uint64()
@@ -281,10 +346,10 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 		}
 
 		if tokenPair.SourceTokenID == srcCurrencyID {
-			if receiver.Amount < srcMinUtxoChainValue {
+			if receiver.Amount < srcMinAmount {
 				return fmt.Errorf(
 					"found an value below minimum value in receivers, receiver: %v. min: %v",
-					receiver, srcMinUtxoChainValue)
+					receiver, srcMinAmount)
 			}
 		}
 
@@ -412,6 +477,144 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	}
 
 	return nil
+}
+
+func (c *SkylineTxControllerImpl) createSolanaTx(
+	ctx context.Context,
+	currencyID uint16,
+	requestBody commonRequest.CreateBridgingTxRequest,
+) (*commonResponse.CreateSolanaBridgingTxFullResponse, error) {
+	_, _, solanaSrcConfig := c.appConfig.GetChainConfig(common.ChainIDStrSolana)
+	if solanaSrcConfig == nil {
+		return nil, fmt.Errorf("source chain not registered: %v", common.ChainIDStrSolana)
+	}
+
+	if solanaSrcConfig.ChainSpecific == nil {
+		return nil, fmt.Errorf("missing chain specific config for source chain: %s", common.ChainIDStrSolana)
+	}
+
+	txProvider, err := solanaSrcConfig.ChainSpecific.CreateTxProvider()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create solana tx provider. err: %w", err)
+	}
+
+	treasuryAddress, err := solanawallet.PublicKeyFromAddress(solanaSrcConfig.TreasuryAddress)
+	if err != nil {
+		return nil, fmt.Errorf("invalid treasury address in config. err: %w", err)
+	}
+
+	senderAddress, err := solanawallet.PublicKeyFromAddress(requestBody.SenderAddr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid sender address in request body. err: %w", err)
+	}
+
+	hasNonCurrencyTokens := false
+
+	for _, tx := range requestBody.Transactions {
+		if tx.TokenID != 0 && tx.TokenID != currencyID {
+			hasNonCurrencyTokens = true
+
+			break
+		}
+	}
+
+	sendTxChainConfig, err := c.solanaSendTxChainConfig(common.ChainIDStrSolana, currencyID, hasNonCurrencyTokens)
+	if err != nil {
+		return nil, err
+	}
+
+	sendTxChainConfig.TreasuryAddress = treasuryAddress
+
+	txSender := solTxSender.NewTxSender(txProvider, &sendTxChainConfig)
+
+	txReceivers := make([]solTxSender.BridgingTxReceiver, 0, len(requestBody.Transactions))
+
+	for _, tx := range requestBody.Transactions {
+		tokenID := tx.TokenID
+		if tokenID == 0 {
+			tokenID = currencyID
+		}
+
+		txReceivers = append(txReceivers, solTxSender.BridgingTxReceiver{
+			Address: tx.Addr,
+			TokenAmount: solanawallet.TokenAmount{
+				TokenID: tokenID,
+				Amount:  tx.Amount,
+			},
+		})
+	}
+
+	txDto := solTxSender.BridgeRequestDto{
+		Ctx:          ctx,
+		ProgramID:    solana.MustPublicKeyFromBase58(solanaSrcConfig.ChainSpecific.ProgramID),
+		DstChainID:   requestBody.DestinationChainID,
+		SenderAddr:   requestBody.SenderAddr,
+		Receivers:    txReceivers,
+		BridgingFee:  requestBody.BridgingFee,
+		OperationFee: requestBody.OperationFee,
+	}
+
+	recentBlockHash, err := txProvider.GetLatestBlockhash(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get latest blockhash. err: %w", err)
+	}
+
+	tx, err := txSender.CreateTx(
+		ctx, senderAddress, solTxSender.InstructionTypeBridgingRequest, recentBlockHash, txDto,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create solana transaction. err: %w", err)
+	}
+
+	txBytes, err := solanawallet.MarshalTransaction(tx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal tx: %w", err)
+	}
+
+	bridgeTokenID := requestBody.Transactions[0].TokenID
+	if bridgeTokenID == 0 {
+		bridgeTokenID = currencyID
+	}
+
+	var tokenAmount uint64
+	if bridgeTokenID != currencyID {
+		tokenAmount = requestBody.Transactions[0].Amount
+	}
+
+	return commonResponse.NewCreateSolanaBridgingTxFullResponse(
+		base64.StdEncoding.EncodeToString(txBytes),
+		recentBlockHash.String(),
+		requestBody.BridgingFee,
+		requestBody.OperationFee,
+		tokenAmount,
+		bridgeTokenID,
+	), nil
+}
+
+func (c *SkylineTxControllerImpl) solanaSendTxChainConfig(
+	srcChainID string, currencyID uint16, hasNonCurrencyTokens bool,
+) (solTxSender.ChainConfig, error) {
+	minBridgingFee, found := c.appConfig.SkylineBridgingSettings.GetMinBridgingFee(srcChainID, hasNonCurrencyTokens)
+	if !found {
+		return solTxSender.ChainConfig{}, fmt.Errorf("no minimal bridging fee for chain: %s", srcChainID)
+	}
+
+	operationFeeBigInt, found := c.appConfig.SkylineBridgingSettings.MinOperationFee[srcChainID]
+	if !found {
+		return solTxSender.ChainConfig{}, fmt.Errorf("no min operation fee for chain: %s", srcChainID)
+	}
+
+	minAmountToBridge := c.appConfig.SkylineBridgingSettings.MinValueToBridge
+	if minAmountToBridge == 0 {
+		return solTxSender.ChainConfig{}, fmt.Errorf("no min value to bridge for source chain: %s", srcChainID)
+	}
+
+	return solTxSender.ChainConfig{
+		MinAmountToBridge:     minAmountToBridge,
+		MinFeeForBridging:     minBridgingFee,
+		MinOperationFeeAmount: operationFeeBigInt.Uint64(),
+		CurrencyTokenID:       currencyID,
+	}, nil
 }
 
 func (c *SkylineTxControllerImpl) createTx(

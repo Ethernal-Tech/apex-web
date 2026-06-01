@@ -9,6 +9,7 @@ import (
 
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
+	solanatx "github.com/Ethernal-Tech/cardano-api/solana"
 	"github.com/Ethernal-Tech/cardano-infrastructure/logger"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
@@ -40,8 +41,10 @@ type EthChainConfig struct {
 }
 
 type SolanaChainConfig struct {
-	ChainID   string `json:"-"`
-	IsEnabled bool   `json:"isEnabled"`
+	ChainID         string                      `json:"-"`
+	TreasuryAddress string                      `json:"treasuryAddress"`
+	ChainSpecific   *solanatx.SolanaChainConfig `json:"chainSpecific"`
+	IsEnabled       bool                        `json:"isEnabled"`
 }
 
 type CardanoChainConfig struct {
@@ -258,6 +261,8 @@ func (appConfig *AppConfig) fillOutSkylineSpecific(
 			"failed to convert MinChainFeeForBridging to big.Int",
 		)
 
+		minChainFeeForBridgingTokens := settingsResponse.MinChainFeeForBridgingTokens
+
 		minOperationFee := parseBigIntMap(
 			logger,
 			settingsResponse.MinOperationFee,
@@ -282,29 +287,9 @@ func (appConfig *AppConfig) fillOutSkylineSpecific(
 			"failed to convert MinColCoinsAllowedToBridge to big.Int",
 		)
 
-		// TODO: remove this once the oracle API provides the direction config for solana as well
-		_, ok := settingsResponse.DirectionConfig["solana"]
-		if !ok {
-			type DirectionConfigFile struct {
-				Directions      map[string]DirectionConfig `json:"directions"`
-				EcosystemTokens []EcosystemToken           `json:"ecosystemTokens"`
-			}
-
-			dirConfig, err := common.LoadConfig[DirectionConfigFile]("./directionsConfig.json", "")
-			if err != nil {
-				return err
-			}
-
-			settingsResponse.DirectionConfig = dirConfig.Directions
-			settingsResponse.EcosystemTokens = dirConfig.EcosystemTokens
-			minColCoinsAllowedToBridge["solana"] = big.NewInt(1)
-			minChainFeeForBridging["solana"] = big.NewInt(4000000000)
-			minOperationFee["solana"] = big.NewInt(0)
-		}
-
 		appConfig.SkylineBridgingSettings = SkylineBridgingSettings{
 			MinChainFeeForBridging:         minChainFeeForBridging,
-			MinChainFeeForBridgingTokens:   settingsResponse.MinChainFeeForBridgingTokens,
+			MinChainFeeForBridgingTokens:   minChainFeeForBridgingTokens,
 			MinOperationFee:                minOperationFee,
 			MinUtxoChainValue:              settingsResponse.MinUtxoChainValue,
 			MinValueToBridge:               settingsResponse.MinValueToBridge,
