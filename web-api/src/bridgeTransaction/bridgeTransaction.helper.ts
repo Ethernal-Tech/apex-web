@@ -13,10 +13,6 @@ import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
 import { isCardanoChain, isSolanaChain } from 'src/utils/chainUtils';
 import { parseSolanaTxRawStorage } from 'src/utils/solanaTxRaw';
-import {
-	isSolanaBlockhashValidSafe,
-	isSolanaTransactionConfirmed,
-} from 'src/utils/solanaRpc';
 import { getUrlAndApiKey } from 'src/utils/generalUtils';
 import { getAppConfig } from 'src/appConfig/appConfig';
 
@@ -258,25 +254,7 @@ export const getHasTxFailedRequestState = async (
 	if (isCardanoChain(chainId as ChainEnum)) {
 		ttl = getCardanoTTL(model.txRaw);
 	} else if (isSolanaChain(chainId as ChainEnum)) {
-		const { blockHash } = parseSolanaTxRawStorage(model.txRaw);
-		if (!blockHash) {
-			return;
-		}
-
-		const isConfirmed = await isSolanaTransactionConfirmed(model.txHash);
-		if (isConfirmed === undefined || isConfirmed) {
-			return;
-		}
-
-		const blockhashStillValid = await isSolanaBlockhashValidSafe(blockHash);
-		if (blockhashStillValid === undefined || blockhashStillValid) {
-			return;
-		}
-
-		return {
-			sourceTxHash: model.txHash,
-			status: TransactionStatusEnum.InvalidRequest,
-		} as BridgingRequestState;
+		ttl = getSolanaTTL(model.txRaw);
 	} else {
 		ttl = getEthTTL(model.txRaw);
 	}
@@ -494,6 +472,18 @@ export const getCardanoTTL = (txRaw: string): bigint | undefined => {
 		return ttl ? BigInt(ttl.to_str()) : undefined;
 	} catch (e) {
 		Logger.warn(`Error while getCardanoTTL: ${e}`, e.stack);
+	}
+};
+
+export const getSolanaTTL = (storedTxRaw: string): bigint | undefined => {
+	try {
+		const { lastValidBlockHeight } = parseSolanaTxRawStorage(storedTxRaw);
+		if (!lastValidBlockHeight) {
+			return undefined;
+		}
+		return BigInt(lastValidBlockHeight);
+	} catch (e) {
+		Logger.warn(`Error while getSolanaTTL: ${e}`, e.stack);
 	}
 };
 

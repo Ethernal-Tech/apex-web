@@ -2255,8 +2255,8 @@ export interface ICreateEthTransactionFullResponseDto {
 export class SolanaTransactionResponseDto implements ISolanaTransactionResponseDto {
     /** Unsigned Solana transaction, encoded as base64 */
     txRaw!: string;
-    /** Recent blockhash used when building the transaction (base58) */
-    blockHash!: string;
+    /** Block through which the tx stays valid */
+    lastValidBlockHeight!: string;
 
     [key: string]: any;
 
@@ -2276,7 +2276,7 @@ export class SolanaTransactionResponseDto implements ISolanaTransactionResponseD
                     this[property] = _data[property];
             }
             this.txRaw = _data["txRaw"];
-            this.blockHash = _data["blockHash"];
+            this.lastValidBlockHeight = _data["lastValidBlockHeight"];
         }
     }
 
@@ -2294,7 +2294,7 @@ export class SolanaTransactionResponseDto implements ISolanaTransactionResponseD
                 data[property] = this[property];
         }
         data["txRaw"] = this.txRaw;
-        data["blockHash"] = this.blockHash;
+        data["lastValidBlockHeight"] = this.lastValidBlockHeight;
         return data;
     }
 }
@@ -2302,8 +2302,8 @@ export class SolanaTransactionResponseDto implements ISolanaTransactionResponseD
 export interface ISolanaTransactionResponseDto {
     /** Unsigned Solana transaction, encoded as base64 */
     txRaw: string;
-    /** Recent blockhash used when building the transaction (base58) */
-    blockHash: string;
+    /** Block through which the tx stays valid */
+    lastValidBlockHeight: string;
 
     [key: string]: any;
 }
@@ -2475,8 +2475,8 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
     tokenID!: number;
     /** Transaction raw data on source chain */
     txRaw!: string;
-    /** Solana recent blockhash from create tx (base58) */
-    blockHash?: string | undefined;
+    /** Solana block through which the tx stays valid */
+    lastValidBlockHeight?: string | undefined;
     /** Indicates is fallback mechanism used */
     isFallback!: boolean;
     /** Indicates if Layer Zero bridging is used */
@@ -2515,7 +2515,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
             this.nativeTokenAmount = _data["nativeTokenAmount"];
             this.tokenID = _data["tokenID"];
             this.txRaw = _data["txRaw"];
-            this.blockHash = _data["blockHash"];
+            this.lastValidBlockHeight = _data["lastValidBlockHeight"];
             this.isFallback = _data["isFallback"];
             this.isLayerZero = _data["isLayerZero"];
         }
@@ -2547,7 +2547,7 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
         data["nativeTokenAmount"] = this.nativeTokenAmount;
         data["tokenID"] = this.tokenID;
         data["txRaw"] = this.txRaw;
-        data["blockHash"] = this.blockHash;
+        data["lastValidBlockHeight"] = this.lastValidBlockHeight;
         data["isFallback"] = this.isFallback;
         data["isLayerZero"] = this.isLayerZero;
         return data;
@@ -2571,8 +2571,8 @@ export interface ITransactionSubmittedDto {
     tokenID: number;
     /** Transaction raw data on source chain */
     txRaw: string;
-    /** Solana recent blockhash from create tx */
-    blockHash?: string | undefined;
+    /** Solana block through which the tx stays valid */
+    lastValidBlockHeight?: string | undefined;
     /** Indicates is fallback mechanism used */
     isFallback: boolean;
     /** Indicates if Layer Zero bridging is used */

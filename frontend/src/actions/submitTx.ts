@@ -542,7 +542,8 @@ export const signAndSubmitSolanaTx = async (
 		amount: amount.toString(10),
 		originTxHash: signature,
 		txRaw,
-		blockHash: createResponse.bridgingTx?.solTx?.blockHash,
+		lastValidBlockHeight:
+			createResponse.bridgingTx?.solTx?.lastValidBlockHeight,
 		isFallback: createResponse.bridgingTx.isFallback,
 		nativeTokenAmount: tokenAmount.toString(10),
 		tokenID,

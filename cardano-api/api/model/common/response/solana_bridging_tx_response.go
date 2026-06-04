@@ -7,6 +7,8 @@ type SolanaTransactionResponse struct {
 	TxRaw string `json:"txRaw"`
 	// Recent blockhash used when building the transaction (base58)
 	BlockHash string `json:"blockHash"`
+	// Block through which blockHash remains valid
+	LastValidBlockHeight string `json:"lastValidBlockHeight"`
 } // @name SolanaTransactionResponse
 
 type BridgingSolanaTransactionResponse struct {
@@ -24,6 +26,7 @@ type CreateSolanaBridgingTxFullResponse struct {
 func NewCreateSolanaBridgingTxFullResponse(
 	txRaw string,
 	blockHash string,
+	lastValidBlockHeight uint64,
 	bridgingFee uint64,
 	operationFee uint64,
 	tokenAmount uint64,
@@ -32,8 +35,9 @@ func NewCreateSolanaBridgingTxFullResponse(
 	return &CreateSolanaBridgingTxFullResponse{
 		BridgingTx: BridgingSolanaTransactionResponse{
 			SolTx: SolanaTransactionResponse{
-				TxRaw:     txRaw,
-				BlockHash: blockHash,
+				TxRaw:                txRaw,
+				BlockHash:            blockHash,
+				LastValidBlockHeight: strconv.FormatUint(lastValidBlockHeight, 10),
 			},
 			BridgingFee:  strconv.FormatUint(bridgingFee, 10),
 			OperationFee: strconv.FormatUint(operationFee, 10),

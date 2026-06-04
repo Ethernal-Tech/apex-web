@@ -286,7 +286,8 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 		srcMinAmount = srcMinUtxoChainValue
 	} else {
-		srcMinColCoinsAmount, found := c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.SourceChainID]
+		srcMinColCoinsAmount, found :=
+			c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.SourceChainID]
 		if !found || srcMinColCoinsAmount.Sign() == 0 {
 			return fmt.Errorf("no min value to bridge for source chain: %s", requestBody.SourceChainID)
 		}
@@ -526,7 +527,7 @@ func (c *SkylineTxControllerImpl) createSolanaTx(
 		return nil, fmt.Errorf("invalid sender address in request body. err: %w", err)
 	}
 
-	if len(requestBody.Transactions) <= 0 {
+	if len(requestBody.Transactions) == 0 {
 		return nil, fmt.Errorf("no valid transactions in request")
 	}
 
@@ -566,13 +567,13 @@ func (c *SkylineTxControllerImpl) createSolanaTx(
 		OperationFee: requestBody.OperationFee,
 	}
 
-	recentBlockHash, err := txProvider.GetLatestBlockhash(ctx)
+	latestBlockHashAndExpiry, err := txProvider.GetLatestBlockhashAndExpiry(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get latest blockhash. err: %w", err)
 	}
 
 	tx, err := txSender.CreateTx(
-		ctx, senderAddress, solTxSender.InstructionTypeBridgingRequest, recentBlockHash, txDto,
+		ctx, senderAddress, solTxSender.InstructionTypeBridgingRequest, latestBlockHashAndExpiry.Blockhash, txDto,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create solana transaction. err: %w", err)
@@ -595,7 +596,8 @@ func (c *SkylineTxControllerImpl) createSolanaTx(
 
 	return commonResponse.NewCreateSolanaBridgingTxFullResponse(
 		base64.StdEncoding.EncodeToString(txBytes),
-		recentBlockHash.String(),
+		latestBlockHashAndExpiry.Blockhash.String(),
+		latestBlockHashAndExpiry.LastValidBlockHeight,
 		requestBody.BridgingFee,
 		requestBody.OperationFee,
 		tokenAmount,
@@ -603,7 +605,8 @@ func (c *SkylineTxControllerImpl) createSolanaTx(
 	), nil
 }
 
-func (c *SkylineTxControllerImpl) solanaSendTxChainConfig(srcChainID string, currencyID uint16) (solTxSender.ChainConfig, error) {
+func (c *SkylineTxControllerImpl) solanaSendTxChainConfig(
+	srcChainID string, currencyID uint16) (solTxSender.ChainConfig, error) {
 	minBridgingFee, found := c.appConfig.SkylineBridgingSettings.GetMinBridgingFee(srcChainID, false)
 	if !found {
 		return solTxSender.ChainConfig{}, fmt.Errorf("no minimal bridging fee for chain: %s", srcChainID)

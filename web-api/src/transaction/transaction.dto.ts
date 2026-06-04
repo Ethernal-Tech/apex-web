@@ -146,11 +146,10 @@ export class TransactionSubmittedDto {
 
 	@IsOptional()
 	@ApiProperty({
-		description:
-			'Solana recent blockhash from create tx (base58); stored with txRaw for expiry checks',
+		description: 'Solana last valid block height from create tx',
 		required: false,
 	})
-	blockHash?: string;
+	lastValidBlockHeight?: string;
 
 	@ApiProperty({
 		description: 'Indicates is fallback mechanism used',
@@ -364,9 +363,9 @@ export class SolanaTransactionResponseDto {
 
 	@IsNotEmpty()
 	@ApiProperty({
-		description: 'Recent blockhash used when building the transaction (base58)',
+		description: 'Block through which the tx blockhash stays valid',
 	})
-	blockHash: string;
+	lastValidBlockHeight: string;
 }
 
 @ApiExtraModels(SolanaTransactionResponseDto)

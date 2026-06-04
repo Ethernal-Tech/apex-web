@@ -61,7 +61,7 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/Ethernal-Tech/solana-infrastructure v0.0.0-20260604103149-e442b2b1455e
+	github.com/Ethernal-Tech/solana-infrastructure v0.0.0-20260604145624-60bf84a16031
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -94,3 +94,5 @@ require (
 	golang.org/x/term v0.26.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 )
+
+replace github.com/Ethernal-Tech/solana-infrastructure => ../../solana-infrastructure

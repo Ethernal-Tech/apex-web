@@ -341,7 +341,7 @@ export class TransactionService {
 			nativeTokenAmount,
 			tokenID,
 			txRaw,
-			blockHash,
+			lastValidBlockHeight,
 			isFallback,
 			isLayerZero,
 		}: TransactionSubmittedDto,
@@ -385,8 +385,8 @@ export class TransactionService {
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;
 		entity.txRaw =
-			isSolanaChain(originChain) && blockHash
-				? serializeSolanaTxRawStorage(txRaw, blockHash)
+			isSolanaChain(originChain) && lastValidBlockHeight
+				? serializeSolanaTxRawStorage(txRaw, lastValidBlockHeight)
 				: txRaw;
 		entity.isCentralized = isFallback;
 		entity.isLayerZero = isLayerZero;
