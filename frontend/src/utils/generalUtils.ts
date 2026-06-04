@@ -33,8 +33,6 @@ import { EtherUnits } from 'web3-utils';
 export const SKYLINE_DOCUMENTATION_URL =
 	'https://ethernal-6.gitbook.io/skyline';
 
-const WEI_PER_LAMPORT = BigInt(1_000_000_000);
-
 export const capitalizeWord = (word: string): string => {
 	if (!word || word.length === 0) {
 		return word;
@@ -104,6 +102,10 @@ export const convertDfmToWei = (dfm: Numbers): string => {
 	return toWei(dfm, 12);
 };
 
+export const convertLamportsToDfm = (lamports: bigint | Numbers): string => {
+	return fromWei(lamports, 3);
+};
+
 export const convertWeiToDfmByChain = (wei: Numbers, chain: ChainEnum) => {
 	if (isCardanoChain(chain)) {
 		return convertWeiToDfm(wei);
@@ -130,12 +132,12 @@ export const convertWeiToDfmBig = (wei: bigint) => {
 };
 
 // 1 lamport = 10^9 wei (9 decimals vs 18 decimals).
-export const convertWeiToLamports = (wei: bigint | Numbers): bigint => {
-	return BigInt(wei) / WEI_PER_LAMPORT;
+export const convertWeiToLamports = (wei: bigint | Numbers): string => {
+	return fromWei(wei, 9);
 };
 
-export const convertLamportsToWei = (lamports: bigint | Numbers): bigint => {
-	return BigInt(lamports) * WEI_PER_LAMPORT;
+export const convertLamportsToWei = (lamports: bigint | Numbers): string => {
+	return toWei(lamports, 9);
 };
 
 export const shouldUseMainnet = (src: ChainEnum, dst: ChainEnum): boolean =>

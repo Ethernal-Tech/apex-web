@@ -100,13 +100,12 @@ export class TransactionService {
 		}
 
 		const srcMinFee =
-			dto.tokenID !== currencyID && !isEvmChain(dto.originChain)
+			dto.tokenID !== currencyID && isCardanoChain(dto.originChain)
 				? settings.bridgingSettings.minChainFeeForBridgingTokens[
 						dto.originChain
 					]
 				: settings.bridgingSettings.minChainFeeForBridging[dto.originChain];
 		if (!srcMinFee) {
-			console.log('settings', settings.bridgingSettings);
 			throw new InternalServerErrorException(
 				`No minFee for source chain: ${dto.originChain}`,
 			);

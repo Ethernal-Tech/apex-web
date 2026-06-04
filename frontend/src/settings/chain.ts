@@ -181,7 +181,7 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 		borderColor: '#1C1C1E',
 		letter: 'S',
 		mainColor: '#1C1C1E',
-		order: 8,
+		order: 14,
 	},
 };
 

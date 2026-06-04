@@ -82,6 +82,11 @@ export class TransactionController {
 		return await this.transactionService.getCardanoTxFee(model);
 	}
 
+	@ApiOperation({
+		summary: 'Create an EVM bridging transaction',
+		description:
+			'Builds a bridging transaction with all required fees and metadata. The transaction must be signed and submitted separately.',
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: CreateEthTransactionFullResponseDto,
@@ -99,6 +104,11 @@ export class TransactionController {
 		return this.transactionService.createEth(model);
 	}
 
+	@ApiOperation({
+		summary: 'Create a Solana bridging transaction',
+		description:
+			'Builds a bridging transaction with all required fees and metadata. The transaction must be signed and submitted separately.',
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: CreateSolanaTransactionFullResponseDto,

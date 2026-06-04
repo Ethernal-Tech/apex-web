@@ -9,6 +9,7 @@ import {
 	calculateTokenUtxoMinValue,
 	convertApexToDfm,
 	convertWeiToDfm,
+	convertLamportsToDfm,
 	createUtxo,
 	minBigInt,
 } from '../../../utils/generalUtils';
@@ -86,7 +87,11 @@ const calculateMaxAmountToken = (
 		BigInt(maxTokenAmountAllowedToBridge || '0') !== BigInt(0)
 			? isEvmChain(chain)
 				? BigInt(maxTokenAmountAllowedToBridge)
-				: BigInt(convertWeiToDfm(maxTokenAmountAllowedToBridge))
+				: isSolanaChain(chain)
+					? BigInt(
+							convertLamportsToDfm(maxTokenAmountAllowedToBridge),
+						)
+					: BigInt(convertWeiToDfm(maxTokenAmountAllowedToBridge))
 			: BigInt(0);
 
 	const tokenBalance = BigInt(totalBalance[sourceTokenID] || '0');
@@ -110,7 +115,7 @@ const calculateMaxAmountCurrency = (
 	maxAmountAllowedToBridge: string,
 	chain: ChainEnum,
 	changeMinUtxo: number,
-	evmWalletFeeWeiValue: string,
+	nonCardanoWalletFeeWeiValue: string,
 	bridgeTxFee: string,
 	operationFee: string,
 ): { maxByBalance: bigint; maxByAllowed: bigint } => {
@@ -122,7 +127,9 @@ const calculateMaxAmountCurrency = (
 		BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
 			? isEvmChain(chain)
 				? BigInt(maxAmountAllowedToBridge)
-				: BigInt(convertWeiToDfm(maxAmountAllowedToBridge))
+				: isSolanaChain(chain)
+					? BigInt(convertLamportsToDfm(maxAmountAllowedToBridge))
+					: BigInt(convertWeiToDfm(maxAmountAllowedToBridge))
 			: BigInt(0);
 
 	const balanceAllowedToUse =
@@ -137,7 +144,7 @@ const calculateMaxAmountCurrency = (
 		maxByBalance =
 			BigInt(totalBalance[currencyID] || '0') -
 			BigInt(bridgeTxFee) -
-			BigInt(evmWalletFeeWeiValue) -
+			BigInt(nonCardanoWalletFeeWeiValue) -
 			BigInt(operationFee);
 	} else if (isSolanaChain(chain)) {
 		maxByBalance =
@@ -150,7 +157,8 @@ const calculateMaxAmountCurrency = (
 			BigInt(appSettings.potentialWalletFee) -
 			BigInt(bridgeTxFee) -
 			BigInt(changeMinUtxo) -
-			BigInt(operationFee);
+			BigInt(operationFee) -
+			BigInt(nonCardanoWalletFeeWeiValue);
 	}
 
 	return { maxByAllowed: balanceAllowedToUse, maxByBalance };
@@ -262,6 +270,7 @@ const BridgeInput = ({
 	const defaultBridgeTxFee = useMemo(
 		() =>
 			isEvmChain(chain) ||
+			isSolanaChain(chain) ||
 			!sourceTokenID ||
 			!currencyID ||
 			sourceTokenID === currencyID
@@ -499,6 +508,7 @@ const BridgeInput = ({
 		if (
 			(settings.bridgingAddresses || []).length === 0 ||
 			isEvmChain(chain) ||
+			isSolanaChain(chain) ||
 			!sourceTokenID ||
 			!currencyID ||
 			sourceTokenID === currencyID ||

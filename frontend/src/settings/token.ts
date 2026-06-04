@@ -319,18 +319,6 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 		label: 'BNB',
 		borderColor: '#F3BA2F',
 	},
-	14: {
-		tokenID: 14,
-		icon: PolygonIcon,
-		label: 'POL',
-		borderColor: '#7B3FE4',
-	},
-	21: {
-		tokenID: 21,
-		icon: SolanaIcon,
-		label: 'SOL',
-		borderColor: '#1C1C1E',
-	},
 };
 
 export const getTokenInfo = (tokenID: number | undefined): TokenInfo => {

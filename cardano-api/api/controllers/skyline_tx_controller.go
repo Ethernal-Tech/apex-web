@@ -196,7 +196,7 @@ func (c *SkylineTxControllerImpl) createSolanaBridgingTx(w http.ResponseWriter, 
 
 	c.logger.Debug("createSolanaBridgingTx request", "body", requestBody, "url", r.URL)
 
-	currencyID, err := c.appConfig.SkylineBridgingSettings.GetCurrencyID(common.ChainIDStrSolana)
+	currencyID, err := c.appConfig.SkylineBridgingSettings.GetCurrencyID(requestBody.SourceChainID)
 	if err != nil {
 		utils.WriteErrorResponse(
 			w, r, http.StatusBadRequest,
@@ -286,10 +286,12 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 
 		srcMinAmount = srcMinUtxoChainValue
 	} else {
-		srcMinAmount = c.appConfig.SkylineBridgingSettings.MinValueToBridge
-		if srcMinAmount == 0 {
+		srcMinColCoinsAmount, found := c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.SourceChainID]
+		if !found || srcMinColCoinsAmount.Sign() == 0 {
 			return fmt.Errorf("no min value to bridge for source chain: %s", requestBody.SourceChainID)
 		}
+
+		srcMinAmount = srcMinColCoinsAmount.Uint64()
 	}
 
 	destCurrencyID, err := c.appConfig.SkylineBridgingSettings.GetCurrencyID(requestBody.DestinationChainID)
@@ -374,14 +376,19 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			}
 
 			if tokenPair.SourceTokenID != srcCurrencyID && tokenPair.DestinationTokenID != destCurrencyID {
-				minColCoinsAllowedToBridge := common.MaxBigInt(
-					c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.SourceChainID],
-					c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.DestinationChainID],
-				).Uint64()
-				if receiver.Amount < minColCoinsAllowedToBridge {
+				minColCoinsAllowedToBridge, err := utils.GetMinColoredCoinsAllowedToBridge(
+					requestBody.SourceChainID,
+					requestBody.DestinationChainID,
+					c.appConfig.SkylineBridgingSettings,
+				)
+				if err != nil {
+					return err
+				}
+
+				if receiver.Amount < minColCoinsAllowedToBridge.Uint64() {
 					return fmt.Errorf(
 						"found an value below minimum value in receivers, receiver: %v. min: %v",
-						receiver, minColCoinsAllowedToBridge)
+						receiver, minColCoinsAllowedToBridge.Uint64())
 				}
 			}
 		} else if ethDestConfig != nil {
@@ -389,15 +396,19 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 				return fmt.Errorf("found an invalid receiver addr in request body. receiver: %v", receiver)
 			}
 
-			// eth destination
-			minColCoinsAllowedToBridge := common.MaxBigInt(
-				c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.SourceChainID],
-				common.WeiToDfm(c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[requestBody.DestinationChainID]),
+			minColCoinsAllowedToBridge, err := utils.GetMinColoredCoinsAllowedToBridge(
+				requestBody.SourceChainID,
+				requestBody.DestinationChainID,
+				c.appConfig.SkylineBridgingSettings,
 			)
+			if err != nil {
+				return err
+			}
+
 			if receiver.Amount < minColCoinsAllowedToBridge.Uint64() {
 				return fmt.Errorf(
 					"found an value below minimum value in receivers, receiver: %v. min: %v",
-					receiver, minColCoinsAllowedToBridge)
+					receiver, minColCoinsAllowedToBridge.Uint64())
 			}
 		} else {
 			err := solanawallet.ValidateAddress(receiver.Addr, false)
@@ -405,12 +416,19 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 				return fmt.Errorf("found an invalid receiver addr in request body. receiver: %v", receiver)
 			}
 
-			if tokenPair.DestinationTokenID == destCurrencyID {
-				if receiver.Amount < c.appConfig.SkylineBridgingSettings.MinValueToBridge {
-					return fmt.Errorf(
-						"found an value below minimum value in receivers, receiver: %v. min: %v",
-						receiver, c.appConfig.SkylineBridgingSettings.MinValueToBridge)
-				}
+			minColCoinsAllowedToBridge, err := utils.GetMinColoredCoinsAllowedToBridge(
+				requestBody.SourceChainID,
+				requestBody.DestinationChainID,
+				c.appConfig.SkylineBridgingSettings,
+			)
+			if err != nil {
+				return err
+			}
+
+			if receiver.Amount < minColCoinsAllowedToBridge.Uint64() {
+				return fmt.Errorf(
+					"found an value below minimum value in receivers, receiver: %v. min: %v",
+					receiver, minColCoinsAllowedToBridge.Uint64())
 			}
 		}
 
@@ -484,13 +502,13 @@ func (c *SkylineTxControllerImpl) createSolanaTx(
 	currencyID uint16,
 	requestBody commonRequest.CreateBridgingTxRequest,
 ) (*commonResponse.CreateSolanaBridgingTxFullResponse, error) {
-	_, _, solanaSrcConfig := c.appConfig.GetChainConfig(common.ChainIDStrSolana)
+	_, _, solanaSrcConfig := c.appConfig.GetChainConfig(requestBody.SourceChainID)
 	if solanaSrcConfig == nil {
-		return nil, fmt.Errorf("source chain not registered: %v", common.ChainIDStrSolana)
+		return nil, fmt.Errorf("source chain not registered: %v", requestBody.SourceChainID)
 	}
 
 	if solanaSrcConfig.ChainSpecific == nil {
-		return nil, fmt.Errorf("missing chain specific config for source chain: %s", common.ChainIDStrSolana)
+		return nil, fmt.Errorf("missing chain specific config for source chain: %s", requestBody.SourceChainID)
 	}
 
 	txProvider, err := solanaSrcConfig.ChainSpecific.CreateTxProvider()
@@ -508,17 +526,11 @@ func (c *SkylineTxControllerImpl) createSolanaTx(
 		return nil, fmt.Errorf("invalid sender address in request body. err: %w", err)
 	}
 
-	hasNonCurrencyTokens := false
-
-	for _, tx := range requestBody.Transactions {
-		if tx.TokenID != 0 && tx.TokenID != currencyID {
-			hasNonCurrencyTokens = true
-
-			break
-		}
+	if len(requestBody.Transactions) <= 0 {
+		return nil, fmt.Errorf("no valid transactions in request")
 	}
 
-	sendTxChainConfig, err := c.solanaSendTxChainConfig(common.ChainIDStrSolana, currencyID, hasNonCurrencyTokens)
+	sendTxChainConfig, err := c.solanaSendTxChainConfig(requestBody.SourceChainID, currencyID)
 	if err != nil {
 		return nil, err
 	}
@@ -591,10 +603,8 @@ func (c *SkylineTxControllerImpl) createSolanaTx(
 	), nil
 }
 
-func (c *SkylineTxControllerImpl) solanaSendTxChainConfig(
-	srcChainID string, currencyID uint16, hasNonCurrencyTokens bool,
-) (solTxSender.ChainConfig, error) {
-	minBridgingFee, found := c.appConfig.SkylineBridgingSettings.GetMinBridgingFee(srcChainID, hasNonCurrencyTokens)
+func (c *SkylineTxControllerImpl) solanaSendTxChainConfig(srcChainID string, currencyID uint16) (solTxSender.ChainConfig, error) {
+	minBridgingFee, found := c.appConfig.SkylineBridgingSettings.GetMinBridgingFee(srcChainID, false)
 	if !found {
 		return solTxSender.ChainConfig{}, fmt.Errorf("no minimal bridging fee for chain: %s", srcChainID)
 	}
@@ -604,10 +614,14 @@ func (c *SkylineTxControllerImpl) solanaSendTxChainConfig(
 		return solTxSender.ChainConfig{}, fmt.Errorf("no min operation fee for chain: %s", srcChainID)
 	}
 
-	minAmountToBridge := c.appConfig.SkylineBridgingSettings.MinValueToBridge
-	if minAmountToBridge == 0 {
+	var minAmountToBridge uint64
+
+	minAmount, found := c.appConfig.SkylineBridgingSettings.MinColCoinsAllowedToBridge[srcChainID]
+	if !found || minAmount.Sign() == 0 {
 		return solTxSender.ChainConfig{}, fmt.Errorf("no min value to bridge for source chain: %s", srcChainID)
 	}
+
+	minAmountToBridge = minAmount.Uint64()
 
 	return solTxSender.ChainConfig{
 		MinAmountToBridge:     minAmountToBridge,

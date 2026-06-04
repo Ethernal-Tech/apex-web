@@ -88,6 +88,7 @@ const prepareCreateCardanoBridgingTx = (
 
 const prepareCreateSolanaBridgingTx = (dto: CreateTransactionDto) => ({
 	senderAddr: dto.senderAddress,
+	sourceChainId: dto.originChain,
 	destinationChainId: dto.destinationChain,
 	transactions: [
 		{
@@ -214,7 +215,9 @@ export const createEthBridgingTx = (
 	let minValue: bigint;
 	if (isSolanaChain(destChain)) {
 		minValue = BigInt(
-			convertLamportsToWei(bridgingSettings.minValueToBridge), //TODO: check if this is correct
+			convertLamportsToWei(
+				bridgingSettings.minColCoinsAllowedToBridge[dto.destinationChain],
+			), //TODO: check if this is correct
 		);
 	} else if (isCardanoChain(destChain) && isWrappedCurrencyBridging) {
 		minValue = BigInt(

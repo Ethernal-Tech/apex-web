@@ -3,7 +3,7 @@ import { captureAndThrowError, captureException } from './sentry';
 import {
 	confirmTransactionSignature,
 	getBalanceLamports,
-	getSplTokenBalanceLamports,
+	getSplTokenBalancesByMintLamports,
 	sendRawTransactionBase64,
 } from '../utils/solanaRpc';
 import {
@@ -110,32 +110,35 @@ class SolWalletHandler {
 		return getBalanceLamports(this._address, this._useMainnet);
 	};
 
-	getSplTokenBalance = async (mintAddress: string): Promise<bigint> => {
+	getSplTokenBalancesByMint = async (): Promise<Record<string, bigint>> => {
 		if (!this._address) {
 			captureAndThrowError(
 				'Wallet not enabled.',
 				'SolWalletHandler.ts',
-				'getSplTokenBalance',
+				'getSplTokenBalancesByMint',
 			);
 		}
 
 		try {
-			return await getSplTokenBalanceLamports(
+			return await getSplTokenBalancesByMintLamports(
 				this._address,
-				mintAddress,
 				this._useMainnet,
 			);
 		} catch (err) {
 			captureException(err, {
 				tags: {
 					component: 'SolWalletHandler.ts',
-					action: 'getSplTokenBalance',
-					mintAddress,
+					action: 'getSplTokenBalancesByMint',
 				},
 			});
 
-			return BigInt(0);
+			return {};
 		}
+	};
+
+	getSplTokenBalance = async (mintAddress: string): Promise<bigint> => {
+		const balances = await this.getSplTokenBalancesByMint();
+		return balances[mintAddress] ?? BigInt(0);
 	};
 
 	/**

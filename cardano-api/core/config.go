@@ -261,8 +261,6 @@ func (appConfig *AppConfig) fillOutSkylineSpecific(
 			"failed to convert MinChainFeeForBridging to big.Int",
 		)
 
-		minChainFeeForBridgingTokens := settingsResponse.MinChainFeeForBridgingTokens
-
 		minOperationFee := parseBigIntMap(
 			logger,
 			settingsResponse.MinOperationFee,
@@ -289,7 +287,7 @@ func (appConfig *AppConfig) fillOutSkylineSpecific(
 
 		appConfig.SkylineBridgingSettings = SkylineBridgingSettings{
 			MinChainFeeForBridging:         minChainFeeForBridging,
-			MinChainFeeForBridgingTokens:   minChainFeeForBridgingTokens,
+			MinChainFeeForBridgingTokens:   settingsResponse.MinChainFeeForBridgingTokens,
 			MinOperationFee:                minOperationFee,
 			MinUtxoChainValue:              settingsResponse.MinUtxoChainValue,
 			MinValueToBridge:               settingsResponse.MinValueToBridge,
@@ -547,21 +545,15 @@ func (config EthChainConfig) ToSendTxChainConfig(
 func (config SolanaChainConfig) ToSendTxChainConfig(
 	appConfig *AppConfig,
 ) (sendtx.ChainConfig, error) {
-	var (
-		feeValue *big.Int
-	)
-
-	feeValue = appConfig.SkylineBridgingSettings.MinChainFeeForBridging[config.ChainID]
-
 	return sendtx.ChainConfig{
-		DefaultMinFeeForBridging: feeValue.Uint64(),
+		DefaultMinFeeForBridging: appConfig.SkylineBridgingSettings.MinChainFeeForBridging[config.ChainID].Uint64(),
 	}, nil
 }
 
 func (settings SkylineBridgingSettings) GetMinBridgingFee(chainID string, isNativeToken bool) (
 	fee uint64, found bool,
 ) {
-	if isNativeToken {
+	if isNativeToken && chainID != common.ChainIDStrSolana {
 		fee, found = settings.MinChainFeeForBridgingTokens[chainID]
 	} else {
 		var feeBigInt *big.Int

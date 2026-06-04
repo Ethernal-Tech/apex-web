@@ -63,10 +63,55 @@ export async function getBalanceLamports(
 ): Promise<bigint> {
 	const result = await solanaRpcCall<{ value: number }>(
 		'getBalance',
-		[address, { commitment: 'confirmed' }],
+		[address, { commitment: 'finalized' }],
 		useMainnet,
 	);
 	return BigInt(result.value);
+}
+
+const SPL_TOKEN_PROGRAM_ID = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
+
+type ParsedTokenAccount = {
+	account: {
+		data: {
+			parsed?: {
+				info?: {
+					mint?: string;
+					tokenAmount?: { amount?: string };
+				};
+			};
+		};
+	};
+};
+
+/** One RPC call: all SPL token balances for owner, keyed by mint address. */
+export async function getSplTokenBalancesByMintLamports(
+	ownerAddress: string,
+	useMainnet?: boolean,
+): Promise<Record<string, bigint>> {
+	const result = await solanaRpcCall<{ value: ParsedTokenAccount[] }>(
+		'getTokenAccountsByOwner',
+		[
+			ownerAddress,
+			{ programId: SPL_TOKEN_PROGRAM_ID },
+			{ encoding: 'jsonParsed', commitment: 'confirmed' },
+		],
+		useMainnet,
+	);
+
+	const balances: Record<string, bigint> = {};
+	for (const { account } of result.value) {
+		const info = account.data?.parsed?.info;
+		const mint = info?.mint;
+		const amount = info?.tokenAmount?.amount;
+		if (!mint || !amount) {
+			continue;
+		}
+		const lamports = BigInt(amount);
+		balances[mint] = (balances[mint] ?? BigInt(0)) + lamports;
+	}
+
+	return balances;
 }
 
 export async function getSplTokenBalanceLamports(
@@ -74,35 +119,11 @@ export async function getSplTokenBalanceLamports(
 	mintAddress: string,
 	useMainnet?: boolean,
 ): Promise<bigint> {
-	const result = await solanaRpcCall<{
-		value: Array<{
-			account: {
-				data: {
-					parsed?: {
-						info?: { tokenAmount?: { amount?: string } };
-					};
-				};
-			};
-		}>;
-	}>(
-		'getTokenAccountsByOwner',
-		[
-			ownerAddress,
-			{ mint: mintAddress },
-			{ encoding: 'jsonParsed', commitment: 'confirmed' },
-		],
+	const balances = await getSplTokenBalancesByMintLamports(
+		ownerAddress,
 		useMainnet,
 	);
-
-	let total = BigInt(0);
-	for (const { account } of result.value) {
-		const amount = account.data?.parsed?.info?.tokenAmount?.amount;
-		if (amount) {
-			total += BigInt(amount);
-		}
-	}
-
-	return total;
+	return balances[mintAddress] ?? BigInt(0);
 }
 
 export async function getFeeForMessageLamports(

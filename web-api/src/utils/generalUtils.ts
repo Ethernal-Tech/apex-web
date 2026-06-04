@@ -7,7 +7,6 @@ import { isCardanoChain, isSolanaChain } from './chainUtils';
 import { getAppConfig } from 'src/appConfig/appConfig';
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
-const WEI_PER_LAMPORT = BigInt(1_000_000_000);
 
 export const wait = async (durationMs: number) =>
 	new Promise((res) => setTimeout(res, durationMs));
@@ -81,12 +80,12 @@ export const convertDfmToWei = (dfm: Numbers): string => {
 };
 
 // 1 lamport = 10^9 wei (9 decimals vs 18 decimals).
-export const convertWeiToLamports = (wei: bigint | Numbers): bigint => {
-	return BigInt(wei) / WEI_PER_LAMPORT;
+export const convertWeiToLamports = (wei: bigint | Numbers): string => {
+	return fromWei(wei, 9);
 };
 
-export const convertLamportsToWei = (lamports: bigint | Numbers): bigint => {
-	return BigInt(lamports) * WEI_PER_LAMPORT;
+export const convertLamportsToWei = (lamports: bigint | Numbers): string => {
+	return toWei(lamports, 9);
 };
 
 export const convertWeiToDfmByChain = (wei: Numbers, chain: ChainEnum) => {
