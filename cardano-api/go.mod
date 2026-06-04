@@ -94,5 +94,3 @@ require (
 	golang.org/x/term v0.26.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 )
-
-replace github.com/Ethernal-Tech/solana-infrastructure => ../../solana-infrastructure
