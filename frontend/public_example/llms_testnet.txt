@@ -84,6 +84,35 @@ For UTXO chains **not** listed here, ask the user to provide the Ogmios URL befo
 
 ---
 
+
+## Explorer URLs
+
+Use these to construct transaction links when reporting results to the user.
+
+| Chain ID    | Explorer Base URL                                          | Tx URL format                                                              |
+|-------------|------------------------------------------------------------|----------------------------------------------------------------------------|
+| `prime`     | `https://beta-explorer.prime.testnet.apexfusion.org/en`    | `https://beta-explorer.prime.testnet.apexfusion.org/en/transactions/<txHash>` |
+| `vector`    | `https://explorer.vector.testnet.apexfusion.org`           | `https://explorer.vector.testnet.apexfusion.org/transaction/hash/<txHash>` |
+| `cardano`   | `https://preview.cardanoscan.io`                           | `https://preview.cardanoscan.io/transaction/<txHash>`                     |
+| `nexus`     | `https://explorer.nexus.testnet.apexfusion.org`            | `https://explorer.nexus.testnet.apexfusion.org/tx/<txHash>`               |
+| `polygon`   | `https://amoy.polygonscan.com`                             | `https://amoy.polygonscan.com/tx/<txHash>`                                |
+| `ethereum`  | `https://sepolia.etherscan.io`                             | `https://sepolia.etherscan.io/tx/<txHash>`                                |
+| `katana`    | `https://bokuto.katanascan.com`                            | `https://bokuto.katanascan.com/tx/<txHash>`                               |
+| `sei`       | `https://testnet.seiscan.io`                               | `https://testnet.seiscan.io/tx/<txHash>`                                  |
+| `arbitrum`  | `https://sepolia.arbiscan.io`                              | `https://sepolia.arbiscan.io/tx/<txHash>`                                 |
+| `scroll`    | `https://sepolia.scrollscan.com`                           | `https://sepolia.scrollscan.com/tx/<txHash>`                              |
+| `unichain`  | `https://unichain-sepolia.blockscout.com`                  | `https://unichain-sepolia.blockscout.com/tx/<txHash>`                     |
+| `base`      | `https://sepolia.basescan.org`                             | `https://sepolia.basescan.org/tx/<txHash>`                                |
+| `bsc`       | `https://testnet.bscscan.com`                              | `https://testnet.bscscan.com/tx/<txHash>`                                 |
+
+**Rules:**
+- UTXO chains (`prime`, `vector`, `cardano`): append `/transactions/<txHash>`
+- EVM chains (all others): append `/tx/<txHash>`
+- Always include explorer links in the `BRIDGE TRANSACTION SUMMARY` when a `txHash` is available.
+
+---
+
+
 ## Interaction Model
 
 The agent never controls the user's private key. The workflow is a **four-phase handshake**:
@@ -562,7 +591,11 @@ When a terminal status is reached, always report the outcome using this exact st
   Total cost      : <token amount + bridging fee + operation fee>
 
   Source tx       : <sourceTxHash>
+  Source tx link  : <explorer URL for originChain>/transactions/<txHash> or /tx/<txHash>
+
   Destination tx  : <destinationTxHash, or "N/A" if refunded/failed>
+  Dest tx link    : <explorer URL for destinationChain>/transactions/<txHash> or /tx/<txHash>, or "N/A">
+
   Bridge tx ID    : <id>
 ══════════════════════════════════════════
 ```
@@ -730,3 +763,4 @@ Agent collects (if not provided):
 24. **Always perform continuous tracking.** Poll every 20 seconds and proactively report non-terminal updates until terminal completion (or timeout): full block for the first non-terminal status, then short-line updates at every poll.
 25. **Always state active tracking behavior in the first progress block.** Include the line: `Tracking        : I am polling every 20 seconds and will send an update if the status changes.`
 26. **After the first progress block, do not repost the full body for non-terminal updates.** Use only: `Bridging not finished yet, current status: <status>` for every subsequent poll while status is non-terminal.
+27. **Always construct and display explorer links in `BRIDGE TRANSACTION SUMMARY`.** Use the Explorer URLs table to build the full transaction URL. For `prime` append `/transactions/<txHash>`; for `cardano` append `/transaction/<txHash>`; for `vector` append `/transaction/hash/<txHash>`; for EVM chains append `/tx/<txHash>`. Include `Source tx link` for the source transaction and `Dest tx link` for the destination transaction (omit `Dest tx link` if `destinationTxHash` is null).
