@@ -515,13 +515,17 @@ export const signAndSubmitSolanaTx = async (
 		);
 	}
 
+	const bridgingFee = BigInt(createResponse.bridgingTx.bridgingFee || '0');
+	const operationFee = BigInt(createResponse.bridgingTx.operationFee || '0');
 	const tokenAmount = BigInt(createResponse.bridgingTx.tokenAmount || '0');
-	const tokenID =
-		tokenAmount > BigInt(0) ? createResponse.bridgingTx.tokenID : 0;
-	const amount =
-		BigInt(createResponse.bridgingTx.bridgingFee || '0') +
-		BigInt(createResponse.bridgingTx.operationFee || '0') +
-		tokenAmount;
+	const isSplTokenBridge = tokenAmount > BigInt(0);
+	const tokenID = isSplTokenBridge ? createResponse.bridgingTx.tokenID : 0;
+
+	const bridgedCurrencyAmount = isSplTokenBridge
+		? BigInt(0)
+		: BigInt(values.amount || '0');
+	const amount = bridgingFee + operationFee + bridgedCurrencyAmount;
+	const nativeTokenAmount = isSplTokenBridge ? tokenAmount : BigInt(0);
 
 	updateLoadingState({
 		content: 'Signing and submitting the bridging transaction...',
@@ -545,7 +549,7 @@ export const signAndSubmitSolanaTx = async (
 		lastValidBlockHeight:
 			createResponse.bridgingTx?.solTx?.lastValidBlockHeight,
 		isFallback: createResponse.bridgingTx.isFallback,
-		nativeTokenAmount: tokenAmount.toString(10),
+		nativeTokenAmount: nativeTokenAmount.toString(10),
 		tokenID,
 		isLayerZero: false,
 	});

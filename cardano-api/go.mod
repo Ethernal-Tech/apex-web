@@ -61,7 +61,7 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/Ethernal-Tech/solana-infrastructure v0.0.0-20260604145624-60bf84a16031
+	github.com/Ethernal-Tech/solana-infrastructure v0.0.0-20260605142832-26c541b6415b
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

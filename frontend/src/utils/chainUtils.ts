@@ -378,7 +378,7 @@ const EXPLORER_URLS: {
 		[ChainEnum.Arbitrum]: 'https://sepolia.arbiscan.io/',
 		[ChainEnum.Scroll]: 'https://sepolia.scrollscan.com/',
 		[ChainEnum.Unichain]: 'https://unichain-sepolia.blockscout.com/',
-		[ChainEnum.Solana]: 'https://explorer.solana.com/?cluster=testnet',
+		[ChainEnum.Solana]: 'https://explorer.solana.com/?cluster=devnet',
 	},
 };
 
@@ -437,7 +437,7 @@ export const getExplorerTxUrl = (
 		case ChainEnum.Solana: {
 			url = appSettings.isMainnet
 				? `${base}/tx/${txHash}`
-				: `${base}/tx/${txHash}?cluster=testnet`;
+				: `${base}/tx/${txHash}?cluster=devnet`;
 			break;
 		}
 		default:
@@ -512,7 +512,7 @@ export const getExplorerAddressUrl = (
 		case ChainEnum.Solana: {
 			url = appSettings.isMainnet
 				? `${base}/address/${address}`
-				: `${base}/address/${address}?cluster=testnet`;
+				: `${base}/address/${address}?cluster=devnet`;
 			break;
 		}
 		default:
