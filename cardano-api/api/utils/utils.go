@@ -145,7 +145,7 @@ func GetAllBridgingAddress(
 func GetMinColoredCoinsAllowedToBridge(
 	chainIDSrc, chainIDDst string, settings core.SkylineBridgingSettings,
 ) (*big.Int, error) {
-	if !isCardanoChainID(chainIDSrc) && !isSolanaChainID(chainIDSrc) {
+	if !common.IsCardanoChainID(chainIDSrc) && !common.IsSolanaChainID(chainIDSrc) {
 		return nil, fmt.Errorf("unsupported source chain: %q", chainIDSrc)
 	}
 
@@ -190,34 +190,13 @@ const (
 	tokenRepWei
 )
 
-func isCardanoChainID(chainID string) bool {
-	return chainID == common.ChainIDStrCardano ||
-		chainID == common.ChainIDStrPrime ||
-		chainID == common.ChainIDStrVector
-}
-
-func isEvmChainID(chainID string) bool {
-	return chainID == common.ChainIDStrNexus ||
-		chainID == common.ChainIDStrPolygon ||
-		chainID == common.ChainIDStrEthereum ||
-		chainID == common.ChainIDStrKatana ||
-		chainID == common.ChainIDStrSei ||
-		chainID == common.ChainIDStrArbitrum ||
-		chainID == common.ChainIDStrScroll ||
-		chainID == common.ChainIDStrUnichain
-}
-
-func isSolanaChainID(chainID string) bool {
-	return chainID == common.ChainIDStrSolana
-}
-
 func tokenRepresentationForChainID(chainID string) (tokenRepresentation, error) {
 	switch {
-	case isCardanoChainID(chainID):
+	case common.IsCardanoChainID(chainID):
 		return tokenRepDfm, nil
-	case isEvmChainID(chainID):
+	case common.IsEvmChainID(chainID):
 		return tokenRepWei, nil
-	case isSolanaChainID(chainID):
+	case common.IsSolanaChainID(chainID):
 		return tokenRepLamports, nil
 	default:
 		return 0, fmt.Errorf("unknown chain id: %q", chainID)

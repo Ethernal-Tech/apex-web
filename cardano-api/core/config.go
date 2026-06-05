@@ -553,7 +553,7 @@ func (config SolanaChainConfig) ToSendTxChainConfig(
 func (settings SkylineBridgingSettings) GetMinBridgingFee(chainID string, isNativeToken bool) (
 	fee uint64, found bool,
 ) {
-	if isNativeToken && chainID != common.ChainIDStrSolana {
+	if isNativeToken && !common.IsSolanaChainID(chainID) {
 		fee, found = settings.MinChainFeeForBridgingTokens[chainID]
 	} else {
 		var feeBigInt *big.Int

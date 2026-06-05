@@ -63,7 +63,7 @@ export async function getBalanceLamports(
 ): Promise<bigint> {
 	const result = await solanaRpcCall<{ value: number }>(
 		'getBalance',
-		[address, { commitment: 'finalized' }],
+		[address, { commitment: 'confirmed' }],
 		useMainnet,
 	);
 	return BigInt(result.value);

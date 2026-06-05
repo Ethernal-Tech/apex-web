@@ -73,10 +73,6 @@ const getWalletBalanceAction = async (
 	}
 
 	if (isSolanaChain(srcChain)) {
-		const needsNative = dirTokens.some((tokenID) => {
-			const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
-			return tokenConfig?.chainSpecific === LovelaceTokenName;
-		});
 		const hasSplTokens = dirTokens.some((tokenID) => {
 			const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
 			return (
@@ -85,9 +81,7 @@ const getWalletBalanceAction = async (
 		});
 
 		const [nativeLamports, splByMint] = await Promise.all([
-			needsNative
-				? solWalletHandler.getBalanceLamports()
-				: Promise.resolve(BigInt(0)),
+			solWalletHandler.getBalanceLamports(),
 			hasSplTokens
 				? solWalletHandler.getSplTokenBalancesByMint()
 				: Promise.resolve({} as Record<string, bigint>),
@@ -96,8 +90,12 @@ const getWalletBalanceAction = async (
 		const finalBalance: { [key: string]: string } = {};
 		for (const tokenID of dirTokens) {
 			const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
+			const isCurrencyToken =
+				currencyID !== undefined && tokenID === currencyID;
 			if (!tokenConfig) {
-				finalBalance[tokenID.toString()] = '0';
+				finalBalance[tokenID.toString()] = isCurrencyToken
+					? nativeLamports.toString(10)
+					: '0';
 				continue;
 			}
 
@@ -188,7 +186,7 @@ export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
 
 export const getUpdateBalanceInterval = (): number => {
 	const srcChain = getCurrentSrcChain();
-	if (!srcChain || srcChain === ChainEnum.Solana) {
+	if (!srcChain || isSolanaChain(srcChain)) {
 		return SOLANA_WALLET_UPDATE_BALANCE_INTERVAL;
 	}
 

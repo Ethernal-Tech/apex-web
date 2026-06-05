@@ -150,6 +150,7 @@ const calculateMaxAmountCurrency = (
 		maxByBalance =
 			BigInt(totalBalance[currencyID] || '0') -
 			BigInt(bridgeTxFee || '0') -
+			BigInt(nonCardanoWalletFeeWeiValue) -
 			BigInt(operationFee || '0');
 	} else {
 		maxByBalance =
@@ -157,8 +158,7 @@ const calculateMaxAmountCurrency = (
 			BigInt(appSettings.potentialWalletFee) -
 			BigInt(bridgeTxFee) -
 			BigInt(changeMinUtxo) -
-			BigInt(operationFee) -
-			BigInt(nonCardanoWalletFeeWeiValue);
+			BigInt(operationFee);
 	}
 
 	return { maxByAllowed: balanceAllowedToUse, maxByBalance };

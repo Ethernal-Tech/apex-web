@@ -14,3 +14,24 @@ const (
 	ChainIDStrUnichain = "unichain"
 	ChainIDStrSolana   = "solana"
 )
+
+func IsCardanoChainID(chainID string) bool {
+	return chainID == ChainIDStrCardano ||
+		chainID == ChainIDStrPrime ||
+		chainID == ChainIDStrVector
+}
+
+func IsEvmChainID(chainID string) bool {
+	return chainID == ChainIDStrNexus ||
+		chainID == ChainIDStrPolygon ||
+		chainID == ChainIDStrEthereum ||
+		chainID == ChainIDStrKatana ||
+		chainID == ChainIDStrSei ||
+		chainID == ChainIDStrArbitrum ||
+		chainID == ChainIDStrScroll ||
+		chainID == ChainIDStrUnichain
+}
+
+func IsSolanaChainID(chainID string) bool {
+	return chainID == ChainIDStrSolana
+}
