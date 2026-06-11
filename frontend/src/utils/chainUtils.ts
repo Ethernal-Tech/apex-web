@@ -378,7 +378,7 @@ const EXPLORER_URLS: {
 		[ChainEnum.Arbitrum]: 'https://sepolia.arbiscan.io/',
 		[ChainEnum.Scroll]: 'https://sepolia.scrollscan.com/',
 		[ChainEnum.Unichain]: 'https://unichain-sepolia.blockscout.com/',
-		[ChainEnum.Solana]: 'https://explorer.solana.com/?cluster=devnet',
+		[ChainEnum.Solana]: 'https://explorer.solana.com',
 	},
 };
 
