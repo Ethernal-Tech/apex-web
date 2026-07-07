@@ -180,6 +180,15 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 
 	for chainID, solanaChainConfig := range appConfig.SolanaChains {
 		solanaChainConfig.ChainID = chainID
+
+		if solanaChainConfig.ChainSpecific != nil {
+			txProvider, err := solanawallet.NewProvider(solanaChainConfig.ChainSpecific.JSONRPCAddress, nil)
+			if err != nil {
+				return fmt.Errorf("failed to create tx provider: %w", err)
+			}
+
+			solanaChainConfig.ChainSpecific.TxProvider = txProvider
+		}
 	}
 
 	appConfig.solanaChainsMu.Unlock()

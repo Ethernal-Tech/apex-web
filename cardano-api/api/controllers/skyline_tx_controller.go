@@ -512,9 +512,9 @@ func (c *SkylineTxControllerImpl) createSolanaTx(
 		return nil, fmt.Errorf("missing chain specific config for source chain: %s", requestBody.SourceChainID)
 	}
 
-	txProvider, err := solanaSrcConfig.ChainSpecific.CreateTxProvider()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create solana tx provider. err: %w", err)
+	txProvider := solanaSrcConfig.ChainSpecific.TxProvider
+	if txProvider == nil {
+		return nil, fmt.Errorf("tx provider is not defined for source chain: %s", requestBody.SourceChainID)
 	}
 
 	treasuryAddress, err := solanawallet.PublicKeyFromAddress(solanaSrcConfig.TreasuryAddress)

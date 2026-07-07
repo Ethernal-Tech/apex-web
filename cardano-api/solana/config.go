@@ -8,8 +8,9 @@ import (
 )
 
 type SolanaChainConfig struct {
-	JSONRPCAddress string `json:"jsonRpcAddress"`
-	ProgramID      string `json:"programID"`
+	JSONRPCAddress string                 `json:"jsonRpcAddress"`
+	TxProvider     *solanawallet.Provider `json:"-"`
+	ProgramID      string                 `json:"programID"`
 }
 
 func NewSolanaChainConfig(rawMessage json.RawMessage) (*SolanaChainConfig, error) {
@@ -23,8 +24,4 @@ func NewSolanaChainConfig(rawMessage json.RawMessage) (*SolanaChainConfig, error
 
 func (config SolanaChainConfig) Serialize() ([]byte, error) {
 	return json.Marshal(config)
-}
-
-func (config SolanaChainConfig) CreateTxProvider() (*solanawallet.Provider, error) {
-	return solanawallet.NewProvider(config.JSONRPCAddress)
 }
