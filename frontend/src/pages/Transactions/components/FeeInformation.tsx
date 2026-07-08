@@ -15,6 +15,7 @@ import {
 } from '../../../utils/generalUtils';
 import { ChainEnum } from '../../../swagger/apexBridgeApiService';
 import { BridgingModeEnum } from '../../../settings/chain';
+import { getEstimatedBridgeTime } from '../../../settings/estimatedBridgeTime';
 import { getCurrencyID, getTokenInfo } from '../../../settings/token';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../redux/store';
@@ -29,6 +30,7 @@ interface FeeInformationProps {
 	bridgeTxFee: string;
 	operationFee?: string;
 	chain: ChainEnum;
+	destinationChain: ChainEnum;
 	bridgingMode: BridgingModeEnum;
 	isFeeInformation: boolean;
 }
@@ -39,6 +41,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 	bridgeTxFee,
 	operationFee,
 	chain,
+	destinationChain,
 	bridgingMode,
 	isFeeInformation = true,
 }) => {
@@ -47,6 +50,11 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 	const isSkylineMode = bridgingMode === BridgingModeEnum.Skyline;
 	const isLayerZeroMode = bridgingMode === BridgingModeEnum.LayerZero;
 	const isReactorMode = bridgingMode === BridgingModeEnum.Reactor;
+	const estimatedBridgeTime = getEstimatedBridgeTime(
+		bridgingMode,
+		chain,
+		destinationChain,
+	);
 
 	if (isReactorMode && !isFeeInformation) {
 		return (
@@ -152,7 +160,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 									color={'white'}
 									sx={{ fontSize: '14px' }}
 								>
-									{isLayerZeroMode
+									{bridgingMode === BridgingModeEnum.LayerZero
 										? 'This fee covers the bridge blockchain transaction costs.'
 										: `This fee covers the bridge blockchain transaction costs. This fee is set to the predefined minimum. When bridging native tokens, the minimum ${currencyToken.label} required to hold those tokens on ${capitalizeWord(chain)} is added.`}
 								</Typography>
@@ -246,17 +254,9 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 				>
 					<Typography>Estimated time</Typography>
 				</Box>
-				{isLayerZeroMode ? (
-					<Box>
-						<Typography>{'1-5 minutes'}</Typography>
-					</Box>
-				) : (
-					<Box component="span">
-						<Typography>
-							{isSkylineMode ? '28-35 minutes' : '16-20 minutes'}
-						</Typography>
-					</Box>
-				)}
+				<Box component="span">
+					<Typography>{estimatedBridgeTime}</Typography>
+				</Box>
 			</Box>
 		</CustomBox>
 	);

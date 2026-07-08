@@ -658,6 +658,7 @@ const BridgeInput = ({
 					bridgeTxFee={adjustedBridgeTxFee || '0'}
 					operationFee={operationFee || '0'}
 					chain={chain}
+					destinationChain={destinationChain}
 					bridgingMode={bridgingModeInfo.bridgingMode}
 					sx={{
 						gridColumn: 'span 1',
