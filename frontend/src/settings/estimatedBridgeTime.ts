@@ -92,8 +92,7 @@ export const getApexEstimatedBridgeTime = (
 	const minTotal =
 		srcConfirmation.min +
 		BRIDGE_PROCESSING_MINUTES.min +
-		dstConfirmation.min -
-		marginMinutes;
+		dstConfirmation.min;
 	const maxTotal =
 		srcConfirmation.max +
 		BRIDGE_PROCESSING_MINUTES.max +
