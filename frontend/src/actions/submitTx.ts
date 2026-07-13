@@ -25,7 +25,8 @@ const TX_SUCCESS = BigInt(1);
 
 const blockOffset = BigInt(1000);
 
-const tryCount = 60;
+const tryCount = 30;
+const tryDelayMs = 1000;
 
 const bigintReplacer = (_: string, value: unknown) =>
 	typeof value === 'bigint' ? `bigint:${value}` : value;
@@ -120,9 +121,37 @@ export const signAndSubmitCardanoTx = async (
 						null,
 						transactionSubmittedDto,
 					);
-				const submittedResponse = await retry(async () => {
+				const submittedResponse = await retry(
+					async () => {
+						const res = await tryCatchJsonByAction(
+							bindedSubmittedActivateAction,
+							false,
+						);
+
+						if (res instanceof ErrorResponse) {
+							throw new Error(res.err ?? 'ErrorResponse');
+						}
+
+						return res;
+					},
+					tryCount,
+					tryDelayMs,
+				);
+
+				return submittedResponse;
+			} catch (err) {
+				console.error(
+					'Bridging transaction backend submission failed',
+					err,
+				);
+			}
+		}
+
+		try {
+			const activateResponse = await retry(
+				async () => {
 					const res = await tryCatchJsonByAction(
-						bindedSubmittedActivateAction,
+						bindedActivateAction,
 						false,
 					);
 
@@ -131,35 +160,24 @@ export const signAndSubmitCardanoTx = async (
 					}
 
 					return res;
-				}, tryCount);
-
-				return submittedResponse;
-			} catch (err) {
-				throw new Error(
-					'Bridging transaction backend submission failed',
-				);
-			}
-		}
-
-		try {
-			const activateResponse = await retry(async () => {
-				const res = await tryCatchJsonByAction(
-					bindedActivateAction,
-					false,
-				);
-
-				if (res instanceof ErrorResponse) {
-					throw new Error(res.err ?? 'ErrorResponse');
-				}
-
-				return res;
-			}, tryCount);
+				},
+				tryCount,
+				tryDelayMs,
+			);
 
 			return activateResponse;
 		} catch (err) {
-			throw new Error('Bridging transaction activation backend failed');
+			console.error(
+				'Bridging transaction activation backend failed',
+				err,
+			);
 		}
 	}
+
+	return response.status === 'rejected' ||
+		response.value instanceof ErrorResponse
+		? undefined
+		: response.value;
 };
 
 const DEFAULT_GAS_PRICE = 1000000000; // TODO - adjust gas price
@@ -311,20 +329,27 @@ export const signAndSubmitEthTx = async (
 					}),
 				);
 
-			const submittedResponse = await retry(async () => {
-				const res = await tryCatchJsonByAction(
-					bindedSubmittedActivatedAction,
-					false,
-				);
+			const submittedResponse = await retry(
+				async () => {
+					const res = await tryCatchJsonByAction(
+						bindedSubmittedActivatedAction,
+						false,
+					);
 
-				if (res instanceof ErrorResponse) {
-					throw new Error(res.err ?? 'ErrorResponse');
-				}
-			}, tryCount);
+					if (res instanceof ErrorResponse) {
+						throw new Error(res.err ?? 'ErrorResponse');
+					}
+				},
+				tryCount,
+				tryDelayMs,
+			);
 
 			return submittedResponse;
 		} catch (err) {
-			throw new Error();
+			console.error(
+				'Bridging transaction backend submission failed',
+				err,
+			);
 		}
 	}
 
@@ -341,18 +366,27 @@ export const signAndSubmitEthTx = async (
 	);
 
 	try {
-		const updateResponse = await retry(async () => {
-			const res = await tryCatchJsonByAction(bindedUpdateAction, false);
+		const updateResponse = await retry(
+			async () => {
+				const res = await tryCatchJsonByAction(
+					bindedUpdateAction,
+					false,
+				);
 
-			if (res instanceof ErrorResponse) {
-				throw new Error(res.err ?? 'ErrorResponse');
-			}
+				if (res instanceof ErrorResponse) {
+					throw new Error(res.err ?? 'ErrorResponse');
+				}
 
-			return res;
-		}, tryCount);
+				return res;
+			},
+			tryCount,
+			tryDelayMs,
+		);
 
 		return updateResponse;
 	} catch (err) {
-		throw new Error();
+		console.error('Bridging transaction activation backend failed', err);
 	}
+
+	return response instanceof ErrorResponse ? undefined : response;
 };
