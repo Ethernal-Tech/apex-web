@@ -26,11 +26,16 @@ import evmWalletHandler from '../features/EvmWalletHandler';
 import { Transaction } from 'web3-types';
 import { toApexBridgeName, toLayerZeroChainName } from '../settings/chain';
 import { ISettingsState } from '../settings/settingsRedux';
-import { longRetryOptions, retry, retryForever } from '../utils/generalUtils';
+import {
+	longRetryOptions,
+	retry,
+	retryForever,
+	wait,
+} from '../utils/generalUtils';
 import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
 import { UpdateSubmitLoadingState } from '../utils/statusUtils';
 import { validateSubmitTxInputs } from '../utils/validationUtils';
-import { captureAndThrowError } from '../features/sentry';
+import { captureAndThrowError, captureException } from '../features/sentry';
 import { getCurrencyID } from '../settings/token';
 import solWalletHandler from '../features/SolWalletHandler';
 import { getFeeForMessageLamports } from '../utils/solanaRpc';
@@ -47,13 +52,15 @@ type TxDetailsOptions = {
 	minTipCap: bigint;
 };
 
+const defaultTxActivationPeriodMS = 10000;
+
 const defaultGasLimitEstimation = 30000;
 
 const TX_SUCCESS = BigInt(1);
 
 const blockOffset = BigInt(1000);
 
-const tryCount = 60;
+const tryCount = 30;
 
 const waitForEvmReceipt = async (txHash: string) =>
 	retry(
@@ -223,10 +230,14 @@ export const signAndSubmitCardanoTx = async (
 
 				return submittedResponse;
 			} catch (err) {
-				captureAndThrowError(
+				captureException(
 					err instanceof Error ? err : new Error(String(err)),
-					'submitTx.ts',
-					'signAndSubmitCardanoTx',
+					{
+						tags: {
+							component: 'submitTx.ts',
+							action: 'signAndSubmitCardanoTx',
+						},
+					},
 				);
 			}
 		}
@@ -247,13 +258,24 @@ export const signAndSubmitCardanoTx = async (
 
 			return activateResponse;
 		} catch (err) {
-			captureAndThrowError(
+			captureException(
 				err instanceof Error ? err : new Error(String(err)),
-				'submitTx.ts',
-				'signAndSubmitCardanoTx',
+				{
+					tags: {
+						component: 'submitTx.ts',
+						action: 'signAndSubmitCardanoTx',
+					},
+				},
 			);
+
+			await wait(defaultTxActivationPeriodMS);
 		}
 	}
+
+	return response.status === 'rejected' ||
+		response.value instanceof ErrorResponse
+		? undefined
+		: response.value;
 };
 
 export const signAndSubmitEthTx = async (
@@ -452,10 +474,14 @@ export const signAndSubmitEthTx = async (
 
 			return submittedResponse;
 		} catch (err) {
-			captureAndThrowError(
+			captureException(
 				err instanceof Error ? err : new Error(String(err)),
-				'submitTx.ts',
-				'signAndSubmitLayerZeroTx',
+				{
+					tags: {
+						component: 'submitTx.ts',
+						action: 'signAndSubmitEthTx',
+					},
+				},
 			);
 		}
 	}
@@ -485,12 +511,17 @@ export const signAndSubmitEthTx = async (
 
 		return updateResponse;
 	} catch (err) {
-		captureAndThrowError(
-			err instanceof Error ? err : new Error(String(err)),
-			'submitTx.ts',
-			'signAndSubmitEthTx',
-		);
+		captureException(err instanceof Error ? err : new Error(String(err)), {
+			tags: {
+				component: 'submitTx.ts',
+				action: 'signAndSubmitEthTx',
+			},
+		});
+
+		await wait(defaultTxActivationPeriodMS);
 	}
+
+	return response instanceof ErrorResponse ? undefined : response;
 };
 
 export const signAndSubmitSolanaTx = async (
@@ -569,18 +600,30 @@ export const signAndSubmitSolanaTx = async (
 				null,
 				transactionSubmittedDto,
 			);
-		const submittedActivatedResponse = await retry(async () => {
-			const res = await tryCatchJsonByAction(
-				bindedSubmittedActivatedAction,
-				false,
-			);
-			if (res instanceof ErrorResponse) {
-				throw new Error(res.err ?? 'ErrorResponse');
-			}
-			return res;
-		}, tryCount);
+		try {
+			const submittedActivatedResponse = await retry(async () => {
+				const res = await tryCatchJsonByAction(
+					bindedSubmittedActivatedAction,
+					false,
+				);
+				if (res instanceof ErrorResponse) {
+					throw new Error(res.err ?? 'ErrorResponse');
+				}
+				return res;
+			}, tryCount);
 
-		return submittedActivatedResponse;
+			return submittedActivatedResponse;
+		} catch (err) {
+			captureException(
+				err instanceof Error ? err : new Error(String(err)),
+				{
+					tags: {
+						component: 'submitTx.ts',
+						action: 'signAndSubmitSolanaTx',
+					},
+				},
+			);
+		}
 	}
 
 	const bindedActivateAction = bridgingTransactionActivateAction.bind(
@@ -590,15 +633,30 @@ export const signAndSubmitSolanaTx = async (
 			originTxHash: signature,
 		}),
 	);
-	const activateResponse = await retry(async () => {
-		const res = await tryCatchJsonByAction(bindedActivateAction, false);
-		if (res instanceof ErrorResponse) {
-			throw new Error(res.err ?? 'ErrorResponse');
-		}
-		return res;
-	}, tryCount);
+	try {
+		const activateResponse = await retry(async () => {
+			const res = await tryCatchJsonByAction(bindedActivateAction, false);
+			if (res instanceof ErrorResponse) {
+				throw new Error(res.err ?? 'ErrorResponse');
+			}
+			return res;
+		}, tryCount);
 
-	return activateResponse;
+		return activateResponse;
+	} catch (err) {
+		captureException(err instanceof Error ? err : new Error(String(err)), {
+			tags: {
+				component: 'submitTx.ts',
+				action: 'signAndSubmitSolanaTx',
+			},
+		});
+
+		await wait(defaultTxActivationPeriodMS);
+	}
+
+	return submittedResponse instanceof ErrorResponse
+		? undefined
+		: submittedResponse;
 };
 
 export const signAndSubmitLayerZeroTx = async (
@@ -833,10 +891,14 @@ export const signAndSubmitLayerZeroTx = async (
 
 			return submittedActivatedResponse;
 		} catch (err) {
-			captureAndThrowError(
+			captureException(
 				err instanceof Error ? err : new Error(String(err)),
-				'submitTx.ts',
-				'signAndSubmitLayerZeroTx',
+				{
+					tags: {
+						component: 'submitTx.ts',
+						action: 'signAndSubmitLayerZeroTx',
+					},
+				},
 			);
 		}
 	}
@@ -869,12 +931,17 @@ export const signAndSubmitLayerZeroTx = async (
 
 		return updateResponse;
 	} catch (err) {
-		captureAndThrowError(
-			err instanceof Error ? err : new Error(String(err)),
-			'submitTx.ts',
-			'signAndSubmitLayerZeroTx',
-		);
+		captureException(err instanceof Error ? err : new Error(String(err)), {
+			tags: {
+				component: 'submitTx.ts',
+				action: 'signAndSubmitLayerZeroTx',
+			},
+		});
+
+		await wait(defaultTxActivationPeriodMS);
 	}
+
+	return response instanceof ErrorResponse ? undefined : response;
 };
 
 export const populateTxDetails = async (
