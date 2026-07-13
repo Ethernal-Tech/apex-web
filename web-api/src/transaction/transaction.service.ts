@@ -32,6 +32,7 @@ import { MoreThan, Repository } from 'typeorm';
 import {
 	getInputUtxos,
 	mapBridgeTransactionToResponse,
+	getTxTTL,
 } from 'src/bridgeTransaction/bridgeTransaction.helper';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 import { SettingsService } from 'src/settings/settings.service';
@@ -373,6 +374,11 @@ export class TransactionService {
 		const enTokenID =
 			tokenID !== currencyID || nNativeTokenAmount > BigInt(0) ? tokenID : 0;
 
+		const txRawWithSolana =
+			isSolanaChain(originChain) && lastValidBlockHeight
+				? serializeSolanaTxRawStorage(txRaw, lastValidBlockHeight)
+				: txRaw;
+
 		entity.sourceTxHash = (originTxHash ?? '').trim();
 		entity.senderAddress = (senderAddress ?? '').trim() || entity.senderAddress;
 		entity.receiverAddresses = receiverAddresses ?? entity.receiverAddresses;
@@ -385,9 +391,9 @@ export class TransactionService {
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;
 		entity.txRaw =
-			isSolanaChain(originChain) && lastValidBlockHeight
-				? serializeSolanaTxRawStorage(txRaw, lastValidBlockHeight)
-				: txRaw;
+			getTxTTL(originChain, txRawWithSolana) !== undefined
+				? txRawWithSolana
+				: '';
 		entity.isCentralized = isFallback;
 		entity.isLayerZero = isLayerZero;
 		entity.activeFrom = activate
@@ -445,7 +451,7 @@ export class TransactionService {
 
 		// Apply updates
 		if (txRaw !== undefined) {
-			entity.txRaw = txRaw;
+			entity.txRaw = getTxTTL(originChain, txRaw) !== undefined ? txRaw : '';
 		}
 		entity.activeFrom = new Date();
 		entity.clientID = null;

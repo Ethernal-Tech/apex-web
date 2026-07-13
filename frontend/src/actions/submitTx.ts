@@ -594,63 +594,16 @@ export const signAndSubmitSolanaTx = async (
 		isLayerZero: false,
 	});
 
-	const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
-		null,
-		transactionSubmittedDto,
-	);
-	const submittedResponse = await tryCatchJsonByAction(
-		bindedSubmittedAction,
-		false,
-	);
-
-	if (submittedResponse instanceof ErrorResponse) {
-		const bindedSubmittedActivatedAction =
-			bridgingTransactionSubmittedActivatedAction.bind(
-				null,
-				transactionSubmittedDto,
-			);
-		try {
-			const submittedActivatedResponse = await retry(
-				async () => {
-					const res = await tryCatchJsonByAction(
-						bindedSubmittedActivatedAction,
-						false,
-					);
-					if (res instanceof ErrorResponse) {
-						throw new Error(res.err ?? 'ErrorResponse');
-					}
-					return res;
-				},
-				tryCount,
-				tryDelayMs,
-			);
-
-			return submittedActivatedResponse;
-		} catch (err) {
-			captureException(
-				err instanceof Error ? err : new Error(String(err)),
-				{
-					tags: {
-						component: 'submitTx.ts',
-						action: 'signAndSubmitSolanaTx',
-					},
-				},
-			);
-		}
-	}
-
-	const bindedActivateAction = bridgingTransactionActivateAction.bind(
-		null,
-		new TransactionActivateDeleteDto({
-			originChain: values.originChain as unknown as ChainEnum,
-			originTxHash: signature,
-		}),
-	);
+	const bindedSubmittedActivatedAction =
+		bridgingTransactionSubmittedActivatedAction.bind(
+			null,
+			transactionSubmittedDto,
+		);
 	try {
-		const activateResponse = await retry(
+		const submittedActivatedResponse = await retry(
 			async () => {
 				const res = await tryCatchJsonByAction(
-					bindedActivateAction,
+					bindedSubmittedActivatedAction,
 					false,
 				);
 				if (res instanceof ErrorResponse) {
@@ -662,19 +615,14 @@ export const signAndSubmitSolanaTx = async (
 			tryDelayMs,
 		);
 
-		return activateResponse;
+		return submittedActivatedResponse;
 	} catch (err) {
-		captureException(err instanceof Error ? err : new Error(String(err)), {
-			tags: {
-				component: 'submitTx.ts',
-				action: 'signAndSubmitSolanaTx',
-			},
-		});
+		captureAndThrowError(
+			err instanceof Error ? err : new Error(String(err)),
+			'submitTx.ts',
+			'signAndSubmitSolanaTx',
+		);
 	}
-
-	return submittedResponse instanceof ErrorResponse
-		? undefined
-		: submittedResponse;
 };
 
 export const signAndSubmitLayerZeroTx = async (

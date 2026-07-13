@@ -250,15 +250,7 @@ export const getHasTxFailedRequestState = async (
 		return;
 	}
 
-	let ttl: bigint | undefined;
-	if (isCardanoChain(chainId as ChainEnum)) {
-		ttl = getCardanoTTL(model.txRaw);
-	} else if (isSolanaChain(chainId as ChainEnum)) {
-		ttl = getSolanaTTL(model.txRaw);
-	} else {
-		ttl = getEthTTL(model.txRaw);
-	}
-
+	const ttl = getTxTTL(chainId, model.txRaw);
 	if (!ttl) {
 		return;
 	}
@@ -447,6 +439,22 @@ export const mapBridgeTransactionToResponse = (
 	response.isLayerZero = entity.isLayerZero;
 	response.isRefund = entity.isRefund;
 	return response;
+};
+
+export const getTxTTL = (
+	chainId: string,
+	txRaw: string,
+): bigint | undefined => {
+	let ttl: bigint | undefined;
+	if (isCardanoChain(chainId as ChainEnum)) {
+		ttl = getCardanoTTL(txRaw);
+	} else if (isSolanaChain(chainId as ChainEnum)) {
+		ttl = getSolanaTTL(txRaw);
+	} else {
+		ttl = getEthTTL(txRaw);
+	}
+
+	return ttl;
 };
 
 export const getInputUtxos = (txRaw: string): Utxo[] => {
