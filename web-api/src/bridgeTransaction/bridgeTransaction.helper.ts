@@ -7,7 +7,7 @@ import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization
 import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
-import { isCardanoChain, isEvmChain } from 'src/utils/chainUtils';
+import { isCardanoChain } from 'src/utils/chainUtils';
 import { getAppConfig } from 'src/appConfig/appConfig';
 
 export const BridgingRequestNotFinalStates = [
