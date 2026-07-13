@@ -276,6 +276,12 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			len(requestBody.Transactions), c.appConfig.SkylineBridgingSettings.MaxReceiversPerBridgingRequest, requestBody)
 	}
 
+	if solanaDestConfig != nil && len(requestBody.Transactions) > 1 {
+		return fmt.Errorf("number of receivers in metadata greater than maximum allowed "+
+			"for solana destination chain. no: %v, max: %v, requestBody: %v",
+			len(requestBody.Transactions), 1, requestBody)
+	}
+
 	var srcMinAmount uint64
 
 	if cardanoSrcConfig != nil {
