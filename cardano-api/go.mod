@@ -16,7 +16,7 @@ require (
 )
 
 require (
-	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20260601091913-3a7e607f6830
+	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20260713111327-1627e93a6210
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
