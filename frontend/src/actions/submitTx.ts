@@ -19,13 +19,15 @@ import walletHandler from '../features/WalletHandler';
 import evmWalletHandler from '../features/EvmWalletHandler';
 import { Transaction } from 'web3-types';
 import { UpdateSubmitLoadingState } from '../utils/statusUtils';
-import { retry, retryForever } from '../utils/generalUtils';
+import { retry, retryForever, wait } from '../utils/generalUtils';
+
+const defaultTxActivationPeriodMS = 10000;
 
 const TX_SUCCESS = BigInt(1);
 
 const blockOffset = BigInt(1000);
 
-const tryCount = 60;
+const tryCount = 30;
 
 const bigintReplacer = (_: string, value: unknown) =>
 	typeof value === 'bigint' ? `bigint:${value}` : value;
@@ -135,8 +137,9 @@ export const signAndSubmitCardanoTx = async (
 
 				return submittedResponse;
 			} catch (err) {
-				throw new Error(
+				console.error(
 					'Bridging transaction backend submission failed',
+					err,
 				);
 			}
 		}
@@ -157,9 +160,19 @@ export const signAndSubmitCardanoTx = async (
 
 			return activateResponse;
 		} catch (err) {
-			throw new Error('Bridging transaction activation backend failed');
+			console.error(
+				'Bridging transaction activation backend failed',
+				err,
+			);
+
+			await wait(defaultTxActivationPeriodMS);
 		}
 	}
+
+	return response.status === 'rejected' ||
+		response.value instanceof ErrorResponse
+		? undefined
+		: response.value;
 };
 
 const DEFAULT_GAS_PRICE = 1000000000; // TODO - adjust gas price
@@ -324,7 +337,10 @@ export const signAndSubmitEthTx = async (
 
 			return submittedResponse;
 		} catch (err) {
-			throw new Error();
+			console.error(
+				'Bridging transaction backend submission failed',
+				err,
+			);
 		}
 	}
 
@@ -353,6 +369,10 @@ export const signAndSubmitEthTx = async (
 
 		return updateResponse;
 	} catch (err) {
-		throw new Error();
+		console.error('Bridging transaction activation backend failed', err);
+
+		await wait(defaultTxActivationPeriodMS);
 	}
+
+	return response instanceof ErrorResponse ? undefined : response;
 };
