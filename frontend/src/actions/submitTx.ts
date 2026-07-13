@@ -26,12 +26,7 @@ import evmWalletHandler from '../features/EvmWalletHandler';
 import { Transaction } from 'web3-types';
 import { toApexBridgeName, toLayerZeroChainName } from '../settings/chain';
 import { ISettingsState } from '../settings/settingsRedux';
-import {
-	longRetryOptions,
-	retry,
-	retryForever,
-	wait,
-} from '../utils/generalUtils';
+import { longRetryOptions, retry, retryForever } from '../utils/generalUtils';
 import { SendTransactionOptions } from 'web3/lib/commonjs/eth.exports';
 import { UpdateSubmitLoadingState } from '../utils/statusUtils';
 import { validateSubmitTxInputs } from '../utils/validationUtils';
@@ -52,15 +47,14 @@ type TxDetailsOptions = {
 	minTipCap: bigint;
 };
 
-const defaultTxActivationPeriodMS = 10000;
-
 const defaultGasLimitEstimation = 30000;
 
 const TX_SUCCESS = BigInt(1);
 
 const blockOffset = BigInt(1000);
 
-const tryCount = 30;
+const tryCount = 35;
+const tryDelayMs = 1000;
 
 const waitForEvmReceipt = async (txHash: string) =>
 	retry(
@@ -215,18 +209,22 @@ export const signAndSubmitCardanoTx = async (
 						null,
 						transactionSubmittedDto,
 					);
-				const submittedResponse = await retry(async () => {
-					const res = await tryCatchJsonByAction(
-						bindedSubmittedActivateAction,
-						false,
-					);
+				const submittedResponse = await retry(
+					async () => {
+						const res = await tryCatchJsonByAction(
+							bindedSubmittedActivateAction,
+							false,
+						);
 
-					if (res instanceof ErrorResponse) {
-						throw new Error(res.err ?? 'ErrorResponse');
-					}
+						if (res instanceof ErrorResponse) {
+							throw new Error(res.err ?? 'ErrorResponse');
+						}
 
-					return res;
-				}, tryCount);
+						return res;
+					},
+					tryCount,
+					tryDelayMs,
+				);
 
 				return submittedResponse;
 			} catch (err) {
@@ -243,18 +241,22 @@ export const signAndSubmitCardanoTx = async (
 		}
 
 		try {
-			const activateResponse = await retry(async () => {
-				const res = await tryCatchJsonByAction(
-					bindedActivateAction,
-					false,
-				);
+			const activateResponse = await retry(
+				async () => {
+					const res = await tryCatchJsonByAction(
+						bindedActivateAction,
+						false,
+					);
 
-				if (res instanceof ErrorResponse) {
-					throw new Error(res.err ?? 'ErrorResponse');
-				}
+					if (res instanceof ErrorResponse) {
+						throw new Error(res.err ?? 'ErrorResponse');
+					}
 
-				return res;
-			}, tryCount);
+					return res;
+				},
+				tryCount,
+				tryDelayMs,
+			);
 
 			return activateResponse;
 		} catch (err) {
@@ -267,8 +269,6 @@ export const signAndSubmitCardanoTx = async (
 					},
 				},
 			);
-
-			await wait(defaultTxActivationPeriodMS);
 		}
 	}
 
@@ -461,16 +461,20 @@ export const signAndSubmitEthTx = async (
 					}),
 				);
 
-			const submittedResponse = await retry(async () => {
-				const res = await tryCatchJsonByAction(
-					bindedSubmittedActivatedAction,
-					false,
-				);
+			const submittedResponse = await retry(
+				async () => {
+					const res = await tryCatchJsonByAction(
+						bindedSubmittedActivatedAction,
+						false,
+					);
 
-				if (res instanceof ErrorResponse) {
-					throw new Error(res.err ?? 'ErrorResponse');
-				}
-			}, tryCount);
+					if (res instanceof ErrorResponse) {
+						throw new Error(res.err ?? 'ErrorResponse');
+					}
+				},
+				tryCount,
+				tryDelayMs,
+			);
 
 			return submittedResponse;
 		} catch (err) {
@@ -499,15 +503,22 @@ export const signAndSubmitEthTx = async (
 	);
 
 	try {
-		const updateResponse = await retry(async () => {
-			const res = await tryCatchJsonByAction(bindedUpdateAction, false);
+		const updateResponse = await retry(
+			async () => {
+				const res = await tryCatchJsonByAction(
+					bindedUpdateAction,
+					false,
+				);
 
-			if (res instanceof ErrorResponse) {
-				throw new Error(res.err ?? 'ErrorResponse');
-			}
+				if (res instanceof ErrorResponse) {
+					throw new Error(res.err ?? 'ErrorResponse');
+				}
 
-			return res;
-		}, tryCount);
+				return res;
+			},
+			tryCount,
+			tryDelayMs,
+		);
 
 		return updateResponse;
 	} catch (err) {
@@ -517,8 +528,6 @@ export const signAndSubmitEthTx = async (
 				action: 'signAndSubmitEthTx',
 			},
 		});
-
-		await wait(defaultTxActivationPeriodMS);
 	}
 
 	return response instanceof ErrorResponse ? undefined : response;
@@ -601,16 +610,20 @@ export const signAndSubmitSolanaTx = async (
 				transactionSubmittedDto,
 			);
 		try {
-			const submittedActivatedResponse = await retry(async () => {
-				const res = await tryCatchJsonByAction(
-					bindedSubmittedActivatedAction,
-					false,
-				);
-				if (res instanceof ErrorResponse) {
-					throw new Error(res.err ?? 'ErrorResponse');
-				}
-				return res;
-			}, tryCount);
+			const submittedActivatedResponse = await retry(
+				async () => {
+					const res = await tryCatchJsonByAction(
+						bindedSubmittedActivatedAction,
+						false,
+					);
+					if (res instanceof ErrorResponse) {
+						throw new Error(res.err ?? 'ErrorResponse');
+					}
+					return res;
+				},
+				tryCount,
+				tryDelayMs,
+			);
 
 			return submittedActivatedResponse;
 		} catch (err) {
@@ -634,13 +647,20 @@ export const signAndSubmitSolanaTx = async (
 		}),
 	);
 	try {
-		const activateResponse = await retry(async () => {
-			const res = await tryCatchJsonByAction(bindedActivateAction, false);
-			if (res instanceof ErrorResponse) {
-				throw new Error(res.err ?? 'ErrorResponse');
-			}
-			return res;
-		}, tryCount);
+		const activateResponse = await retry(
+			async () => {
+				const res = await tryCatchJsonByAction(
+					bindedActivateAction,
+					false,
+				);
+				if (res instanceof ErrorResponse) {
+					throw new Error(res.err ?? 'ErrorResponse');
+				}
+				return res;
+			},
+			tryCount,
+			tryDelayMs,
+		);
 
 		return activateResponse;
 	} catch (err) {
@@ -650,8 +670,6 @@ export const signAndSubmitSolanaTx = async (
 				action: 'signAndSubmitSolanaTx',
 			},
 		});
-
-		await wait(defaultTxActivationPeriodMS);
 	}
 
 	return submittedResponse instanceof ErrorResponse
@@ -878,16 +896,20 @@ export const signAndSubmitLayerZeroTx = async (
 					}),
 				);
 
-			const submittedActivatedResponse = await retry(async () => {
-				const res = await tryCatchJsonByAction(
-					bindedSubmittedActivatedAction,
-					false,
-				);
+			const submittedActivatedResponse = await retry(
+				async () => {
+					const res = await tryCatchJsonByAction(
+						bindedSubmittedActivatedAction,
+						false,
+					);
 
-				if (res instanceof ErrorResponse) {
-					throw new Error(res.err ?? 'ErrorResponse');
-				}
-			}, tryCount);
+					if (res instanceof ErrorResponse) {
+						throw new Error(res.err ?? 'ErrorResponse');
+					}
+				},
+				tryCount,
+				tryDelayMs,
+			);
 
 			return submittedActivatedResponse;
 		} catch (err) {
@@ -919,15 +941,22 @@ export const signAndSubmitLayerZeroTx = async (
 	);
 
 	try {
-		const updateResponse = await retry(async () => {
-			const res = await tryCatchJsonByAction(bindedUpdateAction, false);
+		const updateResponse = await retry(
+			async () => {
+				const res = await tryCatchJsonByAction(
+					bindedUpdateAction,
+					false,
+				);
 
-			if (res instanceof ErrorResponse) {
-				throw new Error(res.err ?? 'ErrorResponse');
-			}
+				if (res instanceof ErrorResponse) {
+					throw new Error(res.err ?? 'ErrorResponse');
+				}
 
-			return res;
-		}, tryCount);
+				return res;
+			},
+			tryCount,
+			tryDelayMs,
+		);
 
 		return updateResponse;
 	} catch (err) {
@@ -937,8 +966,6 @@ export const signAndSubmitLayerZeroTx = async (
 				action: 'signAndSubmitLayerZeroTx',
 			},
 		});
-
-		await wait(defaultTxActivationPeriodMS);
 	}
 
 	return response instanceof ErrorResponse ? undefined : response;
