@@ -24,6 +24,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThan, Repository } from 'typeorm';
 import {
 	getInputUtxos,
+	getTxTTL,
 	mapBridgeTransactionToResponse,
 } from 'src/bridgeTransaction/bridgeTransaction.helper';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
@@ -240,7 +241,7 @@ export class TransactionService {
 		entity.originChain = originChain;
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;
-		entity.txRaw = txRaw;
+		entity.txRaw = getTxTTL(originChain, txRaw) !== undefined ? txRaw : '';
 		entity.isCentralized = isFallback;
 		entity.activeFrom = activate
 			? new Date()
@@ -297,7 +298,7 @@ export class TransactionService {
 
 		// Apply updates
 		if (txRaw !== undefined) {
-			entity.txRaw = txRaw;
+			entity.txRaw = getTxTTL(originChain, txRaw) !== undefined ? txRaw : '';
 		}
 		entity.activeFrom = new Date();
 		entity.clientID = null;
