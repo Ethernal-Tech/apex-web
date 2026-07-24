@@ -15,6 +15,7 @@ import {
 } from './utils';
 import { BadRequestException } from '@nestjs/common';
 import { areChainsEqual } from '../chainUtils';
+import { isValidSolanaOnCurveAddress } from '../solanaAddress';
 import { ChainApexBridgeEnum } from '../../common/enum';
 
 const NewStakeCredential = (
@@ -163,6 +164,14 @@ export function ValidateEVMAddress(rawAddress: string) {
 	if (!isAddress(rawAddress)) {
 		throw new BadRequestException(
 			`Invalid EVM destination address: ${rawAddress}`,
+		);
+	}
+}
+
+export function ValidateSolanaAddress(rawAddress: string) {
+	if (!isValidSolanaOnCurveAddress(rawAddress)) {
+		throw new BadRequestException(
+			`Invalid Solana destination address: ${rawAddress}`,
 		);
 	}
 }

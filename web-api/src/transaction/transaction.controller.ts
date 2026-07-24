@@ -15,6 +15,7 @@ import {
 	CardanoTransactionFeeResponseDto,
 	TransactionUpdateDto,
 	TransactionActivateDeleteDto,
+	CreateSolanaTransactionFullResponseDto,
 } from './transaction.dto';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
@@ -81,6 +82,11 @@ export class TransactionController {
 		return await this.transactionService.getCardanoTxFee(model);
 	}
 
+	@ApiOperation({
+		summary: 'Create an EVM bridging transaction',
+		description:
+			'Builds a bridging transaction with all required fees and metadata. The transaction must be signed and submitted separately.',
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		type: CreateEthTransactionFullResponseDto,
@@ -96,6 +102,28 @@ export class TransactionController {
 		@Body() model: CreateTransactionDto,
 	): CreateEthTransactionFullResponseDto {
 		return this.transactionService.createEth(model);
+	}
+
+	@ApiOperation({
+		summary: 'Create a Solana bridging transaction',
+		description:
+			'Builds a bridging transaction with all required fees and metadata. The transaction must be signed and submitted separately.',
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: CreateSolanaTransactionFullResponseDto,
+		description: 'Success',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Post('createSolana')
+	async createSolana(
+		@Body() model: CreateTransactionDto,
+	): Promise<CreateSolanaTransactionFullResponseDto> {
+		return await this.transactionService.createSolana(model);
 	}
 
 	@ApiOperation({

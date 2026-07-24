@@ -3,7 +3,7 @@ import { BridgingModeEnum, ChainEnum } from 'src/common/enum';
 import Web3 from 'web3';
 import { Numbers } from 'web3-types';
 import { EtherUnits } from 'web3-utils';
-import { isCardanoChain } from './chainUtils';
+import { isCardanoChain, isSolanaChain } from './chainUtils';
 import { getAppConfig } from 'src/appConfig/appConfig';
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
@@ -77,6 +77,35 @@ export const convertWeiToDfm = (wei: Numbers): string => {
 
 export const convertDfmToWei = (dfm: Numbers): string => {
 	return toWei(dfm, 12);
+};
+
+// 1 lamport = 10^9 wei (9 decimals vs 18 decimals).
+export const convertWeiToLamports = (wei: bigint | Numbers): string => {
+	return fromWei(wei, 9);
+};
+
+export const convertLamportsToWei = (lamports: bigint | Numbers): string => {
+	return toWei(lamports, 9);
+};
+
+export const convertWeiToDfmByChain = (wei: Numbers, chain: ChainEnum) => {
+	if (isCardanoChain(chain)) {
+		return convertWeiToDfm(wei);
+	} else if (isSolanaChain(chain)) {
+		return convertWeiToLamports(wei);
+	} else {
+		return wei;
+	}
+};
+
+export const convertDfmToWeiByChain = (dfm: Numbers, chain: ChainEnum) => {
+	if (isCardanoChain(chain)) {
+		return convertDfmToWei(dfm);
+	} else if (isSolanaChain(chain)) {
+		return convertLamportsToWei(dfm);
+	} else {
+		return dfm;
+	}
 };
 
 export type urlAndApiKey = { url: string; apiKey: string };

@@ -10,6 +10,7 @@ import {
 	CardanoTransactionFeeResponseDto,
 	CreateEthTransactionFullResponseDto,
 	EthTransactionResponseDto,
+	CreateSolanaTransactionFullResponseDto,
 } from './transaction.dto';
 import axios, { AxiosError } from 'axios';
 import {
@@ -19,7 +20,12 @@ import {
 } from '@nestjs/common';
 import web3, { Web3 } from 'web3';
 import { isAddress } from 'web3-validator';
-import { isCardanoChain, isEvmChain, toNumChainID } from 'src/utils/chainUtils';
+import {
+	isCardanoChain,
+	isEvmChain,
+	isSolanaChain,
+	toNumChainID,
+} from 'src/utils/chainUtils';
 import {
 	erc20ABI,
 	reactorGatewayABI,
@@ -29,7 +35,11 @@ import {
 	BridgingSettingsDto,
 	BridgingSettingsTokenDto,
 } from 'src/settings/settings.dto';
-import { convertDfmToWei, getUrlAndApiKey } from 'src/utils/generalUtils';
+import {
+	convertDfmToWei,
+	getUrlAndApiKey,
+	convertLamportsToWei,
+} from 'src/utils/generalUtils';
 import { Utxo } from 'src/blockchain/dto';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import {
@@ -40,6 +50,7 @@ import {
 import {
 	ValidateCardanoAddress,
 	ValidateEVMAddress,
+	ValidateSolanaAddress,
 } from 'src/utils/Address/addreses';
 import { createHash } from 'crypto';
 
@@ -74,6 +85,21 @@ const prepareCreateCardanoBridgingTx = (
 
 	return body;
 };
+
+const prepareCreateSolanaBridgingTx = (dto: CreateTransactionDto) => ({
+	senderAddr: dto.senderAddress,
+	sourceChainId: dto.originChain,
+	destinationChainId: dto.destinationChain,
+	transactions: [
+		{
+			addr: dto.destinationAddress,
+			amount: +dto.amount,
+			tokenID: dto.tokenID,
+		},
+	],
+	bridgingFee: dto.bridgingFee ? +dto.bridgingFee : undefined,
+	operationFee: dto.operationFee ? +dto.operationFee : undefined,
+});
 
 export const createCardanoBridgingTx = async (
 	dto: CreateTransactionDto,
@@ -187,7 +213,13 @@ export const createEthBridgingTx = (
 	const destChain = dto.destinationChain as ChainEnum;
 
 	let minValue: bigint;
-	if (isCardanoChain(destChain) && isWrappedCurrencyBridging) {
+	if (isSolanaChain(destChain)) {
+		minValue = BigInt(
+			convertLamportsToWei(
+				bridgingSettings.minColCoinsAllowedToBridge[dto.destinationChain],
+			), //TODO: check if this is correct
+		);
+	} else if (isCardanoChain(destChain) && isWrappedCurrencyBridging) {
 		minValue = BigInt(
 			convertDfmToWei(bridgingSettings.minUtxoChainValue[dto.destinationChain]),
 		);
@@ -229,6 +261,8 @@ export const createEthBridgingTx = (
 		);
 	} else if (isEvmChain(destChain)) {
 		ValidateEVMAddress(dto.destinationAddress);
+	} else if (isSolanaChain(destChain)) {
+		ValidateSolanaAddress(dto.destinationAddress);
 	} else {
 		throw new BadRequestException(
 			`Unsupported destination chain: ${dto.destinationChain}`,
@@ -318,6 +352,37 @@ export const createEthBridgingTx = (
 		throw new BadRequestException(
 			`unsupported bridging mode: ${bridgingMode} for createEthBridgingTx`,
 		);
+	}
+};
+
+export const createSolanaBridgingTx = async (
+	dto: CreateTransactionDto,
+	bridgingMode: BridgingModeEnum,
+): Promise<CreateSolanaTransactionFullResponseDto> => {
+	const { url, apiKey } = getUrlAndApiKey(bridgingMode, false);
+	const endpointUrl = url + `/api/CardanoTx/CreateSolanaBridgingTx`;
+	const body = prepareCreateSolanaBridgingTx(dto);
+
+	try {
+		Logger.debug(`axios.post: ${endpointUrl}, body: ${JSON.stringify(body)}`);
+		const response = await axios.post(endpointUrl, body, {
+			headers: {
+				'X-API-KEY': apiKey,
+				'Content-Type': 'application/json',
+			},
+		});
+
+		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
+
+		return response.data as CreateSolanaTransactionFullResponseDto;
+	} catch (error) {
+		if (error instanceof AxiosError) {
+			if (error.response) {
+				throw new BadRequestException(error.response.data as ErrorResponseDto);
+			}
+		}
+
+		throw new BadRequestException();
 	}
 };
 

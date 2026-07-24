@@ -401,6 +401,7 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 					userWalletFee={userWalletFee || '0'}
 					bridgeTxFee={bridgeTxFee || '0'}
 					chain={chain}
+					destinationChain={destinationChain}
 					bridgingMode={BridgingModeEnum.LayerZero}
 					sx={{
 						gridColumn: 'span 1',

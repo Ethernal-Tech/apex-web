@@ -34,6 +34,11 @@ export const createEthTransactionAction = (model: CreateTransactionDto) => {
 	return client.createEth(model);
 };
 
+export const createSolanaTransactionAction = (model: CreateTransactionDto) => {
+	const client = new TransactionControllerClient();
+	return client.createSolana(model);
+};
+
 export const bridgingTransactionSubmittedAction = (
 	model: TransactionSubmittedDto,
 ) => {

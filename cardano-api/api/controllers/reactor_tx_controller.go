@@ -144,12 +144,12 @@ func (c *ReactorTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Req
 func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 	requestBody *commonRequest.CreateBridgingTxRequest,
 ) error {
-	cardanoSrcConfig, _ := c.appConfig.GetChainConfig(requestBody.SourceChainID)
+	cardanoSrcConfig, _, _ := c.appConfig.GetChainConfig(requestBody.SourceChainID)
 	if cardanoSrcConfig == nil {
 		return fmt.Errorf("origin chain not registered: %v", requestBody.SourceChainID)
 	}
 
-	cardanoDestConfig, ethDestConfig := c.appConfig.GetChainConfig(requestBody.DestinationChainID)
+	cardanoDestConfig, ethDestConfig, _ := c.appConfig.GetChainConfig(requestBody.DestinationChainID)
 	if cardanoDestConfig == nil && ethDestConfig == nil {
 		return fmt.Errorf("destination chain not registered: %v", requestBody.DestinationChainID)
 	}

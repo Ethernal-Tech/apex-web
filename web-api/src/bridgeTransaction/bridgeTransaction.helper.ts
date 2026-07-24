@@ -11,7 +11,8 @@ import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization
 import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
 import { Logger } from '@nestjs/common';
-import { isCardanoChain } from 'src/utils/chainUtils';
+import { isCardanoChain, isSolanaChain } from 'src/utils/chainUtils';
+import { parseSolanaTxRawStorage } from 'src/utils/solanaTxRaw';
 import { getUrlAndApiKey } from 'src/utils/generalUtils';
 import { getAppConfig } from 'src/appConfig/appConfig';
 
@@ -249,13 +250,7 @@ export const getHasTxFailedRequestState = async (
 		return;
 	}
 
-	let ttl: bigint | undefined;
-	if (isCardanoChain(chainId as ChainEnum)) {
-		ttl = getCardanoTTL(model.txRaw);
-	} else {
-		ttl = getEthTTL(model.txRaw);
-	}
-
+	const ttl = getTxTTL(chainId, model.txRaw);
 	if (!ttl) {
 		return;
 	}
@@ -446,6 +441,22 @@ export const mapBridgeTransactionToResponse = (
 	return response;
 };
 
+export const getTxTTL = (
+	chainId: string,
+	txRaw: string,
+): bigint | undefined => {
+	let ttl: bigint | undefined;
+	if (isCardanoChain(chainId as ChainEnum)) {
+		ttl = getCardanoTTL(txRaw);
+	} else if (isSolanaChain(chainId as ChainEnum)) {
+		ttl = getSolanaTTL(txRaw);
+	} else {
+		ttl = getEthTTL(txRaw);
+	}
+
+	return ttl;
+};
+
 export const getInputUtxos = (txRaw: string): Utxo[] => {
 	const tx = CardanoTransaction.from_hex(txRaw);
 	const inputs = tx.body().inputs();
@@ -469,6 +480,18 @@ export const getCardanoTTL = (txRaw: string): bigint | undefined => {
 		return ttl ? BigInt(ttl.to_str()) : undefined;
 	} catch (e) {
 		Logger.warn(`Error while getCardanoTTL: ${e}`, e.stack);
+	}
+};
+
+export const getSolanaTTL = (storedTxRaw: string): bigint | undefined => {
+	try {
+		const { lastValidBlockHeight } = parseSolanaTxRawStorage(storedTxRaw);
+		if (!lastValidBlockHeight) {
+			return undefined;
+		}
+		return BigInt(lastValidBlockHeight);
+	} catch (e) {
+		Logger.warn(`Error while getSolanaTTL: ${e}`, e.stack);
 	}
 };
 

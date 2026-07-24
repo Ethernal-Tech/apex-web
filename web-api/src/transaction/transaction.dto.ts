@@ -5,6 +5,7 @@ import {
 	IsEnum,
 	IsNotEmpty,
 	IsObject,
+	IsOptional,
 	IsPositive,
 	ValidateNested,
 } from 'class-validator';
@@ -142,6 +143,13 @@ export class TransactionSubmittedDto {
 		description: 'Transaction raw data on source chain',
 	})
 	txRaw: string;
+
+	@IsOptional()
+	@ApiProperty({
+		description: 'Solana last valid block height from create tx',
+		required: false,
+	})
+	lastValidBlockHeight?: string;
 
 	@ApiProperty({
 		description: 'Indicates is fallback mechanism used',
@@ -344,6 +352,75 @@ export class CreateEthTransactionFullResponseDto {
 		type: BridgingEthTransactionResponseDto,
 	})
 	bridgingTx: BridgingEthTransactionResponseDto;
+}
+
+export class SolanaTransactionResponseDto {
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Unsigned Solana transaction, encoded as base64',
+	})
+	txRaw: string;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Block through which the tx blockhash stays valid',
+	})
+	lastValidBlockHeight: string;
+}
+
+@ApiExtraModels(SolanaTransactionResponseDto)
+export class BridgingSolanaTransactionResponseDto {
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@Type(() => SolanaTransactionResponseDto)
+	@ApiProperty({
+		description: 'Solana tx to be executed',
+		type: SolanaTransactionResponseDto,
+	})
+	solTx: SolanaTransactionResponseDto;
+
+	@IsNotEmpty()
+	@ApiProperty()
+	bridgingFee: string;
+
+	@ApiProperty()
+	operationFee: string;
+
+	@ApiProperty()
+	tokenAmount: string;
+
+	@ApiProperty()
+	tokenID: number;
+
+	@ApiProperty()
+	isFallback: boolean;
+}
+
+@ApiExtraModels(
+	SolanaTransactionResponseDto,
+	BridgingSolanaTransactionResponseDto,
+)
+export class CreateSolanaTransactionFullResponseDto {
+	@IsObject()
+	@ValidateNested()
+	@Type(() => SolanaTransactionResponseDto)
+	@ApiProperty({
+		description: 'Approval tx for the bridging tx',
+		type: SolanaTransactionResponseDto,
+		nullable: true,
+	})
+	approvalTx?: SolanaTransactionResponseDto;
+
+	@IsNotEmpty()
+	@IsObject()
+	@ValidateNested()
+	@Type(() => BridgingSolanaTransactionResponseDto)
+	@ApiProperty({
+		description: 'Solana Bridging tx',
+		type: BridgingSolanaTransactionResponseDto,
+	})
+	bridgingTx: BridgingSolanaTransactionResponseDto;
 }
 
 export class ErrorResponseDto {

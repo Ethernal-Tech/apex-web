@@ -17,10 +17,11 @@ import BlockfrostRetriever from '../features/BlockfrostRetriever';
 import OgmiosRetriever from '../features/OgmiosRetriever';
 import { getUtxoRetrieverType } from '../features/utils';
 import { UtxoRetrieverEnum } from '../features/enums';
-import { isEvmChain } from '../settings/chain';
+import { isEvmChain, isSolanaChain } from '../settings/chain';
 import { shouldUseMainnet } from '../utils/generalUtils';
 import { ISettingsState } from '../settings/settingsRedux';
 import { captureException } from '../features/sentry';
+import solWalletHandler from '../features/SolWalletHandler';
 import {
 	getCurrencyID,
 	getTokenConfig,
@@ -29,6 +30,7 @@ import {
 import { normalizeNativeTokenKey } from '../utils/tokenUtils';
 
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
+const SOLANA_WALLET_UPDATE_BALANCE_INTERVAL = 10000;
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
 
 const getWalletBalanceAction = async (
@@ -68,6 +70,45 @@ const getWalletBalanceAction = async (
 		}
 
 		return { balance: balancesMap };
+	}
+
+	if (isSolanaChain(srcChain)) {
+		const hasSplTokens = dirTokens.some((tokenID) => {
+			const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
+			return (
+				tokenConfig && tokenConfig.chainSpecific !== LovelaceTokenName
+			);
+		});
+
+		const [nativeLamports, splByMint] = await Promise.all([
+			solWalletHandler.getBalanceLamports(),
+			hasSplTokens
+				? solWalletHandler.getSplTokenBalancesByMint()
+				: Promise.resolve({} as Record<string, bigint>),
+		]);
+
+		const finalBalance: { [key: string]: string } = {};
+		for (const tokenID of dirTokens) {
+			const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
+			const isCurrencyToken =
+				currencyID !== undefined && tokenID === currencyID;
+			if (!tokenConfig) {
+				finalBalance[tokenID.toString()] = isCurrencyToken
+					? nativeLamports.toString(10)
+					: '0';
+				continue;
+			}
+
+			if (tokenConfig.chainSpecific === LovelaceTokenName) {
+				finalBalance[tokenID.toString()] = nativeLamports.toString(10);
+			} else {
+				finalBalance[tokenID.toString()] = (
+					splByMint[tokenConfig.chainSpecific] ?? BigInt(0)
+				).toString(10);
+			}
+		}
+
+		return { balance: finalBalance };
 	}
 
 	let utxoRetriever: UtxoRetriever = walletHandler;
@@ -145,8 +186,8 @@ export const fetchAndUpdateBalanceAction = async (dispatch: Dispatch) => {
 
 export const getUpdateBalanceInterval = (): number => {
 	const srcChain = getCurrentSrcChain();
-	if (!srcChain) {
-		return DEFAULT_UPDATE_BALANCE_INTERVAL;
+	if (!srcChain || isSolanaChain(srcChain)) {
+		return SOLANA_WALLET_UPDATE_BALANCE_INTERVAL;
 	}
 
 	return getUtxoRetrieverType(srcChain) === UtxoRetrieverEnum.Wallet

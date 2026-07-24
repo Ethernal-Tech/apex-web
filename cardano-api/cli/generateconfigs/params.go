@@ -49,6 +49,8 @@ const (
 	scrollIsEnabledFlag   = "scroll-is-enabled"
 	unichainIsEnabledFlag = "unichain-is-enabled"
 
+	solanaIsEnabledFlag = "solana-is-enabled"
+
 	logsPathFlag = "logs-path"
 
 	utxoCacheTimeoutFlag = "utxo-cache-timeout"
@@ -96,6 +98,8 @@ const (
 	arbitrumIsEnabledFlagDesc = "chain enable flag for arbitrum"
 	scrollIsEnabledFlagDesc   = "chain enable flag for scroll"
 	unichainIsEnabledFlagDesc = "chain enable flag for unichain"
+
+	solanaIsEnabledFlagDesc = "chain enable flag for solana"
 
 	logsPathFlagDesc = "path to where logs will be stored"
 

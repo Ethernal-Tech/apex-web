@@ -9,6 +9,7 @@ import {
 	calculateTokenUtxoMinValue,
 	convertApexToDfm,
 	convertWeiToDfm,
+	convertLamportsToDfm,
 	createUtxo,
 	minBigInt,
 } from '../../../utils/generalUtils';
@@ -18,10 +19,14 @@ import {
 	CardanoTransactionFeeResponseDto,
 	ChainEnum,
 	CreateEthTransactionFullResponseDto,
+	CreateSolanaTransactionFullResponseDto,
 	TxTypeEnum,
 } from '../../../swagger/apexBridgeApiService';
 import appSettings from '../../../settings/appSettings';
-import { estimateEthTxFee } from '../../../actions/submitTx';
+import {
+	estimateEthTxFee,
+	estimateSolanaTxFeeLamports,
+} from '../../../actions/submitTx';
 import CustomSelect from '../../../components/customSelect/CustomSelect';
 import { white } from '../../../containers/theme';
 import { useSupportedSourceTokenOptions } from '../utils';
@@ -30,6 +35,7 @@ import {
 	getBridgingMode,
 	isCardanoChain,
 	isEvmChain,
+	isSolanaChain,
 } from '../../../settings/chain';
 import { getCurrencyID, getTokenInfo } from '../../../settings/token';
 import SubmitLoading from './SubmitLoading';
@@ -51,6 +57,11 @@ type BridgeInputType = {
 		amount: string,
 		tokenID: number,
 	) => Promise<CreateEthTransactionFullResponseDto>;
+	getSolanaTxFee: (
+		address: string,
+		amount: string,
+		tokenID: number,
+	) => Promise<CreateSolanaTransactionFullResponseDto>;
 	submit: (address: string, amount: string, tokenID: number) => Promise<void>;
 	loadingState: SubmitLoadingState | undefined;
 };
@@ -76,7 +87,11 @@ const calculateMaxAmountToken = (
 		BigInt(maxTokenAmountAllowedToBridge || '0') !== BigInt(0)
 			? isEvmChain(chain)
 				? BigInt(maxTokenAmountAllowedToBridge)
-				: BigInt(convertWeiToDfm(maxTokenAmountAllowedToBridge))
+				: isSolanaChain(chain)
+					? BigInt(
+							convertLamportsToDfm(maxTokenAmountAllowedToBridge),
+						)
+					: BigInt(convertWeiToDfm(maxTokenAmountAllowedToBridge))
 			: BigInt(0);
 
 	const tokenBalance = BigInt(totalBalance[sourceTokenID] || '0');
@@ -100,7 +115,7 @@ const calculateMaxAmountCurrency = (
 	maxAmountAllowedToBridge: string,
 	chain: ChainEnum,
 	changeMinUtxo: number,
-	evmWalletFeeWeiValue: string,
+	nonCardanoWalletFeeWeiValue: string,
 	bridgeTxFee: string,
 	operationFee: string,
 ): { maxByBalance: bigint; maxByAllowed: bigint } => {
@@ -112,7 +127,9 @@ const calculateMaxAmountCurrency = (
 		BigInt(maxAmountAllowedToBridge || '0') !== BigInt(0)
 			? isEvmChain(chain)
 				? BigInt(maxAmountAllowedToBridge)
-				: BigInt(convertWeiToDfm(maxAmountAllowedToBridge))
+				: isSolanaChain(chain)
+					? BigInt(convertLamportsToDfm(maxAmountAllowedToBridge))
+					: BigInt(convertWeiToDfm(maxAmountAllowedToBridge))
 			: BigInt(0);
 
 	const balanceAllowedToUse =
@@ -127,8 +144,14 @@ const calculateMaxAmountCurrency = (
 		maxByBalance =
 			BigInt(totalBalance[currencyID] || '0') -
 			BigInt(bridgeTxFee) -
-			BigInt(evmWalletFeeWeiValue) -
+			BigInt(nonCardanoWalletFeeWeiValue) -
 			BigInt(operationFee);
+	} else if (isSolanaChain(chain)) {
+		maxByBalance =
+			BigInt(totalBalance[currencyID] || '0') -
+			BigInt(bridgeTxFee || '0') -
+			BigInt(nonCardanoWalletFeeWeiValue) -
+			BigInt(operationFee || '0');
 	} else {
 		maxByBalance =
 			BigInt(totalBalance[currencyID] || '0') -
@@ -144,6 +167,7 @@ const calculateMaxAmountCurrency = (
 const BridgeInput = ({
 	getCardanoTxFee,
 	getEthTxFee,
+	getSolanaTxFee,
 	submit,
 	loadingState,
 }: BridgeInputType) => {
@@ -246,6 +270,7 @@ const BridgeInput = ({
 	const defaultBridgeTxFee = useMemo(
 		() =>
 			isEvmChain(chain) ||
+			isSolanaChain(chain) ||
 			!sourceTokenID ||
 			!currencyID ||
 			sourceTokenID === currencyID
@@ -362,6 +387,46 @@ const BridgeInput = ({
 				);
 
 				return;
+			} else if (isSolanaChain(chain)) {
+				if (roughCurrencyMaxByBalance <= BigInt(0)) {
+					return;
+				}
+
+				const feeResp = await getSolanaTxFee(
+					destinationAddr,
+					amount
+						? convertApexToDfm(amount, chain)
+						: roughCurrencyMaxByBalance.toString(10),
+					sourceTokenID,
+				);
+
+				const { bridgingTx, approvalTx } = feeResp;
+
+				let walletFeeLamports = BigInt(0);
+				if (approvalTx?.txRaw) {
+					const approvalFee = await estimateSolanaTxFeeLamports(
+						approvalTx.txRaw,
+					);
+					const bridgingFeeEstimate =
+						await estimateSolanaTxFeeLamports(
+							bridgingTx.solTx.txRaw,
+						);
+					walletFeeLamports = approvalFee + bridgingFeeEstimate;
+				} else if (bridgingTx.solTx?.txRaw) {
+					walletFeeLamports = await estimateSolanaTxFeeLamports(
+						bridgingTx.solTx.txRaw,
+					);
+				}
+
+				setUserWalletFee(walletFeeLamports.toString(10));
+				setBridgeTxFee(
+					BigInt(bridgingTx.bridgingFee || '0').toString(10),
+				);
+				setOperationFee(
+					BigInt(bridgingTx.operationFee || '0').toString(10),
+				);
+
+				return;
 			}
 		} catch (e) {
 			console.log('error while calculating wallet fee', e);
@@ -385,6 +450,7 @@ const BridgeInput = ({
 		getCardanoTxFee,
 		roughCurrencyMaxByBalance,
 		getEthTxFee,
+		getSolanaTxFee,
 	]);
 
 	useEffect(() => {
@@ -442,6 +508,7 @@ const BridgeInput = ({
 		if (
 			(settings.bridgingAddresses || []).length === 0 ||
 			isEvmChain(chain) ||
+			isSolanaChain(chain) ||
 			!sourceTokenID ||
 			!currencyID ||
 			sourceTokenID === currencyID ||
@@ -591,6 +658,7 @@ const BridgeInput = ({
 					bridgeTxFee={adjustedBridgeTxFee || '0'}
 					operationFee={operationFee || '0'}
 					chain={chain}
+					destinationChain={destinationChain}
 					bridgingMode={bridgingModeInfo.bridgingMode}
 					sx={{
 						gridColumn: 'span 1',

@@ -21,6 +21,7 @@ export class AppSettings {
 		arbitrum: '0',
 		scroll: '0',
 		unichain: '0',
+		solana: '0',
 	};
 
 	private _minOperationFee: { [key: string]: string } = {
@@ -35,6 +36,7 @@ export class AppSettings {
 		arbitrum: '0',
 		scroll: '0',
 		unichain: '0',
+		solana: '0',
 	};
 
 	private _minColCoinsAllowedToBridge: { [key: string]: string } = {
@@ -49,6 +51,7 @@ export class AppSettings {
 		arbitrum: '0',
 		scroll: '0',
 		unichain: '0',
+		solana: '0',
 	};
 
 	private _utxoRetriever: UtxoRetrieverConfig = {};

@@ -1,5 +1,8 @@
 import { CardanoAddress } from '../features/Address/interfaces';
-import { CardanoNetworkType } from '../features/Address/types';
+import {
+	CardanoNetworkType,
+	SolanaNetworkType,
+} from '../features/Address/types';
 import { ApexBridgeNetwork } from '../features/enums';
 import appSettings from '../settings/appSettings';
 import { isEvmChain } from '../settings/chain';
@@ -175,6 +178,16 @@ const CHAIN_DATA: { [key: string]: ChainData } = {
 			network: ApexBridgeNetwork.TestnetUnichain,
 		},
 	},
+	[ChainEnum.Solana]: {
+		mainnet: {
+			networkID: SolanaNetworkType.MainNetNetwork,
+			network: ApexBridgeNetwork.MainnetSolana,
+		},
+		testnet: {
+			networkID: SolanaNetworkType.TestNetNetwork,
+			network: ApexBridgeNetwork.TestnetSolana,
+		},
+	},
 };
 
 const NETWORK_TO_CHAIN: {
@@ -195,6 +208,7 @@ const NETWORK_TO_CHAIN: {
 		[ApexBridgeNetwork.MainnetArbitrum]: ChainEnum.Arbitrum,
 		[ApexBridgeNetwork.MainnetScroll]: ChainEnum.Scroll,
 		[ApexBridgeNetwork.MainnetUnichain]: ChainEnum.Unichain,
+		[ApexBridgeNetwork.MainnetSolana]: ChainEnum.Solana,
 	},
 	testnet: {
 		[ApexBridgeNetwork.TestnetPrime]: ChainEnum.Prime,
@@ -210,6 +224,7 @@ const NETWORK_TO_CHAIN: {
 		[ApexBridgeNetwork.TestnetArbitrum]: ChainEnum.Arbitrum,
 		[ApexBridgeNetwork.TestnetScroll]: ChainEnum.Scroll,
 		[ApexBridgeNetwork.TestnetUnichain]: ChainEnum.Unichain,
+		[ApexBridgeNetwork.TestnetSolana]: ChainEnum.Solana,
 	},
 };
 
@@ -348,6 +363,7 @@ const EXPLORER_URLS: {
 		[ChainEnum.Arbitrum]: 'https://arbiscan.io/',
 		[ChainEnum.Scroll]: 'https://scrollscan.com/',
 		[ChainEnum.Unichain]: 'https://unichain.blockscout.com/',
+		[ChainEnum.Solana]: 'https://explorer.solana.com/',
 	},
 	testnet: {
 		[ChainEnum.Prime]:
@@ -362,6 +378,7 @@ const EXPLORER_URLS: {
 		[ChainEnum.Arbitrum]: 'https://sepolia.arbiscan.io/',
 		[ChainEnum.Scroll]: 'https://sepolia.scrollscan.com/',
 		[ChainEnum.Unichain]: 'https://unichain-sepolia.blockscout.com/',
+		[ChainEnum.Solana]: 'https://explorer.solana.com',
 	},
 };
 
@@ -415,6 +432,12 @@ export const getExplorerTxUrl = (
 		}
 		case ChainEnum.Cardano: {
 			url = `${base}/transaction/${txHash}`;
+			break;
+		}
+		case ChainEnum.Solana: {
+			url = appSettings.isMainnet
+				? `${base}/tx/${txHash}`
+				: `${base}/tx/${txHash}?cluster=devnet`;
 			break;
 		}
 		default:
@@ -484,6 +507,12 @@ export const getExplorerAddressUrl = (
 		case ChainEnum.Unichain:
 		case ChainEnum.Nexus: {
 			url = `${base}/address/${address}`;
+			break;
+		}
+		case ChainEnum.Solana: {
+			url = appSettings.isMainnet
+				? `${base}/address/${address}`
+				: `${base}/address/${address}?cluster=devnet`;
 			break;
 		}
 		default:

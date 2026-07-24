@@ -9,6 +9,7 @@ import {
 	createEthBridgingTx,
 	getCardanoBridgingTxFee,
 	canUpdateTx,
+	createSolanaBridgingTx,
 } from 'src/transaction/transaction.helper';
 import {
 	CreateTransactionDto,
@@ -17,6 +18,7 @@ import {
 	CardanoTransactionFeeResponseDto,
 	CreateEthTransactionFullResponseDto,
 	TransactionActivateDeleteDto as TransactionActivateDeleteDto,
+	CreateSolanaTransactionFullResponseDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import {
@@ -30,6 +32,7 @@ import { MoreThan, Repository } from 'typeorm';
 import {
 	getInputUtxos,
 	mapBridgeTransactionToResponse,
+	getTxTTL,
 } from 'src/bridgeTransaction/bridgeTransaction.helper';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 import { SettingsService } from 'src/settings/settings.service';
@@ -45,10 +48,12 @@ import {
 	getBridgingSettings,
 	isCardanoChain,
 	isEvmChain,
+	isSolanaChain,
 } from 'src/utils/chainUtils';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
+import { serializeSolanaTxRawStorage } from 'src/utils/solanaTxRaw';
 import { isAddress } from 'web3-validator';
 import { createHash } from 'crypto';
 
@@ -96,7 +101,7 @@ export class TransactionService {
 		}
 
 		const srcMinFee =
-			dto.tokenID !== currencyID && !isEvmChain(dto.originChain)
+			dto.tokenID !== currencyID && isCardanoChain(dto.originChain)
 				? settings.bridgingSettings.minChainFeeForBridgingTokens[
 						dto.originChain
 					]
@@ -142,6 +147,16 @@ export class TransactionService {
 		if (!isEvmChain(dto.originChain)) {
 			throw new BadRequestException(
 				`Chain ${dto.originChain} is not EVM chain`,
+			);
+		}
+
+		return this.validateCreateTx(dto);
+	}
+
+	private validateCreateSolanaTx(dto: CreateTransactionDto) {
+		if (!isSolanaChain(dto.originChain)) {
+			throw new BadRequestException(
+				`Chain ${dto.originChain} is not Solana chain`,
 			);
 		}
 
@@ -284,6 +299,38 @@ export class TransactionService {
 		return tx;
 	}
 
+	async createSolana(
+		dto: CreateTransactionDto,
+	): Promise<CreateSolanaTransactionFullResponseDto> {
+		this.validateCreateSolanaTx(dto);
+
+		const settings = getBridgingSettings(
+			dto.originChain,
+			dto.destinationChain,
+			dto.tokenID,
+			this.settingsService.SettingsResponse,
+		);
+		if (!settings) {
+			throw new BadRequestException(
+				`Bridging token ${dto.tokenID} from ${dto.originChain} to ${dto.destinationChain} not supported`,
+			);
+		}
+
+		const bridgingMode = getBridgingMode(
+			dto.originChain,
+			dto.destinationChain,
+			dto.tokenID,
+			this.settingsService.SettingsResponse,
+		);
+
+		const tx = await createSolanaBridgingTx(dto, bridgingMode!);
+		if (!tx) {
+			throw new BadRequestException('error while creating bridging tx');
+		}
+
+		return tx;
+	}
+
 	async transactionSubmitted(
 		{
 			originChain,
@@ -295,6 +342,7 @@ export class TransactionService {
 			nativeTokenAmount,
 			tokenID,
 			txRaw,
+			lastValidBlockHeight,
 			isFallback,
 			isLayerZero,
 		}: TransactionSubmittedDto,
@@ -326,6 +374,11 @@ export class TransactionService {
 		const enTokenID =
 			tokenID !== currencyID || nNativeTokenAmount > BigInt(0) ? tokenID : 0;
 
+		const txRawWithSolana =
+			isSolanaChain(originChain) && lastValidBlockHeight
+				? serializeSolanaTxRawStorage(txRaw, lastValidBlockHeight)
+				: txRaw;
+
 		entity.sourceTxHash = (originTxHash ?? '').trim();
 		entity.senderAddress = (senderAddress ?? '').trim() || entity.senderAddress;
 		entity.receiverAddresses = receiverAddresses ?? entity.receiverAddresses;
@@ -337,7 +390,10 @@ export class TransactionService {
 		entity.originChain = originChain;
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;
-		entity.txRaw = txRaw;
+		entity.txRaw =
+			getTxTTL(originChain, txRawWithSolana) !== undefined
+				? txRawWithSolana
+				: '';
 		entity.isCentralized = isFallback;
 		entity.isLayerZero = isLayerZero;
 		entity.activeFrom = activate
@@ -395,7 +451,7 @@ export class TransactionService {
 
 		// Apply updates
 		if (txRaw !== undefined) {
-			entity.txRaw = txRaw;
+			entity.txRaw = getTxTTL(originChain, txRaw) !== undefined ? txRaw : '';
 		}
 		entity.activeFrom = new Date();
 		entity.clientID = null;

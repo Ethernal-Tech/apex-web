@@ -75,6 +75,11 @@ import { ReactComponent as UnichainInProgressIcon } from '../../../assets/bridge
 import { ReactComponent as UnichainSuccessIcon } from '../../../assets/bridge-status-assets/unichain-success.svg';
 import { ReactComponent as UnichainErrorIcon } from '../../../assets/bridge-status-assets/unichain-error.svg';
 
+// solana icons
+import { ReactComponent as SolanaInProgressIcon } from '../../../assets/bridge-status-assets/solana.svg';
+import { ReactComponent as SolanaSuccessIcon } from '../../../assets/bridge-status-assets/solana-success.svg';
+import { ReactComponent as SolanaErrorIcon } from '../../../assets/bridge-status-assets/solana-error.svg';
+
 // bridge icons
 import { ReactComponent as BridgeInProgressIcon } from '../../../assets/bridge-status-assets/Bridge-Wallet.svg';
 import { ReactComponent as BridgeSuccessIcon } from '../../../assets/bridge-status-assets/bridge-success.svg';
@@ -197,6 +202,11 @@ const chainStatusIcons: {
 		inProgress: UnichainInProgressIcon,
 		done: UnichainSuccessIcon,
 		error: UnichainErrorIcon,
+	},
+	[ChainEnum.Solana]: {
+		inProgress: SolanaInProgressIcon,
+		done: SolanaSuccessIcon,
+		error: SolanaErrorIcon,
 	},
 };
 

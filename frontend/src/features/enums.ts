@@ -24,6 +24,7 @@ export enum ApexBridgeNetwork {
 	MainnetArbitrum = 'MainnetArbitrum',
 	MainnetScroll = 'MainnetScroll',
 	MainnetUnichain = 'MainnetUnichain',
+	MainnetSolana = 'MainnetSolana',
 	TestnetPrime = 'TestnetPrime',
 	TestnetVector = 'TestnetVector',
 	TestnetNexus = 'TestnetNexus',
@@ -37,6 +38,7 @@ export enum ApexBridgeNetwork {
 	TestnetArbitrum = 'TestnetArbitrum',
 	TestnetScroll = 'TestnetScroll',
 	TestnetUnichain = 'TestnetUnichain',
+	TestnetSolana = 'TestnetSolana',
 }
 
 export enum UtxoRetrieverEnum {

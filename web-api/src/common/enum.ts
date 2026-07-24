@@ -21,6 +21,7 @@ export enum ChainApexBridgeEnum {
 	Arbitrum = 'arbitrum',
 	Scroll = 'scroll',
 	Unichain = 'unichain',
+	Solana = 'solana',
 }
 
 export const ChainEnum = {

@@ -9,9 +9,11 @@ import (
 
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
+	solanatx "github.com/Ethernal-Tech/cardano-api/solana"
 	"github.com/Ethernal-Tech/cardano-infrastructure/logger"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
+	solanawallet "github.com/Ethernal-Tech/solana-infrastructure/wallet"
 	goEthCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/hashicorp/go-hclog"
 )
@@ -36,6 +38,13 @@ type BridgingAddresses struct {
 type EthChainConfig struct {
 	ChainID   string `json:"-"`
 	IsEnabled bool   `json:"isEnabled"`
+}
+
+type SolanaChainConfig struct {
+	ChainID         string                      `json:"-"`
+	TreasuryAddress string                      `json:"treasuryAddress"`
+	ChainSpecific   *solanatx.SolanaChainConfig `json:"chainSpecific"`
+	IsEnabled       bool                        `json:"isEnabled"`
 }
 
 type CardanoChainConfig struct {
@@ -136,8 +145,10 @@ type AppConfig struct {
 
 	cardanoChainsMu         sync.RWMutex
 	evmChainsMu             sync.RWMutex
+	solanaChainsMu          sync.RWMutex
 	CardanoChains           map[string]*CardanoChainConfig `json:"cardanoChains"`
 	EthChains               map[string]*EthChainConfig     `json:"ethChains"`
+	SolanaChains            map[string]*SolanaChainConfig  `json:"solanaChains"`
 	UtxoCacheTimeout        time.Duration                  `json:"utxoCacheTimeout"`
 	OracleAPI               OracleAPISettings              `json:"oracleApi"`
 	Settings                AppSettings                    `json:"appSettings"`
@@ -164,6 +175,23 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 	}
 
 	appConfig.evmChainsMu.Unlock()
+
+	appConfig.solanaChainsMu.Lock()
+
+	for chainID, solanaChainConfig := range appConfig.SolanaChains {
+		solanaChainConfig.ChainID = chainID
+
+		if solanaChainConfig.ChainSpecific != nil {
+			txProvider, err := solanawallet.NewProvider(solanaChainConfig.ChainSpecific.JSONRPCAddress, nil)
+			if err != nil {
+				return fmt.Errorf("failed to create tx provider: %w", err)
+			}
+
+			solanaChainConfig.ChainSpecific.TxProvider = txProvider
+		}
+	}
+
+	appConfig.solanaChainsMu.Unlock()
 
 	settingsRequestURL := fmt.Sprintf("%s/api/Settings/Get", appConfig.OracleAPI.URL)
 
@@ -292,11 +320,11 @@ func (appConfig *AppConfig) fillOutSkylineSpecific(
 	return appConfig.validateDirectionConfig()
 }
 
-func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig, *EthChainConfig) {
+func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig, *EthChainConfig, *SolanaChainConfig) {
 	appConfig.cardanoChainsMu.RLock()
 
 	if cardanoChainConfig, exists := appConfig.CardanoChains[chainID]; exists && cardanoChainConfig.IsEnabled {
-		return cardanoChainConfig, nil
+		return cardanoChainConfig, nil, nil
 	}
 
 	appConfig.cardanoChainsMu.RUnlock()
@@ -304,14 +332,21 @@ func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig,
 	appConfig.evmChainsMu.RLock()
 
 	if ethChainConfig, exists := appConfig.EthChains[chainID]; exists && ethChainConfig.IsEnabled {
-		return nil, ethChainConfig
+		return nil, ethChainConfig, nil
 	}
 
 	appConfig.evmChainsMu.RUnlock()
 
-	return nil, nil
-}
+	appConfig.solanaChainsMu.RLock()
 
+	if solanaChainConfig, exists := appConfig.SolanaChains[chainID]; exists && solanaChainConfig.IsEnabled {
+		return nil, nil, solanaChainConfig
+	}
+
+	appConfig.solanaChainsMu.RUnlock()
+
+	return nil, nil, nil
+}
 func (appConfig *AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]sendtx.ChainConfig, error) {
 	appConfig.cardanoChainsMu.RLock()
 
@@ -340,6 +375,19 @@ func (appConfig *AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]s
 	}
 
 	appConfig.evmChainsMu.RUnlock()
+
+	appConfig.solanaChainsMu.RLock()
+
+	for chainID, config := range appConfig.SolanaChains {
+		ctg, err := config.ToSendTxChainConfig(appConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		result[chainID] = ctg
+	}
+
+	appConfig.solanaChainsMu.RUnlock()
 
 	return result, nil
 }
@@ -402,6 +450,16 @@ func (appConfig *AppConfig) CreateEnabledChains() []string {
 	}
 
 	appConfig.evmChainsMu.RUnlock()
+
+	appConfig.solanaChainsMu.RLock()
+
+	for chainID, cfg := range appConfig.SolanaChains {
+		if cfg.IsEnabled {
+			enabledChains = append(enabledChains, chainID)
+		}
+	}
+
+	appConfig.solanaChainsMu.RUnlock()
 
 	return enabledChains
 }
@@ -493,10 +551,18 @@ func (config EthChainConfig) ToSendTxChainConfig(
 	}, nil
 }
 
+func (config SolanaChainConfig) ToSendTxChainConfig(
+	appConfig *AppConfig,
+) (sendtx.ChainConfig, error) {
+	return sendtx.ChainConfig{
+		DefaultMinFeeForBridging: appConfig.SkylineBridgingSettings.MinChainFeeForBridging[config.ChainID].Uint64(),
+	}, nil
+}
+
 func (settings SkylineBridgingSettings) GetMinBridgingFee(chainID string, isNativeToken bool) (
 	fee uint64, found bool,
 ) {
-	if isNativeToken {
+	if isNativeToken && !common.IsSolanaChainID(chainID) {
 		fee, found = settings.MinChainFeeForBridgingTokens[chainID]
 	} else {
 		var feeBigInt *big.Int
@@ -584,13 +650,17 @@ func (appConfig *AppConfig) validateDirectionConfig() error {
 		ecosystemTokensMap[tok.ID] = tok.Name
 	}
 
-	allChains := make([]string, 0, len(appConfig.CardanoChains)+len(appConfig.EthChains))
+	allChains := make([]string, 0, len(appConfig.CardanoChains)+len(appConfig.EthChains)+len(appConfig.SolanaChains))
 	for _, cc := range appConfig.CardanoChains {
 		allChains = append(allChains, cc.ChainID)
 	}
 
 	for _, ec := range appConfig.EthChains {
 		allChains = append(allChains, ec.ChainID)
+	}
+
+	for _, sc := range appConfig.SolanaChains {
+		allChains = append(allChains, sc.ChainID)
 	}
 
 	for _, chainID := range allChains {
@@ -641,6 +711,20 @@ func (appConfig *AppConfig) validateDirectionConfig() error {
 				if len(tok.ChainSpecific) == 0 || !goEthCommon.IsHexAddress(tok.ChainSpecific) {
 					return fmt.Errorf("invalid eth token contract addr %s in direction config for chain: %s",
 						tok.ChainSpecific, ec.ChainID)
+				}
+			}
+		}
+	}
+
+	for _, sc := range appConfig.SolanaChains {
+		dirConfig := settings.DirectionConfig[sc.ChainID]
+
+		for _, tok := range dirConfig.Tokens {
+			if tok.ChainSpecific != cardanowallet.AdaTokenName {
+				err := solanawallet.ValidateAddress(tok.ChainSpecific, true)
+				if len(tok.ChainSpecific) == 0 || err != nil {
+					return fmt.Errorf("invalid solana token address %s in direction config for chain: %s",
+						tok.ChainSpecific, sc.ChainID)
 				}
 			}
 		}

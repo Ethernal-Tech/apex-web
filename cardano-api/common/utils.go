@@ -43,8 +43,9 @@ const (
 )
 
 const (
-	DfmDecimals = 6
-	WeiDecimals = 18
+	DfmDecimals    = 6
+	WeiDecimals    = 18
+	SolanaDecimals = 9
 )
 
 func IsValidHTTPURL(input string) bool {
@@ -229,6 +230,36 @@ func DfmToWei(dfm *big.Int) *big.Int {
 	base := big.NewInt(10)
 
 	return wei.Mul(wei, base.Exp(base, big.NewInt(WeiDecimals-DfmDecimals), nil))
+}
+
+func LamportsToDfm(lamports *big.Int) *big.Int {
+	dfm := new(big.Int).Set(lamports)
+	base := big.NewInt(10)
+	dfm.Div(dfm, base.Exp(base, big.NewInt(SolanaDecimals-DfmDecimals), nil))
+
+	return dfm
+}
+
+func DfmToLamports(dfm *big.Int) *big.Int {
+	lamports := new(big.Int).Set(dfm)
+	base := big.NewInt(10)
+
+	return lamports.Mul(lamports, base.Exp(base, big.NewInt(SolanaDecimals-DfmDecimals), nil))
+}
+
+func LamportsToWei(lamports *big.Int) *big.Int {
+	wei := new(big.Int).Set(lamports)
+	base := big.NewInt(10)
+
+	return wei.Mul(wei, base.Exp(base, big.NewInt(WeiDecimals-SolanaDecimals), nil))
+}
+
+func WeiToLamports(wei *big.Int) *big.Int {
+	lamports := new(big.Int).Set(wei)
+	base := big.NewInt(10)
+	lamports.Div(lamports, base.Exp(base, big.NewInt(WeiDecimals-SolanaDecimals), nil))
+
+	return lamports
 }
 
 func executeHTTPCall[TResponse any](req *http.Request, apiKey string) (t TResponse, err error) {

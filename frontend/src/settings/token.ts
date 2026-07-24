@@ -4,6 +4,7 @@ import { ReactComponent as ApexIcon } from '../assets/token-icons/apex.svg';
 import { ReactComponent as EthIcon } from '../assets/token-icons/eth.svg';
 import { ReactComponent as PolygonIcon } from '../assets/token-icons/polygon.svg';
 import { ReactComponent as SeiIcon } from '../assets/token-icons/sei.svg';
+import { ReactComponent as SolanaIcon } from '../assets/chain-icons/solana.svg';
 import { ReactComponent as UnknownTokenIcon } from '../assets/token-icons/unknown.svg';
 import {
 	BridgeTransactionDto,
@@ -218,6 +219,30 @@ const testnetTokenInfos: Record<number, TokenInfo> = {
 		icon: EthIcon,
 		label: 'cUnichainETH',
 		borderColor: '#8A92B2',
+	},
+	30: {
+		tokenID: 30,
+		icon: SolanaIcon,
+		label: 'SOL',
+		borderColor: '#1C1C1E',
+	},
+	31: {
+		tokenID: 31,
+		icon: SolanaIcon,
+		label: 'wSOL',
+		borderColor: '#1C1C1E',
+	},
+	32: {
+		tokenID: 32,
+		icon: SolanaIcon,
+		label: 'aSOL',
+		borderColor: '#1C1C1E',
+	},
+	33: {
+		tokenID: 33,
+		icon: ApexIcon,
+		label: 'sAP3X',
+		borderColor: '#0538AF',
 	},
 	[lzEthID]: {
 		tokenID: lzEthID,

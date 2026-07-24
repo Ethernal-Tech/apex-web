@@ -19,6 +19,7 @@ import { ReactComponent as EthIcon } from '../assets/chain-icons/eth.svg';
 import { ReactComponent as ArbitrumIcon } from '../assets/chain-icons/arbitrum.svg';
 import { ReactComponent as ScrollIcon } from '../assets/chain-icons/scroll.svg';
 import { ReactComponent as UnichainIcon } from '../assets/chain-icons/unichain.svg';
+import { ReactComponent as SolanaIcon } from '../assets/chain-icons/solana.svg';
 import { ISettingsState } from './settingsRedux';
 import appSettings from './appSettings';
 import { captureAndThrowError } from '../features/sentry';
@@ -173,6 +174,15 @@ const chainInfoMapping: Partial<Record<ChainEnum, ChainInfo>> = {
 		mainColor: '#F50DB4',
 		order: 13,
 	},
+	[ChainEnum.Solana]: {
+		value: ChainEnum.Solana,
+		label: 'Solana',
+		icon: SolanaIcon,
+		borderColor: '#1C1C1E',
+		letter: 'S',
+		mainColor: '#1C1C1E',
+		order: 14,
+	},
 };
 
 const getChainDirections = function (
@@ -259,6 +269,10 @@ export const isCardanoChain = function (chain: ChainEnum): boolean {
 	);
 };
 
+export const isSolanaChain = function (chain: ChainEnum): boolean {
+	return chain === ChainEnum.Solana;
+};
+
 export const toChainEnum = function (value: string): ChainEnum {
 	const lower = value.toLowerCase();
 	if (Object.values(ChainEnum).includes(lower as ChainEnum)) {
@@ -281,6 +295,7 @@ export function isApexBridgeChain(chain: ChainEnum): boolean {
 		case ChainEnum.Arbitrum:
 		case ChainEnum.Scroll:
 		case ChainEnum.Unichain:
+		case ChainEnum.Solana:
 			return true;
 		default:
 			return false; // bsc / base → false

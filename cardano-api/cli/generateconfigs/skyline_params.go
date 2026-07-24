@@ -90,6 +90,8 @@ type skylineGenerateConfigsParams struct {
 	scrollIsEnabled   bool
 	unichainIsEnabled bool
 
+	solanaIsEnabled bool
+
 	logsPath         string
 	utxoCacheTimeout time.Duration
 	utxoCacheKeys    []string
@@ -481,6 +483,13 @@ func (p *skylineGenerateConfigsParams) setFlags(cmd *cobra.Command) {
 		unichainIsEnabledFlagDesc,
 	)
 
+	cmd.Flags().BoolVar(
+		&p.solanaIsEnabled,
+		solanaIsEnabledFlag,
+		false,
+		solanaIsEnabledFlagDesc,
+	)
+
 	cmd.Flags().StringVar(
 		&p.logsPath,
 		logsPathFlag,
@@ -634,6 +643,11 @@ func (p *skylineGenerateConfigsParams) Execute(
 			},
 			common.ChainIDStrUnichain: {
 				IsEnabled: p.unichainIsEnabled,
+			},
+		},
+		SolanaChains: map[string]*core.SolanaChainConfig{
+			common.ChainIDStrSolana: {
+				IsEnabled: p.solanaIsEnabled,
 			},
 		},
 		UtxoCacheTimeout: p.utxoCacheTimeout,
