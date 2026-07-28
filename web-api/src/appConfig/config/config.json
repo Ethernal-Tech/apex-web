@@ -31,7 +31,7 @@
     "ssl": false,
     "migrationsTableName": "migrations",
     "entities": ["dist/**/*.entity.js"],
-    "migrations": ["dist/migrations/*.js"]
+    "migrations": ["dist/src/database/migrations/*.js"]
   },
   "email": {
     "contactEmail": "contact@skylinebridge.tech",

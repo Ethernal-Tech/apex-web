@@ -37,7 +37,7 @@
       "dist/**/*.entity.js"
     ],
     "migrations": [
-      "dist/migrations/*.js"
+      "dist/src/database/migrations/*.js"
     ]
   },
   "email": {

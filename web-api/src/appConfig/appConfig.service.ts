@@ -22,7 +22,7 @@ const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
 	database: {
 		port: 5432,
 		name: 'apex',
-		migrations: ['dist/database/migrations/*.js'],
+		migrations: ['dist/src/database/migrations/*.js'],
 		migrationsTableName: '__apex_migrations',
 		entities: ['dist/**/*.entity.js'],
 	},

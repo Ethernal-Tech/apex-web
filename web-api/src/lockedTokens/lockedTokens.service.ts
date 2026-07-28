@@ -32,14 +32,28 @@ import {
 	getDirectionTokenIDsFromDirectionConfig,
 	getTokenNameById,
 } from 'src/settings/utils';
-import { amountToBigInt } from 'src/utils/generalUtils';
+import { amountToBigInt, convertWeiToDfm } from 'src/utils/generalUtils';
 import { getBridgingMode } from 'src/utils/chainUtils';
+import { Cron } from '@nestjs/schedule';
+import Web3 from 'web3';
+import {
+	ChainTokenAmounts,
+	HistoricalSnapshot,
+} from './historicalSnapshot.entity';
+import { adaID, apexID, isAdaToken, isApexToken } from './token';
+
+const NEXUS_RPC_URLS = {
+	mainnet: 'https://rpc.nexus.mainnet.apexfusion.org/',
+	testnet: 'https://rpc.nexus.testnet.apexfusion.org',
+} as const;
 
 @Injectable()
 export class LockedTokensService {
 	constructor(
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
+		@InjectRepository(HistoricalSnapshot)
+		private readonly historicalSnapshotRepository: Repository<HistoricalSnapshot>,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly settingsService: SettingsService,
 		private readonly appConfig: AppConfigService,
@@ -70,6 +84,190 @@ export class LockedTokensService {
 			chains: lockedTokens.chains,
 			totalTransferred: sumTransferred.totalTransferred,
 		};
+	}
+
+	/** UTC midnight daily snapshot of TVL / TVB. */
+	@Cron('0 0 * * *', {
+		name: 'historicalDailySnapshot',
+		timeZone: 'UTC',
+	})
+	async takeDailySnapshot(): Promise<HistoricalSnapshot | null> {
+		try {
+			const snapshot = await this.buildAndSaveSnapshot(this.utcMidnight());
+			Logger.log(
+				`historicalDailySnapshot saved for ${snapshot.snapshotAt.toISOString()}`,
+			);
+			return snapshot;
+		} catch (error) {
+			Logger.error(
+				`historicalDailySnapshot failed: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
+				error instanceof Error ? error.stack : undefined,
+			);
+			return null;
+		}
+	}
+
+	public async buildAndSaveSnapshot(
+		snapshotAt: Date = this.utcMidnight(),
+	): Promise<HistoricalSnapshot> {
+		const existing = await this.historicalSnapshotRepository.findOne({
+			where: { snapshotAt },
+		});
+
+		if (existing) {
+			Logger.log(
+				`buildAndSaveSnapshot: snapshot already exists for ${snapshotAt.toISOString()}, skipping`,
+			);
+			return existing;
+		}
+
+		const data = await this.fillTokensData([
+			BridgingModeEnum.Skyline,
+			BridgingModeEnum.LayerZero,
+		]);
+
+		const tvlByChain = this.sumLockedByChain(data.chains);
+		const tvbByChain = data.totalTransferred;
+		const tvlLayerZeroApex = await this.fetchLayerZeroLockedApexDfm();
+
+		const tvlApex = (
+			this.tokenAmount(tvlByChain, ChainEnum.Prime, apexID) +
+			this.tokenAmount(tvlByChain, ChainEnum.Vector, apexID) +
+			BigInt(tvlLayerZeroApex)
+		).toString();
+
+		const cardanoCurrencyId =
+			getCurrencyIDFromDirectionConfig(
+				this.settingsService.SettingsResponse.directionConfig,
+				ChainEnum.Cardano,
+			) ?? adaID;
+
+		const tvlAda = this.tokenAmount(
+			tvlByChain,
+			ChainEnum.Cardano,
+			cardanoCurrencyId,
+		).toString();
+
+		const { tvbApex, tvbAda } = this.sumTransferredTotals(tvbByChain);
+
+		const entity = new HistoricalSnapshot();
+		entity.snapshotAt = snapshotAt;
+		entity.tvlByChain = tvlByChain;
+		entity.tvlLayerZeroApex = tvlLayerZeroApex;
+		entity.tvbByChain = tvbByChain;
+		entity.tvlApex = tvlApex;
+		entity.tvlAda = tvlAda;
+		entity.tvbApex = tvbApex;
+		entity.tvbAda = tvbAda;
+
+		return this.historicalSnapshotRepository.save(entity);
+	}
+
+	private utcMidnight(date = new Date()): Date {
+		return new Date(
+			Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+		);
+	}
+
+	private sumLockedByChain(
+		chains: LockedTokensResponse['chains'],
+	): ChainTokenAmounts {
+		const result: ChainTokenAmounts = {};
+
+		for (const [chain, tokenMap] of Object.entries(chains || {})) {
+			result[chain] = {};
+			for (const [tokenId, addrMap] of Object.entries(tokenMap || {})) {
+				let sum = BigInt(0);
+				for (const [address, amount] of Object.entries(addrMap || {})) {
+					try {
+						sum += BigInt(amount || '0');
+					} catch {
+						Logger.warn(
+							`sumLockedByChain: invalid amount "${amount}" for ${chain}/${tokenId}/${address}`,
+						);
+					}
+				}
+				result[chain][tokenId] = sum.toString();
+			}
+		}
+
+		return result;
+	}
+
+	private tokenAmount(
+		byChain: ChainTokenAmounts,
+		chain: string,
+		tokenId: number,
+	): bigint {
+		const raw = byChain[chain]?.[String(tokenId)] ?? '0';
+		try {
+			return BigInt(raw);
+		} catch {
+			return BigInt(0);
+		}
+	}
+
+	private sumTransferredTotals(tvbByChain: ChainTokenAmounts): {
+		tvbApex: string;
+		tvbAda: string;
+	} {
+		let tvbApex = BigInt(0);
+		let tvbAda = BigInt(0);
+
+		for (const tokenMap of Object.values(tvbByChain || {})) {
+			for (const [tokenKey, amount] of Object.entries(tokenMap || {})) {
+				let value = BigInt(0);
+				try {
+					value = BigInt(amount || '0');
+				} catch {
+					continue;
+				}
+
+				const tokenId = Number(tokenKey);
+				if (isApexToken(tokenId)) {
+					tvbApex += value;
+				} else if (isAdaToken(tokenId)) {
+					tvbAda += value;
+				}
+			}
+		}
+
+		return {
+			tvbApex: tvbApex.toString(),
+			tvbAda: tvbAda.toString(),
+		};
+	}
+
+	private async fetchLayerZeroLockedApexDfm(): Promise<string> {
+		const nexus = this.settingsService.SettingsResponse.layerZeroChains?.find(
+			(c) => c.chain === ChainEnum.Nexus,
+		);
+
+		if (!nexus?.oftAddress) {
+			Logger.warn(
+				'fetchLayerZeroLockedApexDfm: Nexus OFT address not configured',
+			);
+			return '0';
+		}
+
+		const rpcUrl = this.appConfig.app.isMainnet
+			? NEXUS_RPC_URLS.mainnet
+			: NEXUS_RPC_URLS.testnet;
+
+		try {
+			const web3 = new Web3(rpcUrl);
+			const balanceWei = await web3.eth.getBalance(nexus.oftAddress);
+			return convertWeiToDfm(String(balanceWei ?? '0')).split('.')[0];
+		} catch (error) {
+			Logger.error(
+				`fetchLayerZeroLockedApexDfm failed: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
+			);
+			return '0';
+		}
 	}
 
 	private async getLockedTokens(): Promise<LockedTokensResponse> {
