@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	Controller,
 	Get,
 	HttpCode,
@@ -8,7 +9,11 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LockedTokensService } from './lockedTokens.service';
-import { LockedTokensDto, TransferredTokensByDay } from './lockedTokens.dto';
+import {
+	HistoricalSnapshotDto,
+	LockedTokensDto,
+	TransferredTokensByDay,
+} from './lockedTokens.dto';
 import { BridgingModeEnum, GroupByTimePeriod } from 'src/common/enum';
 
 @ApiTags('LockedTokens')
@@ -48,6 +53,68 @@ export class LockedTokensController {
 		const allowedBridgingModes = (modes ?? []) as BridgingModeEnum[];
 
 		return await this.lockedTokensService.fillTokensData(allowedBridgingModes);
+	}
+
+	@ApiOperation({
+		summary: 'Get historical TVL/TVB snapshots',
+		description:
+			'Returns stored historical snapshots. startDate/endDate are optional and default to the earliest/latest snapshot. Ordered by snapshotAt ascending.',
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'OK - Historical snapshots.',
+		type: HistoricalSnapshotDto,
+		isArray: true,
+	})
+	@ApiQuery({
+		name: 'startDate',
+		required: false,
+		description:
+			'Inclusive start (ISO date/time). Defaults to the earliest snapshot.',
+	})
+	@ApiQuery({
+		name: 'endDate',
+		required: false,
+		description:
+			'Inclusive end (ISO date/time). Defaults to the latest snapshot.',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Get('historical')
+	async getHistorical(
+		@Query('startDate') startDateStr?: string,
+		@Query('endDate') endDateStr?: string,
+	): Promise<HistoricalSnapshotDto[]> {
+		let startDate: Date | undefined;
+		let endDate: Date | undefined;
+
+		if (startDateStr) {
+			startDate = new Date(startDateStr);
+			if (isNaN(startDate.getTime())) {
+				throw new BadRequestException(
+					'Invalid startDate. Please provide an ISO date/time string.',
+				);
+			}
+		}
+
+		if (endDateStr) {
+			endDate = new Date(endDateStr);
+			if (isNaN(endDate.getTime())) {
+				throw new BadRequestException(
+					'Invalid endDate. Please provide an ISO date/time string.',
+				);
+			}
+		}
+
+		if (startDate && endDate && startDate > endDate) {
+			throw new BadRequestException(
+				'startDate must be before or equal to endDate.',
+			);
+		}
+
+		return await this.lockedTokensService.getHistoricalSnapshots(
+			startDate,
+			endDate,
+		);
 	}
 
 	@ApiOperation({

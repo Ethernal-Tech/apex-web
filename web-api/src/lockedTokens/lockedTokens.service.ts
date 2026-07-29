@@ -14,7 +14,7 @@ import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import {
 	BridgingModeEnum,
 	ChainEnum,
@@ -84,6 +84,41 @@ export class LockedTokensService {
 			chains: lockedTokens.chains,
 			totalTransferred: sumTransferred.totalTransferred,
 		};
+	}
+
+	public async getHistoricalSnapshots(
+		startDate?: Date,
+		endDate?: Date,
+	): Promise<HistoricalSnapshot[]> {
+		let from = startDate;
+		let to = endDate;
+
+		if (!from) {
+			const earliest = await this.historicalSnapshotRepository.find({
+				order: { snapshotAt: 'ASC' },
+				take: 1,
+			});
+			if (earliest.length === 0) {
+				return [];
+			}
+			from = earliest[0].snapshotAt;
+		}
+
+		if (!to) {
+			const latest = await this.historicalSnapshotRepository.find({
+				order: { snapshotAt: 'DESC' },
+				take: 1,
+			});
+			if (latest.length === 0) {
+				return [];
+			}
+			to = latest[0].snapshotAt;
+		}
+
+		return this.historicalSnapshotRepository.find({
+			where: { snapshotAt: Between(from, to) },
+			order: { snapshotAt: 'ASC' },
+		});
 	}
 
 	/** UTC midnight daily snapshot of TVL / TVB. */
