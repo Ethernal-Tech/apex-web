@@ -869,6 +869,39 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "Create Solana",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"senderAddress\": \"BrQciKpBZg47NU8x3chSFAnXUoY9zszRbsy6oGm8Dp3p\",\n  \"originChain\": \"solana\",\n  \"destinationChain\": \"vector\",\n  \"destinationAddress\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n  \"amount\": \"1000000\",\n  \"tokenID\": 31,\n  \"bridgingFee\": \"3100000000\",\n  \"operationFee\": \"1000000000\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{web_api_base_url}}/transaction/createSolana",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"transaction",
+										"createSolana"
+									]
+								}
+							},
+							"response": []
 						}
 					]
 				},
@@ -974,6 +1007,68 @@
 											"key": "allowedBridgingModes",
 											"value": "reactor,skyline"
 										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Historical",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{web_api_base_url}}/lockedTokens/historical?startDate=2026-07-28T11:43:05.001Z&endDate=2026-07-28T11:43:15.005Z",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"lockedTokens",
+										"historical"
+									],
+									"query": [
+										{
+											"key": "startDate",
+											"value": "2026-07-28T11:43:05.001Z"
+										},
+										{
+											"key": "endDate",
+											"value": "2026-07-28T11:43:15.005Z"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "stats",
+					"item": [
+						{
+							"name": "Get Stats",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{web_api_base_url}}/stats",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"stats"
 									]
 								}
 							},
@@ -1539,6 +1634,40 @@
 											"key": "chainId",
 											"value": "prime"
 										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "CreateSolanaBridgingTx",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_skyline_api_key}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"senderAddr\": \"BrQciKpBZg47NU8x3chSFAnXUoY9zszRbsy6oGm8Dp3p\",\n  \"sourceChainId\": \"solana\",\n  \"destinationChainId\": \"vector\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n      \"amount\": 2000000000,\n      \"tokenID\": 31\n    }\n  ],\n  \"bridgingFee\": 3000000000,\n  \"operationFee\": 1000000000\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{cardano_api_skyline_base_url}}/api/CardanoTx/CreateSolanaBridgingTx",
+									"host": [
+										"{{cardano_api_skyline_base_url}}"
+									],
+									"path": [
+										"api",
+										"CardanoTx",
+										"CreateSolanaBridgingTx"
 									]
 								}
 							},
@@ -2739,7 +2868,8 @@
 		},
 		{
 			"key": "oracle_api_skyline_base_url",
-			"value": ""
+			"value": "",
+			"disabled": true
 		},
 		{
 			"key": "oracle_api_reactor_base_url",
@@ -2755,6 +2885,10 @@
 		},
 		{
 			"key": "web_api_base_url",
+			"value": ""
+		},
+		{
+			"key": "oracle_api_skyline_base_url",
 			"value": ""
 		}
 	]
