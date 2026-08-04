@@ -19,7 +19,7 @@ import {
   XCircle,
   Clock,
 } from "lucide-react";
-import logoAsset from "@/assets/skyline-logo-transparent.png.asset.json";
+import logoAsset from "@/assets/skyline-logo-transparent.png";
 import primeIcon from "@/assets/chains/prime.svg?url";
 import nexusIcon from "@/assets/chains/nexus.svg?url";
 import vectorIcon from "@/assets/chains/vector.svg?url";
@@ -34,7 +34,8 @@ export const Route = createFileRoute("/transactions")({
       { title: "Bridging History — Skyline Bridge" },
       {
         name: "description",
-        content: "Browse, filter, and sort every bridge transaction across the Skyline network.",
+        content:
+          "Browse, filter, and sort every bridge transaction across the Skyline network.",
       },
     ],
   }),
@@ -229,7 +230,14 @@ const MOCK_TXS: Tx[] = (
   ] as Omit<Tx, "sender">[]
 ).map((t, i) => ({ ...t, sender: SENDERS[i % SENDERS.length] }));
 
-type SortKey = "createdAt" | "finishedAt" | "amount" | "tokenAmount" | "origin" | "destination" | "status";
+type SortKey =
+  | "createdAt"
+  | "finishedAt"
+  | "amount"
+  | "tokenAmount"
+  | "origin"
+  | "destination"
+  | "status";
 type SortDir = "asc" | "desc";
 
 type Filters = {
@@ -268,7 +276,8 @@ function TransactionsPage() {
   const [view, setView] = useState<"world" | "user">("world");
 
   const isConnected = Boolean(walletAddress);
-  const connect = () => setWalletAddress("0x7a2cF4d9b1eE8d3cA0f6B91C2E5a7D9b3c4e8F1a");
+  const connect = () =>
+    setWalletAddress("0x7a2cF4d9b1eE8d3cA0f6B91C2E5a7D9b3c4e8F1a");
   const disconnect = () => {
     setWalletAddress(null);
     setView("world");
@@ -286,7 +295,9 @@ function TransactionsPage() {
     const q = search.trim().toLowerCase();
     const base =
       view === "user" && walletAddress
-        ? MOCK_TXS.filter((t) => t.sender === walletAddress || t.receiver === walletAddress)
+        ? MOCK_TXS.filter(
+            (t) => t.sender === walletAddress || t.receiver === walletAddress,
+          )
         : MOCK_TXS;
     return base.filter((t) => {
       if (q) {
@@ -294,16 +305,34 @@ function TransactionsPage() {
           `${t.id} ${CHAINS[t.origin]?.label} ${CHAINS[t.destination]?.label} ${t.sender} ${t.receiver}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
-      if (filters.destination && t.destination !== filters.destination) return false;
-      if (filters.receiver && !t.receiver.toLowerCase().includes(filters.receiver.toLowerCase())) return false;
-      if (filters.amountFrom && t.amount < Number(filters.amountFrom)) return false;
+      if (filters.destination && t.destination !== filters.destination)
+        return false;
+      if (
+        filters.receiver &&
+        !t.receiver.toLowerCase().includes(filters.receiver.toLowerCase())
+      )
+        return false;
+      if (filters.amountFrom && t.amount < Number(filters.amountFrom))
+        return false;
       if (filters.amountTo && t.amount > Number(filters.amountTo)) return false;
-      if (filters.tokenFrom && (t.tokenAmount ?? -Infinity) < Number(filters.tokenFrom)) return false;
-      if (filters.tokenTo && (t.tokenAmount ?? Infinity) > Number(filters.tokenTo)) return false;
+      if (
+        filters.tokenFrom &&
+        (t.tokenAmount ?? -Infinity) < Number(filters.tokenFrom)
+      )
+        return false;
+      if (
+        filters.tokenTo &&
+        (t.tokenAmount ?? Infinity) > Number(filters.tokenTo)
+      )
+        return false;
       // Origin chain and sender address are only filterable in the network-wide view.
       if (view === "world") {
         if (filters.origin && t.origin !== filters.origin) return false;
-        if (filters.sender && !t.sender.toLowerCase().includes(filters.sender.toLowerCase())) return false;
+        if (
+          filters.sender &&
+          !t.sender.toLowerCase().includes(filters.sender.toLowerCase())
+        )
+          return false;
       }
       return true;
     });
@@ -354,7 +383,10 @@ function TransactionsPage() {
   const total = sorted.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const paged = sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paged = sorted.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
   const rangeStart = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = Math.min(currentPage * pageSize, total);
 
@@ -383,8 +415,17 @@ function TransactionsPage() {
       {/* Header — mirrors bridge-app */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
         <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
-          <Link to="/" className="flex items-center gap-2" aria-label="Skyline home">
-            <img src={logoAsset.url} alt="Skyline" className="h-8 w-auto md:h-9" data-skyline-logo-target />
+          <Link
+            to="/"
+            className="flex items-center gap-2"
+            aria-label="Skyline home"
+          >
+            <img
+              src={logoAsset}
+              alt="Skyline"
+              className="h-8 w-auto md:h-9"
+              data-skyline-logo-target
+            />
           </Link>
 
           <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-3 min-[875px]:flex">
@@ -394,7 +435,11 @@ function TransactionsPage() {
               aria-label="Open the full proof-of-reserves audit"
               className="pointer-events-auto group"
             >
-              <StatChip label="TVL" value={isCompact ? "$12.45M" : "$12,450,238.71"} interactive />
+              <StatChip
+                label="TVL"
+                value={isCompact ? "$12.45M" : "$12,450,238.71"}
+                interactive
+              />
             </Link>
             <div className="h-6 w-px bg-white/10" />
             <Link
@@ -403,7 +448,11 @@ function TransactionsPage() {
               aria-label="Open the full proof-of-reserves audit"
               className="pointer-events-auto group"
             >
-              <StatChip label="TVB" value={isCompact ? "$89.20M" : "$89,204,816.34"} interactive />
+              <StatChip
+                label="TVB"
+                value={isCompact ? "$89.20M" : "$89,204,816.34"}
+                interactive
+              />
             </Link>
           </div>
 
@@ -426,10 +475,18 @@ function TransactionsPage() {
         </div>
 
         <div className="flex w-full items-center justify-center gap-3 px-4 pb-3 min-[875px]:hidden">
-          <Link to="/audit" title="Open the full proof-of-reserves audit" aria-label="Open audit">
+          <Link
+            to="/audit"
+            title="Open the full proof-of-reserves audit"
+            aria-label="Open audit"
+          >
             <StatChip label="TVL" value="$12.45M" compact interactive />
           </Link>
-          <Link to="/audit" title="Open the full proof-of-reserves audit" aria-label="Open audit">
+          <Link
+            to="/audit"
+            title="Open the full proof-of-reserves audit"
+            aria-label="Open audit"
+          >
             <StatChip label="TVB" value="$89.20M" compact interactive />
           </Link>
         </div>
@@ -449,7 +506,8 @@ function TransactionsPage() {
                 Every hop across the Skyline
               </h1>
               <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
-                Search, sort, and filter every bridge transaction — from source lock to destination release.
+                Search, sort, and filter every bridge transaction — from source
+                lock to destination release.
               </p>
             </div>
 
@@ -499,7 +557,11 @@ function TransactionsPage() {
                 type="button"
                 onClick={() => changeView("user")}
                 aria-disabled={!isConnected}
-                title={isConnected ? undefined : "Connect your wallet to view your own bridging history"}
+                title={
+                  isConnected
+                    ? undefined
+                    : "Connect your wallet to view your own bridging history"
+                }
                 className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-all ${
                   view === "user"
                     ? "bg-[oklch(0.72_0.19_245)] text-[oklch(0.14_0.03_260)] shadow-[0_6px_20px_-8px_oklch(0.72_0.19_245_/_0.9)]"
@@ -524,32 +586,64 @@ function TransactionsPage() {
               <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.72_0.19_245_/_0.6)] to-transparent" />
 
               <div className="overflow-x-auto">
-                <table className={`w-full border-collapse text-sm ${isCompact ? "min-w-[600px]" : "min-w-[880px]"}`}>
+                <table
+                  className={`w-full border-collapse text-sm ${isCompact ? "min-w-[600px]" : "min-w-[880px]"}`}
+                >
                   <thead>
                     <tr className="text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      <Th onClick={() => toggleSort("origin")} active={sortKey === "origin"} dir={sortDir}>
+                      <Th
+                        onClick={() => toggleSort("origin")}
+                        active={sortKey === "origin"}
+                        dir={sortDir}
+                      >
                         Origin
                       </Th>
-                      <Th onClick={() => toggleSort("destination")} active={sortKey === "destination"} dir={sortDir}>
+                      <Th
+                        onClick={() => toggleSort("destination")}
+                        active={sortKey === "destination"}
+                        dir={sortDir}
+                      >
                         {isCompact ? "Dest" : "Destination"}
                       </Th>
-                      <Th onClick={() => toggleSort("amount")} active={sortKey === "amount"} dir={sortDir}>
+                      <Th
+                        onClick={() => toggleSort("amount")}
+                        active={sortKey === "amount"}
+                        dir={sortDir}
+                      >
                         Amount
                       </Th>
-                      <Th onClick={() => toggleSort("tokenAmount")} active={sortKey === "tokenAmount"} dir={sortDir}>
+                      <Th
+                        onClick={() => toggleSort("tokenAmount")}
+                        active={sortKey === "tokenAmount"}
+                        dir={sortDir}
+                      >
                         Token amount
                       </Th>
                       <th className="px-5 py-4">Receiver</th>
-                      <Th onClick={() => toggleSort("createdAt")} active={sortKey === "createdAt"} dir={sortDir}>
+                      <Th
+                        onClick={() => toggleSort("createdAt")}
+                        active={sortKey === "createdAt"}
+                        dir={sortDir}
+                      >
                         Created
                       </Th>
-                      <Th onClick={() => toggleSort("finishedAt")} active={sortKey === "finishedAt"} dir={sortDir}>
+                      <Th
+                        onClick={() => toggleSort("finishedAt")}
+                        active={sortKey === "finishedAt"}
+                        dir={sortDir}
+                      >
                         Finished
                       </Th>
-                      <Th onClick={() => toggleSort("status")} active={sortKey === "status"} dir={sortDir}>
+                      <Th
+                        onClick={() => toggleSort("status")}
+                        active={sortKey === "status"}
+                        dir={sortDir}
+                      >
                         Status
                       </Th>
-                      {!isCompact && <th className="px-5 py-4 text-right">Actions</th>}
+                      {!isCompact && (
+                        <th className="px-5 py-4 text-right">Actions</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
@@ -584,7 +678,11 @@ function TransactionsPage() {
                       className="h-8 appearance-none rounded-full border border-white/10 bg-white/[0.04] px-3 pr-7 text-xs font-semibold text-foreground [color-scheme:dark] focus:outline-none"
                     >
                       {[5, 10, 25, 50].map((n) => (
-                        <option key={n} value={n} className="bg-[#141a2c] text-foreground">
+                        <option
+                          key={n}
+                          value={n}
+                          className="bg-[#141a2c] text-foreground"
+                        >
                           {n}
                         </option>
                       ))}
@@ -607,11 +705,16 @@ function TransactionsPage() {
                   </span>
                   <span>of {total}</span>
                   <div className="ml-2 flex items-center gap-1">
-                    <PageBtn onClick={() => setPage(Math.max(1, currentPage - 1))} disabled={currentPage <= 1}>
+                    <PageBtn
+                      onClick={() => setPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage <= 1}
+                    >
                       <ChevronLeft className="h-4 w-4" />
                     </PageBtn>
                     <PageBtn
-                      onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+                      onClick={() =>
+                        setPage(Math.min(totalPages, currentPage + 1))
+                      }
                       disabled={currentPage >= totalPages}
                     >
                       <ChevronRight className="h-4 w-4" />
@@ -627,7 +730,9 @@ function TransactionsPage() {
       <footer className="border-t border-white/5 bg-background">
         <div className="flex w-full flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground md:flex-row md:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 md:flex-1 md:justify-start">
-            <span>© {new Date().getFullYear()} Skyline. All rights reserved.</span>
+            <span>
+              © {new Date().getFullYear()} Skyline. All rights reserved.
+            </span>
             <FooterLegal />
           </div>
           <FooterSocials className="md:flex-1 md:justify-center" />
@@ -672,7 +777,9 @@ function Th({
         }`}
       >
         {children}
-        <ChevronsUpDown className={`h-3 w-3 ${active ? (dir === "asc" ? "rotate-180" : "") : "opacity-60"}`} />
+        <ChevronsUpDown
+          className={`h-3 w-3 ${active ? (dir === "asc" ? "rotate-180" : "") : "opacity-60"}`}
+        />
       </button>
     </th>
   );
@@ -721,12 +828,18 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
         <ChainCell chain={dest} compact={compact} />
       </td>
       <td className="px-5 py-4">
-        <div className="font-display text-sm font-semibold text-foreground">{formatNumber(tx.amount)}</div>
-        <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{origin?.symbol}</div>
+        <div className="font-display text-sm font-semibold text-foreground">
+          {formatNumber(tx.amount)}
+        </div>
+        <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          {origin?.symbol}
+        </div>
       </td>
       <td className="px-5 py-4">
         {tx.tokenAmount != null ? (
-          <div className="font-display text-sm text-foreground">{formatNumber(tx.tokenAmount)}</div>
+          <div className="font-display text-sm text-foreground">
+            {formatNumber(tx.tokenAmount)}
+          </div>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
@@ -747,9 +860,15 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
           </button>
         </div>
       </td>
-      <td className="px-5 py-4 text-xs text-muted-foreground">{formatDate(tx.createdAt)}</td>
       <td className="px-5 py-4 text-xs text-muted-foreground">
-        {tx.finishedAt ? formatDate(tx.finishedAt) : <span className="text-[oklch(0.85_0.15_235)]">Pending</span>}
+        {formatDate(tx.createdAt)}
+      </td>
+      <td className="px-5 py-4 text-xs text-muted-foreground">
+        {tx.finishedAt ? (
+          formatDate(tx.finishedAt)
+        ) : (
+          <span className="text-[oklch(0.85_0.15_235)]">Pending</span>
+        )}
       </td>
       <td className="px-5 py-4">
         <StatusPill status={tx.status} />
@@ -768,14 +887,29 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
   );
 }
 
-function ChainCell({ chain, compact }: { chain?: ChainMeta; compact?: boolean }) {
+function ChainCell({
+  chain,
+  compact,
+}: {
+  chain?: ChainMeta;
+  compact?: boolean;
+}) {
   if (!chain) return <span className="text-muted-foreground">—</span>;
   return (
     <div className="flex items-center gap-2.5">
-      <div className="h-7 w-7 overflow-hidden rounded-full" title={compact ? chain.label : undefined}>
-        <img src={chain.icon} alt={chain.label} className="h-full w-full object-cover" />
+      <div
+        className="h-7 w-7 overflow-hidden rounded-full"
+        title={compact ? chain.label : undefined}
+      >
+        <img
+          src={chain.icon}
+          alt={chain.label}
+          className="h-full w-full object-cover"
+        />
       </div>
-      {!compact && <span className="font-medium text-foreground">{chain.label}</span>}
+      {!compact && (
+        <span className="font-medium text-foreground">{chain.label}</span>
+      )}
     </div>
   );
 }
@@ -838,8 +972,14 @@ function StatChip({
         compact ? "px-3 py-1" : "px-3.5 py-1.5"
       } ${interactive ? "group-hover:border-[oklch(0.72_0.19_245_/_0.55)] group-hover:bg-white/[0.07]" : ""}`}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">{label}</span>
-      <span className={`font-display font-semibold text-foreground ${compact ? "text-xs" : "text-sm"}`}>{value}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">
+        {label}
+      </span>
+      <span
+        className={`font-display font-semibold text-foreground ${compact ? "text-xs" : "text-sm"}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -858,11 +998,15 @@ function FilterModal({
   onClear: () => void;
 }) {
   const [draft, setDraft] = useState<Filters>(initial);
-  const set = <K extends keyof Filters>(k: K, v: Filters[K]) => setDraft({ ...draft, [k]: v });
+  const set = <K extends keyof Filters>(k: K, v: Filters[K]) =>
+    setDraft({ ...draft, [k]: v });
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-background/70 backdrop-blur-md" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-background/70 backdrop-blur-md"
+        onClick={onClose}
+      />
       <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-[oklch(0.16_0.035_262)] shadow-2xl">
         <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.72_0.19_245_/_0.6)] to-transparent" />
         <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
@@ -870,7 +1014,9 @@ function FilterModal({
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[oklch(0.85_0.15_235)]">
               Refine results
             </p>
-            <h2 className="font-display text-lg font-semibold text-foreground">Filter transactions</h2>
+            <h2 className="font-display text-lg font-semibold text-foreground">
+              Filter transactions
+            </h2>
           </div>
           <button
             onClick={onClose}
@@ -894,7 +1040,11 @@ function FilterModal({
                     Any chain
                   </option>
                   {Object.values(CHAINS).map((c) => (
-                    <option key={c.id} value={c.id} className="bg-[#141a2c] text-foreground">
+                    <option
+                      key={c.id}
+                      value={c.id}
+                      className="bg-[#141a2c] text-foreground"
+                    >
                       {c.label}
                     </option>
                   ))}
@@ -916,7 +1066,11 @@ function FilterModal({
                   Any chain
                 </option>
                 {Object.values(CHAINS).map((c) => (
-                  <option key={c.id} value={c.id} className="bg-[#141a2c] text-foreground">
+                  <option
+                    key={c.id}
+                    value={c.id}
+                    className="bg-[#141a2c] text-foreground"
+                  >
                     {c.label}
                   </option>
                 ))}
@@ -948,10 +1102,26 @@ function FilterModal({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <NumField label="Amount from" value={draft.amountFrom} onChange={(v) => set("amountFrom", v)} />
-            <NumField label="Amount to" value={draft.amountTo} onChange={(v) => set("amountTo", v)} />
-            <NumField label="Token amount from" value={draft.tokenFrom} onChange={(v) => set("tokenFrom", v)} />
-            <NumField label="Token amount to" value={draft.tokenTo} onChange={(v) => set("tokenTo", v)} />
+            <NumField
+              label="Amount from"
+              value={draft.amountFrom}
+              onChange={(v) => set("amountFrom", v)}
+            />
+            <NumField
+              label="Amount to"
+              value={draft.amountTo}
+              onChange={(v) => set("amountTo", v)}
+            />
+            <NumField
+              label="Token amount from"
+              value={draft.tokenFrom}
+              onChange={(v) => set("tokenFrom", v)}
+            />
+            <NumField
+              label="Token amount to"
+              value={draft.tokenTo}
+              onChange={(v) => set("tokenTo", v)}
+            />
           </div>
         </div>
 
@@ -987,11 +1157,21 @@ function FilterModal({
 
 function Label({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">{children}</div>
+    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+      {children}
+    </div>
   );
 }
 
-function NumField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function NumField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <div>
       <Label>{label}</Label>
@@ -1018,7 +1198,10 @@ function shortHash(a: string) {
 }
 
 function formatNumber(n: number) {
-  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 });
+  return n.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 6,
+  });
 }
 
 function formatDate(d: Date) {

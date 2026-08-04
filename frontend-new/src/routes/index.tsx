@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import {
   ArrowRight,
@@ -21,19 +22,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import { FooterSocials } from "@/components/ui/footer-socials";
-import logoAsset from "@/assets/skyline-logo-transparent.png.asset.json";
-import ethIcon from "@/assets/chains/ethereum.svg?url";
-import solIcon from "@/assets/chains/solana.svg?url";
-import adaIcon from "@/assets/chains/cardano.svg?url";
-import polyIcon from "@/assets/chains/polygon.svg?url";
-import bnbIcon from "@/assets/chains/bnb.svg?url";
-import baseIcon from "@/assets/chains/coinbase.svg?url";
-import apexIcon from "@/assets/chains/apex-fusion-logo.svg?url";
-import arbIcon from "@/assets/chains/arbi.svg?url";
-import katanaIcon from "@/assets/chains/katana.svg?url";
-import scrollIcon from "@/assets/chains/scroll.svg?url";
-import seiIcon from "@/assets/chains/sei.svg?url";
-import uniIcon from "@/assets/chains/unichain.svg?url";
+import { settingsQueryOptions } from "@/lib/api/settings";
+import { getEnabledChainNodes } from "@/lib/chains";
+import logoAsset from "@/assets/skyline-logo-transparent.png";
+import { SKYLINE_DOCUMENTATION_URL } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -56,8 +48,14 @@ function StatChip({
         compact ? "px-3 py-1" : "px-3.5 py-1.5"
       } ${interactive ? "group-hover:border-[oklch(0.72_0.19_245_/_0.55)] group-hover:bg-white/[0.07]" : ""}`}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">{label}</span>
-      <span className={`font-display font-semibold text-foreground ${compact ? "text-xs" : "text-sm"}`}>{value}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">
+        {label}
+      </span>
+      <span
+        className={`font-display font-semibold text-foreground ${compact ? "text-xs" : "text-sm"}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -67,13 +65,22 @@ function Header() {
   const nav = [
     { label: "Ecosystem", href: "#ecosystem" },
     { label: "Roadmap", href: "#roadmap" },
-    { label: "Docs", href: "#docs" },
+    { label: "Docs", href: SKYLINE_DOCUMENTATION_URL },
   ];
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
       <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-8">
-        <Link to="/" className="flex items-center gap-2" aria-label="Skyline home">
-          <img src={logoAsset.url} alt="Skyline" className="h-8 w-auto md:h-9" data-skyline-logo-target />
+        <Link
+          to="/"
+          className="flex items-center gap-2"
+          aria-label="Skyline home"
+        >
+          <img
+            src={logoAsset}
+            alt="Skyline"
+            className="h-8 w-auto md:h-9"
+            data-skyline-logo-target
+          />
         </Link>
         <nav className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-9 min-[1130px]:flex">
           {nav.map((n) => (
@@ -89,10 +96,20 @@ function Header() {
 
         {/* Burger-mode stats — centered in the header once the desktop nav collapses */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 min-[1130px]:hidden">
-          <Link to="/audit" title="View full audit" aria-label="View full audit" className="group pointer-events-auto">
+          <Link
+            to="/audit"
+            title="View full audit"
+            aria-label="View full audit"
+            className="group pointer-events-auto"
+          >
             <StatChip label="TVL" value="$12.45M" interactive />
           </Link>
-          <Link to="/audit" title="View full audit" aria-label="View full audit" className="group pointer-events-auto">
+          <Link
+            to="/audit"
+            title="View full audit"
+            aria-label="View full audit"
+            className="group pointer-events-auto"
+          >
             <StatChip label="TVB" value="$89.20M" interactive />
           </Link>
         </div>
@@ -157,6 +174,25 @@ function Header() {
 }
 
 function Hero() {
+  const { data: settings } = useQuery(settingsQueryOptions);
+  const chainsConnected = settings?.enabledChains.length;
+  const tokensEnabled = settings?.ecosystemTokens.length;
+
+  const stats = [
+    {
+      label: "Chains connected",
+      value: chainsConnected != null ? String(chainsConnected) : "—",
+    },
+    // TODO: update with actual number of apps
+    { label: "Skyline apps", value: "3+" },
+    // TODO: update with actual volume routed
+    { label: "Volume routed", value: "$1.2B" },
+    {
+      label: "DIFFERENT TOKENS",
+      value: tokensEnabled != null ? String(tokensEnabled) : "—",
+    },
+  ];
+
   return (
     <section className="bg-hero-glow relative overflow-hidden">
       {/* Signature Skyline arc */}
@@ -188,8 +224,9 @@ function Hero() {
             across every chain.
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-balance text-base text-muted-foreground md:text-lg">
-            Move assets between blockchains in seconds. Soon, let AI agents settle on your behalf and reach the dollar
-            economy through Stripe and stablecoins — all from one horizon.
+            Move assets between blockchains in seconds. Soon, let AI agents
+            settle on your behalf and reach the dollar economy through Stripe
+            and stablecoins — all from one horizon.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <a
@@ -209,15 +246,17 @@ function Hero() {
 
         {/* Stats strip */}
         <div className="mx-auto mt-20 grid max-w-4xl grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/5 sm:grid-cols-4">
-          {[
-            { label: "Chains connected", value: "10+" },
-            { label: "Skyline apps", value: "3+" },
-            { label: "Volume routed", value: "$1.2B" },
-            { label: "DIFFERENT TOKENS", value: "30+" },
-          ].map((s) => (
-            <div key={s.label} className="bg-background/80 p-5 text-center backdrop-blur">
-              <div className="font-display text-2xl font-semibold text-foreground md:text-3xl">{s.value}</div>
-              <div className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">{s.label}</div>
+          {stats.map((s) => (
+            <div
+              key={s.label}
+              className="bg-background/80 p-5 text-center backdrop-blur"
+            >
+              <div className="font-display text-2xl font-semibold text-foreground md:text-3xl">
+                {s.value}
+              </div>
+              <div className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
+                {s.label}
+              </div>
             </div>
           ))}
         </div>
@@ -227,6 +266,10 @@ function Hero() {
 }
 
 function Pillars() {
+  const { data: settings } = useQuery(settingsQueryOptions);
+  const chainsConnected = settings?.enabledChains.length;
+  const chainsLabel = chainsConnected != null ? String(chainsConnected) : "—";
+
   const pillars = [
     {
       id: "bridge",
@@ -234,8 +277,7 @@ function Pillars() {
       statusTone: "live" as const,
       icon: ArrowLeftRight,
       title: "Cross-chain Bridge",
-      description:
-        "Move native assets across 10+ chains in one click. Native bridging across UTXO, EVM, and SVM chains. Batched, signature-verified settlement. No swaps, no slippage, no wrapped-asset guesswork.",
+      description: `Move native assets across ${chainsLabel} chains in one click. Native bridging across UTXO, EVM, and SVM chains. Batched, signature-verified settlement. No swaps, no slippage, no wrapped-asset guesswork.`,
       bullets: [
         "One bridge across three VMs.",
         "Batched settlement, lower fees.",
@@ -251,7 +293,11 @@ function Pillars() {
       title: "AI Agentic Finance",
       description:
         "Delegate on-chain strategies to autonomous agents. Set intent — rebalance, yield-farm, or DCA — and let Skyline execute across every chain, 24/7.",
-      bullets: ["Intent-based execution", "Programmable guardrails", "Composable strategy market"],
+      bullets: [
+        "Intent-based execution",
+        "Programmable guardrails",
+        "Composable strategy market",
+      ],
       cta: "Join waitlist",
     },
     {
@@ -262,7 +308,11 @@ function Pillars() {
       title: "TradFi Connector",
       description:
         "Bridge on-chain liquidity to the real dollar economy. Off-ramp via Stripe and settle in regulated stablecoins — with the compliance stack built in.",
-      bullets: ["Stripe payouts & payments", "Stablecoin settlement (USDC, PYUSD)", "KYB / KYC-ready flows"],
+      bullets: [
+        "Stripe payouts & payments",
+        "Stablecoin settlement (USDC, PYUSD)",
+        "KYB / KYC-ready flows",
+      ],
       cta: "Talk to us",
     },
   ];
@@ -278,14 +328,18 @@ function Pillars() {
             Three rails. <span className="text-gradient-sky">One horizon.</span>
           </h2>
           <p className="mt-4 text-balance text-muted-foreground">
-            Built as a modular network — start with the bridge you need today, and grow into the AI and fiat rails as
-            they land.
+            Built as a modular network — start with the bridge you need today,
+            and grow into the AI and fiat rails as they land.
           </p>
         </div>
 
         <div className="mt-14 grid gap-6 md:grid-cols-3">
           {pillars.map((p) => (
-            <article key={p.id} id={p.id} className="card-glow group relative flex flex-col rounded-2xl p-6 md:p-7">
+            <article
+              key={p.id}
+              id={p.id}
+              className="card-glow group relative flex flex-col rounded-2xl p-6 md:p-7"
+            >
               <div className="mb-6 flex items-center justify-between">
                 <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-[oklch(0.72_0.19_245)] to-[oklch(0.4_0.22_265)] shadow-[0_10px_30px_-10px_oklch(0.55_0.22_250_/_0.7)]">
                   <p.icon className="h-5 w-5 text-white" strokeWidth={2} />
@@ -301,11 +355,18 @@ function Pillars() {
                   {p.status}
                 </span>
               </div>
-              <h3 className="text-2xl font-semibold text-foreground">{p.title}</h3>
-              <p className="mt-3 text-sm text-muted-foreground">{p.description}</p>
+              <h3 className="text-2xl font-semibold text-foreground">
+                {p.title}
+              </h3>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {p.description}
+              </p>
               <ul className="mt-6 space-y-2">
                 {p.bullets.map((b) => (
-                  <li key={b} className="flex items-start gap-2 text-sm text-foreground/80">
+                  <li
+                    key={b}
+                    className="flex items-start gap-2 text-sm text-foreground/80"
+                  >
                     <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-[oklch(0.78_0.13_240)]" />
                     {b}
                   </li>
@@ -329,22 +390,29 @@ function Pillars() {
 }
 
 function Analytics() {
+  const { data: settings } = useQuery(settingsQueryOptions);
+  const chainsConnected = settings?.enabledChains.length;
+
   const stats = {
     tvl: "$42.7M",
     tvb: "$186.4M",
     transactions: "1.24M",
-    chains: "10+",
+    chains: chainsConnected != null ? String(chainsConnected) : "—",
   };
 
   return (
-    <section id="analytics" className="relative border-y border-white/5 bg-[oklch(0.15_0.03_260)] py-24 md:py-32">
+    <section
+      id="analytics"
+      className="relative border-y border-white/5 bg-[oklch(0.15_0.03_260)] py-24 md:py-32"
+    >
       <div className="container-page">
         <div className="mx-auto max-w-2xl text-center">
           <div className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[oklch(0.78_0.13_240)]">
             Network overview
           </div>
           <h2 className="text-balance text-4xl font-semibold md:text-5xl">
-            Trusted across the <span className="text-gradient-sky">Skyline network</span>
+            Trusted across the{" "}
+            <span className="text-gradient-sky">Skyline network</span>
           </h2>
         </div>
 
@@ -374,8 +442,12 @@ function Analytics() {
                 key={s.label}
                 className="rounded-2xl border border-white/10 bg-[oklch(0.17_0.03_262)] p-6 text-center transition-colors hover:border-[oklch(0.72_0.19_245_/_0.4)]"
               >
-                <div className="font-display text-2xl font-semibold text-foreground md:text-3xl">{s.value}</div>
-                <div className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">{s.label}</div>
+                <div className="font-display text-2xl font-semibold text-foreground md:text-3xl">
+                  {s.value}
+                </div>
+                <div className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
+                  {s.label}
+                </div>
               </div>
             ))}
           </div>
@@ -472,7 +544,10 @@ function Orbit({
               >
                 {/* Zero-size pivot: counter-rotates the spin exactly around the
                     orbital point so content stays put and upright */}
-                <div className="relative h-0 w-0" style={{ animation: counterSpin }}>
+                <div
+                  className="relative h-0 w-0"
+                  style={{ animation: counterSpin }}
+                >
                   {/* Center content on the pivot, undo the squash, undo the tilt.
                       Order matters — the parent chain rotate(tilt) · scaleY(squash)
                       inverts as scaleY(1/squash) · rotate(-tilt); swapping them
@@ -487,9 +562,16 @@ function Orbit({
                       <div className="flex flex-col items-center gap-1.5">
                         <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[oklch(0.72_0.19_245_/_0.5)] bg-gradient-to-br from-[oklch(0.72_0.19_245)] to-[oklch(0.4_0.22_265)] shadow-[0_10px_30px_-6px_oklch(0.55_0.22_250_/_0.7)]">
                           {n.img ? (
-                            <img src={n.img} alt={n.label} className="h-7 w-7" />
+                            <img
+                              src={n.img}
+                              alt={n.label}
+                              className="h-7 w-7"
+                            />
                           ) : n.icon ? (
-                            <n.icon className="h-6 w-6 text-white" strokeWidth={2} />
+                            <n.icon
+                              className="h-6 w-6 text-white"
+                              strokeWidth={2}
+                            />
                           ) : null}
                         </div>
                         <div className="rounded-full border border-white/10 bg-background/80 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-foreground backdrop-blur">
@@ -521,21 +603,16 @@ function Orbit({
 }
 
 function Connecting() {
-  const [ellipseMode, setEllipseMode] = useState(true);
+  const ellipseMode = true;
+  const { data: settings } = useQuery(settingsQueryOptions);
+  const chainsConnected = settings?.enabledChains.length;
   const bridgeRing: OrbitNode[] = [
     { icon: ArrowLeftRight, label: "Bridge", tone: "primary" },
-    { img: ethIcon, label: "Ethereum", tone: "muted" },
-    { img: solIcon, label: "Solana", tone: "muted" },
-    { img: baseIcon, label: "Base", tone: "muted" },
-    { img: polyIcon, label: "Polygon", tone: "muted" },
-    { img: adaIcon, label: "Cardano", tone: "muted" },
-    { img: bnbIcon, label: "BNB Chain", tone: "muted" },
-    { img: apexIcon, label: "Apex Fusion", tone: "muted" },
-    { img: arbIcon, label: "Arbitrum", tone: "muted" },
-    { img: katanaIcon, label: "Katana", tone: "muted" },
-    { img: scrollIcon, label: "Scroll", tone: "muted" },
-    { img: seiIcon, label: "Sei", tone: "muted" },
-    { img: uniIcon, label: "Unichain", tone: "muted" },
+    ...getEnabledChainNodes(settings?.enabledChains).map((c) => ({
+      img: c.img,
+      label: c.label,
+      tone: "muted" as const,
+    })),
   ];
   const agentRing: OrbitNode[] = [
     { icon: Bot, label: "AI Agents", tone: "primary" },
@@ -551,7 +628,10 @@ function Connecting() {
   ];
 
   return (
-    <section id="connecting" className="relative overflow-hidden py-24 md:py-32">
+    <section
+      id="connecting"
+      className="relative overflow-hidden py-24 md:py-32"
+    >
       <div className="pointer-events-none absolute inset-0 bg-hero-glow opacity-40" />
       <div className="container-page relative">
         <div className="relative z-10 mx-auto max-w-2xl text-center">
@@ -562,7 +642,8 @@ function Connecting() {
             One hub. <span className="text-gradient-sky">Every rail.</span>
           </h2>
           <p className="mt-4 text-balance text-muted-foreground">
-            Skyline unifies chains, autonomous agents, and the dollar economy into a single interoperable network.
+            Skyline unifies chains, autonomous agents, and the dollar economy
+            into a single interoperable network.
           </p>
         </div>
 
@@ -573,15 +654,53 @@ function Connecting() {
           {/* Orbits */}
           {ellipseMode ? (
             <>
-              <Orbit width={650} height={400} tilt={45} duration={90} reverse nodes={tradfiRing} ringOpacity={0.28} />
-              <Orbit width={650} height={400} tilt={-45} duration={60} nodes={agentRing} ringOpacity={0.28} />
-              <Orbit size={280} duration={35} reverse nodes={bridgeRing} ringOpacity={0.4} />
+              <Orbit
+                width={650}
+                height={400}
+                tilt={45}
+                duration={90}
+                reverse
+                nodes={tradfiRing}
+                ringOpacity={0.28}
+              />
+              <Orbit
+                width={650}
+                height={400}
+                tilt={-45}
+                duration={60}
+                nodes={agentRing}
+                ringOpacity={0.28}
+              />
+              <Orbit
+                size={280}
+                duration={35}
+                reverse
+                nodes={bridgeRing}
+                ringOpacity={0.4}
+              />
             </>
           ) : (
             <>
-              <Orbit size={640} duration={90} reverse nodes={tradfiRing} ringOpacity={0.18} />
-              <Orbit size={460} duration={60} nodes={agentRing} ringOpacity={0.28} />
-              <Orbit size={280} duration={35} reverse nodes={bridgeRing} ringOpacity={0.4} />
+              <Orbit
+                size={640}
+                duration={90}
+                reverse
+                nodes={tradfiRing}
+                ringOpacity={0.18}
+              />
+              <Orbit
+                size={460}
+                duration={60}
+                nodes={agentRing}
+                ringOpacity={0.28}
+              />
+              <Orbit
+                size={280}
+                duration={35}
+                reverse
+                nodes={bridgeRing}
+                ringOpacity={0.4}
+              />
             </>
           )}
 
@@ -591,14 +710,24 @@ function Connecting() {
               className="flex h-24 w-24 items-center justify-center rounded-full border border-white/15 bg-gradient-to-br from-[oklch(0.28_0.05_262)] to-[oklch(0.14_0.03_260)] backdrop-blur"
               style={{ animation: "skyline-hub-glow 4s ease-in-out infinite" }}
             >
-              <img src={logoAsset.url} alt="Skyline" className="h-full w-full object-contain p-1.5" />
+              <img
+                src={logoAsset}
+                alt="Skyline"
+                className="h-full w-full object-contain p-1.5"
+              />
             </div>
           </div>
         </div>
 
         <div className="mx-auto mt-12 grid max-w-3xl gap-3 sm:grid-cols-3">
           {[
-            { label: "Bridge", body: "10+ chains, one click." },
+            {
+              label: "Bridge",
+              body:
+                chainsConnected != null
+                  ? `${chainsConnected} chains, one click.`
+                  : "— chains, one click.",
+            },
             { label: "AI Agents", body: "Intents that settle themselves." },
             { label: "TradFi", body: "Stripe & stablecoin rails." },
           ].map((c) => (
@@ -619,8 +748,18 @@ function Connecting() {
 }
 
 function Roadmap() {
+  const { data: settings } = useQuery(settingsQueryOptions);
+  const chainsConnected = settings?.enabledChains.length;
+  const tokensEnabled = settings?.ecosystemTokens.length;
+  const chainsLabel = chainsConnected != null ? String(chainsConnected) : "—";
+  const tokensLabel = tokensEnabled != null ? String(tokensEnabled) : "—";
+
   const items = [
-    { q: "Now", title: "Bridge Mainnet", body: "10+ chains, 30+ native assets, validator protected routing." },
+    {
+      q: "Now",
+      title: "Bridge Mainnet",
+      body: `${chainsLabel} chains, ${tokensLabel} native assets, validator protected routing.`,
+    },
     {
       q: "Q3 2026",
       title: "Agent SDK Alpha",
@@ -631,7 +770,11 @@ function Roadmap() {
       title: "Stripe & Stablecoin Rails",
       body: "On/off-ramp via Stripe, settlement in USDC and PYUSD, KYB-ready.",
     },
-    { q: "Q2 2027", title: "Skyline Network v2", body: "Unified intent layer across chains, agents, and fiat rails." },
+    {
+      q: "Q2 2027",
+      title: "Skyline Network v2",
+      body: "Unified intent layer across chains, agents, and fiat rails.",
+    },
   ];
   return (
     <section id="roadmap" className="relative py-24 md:py-32">
@@ -640,15 +783,24 @@ function Roadmap() {
           <div className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[oklch(0.78_0.13_240)]">
             Roadmap
           </div>
-          <h2 className="text-balance text-4xl font-semibold md:text-5xl">Building toward the horizon.</h2>
+          <h2 className="text-balance text-4xl font-semibold md:text-5xl">
+            Building toward the horizon.
+          </h2>
         </div>
         <div className="mx-auto mt-12 max-w-4xl">
           <ol className="relative border-l border-white/10 pl-8">
             {items.map((it, i) => (
-              <li key={it.title} className={i !== items.length - 1 ? "pb-10" : ""}>
+              <li
+                key={it.title}
+                className={i !== items.length - 1 ? "pb-10" : ""}
+              >
                 <span className="absolute -left-[7px] mt-1.5 h-3 w-3 rounded-full bg-[oklch(0.85_0.15_235)] shadow-[0_0_16px_oklch(0.85_0.15_235)]" />
-                <div className="text-xs font-semibold uppercase tracking-wider text-[oklch(0.78_0.13_240)]">{it.q}</div>
-                <h3 className="mt-1 font-display text-xl font-semibold text-foreground">{it.title}</h3>
+                <div className="text-xs font-semibold uppercase tracking-wider text-[oklch(0.78_0.13_240)]">
+                  {it.q}
+                </div>
+                <h3 className="mt-1 font-display text-xl font-semibold text-foreground">
+                  {it.title}
+                </h3>
                 <p className="mt-1 text-sm text-muted-foreground">{it.body}</p>
               </li>
             ))}
@@ -703,7 +855,8 @@ function CTA() {
           <span className="text-gradient-sky">Cross the horizon.</span>
         </h2>
         <p className="mx-auto mt-4 max-w-lg text-muted-foreground">
-          Start bridging in seconds. Be first in line for AI agents and fiat rails.
+          Start bridging in seconds. Be first in line for AI agents and fiat
+          rails.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <a
@@ -730,15 +883,31 @@ function Footer() {
       <div className="container-page py-14">
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-start">
           <div className="max-w-sm">
-            <div className="font-display text-lg font-semibold tracking-[0.3em] text-foreground">SKYLINE</div>
+            <div className="font-display text-lg font-semibold tracking-[0.3em] text-foreground">
+              SKYLINE
+            </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              The universal bridge between chains, agents, and the dollar economy.
+              The universal bridge between chains, agents, and the dollar
+              economy.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-10 sm:grid-cols-3">
             {[
-              { title: "Product", links: [{ label: "Bridge", href: "/bridge-app" }, { label: "Agents", href: "#" }, { label: "TradFi", href: "#" }] },
-              { title: "Developers", links: [{ label: "Docs", href: "#" }, { label: "GitHub", href: "#" }] },
+              {
+                title: "Product",
+                links: [
+                  { label: "Bridge", href: "/bridge-app" },
+                  { label: "Agents", href: "#" },
+                  { label: "TradFi", href: "#" },
+                ],
+              },
+              {
+                title: "Developers",
+                links: [
+                  { label: "Docs", href: "#" },
+                  { label: "GitHub", href: "#" },
+                ],
+              },
               {
                 title: "Connect",
                 links: [
@@ -748,11 +917,16 @@ function Footer() {
               },
             ].map((c) => (
               <div key={c.title}>
-                <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground">{c.title}</div>
+                <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground">
+                  {c.title}
+                </div>
                 <ul className="space-y-2">
                   {c.links.map((l) => (
                     <li key={l.label}>
-                      <a href={l.href} className="text-sm text-muted-foreground hover:text-foreground">
+                      <a
+                        href={l.href}
+                        className="text-sm text-muted-foreground hover:text-foreground"
+                      >
                         {l.label}
                       </a>
                     </li>
@@ -760,7 +934,6 @@ function Footer() {
                 </ul>
               </div>
             ))}
-
           </div>
         </div>
         <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-white/5 pt-6 text-xs text-muted-foreground md:flex-row md:items-center">

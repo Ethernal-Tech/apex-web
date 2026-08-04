@@ -1,8 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { ArrowLeft, ArrowRight, Mail, MapPin, Clock, Send, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  ArrowRight,
+  Mail,
+  MapPin,
+  Clock,
+  Send,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
 import { FooterSocials } from "@/components/ui/footer-socials";
-import logoAsset from "@/assets/skyline-logo-transparent.png.asset.json";
+import { submitContactForm } from "@/lib/api/contact";
+import logoAsset from "@/assets/skyline-logo-transparent.png";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -30,8 +39,12 @@ function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
       <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-8">
-        <Link to="/" className="flex items-center gap-2" aria-label="Skyline home">
-          <img src={logoAsset.url} alt="Skyline" className="h-8 w-auto md:h-9" />
+        <Link
+          to="/"
+          className="flex items-center gap-2"
+          aria-label="Skyline home"
+        >
+          <img src={logoAsset} alt="Skyline" className="h-8 w-auto md:h-9" />
         </Link>
         <nav className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
           <Link
@@ -78,9 +91,12 @@ function Footer() {
       <div className="container-page py-14">
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-start">
           <div className="max-w-sm">
-            <div className="font-display text-lg font-semibold tracking-[0.3em] text-foreground">SKYLINE</div>
+            <div className="font-display text-lg font-semibold tracking-[0.3em] text-foreground">
+              SKYLINE
+            </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              The universal bridge between chains, agents, and the dollar economy.
+              The universal bridge between chains, agents, and the dollar
+              economy.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-10 sm:grid-cols-3">
@@ -109,11 +125,16 @@ function Footer() {
               },
             ].map((c) => (
               <div key={c.title}>
-                <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground">{c.title}</div>
+                <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground">
+                  {c.title}
+                </div>
                 <ul className="space-y-2">
                   {c.links.map((l) => (
                     <li key={l.label}>
-                      <a href={l.href} className="text-sm text-muted-foreground hover:text-foreground">
+                      <a
+                        href={l.href}
+                        className="text-sm text-muted-foreground hover:text-foreground"
+                      >
                         {l.label}
                       </a>
                     </li>
@@ -133,8 +154,15 @@ function Footer() {
 }
 
 function ContactForm() {
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
-  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+  const [status, setStatus] = useState<
+    "idle" | "submitting" | "success" | "error"
+  >("idle");
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const errors: Record<string, string> = {};
@@ -148,18 +176,26 @@ function ContactForm() {
 
   const isValid = Object.keys(errors).length === 0;
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setTouched({ name: true, email: true, phone: true, message: true });
     if (!isValid) return;
 
     setStatus("submitting");
-    // Simulate an async submission. Wire this up to a server function or email service when ready.
-    setTimeout(() => {
+    try {
+      const phone = form.phone.trim();
+      await submitContactForm({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        ...(phone ? { phone } : {}),
+        message: form.message.trim(),
+      });
       setStatus("success");
       setForm({ name: "", email: "", phone: "", message: "" });
       setTouched({});
-    }, 1200);
+    } catch {
+      setStatus("error");
+    }
   };
 
   return (
@@ -172,17 +208,23 @@ function ContactForm() {
               Get in touch
             </div>
             <h1 className="text-balance font-display text-4xl font-semibold md:text-5xl">
-              <span className="text-gradient-sky">Let’s talk about your project</span>
+              <span className="text-gradient-sky">
+                Let’s talk about your project
+              </span>
             </h1>
             <p className="mt-5 max-w-md text-pretty text-base leading-relaxed text-muted-foreground">
-              Please share your info with us and we will aim to get back to as soon as possible.
+              Please share your info with us and we will aim to get back to as
+              soon as possible.
             </p>
             <div className="mt-8 space-y-4">
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.04] text-[oklch(0.85_0.15_235)]">
                   <Mail className="h-4 w-4" />
                 </div>
-                <a href="mailto:contact@skylinebridge.tech" className="transition-colors hover:text-foreground">
+                <a
+                  href="mailto:contact@skylinebridge.tech"
+                  className="transition-colors hover:text-foreground"
+                >
                   contact@skylinebridge.tech
                 </a>
               </div>
@@ -207,9 +249,12 @@ function ContactForm() {
                 <div className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-[oklch(0.55_0.22_250/0.15)] text-[oklch(0.85_0.15_235)]">
                   <CheckCircle className="h-7 w-7" />
                 </div>
-                <h3 className="mt-5 font-display text-xl font-semibold text-foreground">Message sent</h3>
+                <h3 className="mt-5 font-display text-xl font-semibold text-foreground">
+                  Message sent
+                </h3>
                 <p className="mt-2 max-w-xs text-sm text-muted-foreground">
-                  We will aim to get back to you in the next 24 hours. Thank you for your patience!
+                  We will aim to get back to you in the next 24 hours. Thank you
+                  for your patience!
                 </p>
                 <button
                   type="button"
@@ -224,73 +269,114 @@ function ContactForm() {
                 {status === "error" && (
                   <div className="flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive-foreground">
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                    <div>There was an error trying to send your message. Please try again later.</div>
+                    <div>
+                      There was an error trying to send your message. Please try
+                      again later.
+                    </div>
                   </div>
                 )}
                 <div>
-                  <label htmlFor="name" className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                    Your Name <span className="text-[oklch(0.85_0.15_235)]">*</span>
+                  <label
+                    htmlFor="name"
+                    className="mb-1.5 block text-xs font-medium text-muted-foreground"
+                  >
+                    Your Name{" "}
+                    <span className="text-[oklch(0.85_0.15_235)]">*</span>
                   </label>
                   <input
                     id="name"
                     type="text"
                     value={form.name}
-                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, name: e.target.value }))
+                    }
                     onBlur={() => setTouched((t) => ({ ...t, name: true }))}
                     className={`w-full rounded-xl border bg-white/[0.04] px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-[oklch(0.72_0.19_245_/_0.55)] focus:bg-white/[0.06] ${
-                      touched.name && errors.name ? "border-destructive" : "border-white/10"
+                      touched.name && errors.name
+                        ? "border-destructive"
+                        : "border-white/10"
                     }`}
                     placeholder="John Doe"
                   />
-                  {touched.name && errors.name && <p className="mt-1.5 text-xs text-destructive">{errors.name}</p>}
+                  {touched.name && errors.name && (
+                    <p className="mt-1.5 text-xs text-destructive">
+                      {errors.name}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="email"
+                    className="mb-1.5 block text-xs font-medium text-muted-foreground"
+                  >
                     Email <span className="text-[oklch(0.85_0.15_235)]">*</span>
                   </label>
                   <input
                     id="email"
                     type="email"
                     value={form.email}
-                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, email: e.target.value }))
+                    }
                     onBlur={() => setTouched((t) => ({ ...t, email: true }))}
                     className={`w-full rounded-xl border bg-white/[0.04] px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-[oklch(0.72_0.19_245_/_0.55)] focus:bg-white/[0.06] ${
-                      touched.email && errors.email ? "border-destructive" : "border-white/10"
+                      touched.email && errors.email
+                        ? "border-destructive"
+                        : "border-white/10"
                     }`}
                     placeholder="john@example.com"
                   />
-                  {touched.email && errors.email && <p className="mt-1.5 text-xs text-destructive">{errors.email}</p>}
+                  {touched.email && errors.email && (
+                    <p className="mt-1.5 text-xs text-destructive">
+                      {errors.email}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label htmlFor="phone" className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="phone"
+                    className="mb-1.5 block text-xs font-medium text-muted-foreground"
+                  >
                     Phone
                   </label>
                   <input
                     id="phone"
                     type="tel"
                     value={form.phone}
-                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, phone: e.target.value }))
+                    }
                     className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-[oklch(0.72_0.19_245_/_0.55)] focus:bg-white/[0.06]"
                     placeholder="+1 (555) 000-0000"
                   />
                 </div>
                 <div>
-                  <label htmlFor="message" className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                    Message <span className="text-[oklch(0.85_0.15_235)]">*</span>
+                  <label
+                    htmlFor="message"
+                    className="mb-1.5 block text-xs font-medium text-muted-foreground"
+                  >
+                    Message{" "}
+                    <span className="text-[oklch(0.85_0.15_235)]">*</span>
                   </label>
                   <textarea
                     id="message"
                     rows={5}
                     value={form.message}
-                    onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, message: e.target.value }))
+                    }
                     onBlur={() => setTouched((t) => ({ ...t, message: true }))}
                     className={`w-full resize-none rounded-xl border bg-white/[0.04] px-4 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-[oklch(0.72_0.19_245_/_0.55)] focus:bg-white/[0.06] ${
-                      touched.message && errors.message ? "border-destructive" : "border-white/10"
+                      touched.message && errors.message
+                        ? "border-destructive"
+                        : "border-white/10"
                     }`}
                     placeholder="Tell us what you need..."
                   />
                   {touched.message && errors.message && (
-                    <p className="mt-1.5 text-xs text-destructive">{errors.message}</p>
+                    <p className="mt-1.5 text-xs text-destructive">
+                      {errors.message}
+                    </p>
                   )}
                 </div>
                 <button

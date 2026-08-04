@@ -11,7 +11,7 @@ export class ContactController {
 	@ApiOperation({
 		summary: 'Submit a contact message',
 		description:
-			'Allows users to send a contact message by providing their name, email, and message.',
+			'Allows users to send a contact message by providing their name, email, optional phone, and message.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,

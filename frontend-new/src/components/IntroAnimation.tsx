@@ -1,14 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import horizonAsset from "@/assets/logo-horizon.png.asset.json";
-import textAsset from "@/assets/logo-text.png.asset.json";
-import logoAsset from "@/assets/skyline-logo-transparent.png.asset.json";
-// To change the intro sound: replace the file at src/assets/intro-sound.mp3
-// (via lovable-assets) or swap this import for another .mp3.asset.json pointer.
-import introSoundAsset from "@/assets/intro-sound.mp3.asset.json";
+import horizonAsset from "@/assets/logo-horizon.png";
+import textAsset from "@/assets/logo-text.png";
+import logoAsset from "@/assets/skyline-logo-transparent.png";
+// To change the intro sound: replace the file at src/assets/intro-sound.mp3.
+import introSound from "@/assets/intro-sound.mp3";
 
 // Tweak playback here.
 const SOUND = {
-  src: introSoundAsset.url,
+  src: introSound,
   volume: 0.6, // 0.0 – 1.0
 };
 
@@ -129,7 +128,9 @@ export function IntroAnimation() {
 
   useLayoutEffect(() => {
     if (phase !== "fly" || !groupRef.current) return;
-    const target = document.querySelector<HTMLElement>("[data-skyline-logo-target]");
+    const target = document.querySelector<HTMLElement>(
+      "[data-skyline-logo-target]",
+    );
     const src = groupRef.current.getBoundingClientRect();
     if (!target) {
       setFlyTransform("translate(0, 0) scale(1)");
@@ -172,7 +173,7 @@ export function IntroAnimation() {
           transition: "opacity 700ms ease-out",
         }}
       />
-      <img src={logoAsset.url} alt="" className="hidden" />
+      <img src={logoAsset} alt="" className="hidden" />
 
       <div
         ref={groupRef}
@@ -182,27 +183,30 @@ export function IntroAnimation() {
           transition: flying
             ? "transform 900ms cubic-bezier(0.65, 0, 0.2, 1)"
             : "transform 500ms cubic-bezier(0.22, 1, 0.36, 1)",
-          transform: flying && flyTransform ? flyTransform : "translate(0, 0) scale(1)",
+          transform:
+            flying && flyTransform ? flyTransform : "translate(0, 0) scale(1)",
           willChange: "transform, opacity",
         }}
       >
         <img
-          src={horizonAsset.url}
+          src={horizonAsset}
           alt=""
           className="w-[min(70vw,720px)] select-none"
           style={{
-            animation: "skyline-intro-reveal 900ms cubic-bezier(0.65, 0, 0.35, 1) both",
+            animation:
+              "skyline-intro-reveal 900ms cubic-bezier(0.65, 0, 0.35, 1) both",
             filter: "drop-shadow(0 0 24px oklch(0.85 0.18 235 / 0.5))",
           }}
         />
         <img
-          src={textAsset.url}
+          src={textAsset}
           alt="Skyline"
           className="w-[min(55vw,560px)] select-none"
           style={{
             opacity: showText ? 1 : 0,
             transform: showText ? "translateY(0)" : "translateY(12px)",
-            transition: "opacity 550ms ease-out, transform 550ms cubic-bezier(0.22, 1, 0.36, 1)",
+            transition:
+              "opacity 550ms ease-out, transform 550ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         />
       </div>

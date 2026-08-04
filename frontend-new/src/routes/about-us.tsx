@@ -1,11 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Shield, Zap, Globe, Bot, Landmark, GitBranch } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Shield,
+  Zap,
+  Globe,
+  Bot,
+  Landmark,
+  GitBranch,
+} from "lucide-react";
 import { FooterSocials } from "@/components/ui/footer-socials";
-import logoAsset from "@/assets/skyline-logo-transparent.png.asset.json";
+import { settingsQueryOptions } from "@/lib/api/settings";
+import logoAsset from "@/assets/skyline-logo-transparent.png";
 import heroImg from "@/assets/about/about-hero.jpg";
 import bridgeImg from "@/assets/about/about-bridge.jpg";
 import agentsImg from "@/assets/about/about-agents.jpg";
 import tradfiImg from "@/assets/about/about-tradfi.jpg";
+import teamSrdjan from "@/assets/about/team-srdjan.jpg";
+import teamNemanja from "@/assets/about/team-nemanja.jpg";
+import teamDarko from "@/assets/about/team-darko.jpg";
 
 export const Route = createFileRoute("/about-us")({
   head: () => ({
@@ -33,8 +47,12 @@ function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
       <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-8">
-        <Link to="/" className="flex items-center gap-2" aria-label="Skyline home">
-          <img src={logoAsset.url} alt="Skyline" className="h-8 w-auto md:h-9" />
+        <Link
+          to="/"
+          className="flex items-center gap-2"
+          aria-label="Skyline home"
+        >
+          <img src={logoAsset} alt="Skyline" className="h-8 w-auto md:h-9" />
         </Link>
         <nav className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
           <Link
@@ -88,9 +106,10 @@ function Hero() {
           <span className="text-gradient-sky">When “bridged” isn’t enough</span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-pretty text-base text-muted-foreground md:text-lg">
-          Skyline is built by engineers who believe moving value between networks should feel like sending a message —
-          instant, verifiable, and boring in the best possible way. We connect every chain, every agent, and every
-          dollar.
+          Skyline is built by engineers who believe moving value between
+          networks should feel like sending a message — instant, verifiable, and
+          boring in the best possible way. We connect every chain, every agent,
+          and every dollar.
         </p>
         <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
           <Link
@@ -113,8 +132,14 @@ function Hero() {
 }
 
 function Stats() {
+  const { data: settings } = useQuery(settingsQueryOptions);
+  const chainsConnected = settings?.enabledChains.length;
+
   const stats = [
-    { label: "Networks connected", value: "12+" },
+    {
+      label: "Networks connected",
+      value: chainsConnected != null ? String(chainsConnected) : "—",
+    },
     { label: "Worlds bridged", value: "UTxO ↔ EVM" },
     { label: "Custody model", value: "Non-custodial" },
     { label: "Reserves published", value: "Live, on-chain" },
@@ -123,8 +148,12 @@ function Stats() {
     <div className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-6 md:grid-cols-4">
       {stats.map((s) => (
         <div key={s.label} className="px-2 text-center">
-          <div className="font-display text-2xl font-semibold text-foreground md:text-3xl">{s.value}</div>
-          <div className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">{s.label}</div>
+          <div className="font-display text-2xl font-semibold text-foreground md:text-3xl">
+            {s.value}
+          </div>
+          <div className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
+            {s.label}
+          </div>
         </div>
       ))}
     </div>
@@ -159,7 +188,9 @@ function Split({
           <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[oklch(0.85_0.15_235)]">
             {eyebrow}
           </div>
-          <h2 className="font-display text-3xl font-semibold text-foreground md:text-4xl">{title}</h2>
+          <h2 className="font-display text-3xl font-semibold text-foreground md:text-4xl">
+            {title}
+          </h2>
           <div className="mt-5 space-y-4 text-sm leading-relaxed text-muted-foreground md:text-base">
             {body.map((p) => (
               <p key={p}>{p}</p>
@@ -175,7 +206,14 @@ function Split({
           )}
         </div>
         <figure className="card-glow overflow-hidden rounded-2xl">
-          <img src={image} alt={alt} width={1536} height={1024} loading="lazy" className="h-full w-full object-cover" />
+          <img
+            src={image}
+            alt={alt}
+            width={1536}
+            height={1024}
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
         </figure>
       </div>
     </section>
@@ -232,8 +270,12 @@ function Values() {
               <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-[oklch(0.85_0.15_235)]">
                 <v.icon className="h-5 w-5" />
               </div>
-              <h3 className="mt-4 font-display text-lg font-semibold text-foreground">{v.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{v.text}</p>
+              <h3 className="mt-4 font-display text-lg font-semibold text-foreground">
+                {v.title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {v.text}
+              </p>
             </div>
           ))}
         </div>
@@ -246,16 +288,19 @@ function Team() {
   const team = [
     {
       name: "Srdjan Vukmirovic",
+      image: teamSrdjan,
       // role: "Technical lead — protocol & validators",
       text: "Srdjan, a full professor at the Faculty of Technical Sciences, University of Novi Sad, teaches Cloud Computing, AI and Blockchain, and leads technology across several startups with a focus on promoting new ways of thinking about innovation.",
     },
     {
       name: "Nemanja Nedic",
+      image: teamNemanja,
       // role: "Bridge app, audit & history",
       text: "Nemanja, a professor at the Faculty of Technical Sciences, University of Novi Sad, brings a wealth of expertise in technical problem-solving and effective team management cultivated through years of professional experience.",
     },
     {
       name: "Darko Capko",
+      image: teamDarko,
       // role: "Next-generation rails",
       text: "Darko, a full professor at the Faculty of Technical Sciences, University of Novi Sad, teaches modeling, optimization, AI and machine learning, and brings two decades of experience architecting large-scale SCADA and smart grid systems.",
     },
@@ -271,17 +316,35 @@ function Team() {
             Small team, serious infrastructure
           </h2>
           <p className="mt-4 text-sm text-muted-foreground md:text-base">
-            Skyline is built by a compact group of protocol, security, and product engineers who have shipped production
-            systems where downtime is not an option.
+            Skyline is built by a compact group of protocol, security, and
+            product engineers who have shipped production systems where downtime
+            is not an option.
           </p>
         </div>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {team.map((t) => (
-            <div key={t.name} className="card-glow flex flex-col overflow-hidden rounded-2xl">
+            <div
+              key={t.name}
+              className="card-glow flex flex-col overflow-hidden rounded-2xl"
+            >
+              <div className="aspect-[4/3] overflow-hidden">
+                <img
+                  src={t.image}
+                  alt={t.name}
+                  width={800}
+                  height={600}
+                  loading="lazy"
+                  className="h-full w-full object-cover object-top"
+                />
+              </div>
               <div className="flex flex-1 flex-col p-6">
-                <h3 className="font-display text-lg font-semibold text-foreground">{t.name}</h3>
+                <h3 className="font-display text-lg font-semibold text-foreground">
+                  {t.name}
+                </h3>
                 {/* <div className="mt-1 text-xs uppercase tracking-wider text-[oklch(0.85_0.15_235)]">{t.role}</div> */}
-                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{t.text}</p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {t.text}
+                </p>
               </div>
             </div>
           ))}
@@ -291,14 +354,15 @@ function Team() {
   );
 }
 
-
 function CTA() {
   return (
     <section className="relative flex flex-1 items-center overflow-hidden py-20">
       <div className="bg-hero-glow absolute inset-0 opacity-70" />
       <div className="container-page relative text-center">
         <h2 className="text-balance font-display text-4xl font-semibold md:text-5xl">
-          <span className="text-gradient-sky">Let’s cross the horizon together.</span>
+          <span className="text-gradient-sky">
+            Let’s cross the horizon together.
+          </span>
         </h2>
         <p className="mx-auto mt-4 max-w-lg text-muted-foreground">
           Partner with us, integrate the bridge, or just say hello.
@@ -328,9 +392,12 @@ function Footer() {
       <div className="container-page py-14">
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-start">
           <div className="max-w-sm">
-            <div className="font-display text-lg font-semibold tracking-[0.3em] text-foreground">SKYLINE</div>
+            <div className="font-display text-lg font-semibold tracking-[0.3em] text-foreground">
+              SKYLINE
+            </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              The universal bridge between chains, agents, and the dollar economy.
+              The universal bridge between chains, agents, and the dollar
+              economy.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-10 sm:grid-cols-3">
@@ -359,11 +426,16 @@ function Footer() {
               },
             ].map((c) => (
               <div key={c.title}>
-                <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground">{c.title}</div>
+                <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground">
+                  {c.title}
+                </div>
                 <ul className="space-y-2">
                   {c.links.map((l) => (
                     <li key={l.label}>
-                      <a href={l.href} className="text-sm text-muted-foreground hover:text-foreground">
+                      <a
+                        href={l.href}
+                        className="text-sm text-muted-foreground hover:text-foreground"
+                      >
                         {l.label}
                       </a>
                     </li>

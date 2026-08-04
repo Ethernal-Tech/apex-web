@@ -4,3 +4,6 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export const SKYLINE_DOCUMENTATION_URL =
+  "https://ethernal-6.gitbook.io/skyline";
