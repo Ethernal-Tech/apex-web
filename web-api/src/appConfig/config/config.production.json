@@ -3,7 +3,8 @@
     "logLevel": "debug",
     "port": 30000,
     "corsAllowList": [
-      "https://reactor.testnet.apexfusion.org"
+      "https://skyline.testnet.ethernal.work",
+      "http://localhost:8080"
     ],
     "isMainnet": false
   },

@@ -1,14 +1,46 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 
 function newTransactionId() {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
-  return "0x" + Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  return (
+    "0x" + Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")
+  );
 }
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useWalletBalances } from "@/hooks/use-wallet-balances";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkBadge, NetworkToggle } from "@/components/NetworkToggle";
+import {
+  convertDfmToDisplay,
+  formatBalanceParts,
+  toFixedAmount,
+} from "@/lib/amount";
+import { settingsQueryOptions } from "@/lib/api/settings";
+import {
+  CHAIN_FILTERS,
+  CHAIN_META,
+  chainMatchesFilter,
+  getDstChains,
+  getSrcChains,
+  type BridgeChain,
+  type ChainFilterId,
+} from "@/lib/chains";
+import {
+  getCurrencyID,
+  getSupportedSourceTokens,
+  getTokenDisplayName,
+  type BridgeToken,
+} from "@/lib/tokens";
+import type { SettingsResponse } from "@/lib/api/settings";
+import {
+  connectWallet,
+  disconnectWallet,
+  type WalletSession,
+} from "@/lib/wallet/connect";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
@@ -19,7 +51,6 @@ import {
   ExternalLink,
   Search,
   Check,
-  Star,
   Sparkles,
   X,
   HelpCircle,
@@ -27,22 +58,9 @@ import {
   Clipboard,
   AlertCircle,
   History,
+  Loader2,
 } from "lucide-react";
-import logoAsset from "@/assets/skyline-logo-transparent.png.asset.json";
-import ethIcon from "@/assets/chains/ethereum.svg?url";
-import solIcon from "@/assets/chains/solana.svg?url";
-import adaIcon from "@/assets/chains/cardano.svg?url";
-import polyIcon from "@/assets/chains/polygon.svg?url";
-import bnbIcon from "@/assets/chains/bnb.svg?url";
-import baseIcon from "@/assets/chains/coinbase.svg?url";
-import primeIcon from "@/assets/chains/prime.svg?url";
-import nexusIcon from "@/assets/chains/nexus.svg?url";
-import vectorIcon from "@/assets/chains/vector.svg?url";
-import arbIcon from "@/assets/chains/arbi.svg?url";
-import katanaIcon from "@/assets/chains/katana.svg?url";
-import scrollIcon from "@/assets/chains/scroll.svg?url";
-import seiIcon from "@/assets/chains/sei.svg?url";
-import uniIcon from "@/assets/chains/unichain.svg?url";
+import logoAsset from "@/assets/skyline-logo-transparent.png";
 
 export const Route = createFileRoute("/bridge-app")({
   head: () => ({
@@ -50,87 +68,28 @@ export const Route = createFileRoute("/bridge-app")({
       { title: "Skyline Bridge — Move assets across chains" },
       {
         name: "description",
-        content: "The Skyline Bridge app. Move native assets across 10+ chains in seconds.",
+        content:
+          "The Skyline Bridge app. Move native assets across 10+ chains in seconds.",
       },
     ],
   }),
   component: BridgeApp,
 });
 
-type Chain = {
-  id: string;
-  label: string;
-  icon: string;
-  category: "apex" | "utxo" | "evm" | "svm";
-  status?: "live" | "soon";
-  symbol?: string;
-  popular?: boolean;
-  apexFusion?: boolean;
-};
-
-const CHAINS: Chain[] = [
-  {
-    id: "prime",
-    label: "Prime",
-    icon: primeIcon,
-    category: "utxo",
-    status: "live",
-    symbol: "AP3X",
-    popular: true,
-    apexFusion: true,
-  },
-  {
-    id: "nexus",
-    label: "Nexus",
-    icon: nexusIcon,
-    category: "evm",
-    status: "live",
-    symbol: "AP3X",
-    popular: true,
-    apexFusion: true,
-  },
-  {
-    id: "vector",
-    label: "Vector",
-    icon: vectorIcon,
-    category: "utxo",
-    status: "live",
-    symbol: "AP3X",
-    popular: true,
-    apexFusion: true,
-  },
-  { id: "eth", label: "Ethereum", icon: ethIcon, category: "evm", status: "soon", symbol: "ETH" },
-  { id: "sol", label: "Solana", icon: solIcon, category: "svm", status: "soon", symbol: "SOL" },
-  { id: "ada", label: "Cardano", icon: adaIcon, category: "utxo", status: "live", symbol: "ADA", popular: true },
-  { id: "bnb", label: "BNB Chain", icon: bnbIcon, category: "evm", status: "live", symbol: "BNB" },
-  { id: "sei", label: "Sei", icon: seiIcon, category: "evm", status: "soon", symbol: "SEI" },
-  { id: "base", label: "Base", icon: baseIcon, category: "evm", status: "live", symbol: "ETH" },
-  { id: "arb", label: "Arbitrum", icon: arbIcon, category: "evm", status: "soon", symbol: "ETH" },
-  { id: "poly", label: "Polygon", icon: polyIcon, category: "evm", status: "soon", symbol: "POL" },
-  { id: "uni", label: "Unichain", icon: uniIcon, category: "evm", status: "soon", symbol: "ETH" },
-  { id: "scroll", label: "Scroll", icon: scrollIcon, category: "evm", status: "soon", symbol: "ETH" },
-  { id: "katana", label: "Katana", icon: katanaIcon, category: "evm", status: "soon", symbol: "ETH" },
-];
-
-const CATEGORIES: { id: "all" | "popular" | "apex" | "utxo" | "evm" | "svm"; label: string }[] = [
-  { id: "all", label: "All networks" },
-  { id: "popular", label: "Popular" },
-  { id: "apex", label: "Apex Fusion" },
-  { id: "utxo", label: "UTXO" },
-  { id: "evm", label: "EVM" },
-  { id: "svm", label: "SVM" },
-];
+type Chain = BridgeChain;
 
 function ChainSelect({
   label,
   value,
   onChange,
-  exclude,
+  chains,
+  disabled = false,
 }: {
   label: string;
   value: Chain;
   onChange: (c: Chain) => void;
-  exclude?: string;
+  chains: Chain[];
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -140,13 +99,27 @@ function ChainSelect({
       </label>
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)]"
+        disabled={disabled}
+        onClick={() => {
+          if (!disabled) setOpen(true);
+        }}
+        title={
+          disabled
+            ? "Disconnect wallet to change the source network"
+            : undefined
+        }
+        className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-white/10"
       >
         <span className="flex items-center gap-3">
-          <img src={value.icon} alt={value.label} className="h-8 w-8 rounded-full" />
+          <img
+            src={value.icon}
+            alt={value.label}
+            className="h-8 w-8 rounded-full"
+          />
           <span className="flex flex-col">
-            <span className="font-medium text-foreground leading-tight">{value.label}</span>
+            <span className="font-medium text-foreground leading-tight">
+              {value.label}
+            </span>
             {value.symbol && (
               <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 {value.symbol}
@@ -154,15 +127,17 @@ function ChainSelect({
             )}
           </span>
         </span>
-        <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground transition-colors group-hover:text-foreground">
-          Change <ChevronDown className="h-3 w-3" />
-        </span>
+        {!disabled && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground transition-colors group-hover:text-foreground">
+            Change <ChevronDown className="h-3 w-3" />
+          </span>
+        )}
       </button>
       <ChainPickerModal
-        open={open}
+        open={open && !disabled}
         title={`Select ${label.toLowerCase()} network`}
+        chains={chains}
         selectedId={value.id}
-        excludeId={exclude}
         onClose={() => setOpen(false)}
         onSelect={(c) => {
           onChange(c);
@@ -176,20 +151,20 @@ function ChainSelect({
 function ChainPickerModal({
   open,
   title,
+  chains,
   selectedId,
-  excludeId,
   onClose,
   onSelect,
 }: {
   open: boolean;
   title: string;
+  chains: Chain[];
   selectedId: string;
-  excludeId?: string;
   onClose: () => void;
   onSelect: (c: Chain) => void;
 }) {
   const [query, setQuery] = useState("");
-  const [cat, setCat] = useState<(typeof CATEGORIES)[number]["id"]>("all");
+  const [cat, setCat] = useState<ChainFilterId>("all");
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -210,29 +185,26 @@ function ChainPickerModal({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return CHAINS.filter((c) => {
-      if (cat !== "all") {
-        if (cat === "popular") {
-          if (!c.popular) return false;
-        } else if (cat === "apex") {
-          if (!c.apexFusion && c.category !== "apex") return false;
-        } else if (c.category !== cat) {
-          return false;
-        }
-      }
+    return chains.filter((c) => {
+      if (!chainMatchesFilter(c, cat)) return false;
       if (!q) return true;
-      return c.label.toLowerCase().includes(q) || (c.symbol?.toLowerCase().includes(q) ?? false) || c.id.includes(q);
+      return (
+        c.label.toLowerCase().includes(q) ||
+        (c.symbol?.toLowerCase().includes(q) ?? false) ||
+        c.id.includes(q)
+      );
     });
-  }, [query, cat]);
-
-  const live = filtered.filter((c) => c.status !== "soon");
-  const soon = filtered.filter((c) => c.status === "soon");
+  }, [chains, query, cat]);
 
   if (!open) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={onClose} aria-hidden />
+      <div
+        className="absolute inset-0 bg-background/80 backdrop-blur-md"
+        onClick={onClose}
+        aria-hidden
+      />
       <div
         role="dialog"
         aria-modal="true"
@@ -247,7 +219,9 @@ function ChainPickerModal({
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">
               Networks
             </div>
-            <h2 className="mt-1 font-display text-lg font-semibold text-foreground">{title}</h2>
+            <h2 className="mt-1 font-display text-lg font-semibold text-foreground">
+              {title}
+            </h2>
           </div>
           <button
             type="button"
@@ -266,7 +240,7 @@ function ChainPickerModal({
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search 40+ networks or tokens…"
+              placeholder="Search networks…"
               className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
             />
             {query && (
@@ -282,7 +256,7 @@ function ChainPickerModal({
           </div>
 
           <div className="mt-3 flex flex-wrap gap-1.5">
-            {CATEGORIES.map((c) => (
+            {CHAIN_FILTERS.map((c) => (
               <button
                 key={c.id}
                 type="button"
@@ -301,31 +275,27 @@ function ChainPickerModal({
 
         <div className="relative mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto px-3 pb-5">
-            {live.length === 0 && soon.length === 0 && (
-              <div className="px-4 py-10 text-center text-sm text-muted-foreground">No networks match "{query}".</div>
-            )}
-
-            {live.length > 0 && (
-              <SectionHeader icon={<Sparkles className="h-3 w-3" />} label="Live now" count={live.length} />
-            )}
-            <ul className="grid gap-1">
-              {live.map((c) => (
-                <ChainRow
-                  key={c.id}
-                  chain={c}
-                  selected={c.id === selectedId}
-                  disabled={c.id === excludeId}
-                  onSelect={() => onSelect(c)}
-                />
-              ))}
-            </ul>
-
-            {soon.length > 0 && (
+            {filtered.length === 0 ? (
+              <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+                {chains.length === 0
+                  ? "No networks available."
+                  : `No networks match${query ? ` "${query}"` : ""}.`}
+              </div>
+            ) : (
               <>
-                <SectionHeader icon={<Star className="h-3 w-3" />} label="Coming soon" count={soon.length} />
+                <SectionHeader
+                  icon={<Sparkles className="h-3 w-3" />}
+                  label="Networks"
+                  count={filtered.length}
+                />
                 <ul className="grid gap-1">
-                  {soon.map((c) => (
-                    <ChainRow key={c.id} chain={c} selected={false} disabled onSelect={() => {}} />
+                  {filtered.map((c) => (
+                    <ChainRow
+                      key={c.id}
+                      chain={c}
+                      selected={c.id === selectedId}
+                      onSelect={() => onSelect(c)}
+                    />
                   ))}
                 </ul>
               </>
@@ -334,9 +304,14 @@ function ChainPickerModal({
         </div>
 
         <div className="relative flex flex-none items-center justify-between border-t border-white/5 px-6 py-3 text-[11px] text-muted-foreground">
-          <span>{CHAINS.length}+ networks · more integrations rolling out soon</span>
+          <span>
+            {chains.length} network{chains.length === 1 ? "" : "s"} from
+            settings
+          </span>
           <span className="hidden items-center gap-1 md:inline-flex">
-            <kbd className="rounded border border-white/10 bg-white/[0.05] px-1.5 py-0.5 text-[10px]">Esc</kbd>
+            <kbd className="rounded border border-white/10 bg-white/[0.05] px-1.5 py-0.5 text-[10px]">
+              Esc
+            </kbd>
             to close
           </span>
         </div>
@@ -346,7 +321,15 @@ function ChainPickerModal({
   );
 }
 
-function SectionHeader({ icon, label, count }: { icon: React.ReactNode; label: string; count: number }) {
+function SectionHeader({
+  icon,
+  label,
+  count,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  count: number;
+}) {
   return (
     <div className="mb-1.5 mt-3 flex items-center gap-2 px-3">
       <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[oklch(0.85_0.15_235)]">
@@ -370,7 +353,6 @@ function ChainRow({
   disabled?: boolean;
   onSelect: () => void;
 }) {
-  const isSoon = chain.status === "soon";
   return (
     <li>
       <button
@@ -384,7 +366,11 @@ function ChainRow({
         } ${disabled ? "cursor-not-allowed opacity-55" : ""}`}
       >
         <span className="relative">
-          <img src={chain.icon} alt={chain.label} className={`h-9 w-9 rounded-full ${isSoon ? "grayscale" : ""}`} />
+          <img
+            src={chain.icon}
+            alt={chain.label}
+            className="h-9 w-9 rounded-full"
+          />
           {selected && (
             <span className="absolute -bottom-0.5 -right-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[oklch(0.85_0.15_235)] text-[oklch(0.14_0.03_260)] ring-2 ring-[oklch(0.17_0.03_262)]">
               <Check className="h-2.5 w-2.5" />
@@ -393,26 +379,24 @@ function ChainRow({
         </span>
         <span className="flex flex-1 items-center justify-between gap-2 min-w-0">
           <span className="flex flex-col min-w-0">
-            <span className="truncate text-sm font-medium text-foreground">{chain.label}</span>
+            <span className="truncate text-sm font-medium text-foreground">
+              {chain.label}
+            </span>
             <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               {chain.symbol} ·{" "}
               {chain.apexFusion
                 ? `Apex Fusion · ${chain.category.toUpperCase()}`
-                : chain.category === "apex"
-                  ? "Apex Fusion"
-                  : chain.category === "utxo"
-                    ? "UTXO"
-                    : chain.category === "svm"
-                      ? "SVM"
-                      : "EVM"}
+                : chain.category === "utxo"
+                  ? "UTXO"
+                  : chain.category === "svm"
+                    ? "SVM"
+                    : "EVM"}
             </span>
           </span>
-          {isSoon ? (
-            <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              Soon
+          {disabled ? (
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              In use
             </span>
-          ) : disabled ? (
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">In use</span>
           ) : (
             <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[oklch(0.85_0.15_235)]">
               <span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.85_0.15_235)] shadow-[0_0_8px_oklch(0.85_0.15_235)]" />
@@ -425,25 +409,21 @@ function ChainRow({
   );
 }
 
-type Token = {
-  id: string;
-  symbol: string;
-  name: string;
-  icon: string;
-};
+type Token = BridgeToken;
 
-const TOKENS: Token[] = [
-  { id: "ap3x", symbol: "AP3X", name: "Apex Fusion", icon: primeIcon },
-  { id: "eth", symbol: "ETH", name: "Ethereum", icon: ethIcon },
-  { id: "sol", symbol: "SOL", name: "Solana", icon: solIcon },
-  { id: "ada", symbol: "ADA", name: "Cardano", icon: adaIcon },
-  { id: "bnb", symbol: "BNB", name: "BNB", icon: bnbIcon },
-  { id: "sei", symbol: "SEI", name: "Sei", icon: seiIcon },
-  { id: "pol", symbol: "POL", name: "Polygon", icon: polyIcon },
-];
-
-function TokenSelect({ label, value, onChange }: { label: string; value: Token; onChange: (t: Token) => void }) {
+function TokenSelect({
+  label,
+  value,
+  onChange,
+  tokens,
+}: {
+  label: string;
+  value: Token;
+  onChange: (t: Token) => void;
+  tokens: Token[];
+}) {
   const [open, setOpen] = useState(false);
+  const canChange = tokens.length > 1;
   return (
     <div className="relative">
       <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -451,25 +431,37 @@ function TokenSelect({ label, value, onChange }: { label: string; value: Token; 
       </label>
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)]"
+        disabled={!canChange}
+        onClick={() => {
+          if (canChange) setOpen(true);
+        }}
+        className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] disabled:cursor-default disabled:hover:border-white/10"
       >
         <span className="flex items-center gap-3">
-          <img src={value.icon} alt={value.name} className="h-8 w-8 rounded-full" />
+          <img
+            src={value.icon}
+            alt={value.name}
+            className="h-8 w-8 rounded-full"
+          />
           <span className="flex flex-col">
-            <span className="font-medium text-foreground leading-tight">{value.symbol}</span>
+            <span className="font-medium text-foreground leading-tight">
+              {value.symbol}
+            </span>
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
               {value.name}
             </span>
           </span>
         </span>
-        <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground transition-colors group-hover:text-foreground">
-          Change <ChevronDown className="h-3 w-3" />
-        </span>
+        {canChange && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground transition-colors group-hover:text-foreground">
+            Change <ChevronDown className="h-3 w-3" />
+          </span>
+        )}
       </button>
       <TokenPickerModal
         open={open}
         title={`Select ${label.toLowerCase()}`}
+        tokens={tokens}
         selectedId={value.id}
         onClose={() => setOpen(false)}
         onSelect={(t) => {
@@ -484,12 +476,14 @@ function TokenSelect({ label, value, onChange }: { label: string; value: Token; 
 function TokenPickerModal({
   open,
   title,
+  tokens,
   selectedId,
   onClose,
   onSelect,
 }: {
   open: boolean;
   title: string;
+  tokens: Token[];
   selectedId: string;
   onClose: () => void;
   onSelect: (t: Token) => void;
@@ -514,17 +508,24 @@ function TokenPickerModal({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return TOKENS;
-    return TOKENS.filter(
-      (t) => t.symbol.toLowerCase().includes(q) || t.name.toLowerCase().includes(q) || t.id.includes(q),
+    if (!q) return tokens;
+    return tokens.filter(
+      (t) =>
+        t.symbol.toLowerCase().includes(q) ||
+        t.name.toLowerCase().includes(q) ||
+        t.id.includes(q),
     );
-  }, [query]);
+  }, [query, tokens]);
 
   if (!open) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={onClose} aria-hidden />
+      <div
+        className="absolute inset-0 bg-background/80 backdrop-blur-md"
+        onClick={onClose}
+        aria-hidden
+      />
       <div
         role="dialog"
         aria-modal="true"
@@ -536,8 +537,12 @@ function TokenPickerModal({
 
         <div className="relative flex flex-none items-center justify-between px-6 pt-5">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">Tokens</div>
-            <h2 className="mt-1 font-display text-lg font-semibold text-foreground">{title}</h2>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">
+              Tokens
+            </div>
+            <h2 className="mt-1 font-display text-lg font-semibold text-foreground">
+              {title}
+            </h2>
           </div>
           <button
             type="button"
@@ -575,24 +580,41 @@ function TokenPickerModal({
         <div className="relative mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto px-3 pb-5">
             {filtered.length === 0 && (
-              <div className="px-4 py-10 text-center text-sm text-muted-foreground">No tokens match "{query}".</div>
+              <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+                {query
+                  ? `No tokens match "${query}".`
+                  : "No tokens available for this route."}
+              </div>
             )}
 
             {filtered.length > 0 && (
-              <SectionHeader icon={<Sparkles className="h-3 w-3" />} label="Available" count={filtered.length} />
+              <SectionHeader
+                icon={<Sparkles className="h-3 w-3" />}
+                label="Available"
+                count={filtered.length}
+              />
             )}
             <ul className="grid gap-1">
               {filtered.map((t) => (
-                <TokenRow key={t.id} token={t} selected={t.id === selectedId} onSelect={() => onSelect(t)} />
+                <TokenRow
+                  key={t.id}
+                  token={t}
+                  selected={t.id === selectedId}
+                  onSelect={() => onSelect(t)}
+                />
               ))}
             </ul>
           </div>
         </div>
 
         <div className="relative flex flex-none items-center justify-between border-t border-white/5 px-6 py-3 text-[11px] text-muted-foreground">
-          <span>{TOKENS.length} tokens · more assets rolling out soon</span>
+          <span>
+            {tokens.length} token{tokens.length === 1 ? "" : "s"} for this route
+          </span>
           <span className="hidden items-center gap-1 md:inline-flex">
-            <kbd className="rounded border border-white/10 bg-white/[0.05] px-1.5 py-0.5 text-[10px]">Esc</kbd>
+            <kbd className="rounded border border-white/10 bg-white/[0.05] px-1.5 py-0.5 text-[10px]">
+              Esc
+            </kbd>
             to close
           </span>
         </div>
@@ -602,7 +624,15 @@ function TokenPickerModal({
   );
 }
 
-function TokenRow({ token, selected, onSelect }: { token: Token; selected: boolean; onSelect: () => void }) {
+function TokenRow({
+  token,
+  selected,
+  onSelect,
+}: {
+  token: Token;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   return (
     <li>
       <button
@@ -615,7 +645,11 @@ function TokenRow({ token, selected, onSelect }: { token: Token; selected: boole
         }`}
       >
         <span className="relative">
-          <img src={token.icon} alt={token.name} className="h-9 w-9 rounded-full" />
+          <img
+            src={token.icon}
+            alt={token.name}
+            className="h-9 w-9 rounded-full"
+          />
           {selected && (
             <span className="absolute -bottom-0.5 -right-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-[oklch(0.85_0.15_235)] text-[oklch(0.14_0.03_260)] ring-2 ring-[oklch(0.17_0.03_262)]">
               <Check className="h-2.5 w-2.5" />
@@ -624,7 +658,9 @@ function TokenRow({ token, selected, onSelect }: { token: Token; selected: boole
         </span>
         <span className="flex flex-1 items-center justify-between gap-2 min-w-0">
           <span className="flex flex-col min-w-0">
-            <span className="truncate text-sm font-medium text-foreground">{token.symbol}</span>
+            <span className="truncate text-sm font-medium text-foreground">
+              {token.symbol}
+            </span>
             <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               {token.name}
             </span>
@@ -636,32 +672,97 @@ function TokenRow({ token, selected, onSelect }: { token: Token; selected: boole
 }
 
 function BridgeApp() {
-  const [source, setSource] = useState<Chain>(CHAINS[0]);
-  const [destination, setDestination] = useState<Chain>(CHAINS[3]);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const { data: settings, isLoading: settingsLoading } =
+    useQuery(settingsQueryOptions);
+
+  const sourceChains = useMemo(() => getSrcChains(settings), [settings]);
+  const [source, setSource] = useState<Chain | null>(null);
+  const [destination, setDestination] = useState<Chain | null>(null);
+
+  const destinationChains = useMemo(
+    () => getDstChains(source?.id, settings),
+    [source?.id, settings],
+  );
+
+  const [walletSession, setWalletSession] = useState<WalletSession | null>(
+    null,
+  );
+  const [connecting, setConnecting] = useState(false);
   const [step, setStep] = useState<"select" | "transfer">("select");
   const isCompact = useMediaQuery("(max-width: 1000px)");
 
+  const walletAddress = walletSession?.account.account ?? null;
+
+  const connectHandlers = useMemo(
+    () => ({
+      onSession: setWalletSession,
+      onError: (message: string) => toast.error(message),
+    }),
+    [],
+  );
+
+  useEffect(() => {
+    if (
+      (!source || !sourceChains.some((c) => c.id === source.id)) &&
+      sourceChains.length > 0
+    ) {
+      setSource(sourceChains[0]);
+    }
+  }, [source, sourceChains]);
+
+  useEffect(() => {
+    if (
+      (!destination ||
+        !destinationChains.some((c) => c.id === destination.id)) &&
+      destinationChains.length > 0
+    ) {
+      setDestination(destinationChains[0]);
+    }
+  }, [destination, destinationChains]);
+
+  const canSwap = useMemo(() => {
+    if (!source || !destination) return false;
+    return getDstChains(destination.id, settings).some(
+      (c) => c.id === source.id,
+    );
+  }, [source, destination, settings]);
+
   const isConnected = Boolean(walletAddress);
 
-  const connect = () => {
-    setWalletAddress("0x7a2cF4d9b1eE8d3cA0f6B91C2E5a7D9b3c4e8F1a");
-  };
+  const connect = useCallback(async () => {
+    if (!settings || !source || !destination) {
+      toast.error("Networks are still loading. Please try again.");
+      return false;
+    }
+    setConnecting(true);
+    try {
+      return await connectWallet(
+        source.id,
+        destination.id,
+        settings,
+        connectHandlers,
+      );
+    } finally {
+      setConnecting(false);
+    }
+  }, [settings, source, destination, connectHandlers]);
 
-  const disconnect = () => {
-    setWalletAddress(null);
+  const disconnect = useCallback(async () => {
+    await disconnectWallet(connectHandlers);
     setStep("select");
-  };
+  }, [connectHandlers]);
 
   const swap = () => {
-    const s = source;
+    if (!source || !destination || !canSwap) return;
+    const temp = source;
     setSource(destination);
-    setDestination(s);
+    setDestination(temp);
   };
 
-  const proceed = () => {
+  const proceed = async () => {
     if (!isConnected) {
-      connect();
+      const ok = await connect();
+      if (!ok) return;
     }
     setStep("transfer");
   };
@@ -671,8 +772,17 @@ function BridgeApp() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
         <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
-          <Link to="/" className="flex items-center gap-2" aria-label="Skyline home">
-            <img src={logoAsset.url} alt="Skyline" className="h-8 w-auto md:h-9" data-skyline-logo-target />
+          <Link
+            to="/"
+            className="flex items-center gap-2"
+            aria-label="Skyline home"
+          >
+            <img
+              src={logoAsset}
+              alt="Skyline"
+              className="h-8 w-auto md:h-9"
+              data-skyline-logo-target
+            />
           </Link>
 
           {/* TVL / TVB centered stat pill — click to open the audit page */}
@@ -683,7 +793,11 @@ function BridgeApp() {
               aria-label="Open the full proof-of-reserves audit"
               className="pointer-events-auto group"
             >
-              <StatChip label="TVL" value={isCompact ? "$12.45M" : "$12,450,238.71"} interactive />
+              <StatChip
+                label="TVL"
+                value={isCompact ? "$12.45M" : "$12,450,238.71"}
+                interactive
+              />
             </Link>
             <div className="h-6 w-px bg-white/10" />
             <Link
@@ -692,7 +806,11 @@ function BridgeApp() {
               aria-label="Open the full proof-of-reserves audit"
               className="pointer-events-auto group"
             >
-              <StatChip label="TVB" value={isCompact ? "$89.20M" : "$89,204,816.34"} interactive />
+              <StatChip
+                label="TVB"
+                value={isCompact ? "$89.20M" : "$89,204,816.34"}
+                interactive
+              />
             </Link>
           </div>
 
@@ -711,21 +829,40 @@ function BridgeApp() {
             </Link>
             <button
               type="button"
-              onClick={isConnected ? disconnect : connect}
-              className="btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold"
+              disabled={connecting}
+              onClick={() => {
+                void (isConnected ? disconnect() : connect());
+              }}
+              className="btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
             >
-              <Wallet className="h-4 w-4" />
-              {isConnected ? formatAddress(walletAddress) : "Connect Wallet"}
+              {connecting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Wallet className="h-4 w-4" />
+              )}
+              {connecting
+                ? "Connecting…"
+                : isConnected
+                  ? formatAddress(walletAddress)
+                  : "Connect Wallet"}
             </button>
           </div>
         </div>
 
         {/* Mobile stats */}
         <div className="flex w-full items-center justify-center gap-3 px-4 pb-3 min-[875px]:hidden">
-          <Link to="/audit" title="Open the full proof-of-reserves audit" aria-label="Open audit">
+          <Link
+            to="/audit"
+            title="Open the full proof-of-reserves audit"
+            aria-label="Open audit"
+          >
             <StatChip label="TVL" value="$12.45M" compact interactive />
           </Link>
-          <Link to="/audit" title="Open the full proof-of-reserves audit" aria-label="Open audit">
+          <Link
+            to="/audit"
+            title="Open the full proof-of-reserves audit"
+            aria-label="Open audit"
+          >
             <StatChip label="TVB" value="$89.20M" compact interactive />
           </Link>
         </div>
@@ -747,52 +884,103 @@ function BridgeApp() {
             className="mx-auto mt-4 transition-[max-width] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-max-width"
             style={{ maxWidth: step === "transfer" ? "54rem" : "36rem" }}
           >
-            <div key={step} className="card-glow relative animate-bridge-step-in rounded-3xl p-5 md:p-6">
+            <div
+              key={step}
+              className="card-glow relative animate-bridge-step-in rounded-3xl p-5 md:p-6"
+            >
               <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.72_0.19_245_/_0.6)] to-transparent" />
 
               {step === "select" ? (
                 <div className="grid gap-4">
-                  <ChainSelect label="Source" value={source} onChange={setSource} exclude={destination.id} />
+                  {settingsLoading || !source || !destination ? (
+                    <div className="py-10 text-center text-sm text-muted-foreground">
+                      Loading networks…
+                    </div>
+                  ) : (
+                    <>
+                      <ChainSelect
+                        label="Source"
+                        value={source}
+                        onChange={setSource}
+                        chains={sourceChains}
+                        disabled={isConnected}
+                      />
 
-                  <div className="flex justify-center">
-                    <button
-                      type="button"
-                      onClick={swap}
-                      aria-label="Swap chains"
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-background/80 text-[oklch(0.85_0.15_235)] transition-transform hover:rotate-180 hover:border-[oklch(0.72_0.19_245_/_0.5)]"
-                    >
-                      <ArrowLeftRight className="h-4 w-4" />
-                    </button>
-                  </div>
+                      <div className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={swap}
+                          disabled={!canSwap || isConnected}
+                          aria-label="Swap chains"
+                          title={
+                            isConnected
+                              ? "Disconnect wallet to change the source network"
+                              : undefined
+                          }
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-background/80 text-[oklch(0.85_0.15_235)] transition-transform hover:rotate-180 hover:border-[oklch(0.72_0.19_245_/_0.5)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:rotate-0"
+                        >
+                          <ArrowLeftRight className="h-4 w-4" />
+                        </button>
+                      </div>
 
-                  <ChainSelect label="Destination" value={destination} onChange={setDestination} exclude={source.id} />
+                      <ChainSelect
+                        label="Destination"
+                        value={destination}
+                        onChange={setDestination}
+                        chains={destinationChains}
+                      />
 
-                  <button
-                    type="button"
-                    onClick={proceed}
-                    className="btn-primary-glow mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold"
-                  >
-                    {isConnected ? "Move funds" : "Connect Wallet"}
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
+                      <button
+                        type="button"
+                        disabled={connecting}
+                        onClick={() => {
+                          void proceed();
+                        }}
+                        className="btn-primary-glow mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold disabled:opacity-60"
+                      >
+                        {connecting ? (
+                          <>
+                            Connecting…
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </>
+                        ) : (
+                          <>
+                            {isConnected ? "Move funds" : "Connect Wallet"}
+                            <ArrowRight className="h-4 w-4" />
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
                 </div>
-              ) : (
+              ) : source && destination ? (
                 <TransferForm
                   source={source}
                   destination={destination}
+                  settings={settings}
                   walletAddress={walletAddress ?? ""}
                   onDiscard={() => setStep("select")}
                 />
+              ) : (
+                <div className="py-10 text-center text-sm text-muted-foreground">
+                  Loading networks…
+                </div>
               )}
             </div>
 
             <p className="mt-3 text-center text-xs text-muted-foreground">
               Need help? Read the{" "}
-              <a href="#docs" className="text-[oklch(0.85_0.15_235)] hover:underline">
+              <a
+                href="#docs"
+                className="text-[oklch(0.85_0.15_235)] hover:underline"
+              >
                 bridge docs
               </a>{" "}
               or{" "}
-              <Link to="/" className="text-[oklch(0.85_0.15_235)] hover:underline">
+              <Link
+                to="/"
+                className="text-[oklch(0.85_0.15_235)] hover:underline"
+              >
                 return to Skyline
               </Link>
               .
@@ -804,14 +992,20 @@ function BridgeApp() {
       <footer className="border-t border-white/5 bg-background">
         <div className="flex w-full flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground md:flex-row md:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 md:flex-1 md:justify-start">
-            <span>© {new Date().getFullYear()} Skyline. All rights reserved.</span>
+            <span>
+              © {new Date().getFullYear()} Skyline. All rights reserved.
+            </span>
             <FooterLegal />
           </div>
           <FooterSocials className="md:flex-1 md:justify-center" />
           <div className="flex items-center gap-2 md:flex-1 md:justify-end">
             <span className="text-muted-foreground/70">Network:</span>
             {/* Locked once the transfer is underway — the funds are already bound to this network. */}
-            {step === "transfer" ? <NetworkBadge className="inline-flex" /> : <NetworkToggle />}
+            {step === "transfer" ? (
+              <NetworkBadge className="inline-flex" />
+            ) : (
+              <NetworkToggle />
+            )}
           </div>
         </div>
       </footer>
@@ -836,8 +1030,14 @@ function StatChip({
         compact ? "px-3 py-1" : "px-3.5 py-1.5"
       } ${interactive ? "group-hover:border-[oklch(0.72_0.19_245_/_0.55)] group-hover:bg-white/[0.07]" : ""}`}
     >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">{label}</span>
-      <span className={`font-display font-semibold text-foreground ${compact ? "text-xs" : "text-sm"}`}>{value}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">
+        {label}
+      </span>
+      <span
+        className={`font-display font-semibold text-foreground ${compact ? "text-xs" : "text-sm"}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }
@@ -845,23 +1045,76 @@ function StatChip({
 function TransferForm({
   source,
   destination,
+  settings,
   walletAddress,
   onDiscard,
 }: {
   source: Chain;
   destination: Chain;
+  settings: SettingsResponse | undefined;
   walletAddress: string;
   onDiscard: () => void;
 }) {
   const [destAddress, setDestAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [copied, setCopied] = useState(false);
-  const [status, setStatus] = useState<"idle" | "preparing" | "signing">("idle");
-  const balance = 5.99999;
-  const [selectedToken, setSelectedToken] = useState<Token>(
-    () => TOKENS.find((t) => t.symbol === (source.symbol ?? "AP3X")) ?? TOKENS[0],
+  const [status, setStatus] = useState<"idle" | "preparing" | "signing">(
+    "idle",
   );
-  const token = selectedToken.symbol;
+
+  const availableTokens = useMemo(
+    () => getSupportedSourceTokens(settings, source.id, destination.id),
+    [settings, source.id, destination.id],
+  );
+
+  const [selectedToken, setSelectedToken] = useState<Token | null>(null);
+
+  useEffect(() => {
+    if (availableTokens.length === 0) {
+      setSelectedToken(null);
+      return;
+    }
+    setSelectedToken((prev) => {
+      if (prev && availableTokens.some((t) => t.id === prev.id)) return prev;
+      return availableTokens[0];
+    });
+  }, [availableTokens]);
+
+  const { balances, loading: balancesLoading } = useWalletBalances({
+    enabled: Boolean(walletAddress),
+    srcChain: source.id,
+    dstChain: destination.id,
+    settings,
+  });
+
+  const currencyID = useMemo(
+    () => getCurrencyID(settings, source.id),
+    [settings, source.id],
+  );
+  const currencyLabel = getTokenDisplayName(settings, currencyID);
+  const token = selectedToken?.symbol ?? "";
+
+  const currencyBalanceDisplay = useMemo(() => {
+    if (currencyID === undefined) return null;
+    const raw = balances[currencyID];
+    if (raw === undefined) return null;
+    return toFixedAmount(convertDfmToDisplay(raw, source.id), 6);
+  }, [balances, currencyID, source.id]);
+
+  const selectedTokenBalanceDisplay = useMemo(() => {
+    if (!selectedToken || currencyID === undefined) return null;
+    if (selectedToken.tokenID === currencyID) return null;
+    const raw = balances[selectedToken.tokenID];
+    if (raw === undefined) return null;
+    return toFixedAmount(convertDfmToDisplay(raw, source.id), 6);
+  }, [balances, selectedToken, currencyID, source.id]);
+
+  const selectedTokenBalanceForMax = useMemo(() => {
+    if (!selectedToken) return "0";
+    const raw = balances[selectedToken.tokenID];
+    if (raw === undefined) return "0";
+    return convertDfmToDisplay(raw, source.id);
+  }, [balances, selectedToken, source.id]);
 
   const paste = async () => {
     try {
@@ -882,9 +1135,13 @@ function TransferForm({
     }
   };
 
-  const setMax = () => setAmount(balance.toString());
+  const setMax = () => setAmount(selectedTokenBalanceForMax);
 
-  const canMoveFunds = destAddress.trim() !== "" && amount.trim() !== "" && Number(amount) > 0;
+  const canMoveFunds =
+    Boolean(selectedToken) &&
+    destAddress.trim() !== "" &&
+    amount.trim() !== "" &&
+    Number(amount) > 0;
 
   const navigate = useNavigate();
 
@@ -928,7 +1185,9 @@ function TransferForm({
     <div className="relative">
       <div
         className={`transition-all duration-300 ${
-          isProcessing ? "pointer-events-none select-none opacity-40 blur-[2px]" : ""
+          isProcessing
+            ? "pointer-events-none select-none opacity-40 blur-[2px]"
+            : ""
         }`}
         aria-hidden={isProcessing}
       >
@@ -940,8 +1199,14 @@ function TransferForm({
                 Source
               </label>
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                <img src={source.icon} alt={source.label} className="h-8 w-8 rounded-full" />
-                <span className="font-medium text-foreground">{source.label}</span>
+                <img
+                  src={source.icon}
+                  alt={source.label}
+                  className="h-8 w-8 rounded-full"
+                />
+                <span className="font-medium text-foreground">
+                  {source.label}
+                </span>
               </div>
             </div>
 
@@ -950,7 +1215,9 @@ function TransferForm({
                 Address
               </label>
               <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                <span className="truncate text-sm text-foreground">{formatAddress(walletAddress)}</span>
+                <span className="truncate text-sm text-foreground">
+                  {formatAddress(walletAddress)}
+                </span>
                 <button
                   type="button"
                   onClick={copyAddr}
@@ -969,13 +1236,72 @@ function TransferForm({
             <div className="rounded-2xl border border-[oklch(0.72_0.19_245_/_0.35)] bg-[oklch(0.72_0.19_245_/_0.08)] p-3.5">
               <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[oklch(0.85_0.15_235)]">
                 <Wallet className="h-3.5 w-3.5" /> Available Balance
-                <HelpCircle className="h-3 w-3 text-muted-foreground" />
-                <span className="ml-auto text-muted-foreground">{token}</span>
+                <span
+                  title="Balances are read from your connected wallet on the source chain."
+                  className="inline-flex"
+                >
+                  <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                </span>
+                {balancesLoading && (
+                  <Loader2 className="ml-auto h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                )}
               </div>
-              <div className="mt-2 font-display text-2xl font-semibold text-foreground">
-                <span className="text-[oklch(0.85_0.15_235)]">{Math.floor(balance)}</span>
-                <span className="text-foreground/80">.{balance.toFixed(6).split(".")[1]}</span>
-              </div>
+
+              {currencyBalanceDisplay ? (
+                <div className="mt-2 flex items-baseline justify-between gap-3">
+                  <div className="font-display text-2xl font-semibold text-foreground">
+                    {(() => {
+                      const parts = formatBalanceParts(currencyBalanceDisplay);
+                      return (
+                        <>
+                          <span className="text-[oklch(0.85_0.15_235)]">
+                            {parts.whole}
+                          </span>
+                          {parts.fraction !== null && (
+                            <span className="text-foreground/80">
+                              .{parts.fraction}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    {currencyLabel}
+                  </span>
+                </div>
+              ) : (
+                <div className="mt-2 text-sm text-muted-foreground">
+                  {balancesLoading ? "Loading…" : "—"}
+                </div>
+              )}
+
+              {selectedTokenBalanceDisplay && (
+                <div className="mt-1.5 flex items-baseline justify-between gap-3">
+                  <div className="font-display text-xl font-semibold text-foreground">
+                    {(() => {
+                      const parts = formatBalanceParts(
+                        selectedTokenBalanceDisplay,
+                      );
+                      return (
+                        <>
+                          <span className="text-[oklch(0.85_0.15_235)]">
+                            {parts.whole}
+                          </span>
+                          {parts.fraction !== null && (
+                            <span className="text-foreground/80">
+                              .{parts.fraction}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <span className="shrink-0 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                    {token}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -990,9 +1316,16 @@ function TransferForm({
               fill="none"
               aria-hidden="true"
               className="absolute top-0 -translate-y-1/2 text-[oklch(0.85_0.15_235)]"
-              style={{ filter: "drop-shadow(0 0 8px oklch(0.55 0.22 250 / 0.5))" }}
+              style={{
+                filter: "drop-shadow(0 0 8px oklch(0.55 0.22 250 / 0.5))",
+              }}
             >
-              <path d="M10 26 Q32 2 54 26" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <path
+                d="M10 26 Q32 2 54 26"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
               <path
                 d="M54 26 L45 26 M54 26 L54 17"
                 stroke="currentColor"
@@ -1018,8 +1351,14 @@ function TransferForm({
                 Destination
               </label>
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                <img src={destination.icon} alt={destination.label} className="h-8 w-8 rounded-full" />
-                <span className="font-medium text-foreground">{destination.label}</span>
+                <img
+                  src={destination.icon}
+                  alt={destination.label}
+                  className="h-8 w-8 rounded-full"
+                />
+                <span className="font-medium text-foreground">
+                  {destination.label}
+                </span>
               </div>
             </div>
 
@@ -1044,7 +1383,18 @@ function TransferForm({
               </div>
             </div>
 
-            <TokenSelect label="Source Token" value={selectedToken} onChange={setSelectedToken} />
+            {selectedToken ? (
+              <TokenSelect
+                label="Source Token"
+                value={selectedToken}
+                onChange={setSelectedToken}
+                tokens={availableTokens}
+              />
+            ) : (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-muted-foreground">
+                No tokens available for {source.label} → {destination.label}.
+              </div>
+            )}
 
             <div>
               <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -1053,7 +1403,9 @@ function TransferForm({
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 focus-within:border-[oklch(0.72_0.19_245_/_0.5)]">
                 <input
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                  onChange={(e) =>
+                    setAmount(e.target.value.replace(/[^0-9.]/g, ""))
+                  }
                   placeholder="0.000000"
                   inputMode="decimal"
                   className="w-full bg-transparent font-display text-2xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
@@ -1070,7 +1422,11 @@ function TransferForm({
 
             <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 text-xs">
               <FeeRow label="User Wallet Fee" hint value={`0 ${token}`} />
-              <FeeRow label="Bridge Transaction Fee" hint value={`1.000010 ${token}`} />
+              <FeeRow
+                label="Bridge Transaction Fee"
+                hint
+                value={`1.000010 ${token}`}
+              />
               <FeeRow label="Estimated time" value="16-20 minutes" />
             </div>
           </div>
@@ -1102,7 +1458,10 @@ function TransferForm({
           <div className="relative flex animate-bridge-step-in flex-col items-center gap-6 px-6 text-center">
             <TransferSpinner />
             <div className="flex flex-col items-center gap-2">
-              <p key={status} className="animate-bridge-step-in font-display text-lg font-semibold text-foreground">
+              <p
+                key={status}
+                className="animate-bridge-step-in font-display text-lg font-semibold text-foreground"
+              >
                 {status === "preparing"
                   ? "Preparing the transaction…"
                   : "Signing and submitting the bridging transaction…"}
@@ -1128,7 +1487,15 @@ function TransferSpinner() {
   );
 }
 
-function FeeRow({ label, value, hint }: { label: string; value: string; hint?: boolean }) {
+function FeeRow({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint?: boolean;
+}) {
   return (
     <div className="flex items-center justify-between py-1.5 first:pt-0 last:pb-0">
       <span className="flex items-center gap-1.5 text-muted-foreground">

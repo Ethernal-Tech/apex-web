@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ExternalLink, TrendingUp } from "lucide-react";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkToggle } from "@/components/NetworkToggle";
-import logoAsset from "@/assets/skyline-logo-transparent.png.asset.json";
+import logoAsset from "@/assets/skyline-logo-transparent.png";
 import primeIcon from "@/assets/chains/prime.svg?url";
 import nexusIcon from "@/assets/chains/nexus.svg?url";
 import vectorIcon from "@/assets/chains/vector.svg?url";
@@ -18,10 +18,14 @@ export const Route = createFileRoute("/audit")({
         content:
           "A live, public ledger of everything locked in and moved across the Skyline network — verifiable on-chain and updated continuously.",
       },
-      { property: "og:title", content: "Skyline Bridge — Proof of Reserves & Audit" },
+      {
+        property: "og:title",
+        content: "Skyline Bridge — Proof of Reserves & Audit",
+      },
       {
         property: "og:description",
-        content: "Every asset, fully accounted for. Live TVL, TVB and per-chain breakdown across the Skyline network.",
+        content:
+          "Every asset, fully accounted for. Live TVL, TVB and per-chain breakdown across the Skyline network.",
       },
     ],
   }),
@@ -151,7 +155,10 @@ const TOTAL_LOCKED_USD = sumUsd(UTXO.lockedChain) + sumUsd(EVM.lockedChain);
 const TOTAL_BRIDGED_USD = sumUsd(UTXO.bridgedChain) + sumUsd(EVM.bridgedChain);
 
 function sumUsd(chains: ChainRows[]) {
-  return chains.reduce((s, ch) => s + ch.rows.reduce((a, r) => a + r.v * (PRICE[r.c] ?? 0), 0), 0);
+  return chains.reduce(
+    (s, ch) => s + ch.rows.reduce((a, r) => a + r.v * (PRICE[r.c] ?? 0), 0),
+    0,
+  );
 }
 function usdOfRows(rows: CoinRow[]) {
   return rows.reduce((s, r) => s + r.v * (PRICE[r.c] ?? 0), 0);
@@ -171,7 +178,11 @@ const fmtUsdCompact = (n: number) =>
         : `$${n.toFixed(2)}`;
 const fmtUsdFull = (n: number) =>
   `$${n.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
-const fmtTok = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+const fmtTok = (n: number) =>
+  n.toLocaleString("en-US", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+  });
 
 // Ease-out cubic count-up, mirrors the reference html (1600ms)
 function useCountUp(target: number, duration = 1600) {
@@ -208,8 +219,12 @@ function sparkPath(points: number[], w = 120, h = 34) {
     })
     .join(" ");
 }
-const TVL_SPARK = [4.2, 4.6, 4.5, 5.1, 5.4, 5.2, 5.8, 6.3, 6.1, 6.8, 7.2, 7.0, 7.6, 8.1];
-const TVB_SPARK = [3.1, 3.4, 3.8, 4.2, 4.0, 4.6, 5.1, 5.4, 5.8, 6.2, 6.7, 7.1, 7.6, 8.4];
+const TVL_SPARK = [
+  4.2, 4.6, 4.5, 5.1, 5.4, 5.2, 5.8, 6.3, 6.1, 6.8, 7.2, 7.0, 7.6, 8.1,
+];
+const TVB_SPARK = [
+  3.1, 3.4, 3.8, 4.2, 4.0, 4.6, 5.1, 5.4, 5.8, 6.2, 6.7, 7.1, 7.6, 8.4,
+];
 
 const CHART_DAYS = 30;
 const CHART_W = 900;
@@ -218,19 +233,28 @@ function makeSeries(seed: number, base: number) {
   const arr: number[] = [];
   let v = base;
   for (let i = 0; i < CHART_DAYS; i++) {
-    v += Math.sin((i + seed) * 0.42) * base * 0.04 + Math.cos(i * 0.7 + seed) * base * 0.015;
+    v +=
+      Math.sin((i + seed) * 0.42) * base * 0.04 +
+      Math.cos(i * 0.7 + seed) * base * 0.015;
     arr.push(Math.max(v, base * 0.6));
   }
   return arr;
 }
 function areaAndLine(series: number[], yMin: number, yMax: number) {
   const stepX = CHART_W / (series.length - 1);
-  const scaleY = (v: number) => CHART_H - ((v - yMin) / (yMax - yMin)) * (CHART_H - 20) - 10;
+  const scaleY = (v: number) =>
+    CHART_H - ((v - yMin) / (yMax - yMin)) * (CHART_H - 20) - 10;
   const line = series
-    .map((v, i) => `${i === 0 ? "M" : "L"}${(i * stepX).toFixed(1)},${scaleY(v).toFixed(1)}`)
+    .map(
+      (v, i) =>
+        `${i === 0 ? "M" : "L"}${(i * stepX).toFixed(1)},${scaleY(v).toFixed(1)}`,
+    )
     .join(" ");
   const area = `${line} L${CHART_W},${CHART_H} L0,${CHART_H} Z`;
-  const last = { x: (series.length - 1) * stepX, y: scaleY(series[series.length - 1]) };
+  const last = {
+    x: (series.length - 1) * stepX,
+    y: scaleY(series[series.length - 1]),
+  };
   return { line, area, last };
 }
 
@@ -278,7 +302,10 @@ function AuditPage() {
       usd: ch.rows.reduce((s, r) => s + r.v * (PRICE[r.c] ?? 0), 0),
     }));
     const total = perChain.reduce((s, x) => s + x.usd, 0) || 1;
-    return perChain.map((b) => ({ ...b, width: `${((b.usd / total) * 100).toFixed(1)}%` }));
+    return perChain.map((b) => ({
+      ...b,
+      width: `${((b.usd / total) * 100).toFixed(1)}%`,
+    }));
   }, [data]);
 
   return (
@@ -286,8 +313,12 @@ function AuditPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
         <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
-          <Link to="/" className="flex items-center gap-2" aria-label="Skyline home">
-            <img src={logoAsset.url} alt="Skyline" className="h-8 w-auto md:h-9" />
+          <Link
+            to="/"
+            className="flex items-center gap-2"
+            aria-label="Skyline home"
+          >
+            <img src={logoAsset} alt="Skyline" className="h-8 w-auto md:h-9" />
           </Link>
 
           <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-3 md:flex">
@@ -324,8 +355,9 @@ function AuditPage() {
               Every asset, fully accounted for.
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
-              A live, public ledger of everything locked in and moved across the Skyline network — spanning Cardano,
-              Apex Fusion and EVM chains, verifiable on-chain and updated continuously.
+              A live, public ledger of everything locked in and moved across the
+              Skyline network — spanning Cardano, Apex Fusion and EVM chains,
+              verifiable on-chain and updated continuously.
             </p>
           </div>
 
@@ -357,8 +389,12 @@ function AuditPage() {
           <div className="card-glow mt-6 rounded-2xl p-5 md:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <div className="font-display text-base font-semibold">Locked vs. Bridged</div>
-                <div className="mt-0.5 text-xs text-muted-foreground">Rolling {range} view · illustrative history</div>
+                <div className="font-display text-base font-semibold">
+                  Locked vs. Bridged
+                </div>
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  Rolling {range} view · illustrative history
+                </div>
               </div>
               <div className="flex items-center gap-4">
                 <Legend color="#3B92FF" label="TVL" />
@@ -398,7 +434,14 @@ function AuditPage() {
                 </linearGradient>
               </defs>
               {[0.25, 0.5, 0.75].map((f) => (
-                <line key={f} x1="0" y1={CHART_H * f} x2={CHART_W} y2={CHART_H * f} stroke="rgba(255,255,255,0.05)" />
+                <line
+                  key={f}
+                  x1="0"
+                  y1={CHART_H * f}
+                  x2={CHART_W}
+                  y2={CHART_H * f}
+                  stroke="rgba(255,255,255,0.05)"
+                />
               ))}
               <path d={chart.tvb.area} fill="url(#a-tvb)" />
               <path
@@ -416,10 +459,32 @@ function AuditPage() {
                 strokeWidth="2.4"
                 vectorEffect="non-scaling-stroke"
               />
-              <circle cx={chart.tvb.last.x} cy={chart.tvb.last.y} r="9" fill="#22C1E4" opacity="0.22" />
-              <circle cx={chart.tvb.last.x} cy={chart.tvb.last.y} r="4" fill="#22C1E4" />
-              <circle cx={chart.tvl.last.x} cy={chart.tvl.last.y} r="9" fill="#3B92FF" opacity="0.22" />
-              <circle cx={chart.tvl.last.x} cy={chart.tvl.last.y} r="4" fill="#3B92FF" />
+              <circle
+                cx={chart.tvb.last.x}
+                cy={chart.tvb.last.y}
+                r="9"
+                fill="#22C1E4"
+                opacity="0.22"
+              />
+              <circle
+                cx={chart.tvb.last.x}
+                cy={chart.tvb.last.y}
+                r="4"
+                fill="#22C1E4"
+              />
+              <circle
+                cx={chart.tvl.last.x}
+                cy={chart.tvl.last.y}
+                r="9"
+                fill="#3B92FF"
+                opacity="0.22"
+              />
+              <circle
+                cx={chart.tvl.last.x}
+                cy={chart.tvl.last.y}
+                r="4"
+                fill="#3B92FF"
+              />
             </svg>
             <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
               <span>30 days ago</span>
@@ -446,7 +511,9 @@ function AuditPage() {
                 </button>
               ))}
             </div>
-            <span className="text-xs text-muted-foreground">Simple summary, or every last number.</span>
+            <span className="text-xs text-muted-foreground">
+              Simple summary, or every last number.
+            </span>
           </div>
 
           {/* World tabs */}
@@ -457,7 +524,9 @@ function AuditPage() {
                 type="button"
                 onClick={() => setWorld(w)}
                 className={`relative pb-3 text-sm font-semibold transition-colors ${
-                  world === w ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  world === w
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {w === "utxo" ? "UTxO World" : "EVM World"}
@@ -476,7 +545,11 @@ function AuditPage() {
           {mode === "overview" ? (
             <div className="mt-6 grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
               <div className="flex flex-col gap-4">
-                <SummaryCard title="Total Locked" rows={data.summaryLocked} note={data.lockedNote} />
+                <SummaryCard
+                  title="Total Locked"
+                  rows={data.summaryLocked}
+                  note={data.lockedNote}
+                />
                 <SummaryCard title="Total Bridged" rows={data.summaryBridged} />
               </div>
 
@@ -485,8 +558,20 @@ function AuditPage() {
                   Locked composition · by chain
                 </div>
                 <div className="mt-4 flex items-center gap-5">
-                  <svg width="132" height="132" viewBox="0 0 120 120" className="flex-none">
-                    <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="15" />
+                  <svg
+                    width="132"
+                    height="132"
+                    viewBox="0 0 120 120"
+                    className="flex-none"
+                  >
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="52"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.06)"
+                      strokeWidth="15"
+                    />
                     {donut.map((seg, i) => (
                       <circle
                         key={i}
@@ -505,10 +590,18 @@ function AuditPage() {
                   </svg>
                   <div className="flex flex-1 flex-col gap-2">
                     {donut.map((seg, i) => (
-                      <div key={i} className="flex items-center gap-2 text-[13px] font-medium">
-                        <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: seg.color }} />
+                      <div
+                        key={i}
+                        className="flex items-center gap-2 text-[13px] font-medium"
+                      >
+                        <span
+                          className="h-2.5 w-2.5 flex-none rounded-full"
+                          style={{ background: seg.color }}
+                        />
                         <span className="flex-1 truncate">{seg.label}</span>
-                        <span className="tabular-nums text-muted-foreground">{(seg.pct * 100).toFixed(1)}%</span>
+                        <span className="tabular-nums text-muted-foreground">
+                          {(seg.pct * 100).toFixed(1)}%
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -523,10 +616,15 @@ function AuditPage() {
                       <div key={i}>
                         <div className="flex justify-between text-xs font-medium">
                           <span>{b.label}</span>
-                          <span className="tabular-nums text-muted-foreground">{fmtUsdCompact(b.usd)}</span>
+                          <span className="tabular-nums text-muted-foreground">
+                            {fmtUsdCompact(b.usd)}
+                          </span>
                         </div>
                         <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/[0.05]">
-                          <div className="h-full rounded-full" style={{ width: b.width, background: b.color }} />
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: b.width, background: b.color }}
+                          />
                         </div>
                       </div>
                     ))}
@@ -538,15 +636,24 @@ function AuditPage() {
             (() => {
               // Union of chain names, preserving locked order first
               const chainOrder: string[] = [];
-              for (const c of data.lockedChain) if (!chainOrder.includes(c.chain)) chainOrder.push(c.chain);
-              for (const c of data.bridgedChain) if (!chainOrder.includes(c.chain)) chainOrder.push(c.chain);
-              const lockedByChain = new Map(data.lockedChain.map((c) => [c.chain, c]));
-              const bridgedByChain = new Map(data.bridgedChain.map((c) => [c.chain, c]));
+              for (const c of data.lockedChain)
+                if (!chainOrder.includes(c.chain)) chainOrder.push(c.chain);
+              for (const c of data.bridgedChain)
+                if (!chainOrder.includes(c.chain)) chainOrder.push(c.chain);
+              const lockedByChain = new Map(
+                data.lockedChain.map((c) => [c.chain, c]),
+              );
+              const bridgedByChain = new Map(
+                data.bridgedChain.map((c) => [c.chain, c]),
+              );
               return (
                 <div className="mt-6 grid gap-4 lg:grid-cols-2 lg:items-start">
                   {/* Row 1 — summary cards */}
                   <SummaryOnly title="Total Locked" rows={data.summaryLocked} />
-                  <SummaryOnly title="Total Bridged" rows={data.summaryBridged} />
+                  <SummaryOnly
+                    title="Total Bridged"
+                    rows={data.summaryBridged}
+                  />
 
                   {/* Row 2 — note band (spacer keeps right col aligned) */}
                   <NoteBand note={data.lockedNote} />
@@ -559,8 +666,14 @@ function AuditPage() {
                   {/* Rows 4..N — chain pairs, one grid row per chain */}
                   {chainOrder.map((chain) => (
                     <div key={chain} className="contents">
-                      <ChainCard chain={chain} rows={lockedByChain.get(chain)?.rows} />
-                      <ChainCard chain={chain} rows={bridgedByChain.get(chain)?.rows} />
+                      <ChainCard
+                        chain={chain}
+                        rows={lockedByChain.get(chain)?.rows}
+                      />
+                      <ChainCard
+                        chain={chain}
+                        rows={bridgedByChain.get(chain)?.rows}
+                      />
                     </div>
                   ))}
                 </div>
@@ -586,11 +699,16 @@ function AuditPage() {
       <footer className="border-t border-white/5 bg-background">
         <div className="flex w-full flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground md:flex-row md:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 md:flex-1 md:justify-start">
-            <span>© {new Date().getFullYear()} Skyline. All rights reserved.</span>
+            <span>
+              © {new Date().getFullYear()} Skyline. All rights reserved.
+            </span>
             <FooterLegal />
           </div>
           <FooterSocials className="md:flex-1 md:justify-center" />
-          <Link to="/bridge-app" className="text-[oklch(0.85_0.15_235)] hover:underline md:flex-1 md:text-right">
+          <Link
+            to="/bridge-app"
+            className="text-[oklch(0.85_0.15_235)] hover:underline md:flex-1 md:text-right"
+          >
             Return to Bridge →
           </Link>
         </div>
@@ -621,10 +739,14 @@ function MetricCard({
   return (
     <div
       className="relative overflow-hidden rounded-2xl border border-white/10 p-6"
-      style={{ background: `linear-gradient(180deg, ${accent}22, rgba(255,255,255,0.02))` }}
+      style={{
+        background: `linear-gradient(180deg, ${accent}22, rgba(255,255,255,0.02))`,
+      }}
     >
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{label}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          {label}
+        </span>
         <span className="rounded-md bg-[oklch(0.75_0.18_155_/_0.15)] px-2 py-1 text-[10px] font-semibold text-[oklch(0.85_0.18_155)]">
           ▲ {delta} · {deltaLabel}
         </span>
@@ -633,9 +755,22 @@ function MetricCard({
         {fmtUsdFull(useCountUp(usd))}
       </div>
 
-      <div className="mt-4 max-w-xs text-xs leading-relaxed text-muted-foreground">{note}</div>
-      <svg width="120" height="34" viewBox="0 0 120 34" className="absolute bottom-5 right-5 opacity-90">
-        <path d={sparkPath(spark)} fill="none" stroke={accent} strokeWidth="2.2" strokeLinecap="round" />
+      <div className="mt-4 max-w-xs text-xs leading-relaxed text-muted-foreground">
+        {note}
+      </div>
+      <svg
+        width="120"
+        height="34"
+        viewBox="0 0 120 34"
+        className="absolute bottom-5 right-5 opacity-90"
+      >
+        <path
+          d={sparkPath(spark)}
+          fill="none"
+          stroke={accent}
+          strokeWidth="2.2"
+          strokeLinecap="round"
+        />
       </svg>
     </div>
   );
@@ -650,12 +785,22 @@ function Legend({ color, label }: { color: string; label: string }) {
   );
 }
 
-function SummaryCard({ title, rows, note }: { title: string; rows: CoinRow[]; note?: string }) {
+function SummaryCard({
+  title,
+  rows,
+  note,
+}: {
+  title: string;
+  rows: CoinRow[];
+  note?: string;
+}) {
   const totalUsd = usdOfRows(rows);
   return (
     <div className="card-glow rounded-2xl p-5 md:p-6">
       <div className="flex items-center justify-between">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{title}</div>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          {title}
+        </div>
         <div className="text-[11px] font-semibold tabular-nums text-[oklch(0.85_0.15_235)]">
           {fmtUsdCompact(totalUsd)}
         </div>
@@ -671,7 +816,9 @@ function SummaryCard({ title, rows, note }: { title: string; rows: CoinRow[]; no
               <span className="text-sm font-semibold">{row.c}</span>
             </span>
             <span className="text-right">
-              <span className="font-display text-base font-semibold tabular-nums">{fmtTok(row.v)}</span>
+              <span className="font-display text-base font-semibold tabular-nums">
+                {fmtTok(row.v)}
+              </span>
               <span className="block text-[11px] tabular-nums text-muted-foreground">
                 {fmtUsdCompact(row.v * (PRICE[row.c] ?? 0))}
               </span>
@@ -693,16 +840,24 @@ function SummaryOnly({ title, rows }: { title: string; rows: CoinRow[] }) {
   return (
     <div className="card-glow rounded-2xl p-5 md:p-6">
       <div className="flex items-center justify-between">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">{title}</div>
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          {title}
+        </div>
         <div className="text-[11px] font-semibold tabular-nums text-[oklch(0.85_0.15_235)]">
           {fmtUsdCompact(totalUsd)}
         </div>
       </div>
       <div className="mt-3 divide-y divide-white/5">
         {rows.map((row, i) => (
-          <div key={i} className="flex items-center justify-between py-2.5 text-sm">
+          <div
+            key={i}
+            className="flex items-center justify-between py-2.5 text-sm"
+          >
             <span className="inline-flex items-center gap-2">
-              <span className="h-2 w-2 rounded-sm" style={{ background: COIN_COLOR[row.c] ?? "#3B92FF" }} />
+              <span
+                className="h-2 w-2 rounded-sm"
+                style={{ background: COIN_COLOR[row.c] ?? "#3B92FF" }}
+              />
               {row.c}
             </span>
             <span className="text-right tabular-nums">
@@ -734,7 +889,11 @@ function NoteBand({ note }: { note?: string }) {
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{children}</div>;
+  return (
+    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+      {children}
+    </div>
+  );
 }
 
 function ChainCard({ chain, rows }: { chain: string; rows?: CoinRow[] }) {
@@ -751,7 +910,10 @@ function ChainCard({ chain, rows }: { chain: string; rows?: CoinRow[] }) {
           {icon ? (
             <img src={icon} alt={chain} className="h-6 w-6 rounded-full" />
           ) : (
-            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: CHAIN_COLOR[chain] ?? "#3B92FF" }} />
+            <span
+              className="h-2.5 w-2.5 rounded-sm"
+              style={{ background: CHAIN_COLOR[chain] ?? "#3B92FF" }}
+            />
           )}
           <span
             className="text-[12px] font-semibold uppercase tracking-[0.1em]"
@@ -760,11 +922,16 @@ function ChainCard({ chain, rows }: { chain: string; rows?: CoinRow[] }) {
             {chain}
           </span>
         </div>
-        <span className="text-[11px] tabular-nums text-muted-foreground">{fmtUsdCompact(chainUsd)}</span>
+        <span className="text-[11px] tabular-nums text-muted-foreground">
+          {fmtUsdCompact(chainUsd)}
+        </span>
       </div>
       <div className="mt-2 divide-y divide-white/5">
         {rows.map((row, i) => (
-          <div key={i} className="flex items-center justify-between py-2 text-[13px]">
+          <div
+            key={i}
+            className="flex items-center justify-between py-2 text-[13px]"
+          >
             <span className="text-muted-foreground">{row.c}</span>
             <span className="text-right tabular-nums">
               <span>{fmtTok(row.v)}</span>
