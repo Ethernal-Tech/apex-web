@@ -123,6 +123,14 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 		LAYERZERO_SCAN_URL: str({ default: undefined }),
 		LAYERZERO_CONFIG: layerZeroConfig({ default: undefined }),
 
+		COINGECKO_API_URL: str({ default: undefined }),
+		COINGECKO_API_KEY: str({ default: undefined }),
+		DEFILLAMA_API_URL: str({ default: undefined }),
+		TOKEN_PRICE_PROVIDERS: list({ default: undefined }),
+		TOKEN_PRICE_REQUEST_TIMEOUT_MS: num({ default: undefined }),
+		TOKEN_PRICE_STALENESS_MINUTES: num({ default: undefined }),
+		TRACKED_TOKENS_PATH: str({ default: undefined }),
+
 		WEB_API_API_KEYS: list({ default: undefined }),
 	});
 
@@ -175,6 +183,15 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			apiUrl: env.LAYERZERO_API_URL,
 			scanUrl: env.LAYERZERO_SCAN_URL,
 			networks: env.LAYERZERO_CONFIG,
+		},
+		prices: {
+			coingeckoApiUrl: env.COINGECKO_API_URL,
+			coingeckoApiKey: env.COINGECKO_API_KEY,
+			defillamaApiUrl: env.DEFILLAMA_API_URL,
+			providerOrder: env.TOKEN_PRICE_PROVIDERS,
+			requestTimeoutMs: env.TOKEN_PRICE_REQUEST_TIMEOUT_MS,
+			stalenessThresholdMinutes: env.TOKEN_PRICE_STALENESS_MINUTES,
+			trackedTokensPath: env.TRACKED_TOKENS_PATH,
 		},
 		secrets: {
 			apiKeys: env.WEB_API_API_KEYS,

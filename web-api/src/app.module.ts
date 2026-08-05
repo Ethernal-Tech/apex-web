@@ -10,6 +10,7 @@ import { MailerConfigModule } from './mailer/mailer.module';
 import { LockedTokensModule } from './lockedTokens/lockedTokens.module';
 import { AppConfigModule } from './appConfig/appConfig.module';
 import { StatsModule } from './stats/stats.module';
+import { TokenPriceModule } from './tokenPrice/tokenPrice.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ApiKeyGuard } from './common/guards/api-key.guard';
 
@@ -26,6 +27,7 @@ import { ApiKeyGuard } from './common/guards/api-key.guard';
 		ContactModule,
 		LockedTokensModule,
 		StatsModule,
+		TokenPriceModule,
 		AppConfigModule,
 	],
 	controllers: [],

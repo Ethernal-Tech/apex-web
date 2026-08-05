@@ -7,6 +7,7 @@ import {
 	resolveConfigDir,
 	safeReadJson,
 } from './appConfig.helper';
+import { DEFAULT_PROVIDER_ORDER } from 'src/tokenPrice/tokenPrice.config';
 
 const defaultUrl = 'http://localhost:40000';
 
@@ -29,6 +30,13 @@ const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
 	email: { contactEmail: 'info@ethernal.tech', smtpPort: 465 },
 	features: {
 		statusUpdateModesSupported: [],
+	},
+	prices: {
+		coingeckoApiUrl: 'https://api.coingecko.com/api/v3',
+		defillamaApiUrl: 'https://coins.llama.fi',
+		providerOrder: DEFAULT_PROVIDER_ORDER,
+		requestTimeoutMs: 10000,
+		stalenessThresholdMinutes: 60,
 	},
 };
 
@@ -97,6 +105,9 @@ export class AppConfigService {
 	}
 	get layerZero() {
 		return this.config.layerzero;
+	}
+	get prices() {
+		return this.config.prices;
 	}
 	get secrets() {
 		return this.config.secrets;

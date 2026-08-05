@@ -1,0 +1,37 @@
+{
+	"_comment": [
+		"Tokens whose USD price the API fetches and caches.",
+		"tokenIDs are NOT listed here: they are derived from the bridge settings.",
+		"The symbol (or an alias) is matched against the ecosystem token names",
+		"served by the cardano api, and every wrapped representation of that asset",
+		"- anything the direction config bridges it to - inherits the price.",
+		"So APEX also covers cAP3X/bAP3X/bnAP3X, and ADA also covers xADA.",
+		"To track a new asset, add an entry with its ecosystem name and provider ids."
+	],
+	"tokens": [
+		{
+			"symbol": "APEX",
+			"aliases": ["AP3X"],
+			"ids": {
+				"coingecko": "apex-4",
+				"defillama": "coingecko:apex-4"
+			}
+		},
+		{
+			"symbol": "ADA",
+			"aliases": ["WADA"],
+			"ids": {
+				"coingecko": "cardano",
+				"defillama": "coingecko:cardano"
+			}
+		},
+		{
+			"symbol": "SOL",
+			"aliases": ["WSOL"],
+			"ids": {
+				"coingecko": "solana",
+				"defillama": "coingecko:solana"
+			}
+		}
+	]
+}
