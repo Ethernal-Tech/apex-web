@@ -69,6 +69,22 @@ export interface AppConfig {
 		scanUrl: string;
 		networks: LayerZeroNetworkConfig[];
 	};
+	prices: {
+		coingeckoApiUrl: string;
+		coingeckoApiKey?: string;
+		defillamaApiUrl: string;
+		/** Providers are queried in this order, first hit per token wins. */
+		providerOrder: string[];
+		requestTimeoutMs: number;
+		/** Age after which a cached price is reported as stale. */
+		stalenessThresholdMinutes: number;
+		/**
+		 * Path to the tracked tokens JSON file. Defaults to trackedTokens.json in
+		 * the appConfig config folder; point it at a mounted file to change the
+		 * tracked tokens without rebuilding the image.
+		 */
+		trackedTokensPath?: string;
+	};
 	secrets: {
 		apiKeys: string[];
 	};
