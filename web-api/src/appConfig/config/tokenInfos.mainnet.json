@@ -1,0 +1,63 @@
+{
+	"_comment": [
+		"Display metadata for bridge tokens on MAINNET: what the UI shows for a",
+		"given tokenID. The testnet deployment reads tokenInfos.testnet.json; the file",
+		"is picked by the app.isMainnet setting.",
+		"",
+		"This file is the source of truth - adding a token here is enough, no",
+		"frontend rebuild and no redeploy. Edits are picked up on the next request",
+		"(the file is re-read whenever its mtime changes), so no restart either.",
+		"",
+		"\"icon\" is a key the frontend resolves to a bundled asset. Known keys:",
+		"apex, eth, polygon, sei, solana, unknown. An unknown key falls back to the",
+		"unknown icon, so a brand new asset can ship with \"icon\": \"unknown\" and an",
+		"optional \"iconUrl\" pointing at a hosted image until the asset is bundled."
+	],
+	"unknownToken": {
+		"tokenID": 0,
+		"icon": "apex",
+		"label": ""
+	},
+	"tokens": [
+		{
+			"tokenID": 1,
+			"icon": "apex",
+			"label": "AP3X"
+		},
+		{
+			"tokenID": 2,
+			"icon": "unknown",
+			"label": "ADA"
+		},
+		{
+			"tokenID": 3,
+			"icon": "apex",
+			"label": "cAP3X"
+		},
+		{
+			"tokenID": 4,
+			"icon": "unknown",
+			"label": "xADA"
+		},
+		{
+			"tokenID": 1000001,
+			"icon": "eth",
+			"label": "ETH"
+		},
+		{
+			"tokenID": 1000002,
+			"icon": "apex",
+			"label": "bAP3X"
+		},
+		{
+			"tokenID": 1000003,
+			"icon": "apex",
+			"label": "bnAP3X"
+		},
+		{
+			"tokenID": 1000004,
+			"icon": "unknown",
+			"label": "BNB"
+		}
+	]
+}

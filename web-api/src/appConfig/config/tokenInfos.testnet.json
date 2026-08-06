@@ -1,0 +1,208 @@
+{
+	"_comment": [
+		"Display metadata for bridge tokens on TESTNET: what the UI shows for a",
+		"given tokenID. The mainnet deployment reads tokenInfos.mainnet.json; the file",
+		"is picked by the app.isMainnet setting.",
+		"",
+		"This file is the source of truth - adding a token here is enough, no",
+		"frontend rebuild and no redeploy. Edits are picked up on the next request",
+		"(the file is re-read whenever its mtime changes), so no restart either.",
+		"",
+		"\"icon\" is a key the frontend resolves to a bundled asset. Known keys:",
+		"apex, eth, polygon, sei, solana, unknown. An unknown key falls back to the",
+		"unknown icon, so a brand new asset can ship with \"icon\": \"unknown\" and an",
+		"optional \"iconUrl\" pointing at a hosted image until the asset is bundled."
+	],
+	"unknownToken": {
+		"tokenID": 0,
+		"icon": "apex",
+		"label": ""
+	},
+	"tokens": [
+		{
+			"tokenID": 1,
+			"icon": "apex",
+			"label": "AP3X"
+		},
+		{
+			"tokenID": 2,
+			"icon": "unknown",
+			"label": "ADA"
+		},
+		{
+			"tokenID": 3,
+			"icon": "apex",
+			"label": "cAP3X"
+		},
+		{
+			"tokenID": 4,
+			"icon": "unknown",
+			"label": "xADA"
+		},
+		{
+			"tokenID": 5,
+			"icon": "unknown",
+			"label": "myTestToken"
+		},
+		{
+			"tokenID": 6,
+			"icon": "unknown",
+			"label": "TokN2"
+		},
+		{
+			"tokenID": 7,
+			"icon": "unknown",
+			"label": "TokN3"
+		},
+		{
+			"tokenID": 8,
+			"icon": "unknown",
+			"label": "TokC1"
+		},
+		{
+			"tokenID": 9,
+			"icon": "unknown",
+			"label": "TokC2"
+		},
+		{
+			"tokenID": 10,
+			"icon": "unknown",
+			"label": "TokC3"
+		},
+		{
+			"tokenID": 11,
+			"icon": "unknown",
+			"label": "TokV1"
+		},
+		{
+			"tokenID": 12,
+			"icon": "unknown",
+			"label": "TokV2"
+		},
+		{
+			"tokenID": 13,
+			"icon": "unknown",
+			"label": "TokV3"
+		},
+		{
+			"tokenID": 14,
+			"icon": "polygon",
+			"label": "POL"
+		},
+		{
+			"tokenID": 15,
+			"icon": "polygon",
+			"label": "xPOL"
+		},
+		{
+			"tokenID": 16,
+			"icon": "apex",
+			"label": "pAP3X"
+		},
+		{
+			"tokenID": 17,
+			"icon": "polygon",
+			"label": "cPOL"
+		},
+		{
+			"tokenID": 18,
+			"icon": "eth",
+			"label": "ETH"
+		},
+		{
+			"tokenID": 19,
+			"icon": "eth",
+			"label": "cKatanaETH"
+		},
+		{
+			"tokenID": 20,
+			"icon": "eth",
+			"label": "ETH"
+		},
+		{
+			"tokenID": 21,
+			"icon": "eth",
+			"label": "cETH"
+		},
+		{
+			"tokenID": 22,
+			"icon": "sei",
+			"label": "SEI"
+		},
+		{
+			"tokenID": 23,
+			"icon": "sei",
+			"label": "cSEI"
+		},
+		{
+			"tokenID": 24,
+			"icon": "eth",
+			"label": "ETH"
+		},
+		{
+			"tokenID": 25,
+			"icon": "eth",
+			"label": "cArbitrumETH"
+		},
+		{
+			"tokenID": 26,
+			"icon": "eth",
+			"label": "ETH"
+		},
+		{
+			"tokenID": 27,
+			"icon": "eth",
+			"label": "cScrollETH"
+		},
+		{
+			"tokenID": 28,
+			"icon": "eth",
+			"label": "ETH"
+		},
+		{
+			"tokenID": 29,
+			"icon": "eth",
+			"label": "cUnichainETH"
+		},
+		{
+			"tokenID": 30,
+			"icon": "solana",
+			"label": "SOL"
+		},
+		{
+			"tokenID": 31,
+			"icon": "solana",
+			"label": "wSOL"
+		},
+		{
+			"tokenID": 32,
+			"icon": "solana",
+			"label": "aSOL"
+		},
+		{
+			"tokenID": 33,
+			"icon": "apex",
+			"label": "sAP3X"
+		},
+		{
+			"tokenID": 1000001,
+			"icon": "eth",
+			"label": "ETH"
+		},
+		{
+			"tokenID": 1000002,
+			"icon": "apex",
+			"label": "bAP3X"
+		},
+		{
+			"tokenID": 1000003,
+			"icon": "apex",
+			"label": "bnAP3X"
+		},
+		{
+			"tokenID": 1000004,
+			"icon": "unknown",
+			"label": "BNB"
+		}
+	]
+}
