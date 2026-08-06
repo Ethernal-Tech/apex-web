@@ -15,6 +15,8 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkBadge } from "@/components/NetworkToggle";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
+import { useBridgeStats } from "@/hooks/use-bridge-stats";
+import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
 import ethIcon from "@/assets/chains/ethereum.svg?url";
 import solIcon from "@/assets/chains/solana.svg?url";
 import adaIcon from "@/assets/chains/cardano.svg?url";
@@ -260,6 +262,7 @@ function TransactionPage() {
   const { id } = Route.useParams();
   const { src, dst, amount, addr, sender, fail } = Route.useSearch();
   const isCompact = useMediaQuery("(max-width: 1000px)");
+  const { tvlUsd, tvbUsd } = useBridgeStats();
 
   const source = CHAIN_META[src] ?? CHAIN_META.nexus;
   const destination = CHAIN_META[dst] ?? CHAIN_META.prime;
@@ -357,7 +360,9 @@ function TransactionPage() {
             >
               <StatChip
                 label="TVL"
-                value={isCompact ? "19.0M AP3X" : "19,000,364.92 AP3X"}
+                value={
+                  isCompact ? formatUsdCompact(tvlUsd) : formatUsdFull(tvlUsd)
+                }
                 interactive
               />
             </Link>
@@ -370,7 +375,9 @@ function TransactionPage() {
             >
               <StatChip
                 label="TVB"
-                value={isCompact ? "142.6M AP3X" : "142,643,200.93 AP3X"}
+                value={
+                  isCompact ? formatUsdCompact(tvbUsd) : formatUsdFull(tvbUsd)
+                }
                 interactive
               />
             </Link>
@@ -393,7 +400,12 @@ function TransactionPage() {
             aria-label="Open audit"
             className="group"
           >
-            <StatChip label="TVL" value="19.0M AP3X" compact interactive />
+            <StatChip
+              label="TVL"
+              value={formatUsdCompact(tvlUsd)}
+              compact
+              interactive
+            />
           </Link>
           <Link
             to="/audit"
@@ -401,7 +413,12 @@ function TransactionPage() {
             aria-label="Open audit"
             className="group"
           >
-            <StatChip label="TVB" value="142.6M AP3X" compact interactive />
+            <StatChip
+              label="TVB"
+              value={formatUsdCompact(tvbUsd)}
+              compact
+              interactive
+            />
           </Link>
         </div>
       </header>

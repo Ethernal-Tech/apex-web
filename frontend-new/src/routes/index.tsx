@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { FooterSocials } from "@/components/ui/footer-socials";
 import { settingsQueryOptions } from "@/lib/api/settings";
+import { useBridgeStats } from "@/hooks/use-bridge-stats";
+import { formatUsdCompact } from "@/lib/usd";
 import { getEnabledChainNodes } from "@/lib/chains";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 import { SKYLINE_DOCUMENTATION_URL } from "@/lib/utils";
@@ -62,6 +64,9 @@ function StatChip({
 
 function Header() {
   const [open, setOpen] = useState(false);
+  const { tvlUsd, tvbUsd } = useBridgeStats();
+  const tvl = formatUsdCompact(tvlUsd);
+  const tvb = formatUsdCompact(tvbUsd);
   const nav = [
     { label: "Ecosystem", href: "#ecosystem" },
     { label: "Roadmap", href: "#roadmap" },
@@ -102,7 +107,7 @@ function Header() {
             aria-label="View full audit"
             className="group pointer-events-auto"
           >
-            <StatChip label="TVL" value="$12.45M" interactive />
+            <StatChip label="TVL" value={tvl} interactive />
           </Link>
           <Link
             to="/audit"
@@ -110,7 +115,7 @@ function Header() {
             aria-label="View full audit"
             className="group pointer-events-auto"
           >
-            <StatChip label="TVB" value="$89.20M" interactive />
+            <StatChip label="TVB" value={tvb} interactive />
           </Link>
         </div>
 
@@ -121,7 +126,7 @@ function Header() {
             aria-label="View full audit"
             className="group pointer-events-auto inline-flex"
           >
-            <StatChip label="TVL" value="$12.45M" interactive />
+            <StatChip label="TVL" value={tvl} interactive />
           </Link>
           <Link
             to="/audit"
@@ -129,7 +134,7 @@ function Header() {
             aria-label="View full audit"
             className="group pointer-events-auto inline-flex"
           >
-            <StatChip label="TVB" value="$89.20M" interactive />
+            <StatChip label="TVB" value={tvb} interactive />
           </Link>
           <a
             href="/bridge-app"

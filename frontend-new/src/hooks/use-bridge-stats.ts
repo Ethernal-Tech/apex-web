@@ -1,0 +1,164 @@
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+
+import { lockedTokensQueryOptions } from "@/lib/api/lockedTokens";
+import { priceByTokenId, tokenPricesQueryOptions } from "@/lib/api/tokenPrice";
+import { settingsQueryOptions } from "@/lib/api/settings";
+import { getCurrencyID } from "@/lib/tokens";
+import appSettings from "@/settings/appSettings";
+
+/** Every amount the web-api serves is in DFM — 6 decimals. */
+const DFM_UNIT = 1_000_000;
+/** LayerZero balances come back in wei (18 decimals). */
+const WEI_PER_DFM = BigInt(1_000_000_000_000);
+
+const NEXUS_RPC_URLS = {
+  mainnet: "https://rpc.nexus.mainnet.apexfusion.org/",
+  testnet: "https://rpc.nexus.testnet.apexfusion.org",
+} as const;
+
+/**
+ * Native APEX held by the Nexus OFT contract. Read straight from the chain,
+ * the way the old frontend did — it is not part of `GET /lockedTokens`.
+ *
+ * Plain JSON-RPC rather than web3, so the landing page does not have to pull
+ * the whole web3 bundle in just for a balance read.
+ */
+async function fetchLayerZeroLockedApexDfm(
+  oftAddress: string,
+): Promise<bigint> {
+  const res = await fetch(
+    appSettings.isMainnet ? NEXUS_RPC_URLS.mainnet : NEXUS_RPC_URLS.testnet,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "eth_getBalance",
+        params: [oftAddress, "latest"],
+      }),
+    },
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to read the Nexus OFT balance (${res.status})`);
+  }
+
+  const body = (await res.json()) as { result?: string; error?: unknown };
+  if (!body.result) {
+    throw new Error(`Failed to read the Nexus OFT balance`);
+  }
+
+  return BigInt(body.result) / WEI_PER_DFM;
+}
+
+function addAmount(
+  totals: Map<number, bigint>,
+  tokenID: number,
+  amount: string | bigint,
+): void {
+  let value: bigint;
+  try {
+    value = typeof amount === "bigint" ? amount : BigInt(amount || "0");
+  } catch {
+    return;
+  }
+  totals.set(tokenID, (totals.get(tokenID) ?? BigInt(0)) + value);
+}
+
+/** Σ amount × USD price. Tokens without a cached price are skipped. */
+function toUsd(
+  totals: Map<number, bigint>,
+  prices: Map<number, number>,
+): number {
+  let usd = 0;
+  for (const [tokenID, amount] of totals) {
+    const price = prices.get(tokenID);
+    console.log("tokenID", tokenID, "amount", amount, "price", price);
+    if (!price) continue;
+    usd += (Number(amount) / DFM_UNIT) * price;
+  }
+  return usd;
+}
+
+export type BridgeStats = {
+  /** Total value locked, in USD. */
+  tvlUsd: number | undefined;
+  /** Total value bridged, in USD. */
+  tvbUsd: number | undefined;
+  isLoading: boolean;
+};
+
+/**
+ * TVL / TVB in USD.
+ *
+ * Same inputs as the old frontend — `GET /lockedTokens` plus the LayerZero
+ * locked APEX read from Nexus — but instead of expressing everything in APEX,
+ * every token total is multiplied by its USD price from `GET /tokenPrice` and
+ * summed.
+ */
+export function useBridgeStats(): BridgeStats {
+  const { data: settings } = useQuery(settingsQueryOptions);
+  const { data: lockedTokens, isPending: lockedPending } = useQuery(
+    lockedTokensQueryOptions,
+  );
+  const { data: prices, isPending: pricesPending } = useQuery(
+    tokenPricesQueryOptions,
+  );
+
+  const nexusOftAddress = settings?.layerZeroChains?.find(
+    (c) => c.chain === "nexus",
+  )?.oftAddress;
+
+  const { data: layerZeroLockedApex } = useQuery({
+    queryKey: ["layerZeroLockedApex", nexusOftAddress] as const,
+    queryFn: () => fetchLayerZeroLockedApexDfm(nexusOftAddress!),
+    enabled: !!nexusOftAddress,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+  });
+
+  return useMemo(() => {
+    const isLoading = lockedPending || pricesPending;
+    if (!lockedTokens || !prices) {
+      return { tvlUsd: undefined, tvbUsd: undefined, isLoading };
+    }
+
+    const priceMap = priceByTokenId(prices);
+
+    const lockedTotals = new Map<number, bigint>();
+    for (const tokenMap of Object.values(lockedTokens.chains ?? {})) {
+      for (const [tokenID, addressMap] of Object.entries(tokenMap ?? {})) {
+        for (const amount of Object.values(addressMap ?? {})) {
+          addAmount(lockedTotals, Number(tokenID), amount);
+        }
+      }
+    }
+  
+    // APEX locked in the Nexus OFT contract is priced as prime's native currency
+    const apexTokenID = getCurrencyID(settings, "prime");
+    if (layerZeroLockedApex && apexTokenID !== undefined) {
+      addAmount(lockedTotals, apexTokenID, layerZeroLockedApex);
+    }
+
+    const bridgedTotals = new Map<number, bigint>();
+    for (const tokenMap of Object.values(lockedTokens.totalTransferred ?? {})) {
+      for (const [tokenID, amount] of Object.entries(tokenMap ?? {})) {
+        addAmount(bridgedTotals, Number(tokenID), amount);
+      }
+    }
+
+    return {
+      tvlUsd: toUsd(lockedTotals, priceMap),
+      tvbUsd: toUsd(bridgedTotals, priceMap),
+      isLoading,
+    };
+  }, [
+    settings,
+    lockedTokens,
+    prices,
+    layerZeroLockedApex,
+    lockedPending,
+    pricesPending,
+  ]);
+}
