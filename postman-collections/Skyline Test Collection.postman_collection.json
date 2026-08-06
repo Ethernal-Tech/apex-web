@@ -1075,6 +1075,124 @@
 							"response": []
 						}
 					]
+				},
+				{
+					"name": "tokenInfo",
+					"item": [
+						{
+							"name": "Get Token Infos",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Body has expected fields\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"network\");",
+											"    pm.expect(json).to.have.property(\"tokens\");",
+											"    pm.expect(json).to.have.property(\"unknownToken\");",
+											"    pm.expect(json.tokens).to.be.an(\"array\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{web_api_base_url}}/tokenInfo",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"tokenInfo"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "tokenPrice",
+					"item": [
+						{
+							"name": "Get Token Prices",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status code is 200\", function () {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is an array of prices\", function () {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.be.an(\"array\");",
+											"});",
+											"",
+											"pm.test(\"Entries have expected fields\", function () {",
+											"    const json = pm.response.json();",
+											"    if (json.length === 0) return;",
+											"    const entry = json[0];",
+											"    pm.expect(entry).to.have.property(\"name\");",
+											"    pm.expect(entry).to.have.property(\"symbol\");",
+											"    pm.expect(entry).to.have.property(\"chains\");",
+											"    pm.expect(entry).to.have.property(\"priceUsd\");",
+											"    pm.expect(entry).to.have.property(\"source\");",
+											"    pm.expect(entry).to.have.property(\"fetchedAt\");",
+											"    pm.expect(entry).to.have.property(\"stale\");",
+											"});",
+											"",
+											"pm.test(\"Prices are not stale\", function () {",
+											"    const json = pm.response.json();",
+											"    const stale = json.filter((entry) => entry.stale).map((entry) => entry.symbol);",
+											"    pm.expect(stale, `stale prices: ${stale.join(\", \")}`).to.be.empty;",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{web_api_base_url}}/tokenPrice",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"tokenPrice"
+									]
+								}
+							},
+							"response": []
+						}
+					]
 				}
 			]
 		},
