@@ -13,11 +13,19 @@ export type DirectionConfigEntry = {
   >;
 };
 
+export type LayerZeroChainSettings = {
+  chain: string;
+  oftAddress: string;
+  chainID: number;
+  txType: string;
+};
+
 /** Subset of web-api `GET /settings` used by the app. */
 export type SettingsResponse = {
   enabledChains: string[];
   ecosystemTokens: Array<{ id: number; name: string }>;
   directionConfig: Record<string, DirectionConfigEntry>;
+  layerZeroChains?: LayerZeroChainSettings[];
 };
 
 export async function fetchSettings(): Promise<SettingsResponse> {

@@ -61,6 +61,8 @@ import {
   Loader2,
 } from "lucide-react";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
+import { useBridgeStats } from "@/hooks/use-bridge-stats";
+import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
 
 export const Route = createFileRoute("/bridge-app")({
   head: () => ({
@@ -690,6 +692,7 @@ function BridgeApp() {
   const [connecting, setConnecting] = useState(false);
   const [step, setStep] = useState<"select" | "transfer">("select");
   const isCompact = useMediaQuery("(max-width: 1000px)");
+  const { tvlUsd, tvbUsd } = useBridgeStats();
 
   const walletAddress = walletSession?.account.account ?? null;
 
@@ -795,7 +798,9 @@ function BridgeApp() {
             >
               <StatChip
                 label="TVL"
-                value={isCompact ? "$12.45M" : "$12,450,238.71"}
+                value={
+                  isCompact ? formatUsdCompact(tvlUsd) : formatUsdFull(tvlUsd)
+                }
                 interactive
               />
             </Link>
@@ -808,7 +813,9 @@ function BridgeApp() {
             >
               <StatChip
                 label="TVB"
-                value={isCompact ? "$89.20M" : "$89,204,816.34"}
+                value={
+                  isCompact ? formatUsdCompact(tvbUsd) : formatUsdFull(tvbUsd)
+                }
                 interactive
               />
             </Link>
@@ -856,14 +863,24 @@ function BridgeApp() {
             title="Open the full proof-of-reserves audit"
             aria-label="Open audit"
           >
-            <StatChip label="TVL" value="$12.45M" compact interactive />
+            <StatChip
+              label="TVL"
+              value={formatUsdCompact(tvlUsd)}
+              compact
+              interactive
+            />
           </Link>
           <Link
             to="/audit"
             title="Open the full proof-of-reserves audit"
             aria-label="Open audit"
           >
-            <StatChip label="TVB" value="$89.20M" compact interactive />
+            <StatChip
+              label="TVB"
+              value={formatUsdCompact(tvbUsd)}
+              compact
+              interactive
+            />
           </Link>
         </div>
       </header>

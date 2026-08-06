@@ -20,6 +20,8 @@ import {
   Clock,
 } from "lucide-react";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
+import { useBridgeStats } from "@/hooks/use-bridge-stats";
+import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
 import primeIcon from "@/assets/chains/prime.svg?url";
 import nexusIcon from "@/assets/chains/nexus.svg?url";
 import vectorIcon from "@/assets/chains/vector.svg?url";
@@ -264,6 +266,7 @@ const EMPTY_FILTERS: Filters = {
 
 function TransactionsPage() {
   const isCompact = useMediaQuery("(max-width: 1000px)");
+  const { tvlUsd, tvbUsd } = useBridgeStats();
 
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -437,7 +440,9 @@ function TransactionsPage() {
             >
               <StatChip
                 label="TVL"
-                value={isCompact ? "$12.45M" : "$12,450,238.71"}
+                value={
+                  isCompact ? formatUsdCompact(tvlUsd) : formatUsdFull(tvlUsd)
+                }
                 interactive
               />
             </Link>
@@ -450,7 +455,9 @@ function TransactionsPage() {
             >
               <StatChip
                 label="TVB"
-                value={isCompact ? "$89.20M" : "$89,204,816.34"}
+                value={
+                  isCompact ? formatUsdCompact(tvbUsd) : formatUsdFull(tvbUsd)
+                }
                 interactive
               />
             </Link>
@@ -480,14 +487,24 @@ function TransactionsPage() {
             title="Open the full proof-of-reserves audit"
             aria-label="Open audit"
           >
-            <StatChip label="TVL" value="$12.45M" compact interactive />
+            <StatChip
+              label="TVL"
+              value={formatUsdCompact(tvlUsd)}
+              compact
+              interactive
+            />
           </Link>
           <Link
             to="/audit"
             title="Open the full proof-of-reserves audit"
             aria-label="Open audit"
           >
-            <StatChip label="TVB" value="$89.20M" compact interactive />
+            <StatChip
+              label="TVB"
+              value={formatUsdCompact(tvbUsd)}
+              compact
+              interactive
+            />
           </Link>
         </div>
       </header>
