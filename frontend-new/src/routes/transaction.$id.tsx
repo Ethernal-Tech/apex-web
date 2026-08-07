@@ -19,6 +19,7 @@ import { NetworkBadge } from "@/components/NetworkToggle";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 import { convertDfmToApex, toFixedAmount } from "@/lib/amount";
 import { settingsQueryOptions } from "@/lib/api/settings";
+import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
 import { getAction } from "@/lib/api/transaction";
 import {
   buildBridgingStepsFromStatus,
@@ -153,6 +154,7 @@ function TransactionPage() {
 
   const txId = Number.parseInt(id, 10);
   const settingsQuery = useQuery(settingsQueryOptions);
+  useQuery(tokenInfosQueryOptions);
 
   const txQuery = useQuery({
     queryKey: ["bridgeTransaction", txId] as const,

@@ -24,6 +24,7 @@ import {
 } from "@/lib/amount";
 import { bridgingAddressesQueryOptions } from "@/lib/api/bridgingAddresses";
 import { settingsQueryOptions } from "@/lib/api/settings";
+import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
 import {
   getAdjustedBridgeTxFee,
   getDefaultBridgeTxFee,
@@ -696,6 +697,8 @@ function TokenRow({
 function BridgeApp() {
   const { data: settings, isLoading: settingsLoading } =
     useQuery(settingsQueryOptions);
+  // Hydrates token label/icon registry used by getSupportedSourceTokens / getTokenInfo.
+  useQuery(tokenInfosQueryOptions);
 
   const sourceChains = useMemo(() => getSrcChains(settings), [settings]);
   const [source, setSource] = useState<Chain | null>(null);
@@ -1136,9 +1139,12 @@ function TransferForm({
   );
   const [adjustedBridgeTxFeeDfm, setAdjustedBridgeTxFeeDfm] = useState("0");
 
+  const { data: tokenInfos } = useQuery(tokenInfosQueryOptions);
+
   const availableTokens = useMemo(
     () => getSupportedSourceTokens(settings, source.id, destination.id),
-    [settings, source.id, destination.id],
+    // tokenInfos hydrates getTokenInfo() used inside getSupportedSourceTokens.
+    [settings, source.id, destination.id, tokenInfos],
   );
 
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
@@ -1165,7 +1171,10 @@ function TransferForm({
     () => (settings ? getCurrencyID(settings, source.id) : undefined),
     [settings, source.id],
   );
-  const currencyLabel = getTokenDisplayName(settings, currencyID);
+  const currencyLabel = useMemo(
+    () => getTokenDisplayName(settings, currencyID),
+    [settings, currencyID, tokenInfos],
+  );
   const token = selectedToken?.symbol ?? "";
 
   const currencyBalanceDisplay = useMemo(() => {
