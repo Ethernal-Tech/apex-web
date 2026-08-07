@@ -36,6 +36,9 @@ export type ConnectHandlers = {
 };
 
 const STORAGE_WALLET_KEY = "selected_wallet";
+const STORAGE_ACCOUNT_KEY = "selected_wallet_account";
+const STORAGE_SOURCE_CHAIN_KEY = "selected_chain";
+const STORAGE_DEST_CHAIN_KEY = "destination_chain";
 
 export function loadStoredWalletName(): string | null {
   if (typeof window === "undefined") return null;
@@ -46,6 +49,39 @@ export function persistWalletName(name: string | null) {
   if (typeof window === "undefined") return;
   if (name) localStorage.setItem(STORAGE_WALLET_KEY, name);
   else localStorage.removeItem(STORAGE_WALLET_KEY);
+}
+
+export function loadStoredWalletAccount(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(STORAGE_ACCOUNT_KEY);
+}
+
+export function persistWalletAccount(account: string | null) {
+  if (typeof window === "undefined") return;
+  if (account) localStorage.setItem(STORAGE_ACCOUNT_KEY, account);
+  else localStorage.removeItem(STORAGE_ACCOUNT_KEY);
+}
+
+export function loadStoredSourceChain(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(STORAGE_SOURCE_CHAIN_KEY);
+}
+
+export function persistSourceChain(chain: string | null) {
+  if (typeof window === "undefined") return;
+  if (chain) localStorage.setItem(STORAGE_SOURCE_CHAIN_KEY, chain);
+  else localStorage.removeItem(STORAGE_SOURCE_CHAIN_KEY);
+}
+
+export function loadStoredDestinationChain(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(STORAGE_DEST_CHAIN_KEY);
+}
+
+export function persistDestinationChain(chain: string | null) {
+  if (typeof window === "undefined") return;
+  if (chain) localStorage.setItem(STORAGE_DEST_CHAIN_KEY, chain);
+  else localStorage.removeItem(STORAGE_DEST_CHAIN_KEY);
 }
 
 async function checkAndSetEvmData(
@@ -102,6 +138,7 @@ async function checkAndSetEvmData(
   }
 
   persistWalletName(selectedWalletName);
+  persistWalletAccount(account);
   handlers.onSession({
     walletName: selectedWalletName,
     account: { account, networkId, network },
@@ -238,6 +275,7 @@ async function enableCardanoWallet(
 
   const account = await cardanoWalletHandler.getChangeAddress();
   persistWalletName(selectedWalletName);
+  persistWalletAccount(account);
   handlers.onSession({
     walletName: selectedWalletName,
     account: { account, networkId, network },
@@ -284,6 +322,7 @@ async function enableSolanaWallet(
   }
 
   persistWalletName(selectedWalletName);
+  persistWalletAccount(account);
   handlers.onSession({
     walletName: selectedWalletName,
     account: { account, networkId, network },
@@ -360,6 +399,7 @@ async function enableWallet(
 
 export async function disconnectWallet(handlers?: ConnectHandlers) {
   persistWalletName(null);
+  persistWalletAccount(null);
   cardanoWalletHandler.clearEnabledWallet();
   evmWalletHandler.clearEnabledWallet();
   await solWalletHandler.disconnect();

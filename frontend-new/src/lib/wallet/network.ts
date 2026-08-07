@@ -299,3 +299,11 @@ export function checkChainCompatibility(
     fromNetworkToChain(network, useMainnet) === chain
   );
 }
+
+export function checkCardanoAddressCompatibility(
+  chain: string,
+  addr: { GetNetwork(): number },
+  useMainnet: boolean,
+): boolean {
+  return fromChainToNetworkId(chain, useMainnet) === addr.GetNetwork();
+}

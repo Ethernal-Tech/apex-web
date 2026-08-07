@@ -145,7 +145,7 @@ export function useBridgeStats(): BridgeStats {
     }
 
     // APEX locked in the Nexus OFT contract is priced as prime's native currency
-    const apexTokenID = getCurrencyID(settings, "prime");
+    const apexTokenID = settings ? getCurrencyID(settings, "prime") : undefined;
     if (layerZeroLockedApex && apexTokenID !== undefined) {
       addAmount(lockedTotals, apexTokenID, layerZeroLockedApex);
     }

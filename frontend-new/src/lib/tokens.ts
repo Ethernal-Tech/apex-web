@@ -1,9 +1,11 @@
-import type {
-  DirectionConfigEntry,
-  SettingsResponse,
-} from "@/lib/api/settings";
+import type { SettingsResponse } from "@/lib/api/settings";
 import { CHAIN_META } from "@/lib/chains";
 import primeIcon from "@/assets/chains/prime.svg?url";
+import type {
+  BridgingSettingsDirectionConfigDto,
+  BridgingSettingsEcosystemTokenDto,
+  BridgingSettingsTokenDto,
+} from "@/swagger/apexBridgeApiService";
 
 export const LovelaceTokenName = "lovelace";
 
@@ -12,6 +14,10 @@ export const LovelaceTokenName = "lovelace";
  * tokenInfos config gives no color at all. See useTokenColor.
  */
 export const DEFAULT_TOKEN_COLOR = "#3B92FF";
+export interface IDirectionFullConfig {
+  directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto };
+  ecosystemTokens: BridgingSettingsEcosystemTokenDto[];
+}
 
 export type BridgeToken = {
   id: string;
@@ -31,22 +37,29 @@ export function getTokenConfig(
   settings: SettingsResponse | undefined,
   chain: string,
   tokenID: number,
-): DirectionConfigEntry["tokens"][string] | undefined {
+): BridgingSettingsTokenDto | undefined {
   return getDirectionConfig(settings)[chain]?.tokens?.[tokenID];
 }
 
-/** Native currency token id for a chain (`chainSpecific === 'lovelace'`). */
-export function getCurrencyID(
-  settings: SettingsResponse | undefined,
+export const getCurrencyID = (
+  settings: IDirectionFullConfig,
   chain: string,
-): number | undefined {
-  const tokens = getDirectionConfig(settings)[chain]?.tokens;
-  if (!tokens) return undefined;
-  const currencyID = Object.keys(tokens).find(
-    (id) => tokens[+id].chainSpecific === LovelaceTokenName,
+): number | undefined => {
+  if (
+    !settings.directionConfig[chain] ||
+    !settings.directionConfig[chain].tokens
+  ) {
+    return;
+  }
+
+  const currencyID = Object.keys(settings.directionConfig[chain].tokens).find(
+    (x: string) =>
+      settings.directionConfig[chain].tokens[+x].chainSpecific ===
+      LovelaceTokenName,
   );
+
   return currencyID ? +currencyID : undefined;
-}
+};
 
 export function getTokenDisplayName(
   settings: SettingsResponse | undefined,

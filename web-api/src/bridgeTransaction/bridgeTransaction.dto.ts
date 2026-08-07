@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsNotEmpty } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { PaginatedDto } from 'src/common/dto';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
@@ -111,21 +111,25 @@ export class BridgeTransactionDto {
 }
 
 export class BridgeTransactionFilterDto extends PaginatedDto {
-	@IsNotEmpty()
+	@IsOptional()
 	@ApiProperty({
 		description:
-			'Address that initiated the bridging transaction on the source chain',
+			'Address that initiated the bridging transaction on the source chain. Omit for network-wide history.',
+		nullable: true,
+		required: false,
 	})
-	senderAddress: string;
+	senderAddress?: string;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@IsEnum(ChainEnum)
 	@ApiProperty({
-		description: 'Source chain ID',
+		description: 'Source chain ID. Omit to include all origin chains.',
 		enum: ChainEnum,
 		enumName: 'ChainEnum',
+		nullable: true,
+		required: false,
 	})
-	originChain: ChainEnum;
+	originChain?: ChainEnum;
 
 	@ApiProperty({
 		description: 'Destination chain ID',

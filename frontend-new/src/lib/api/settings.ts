@@ -1,32 +1,45 @@
 import { queryOptions } from "@tanstack/react-query";
 import appSettings from "@/settings/appSettings";
+import type {
+  BridgingSettingsDirectionConfigDto,
+  BridgingSettingsEcosystemTokenDto,
+  SettingsFullResponseDto,
+  SettingsResponseDto,
+  TxTypeEnum,
+} from "@/swagger/apexBridgeApiService";
+import { setTokenNames } from "../tokenInfo";
 
-export type DirectionConfigEntry = {
-  destChain: Record<string, Array<{ srcTokenID: number; dstTokenID: number }>>;
-  tokens: Record<
-    string,
-    {
-      chainSpecific: string;
-      lockUnlock: boolean;
-      isWrappedCurrency: boolean;
-    }
-  >;
-};
+export type LayerZeroChains = Record<
+  string,
+  { oftAddress: string; chainID: number; txType: TxTypeEnum }
+>;
 
-export type LayerZeroChainSettings = {
-  chain: string;
-  oftAddress: string;
-  chainID: number;
-  txType: string;
-};
-
-/** Subset of web-api `GET /settings` used by the app. */
-export type SettingsResponse = {
+export interface ISettingsState {
+  settingsPerMode: { [key: string]: SettingsResponseDto };
+  layerZeroChains: LayerZeroChains;
   enabledChains: string[];
-  ecosystemTokens: Array<{ id: number; name: string }>;
-  directionConfig: Record<string, DirectionConfigEntry>;
-  layerZeroChains?: LayerZeroChainSettings[];
-};
+  directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto };
+  ecosystemTokens: BridgingSettingsEcosystemTokenDto[];
+  bridgingAddresses: string[];
+  reactorValidatorStatus: boolean | undefined;
+}
+
+/** App settings shape from `GET /settings` (full response, LZ chains keyed). */
+export type SettingsResponse = ISettingsState;
+
+function mapLayerZeroChains(
+  chains: SettingsFullResponseDto["layerZeroChains"] | undefined,
+): LayerZeroChains {
+  return (chains ?? []).reduce<LayerZeroChains>((acc, cfg) => {
+    const key = String(cfg.chain).toLowerCase();
+    acc[key] = {
+      oftAddress: cfg.oftAddress,
+      chainID: cfg.chainID,
+      txType: cfg.txType as TxTypeEnum,
+    };
+    return acc;
+  }, {});
+}
 
 export async function fetchSettings(): Promise<SettingsResponse> {
   const res = await fetch(`${appSettings.apiUrl}/settings`, {
@@ -35,7 +48,19 @@ export async function fetchSettings(): Promise<SettingsResponse> {
   if (!res.ok) {
     throw new Error(`Failed to load settings (${res.status})`);
   }
-  return res.json() as Promise<SettingsResponse>;
+
+  const payload = (await res.json()) as SettingsFullResponseDto;
+  setTokenNames(payload.ecosystemTokens ?? []);
+
+  return {
+    settingsPerMode: payload.settingsPerMode ?? {},
+    layerZeroChains: mapLayerZeroChains(payload.layerZeroChains),
+    enabledChains: payload.enabledChains ?? [],
+    directionConfig: payload.directionConfig ?? {},
+    ecosystemTokens: payload.ecosystemTokens ?? [],
+    bridgingAddresses: [],
+    reactorValidatorStatus: undefined,
+  };
 }
 
 export const settingsQueryOptions = queryOptions({

@@ -14,6 +14,10 @@ type Cip30Api = {
   getNetworkId: () => Promise<number>;
   getChangeAddress: () => Promise<string>;
   getBalance: () => Promise<string>;
+  getUtxos?: () => Promise<string[] | undefined>;
+  getCollateral?: () => Promise<string[] | undefined>;
+  signTx: (tx: string, partialSign?: boolean) => Promise<string>;
+  submitTx: (tx: string) => Promise<string>;
   experimental?: {
     getConnectedNetworkId?: () => Promise<string>;
     appVersion?: unknown;
@@ -55,7 +59,7 @@ class CardanoWalletHandler {
 
     return SUPPORTED_WALLETS.filter((sw) => cardano[sw] !== undefined).map(
       (sw) => ({
-        name: sw,
+        name: cardano[sw].name,
         icon: cardano[sw].icon,
         version: cardano[sw].apiVersion,
       }),
@@ -163,7 +167,6 @@ class CardanoWalletHandler {
 
   getBalance = async (): Promise<Record<string, bigint>> => {
     this._checkWalletAndThrow();
-    // Lazy-load: keep the heavy CSL package out of the initial bundle until balance is fetched.
     const { Value } = await import("@emurgo/cardano-serialization-lib-asmjs");
     const balanceHex = await this._enabledWallet!.getBalance();
     const value = Value.from_bytes(toBytes(balanceHex));
@@ -194,6 +197,56 @@ class CardanoWalletHandler {
 
     return result;
   };
+
+  /**
+   * Same flow as Mesh `BrowserWallet.signTx`:
+   * CIP-30 returns a witness set → merge vkeys into the unsigned tx → return full CBOR.
+   * @see @meshsdk/wallet BrowserWallet.signTx / addBrowserWitnesses
+   */
+  signTx = async (
+    unsignedTx: string,
+    partialSign?: boolean,
+  ): Promise<string> => {
+    this._checkWalletAndThrow();
+    const witness = await this._enabledWallet!.signTx(unsignedTx, partialSign);
+    if (witness === "") {
+      return unsignedTx;
+    }
+    return await addBrowserWitnesses(unsignedTx, witness);
+  };
+
+  submitTx = async (tx: string): Promise<string> => {
+    this._checkWalletAndThrow();
+    return await this._enabledWallet!.submitTx(tx);
+  };
+}
+
+/**
+ * Port of MeshSDK `BrowserWallet.addBrowserWitnesses`.
+ *
+ * Must keep the original tx body bytes — re-encoding via `Transaction.new()`
+ * changes the body CBOR and invalidates wallet signatures (Eternl TxSendError 3100).
+ * `FixedTransaction` preserves the raw body while attaching vkey witnesses.
+ */
+async function addBrowserWitnesses(
+  unsignedTx: string,
+  witnesses: string,
+): Promise<string> {
+  const { FixedTransaction, TransactionWitnessSet } =
+    await import("@emurgo/cardano-serialization-lib-asmjs");
+
+  const walletWitnessSet = TransactionWitnessSet.from_bytes(toBytes(witnesses));
+  const cWitness = walletWitnessSet.vkeys();
+  if (cWitness === undefined) {
+    return unsignedTx;
+  }
+
+  const fixedTx = FixedTransaction.from_bytes(toBytes(unsignedTx));
+  for (let i = 0; i < cWitness.len(); i++) {
+    fixedTx.add_vkey_witness(cWitness.get(i));
+  }
+
+  return fixedTx.to_hex();
 }
 
 const cardanoWalletHandler = new CardanoWalletHandler();

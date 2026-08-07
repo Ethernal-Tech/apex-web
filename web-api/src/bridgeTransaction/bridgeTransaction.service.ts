@@ -64,11 +64,20 @@ export class BridgeTransactionService {
 	async getAllFiltered(
 		model: BridgeTransactionFilterDto,
 	): Promise<BridgeTransactionResponseDto> {
-		const baseWhere: Omit<FindOptionsWhere<BridgeTransaction>, 'activeFrom'> = {
-			destinationChain: model.destinationChain,
-			senderAddress: model.senderAddress,
-			originChain: model.originChain,
-		};
+		const baseWhere: Omit<
+			FindOptionsWhere<BridgeTransaction>,
+			'activeFrom'
+		> = {};
+
+		if (model.destinationChain) {
+			baseWhere.destinationChain = model.destinationChain;
+		}
+		if (model.senderAddress) {
+			baseWhere.senderAddress = model.senderAddress;
+		}
+		if (model.originChain) {
+			baseWhere.originChain = model.originChain;
+		}
 
 		if (model.amountFrom && model.amountTo) {
 			baseWhere.amount = Between(model.amountFrom, model.amountTo);

@@ -1,5 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkToggle } from "@/components/NetworkToggle";
@@ -11,8 +13,8 @@ import {
   ChevronRight,
   ChevronsUpDown,
   Clipboard,
-  ExternalLink,
   Filter,
+  Loader2,
   Search,
   Wallet,
   X,
@@ -20,15 +22,25 @@ import {
   Clock,
 } from "lucide-react";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
+import {
+  convertApexToDfm,
+  convertDfmToApex,
+  toFixedAmount,
+} from "@/lib/amount";
+import { fetchBridgeTransactions } from "@/lib/api/bridgeTransactions";
+import { isStatusFinal } from "@/lib/bridging/statusUtils";
+import { CHAIN_META } from "@/lib/chains";
+import {
+  disconnectWallet,
+  loadStoredSourceChain,
+  loadStoredWalletAccount,
+} from "@/lib/wallet/connect";
+import {
+  BridgeTransactionDto,
+  TransactionStatusEnum,
+} from "@/swagger/apexBridgeApiService";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
-import primeIcon from "@/assets/chains/prime.svg?url";
-import nexusIcon from "@/assets/chains/nexus.svg?url";
-import vectorIcon from "@/assets/chains/vector.svg?url";
-import adaIcon from "@/assets/chains/cardano.svg?url";
-import ethIcon from "@/assets/chains/ethereum.svg?url";
-import bnbIcon from "@/assets/chains/bnb.svg?url";
-import baseIcon from "@/assets/chains/coinbase.svg?url";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -46,15 +58,17 @@ export const Route = createFileRoute("/transactions")({
 
 type ChainMeta = { id: string; label: string; icon: string; symbol: string };
 
-const CHAINS: Record<string, ChainMeta> = {
-  prime: { id: "prime", label: "Prime", icon: primeIcon, symbol: "AP3X" },
-  nexus: { id: "nexus", label: "Nexus", icon: nexusIcon, symbol: "AP3X" },
-  vector: { id: "vector", label: "Vector", icon: vectorIcon, symbol: "AP3X" },
-  ada: { id: "ada", label: "Cardano", icon: adaIcon, symbol: "ADA" },
-  eth: { id: "eth", label: "Ethereum", icon: ethIcon, symbol: "ETH" },
-  bnb: { id: "bnb", label: "BNB Chain", icon: bnbIcon, symbol: "BNB" },
-  base: { id: "base", label: "Base", icon: baseIcon, symbol: "ETH" },
-};
+const CHAINS: Record<string, ChainMeta> = Object.fromEntries(
+  Object.entries(CHAIN_META).map(([id, meta]) => [
+    id,
+    {
+      id,
+      label: meta.label,
+      icon: meta.icon,
+      symbol: meta.symbol ?? "TOKEN",
+    },
+  ]),
+);
 
 type Status = "success" | "pending" | "failed";
 
@@ -63,174 +77,56 @@ type Tx = {
   origin: string;
   destination: string;
   amount: number;
+  amountDisplay: string;
   tokenAmount: number | null;
+  tokenAmountDisplay: string | null;
   receiver: string;
   sender: string;
   createdAt: Date;
   finishedAt: Date | null;
   status: Status;
+  rawStatus: TransactionStatusEnum;
 };
 
-const RECEIVER_A =
-  "addr_test1qrsknr4y5znjqz3xnp8sdvhur0k5adfhcprujfjcv8fyz4nu5xr6ldyfxu4yggkjunlkm9x5rq0mne4d4vgz3xchw2sqnr3wh";
-const RECEIVER_B = "0x7a2cF4d9b1eE8d3cA0f6B91C2E5a7D9b3c4e8F1a";
-const RECEIVER_C = "0x9b3c4e8F1a7a2cF4d9b1eE8d3cA0f6B91C2E5a7D";
-
-// Senders are assigned round-robin below. RECEIVER_B matches the demo wallet in
-// connect(), so several transactions belong to the connected user's own history.
-const SENDERS = [RECEIVER_B, RECEIVER_A, RECEIVER_C];
-
-function h(id: string) {
-  return "0x" + id.padEnd(32, "0").slice(0, 32);
+function mapStatus(status: TransactionStatusEnum): Status {
+  if (status === TransactionStatusEnum.ExecutedOnDestination) return "success";
+  if (
+    status === TransactionStatusEnum.InvalidRequest ||
+    status === TransactionStatusEnum.FailedToExecuteOnDestination
+  ) {
+    return "failed";
+  }
+  return "pending";
 }
 
-const MOCK_TXS: Tx[] = (
-  [
-    {
-      id: h("a1"),
-      origin: "prime",
-      destination: "ada",
-      amount: 2.00001,
-      tokenAmount: null,
-      receiver: RECEIVER_A,
-      createdAt: new Date("2026-07-13T12:09:24"),
-      finishedAt: new Date("2026-07-13T12:20:00"),
-      status: "success",
-    },
-    {
-      id: h("a2"),
-      origin: "prime",
-      destination: "ada",
-      amount: 2.00001,
-      tokenAmount: null,
-      receiver: RECEIVER_A,
-      createdAt: new Date("2026-07-11T10:23:46"),
-      finishedAt: new Date("2026-07-11T10:32:40"),
-      status: "success",
-    },
-    {
-      id: h("a3"),
-      origin: "prime",
-      destination: "ada",
-      amount: 2.00001,
-      tokenAmount: null,
-      receiver: RECEIVER_A,
-      createdAt: new Date("2026-07-08T11:40:23"),
-      finishedAt: new Date("2026-07-08T11:53:30"),
-      status: "success",
-    },
-    {
-      id: h("a4"),
-      origin: "nexus",
-      destination: "prime",
-      amount: 148.42,
-      tokenAmount: 148.42,
-      receiver: RECEIVER_B,
-      createdAt: new Date("2026-07-05T09:14:00"),
-      finishedAt: new Date("2026-07-05T09:22:11"),
-      status: "success",
-    },
-    {
-      id: h("a5"),
-      origin: "vector",
-      destination: "nexus",
-      amount: 12.5,
-      tokenAmount: 12.5,
-      receiver: RECEIVER_B,
-      createdAt: new Date("2026-07-02T16:44:00"),
-      finishedAt: null,
-      status: "pending",
-    },
-    {
-      id: h("a6"),
-      origin: "eth",
-      destination: "base",
-      amount: 0.42,
-      tokenAmount: 0.42,
-      receiver: RECEIVER_C,
-      createdAt: new Date("2026-06-29T18:02:19"),
-      finishedAt: new Date("2026-06-29T18:07:04"),
-      status: "success",
-    },
-    {
-      id: h("a7"),
-      origin: "bnb",
-      destination: "eth",
-      amount: 4.9,
-      tokenAmount: 4.9,
-      receiver: RECEIVER_C,
-      createdAt: new Date("2026-06-24T08:12:56"),
-      finishedAt: new Date("2026-06-24T08:18:41"),
-      status: "failed",
-    },
-    {
-      id: h("a8"),
-      origin: "prime",
-      destination: "vector",
-      amount: 501,
-      tokenAmount: 501,
-      receiver: RECEIVER_A,
-      createdAt: new Date("2026-06-19T21:04:00"),
-      finishedAt: new Date("2026-06-19T21:12:20"),
-      status: "success",
-    },
-    {
-      id: h("a9"),
-      origin: "nexus",
-      destination: "ada",
-      amount: 78.11,
-      tokenAmount: 78.11,
-      receiver: RECEIVER_A,
-      createdAt: new Date("2026-06-14T14:33:47"),
-      finishedAt: new Date("2026-06-14T14:41:00"),
-      status: "success",
-    },
-    {
-      id: h("aa"),
-      origin: "base",
-      destination: "eth",
-      amount: 1.02,
-      tokenAmount: 1.02,
-      receiver: RECEIVER_C,
-      createdAt: new Date("2026-06-11T07:20:00"),
-      finishedAt: new Date("2026-06-11T07:26:13"),
-      status: "success",
-    },
-    {
-      id: h("ab"),
-      origin: "prime",
-      destination: "nexus",
-      amount: 25,
-      tokenAmount: 25,
-      receiver: RECEIVER_B,
-      createdAt: new Date("2026-06-08T13:12:00"),
-      finishedAt: new Date("2026-06-08T13:18:20"),
-      status: "success",
-    },
-    {
-      id: h("ac"),
-      origin: "vector",
-      destination: "ada",
-      amount: 3.33,
-      tokenAmount: 3.33,
-      receiver: RECEIVER_A,
-      createdAt: new Date("2026-06-04T11:00:00"),
-      finishedAt: new Date("2026-06-04T11:09:44"),
-      status: "success",
-    },
-    {
-      id: h("ad"),
-      origin: "eth",
-      destination: "bnb",
-      amount: 0.9,
-      tokenAmount: 0.9,
-      receiver: RECEIVER_C,
-      createdAt: new Date("2026-05-30T19:22:14"),
-      finishedAt: null,
-      status: "pending",
-    },
-  ] as Omit<Tx, "sender">[]
-).map((t, i) => ({ ...t, sender: SENDERS[i % SENDERS.length] }));
+function mapDtoToTx(dto: BridgeTransactionDto): Tx {
+  const amountDisplay = toFixedAmount(
+    convertDfmToApex(dto.amount, dto.originChain),
+    6,
+  );
+  const hasToken =
+    dto.nativeTokenAmount != null &&
+    BigInt(dto.nativeTokenAmount || "0") > BigInt(0);
+  const tokenAmountDisplay = hasToken
+    ? toFixedAmount(convertDfmToApex(dto.nativeTokenAmount, dto.originChain), 6)
+    : null;
+
+  return {
+    id: String(dto.id),
+    origin: dto.originChain,
+    destination: dto.destinationChain,
+    amount: Number(amountDisplay),
+    amountDisplay,
+    tokenAmount: tokenAmountDisplay != null ? Number(tokenAmountDisplay) : null,
+    tokenAmountDisplay,
+    receiver: dto.receiverAddresses,
+    sender: dto.senderAddress,
+    createdAt: dto.createdAt,
+    finishedAt: dto.finishedAt ?? null,
+    status: mapStatus(dto.status),
+    rawStatus: dto.status,
+  };
+}
 
 type SortKey =
   | "createdAt"
@@ -267,8 +163,11 @@ const EMPTY_FILTERS: Filters = {
 function TransactionsPage() {
   const isCompact = useMediaQuery("(max-width: 1000px)");
   const { tvlUsd, tvbUsd } = useBridgeStats();
+  const navigate = useNavigate();
 
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string | null>(() =>
+    loadStoredWalletAccount(),
+  );
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -278,10 +177,24 @@ function TransactionsPage() {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [view, setView] = useState<"world" | "user">("world");
 
+  useEffect(() => {
+    const sync = () => setWalletAddress(loadStoredWalletAccount());
+    sync();
+    window.addEventListener("storage", sync);
+    window.addEventListener("focus", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("focus", sync);
+    };
+  }, []);
+
   const isConnected = Boolean(walletAddress);
-  const connect = () =>
-    setWalletAddress("0x7a2cF4d9b1eE8d3cA0f6B91C2E5a7D9b3c4e8F1a");
-  const disconnect = () => {
+  const connect = () => {
+    navigate({ to: "/bridge-app" });
+    toast.message("Connect your wallet on the bridge to view your history.");
+  };
+  const disconnect = async () => {
+    await disconnectWallet();
     setWalletAddress(null);
     setView("world");
   };
@@ -290,106 +203,89 @@ function TransactionsPage() {
     if (v === "user" && !isConnected) return;
     setView(v);
     setPage(1);
-    // Origin/sender filters only exist in world view — drop them when leaving it.
     if (v === "user") setFilters((f) => ({ ...f, origin: "", sender: "" }));
   };
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const base =
-      view === "user" && walletAddress
-        ? MOCK_TXS.filter(
-            (t) => t.sender === walletAddress || t.receiver === walletAddress,
-          )
-        : MOCK_TXS;
-    return base.filter((t) => {
-      if (q) {
-        const hay =
-          `${t.id} ${CHAINS[t.origin]?.label} ${CHAINS[t.destination]?.label} ${t.sender} ${t.receiver}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      if (filters.destination && t.destination !== filters.destination)
-        return false;
-      if (
-        filters.receiver &&
-        !t.receiver.toLowerCase().includes(filters.receiver.toLowerCase())
-      )
-        return false;
-      if (filters.amountFrom && t.amount < Number(filters.amountFrom))
-        return false;
-      if (filters.amountTo && t.amount > Number(filters.amountTo)) return false;
-      if (
-        filters.tokenFrom &&
-        (t.tokenAmount ?? -Infinity) < Number(filters.tokenFrom)
-      )
-        return false;
-      if (
-        filters.tokenTo &&
-        (t.tokenAmount ?? Infinity) > Number(filters.tokenTo)
-      )
-        return false;
-      // Origin chain and sender address are only filterable in the network-wide view.
-      if (view === "world") {
-        if (filters.origin && t.origin !== filters.origin) return false;
-        if (
-          filters.sender &&
-          !t.sender.toLowerCase().includes(filters.sender.toLowerCase())
-        )
-          return false;
-      }
-      return true;
-    });
-  }, [search, filters, view, walletAddress]);
+  const listQuery = useQuery({
+    queryKey: [
+      "bridgeTransactions",
+      view,
+      walletAddress,
+      page,
+      pageSize,
+      sortKey,
+      sortDir,
+      filters,
+      search,
+    ] as const,
+    enabled: view === "world" || Boolean(walletAddress),
+    queryFn: async () => {
+      // User history: sender = account, origin = wallet chain.
+      // World history: omit sender unless filtered.
+      const walletChain = loadStoredSourceChain() || undefined;
 
-  const sorted = useMemo(() => {
-    const list = [...filtered];
-    list.sort((a, b) => {
-      let av: number | string = 0;
-      let bv: number | string = 0;
-      switch (sortKey) {
-        case "createdAt":
-          av = a.createdAt.getTime();
-          bv = b.createdAt.getTime();
-          break;
-        case "finishedAt":
-          av = a.finishedAt?.getTime() ?? 0;
-          bv = b.finishedAt?.getTime() ?? 0;
-          break;
-        case "amount":
-          av = a.amount;
-          bv = b.amount;
-          break;
-        case "tokenAmount":
-          av = a.tokenAmount ?? -1;
-          bv = b.tokenAmount ?? -1;
-          break;
-        case "origin":
-          av = a.origin;
-          bv = b.origin;
-          break;
-        case "destination":
-          av = a.destination;
-          bv = b.destination;
-          break;
-        case "status":
-          av = a.status;
-          bv = b.status;
-          break;
-      }
-      if (av < bv) return sortDir === "asc" ? -1 : 1;
-      if (av > bv) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-    return list;
-  }, [filtered, sortKey, sortDir]);
+      const senderAddress =
+        view === "user" ? walletAddress! : filters.sender.trim() || undefined;
 
-  const total = sorted.length;
+      const originChain =
+        view === "user" ? walletChain : filters.origin || undefined;
+
+      const amountChain =
+        view === "user" ? walletChain : filters.origin || undefined;
+
+      const convertAmount = (value: string) => {
+        if (!value.trim() || !amountChain) return undefined;
+        return convertApexToDfm(value, amountChain);
+      };
+
+      const orderByMap: Record<SortKey, string> = {
+        createdAt: "createdAt",
+        finishedAt: "finishedAt",
+        amount: "amount",
+        tokenAmount: "nativeTokenAmount",
+        origin: "originChain",
+        destination: "destinationChain",
+        status: "status",
+      };
+
+      // Receiver filter / search → SQL LIKE (wildcards for partial match).
+      const receiverAddress = filters.receiver.trim()
+        ? filters.receiver.trim()
+        : search.trim()
+          ? `%${search.trim()}%`
+          : undefined;
+
+      return fetchBridgeTransactions({
+        page: page - 1,
+        perPage: pageSize,
+        orderBy: orderByMap[sortKey],
+        order: sortDir,
+        senderAddress,
+        originChain,
+        destinationChain: filters.destination || undefined,
+        receiverAddress,
+        amountFrom: convertAmount(filters.amountFrom),
+        amountTo: convertAmount(filters.amountTo),
+        nativeTokenAmountFrom: convertAmount(filters.tokenFrom),
+        nativeTokenAmountTo: convertAmount(filters.tokenTo),
+      });
+    },
+    refetchInterval: (query) => {
+      const items = query.state.data?.items ?? [];
+      if (items.length === 0) return false;
+      if (items.every((x) => isStatusFinal(x.status))) return false;
+      return 5000;
+    },
+  });
+
+  const paged = useMemo(
+    () => (listQuery.data?.items ?? []).map(mapDtoToTx),
+    [listQuery.data],
+  );
+
+  const total = listQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const paged = sorted.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
   const rangeStart = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = Math.min(currentPage * pageSize, total);
 
@@ -399,9 +295,29 @@ function TransactionsPage() {
       setSortKey(key);
       setSortDir("desc");
     }
+    setPage(1);
   };
 
   const applyFilters = (next: Filters) => {
+    const amountChain =
+      view === "user"
+        ? loadStoredSourceChain() || undefined
+        : next.origin || undefined;
+    const hasAmountFilter = Boolean(
+      next.amountFrom.trim() ||
+      next.amountTo.trim() ||
+      next.tokenFrom.trim() ||
+      next.tokenTo.trim(),
+    );
+    // convertApexToDfm needs a chain; without it amount filters would be dropped silently.
+    if (hasAmountFilter && !amountChain) {
+      toast.error(
+        view === "world"
+          ? "Select an origin chain to filter by amount."
+          : "Connect on the bridge first so amount filters use your source chain.",
+      );
+      return;
+    }
     setFilters(next);
     setPage(1);
     setFiltersOpen(false);
@@ -412,6 +328,7 @@ function TransactionsPage() {
   };
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  const isLoading = listQuery.isLoading || listQuery.isFetching;
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -537,7 +454,7 @@ function TransactionsPage() {
                     setSearch(e.target.value);
                     setPage(1);
                   }}
-                  placeholder="Search hash, chain, address…"
+                  placeholder="Search by receiver address…"
                   className="h-10 w-full rounded-full border border-white/10 bg-white/[0.04] pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none md:w-72"
                 />
               </div>
@@ -593,7 +510,7 @@ function TransactionsPage() {
             <span className="text-xs text-muted-foreground">
               {view === "world"
                 ? "Every transfer across the Skyline network."
-                : "Only transfers involving your connected wallet."}
+                : "Transfers from your connected wallet and source chain."}
             </span>
           </div>
 
@@ -664,16 +581,43 @@ function TransactionsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {paged.map((t) => (
-                      <TxRow key={t.id} tx={t} compact={isCompact} />
-                    ))}
-                    {paged.length === 0 && (
+                    {isLoading && paged.length === 0 && (
                       <tr>
                         <td
                           colSpan={isCompact ? 8 : 9}
                           className="px-5 py-14 text-center text-sm text-muted-foreground"
                         >
-                          No transactions match your filters.
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Loading transactions…
+                          </span>
+                        </td>
+                      </tr>
+                    )}
+                    {listQuery.isError && paged.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={isCompact ? 8 : 9}
+                          className="px-5 py-14 text-center text-sm text-[oklch(0.8_0.2_27)]"
+                        >
+                          {(listQuery.error as Error)?.message ||
+                            "Failed to load transactions."}
+                        </td>
+                      </tr>
+                    )}
+                    {!listQuery.isError &&
+                      paged.map((t) => (
+                        <TxRow key={t.id} tx={t} compact={isCompact} />
+                      ))}
+                    {!isLoading && !listQuery.isError && paged.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={isCompact ? 8 : 9}
+                          className="px-5 py-14 text-center text-sm text-muted-foreground"
+                        >
+                          {view === "user" && !isConnected
+                            ? "Connect your wallet to view your bridging history."
+                            : "No transactions match your filters."}
                         </td>
                       </tr>
                     )}
@@ -813,9 +757,9 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
     search: {
       src: tx.origin,
       dst: tx.destination,
-      amount: String(tx.amount),
+      amount: tx.amountDisplay,
       addr: tx.receiver,
-      sender: tx.receiver,
+      sender: tx.sender,
     },
   };
 
@@ -846,16 +790,16 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
       </td>
       <td className="px-5 py-4">
         <div className="font-display text-sm font-semibold text-foreground">
-          {formatNumber(tx.amount)}
+          {tx.amountDisplay}
         </div>
         <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
           {origin?.symbol}
         </div>
       </td>
       <td className="px-5 py-4">
-        {tx.tokenAmount != null ? (
+        {tx.tokenAmountDisplay != null ? (
           <div className="font-display text-sm text-foreground">
-            {formatNumber(tx.tokenAmount)}
+            {tx.tokenAmountDisplay}
           </div>
         ) : (
           <span className="text-muted-foreground">—</span>
@@ -1050,7 +994,21 @@ function FilterModal({
               <div className="relative">
                 <select
                   value={draft.origin}
-                  onChange={(e) => set("origin", e.target.value)}
+                  onChange={(e) => {
+                    const origin = e.target.value;
+                    setDraft({
+                      ...draft,
+                      origin,
+                      ...(origin
+                        ? {}
+                        : {
+                            amountFrom: "",
+                            amountTo: "",
+                            tokenFrom: "",
+                            tokenTo: "",
+                          }),
+                    });
+                  }}
                   className="h-10 w-full appearance-none rounded-xl border border-white/10 bg-white/[0.04] px-3 pr-9 text-sm text-foreground [color-scheme:dark] focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none"
                 >
                   <option value="" className="bg-[#141a2c] text-foreground">
@@ -1123,23 +1081,33 @@ function FilterModal({
               label="Amount from"
               value={draft.amountFrom}
               onChange={(v) => set("amountFrom", v)}
+              disabled={world && !draft.origin}
             />
             <NumField
               label="Amount to"
               value={draft.amountTo}
               onChange={(v) => set("amountTo", v)}
+              disabled={world && !draft.origin}
             />
             <NumField
               label="Token amount from"
               value={draft.tokenFrom}
               onChange={(v) => set("tokenFrom", v)}
+              disabled={world && !draft.origin}
             />
             <NumField
               label="Token amount to"
               value={draft.tokenTo}
               onChange={(v) => set("tokenTo", v)}
+              disabled={world && !draft.origin}
             />
           </div>
+          {world && !draft.origin && (
+            <p className="text-[11px] text-muted-foreground">
+              Pick an origin chain to enable amount filters (decimals differ per
+              chain).
+            </p>
+          )}
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-white/5 bg-white/[0.02] px-6 py-4">
@@ -1184,10 +1152,12 @@ function NumField({
   label,
   value,
   onChange,
+  disabled,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <div>
@@ -1196,9 +1166,10 @@ function NumField({
         type="number"
         inputMode="decimal"
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         placeholder="0.00"
-        className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none"
+        className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
       />
     </div>
   );
@@ -1212,13 +1183,6 @@ function formatAddress(a: string | null) {
 function shortHash(a: string) {
   if (a.length <= 14) return a;
   return `${a.slice(0, 8)}…${a.slice(-6)}`;
-}
-
-function formatNumber(n: number) {
-  return n.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
-  });
 }
 
 function formatDate(d: Date) {
