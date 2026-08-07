@@ -17,7 +17,6 @@ export type BridgeTxListQuery = {
   originChain?: string;
   destinationChain?: string;
   receiverAddress?: string;
-  /** Raw on-chain units (DFM/wei/lamports) */
   amountFrom?: string;
   amountTo?: string;
   nativeTokenAmountFrom?: string;

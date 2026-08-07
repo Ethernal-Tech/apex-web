@@ -18,6 +18,7 @@
     "migration:generate": "npm run build && node -r ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate ./src/database/migrations/$npm_config_name --d ./src/database/data.source.ts",
     "migration:run": "npm run build && node -r ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:run --d ./src/database/data.source.ts",
     "migration:revert": "npm run build && node -r ts-node/register -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:revert --d ./src/database/data.source.ts",
+    "backfill:amount-wei": "ts-node -r tsconfig-paths/register src/database/scripts/backfillAmountWei.ts",
     "swagger:generate": "ts-node -r tsconfig-paths/register generate-swagger.ts"
   },
   "dependencies": {

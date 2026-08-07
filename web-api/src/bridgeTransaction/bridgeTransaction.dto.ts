@@ -141,28 +141,28 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 	destinationChain?: ChainEnum;
 
 	@ApiProperty({
-		description: 'Minimum amount of currency',
+		description: 'Minimum currency amount in 18-decimal wei',
 		nullable: true,
 		required: false,
 	})
 	amountFrom?: string;
 
 	@ApiProperty({
-		description: 'Maximum amount of currency',
+		description: 'Maximum currency amount in 18-decimal wei',
 		nullable: true,
 		required: false,
 	})
 	amountTo?: string;
 
 	@ApiProperty({
-		description: 'Minimum amount of native token',
+		description: 'Minimum native token amount in 18-decimal wei',
 		nullable: true,
 		required: false,
 	})
 	nativeTokenAmountFrom?: string;
 
 	@ApiProperty({
-		description: 'Maximum amount of native token',
+		description: 'Maximum native token amount in 18-decimal wei',
 		nullable: true,
 		required: false,
 	})

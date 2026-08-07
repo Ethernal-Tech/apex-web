@@ -12,7 +12,6 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { z } from "zod";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkBadge } from "@/components/NetworkToggle";
@@ -40,16 +39,7 @@ import {
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
 
-const searchSchema = z.object({
-  src: z.string().optional(),
-  dst: z.string().optional(),
-  amount: z.string().optional(),
-  addr: z.string().optional(),
-  sender: z.string().optional(),
-});
-
 export const Route = createFileRoute("/transaction/$id")({
-  validateSearch: (s) => searchSchema.parse(s),
   head: () => ({
     meta: [
       { title: "Skyline Bridge — Transaction" },
@@ -147,7 +137,6 @@ function chainView(chainId: string | undefined) {
 
 function TransactionPage() {
   const { id } = Route.useParams();
-  const search = Route.useSearch();
   const isCompact = useMediaQuery("(max-width: 1000px)");
   const [showDetails, setShowDetails] = useState(false);
   const { tvlUsd, tvbUsd } = useBridgeStats();
@@ -179,22 +168,20 @@ function TransactionPage() {
   const tx = txQuery.data;
   const settings = settingsQuery.data;
 
-  const source = chainView(tx?.originChain ?? search.src);
-  const destination = chainView(tx?.destinationChain ?? search.dst);
+  const source = chainView(tx?.originChain);
+  const destination = chainView(tx?.destinationChain);
 
   const amountDisplay = useMemo(() => {
-    if (tx) {
-      return toFixedAmount(convertDfmToApex(tx.amount, tx.originChain), 6);
-    }
-    return search.amount ?? "0";
-  }, [tx, search.amount]);
+    if (!tx) return "0";
+    return toFixedAmount(convertDfmToApex(tx.amount, tx.originChain), 6);
+  }, [tx]);
 
   const currencyID =
     tx && settings ? getCurrencyID(settings, tx.originChain) : undefined;
   const symbol = getTokenDisplayName(settings, currencyID) || source.symbol;
 
-  const sender = tx?.senderAddress ?? search.sender ?? "";
-  const receiver = tx?.receiverAddresses ?? search.addr ?? "";
+  const sender = tx?.senderAddress ?? "";
+  const receiver = tx?.receiverAddresses ?? "";
   const startedAt = tx?.createdAt ?? null;
   const finishedAt = tx?.finishedAt ?? null;
 

@@ -97,6 +97,11 @@ export const convertApexToDfm = (
   return apex;
 };
 
+export const convertApexToWei = (apex: string | number): string => {
+  if (typeof apex === "number") apex = apex.toString();
+  return toWei(apex, "ether");
+};
+
 export function toFixedAmount(n: number | string, decimals: number): string {
   return (+n).toFixed(decimals);
 }

@@ -1430,13 +1430,6 @@ function TransferForm({
       navigate({
         to: "/transaction/$id",
         params: { id: String(response.id) },
-        search: {
-          src: source.id,
-          dst: destination.id,
-          amount: amount.trim(),
-          addr: destAddress.trim(),
-          sender: walletAddress,
-        },
       });
     } catch {
       setStatus("idle");

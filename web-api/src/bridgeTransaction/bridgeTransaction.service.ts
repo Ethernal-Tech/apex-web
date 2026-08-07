@@ -80,24 +80,22 @@ export class BridgeTransactionService {
 		}
 
 		if (model.amountFrom && model.amountTo) {
-			baseWhere.amount = Between(model.amountFrom, model.amountTo);
+			baseWhere.amountWei = Between(model.amountFrom, model.amountTo);
 		} else if (model.amountFrom) {
-			baseWhere.amount = MoreThanOrEqual(model.amountFrom);
+			baseWhere.amountWei = MoreThanOrEqual(model.amountFrom);
 		} else if (model.amountTo) {
-			baseWhere.amount = LessThanOrEqual(model.amountTo);
+			baseWhere.amountWei = LessThanOrEqual(model.amountTo);
 		}
 
 		if (model.nativeTokenAmountFrom && model.nativeTokenAmountTo) {
-			baseWhere.nativeTokenAmount = Between(
+			baseWhere.tokenAmountWei = Between(
 				model.nativeTokenAmountFrom,
 				model.nativeTokenAmountTo,
 			);
 		} else if (model.nativeTokenAmountFrom) {
-			baseWhere.nativeTokenAmount = MoreThanOrEqual(
-				model.nativeTokenAmountFrom,
-			);
+			baseWhere.tokenAmountWei = MoreThanOrEqual(model.nativeTokenAmountFrom);
 		} else if (model.nativeTokenAmountTo) {
-			baseWhere.nativeTokenAmount = LessThanOrEqual(model.nativeTokenAmountTo);
+			baseWhere.tokenAmountWei = LessThanOrEqual(model.nativeTokenAmountTo);
 		}
 
 		if (model.receiverAddress) {

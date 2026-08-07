@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 import {
-  convertApexToDfm,
+  convertApexToWei,
   convertDfmToApex,
   toFixedAmount,
 } from "@/lib/amount";
@@ -230,19 +230,16 @@ function TransactionsPage() {
       const originChain =
         view === "user" ? walletChain : filters.origin || undefined;
 
-      const amountChain =
-        view === "user" ? walletChain : filters.origin || undefined;
-
       const convertAmount = (value: string) => {
-        if (!value.trim() || !amountChain) return undefined;
-        return convertApexToDfm(value, amountChain);
+        if (!value.trim()) return undefined;
+        return convertApexToWei(value);
       };
 
       const orderByMap: Record<SortKey, string> = {
         createdAt: "createdAt",
         finishedAt: "finishedAt",
-        amount: "amount",
-        tokenAmount: "nativeTokenAmount",
+        amount: "amountWei",
+        tokenAmount: "tokenAmountWei",
         origin: "originChain",
         destination: "destinationChain",
         status: "status",
@@ -299,25 +296,6 @@ function TransactionsPage() {
   };
 
   const applyFilters = (next: Filters) => {
-    const amountChain =
-      view === "user"
-        ? loadStoredSourceChain() || undefined
-        : next.origin || undefined;
-    const hasAmountFilter = Boolean(
-      next.amountFrom.trim() ||
-      next.amountTo.trim() ||
-      next.tokenFrom.trim() ||
-      next.tokenTo.trim(),
-    );
-    // convertApexToDfm needs a chain; without it amount filters would be dropped silently.
-    if (hasAmountFilter && !amountChain) {
-      toast.error(
-        view === "world"
-          ? "Select an origin chain to filter by amount."
-          : "Connect on the bridge first so amount filters use your source chain.",
-      );
-      return;
-    }
     setFilters(next);
     setPage(1);
     setFiltersOpen(false);
@@ -754,13 +732,6 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
   const linkProps = {
     to: "/transaction/$id" as const,
     params: { id: tx.id },
-    search: {
-      src: tx.origin,
-      dst: tx.destination,
-      amount: tx.amountDisplay,
-      addr: tx.receiver,
-      sender: tx.sender,
-    },
   };
 
   const rowProps = compact
@@ -994,21 +965,7 @@ function FilterModal({
               <div className="relative">
                 <select
                   value={draft.origin}
-                  onChange={(e) => {
-                    const origin = e.target.value;
-                    setDraft({
-                      ...draft,
-                      origin,
-                      ...(origin
-                        ? {}
-                        : {
-                            amountFrom: "",
-                            amountTo: "",
-                            tokenFrom: "",
-                            tokenTo: "",
-                          }),
-                    });
-                  }}
+                  onChange={(e) => set("origin", e.target.value)}
                   className="h-10 w-full appearance-none rounded-xl border border-white/10 bg-white/[0.04] px-3 pr-9 text-sm text-foreground [color-scheme:dark] focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none"
                 >
                   <option value="" className="bg-[#141a2c] text-foreground">
@@ -1081,33 +1038,23 @@ function FilterModal({
               label="Amount from"
               value={draft.amountFrom}
               onChange={(v) => set("amountFrom", v)}
-              disabled={world && !draft.origin}
             />
             <NumField
               label="Amount to"
               value={draft.amountTo}
               onChange={(v) => set("amountTo", v)}
-              disabled={world && !draft.origin}
             />
             <NumField
               label="Token amount from"
               value={draft.tokenFrom}
               onChange={(v) => set("tokenFrom", v)}
-              disabled={world && !draft.origin}
             />
             <NumField
               label="Token amount to"
               value={draft.tokenTo}
               onChange={(v) => set("tokenTo", v)}
-              disabled={world && !draft.origin}
             />
           </div>
-          {world && !draft.origin && (
-            <p className="text-[11px] text-muted-foreground">
-              Pick an origin chain to enable amount filters (decimals differ per
-              chain).
-            </p>
-          )}
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-white/5 bg-white/[0.02] px-6 py-4">
