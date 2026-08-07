@@ -74,7 +74,6 @@ function toUsd(
   let usd = 0;
   for (const [tokenID, amount] of totals) {
     const price = prices.get(tokenID);
-    console.log("tokenID", tokenID, "amount", amount, "price", price);
     if (!price) continue;
     usd += (Number(amount) / DFM_UNIT) * price;
   }
