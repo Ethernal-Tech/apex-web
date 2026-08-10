@@ -8,6 +8,7 @@ import primeIcon from "@/assets/chains/prime.svg?url";
 import nexusIcon from "@/assets/chains/nexus.svg?url";
 import vectorIcon from "@/assets/chains/vector.svg?url";
 import adaIcon from "@/assets/chains/cardano.svg?url";
+import solIcon from "@/assets/chains/solana.svg?url";
 
 export const Route = createFileRoute("/audit")({
   head: () => ({
@@ -35,22 +36,31 @@ export const Route = createFileRoute("/audit")({
 // ── Token prices (USD) ────────────────────────────────────────────────
 const AP3X_USD = 0.01598;
 const ADA_USD = 0.1751;
+const SOL_USD = 76.9;
 // Wrapped variants are pegged to their underlying
 const PRICE: Record<string, number> = {
   AP3X: AP3X_USD,
   cAP3X: AP3X_USD,
   bAP3X: AP3X_USD,
   bnAP3X: AP3X_USD,
+  sAP3X: AP3X_USD,
   ADA: ADA_USD,
   xADA: ADA_USD,
+  SOL: SOL_USD,
+  wSOL: SOL_USD,
+  aSOL: SOL_USD,
 };
 const COIN_COLOR: Record<string, string> = {
   AP3X: "#3B92FF",
   cAP3X: "#8B7CFF",
   bAP3X: "#22C1E4",
   bnAP3X: "#F0B429",
+  sAP3X: "#9945FF",
   ADA: "#4F7BFF",
   xADA: "#2FD3A5",
+  SOL: "#9945FF",
+  wSOL: "#14F195",
+  aSOL: "#7cc4ff",
 };
 const CHAIN_COLOR: Record<string, string> = {
   Cardano: "#22C1E4",
@@ -59,19 +69,21 @@ const CHAIN_COLOR: Record<string, string> = {
   Nexus: "#7cc4ff",
   Base: "#63b6ff",
   BSC: "#F0B429",
+  Solana: "#9945FF",
 };
 const CHAIN_ICON: Record<string, string | undefined> = {
   Cardano: adaIcon,
   Prime: primeIcon,
   Vector: vectorIcon,
   Nexus: nexusIcon,
+  Solana: solIcon,
 };
 
 // ── Data (exact amounts from the reference design) ────────────────────
 type CoinRow = { c: string; v: number };
 type ChainRows = { chain: string; rows: CoinRow[] };
 type WorldData = {
-  key: "utxo" | "evm";
+  key: WorldKey;
   name: string;
   tag: string;
   summaryLocked: CoinRow[];
@@ -79,12 +91,18 @@ type WorldData = {
   lockedNote?: string;
   lockedChain: ChainRows[];
   bridgedChain: ChainRows[];
+  /**
+   * Per-chain donut/bars. Pointless for a single-chain world (it would just be
+   * one 100% segment), so those worlds opt out and show the summaries alone.
+   */
+  showComposition?: boolean;
 };
 
 const UTXO: WorldData = {
   key: "utxo",
   name: "UTxO World",
   tag: "Cardano · Prime · Vector",
+  showComposition: true,
   summaryLocked: [
     { c: "AP3X", v: 19_131_409.32 },
     { c: "ADA", v: 37_995.28 },
@@ -134,6 +152,7 @@ const EVM: WorldData = {
   key: "evm",
   name: "EVM World",
   tag: "Nexus · Base · BSC",
+  showComposition: true,
   summaryLocked: [{ c: "AP3X", v: 15_130_179.88 }],
   summaryBridged: [{ c: "AP3X", v: 55_296_927.66 }],
   lockedChain: [{ chain: "Nexus", rows: [{ c: "AP3X", v: 15_130_179.88 }] }],
@@ -150,9 +169,34 @@ const EVM: WorldData = {
   ],
 };
 
+// Solana is a single-chain world: wSOL is the only asset the bridge holds there,
+// so the per-chain composition is dropped and the summaries stand on their own.
+const SOL: WorldData = {
+  key: "sol",
+  name: "SOL World",
+  tag: "Solana",
+  summaryLocked: [{ c: "wSOL", v: 12_480.55 }],
+  summaryBridged: [{ c: "wSOL", v: 41_206.83 }],
+  lockedChain: [{ chain: "Solana", rows: [{ c: "wSOL", v: 12_480.55 }] }],
+  bridgedChain: [{ chain: "Solana", rows: [{ c: "wSOL", v: 41_206.83 }] }],
+};
+
+const WORLDS: Record<WorldKey, WorldData> = {
+  utxo: UTXO,
+  evm: EVM,
+  sol: SOL,
+};
+const WORLD_KEYS = Object.keys(WORLDS) as WorldKey[];
+
 // Totals across the whole network (from design)
-const TOTAL_LOCKED_USD = sumUsd(UTXO.lockedChain) + sumUsd(EVM.lockedChain);
-const TOTAL_BRIDGED_USD = sumUsd(UTXO.bridgedChain) + sumUsd(EVM.bridgedChain);
+const TOTAL_LOCKED_USD = WORLD_KEYS.reduce(
+  (s, key) => s + sumUsd(WORLDS[key].lockedChain),
+  0,
+);
+const TOTAL_BRIDGED_USD = WORLD_KEYS.reduce(
+  (s, key) => s + sumUsd(WORLDS[key].bridgedChain),
+  0,
+);
 
 function sumUsd(chains: ChainRows[]) {
   return chains.reduce(
@@ -165,7 +209,7 @@ function usdOfRows(rows: CoinRow[]) {
 }
 
 type Mode = "overview" | "full";
-type WorldKey = "utxo" | "evm";
+type WorldKey = "utxo" | "evm" | "sol";
 
 // ── Formatting ────────────────────────────────────────────────────────
 const fmtUsdCompact = (n: number) =>
@@ -263,7 +307,8 @@ function AuditPage() {
   const [world, setWorld] = useState<WorldKey>("utxo");
   const [range, setRange] = useState<"7D" | "30D" | "90D">("30D");
 
-  const data = world === "utxo" ? UTXO : EVM;
+  const data = WORLDS[world];
+  const showComposition = data.showComposition ?? false;
 
   const chart = useMemo(() => {
     const tvl = makeSeries(3, 60);
@@ -356,8 +401,8 @@ function AuditPage() {
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
               A live, public ledger of everything locked in and moved across the
-              Skyline network — spanning Cardano, Apex Fusion and EVM chains,
-              verifiable on-chain and updated continuously.
+              Skyline network — spanning Cardano, Apex Fusion, EVM chains and
+              Solana, verifiable on-chain and updated continuously.
             </p>
           </div>
 
@@ -371,7 +416,7 @@ function AuditPage() {
               accent="#3B92FF"
               spark={TVL_SPARK}
               note="Assets held in Skyline's audited lock contracts, fully redeemable 1:1."
-              tokens={["AP3X", "cAP3X", "ADA", "xADA"]}
+              tokens={["AP3X", "cAP3X", "ADA", "xADA", "wSOL"]}
             />
             <MetricCard
               label="Total Value Bridged · TVB"
@@ -381,7 +426,15 @@ function AuditPage() {
               accent="#22C1E4"
               spark={TVB_SPARK}
               note="Cumulative value transferred across every supported chain since launch."
-              tokens={["AP3X", "cAP3X", "bAP3X", "bnAP3X", "ADA", "xADA"]}
+              tokens={[
+                "AP3X",
+                "cAP3X",
+                "bAP3X",
+                "bnAP3X",
+                "ADA",
+                "xADA",
+                "wSOL",
+              ]}
             />
           </div>
 
@@ -518,7 +571,7 @@ function AuditPage() {
 
           {/* World tabs */}
           <div className="mt-8 flex items-end gap-6 border-b border-white/10">
-            {(["utxo", "evm"] as WorldKey[]).map((w) => (
+            {WORLD_KEYS.map((w) => (
               <button
                 key={w}
                 type="button"
@@ -529,7 +582,7 @@ function AuditPage() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {w === "utxo" ? "UTxO World" : "EVM World"}
+                {WORLDS[w].name}
                 {world === w && (
                   <span className="absolute -bottom-px left-0 right-0 h-0.5 rounded-full bg-[oklch(0.72_0.19_245)]" />
                 )}
@@ -543,8 +596,18 @@ function AuditPage() {
           </div>
 
           {mode === "overview" ? (
-            <div className="mt-6 grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
-              <div className="flex flex-col gap-4">
+            <div
+              className={`mt-6 grid gap-4 ${
+                showComposition
+                  ? "lg:grid-cols-[1.15fr_.85fr]"
+                  : "lg:grid-cols-2 lg:items-start"
+              }`}
+            >
+              {/* `contents` puts both cards straight into the grid, side by side,
+                  when there is no composition column to sit next to. */}
+              <div
+                className={showComposition ? "flex flex-col gap-4" : "contents"}
+              >
                 <SummaryCard
                   title="Total Locked"
                   rows={data.summaryLocked}
@@ -553,84 +616,86 @@ function AuditPage() {
                 <SummaryCard title="Total Bridged" rows={data.summaryBridged} />
               </div>
 
-              <div className="card-glow rounded-2xl p-5 md:p-6">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  Locked composition · by chain
-                </div>
-                <div className="mt-4 flex items-center gap-5">
-                  <svg
-                    width="132"
-                    height="132"
-                    viewBox="0 0 120 120"
-                    className="flex-none"
-                  >
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="52"
-                      fill="none"
-                      stroke="rgba(255,255,255,0.06)"
-                      strokeWidth="15"
-                    />
-                    {donut.map((seg, i) => (
+              {showComposition && (
+                <div className="card-glow rounded-2xl p-5 md:p-6">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Locked composition · by chain
+                  </div>
+                  <div className="mt-4 flex items-center gap-5">
+                    <svg
+                      width="132"
+                      height="132"
+                      viewBox="0 0 120 120"
+                      className="flex-none"
+                    >
                       <circle
-                        key={i}
                         cx="60"
                         cy="60"
                         r="52"
                         fill="none"
-                        stroke={seg.color}
+                        stroke="rgba(255,255,255,0.06)"
                         strokeWidth="15"
-                        strokeDasharray={seg.dash}
-                        strokeDashoffset={seg.offset}
-                        transform="rotate(-90 60 60)"
-                        strokeLinecap="butt"
                       />
-                    ))}
-                  </svg>
-                  <div className="flex flex-1 flex-col gap-2">
-                    {donut.map((seg, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-2 text-[13px] font-medium"
-                      >
-                        <span
-                          className="h-2.5 w-2.5 flex-none rounded-full"
-                          style={{ background: seg.color }}
+                      {donut.map((seg, i) => (
+                        <circle
+                          key={i}
+                          cx="60"
+                          cy="60"
+                          r="52"
+                          fill="none"
+                          stroke={seg.color}
+                          strokeWidth="15"
+                          strokeDasharray={seg.dash}
+                          strokeDashoffset={seg.offset}
+                          transform="rotate(-90 60 60)"
+                          strokeLinecap="butt"
                         />
-                        <span className="flex-1 truncate">{seg.label}</span>
-                        <span className="tabular-nums text-muted-foreground">
-                          {(seg.pct * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-6 border-t border-white/5 pt-4">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Bridged distribution · by chain
-                  </div>
-                  <div className="mt-3 flex flex-col gap-3">
-                    {bars.map((b, i) => (
-                      <div key={i}>
-                        <div className="flex justify-between text-xs font-medium">
-                          <span>{b.label}</span>
+                      ))}
+                    </svg>
+                    <div className="flex flex-1 flex-col gap-2">
+                      {donut.map((seg, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 text-[13px] font-medium"
+                        >
+                          <span
+                            className="h-2.5 w-2.5 flex-none rounded-full"
+                            style={{ background: seg.color }}
+                          />
+                          <span className="flex-1 truncate">{seg.label}</span>
                           <span className="tabular-nums text-muted-foreground">
-                            {fmtUsdCompact(b.usd)}
+                            {(seg.pct * 100).toFixed(1)}%
                           </span>
                         </div>
-                        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/[0.05]">
-                          <div
-                            className="h-full rounded-full"
-                            style={{ width: b.width, background: b.color }}
-                          />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 border-t border-white/5 pt-4">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                      Bridged distribution · by chain
+                    </div>
+                    <div className="mt-3 flex flex-col gap-3">
+                      {bars.map((b, i) => (
+                        <div key={i}>
+                          <div className="flex justify-between text-xs font-medium">
+                            <span>{b.label}</span>
+                            <span className="tabular-nums text-muted-foreground">
+                              {fmtUsdCompact(b.usd)}
+                            </span>
+                          </div>
+                          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/[0.05]">
+                            <div
+                              className="h-full rounded-full"
+                              style={{ width: b.width, background: b.color }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           ) : (
             (() => {
