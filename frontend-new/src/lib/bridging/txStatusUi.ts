@@ -11,13 +11,12 @@ export type DetailStep = {
   state: DetailState;
 };
 
-const STATUS_COPY: Record<
-  string,
-  {
-    title: (s: string, d: string) => string;
-    desc: (s: string, d: string) => string;
-  }
-> = {
+type StatusCopy = {
+  title: (source: string, dest: string) => string;
+  desc: (source: string, dest: string) => string;
+};
+
+const STATUS_COPY: Record<string, StatusCopy> = {
   Pending: {
     title: (s) => `Waiting on ${s}`,
     desc: (s) =>
@@ -53,10 +52,18 @@ const STATUS_COPY: Record<
     desc: () =>
       "Some details of the transfer didn't check out, so it was stopped safely before any funds were moved.",
   },
-  FailedToExecuteOnDestination: {
-    title: (_s, d) => `Couldn't complete on ${d}`,
-    desc: (_s, d) =>
-      `The assets couldn't be released on the ${d} chain. Your funds are safe — please reach out to support to resolve it.`,
+};
+
+/** Overrides for refund txs — late steps return funds to source, not destination. */
+const REFUND_STATUS_COPY: Partial<Record<string, StatusCopy>> = {
+  SubmittedToDestination: {
+    title: (s) => `Returning to ${s}`,
+    desc: (s) => `The bridge is now returning your assets to the ${s} chain.`,
+  },
+  ExecutedOnDestination: {
+    title: (s) => `Refunded on ${s}`,
+    desc: (s) =>
+      `Your assets have been returned to the ${s} chain — the refund is complete.`,
   },
 };
 
@@ -78,9 +85,9 @@ export function statusToStages(status: TransactionStatusEnum): StageStatus[] {
       return ["failed", "pending", "pending"];
     case TransactionStatusEnum.SubmittedToBridge:
     case TransactionStatusEnum.IncludedInBatch:
-      return ["success", "active", "pending"];
     case TransactionStatusEnum.FailedToExecuteOnDestination:
-      return ["success", "success", "failed"];
+      // Bridge can report FailedToExecute transiently; treat as in-progress, not failed.
+      return ["success", "active", "pending"];
     case TransactionStatusEnum.SubmittedToDestination:
       return ["success", "success", "active"];
     case TransactionStatusEnum.ExecutedOnDestination:
@@ -94,12 +101,14 @@ export function buildBridgingStepsFromStatus(
   status: TransactionStatusEnum,
   sourceLabel: string,
   destLabel: string,
+  isRefund = false,
 ): DetailStep[] {
   const mk = (key: string, state: DetailState): DetailStep => {
-    const copy = STATUS_COPY[key] ?? {
-      title: () => key,
-      desc: () => "",
-    };
+    const copy = (isRefund ? REFUND_STATUS_COPY[key] : undefined) ??
+      STATUS_COPY[key] ?? {
+        title: () => key,
+        desc: () => "",
+      };
     return {
       key,
       state,
@@ -116,16 +125,6 @@ export function buildBridgingStepsFromStatus(
     ];
   }
 
-  if (status === TransactionStatusEnum.FailedToExecuteOnDestination) {
-    return [
-      mk(TransactionStatusEnum.DiscoveredOnSource, "done"),
-      mk(TransactionStatusEnum.SubmittedToBridge, "done"),
-      mk(TransactionStatusEnum.IncludedInBatch, "done"),
-      mk(TransactionStatusEnum.SubmittedToDestination, "done"),
-      mk(TransactionStatusEnum.FailedToExecuteOnDestination, "failed"),
-    ];
-  }
-
   if (status === TransactionStatusEnum.Pending) {
     return [
       mk(TransactionStatusEnum.Pending, "active"),
@@ -133,7 +132,14 @@ export function buildBridgingStepsFromStatus(
     ];
   }
 
-  const activeIdx = HAPPY_PATH.indexOf(status as (typeof HAPPY_PATH)[number]);
+  const effectiveStatus =
+    status === TransactionStatusEnum.FailedToExecuteOnDestination
+      ? TransactionStatusEnum.IncludedInBatch
+      : status;
+
+  const activeIdx = HAPPY_PATH.indexOf(
+    effectiveStatus as (typeof HAPPY_PATH)[number],
+  );
 
   return HAPPY_PATH.map((key, i) => {
     if (activeIdx < 0) return mk(key, "pending");
@@ -141,7 +147,7 @@ export function buildBridgingStepsFromStatus(
     if (i === activeIdx) {
       return mk(
         key,
-        status === TransactionStatusEnum.ExecutedOnDestination
+        effectiveStatus === TransactionStatusEnum.ExecutedOnDestination
           ? "done"
           : "active",
       );
@@ -150,17 +156,29 @@ export function buildBridgingStepsFromStatus(
   });
 }
 
-export function getOverallStatusLabel(status: TransactionStatusEnum): string {
+export function getOverallStatusLabel(
+  status: TransactionStatusEnum,
+  isRefund = false,
+): string {
   if (status === TransactionStatusEnum.ExecutedOnDestination) {
-    return "Transfer complete";
+    return isRefund ? "Refund Complete" : "Transfer complete";
   }
   if (status === TransactionStatusEnum.InvalidRequest) {
     return "Transfer failed";
   }
-  if (status === TransactionStatusEnum.FailedToExecuteOnDestination) {
-    return "Transfer issue";
+  return isRefund ? "Refund in Progress" : "Transfer in progress";
+}
+
+/** Final progress-step copy: release to destination, or return to source on refund. */
+export function getReleaseStepDescription(
+  sourceLabel: string,
+  destLabel: string,
+  isRefund: boolean,
+): string {
+  if (isRefund) {
+    return `The assets are returned from the bridge wallet to the addresses on the ${sourceLabel} chain.`;
   }
-  return "Transfer in progress";
+  return `The assets go from the Bridge Wallet to the address on the ${destLabel} Chain.`;
 }
 
 export { isStatusFinal };

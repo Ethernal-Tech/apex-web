@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Loader2,
   AlertCircle,
+  Undo2,
 } from "lucide-react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
@@ -23,6 +24,7 @@ import { getAction } from "@/lib/api/transaction";
 import {
   buildBridgingStepsFromStatus,
   getOverallStatusLabel,
+  getReleaseStepDescription,
   isStatusFinal,
   statusToStages,
   type DetailState,
@@ -30,8 +32,13 @@ import {
   type StageStatus,
 } from "@/lib/bridging/txStatusUi";
 import { CHAIN_META } from "@/lib/chains";
+import { getExplorerUrl, openExplorer } from "@/lib/explorer";
 import { ErrorResponse, tryCatchJsonByAction } from "@/lib/fetchUtils";
-import { getCurrencyID, getTokenDisplayName } from "@/lib/tokens";
+import {
+  getCurrencyID,
+  getRealTokenIDFromEntity,
+  getTokenDisplayName,
+} from "@/lib/tokens";
 import {
   TransactionStatusEnum,
   type BridgeTransactionDto,
@@ -70,8 +77,21 @@ const STAGE_LABELS = [
   },
 ] as const;
 
-function StepIcon({ state }: { state: DetailState }) {
+function StepIcon({
+  state,
+  refundDone,
+}: {
+  state: DetailState;
+  refundDone?: boolean;
+}) {
   if (state === "done") {
+    if (refundDone) {
+      return (
+        <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[oklch(0.78_0.14_85)] text-[oklch(0.14_0.03_260)] ring-2 ring-[oklch(0.78_0.14_85_/_0.3)]">
+          <Undo2 className="h-3.5 w-3.5" strokeWidth={3} />
+        </span>
+      );
+    }
     return (
       <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[oklch(0.7_0.18_165)] text-[oklch(0.14_0.03_260)] ring-2 ring-[oklch(0.7_0.18_165_/_0.3)]">
         <Check className="h-3.5 w-3.5" strokeWidth={3} />
@@ -99,12 +119,18 @@ function StepIcon({ state }: { state: DetailState }) {
   );
 }
 
-function BridgingDetail({ steps }: { steps: DetailStep[] }) {
+function BridgingDetail({
+  steps,
+  isRefund,
+}: {
+  steps: DetailStep[];
+  isRefund: boolean;
+}) {
   return (
     <ol className="mt-4 grid gap-3 border-t border-white/5 pt-4">
-      {steps.map((s) => (
+      {steps.map((s, i) => (
         <li key={s.key} className="flex items-start gap-3">
-          <StepIcon state={s.state} />
+          <StepIcon state={s.state} refundDone={isRefund && i > 0} />
           <div className="min-w-0">
             <div
               className={`text-sm font-medium leading-tight ${
@@ -176,27 +202,64 @@ function TransactionPage() {
     return toFixedAmount(convertDfmToApex(tx.amount, tx.originChain), 6);
   }, [tx]);
 
+  const tokenAmountDisplay = useMemo(() => {
+    if (!tx?.nativeTokenAmount) return null;
+    if (BigInt(tx.nativeTokenAmount || "0") === BigInt(0)) return null;
+    return toFixedAmount(
+      convertDfmToApex(tx.nativeTokenAmount, tx.originChain),
+      6,
+    );
+  }, [tx]);
+
   const currencyID =
     tx && settings ? getCurrencyID(settings, tx.originChain) : undefined;
-  const symbol = getTokenDisplayName(settings, currencyID) || source.symbol;
+  const currencySymbol =
+    getTokenDisplayName(settings, currencyID) || source.symbol;
+
+  const realTokenID = settings
+    ? getRealTokenIDFromEntity(settings, tx)
+    : undefined;
+  const tokenSymbol = getTokenDisplayName(settings, realTokenID);
 
   const sender = tx?.senderAddress ?? "";
   const receiver = tx?.receiverAddresses ?? "";
   const startedAt = tx?.createdAt ?? null;
   const finishedAt = tx?.finishedAt ?? null;
 
-  const status = tx?.status ?? TransactionStatusEnum.Pending;
-  const stages = statusToStages(status);
+  const rawStatus = tx?.status ?? TransactionStatusEnum.Pending;
+  const isRefund = !!tx?.isRefund;
+
+  const [statusToShow, setStatusToShow] = useState(rawStatus);
+  useEffect(() => {
+    setStatusToShow(rawStatus);
+  }, [txId]);
+  useEffect(() => {
+    setStatusToShow((prev) => {
+      if (
+        prev === TransactionStatusEnum.SubmittedToDestination &&
+        (rawStatus === TransactionStatusEnum.IncludedInBatch ||
+          rawStatus === TransactionStatusEnum.FailedToExecuteOnDestination)
+      ) {
+        return prev;
+      }
+      return rawStatus;
+    });
+  }, [rawStatus]);
+
+  const stages = statusToStages(statusToShow);
   const detailSteps = buildBridgingStepsFromStatus(
-    status,
+    statusToShow,
     source.label,
     destination.label,
+    isRefund,
   );
-
-  const overallDone = status === TransactionStatusEnum.ExecutedOnDestination;
-  const overallFailed = status === TransactionStatusEnum.InvalidRequest;
-  const statusLabel = getOverallStatusLabel(status);
-  const showFinalDetails = !!tx && isStatusFinal(status);
+  const overallDone =
+    statusToShow === TransactionStatusEnum.ExecutedOnDestination;
+  const overallFailed = statusToShow === TransactionStatusEnum.InvalidRequest;
+  // Refund styling for in-progress/complete refunds; failed invalid-request keeps error styling.
+  const showAsRefund = isRefund && !overallFailed;
+  const statusLabel = getOverallStatusLabel(statusToShow, isRefund);
+  const showFinalDetails = !!tx && isStatusFinal(rawStatus);
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -335,12 +398,15 @@ function TransactionPage() {
                           source={source.label}
                           destination={destination.label}
                           amount={amountDisplay}
-                          symbol={symbol}
+                          symbol={currencySymbol}
+                          tokenAmount={tokenAmountDisplay}
+                          tokenSymbol={tokenSymbol}
                           sender={sender}
                           receiver={receiver}
                           started={startedAt ?? new Date()}
                           finished={finishedAt ?? new Date()}
                           failed={overallFailed}
+                          isRefund={isRefund}
                           statusLabel={statusLabel}
                         />
                       ) : (
@@ -357,9 +423,22 @@ function TransactionPage() {
                             <div className="mt-1 font-display text-2xl font-semibold text-foreground">
                               {amountDisplay}{" "}
                               <span className="text-sm font-medium text-muted-foreground">
-                                {symbol}
+                                {currencySymbol}
                               </span>
                             </div>
+                            {tokenAmountDisplay && (
+                              <>
+                                <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                  Token amount
+                                </div>
+                                <div className="mt-1 font-display text-xl font-semibold text-foreground">
+                                  {tokenAmountDisplay}{" "}
+                                  <span className="text-sm font-medium text-muted-foreground">
+                                    {tokenSymbol}
+                                  </span>
+                                </div>
+                              </>
+                            )}
                             {tx.sourceTxHash && (
                               <div className="mt-3 border-t border-white/5 pt-3">
                                 <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -382,11 +461,16 @@ function TransactionPage() {
                         className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.2em] ${
                           overallFailed
                             ? "text-[oklch(0.78_0.19_25)]"
-                            : overallDone
-                              ? "text-[oklch(0.85_0.15_165)]"
-                              : "text-[oklch(0.85_0.15_235)]"
+                            : showAsRefund
+                              ? "text-[oklch(0.88_0.12_85)]"
+                              : overallDone
+                                ? "text-[oklch(0.85_0.15_165)]"
+                                : "text-[oklch(0.85_0.15_235)]"
                         }`}
                       >
+                        {showAsRefund && (
+                          <Undo2 className="h-3.5 w-3.5" strokeWidth={2.5} />
+                        )}
                         {statusLabel}
                       </span>
                       {!overallDone && !overallFailed && <SmallSpinner />}
@@ -399,24 +483,37 @@ function TransactionPage() {
                           index={i}
                           status={stageStatus}
                           title={STAGE_LABELS[i].title}
+                          isRefund={isRefund}
                           chainIcon={
                             i === 0
                               ? source.icon
                               : i === 2
-                                ? destination.icon
+                                ? isRefund
+                                  ? source.icon
+                                  : destination.icon
                                 : undefined
                           }
                           chainLabel={
                             i === 0
                               ? source.label
                               : i === 2
-                                ? destination.label
+                                ? isRefund
+                                  ? source.label
+                                  : destination.label
                                 : "Bridge"
                           }
-                          description={STAGE_LABELS[i].describe(
-                            source.label,
-                            destination.label,
-                          )}
+                          description={
+                            i === 2
+                              ? getReleaseStepDescription(
+                                  source.label,
+                                  destination.label,
+                                  isRefund,
+                                )
+                              : STAGE_LABELS[i].describe(
+                                  source.label,
+                                  destination.label,
+                                )
+                          }
                         />
                       ))}
                     </div>
@@ -435,7 +532,9 @@ function TransactionPage() {
                       />
                     </button>
 
-                    {showDetails && <BridgingDetail steps={detailSteps} />}
+                    {showDetails && (
+                      <BridgingDetail steps={detailSteps} isRefund={isRefund} />
+                    )}
 
                     <div className="mt-auto grid grid-cols-2 gap-2 pt-8">
                       <Link
@@ -447,16 +546,12 @@ function TransactionPage() {
                       </Link>
                       <button
                         type="button"
-                        disabled={!tx.sourceTxHash}
-                        onClick={() => {
-                          if (tx.sourceTxHash) {
-                            void navigator.clipboard.writeText(tx.sourceTxHash);
-                          }
-                        }}
+                        disabled={!getExplorerUrl(tx)}
+                        onClick={() => openExplorer(tx)}
                         className="btn-primary-glow inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] disabled:opacity-40"
                       >
-                        <ExternalLink className="h-3.5 w-3.5 shrink-0" /> Copy
-                        tx hash
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0" /> View
+                        Explorer
                       </button>
                     </div>
                   </div>
@@ -524,6 +619,7 @@ function StageColumn({
   chainIcon,
   chainLabel,
   description,
+  isRefund,
 }: {
   index: number;
   status: StageStatus;
@@ -531,6 +627,7 @@ function StageColumn({
   chainIcon?: string;
   chainLabel: string;
   description: string;
+  isRefund: boolean;
 }) {
   return (
     <div className="flex flex-col items-center text-center">
@@ -539,8 +636,13 @@ function StageColumn({
         status={status}
         chainIcon={chainIcon}
         chainLabel={chainLabel}
+        isRefund={isRefund}
       />
-      <StatusBadge status={status} index={index} />
+      <StatusBadge
+        status={status}
+        index={index}
+        refundDone={isRefund && index > 0}
+      />
       <div className="mt-3 font-display text-sm font-semibold text-foreground">
         {title}
       </div>
@@ -556,15 +658,27 @@ function StageOrb({
   status,
   chainIcon,
   chainLabel,
+  isRefund,
 }: {
   index: number;
   status: StageStatus;
   chainIcon?: string;
   chainLabel: string;
+  isRefund: boolean;
 }) {
   const active = status === "active";
   const failed = status === "failed";
   const done = status === "success";
+  const refundDone = isRefund && done && index > 0;
+  const doneGlow = refundDone
+    ? "bg-[oklch(0.78_0.14_85_/_0.28)]"
+    : "bg-[oklch(0.7_0.18_165_/_0.28)]";
+  const doneBorder = refundDone
+    ? "border-[oklch(0.78_0.14_85_/_0.55)]"
+    : "border-[oklch(0.7_0.18_165_/_0.55)]";
+  const doneFill = refundDone
+    ? "bg-[oklch(0.78_0.14_85_/_0.35)]"
+    : "bg-[oklch(0.7_0.18_165_/_0.35)]";
 
   return (
     <div className="relative flex h-20 w-20 items-center justify-center">
@@ -575,7 +689,7 @@ function StageOrb({
         <div className="absolute inset-0 rounded-full bg-[oklch(0.62_0.22_25_/_0.35)] blur-xl" />
       )}
       {done && (
-        <div className="absolute inset-0 rounded-full bg-[oklch(0.7_0.18_165_/_0.28)] blur-xl" />
+        <div className={`absolute inset-0 rounded-full ${doneGlow} blur-xl`} />
       )}
 
       {index === 1 ? (
@@ -586,7 +700,7 @@ function StageOrb({
               : failed
                 ? "border-[oklch(0.62_0.22_25_/_0.6)]"
                 : done
-                  ? "border-[oklch(0.7_0.18_165_/_0.55)]"
+                  ? doneBorder
                   : "border-white/10"
           } bg-white/[0.03]`}
         >
@@ -597,7 +711,7 @@ function StageOrb({
                 : failed
                   ? "bg-[oklch(0.62_0.22_25_/_0.4)]"
                   : done
-                    ? "bg-[oklch(0.7_0.18_165_/_0.35)]"
+                    ? doneFill
                     : "bg-white/5"
             }`}
           />
@@ -610,7 +724,7 @@ function StageOrb({
               : failed
                 ? "border-[oklch(0.62_0.22_25_/_0.6)]"
                 : done
-                  ? "border-[oklch(0.7_0.18_165_/_0.55)]"
+                  ? doneBorder
                   : "border-white/10"
           } bg-white/[0.03]`}
         >
@@ -630,11 +744,20 @@ function StageOrb({
 function StatusBadge({
   status,
   index,
+  refundDone,
 }: {
   status: StageStatus;
   index: number;
+  refundDone?: boolean;
 }) {
   if (status === "success") {
+    if (refundDone) {
+      return (
+        <span className="mt-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[oklch(0.78_0.14_85)] text-[oklch(0.14_0.03_260)] ring-2 ring-[oklch(0.78_0.14_85_/_0.3)]">
+          <Undo2 className="h-3.5 w-3.5" strokeWidth={3} />
+        </span>
+      );
+    }
     return (
       <span className="mt-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[oklch(0.7_0.18_165)] text-[oklch(0.14_0.03_260)] ring-2 ring-[oklch(0.7_0.18_165_/_0.3)]">
         <Check className="h-3.5 w-3.5" strokeWidth={3} />
@@ -702,22 +825,28 @@ function TransactionDetails({
   destination,
   amount,
   symbol,
+  tokenAmount,
+  tokenSymbol,
   sender,
   receiver,
   started,
   finished,
   failed,
+  isRefund,
   statusLabel,
 }: {
   source: string;
   destination: string;
   amount: string;
   symbol: string;
+  tokenAmount: string | null;
+  tokenSymbol: string;
   sender: string;
   receiver: string;
   started: Date;
   finished: Date;
   failed: boolean;
+  isRefund: boolean;
   statusLabel: string;
 }) {
   return (
@@ -729,6 +858,12 @@ function TransactionDetails({
         <DetailRow label="Source chain" value={source} />
         <DetailRow label="Destination chain" value={destination} />
         <DetailRow label="Amount" value={`${amount} ${symbol}`} />
+        {tokenAmount && (
+          <DetailRow
+            label="Token amount"
+            value={`${tokenAmount} ${tokenSymbol}`}
+          />
+        )}
         <DetailRow
           label="Sender address"
           value={<span className="font-mono">{shortAddr(sender)}</span>}
@@ -745,6 +880,10 @@ function TransactionDetails({
             failed ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[oklch(0.62_0.22_25_/_0.15)] px-2 py-0.5 text-[oklch(0.85_0.19_25)]">
                 <XIcon className="h-3 w-3" strokeWidth={3} /> {statusLabel}
+              </span>
+            ) : isRefund ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[oklch(0.78_0.14_85_/_0.15)] px-2 py-0.5 text-[oklch(0.88_0.12_85)]">
+                <Undo2 className="h-3 w-3" strokeWidth={3} /> {statusLabel}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 rounded-full bg-[oklch(0.7_0.18_165_/_0.15)] px-2 py-0.5 text-[oklch(0.85_0.15_165)]">

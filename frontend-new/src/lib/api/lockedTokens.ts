@@ -15,7 +15,7 @@ export type LockedTokensResponse = {
   totalTransferred: Record<string, Record<string, string>>;
 };
 
-/** Bridging modes summed into TVB, same set the old frontend asked for. */
+/** Bridging modes included when summing TVB from `GET /lockedTokens`. */
 const ALLOWED_BRIDGING_MODES = ["skyline", "layerzero"] as const;
 
 export async function fetchLockedTokens(): Promise<LockedTokensResponse> {

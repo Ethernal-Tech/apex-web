@@ -1,11 +1,18 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useBridgeFees } from "@/hooks/use-bridge-fees";
+import { useReactorValidatorStatus } from "@/hooks/use-reactor-validator-status";
 import { useWalletBalances } from "@/hooks/use-wallet-balances";
+import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkBadge, NetworkToggle } from "@/components/NetworkToggle";
 import {
@@ -33,15 +40,21 @@ import { submitBridgeTransfer } from "@/lib/bridging/bridgeSubmit";
 import { getEstimatedBridgeTime } from "@/lib/bridging/estimatedBridgeTime";
 import { resolveBridgeMaxAmounts } from "@/lib/bridging/maxAmount";
 import { BridgingModeEnum, getBridgingMode } from "@/lib/bridging/mode";
+import type {
+  SubmitLoadingState,
+  UpdateSubmitLoadingState,
+} from "@/lib/bridging/statusUtils";
 import {
   CHAIN_FILTERS,
   CHAIN_META,
   chainMatchesFilter,
   getDstChains,
   getSrcChains,
+  isLZBridging,
   type BridgeChain,
   type ChainFilterId,
 } from "@/lib/chains";
+import { getExplorerTxUrl } from "@/lib/explorer";
 import {
   getCurrencyID,
   getSupportedSourceTokens,
@@ -52,15 +65,10 @@ import type { SettingsResponse } from "@/lib/api/settings";
 import appSettings from "@/settings/appSettings";
 import { ChainEnum } from "@/swagger/apexBridgeApiService";
 import {
-  connectWallet,
-  disconnectWallet,
   loadStoredDestinationChain,
   loadStoredSourceChain,
-  loadStoredWalletName,
   persistDestinationChain,
   persistSourceChain,
-  restoreWallet,
-  type WalletSession,
 } from "@/lib/wallet/connect";
 import { createPortal } from "react-dom";
 import {
@@ -98,6 +106,14 @@ export const Route = createFileRoute("/bridge-app")({
   }),
   component: BridgeApp,
 });
+
+function readReturnTo(search: Record<string, unknown>): string | undefined {
+  const raw = search.returnTo;
+  if (typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//")) {
+    return raw;
+  }
+  return undefined;
+}
 
 type Chain = BridgeChain;
 
@@ -695,6 +711,10 @@ function TokenRow({
 }
 
 function BridgeApp() {
+  const navigate = useNavigate();
+  const returnTo = useRouterState({
+    select: (s) => readReturnTo(s.location.search as Record<string, unknown>),
+  });
   const { data: settings, isLoading: settingsLoading } =
     useQuery(settingsQueryOptions);
   // Hydrates token label/icon registry used by getSupportedSourceTokens / getTokenInfo.
@@ -709,29 +729,31 @@ function BridgeApp() {
     [source?.id, settings],
   );
 
-  const [walletSession, setWalletSession] = useState<WalletSession | null>(
-    null,
-  );
-  const [connecting, setConnecting] = useState(false);
+  const {
+    account,
+    isFullyLoggedIn,
+    isConnecting: connecting,
+    connect: connectSession,
+    disconnect: disconnectSession,
+  } = useWalletSession();
+
   const [step, setStep] = useState<"select" | "transfer">("select");
   const isCompact = useMediaQuery("(max-width: 1000px)");
   const { tvlUsd, tvbUsd } = useBridgeStats();
-  const restoreTriedRef = useRef(false);
 
-  const walletAddress = walletSession?.account.account ?? null;
+  const walletAddress = account?.account ?? null;
+  const isConnected = isFullyLoggedIn;
+
+  // History → connect → return to the page that asked for the wallet.
+  useEffect(() => {
+    if (!returnTo || !isFullyLoggedIn) return;
+    void navigate({ to: returnTo });
+  }, [returnTo, isFullyLoggedIn, navigate]);
 
   const { data: bridgingAddresses = [] } = useQuery({
     ...bridgingAddressesQueryOptions(source?.id),
     enabled: Boolean(walletAddress && source?.id),
   });
-
-  const connectHandlers = useMemo(
-    () => ({
-      onSession: setWalletSession,
-      onError: (message: string) => toast.error(message),
-    }),
-    [],
-  );
 
   useEffect(() => {
     if (sourceChains.length === 0) return;
@@ -759,26 +781,6 @@ function BridgeApp() {
     if (destination) persistDestinationChain(destination.id);
   }, [destination]);
 
-  // Re-enable the saved wallet after settings load.
-  useEffect(() => {
-    if (restoreTriedRef.current) return;
-    if (!settings || !source || !destination) return;
-    if (walletSession) return;
-
-    const walletName = loadStoredWalletName();
-    if (!walletName) return;
-
-    restoreTriedRef.current = true;
-    setConnecting(true);
-    void restoreWallet(
-      walletName,
-      source.id,
-      destination.id,
-      settings,
-      connectHandlers,
-    ).finally(() => setConnecting(false));
-  }, [settings, source, destination, walletSession, connectHandlers]);
-
   const canSwap = useMemo(() => {
     if (!source || !destination) return false;
     return getDstChains(destination.id, settings).some(
@@ -786,30 +788,18 @@ function BridgeApp() {
     );
   }, [source, destination, settings]);
 
-  const isConnected = Boolean(walletAddress);
-
   const connect = useCallback(async () => {
     if (!settings || !source || !destination) {
       toast.error("Networks are still loading. Please try again.");
       return false;
     }
-    setConnecting(true);
-    try {
-      return await connectWallet(
-        source.id,
-        destination.id,
-        settings,
-        connectHandlers,
-      );
-    } finally {
-      setConnecting(false);
-    }
-  }, [settings, source, destination, connectHandlers]);
+    return connectSession(source.id, destination.id, settings);
+  }, [settings, source, destination, connectSession]);
 
   const disconnect = useCallback(async () => {
-    await disconnectWallet(connectHandlers);
+    await disconnectSession();
     setStep("select");
-  }, [connectHandlers]);
+  }, [disconnectSession]);
 
   const swap = () => {
     if (!source || !destination || !canSwap) return;
@@ -1134,11 +1124,22 @@ function TransferForm({
   const [destAddress, setDestAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [copied, setCopied] = useState(false);
-  const [status, setStatus] = useState<"idle" | "preparing" | "signing">(
-    "idle",
-  );
+  const [loadingState, setLoadingState] = useState<
+    SubmitLoadingState | undefined
+  >();
   const [adjustedBridgeTxFeeDfm, setAdjustedBridgeTxFeeDfm] = useState("0");
 
+  const updateLoadingState = (newState: UpdateSubmitLoadingState) => {
+    setLoadingState(
+      (prev) =>
+        ({
+          content: newState.content ?? prev?.content ?? "",
+          txHash: newState.txHash ?? prev?.txHash,
+        }) as SubmitLoadingState,
+    );
+  };
+
+  const reactorValidatorChangeInProgress = useReactorValidatorStatus();
   const { data: tokenInfos } = useQuery(tokenInfosQueryOptions);
 
   const availableTokens = useMemo(
@@ -1363,6 +1364,13 @@ function TransferForm({
     fees.bridgingMode === BridgingModeEnum.Skyline &&
     BigInt(fees.operationFeeDfm || "0") > BigInt(0);
 
+  const isFeeInformation =
+    bridgingModeInfo.bridgingMode !== BridgingModeEnum.Reactor ||
+    !reactorValidatorChangeInProgress;
+  const reactorSubmitBlocked =
+    bridgingModeInfo.bridgingMode === BridgingModeEnum.Reactor &&
+    reactorValidatorChangeInProgress !== false;
+
   const paste = async () => {
     try {
       const text = await navigator.clipboard.readText();
@@ -1396,13 +1404,16 @@ function TransferForm({
     enteredDfm > BigInt(0) &&
     !insufficientBalance &&
     !overMaxAllowed &&
-    !insufficientCurrency;
+    !insufficientCurrency &&
+    !reactorSubmitBlocked;
 
   const navigate = useNavigate();
 
   const handleMoveFunds = async () => {
-    if (!canMoveFunds || !settings || !selectedToken) return;
-    setStatus("preparing");
+    if (!canMoveFunds || !settings || !selectedToken || reactorSubmitBlocked) {
+      return;
+    }
+    updateLoadingState({ content: "Preparing the transaction..." });
 
     try {
       const response = await submitBridgeTransfer({
@@ -1413,17 +1424,11 @@ function TransferForm({
         destinationAddress: destAddress.trim(),
         amountDisplay: amount.trim(),
         tokenID: selectedToken.tokenID,
-        updateLoadingState: (s) => {
-          if (s.content?.toLowerCase().includes("sign")) {
-            setStatus("signing");
-          } else if (s.content) {
-            setStatus("preparing");
-          }
-        },
+        updateLoadingState,
       });
 
       if (!response) {
-        setStatus("idle");
+        setLoadingState(undefined);
         return;
       }
 
@@ -1432,11 +1437,19 @@ function TransferForm({
         params: { id: String(response.id) },
       });
     } catch {
-      setStatus("idle");
+      setLoadingState(undefined);
     }
   };
 
-  const isProcessing = status !== "idle";
+  const isProcessing = !!loadingState;
+  const submitExplorerUrl =
+    loadingState?.txHash &&
+    getExplorerTxUrl(
+      source.id as ChainEnum,
+      loadingState.txHash,
+      isLZBridging(source.id, destination.id),
+      true,
+    );
 
   return (
     <div className="relative">
@@ -1695,35 +1708,43 @@ function TransferForm({
               )}
             </div>
 
-            <TooltipProvider delayDuration={200}>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 text-xs">
-                <FeeRow
-                  label={walletFeeLabel}
-                  hint={`This is the fee paid to process your transaction on the ${source.label} blockchain. Larger transactions have higher fees.`}
-                  value={formatFeeDfm(fees.userWalletFeeDfm)}
-                  loading={fees.loading}
-                />
-                <FeeRow
-                  label="Bridge Transaction Fee"
-                  hint={
-                    fees.bridgingMode === BridgingModeEnum.LayerZero
-                      ? "This fee covers the bridge blockchain transaction costs."
-                      : `This fee covers the bridge blockchain transaction costs. This fee is set to the predefined minimum. When bridging native tokens, the minimum ${feeTokenLabel} required to hold those tokens on ${source.label} is added.`
-                  }
-                  value={formatFeeDfm(adjustedBridgeTxFeeDfm)}
-                  loading={fees.loading}
-                />
-                {showOperationFee && (
+            {isFeeInformation ? (
+              <TooltipProvider delayDuration={200}>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 text-xs">
                   <FeeRow
-                    label="Bridge Operation Fee"
-                    hint="This fee covers the cost of operating the bridge, including maintaining balance between ADA and APEX during bridging."
-                    value={formatFeeDfm(fees.operationFeeDfm)}
+                    label={walletFeeLabel}
+                    hint={`This is the fee paid to process your transaction on the ${source.label} blockchain. Larger transactions have higher fees.`}
+                    value={formatFeeDfm(fees.userWalletFeeDfm)}
                     loading={fees.loading}
                   />
-                )}
-                <FeeRow label="Estimated time" value={estimatedTime} />
+                  <FeeRow
+                    label="Bridge Transaction Fee"
+                    hint={
+                      fees.bridgingMode === BridgingModeEnum.LayerZero
+                        ? "This fee covers the bridge blockchain transaction costs."
+                        : `This fee covers the bridge blockchain transaction costs. This fee is set to the predefined minimum. When bridging native tokens, the minimum ${feeTokenLabel} required to hold those tokens on ${source.label} is added.`
+                    }
+                    value={formatFeeDfm(adjustedBridgeTxFeeDfm)}
+                    loading={fees.loading}
+                  />
+                  {showOperationFee && (
+                    <FeeRow
+                      label="Bridge Operation Fee"
+                      hint="This fee covers the cost of operating the bridge, including maintaining balance between ADA and APEX during bridging."
+                      value={formatFeeDfm(fees.operationFeeDfm)}
+                      loading={fees.loading}
+                    />
+                  )}
+                  <FeeRow label="Estimated time" value={estimatedTime} />
+                </div>
+              </TooltipProvider>
+            ) : (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-5 text-center text-sm font-semibold text-foreground">
+                Bridge validator set change in progress.
+                <br />
+                Bridging is not possible at the moment.
               </div>
-            </TooltipProvider>
+            )}
           </div>
         </div>
 
@@ -1754,12 +1775,21 @@ function TransferForm({
             <TransferSpinner />
             <div className="flex flex-col items-center gap-2">
               <p
-                key={status}
-                className="animate-bridge-step-in font-display text-lg font-semibold text-foreground"
+                key={loadingState?.content}
+                className="animate-bridge-step-in inline-flex items-center gap-2 font-display text-lg font-semibold text-foreground"
               >
-                {status === "preparing"
-                  ? "Preparing the transaction…"
-                  : "Signing and submitting the bridging transaction…"}
+                {loadingState?.content}
+                {!!submitExplorerUrl && (
+                  <a
+                    href={submitExplorerUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex text-foreground transition-colors hover:text-[oklch(0.85_0.15_235)]"
+                    aria-label="Open transaction in explorer"
+                  >
+                    <ExternalLink className="h-5 w-5" />
+                  </a>
+                )}
               </p>
               <p className="flex items-center gap-1.5 text-xs font-medium text-[oklch(0.78_0.19_25)]">
                 <AlertCircle className="h-3.5 w-3.5" />

@@ -1,5 +1,6 @@
 import { getSrcChains, isEvmChain, isSolanaChain } from "@/lib/chains";
 import type { SettingsResponse } from "@/lib/api/settings";
+import appSettings from "@/settings/appSettings";
 import cardanoWalletHandler, {
   SUPPORTED_WALLETS,
 } from "@/lib/wallet/cardanoWallet";
@@ -18,6 +19,7 @@ import solWalletHandler, {
 } from "@/lib/wallet/solWallet";
 import { retry, shortRetryOptions, shouldUseMainnet } from "@/lib/wallet/utils";
 import { ApexBridgeNetwork } from "@/lib/wallet/enums";
+import { ChainEnum } from "@/swagger/apexBridgeApiService";
 
 export type WalletAccount = {
   account: string;
@@ -51,15 +53,9 @@ export function persistWalletName(name: string | null) {
   else localStorage.removeItem(STORAGE_WALLET_KEY);
 }
 
-export function loadStoredWalletAccount(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(STORAGE_ACCOUNT_KEY);
-}
-
-export function persistWalletAccount(account: string | null) {
+function clearLegacyStoredAccount() {
   if (typeof window === "undefined") return;
-  if (account) localStorage.setItem(STORAGE_ACCOUNT_KEY, account);
-  else localStorage.removeItem(STORAGE_ACCOUNT_KEY);
+  localStorage.removeItem(STORAGE_ACCOUNT_KEY);
 }
 
 export function loadStoredSourceChain(): string | null {
@@ -82,6 +78,24 @@ export function persistDestinationChain(chain: string | null) {
   if (typeof window === "undefined") return;
   if (chain) localStorage.setItem(STORAGE_DEST_CHAIN_KEY, chain);
   else localStorage.removeItem(STORAGE_DEST_CHAIN_KEY);
+}
+
+export function initChainsState(): {
+  chain: string;
+  destinationChain: string;
+} {
+  const chain = loadStoredSourceChain();
+  const destinationChain = loadStoredDestinationChain();
+
+  if (!chain || !destinationChain || chain === destinationChain) {
+    const src = ChainEnum.Prime;
+    const dst = appSettings.isSkyline ? ChainEnum.Cardano : ChainEnum.Vector;
+    persistSourceChain(src);
+    persistDestinationChain(dst);
+    return { chain: src, destinationChain: dst };
+  }
+
+  return { chain, destinationChain };
 }
 
 async function checkAndSetEvmData(
@@ -138,7 +152,6 @@ async function checkAndSetEvmData(
   }
 
   persistWalletName(selectedWalletName);
-  persistWalletAccount(account);
   handlers.onSession({
     walletName: selectedWalletName,
     account: { account, networkId, network },
@@ -275,7 +288,6 @@ async function enableCardanoWallet(
 
   const account = await cardanoWalletHandler.getChangeAddress();
   persistWalletName(selectedWalletName);
-  persistWalletAccount(account);
   handlers.onSession({
     walletName: selectedWalletName,
     account: { account, networkId, network },
@@ -322,7 +334,6 @@ async function enableSolanaWallet(
   }
 
   persistWalletName(selectedWalletName);
-  persistWalletAccount(account);
   handlers.onSession({
     walletName: selectedWalletName,
     account: { account, networkId, network },
@@ -399,7 +410,7 @@ async function enableWallet(
 
 export async function disconnectWallet(handlers?: ConnectHandlers) {
   persistWalletName(null);
-  persistWalletAccount(null);
+  clearLegacyStoredAccount();
   cardanoWalletHandler.clearEnabledWallet();
   evmWalletHandler.clearEnabledWallet();
   await solWalletHandler.disconnect();
@@ -460,4 +471,31 @@ export async function restoreWallet(
     await disconnectWallet(handlers);
   }
   return success;
+}
+
+let onLoadCalled = false;
+
+export async function onLoadWallet(
+  selectedWalletName: string,
+  srcChain: string,
+  dstChain: string,
+  settings: SettingsResponse,
+  handlers: ConnectHandlers,
+): Promise<void> {
+  if (onLoadCalled) {
+    return;
+  }
+
+  onLoadCalled = true;
+
+  const success = await enableWallet(
+    selectedWalletName,
+    srcChain,
+    dstChain,
+    settings,
+    handlers,
+  );
+  if (!success) {
+    await disconnectWallet(handlers);
+  }
 }

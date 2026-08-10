@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { getAssetsSumMap, type SimpleUtxo } from "@/lib/cardano/utxoMinValue";
 import { NewAddressFromBytes } from "@/lib/wallet/address/addreses";
 import { ApexBridgeNetwork } from "@/lib/wallet/enums";
 import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
+import type { UtxoRetriever } from "@/lib/wallet/utxoRetriever";
 import { toBytes } from "@/lib/wallet/utils";
 
 type WalletInfo = {
@@ -15,7 +17,9 @@ type Cip30Api = {
   getChangeAddress: () => Promise<string>;
   getBalance: () => Promise<string>;
   getUtxos?: () => Promise<string[] | undefined>;
-  getCollateral?: () => Promise<string[] | undefined>;
+  getCollateral?: (params?: {
+    amount?: string;
+  }) => Promise<string[] | undefined>;
   signTx: (tx: string, partialSign?: boolean) => Promise<string>;
   submitTx: (tx: string) => Promise<string>;
   experimental?: {
@@ -45,7 +49,7 @@ const ETERNL_NETWORK_ID_TO_APEX_BRIDGE_NETWORK: Record<
   afpm: ApexBridgeNetwork.MainnetPrime,
 };
 
-class CardanoWalletHandler {
+class CardanoWalletHandler implements UtxoRetriever {
   private _enabledWallet: Cip30Api | undefined;
 
   getNativeAPI = () => this._enabledWallet;
@@ -94,6 +98,29 @@ class CardanoWalletHandler {
   };
 
   checkWallet = (): boolean => !!this._enabledWallet;
+
+  version = (): unknown => {
+    const nativeAPI = this.getNativeAPI();
+    const experimentalAPI = nativeAPI?.experimental;
+    if (!experimentalAPI) {
+      captureAndThrowError(
+        "experimental not defined",
+        "cardanoWallet.ts",
+        "version",
+      );
+    }
+
+    const appVersion = experimentalAPI.appVersion;
+    if (!appVersion) {
+      captureAndThrowError(
+        "appVersion not defined",
+        "cardanoWallet.ts",
+        "version",
+      );
+    }
+
+    return appVersion;
+  };
 
   private _checkWalletAndThrow = () => {
     if (!this.checkWallet()) {
@@ -165,37 +192,43 @@ class CardanoWalletHandler {
     return await this._enabledWallet!.getNetworkId();
   };
 
-  getBalance = async (): Promise<Record<string, bigint>> => {
+  getAllUtxos = async (includeCollateral = true): Promise<SimpleUtxo[]> => {
     this._checkWalletAndThrow();
-    const { Value } = await import("@emurgo/cardano-serialization-lib-asmjs");
-    const balanceHex = await this._enabledWallet!.getBalance();
-    const value = Value.from_bytes(toBytes(balanceHex));
-    const result: Record<string, bigint> = {
-      lovelace: BigInt(value.coin().to_str()),
-    };
 
-    const multi = value.multiasset();
-    if (!multi) return result;
+    const address = await this.getChangeAddress();
+    const networkId = await this.getNetworkId();
+    const allUtxosMap: { [key: string]: SimpleUtxo } = {};
 
-    const policies = multi.keys();
-    for (let i = 0; i < policies.len(); i++) {
-      const policy = policies.get(i);
-      const assets = multi.get(policy);
-      if (!assets) continue;
-      const names = assets.keys();
-      for (let j = 0; j < names.len(); j++) {
-        const assetName = names.get(j);
-        const amount = assets.get(assetName);
-        if (!amount) continue;
-        const nameBytes = assetName.name();
-        const nameHex = Array.from(nameBytes)
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
-        result[`${policy.to_hex()}${nameHex}`] = BigInt(amount.to_str());
+    const utxoHexes = (await this._enabledWallet!.getUtxos?.()) ?? [];
+    for (const hex of utxoHexes) {
+      const utxo = await parseCip30Utxo(hex, networkId);
+      if (utxo.output.address === address) {
+        allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] = utxo;
       }
     }
 
-    return result;
+    if (includeCollateral) {
+      const collateralHexes =
+        (await this._enabledWallet!.getCollateral?.()) ?? [];
+      for (const hex of collateralHexes) {
+        const utxo = await parseCip30Utxo(hex, networkId);
+        if (utxo.output.address === address) {
+          allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] = utxo;
+        }
+      }
+    }
+
+    return Object.values(allUtxosMap);
+  };
+
+  getBalance = async (
+    allUtxos?: SimpleUtxo[],
+  ): Promise<Record<string, bigint>> => {
+    this._checkWalletAndThrow();
+    if (allUtxos === undefined) {
+      allUtxos = await this.getAllUtxos();
+    }
+    return getAssetsSumMap(allUtxos);
   };
 
   /**
@@ -247,6 +280,66 @@ async function addBrowserWitnesses(
   }
 
   return fixedTx.to_hex();
+}
+
+async function parseCip30Utxo(
+  hex: string,
+  networkId: number,
+): Promise<SimpleUtxo> {
+  const { TransactionUnspentOutput } =
+    await import("@emurgo/cardano-serialization-lib-asmjs");
+  const tuo = TransactionUnspentOutput.from_bytes(toBytes(hex));
+  const input = tuo.input();
+  const output = tuo.output();
+  const value = output.amount();
+
+  const amount: { unit: string; quantity: string }[] = [
+    { unit: "lovelace", quantity: value.coin().to_str() },
+  ];
+
+  const multi = value.multiasset();
+  if (multi) {
+    const policies = multi.keys();
+    for (let i = 0; i < policies.len(); i++) {
+      const policy = policies.get(i);
+      const assets = multi.get(policy);
+      if (!assets) continue;
+      const names = assets.keys();
+      for (let j = 0; j < names.len(); j++) {
+        const assetName = names.get(j);
+        const qty = assets.get(assetName);
+        if (!qty) continue;
+        const nameBytes = assetName.name();
+        const nameHex = Array.from(nameBytes)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        amount.push({
+          unit: `${policy.to_hex()}${nameHex}`,
+          quantity: qty.to_str(),
+        });
+      }
+    }
+  }
+
+  const txHashBytes = input.transaction_id().to_bytes();
+  const txHash = Array.from(txHashBytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+
+  const addrBytes = output.address().to_bytes();
+  const customAddr = NewAddressFromBytes(addrBytes);
+  const address = customAddr?.String(networkId) ?? output.address().to_bech32();
+
+  return {
+    input: {
+      txHash,
+      outputIndex: input.index(),
+    },
+    output: {
+      address,
+      amount,
+    },
+  };
 }
 
 const cardanoWalletHandler = new CardanoWalletHandler();

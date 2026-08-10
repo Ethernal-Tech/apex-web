@@ -17,8 +17,8 @@ const NEXUS_RPC_URLS = {
 } as const;
 
 /**
- * Native APEX held by the Nexus OFT contract. Read straight from the chain,
- * the way the old frontend did — it is not part of `GET /lockedTokens`.
+ * Native APEX held by the Nexus OFT contract. Read straight from the chain —
+ * it is not part of `GET /lockedTokens`.
  *
  * Plain JSON-RPC rather than web3, so the landing page does not have to pull
  * the whole web3 bundle in just for a balance read.
@@ -110,7 +110,6 @@ export type BridgeStats = {
 /**
  * TVL / TVB in USD.
  *
- * Same inputs as the old frontend — `GET /lockedTokens` plus the LayerZero
  * locked APEX read from Nexus — but instead of expressing everything in APEX,
  * every token total is multiplied by its USD price from `GET /tokenPrice` and
  * summed.

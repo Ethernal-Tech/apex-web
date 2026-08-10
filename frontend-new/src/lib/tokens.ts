@@ -13,6 +13,8 @@ export const LovelaceTokenName = "lovelace";
  * tokenInfos config gives no color at all. See useTokenColor.
  */
 export const DEFAULT_TOKEN_COLOR = "#3B92FF";
+export const apexID = 1;
+
 export interface IDirectionFullConfig {
   directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto };
   ecosystemTokens: BridgingSettingsEcosystemTokenDto[];
@@ -58,6 +60,55 @@ export const getCurrencyID = (
   );
 
   return currencyID ? +currencyID : undefined;
+};
+
+export const getWrappedCurrencyID = (
+  settings: IDirectionFullConfig,
+  chain: string,
+): number | undefined => {
+  if (
+    !settings.directionConfig[chain] ||
+    !settings.directionConfig[chain].tokens
+  ) {
+    return;
+  }
+
+  const wrappedCurrencyID = Object.keys(
+    settings.directionConfig[chain].tokens,
+  ).find(
+    (x: string) => settings.directionConfig[chain].tokens[+x].isWrappedCurrency,
+  );
+
+  return wrappedCurrencyID ? +wrappedCurrencyID : undefined;
+};
+
+export const getRealTokenIDFromEntity = (
+  settings: IDirectionFullConfig,
+  transaction:
+    | {
+        tokenID?: number;
+        nativeTokenAmount?: string;
+        originChain: string;
+      }
+    | undefined,
+) => {
+  if (!transaction) return apexID;
+
+  if (transaction.tokenID) return transaction.tokenID;
+
+  if (BigInt(transaction.nativeTokenAmount || "0") === BigInt(0)) {
+    const currencyID = getCurrencyID(settings, transaction.originChain);
+
+    return currencyID || apexID;
+  }
+
+  // for backward compatibility reasons
+  const wrappedCurrencyID = getWrappedCurrencyID(
+    settings,
+    transaction.originChain,
+  );
+
+  return wrappedCurrencyID || apexID;
 };
 
 export function getTokenDisplayName(

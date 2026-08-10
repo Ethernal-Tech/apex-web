@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkToggle } from "@/components/NetworkToggle";
@@ -16,6 +15,7 @@ import {
   Filter,
   Loader2,
   Search,
+  Undo2,
   Wallet,
   X,
   XCircle,
@@ -28,19 +28,27 @@ import {
   toFixedAmount,
 } from "@/lib/amount";
 import { fetchBridgeTransactions } from "@/lib/api/bridgeTransactions";
-import { isStatusFinal } from "@/lib/bridging/statusUtils";
+import { settingsQueryOptions } from "@/lib/api/settings";
+import type { SettingsResponse } from "@/lib/api/settings";
+import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
+import {
+  isStatusFinal,
+  getStatusIconAndLabel,
+} from "@/lib/bridging/statusUtils";
+import type { StatusKind } from "@/lib/bridging/statusUtils";
 import { CHAIN_META } from "@/lib/chains";
 import {
-  disconnectWallet,
-  loadStoredSourceChain,
-  loadStoredWalletAccount,
-} from "@/lib/wallet/connect";
+  getCurrencyID,
+  getRealTokenIDFromEntity,
+  getTokenDisplayName,
+} from "@/lib/tokens";
+import { useBridgeStats } from "@/hooks/use-bridge-stats";
+import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
+import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
 import {
   BridgeTransactionDto,
   TransactionStatusEnum,
 } from "@/swagger/apexBridgeApiService";
-import { useBridgeStats } from "@/hooks/use-bridge-stats";
-import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -70,7 +78,7 @@ const CHAINS: Record<string, ChainMeta> = Object.fromEntries(
   ]),
 );
 
-type Status = "success" | "pending" | "failed";
+type Status = StatusKind;
 
 type Tx = {
   id: string;
@@ -78,28 +86,24 @@ type Tx = {
   destination: string;
   amount: number;
   amountDisplay: string;
+  currencyLabel: string;
   tokenAmount: number | null;
   tokenAmountDisplay: string | null;
+  tokenLabel: string | null;
   receiver: string;
   sender: string;
   createdAt: Date;
   finishedAt: Date | null;
   status: Status;
+  statusLabel: string;
   rawStatus: TransactionStatusEnum;
+  isRefund: boolean;
 };
 
-function mapStatus(status: TransactionStatusEnum): Status {
-  if (status === TransactionStatusEnum.ExecutedOnDestination) return "success";
-  if (
-    status === TransactionStatusEnum.InvalidRequest ||
-    status === TransactionStatusEnum.FailedToExecuteOnDestination
-  ) {
-    return "failed";
-  }
-  return "pending";
-}
-
-function mapDtoToTx(dto: BridgeTransactionDto): Tx {
+function mapDtoToTx(
+  dto: BridgeTransactionDto,
+  settings: SettingsResponse | undefined,
+): Tx {
   const amountDisplay = toFixedAmount(
     convertDfmToApex(dto.amount, dto.originChain),
     6,
@@ -111,20 +115,41 @@ function mapDtoToTx(dto: BridgeTransactionDto): Tx {
     ? toFixedAmount(convertDfmToApex(dto.nativeTokenAmount, dto.originChain), 6)
     : null;
 
+  const currencyID = settings
+    ? getCurrencyID(settings, dto.originChain)
+    : undefined;
+  const currencyLabel =
+    getTokenDisplayName(settings, currencyID) ||
+    CHAINS[dto.originChain]?.symbol ||
+    "TOKEN";
+
+  const realTokenID = settings
+    ? getRealTokenIDFromEntity(settings, dto)
+    : undefined;
+  const tokenLabel = hasToken
+    ? getTokenDisplayName(settings, realTokenID) || null
+    : null;
+
+  const statusMeta = getStatusIconAndLabel(dto.status, !!dto.isRefund);
+
   return {
     id: String(dto.id),
     origin: dto.originChain,
     destination: dto.destinationChain,
     amount: Number(amountDisplay),
     amountDisplay,
+    currencyLabel,
     tokenAmount: tokenAmountDisplay != null ? Number(tokenAmountDisplay) : null,
     tokenAmountDisplay,
+    tokenLabel,
     receiver: dto.receiverAddresses,
     sender: dto.senderAddress,
     createdAt: dto.createdAt,
     finishedAt: dto.finishedAt ?? null,
-    status: mapStatus(dto.status),
+    status: statusMeta.kind,
+    statusLabel: statusMeta.label,
     rawStatus: dto.status,
+    isRefund: !!dto.isRefund,
   };
 }
 
@@ -164,10 +189,20 @@ function TransactionsPage() {
   const isCompact = useMediaQuery("(max-width: 1000px)");
   const { tvlUsd, tvbUsd } = useBridgeStats();
   const navigate = useNavigate();
+  const { data: settings } = useQuery(settingsQueryOptions);
+  useQuery(tokenInfosQueryOptions);
+  const {
+    account,
+    isFullyLoggedIn,
+    isConnecting: isRestoring,
+    sourceChain: sessionSourceChain,
+    disconnect: disconnectSession,
+  } = useWalletSession();
 
-  const [walletAddress, setWalletAddress] = useState<string | null>(() =>
-    loadStoredWalletAccount(),
-  );
+  const walletAddress = account?.account ?? null;
+  const isConnected = isFullyLoggedIn;
+  const sourceChain = isConnected ? sessionSourceChain : null;
+
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -176,31 +211,35 @@ function TransactionsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [view, setView] = useState<"world" | "user">("world");
+  // Until the user clicks World/Your, connected ⇒ Your history.
+  const viewTouchedRef = useRef(false);
 
   useEffect(() => {
-    const sync = () => setWalletAddress(loadStoredWalletAccount());
-    sync();
-    window.addEventListener("storage", sync);
-    window.addEventListener("focus", sync);
-    return () => {
-      window.removeEventListener("storage", sync);
-      window.removeEventListener("focus", sync);
-    };
-  }, []);
+    if (!isConnected) {
+      viewTouchedRef.current = false;
+      setView("world");
+      return;
+    }
+    if (!viewTouchedRef.current) {
+      setView("user");
+    }
+  }, [isConnected]);
 
-  const isConnected = Boolean(walletAddress);
   const connect = () => {
-    navigate({ to: "/bridge-app" });
-    toast.message("Connect your wallet on the bridge to view your history.");
+    navigate({
+      to: "/bridge-app",
+      search: { returnTo: "/transactions" },
+    });
   };
   const disconnect = async () => {
-    await disconnectWallet();
-    setWalletAddress(null);
+    await disconnectSession();
+    viewTouchedRef.current = false;
     setView("world");
   };
 
   const changeView = (v: "world" | "user") => {
     if (v === "user" && !isConnected) return;
+    viewTouchedRef.current = true;
     setView(v);
     setPage(1);
     if (v === "user") setFilters((f) => ({ ...f, origin: "", sender: "" }));
@@ -211,6 +250,7 @@ function TransactionsPage() {
       "bridgeTransactions",
       view,
       walletAddress,
+      sourceChain,
       page,
       pageSize,
       sortKey,
@@ -220,15 +260,15 @@ function TransactionsPage() {
     ] as const,
     enabled: view === "world" || Boolean(walletAddress),
     queryFn: async () => {
-      // User history: sender = account, origin = wallet chain.
+      // User history: sender = live account, origin = restored source chain.
       // World history: omit sender unless filtered.
-      const walletChain = loadStoredSourceChain() || undefined;
-
       const senderAddress =
         view === "user" ? walletAddress! : filters.sender.trim() || undefined;
 
       const originChain =
-        view === "user" ? walletChain : filters.origin || undefined;
+        view === "user"
+          ? sourceChain || undefined
+          : filters.origin || undefined;
 
       const convertAmount = (value: string) => {
         if (!value.trim()) return undefined;
@@ -276,8 +316,8 @@ function TransactionsPage() {
   });
 
   const paged = useMemo(
-    () => (listQuery.data?.items ?? []).map(mapDtoToTx),
-    [listQuery.data],
+    () => (listQuery.data?.items ?? []).map((dto) => mapDtoToTx(dto, settings)),
+    [listQuery.data, settings],
   );
 
   const total = listQuery.data?.total ?? 0;
@@ -368,10 +408,19 @@ function TransactionsPage() {
             <button
               type="button"
               onClick={isConnected ? disconnect : connect}
-              className="btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold"
+              disabled={isRestoring}
+              className="btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
             >
-              <Wallet className="h-4 w-4" />
-              {isConnected ? formatAddress(walletAddress) : "Connect Wallet"}
+              {isRestoring ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Wallet className="h-4 w-4" />
+              )}
+              {isRestoring
+                ? "Connecting…"
+                : isConnected
+                  ? formatAddress(walletAddress)
+                  : "Connect Wallet"}
             </button>
           </div>
         </div>
@@ -769,9 +818,16 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
       </td>
       <td className="px-5 py-4">
         {tx.tokenAmountDisplay != null ? (
-          <div className="font-display text-sm text-foreground">
-            {tx.tokenAmountDisplay}
-          </div>
+          <>
+            <div className="font-display text-sm text-foreground">
+              {tx.tokenAmountDisplay}
+            </div>
+            {tx.tokenLabel && (
+              <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                {tx.tokenLabel}
+              </div>
+            )}
+          </>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
@@ -803,7 +859,7 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
         )}
       </td>
       <td className="px-5 py-4">
-        <StatusPill status={tx.status} />
+        <StatusPill status={tx.status} label={tx.statusLabel} />
       </td>
       {!compact && (
         <td className="px-5 py-4 text-right">
@@ -846,22 +902,30 @@ function ChainCell({
   );
 }
 
-function StatusPill({ status }: { status: Status }) {
+function StatusPill({ status, label }: { status: Status; label: string }) {
+  const caption = label.charAt(0).toUpperCase() + label.slice(1);
+
   if (status === "success")
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.72_0.19_155_/_0.4)] bg-[oklch(0.72_0.19_155_/_0.12)] px-2.5 py-1 text-[11px] font-semibold text-[oklch(0.85_0.18_155)]">
-        <CheckCircle2 className="h-3.5 w-3.5" /> Success
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.72_0.19_155_/_0.4)] bg-[oklch(0.72_0.19_155_/_0.12)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[oklch(0.85_0.18_155)]">
+        <CheckCircle2 className="h-3.5 w-3.5" /> {caption}
       </span>
     );
   if (status === "failed")
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.62_0.24_27_/_0.5)] bg-[oklch(0.62_0.24_27_/_0.12)] px-2.5 py-1 text-[11px] font-semibold text-[oklch(0.8_0.2_27)]">
-        <XCircle className="h-3.5 w-3.5" /> Failed
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.62_0.24_27_/_0.5)] bg-[oklch(0.62_0.24_27_/_0.12)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[oklch(0.8_0.2_27)]">
+        <XCircle className="h-3.5 w-3.5" /> {caption}
+      </span>
+    );
+  if (status === "refunded" || status === "refunding")
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.78_0.14_85_/_0.45)] bg-[oklch(0.78_0.14_85_/_0.12)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[oklch(0.88_0.12_85)]">
+        <Undo2 className="h-3.5 w-3.5" /> {caption}
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.72_0.19_245_/_0.4)] bg-[oklch(0.72_0.19_245_/_0.12)] px-2.5 py-1 text-[11px] font-semibold text-[oklch(0.85_0.15_235)]">
-      <Clock className="h-3.5 w-3.5 animate-pulse" /> Pending
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.72_0.19_245_/_0.4)] bg-[oklch(0.72_0.19_245_/_0.12)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[oklch(0.85_0.15_235)]">
+      <Clock className="h-3.5 w-3.5 animate-pulse" /> {caption}
     </span>
   );
 }
