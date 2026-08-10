@@ -31,6 +31,8 @@ export const apexID = 1;
 export const adaID = 2;
 export const capexID = 3;
 export const xadaID = 4;
+export const polID = 5;
+export const papexID = 6;
 
 export const lzEthID = 1000001;
 export const bapexID = 1000002;
@@ -268,6 +270,18 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 		tokenID: xadaID,
 		icon: UnknownTokenIcon, //AdaIcon,
 		label: 'xADA',
+		borderColor: '#0538AF',
+	},
+	[polID]: {
+		tokenID: polID,
+		icon: PolygonIcon,
+		label: 'POL',
+		borderColor: '#7B3FE4',
+	},
+	[papexID]: {
+		tokenID: papexID,
+		icon: ApexIcon,
+		label: 'pAP3X',
 		borderColor: '#0538AF',
 	},
 	[lzEthID]: {
