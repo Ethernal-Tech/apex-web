@@ -32,6 +32,14 @@
 				"coingecko": "solana",
 				"defillama": "coingecko:solana"
 			}
+		},
+		{
+			"symbol": "POL",
+			"aliases": ["WPOL", "MATIC"],
+			"ids": {
+				"coingecko": "polygon-ecosystem-token",
+				"defillama": "coingecko:polygon-ecosystem-token"
+			}
 		}
 	]
 }
