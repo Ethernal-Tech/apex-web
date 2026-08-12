@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import appSettings from "@/settings/appSettings";
-import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
+import { captureAndThrowError } from "@/lib/wallet/errors";
 import {
   confirmTransactionSignature,
   getBalanceLamports,
@@ -114,20 +114,7 @@ class SolWalletHandler {
         "getSplTokenBalancesByMint",
       );
     }
-    try {
-      return await getSplTokenBalancesByMintLamports(
-        this._address,
-        this._useMainnet,
-      );
-    } catch (err) {
-      captureException(err, {
-        tags: {
-          component: "solWallet.ts",
-          action: "getSplTokenBalancesByMint",
-        },
-      });
-      return {};
-    }
+    return getSplTokenBalancesByMintLamports(this._address, this._useMainnet);
   };
 
   signAndSendTransaction = async (txRawBase64: string): Promise<string> => {

@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"net/http"
 	"slices"
+	"strings"
 
 	commonRequest "github.com/Ethernal-Tech/cardano-api/api/model/common/request"
 	commonResponse "github.com/Ethernal-Tech/cardano-api/api/model/common/response"
@@ -52,6 +53,7 @@ func (c *ReactorTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
 		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
+		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance},
 	}
 }
 
@@ -350,4 +352,78 @@ func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(
 	}
 
 	return txSender, receivers, nil
+}
+
+// @Summary Get address balance for a Cardano-family chain
+// @Description Returns native lovelace and aggregated native-asset balances for the given address
+// @Tags CardanoTx
+// @Produce json
+// @Param chainId query string true "Cardano chain ID (prime, vector)"
+// @Param address query string true "Bech32 address on that chain"
+// @Success 200 {object} response.AddressBalanceResponse "OK - Address balance."
+// @Failure 400 {object} response.ErrorResponse "Bad Request – missing/invalid query params or balance lookup failed."
+// @Failure 401 {object} response.ErrorResponse "Unauthorized – API key missing or invalid."
+// @Security ApiKeyAuth
+// @Router /CardanoTx/GetBalance [get]
+func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Request) {
+	c.logger.Debug("getBalance request", "url", r.URL)
+
+	queryValues := r.URL.Query()
+
+	chainIDArr, exists := queryValues["chainId"]
+	if !exists || len(chainIDArr) == 0 || strings.TrimSpace(chainIDArr[0]) == "" {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			errors.New("chainId missing from query"), c.logger)
+
+		return
+	}
+
+	addressArr, exists := queryValues["address"]
+	if !exists || len(addressArr) == 0 || strings.TrimSpace(addressArr[0]) == "" {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			errors.New("address missing from query"), c.logger)
+
+		return
+	}
+
+	chainID := strings.TrimSpace(chainIDArr[0])
+	address := strings.TrimSpace(addressArr[0])
+
+	if !common.IsCardanoChainID(chainID) {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("unsupported chainId for GetBalance: %s", chainID), c.logger)
+
+		return
+	}
+
+	cfg, exists := c.appConfig.CardanoChains[chainID]
+	if !exists || cfg == nil || !cfg.IsEnabled {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("chain is not configured or disabled: %s", chainID), c.logger)
+
+		return
+	}
+
+	if !cardanotx.IsValidOutputAddress(address, cfg.NetworkID) {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("invalid address for chain %s", chainID), c.logger)
+
+		return
+	}
+
+	balance, err := utils.FetchCardanoAddressBalance(r.Context(), cfg, address)
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("get balance: %w", err), c.logger)
+
+		return
+	}
+
+	utils.WriteResponse(w, r, http.StatusOK, balance, c.logger)
 }

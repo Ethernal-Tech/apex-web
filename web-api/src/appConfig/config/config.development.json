@@ -43,5 +43,11 @@
     "scanUrl": "https://scan.layerzero-api.com/v1",
     "networks": [
     ]
+  },
+  "balances": {
+    "solanaRpcUrl": "https://api.devnet.solana.com",
+    "evmRpcUrls": {
+      "nexus": "https://rpc.nexus.testnet.apexfusion.org"
+    }
   }
 }

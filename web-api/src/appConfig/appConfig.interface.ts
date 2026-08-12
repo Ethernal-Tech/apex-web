@@ -111,6 +111,14 @@ export interface AppConfig {
 	secrets: {
 		apiKeys: string[];
 	};
+	/**
+	 * Optional overrides for `GET /balance` (EVM / Solana only).
+	 * Missing RPC URLs fall back to built-in defaults in BalanceService.
+	 */
+	balances?: {
+		evmRpcUrls?: { [chain: string]: string };
+		solanaRpcUrl?: string;
+	};
 }
 
 export type DeepPartial<T> = T extends object

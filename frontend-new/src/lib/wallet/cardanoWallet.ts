@@ -195,27 +195,27 @@ class CardanoWalletHandler implements UtxoRetriever {
   getAllUtxos = async (includeCollateral = true): Promise<SimpleUtxo[]> => {
     this._checkWalletAndThrow();
 
-    const address = await this.getChangeAddress();
     const networkId = await this.getNetworkId();
+    const changeAddrHex = await this._enabledWallet!.getChangeAddress();
+    const changeAddrBytes = toBytes(changeAddrHex);
+    const displayAddress =
+      NewAddressFromBytes(changeAddrBytes)?.String(networkId) ?? changeAddrHex;
+
     const allUtxosMap: { [key: string]: SimpleUtxo } = {};
 
-    const utxoHexes = (await this._enabledWallet!.getUtxos?.()) ?? [];
-    for (const hex of utxoHexes) {
-      const utxo = await parseCip30Utxo(hex, networkId);
-      if (utxo.output.address === address) {
-        allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] = utxo;
+    const collect = async (hexes: string[]) => {
+      for (const hex of hexes) {
+        const parsed = await parseCip30Utxo(hex, displayAddress);
+        if (!bytesEqual(parsed.addrBytes, changeAddrBytes)) continue;
+        allUtxosMap[
+          `${parsed.utxo.input.txHash}#${parsed.utxo.input.outputIndex}`
+        ] = parsed.utxo;
       }
-    }
+    };
 
+    await collect((await this._enabledWallet!.getUtxos?.()) ?? []);
     if (includeCollateral) {
-      const collateralHexes =
-        (await this._enabledWallet!.getCollateral?.()) ?? [];
-      for (const hex of collateralHexes) {
-        const utxo = await parseCip30Utxo(hex, networkId);
-        if (utxo.output.address === address) {
-          allUtxosMap[`${utxo.input.txHash}#${utxo.input.outputIndex}`] = utxo;
-        }
-      }
+      await collect((await this._enabledWallet!.getCollateral?.()) ?? []);
     }
 
     return Object.values(allUtxosMap);
@@ -225,10 +225,13 @@ class CardanoWalletHandler implements UtxoRetriever {
     allUtxos?: SimpleUtxo[],
   ): Promise<Record<string, bigint>> => {
     this._checkWalletAndThrow();
-    if (allUtxos === undefined) {
-      allUtxos = await this.getAllUtxos();
+    if (allUtxos !== undefined) {
+      return getAssetsSumMap(allUtxos);
     }
-    return getAssetsSumMap(allUtxos);
+
+    // Prefer CIP-30 Value CBOR — no per-UTXO address decode needed for display.
+    const balanceHex = await this._enabledWallet!.getBalance();
+    return parseCip30Value(balanceHex);
   };
 
   /**
@@ -282,10 +285,58 @@ async function addBrowserWitnesses(
   return fixedTx.to_hex();
 }
 
+function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/** Parse CIP-30 `getBalance` Value CBOR → unit → amount. */
+async function parseCip30Value(
+  balanceHex: string,
+): Promise<Record<string, bigint>> {
+  const { Value } = await import("@emurgo/cardano-serialization-lib-asmjs");
+  const value = Value.from_bytes(toBytes(balanceHex));
+  const out: Record<string, bigint> = {
+    lovelace: BigInt(value.coin().to_str()),
+  };
+
+  const multi = value.multiasset();
+  if (!multi) return out;
+
+  const policies = multi.keys();
+  for (let i = 0; i < policies.len(); i++) {
+    const policy = policies.get(i);
+    const assets = multi.get(policy);
+    if (!assets) continue;
+    const names = assets.keys();
+    for (let j = 0; j < names.len(); j++) {
+      const assetName = names.get(j);
+      const qty = assets.get(assetName);
+      if (!qty) continue;
+      const unit = `${bytesToHex(policy.to_bytes())}${bytesToHex(assetName.name())}`;
+      out[unit] = BigInt(qty.to_str());
+    }
+  }
+
+  return out;
+}
+
+/**
+ * Parse a CIP-30 UTXO hex. Address string is supplied by the caller
+ */
 async function parseCip30Utxo(
   hex: string,
-  networkId: number,
-): Promise<SimpleUtxo> {
+  displayAddress: string,
+): Promise<{ utxo: SimpleUtxo; addrBytes: Uint8Array }> {
   const { TransactionUnspentOutput } =
     await import("@emurgo/cardano-serialization-lib-asmjs");
   const tuo = TransactionUnspentOutput.from_bytes(toBytes(hex));
@@ -309,35 +360,25 @@ async function parseCip30Utxo(
         const assetName = names.get(j);
         const qty = assets.get(assetName);
         if (!qty) continue;
-        const nameBytes = assetName.name();
-        const nameHex = Array.from(nameBytes)
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
         amount.push({
-          unit: `${policy.to_hex()}${nameHex}`,
+          unit: `${bytesToHex(policy.to_bytes())}${bytesToHex(assetName.name())}`,
           quantity: qty.to_str(),
         });
       }
     }
   }
 
-  const txHashBytes = input.transaction_id().to_bytes();
-  const txHash = Array.from(txHashBytes)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  const addrBytes = output.address().to_bytes();
-  const customAddr = NewAddressFromBytes(addrBytes);
-  const address = customAddr?.String(networkId) ?? output.address().to_bech32();
-
   return {
-    input: {
-      txHash,
-      outputIndex: input.index(),
-    },
-    output: {
-      address,
-      amount,
+    addrBytes: output.address().to_bytes(),
+    utxo: {
+      input: {
+        txHash: bytesToHex(input.transaction_id().to_bytes()),
+        outputIndex: input.index(),
+      },
+      output: {
+        address: displayAddress,
+        amount,
+      },
     },
   };
 }

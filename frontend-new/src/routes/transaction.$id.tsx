@@ -44,6 +44,7 @@ import {
   type BridgeTransactionDto,
 } from "@/swagger/apexBridgeApiService";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
+import { useLiveTxBalances } from "@/hooks/use-live-tx-balances";
 import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
 
 export const Route = createFileRoute("/transaction/$id")({
@@ -260,6 +261,27 @@ function TransactionPage() {
   const showAsRefund = isRefund && !overallFailed;
   const statusLabel = getOverallStatusLabel(statusToShow, isRefund);
   const showFinalDetails = !!tx && isStatusFinal(rawStatus);
+  // Keep balances visible after finalization if the user watched this tx
+  // while it was still in progress (so the destination bump stays on screen).
+  // Opening an already-final tx from history does not show balances.
+  const [shouldTrackBalances, setShouldTrackBalances] = useState(false);
+  useEffect(() => {
+    setShouldTrackBalances(false);
+  }, [txId]);
+  useEffect(() => {
+    if (tx && !isStatusFinal(rawStatus)) {
+      setShouldTrackBalances(true);
+    }
+  }, [tx, rawStatus]);
+
+  const liveBalances = useLiveTxBalances({
+    tx,
+    settings,
+    sourceLabel: source.label,
+    destinationLabel: destination.label,
+    isFinal: !!tx && isStatusFinal(rawStatus),
+    shouldTrackBalances,
+  });
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -518,6 +540,23 @@ function TransactionPage() {
                       ))}
                     </div>
 
+                    {(liveBalances.source || liveBalances.destination) && (
+                      <div className="mt-6 grid gap-2 border-t border-white/5 pt-4 sm:grid-cols-2">
+                        {liveBalances.source && (
+                          <LiveBalanceCard
+                            title="Source wallet"
+                            balance={liveBalances.source}
+                          />
+                        )}
+                        {liveBalances.destination && (
+                          <LiveBalanceCard
+                            title="Destination wallet"
+                            balance={liveBalances.destination}
+                          />
+                        )}
+                      </div>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => setShowDetails((v) => !v)}
@@ -607,6 +646,42 @@ function ChainSummary({
             {chain.symbol}
           </span>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function LiveBalanceCard({
+  title,
+  balance,
+}: {
+  title: string;
+  balance: {
+    chainLabel: string;
+    address: string;
+    symbol: string;
+    amountDisplay: string | null;
+    isLoading: boolean;
+    isError: boolean;
+  };
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        {title}
+      </div>
+      <div className="mt-1 text-xs text-muted-foreground">
+        {balance.chainLabel} ·{" "}
+        <span className="font-mono">{shortAddr(balance.address)}</span>
+      </div>
+      <div className="mt-2 font-display text-lg font-semibold text-foreground">
+        {balance.isError
+          ? "—"
+          : balance.amountDisplay != null
+            ? `${balance.amountDisplay} ${balance.symbol}`
+            : balance.isLoading
+              ? "Loading…"
+              : "—"}
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { fetchAddressBalance } from "@/lib/api/balance";
 import type { SettingsResponse } from "@/lib/api/settings";
 import type { SimpleUtxo } from "@/lib/cardano/utxoMinValue";
 import { isEvmChain, isSolanaChain } from "@/lib/chains";
@@ -36,6 +37,151 @@ export function getUpdateBalanceInterval(srcChain: string | undefined): number {
     : DEFAULT_UPDATE_BALANCE_INTERVAL;
 }
 
+function mapSolanaApiBalanceToWalletBalances(
+  settings: SettingsResponse,
+  srcChain: string,
+  dirTokens: number[],
+  currencyID: number | undefined,
+  data: { amount: string; tokens: { unit: string; amount: string }[] },
+): WalletBalances {
+  const finalBalance: WalletBalances = {};
+  for (const tokenID of dirTokens) {
+    const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
+    const isCurrencyToken = currencyID !== undefined && tokenID === currencyID;
+    if (
+      !tokenConfig ||
+      tokenConfig.chainSpecific === LovelaceTokenName ||
+      isCurrencyToken
+    ) {
+      finalBalance[tokenID.toString()] = data.amount ?? "0";
+      continue;
+    }
+
+    const mint = tokenConfig.chainSpecific;
+    const hit = data.tokens.find(
+      (t) => t.unit === mint || t.unit.toLowerCase() === mint.toLowerCase(),
+    );
+    finalBalance[tokenID.toString()] = hit?.amount ?? "0";
+  }
+  return finalBalance;
+}
+
+async function fetchSolanaBalancesFromRpc(
+  settings: SettingsResponse,
+  srcChain: string,
+  dirTokens: number[],
+  currencyID: number | undefined,
+): Promise<WalletBalances> {
+  const hasSplTokens = dirTokens.some((tokenID) => {
+    const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
+    return tokenConfig && tokenConfig.chainSpecific !== LovelaceTokenName;
+  });
+
+  const [nativeLamports, splByMint] = await Promise.all([
+    solWalletHandler.getBalanceLamports(),
+    hasSplTokens
+      ? solWalletHandler.getSplTokenBalancesByMint()
+      : Promise.resolve({} as Record<string, bigint>),
+  ]);
+
+  const finalBalance: WalletBalances = {};
+  for (const tokenID of dirTokens) {
+    const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
+    const isCurrencyToken = currencyID !== undefined && tokenID === currencyID;
+    if (!tokenConfig) {
+      finalBalance[tokenID.toString()] = isCurrencyToken
+        ? nativeLamports.toString(10)
+        : "0";
+      continue;
+    }
+
+    if (tokenConfig.chainSpecific === LovelaceTokenName) {
+      finalBalance[tokenID.toString()] = nativeLamports.toString(10);
+    } else {
+      finalBalance[tokenID.toString()] = (
+        splByMint[tokenConfig.chainSpecific] ?? BigInt(0)
+      ).toString(10);
+    }
+  }
+
+  return finalBalance;
+}
+
+async function fetchSolanaBalancesFromBackend(
+  settings: SettingsResponse,
+  srcChain: string,
+  dirTokens: number[],
+  currencyID: number | undefined,
+): Promise<WalletBalances> {
+  const address = solWalletHandler.getAddress();
+  const splMints = dirTokens
+    .map((tokenID) => getTokenConfig(settings, srcChain, tokenID))
+    .filter(
+      (config): config is NonNullable<typeof config> =>
+        !!config && config.chainSpecific !== LovelaceTokenName,
+    )
+    .map((config) => config.chainSpecific);
+
+  const data = await fetchAddressBalance({
+    chain: srcChain,
+    address,
+    tokens: splMints.length > 0 ? splMints : undefined,
+  });
+
+  return mapSolanaApiBalanceToWalletBalances(
+    settings,
+    srcChain,
+    dirTokens,
+    currencyID,
+    data,
+  );
+}
+
+/** Solana: RPC first, web-api fallback, then throw. */
+async function fetchSolanaWalletBalances(
+  settings: SettingsResponse,
+  srcChain: string,
+  dirTokens: number[],
+  currencyID: number | undefined,
+): Promise<WalletBalances> {
+  try {
+    return await fetchSolanaBalancesFromRpc(
+      settings,
+      srcChain,
+      dirTokens,
+      currencyID,
+    );
+  } catch (rpcError) {
+    console.log(
+      `Solana RPC balance failed, falling back to web-api: ${rpcError}`,
+    );
+    captureException(rpcError, {
+      tags: {
+        component: "balance.ts",
+        action: "fetchSolanaBalancesFromRpc",
+      },
+    });
+
+    try {
+      return await fetchSolanaBalancesFromBackend(
+        settings,
+        srcChain,
+        dirTokens,
+        currencyID,
+      );
+    } catch (apiError) {
+      console.log(`Solana web-api balance fallback failed: ${apiError}`);
+      captureException(apiError, {
+        tags: {
+          component: "balance.ts",
+          action: "fetchSolanaBalancesFromBackend",
+        },
+      });
+      throw apiError;
+    }
+  }
+}
+
 export async function fetchWalletBalances(
   srcChain: string,
   dstChain: string,
@@ -67,61 +213,41 @@ export async function fetchWalletBalances(
   }
 
   if (isSolanaChain(srcChain)) {
-    const hasSplTokens = dirTokens.some((tokenID) => {
-      const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
-      return tokenConfig && tokenConfig.chainSpecific !== LovelaceTokenName;
-    });
-
-    const [nativeLamports, splByMint] = await Promise.all([
-      solWalletHandler.getBalanceLamports(),
-      hasSplTokens
-        ? solWalletHandler.getSplTokenBalancesByMint()
-        : Promise.resolve({} as Record<string, bigint>),
-    ]);
-
-    const finalBalance: WalletBalances = {};
-    for (const tokenID of dirTokens) {
-      const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
-      const isCurrencyToken =
-        currencyID !== undefined && tokenID === currencyID;
-      if (!tokenConfig) {
-        finalBalance[tokenID.toString()] = isCurrencyToken
-          ? nativeLamports.toString(10)
-          : "0";
-        continue;
-      }
-
-      if (tokenConfig.chainSpecific === LovelaceTokenName) {
-        finalBalance[tokenID.toString()] = nativeLamports.toString(10);
-      } else {
-        finalBalance[tokenID.toString()] = (
-          splByMint[tokenConfig.chainSpecific] ?? BigInt(0)
-        ).toString(10);
-      }
-    }
-
-    return { balance: finalBalance };
+    return {
+      balance: await fetchSolanaWalletBalances(
+        settings,
+        srcChain,
+        dirTokens,
+        currencyID,
+      ),
+    };
   }
 
-  let utxoRetriever: UtxoRetriever = cardanoWalletHandler;
-  const addr = await cardanoWalletHandler.getChangeAddress();
+  const utxoRetrieverType = getUtxoRetrieverType(srcChain);
   const utxoRetrieverConfig =
     !!appSettings.utxoRetriever && appSettings.utxoRetriever[srcChain];
 
-  const utxoRetrieverType = getUtxoRetrieverType(srcChain);
+  let utxoRetriever: UtxoRetriever = cardanoWalletHandler;
+  let utxos: SimpleUtxo[] | undefined;
+  let balance: Record<string, bigint>;
 
-  if (utxoRetrieverType === UtxoRetrieverEnum.Blockfrost) {
-    utxoRetriever = new BlockfrostRetriever(
-      addr,
-      utxoRetrieverConfig!.url,
-      utxoRetrieverConfig!.dmtrApiKey,
-    );
-  } else if (utxoRetrieverType === UtxoRetrieverEnum.Ogmios) {
-    utxoRetriever = new OgmiosRetriever(addr, utxoRetrieverConfig!.url);
+  if (utxoRetrieverType === UtxoRetrieverEnum.Wallet) {
+    // CIP-30 getBalance Value CBOR — no UTXO address decode for display.
+    balance = await cardanoWalletHandler.getBalance();
+  } else {
+    const addr = await cardanoWalletHandler.getChangeAddress();
+    if (utxoRetrieverType === UtxoRetrieverEnum.Blockfrost) {
+      utxoRetriever = new BlockfrostRetriever(
+        addr,
+        utxoRetrieverConfig!.url,
+        utxoRetrieverConfig!.dmtrApiKey,
+      );
+    } else {
+      utxoRetriever = new OgmiosRetriever(addr, utxoRetrieverConfig!.url);
+    }
+    utxos = await utxoRetriever.getAllUtxos();
+    balance = await utxoRetriever.getBalance(utxos);
   }
-
-  const utxos = await utxoRetriever.getAllUtxos();
-  const balance = await utxoRetriever.getBalance(utxos);
 
   const finalBalance: WalletBalances = dirTokens.reduce(
     (acc: WalletBalances, cv: number) => {
