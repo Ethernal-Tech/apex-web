@@ -115,9 +115,6 @@ export class AppConfigService {
 	get secrets() {
 		return this.config.secrets;
 	}
-	get balances() {
-		return this.config.balances;
-	}
 	get txValidityPeriod() {
 		return this.config.app.txValidityPeriod;
 	}

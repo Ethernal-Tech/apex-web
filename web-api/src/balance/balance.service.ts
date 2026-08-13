@@ -18,36 +18,6 @@ import { fetchSolanaAddressBalance } from './balance.solana';
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
-const DEFAULT_EVM_RPC: Record<'mainnet' | 'testnet', Record<string, string>> = {
-	mainnet: {
-		[ChainEnum.Nexus]: 'https://rpc.nexus.mainnet.apexfusion.org/',
-		[ChainEnum.Base]: 'https://mainnet.base.org',
-		[ChainEnum.BNB]: 'https://bsc-dataseed.bnbchain.org',
-		[ChainEnum.Polygon]: 'https://polygon-rpc.com',
-		[ChainEnum.Ethereum]: 'https://ethereum.publicnode.com',
-		[ChainEnum.Arbitrum]: 'https://arb1.arbitrum.io/rpc',
-		[ChainEnum.Scroll]: 'https://rpc.scroll.io',
-		[ChainEnum.Unichain]: 'https://mainnet.unichain.org',
-		[ChainEnum.Sei]: 'https://evm-rpc.sei-apis.com',
-		[ChainEnum.Katana]: 'https://rpc.katanarpc.com',
-	},
-	testnet: {
-		[ChainEnum.Nexus]: 'https://rpc.nexus.testnet.apexfusion.org',
-		[ChainEnum.Polygon]: 'https://polygon-amoy.drpc.org',
-		[ChainEnum.Ethereum]: 'https://ethereum-sepolia-rpc.publicnode.com',
-		[ChainEnum.Arbitrum]: 'https://sepolia-rollup.arbitrum.io/rpc',
-		[ChainEnum.Scroll]: 'https://sepolia-rpc.scroll.io',
-		[ChainEnum.Unichain]: 'https://unichain-sepolia-rpc.publicnode.com',
-		[ChainEnum.Sei]: 'https://evm-rpc-testnet.sei-apis.com',
-		[ChainEnum.Katana]: 'https://rpc-bokuto.katanarpc.com',
-	},
-};
-
-const DEFAULT_SOLANA_RPC: Record<'mainnet' | 'testnet', string> = {
-	mainnet: 'https://api.mainnet.solana.com',
-	testnet: 'https://api.devnet.solana.com',
-};
-
 function isBalanceEvmChain(chain: ChainEnum): boolean {
 	return (
 		isEvmChain(chain) || chain === ChainEnum.Base || chain === ChainEnum.BNB
@@ -93,7 +63,7 @@ export class BalanceService {
 
 		if (isBalanceEvmChain(chain)) {
 			ValidateEVMAddress(address);
-			const rpcUrl = this.resolveEvmRpcUrl(chain, isMainnet);
+			const rpcUrl = this.resolveEvmRpcUrl(chain);
 			const result = await fetchEvmAddressBalance(
 				rpcUrl,
 				address,
@@ -105,7 +75,7 @@ export class BalanceService {
 
 		if (isSolanaChain(chain)) {
 			ValidateSolanaAddress(address);
-			const rpcUrl = this.resolveSolanaRpcUrl(isMainnet);
+			const rpcUrl = this.resolveSolanaRpcUrl();
 			const result = await fetchSolanaAddressBalance(
 				rpcUrl,
 				address,
@@ -132,24 +102,24 @@ export class BalanceService {
 		);
 	}
 
-	private resolveEvmRpcUrl(chain: ChainEnum, isMainnet: boolean): string {
-		const fromConfig = this.appConfig.balances?.evmRpcUrls?.[chain];
+	private resolveEvmRpcUrl(chain: ChainEnum): string {
+		const fromConfig = this.appConfig.rpc?.evmUrls?.find(
+			(entry) => entry.chain === chain,
+		)?.value;
 		if (fromConfig?.trim()) return fromConfig.trim();
 
-		const network = isMainnet ? 'mainnet' : 'testnet';
-		const fallback = DEFAULT_EVM_RPC[network][chain];
-		if (!fallback) {
-			throw new BadRequestException(
-				`No EVM RPC URL configured for chain "${chain}" (${network}). ` +
-					`Set balances.evmRpcUrls.${chain} in app config.`,
-			);
-		}
-		return fallback;
+		throw new BadRequestException(
+			`No EVM RPC URL configured for chain "${chain}". ` +
+				`Set EVM_RPC_URL_${chain.toUpperCase()}.`,
+		);
 	}
 
-	private resolveSolanaRpcUrl(isMainnet: boolean): string {
-		const fromConfig = this.appConfig.balances?.solanaRpcUrl;
+	private resolveSolanaRpcUrl(): string {
+		const fromConfig = this.appConfig.rpc?.solanaUrl;
 		if (fromConfig?.trim()) return fromConfig.trim();
-		return DEFAULT_SOLANA_RPC[isMainnet ? 'mainnet' : 'testnet'];
+
+		throw new BadRequestException(
+			`No Solana RPC URL configured. Set SOLANA_RPC_URL.`,
+		);
 	}
 }

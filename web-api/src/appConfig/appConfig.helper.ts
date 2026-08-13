@@ -117,9 +117,13 @@ export const chainValueConfig = makeValidator((x) => {
  */
 const EVM_RPC_URL_PREFIX = 'EVM_RPC_URL_';
 
-const evmRpcChains = Object.values(ChainApexBridgeEnum).filter((chain) =>
-	isEvmChain(chain as ChainEnum),
-);
+const evmRpcChains = [
+	...Object.values(ChainApexBridgeEnum).filter((chain) =>
+		isEvmChain(chain as ChainEnum),
+	),
+	ChainEnum.Base,
+	ChainEnum.BNB,
+];
 
 const evmRpcUrlVar = (chain: string): string =>
 	`${EVM_RPC_URL_PREFIX}${chain.toUpperCase()}`;
