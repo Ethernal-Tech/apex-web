@@ -1,8 +1,15 @@
 import * as fs from 'fs';
 import path from 'path';
-import { AppConfig, DeepPartial, LogLevel } from './appConfig.interface';
+import {
+	AppConfig,
+	ChainValueConfig,
+	DeepPartial,
+	LogLevel,
+} from './appConfig.interface';
 import { bool, cleanEnv, makeValidator, num, str } from 'envalid';
 import { Logger } from '@nestjs/common';
+import { ChainApexBridgeEnum, ChainEnum } from 'src/common/enum';
+import { isEvmChain } from 'src/utils/chainUtils';
 
 export const resolveConfigDir = (configName: string): string => {
 	const candidates = [
@@ -80,7 +87,72 @@ export const evmAddressConfig = makeValidator((x) => {
 		});
 });
 
+/**
+ * `chain::value,chain::value` — like evmAddressConfig
+ */
+export const chainValueConfig = makeValidator((x) => {
+	if (!x) return [];
+
+	return x
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean)
+		.map((item) => {
+			const separator = item.indexOf('::');
+			if (separator <= 0 || separator === item.length - 2) {
+				throw new Error(`Invalid chain::value config item format: "${item}"`);
+			}
+			return {
+				chain: item.slice(0, separator),
+				value: item.slice(separator + 2),
+			};
+		});
+});
+
+/**
+ * `EVM_RPC_URL_<CHAIN>`, one variable per EVM chain rather than one packed list.
+ *
+ * The set of names is derived from the chains themselves, so adding an EVM chain
+ * to ChainApexBridgeEnum is all it takes for its variable to be recognised.
+ */
+const EVM_RPC_URL_PREFIX = 'EVM_RPC_URL_';
+
+const evmRpcChains = Object.values(ChainApexBridgeEnum).filter((chain) =>
+	isEvmChain(chain as ChainEnum),
+);
+
+const evmRpcUrlVar = (chain: string): string =>
+	`${EVM_RPC_URL_PREFIX}${chain.toUpperCase()}`;
+
+const readEvmRpcUrls = (): ChainValueConfig[] => {
+	const env = cleanEnv(
+		process.env,
+		Object.fromEntries(
+			evmRpcChains.map((chain) => [
+				evmRpcUrlVar(chain),
+				str({ default: undefined }),
+			]),
+		),
+	) as Record<string, string | undefined>;
+
+	return evmRpcChains.flatMap((chain) => {
+		const value = env[evmRpcUrlVar(chain)];
+
+		return value ? [{ chain: chain as string, value }] : [];
+	});
+};
+
 export const envOverrides = (): DeepPartial<AppConfig> => {
+	if (process.env.EVM_RPC_URLS) {
+		// Losing every EVM chain quietly because a deployment still carries only the
+		// old packed variable is not a failure worth being subtle about.
+		Logger.warn(
+			`EVM_RPC_URLS is set but no longer read. Replace it with one ` +
+				`${EVM_RPC_URL_PREFIX}<CHAIN> variable per chain, e.g. ` +
+				`${evmRpcUrlVar(ChainApexBridgeEnum.Nexus)}.`,
+		);
+	}
+
 	const env = cleanEnv(process.env, {
 		LOG_LEVEL: str({ default: undefined }),
 		PORT: num({ default: undefined }),
@@ -97,9 +169,11 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 		ETH_TX_TTL_INC: num({ default: undefined }),
 		RECENT_INPUTS_THRESHOLD_MINUTES: num({ default: undefined }),
 		SKYLINE_GATEWAY_ADDRS: evmAddressConfig({ default: undefined }),
-		SKYLINE_NT_WALLET_ADDRS: evmAddressConfig({ default: undefined }),
 		REACTOR_NEXUS_GATEWAY_ADDR: str({ default: undefined }),
 		REACTOR_NEXUS_CENTRALIZED_GATEWAY_ADDR: str({ default: undefined }),
+
+		SOLANA_RPC_URL: str({ default: undefined }),
+		SOLANA_HOLDER_ADDRS: chainValueConfig({ default: undefined }),
 
 		CENTRALIZED_API_URL: str({ default: undefined }),
 		ORACLE_SKYLINE_URL: str({ default: undefined }),
@@ -152,7 +226,6 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			recentInputsThresholdMinutes: env.RECENT_INPUTS_THRESHOLD_MINUTES,
 			addresses: {
 				skylineGateway: env.SKYLINE_GATEWAY_ADDRS,
-				skylineNativeTokenWallet: env.SKYLINE_NT_WALLET_ADDRS,
 				reactorNexusGateway: env.REACTOR_NEXUS_GATEWAY_ADDR as `0x${string}`,
 				reactorNexusCentralizedGateway:
 					env.REACTOR_NEXUS_CENTRALIZED_GATEWAY_ADDR as `0x${string}`,
@@ -164,6 +237,11 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			cardanoApiSkylineUrl: env.CARDANO_API_SKYLINE_URL,
 			cardanoApiReactorUrl: env.CARDANO_API_REACTOR_URL,
 			centralizedApiUrl: env.CENTRALIZED_API_URL,
+		},
+		rpc: {
+			evmUrls: readEvmRpcUrls(),
+			solanaUrl: env.SOLANA_RPC_URL,
+			solanaHolders: env.SOLANA_HOLDER_ADDRS,
 		},
 		database: {
 			host: env.DB_HOST,

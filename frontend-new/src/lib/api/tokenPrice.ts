@@ -46,3 +46,22 @@ export function priceByTokenId(
   }
   return map;
 }
+
+/**
+ * Ecosystem token name -> USD price, for amounts labelled by token name rather
+ * than by ID (`bAP3X`, `xADA`, ...). Keys are uppercased: the settings spell
+ * the same asset `bAP3X` or `BAP3X` depending on the chain. The tracked symbol
+ * is registered too, so `ADA` resolves even on a chain that names it xADA.
+ */
+export function priceByTokenName(
+  prices: TokenPrice[] | undefined,
+): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const price of prices ?? []) {
+    map.set(price.name.toUpperCase(), price.priceUsd);
+    if (!map.has(price.symbol.toUpperCase())) {
+      map.set(price.symbol.toUpperCase(), price.priceUsd);
+    }
+  }
+  return map;
+}

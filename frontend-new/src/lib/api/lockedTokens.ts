@@ -1,6 +1,9 @@
 import { queryOptions } from "@tanstack/react-query";
 import appSettings from "@/settings/appSettings";
 
+/** Every amount the web-api serves is in DFM — 6 decimals. */
+export const DFM_UNIT = 1_000_000;
+
 /**
  * `GET /lockedTokens` — amounts are strings in DFM (6 decimals) for every
  * chain, the web-api normalises EVM wei before serving them.

@@ -88,6 +88,24 @@ export const convertLamportsToWei = (lamports: bigint | Numbers): string => {
 	return toWei(lamports, 9);
 };
 
+/**
+ * Any chain's smallest unit -> DFM (6 decimals), the unit every amount the API
+ * serves is expressed in. Integer arithmetic, truncating: 18 decimals divides
+ * by 1e12, 9 (lamports) by 1e3, 6 is identity.
+ *
+ * Not `convertWeiToDfmByChain` below, which returns EVM amounts untouched and
+ * yields a fractional string for Cardano.
+ */
+export const rawToDfm = (raw: bigint, decimals: number): string => {
+	if (!Number.isInteger(decimals) || decimals < 0 || decimals > 77) {
+		throw new Error(`unsupported token decimals: ${decimals}`);
+	}
+
+	return decimals >= 6
+		? (raw / BigInt(10) ** BigInt(decimals - 6)).toString()
+		: (raw * BigInt(10) ** BigInt(6 - decimals)).toString();
+};
+
 export const convertWeiToDfmByChain = (wei: Numbers, chain: ChainEnum) => {
 	if (isCardanoChain(chain)) {
 		return convertWeiToDfm(wei);

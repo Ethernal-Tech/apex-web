@@ -1,14 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import { lockedTokensQueryOptions } from "@/lib/api/lockedTokens";
+import { DFM_UNIT, lockedTokensQueryOptions } from "@/lib/api/lockedTokens";
 import { priceByTokenId, tokenPricesQueryOptions } from "@/lib/api/tokenPrice";
 import { settingsQueryOptions } from "@/lib/api/settings";
 import { getCurrencyID } from "@/lib/tokens";
+import { isUnreportedChain } from "@/lib/chains";
 import appSettings from "@/settings/appSettings";
 
-/** Every amount the web-api serves is in DFM — 6 decimals. */
-const DFM_UNIT = 1_000_000;
 /** LayerZero balances come back in wei (18 decimals). */
 const WEI_PER_DFM = BigInt(1_000_000_000_000);
 
@@ -80,6 +79,26 @@ function toUsd(
   return usd;
 }
 
+/**
+ * APEX in the Nexus OFT contract, in DFM. Shared so the audit breakdown counts
+ * the same balance the TVL figure does - react-query dedupes the read.
+ */
+export function useLayerZeroLockedApex(): bigint | undefined {
+  const { data: settings } = useQuery(settingsQueryOptions);
+  const oftAddress = settings?.layerZeroChains?.find(
+    (c) => c.chain === "nexus",
+  )?.oftAddress;
+
+  const { data } = useQuery({
+    queryKey: ["layerZeroLockedApex", oftAddress] as const,
+    queryFn: () => fetchLayerZeroLockedApexDfm(oftAddress!),
+    enabled: !!oftAddress,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+  });
+  return data;
+}
+
 export type BridgeStats = {
   /** Total value locked, in USD. */
   tvlUsd: number | undefined;
@@ -105,17 +124,7 @@ export function useBridgeStats(): BridgeStats {
     tokenPricesQueryOptions,
   );
 
-  const nexusOftAddress = settings?.layerZeroChains?.find(
-    (c) => c.chain === "nexus",
-  )?.oftAddress;
-
-  const { data: layerZeroLockedApex } = useQuery({
-    queryKey: ["layerZeroLockedApex", nexusOftAddress] as const,
-    queryFn: () => fetchLayerZeroLockedApexDfm(nexusOftAddress!),
-    enabled: !!nexusOftAddress,
-    staleTime: 60_000,
-    refetchInterval: 60_000,
-  });
+  const layerZeroLockedApex = useLayerZeroLockedApex();
 
   return useMemo(() => {
     const isLoading = lockedPending || pricesPending;
@@ -126,14 +135,15 @@ export function useBridgeStats(): BridgeStats {
     const priceMap = priceByTokenId(prices);
 
     const lockedTotals = new Map<number, bigint>();
-    for (const tokenMap of Object.values(lockedTokens.chains ?? {})) {
+    for (const [chain, tokenMap] of Object.entries(lockedTokens.chains ?? {})) {
+      if (isUnreportedChain(chain)) continue;
       for (const [tokenID, addressMap] of Object.entries(tokenMap ?? {})) {
         for (const amount of Object.values(addressMap ?? {})) {
           addAmount(lockedTotals, Number(tokenID), amount);
         }
       }
     }
-  
+
     // APEX locked in the Nexus OFT contract is priced as prime's native currency
     const apexTokenID = getCurrencyID(settings, "prime");
     if (layerZeroLockedApex && apexTokenID !== undefined) {
@@ -141,7 +151,10 @@ export function useBridgeStats(): BridgeStats {
     }
 
     const bridgedTotals = new Map<number, bigint>();
-    for (const tokenMap of Object.values(lockedTokens.totalTransferred ?? {})) {
+    for (const [chain, tokenMap] of Object.entries(
+      lockedTokens.totalTransferred ?? {},
+    )) {
+      if (isUnreportedChain(chain)) continue;
       for (const [tokenID, amount] of Object.entries(tokenMap ?? {})) {
         addAmount(bridgedTotals, Number(tokenID), amount);
       }

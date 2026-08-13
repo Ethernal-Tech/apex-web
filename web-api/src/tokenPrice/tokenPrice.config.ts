@@ -60,6 +60,22 @@ export const DEFAULT_TRACKED_TOKENS: readonly TrackedToken[] = [
 			[PriceProviderEnum.DefiLlama]: 'coingecko:cardano',
 		},
 	},
+	{
+		symbol: 'SOL',
+		aliases: ['WSOL'],
+		ids: {
+			[PriceProviderEnum.CoinGecko]: 'solana',
+			[PriceProviderEnum.DefiLlama]: 'coingecko:solana',
+		},
+	},
+	{
+		symbol: 'POL',
+		aliases: ['WPOL', 'MATIC'],
+		ids: {
+			[PriceProviderEnum.CoinGecko]: 'polygon-ecosystem-token',
+			[PriceProviderEnum.DefiLlama]: 'coingecko:polygon-ecosystem-token',
+		},
+	},
 ];
 
 /** Order in which providers are tried. Overridable via TOKEN_PRICE_PROVIDERS. */

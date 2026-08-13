@@ -1,8 +1,8 @@
-import { getAppConfig } from 'src/appConfig/appConfig';
 import {
 	BridgingSettingsDirectionConfigDto,
 	BridgingSettingsEcosystemTokenDto,
 } from './settings.dto';
+import { getSkylineEvmAddresses } from './gatewayAddresses.helper';
 
 export const Lovelace = 'lovelace';
 
@@ -70,23 +70,15 @@ export function getTokenNameById(
 	return token ? token.name : null;
 }
 
+/**
+ * Both addresses are resolved from the chain at startup, not configured - see
+ * gatewayAddresses.helper.ts. An unresolved chain yields '' exactly as an
+ * unconfigured one used to, so the callers' existing guards still hold.
+ */
 export function getSkylineGatewayAddress(srcChain: string): string {
-	const evmGatewayAddressCfg = getAppConfig().bridge.addresses.skylineGateway;
-	for (const cfg of evmGatewayAddressCfg) {
-		if (cfg.chain === srcChain) {
-			return cfg.address;
-		}
-	}
-	return '';
+	return getSkylineEvmAddresses()[srcChain]?.gateway ?? '';
 }
 
 export function getSkylineNativeTokenWalletAddress(srcChain: string): string {
-	const evmNativeTokenWalletAddressCfg =
-		getAppConfig().bridge.addresses.skylineNativeTokenWallet;
-	for (const cfg of evmNativeTokenWalletAddressCfg) {
-		if (cfg.chain === srcChain) {
-			return cfg.address;
-		}
-	}
-	return '';
+	return getSkylineEvmAddresses()[srcChain]?.nativeTokenWallet ?? '';
 }

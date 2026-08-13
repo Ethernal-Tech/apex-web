@@ -11,53 +11,66 @@
 		"\"icon\" is a key the frontend resolves to a bundled asset. Known keys:",
 		"apex, eth, polygon, sei, solana, unknown. An unknown key falls back to the",
 		"unknown icon, so a brand new asset can ship with \"icon\": \"unknown\" and an",
-		"optional \"iconUrl\" pointing at a hosted image until the asset is bundled."
+		"optional \"iconUrl\" pointing at a hosted image until the asset is bundled.",
+		"",
+		"\"color\" is the accent the UI paints the token in (legend dots, chart",
+		"series), as a hex string. Optional: a token without one falls back to the",
+		"unknownToken color, and to the UI's own default accent if that is unset too."
 	],
 	"unknownToken": {
 		"tokenID": 0,
 		"icon": "apex",
-		"label": ""
+		"label": "",
+		"color": "#3B92FF"
 	},
 	"tokens": [
 		{
 			"tokenID": 1,
 			"icon": "apex",
-			"label": "AP3X"
+			"label": "AP3X",
+			"color": "#3B92FF"
 		},
 		{
 			"tokenID": 2,
 			"icon": "unknown",
-			"label": "ADA"
+			"label": "ADA",
+			"color": "#4F7BFF"
 		},
 		{
 			"tokenID": 3,
 			"icon": "apex",
-			"label": "cAP3X"
+			"label": "cAP3X",
+			"color": "#8B7CFF"
 		},
 		{
 			"tokenID": 4,
 			"icon": "unknown",
-			"label": "xADA"
+			"label": "xADA",
+			"color": "#2FD3A5"
 		},
 		{
 			"tokenID": 1000001,
 			"icon": "eth",
-			"label": "ETH"
+			"label": "ETH",
+			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 1000002,
 			"icon": "apex",
-			"label": "bAP3X"
+			"label": "bAP3X",
+			"color": "#22C1E4"
 		},
 		{
 			"tokenID": 1000003,
 			"icon": "apex",
-			"label": "bnAP3X"
+			"label": "bnAP3X",
+			"color": "#F0B429"
 		},
 		{
 			"tokenID": 1000004,
 			"icon": "unknown",
-			"label": "BNB"
+			"label": "BNB",
+			"color": "#F3BA2F"
 		}
 	]
 }

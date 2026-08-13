@@ -6,14 +6,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { SettingsModule } from 'src/settings/settings.module';
 import { HistoricalSnapshot } from './historicalSnapshot.entity';
+import { MultiChainTvlService } from './multiChainTvl.service';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([BridgeTransaction, HistoricalSnapshot]),
-		CacheModule.register({ ttl: 30, max: 100 }),
+		// cache-manager v7 TTLs are milliseconds, so this was 30ms - i.e. no cache.
+		// `max` is not part of v7's options and was ignored.
+		CacheModule.register({ ttl: 30_000 }),
 		SettingsModule,
 	],
-	providers: [LockedTokensService],
+	providers: [LockedTokensService, MultiChainTvlService],
 	controllers: [LockedTokensController],
 	exports: [LockedTokensService],
 })

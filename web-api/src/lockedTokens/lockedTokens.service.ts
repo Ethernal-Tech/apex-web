@@ -41,6 +41,7 @@ import {
 	HistoricalSnapshot,
 } from './historicalSnapshot.entity';
 import { adaID, apexID, isAdaToken, isApexToken } from './token';
+import { MultiChainTvlService } from './multiChainTvl.service';
 
 const NEXUS_RPC_URLS = {
 	mainnet: 'https://rpc.nexus.mainnet.apexfusion.org/',
@@ -57,6 +58,7 @@ export class LockedTokensService {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly settingsService: SettingsService,
 		private readonly appConfig: AppConfigService,
+		private readonly multiChainTvl: MultiChainTvlService,
 	) {}
 
 	onModuleInit() {
@@ -74,15 +76,38 @@ export class LockedTokensService {
 	public async fillTokensData(
 		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<LockedTokensDto> {
+		return (await this.fillTokensDataWithErrors(allowedBridgingModes)).data;
+	}
+
+	/**
+	 * As `fillTokensData`, plus which non-Cardano chains could not be read.
+	 * The errors stay off the public DTO; the snapshot cron uses them to avoid
+	 * persisting an incomplete day.
+	 */
+	private async fillTokensDataWithErrors(
+		allowedBridgingModes: BridgingModeEnum[],
+	): Promise<{ data: LockedTokensDto; errors: Record<string, string> }> {
 		const lockedTokens = await this.getLockedTokens();
 		const sumTransferred = await this.sumTransferredTokensPerChain(
 			this.settingsService.SettingsResponse.directionConfig,
 			allowedBridgingModes,
 		);
 
+		// EVM and Solana chains are absent from cardano-api's locked tokens, which
+		// reads UTxO bridging addresses only. Merged per token so that an
+		// overlapping chain name could never drop the Cardano side.
+		const multiChain = await this.multiChainTvl.getLockedTokens();
+		const chains = { ...lockedTokens.chains };
+		for (const [chain, tokenMap] of Object.entries(multiChain.chains)) {
+			chains[chain] = { ...(chains[chain] ?? {}), ...tokenMap };
+		}
+
 		return {
-			chains: lockedTokens.chains,
-			totalTransferred: sumTransferred.totalTransferred,
+			data: {
+				chains,
+				totalTransferred: sumTransferred.totalTransferred,
+			},
+			errors: multiChain.errors,
 		};
 	}
 
@@ -158,10 +183,20 @@ export class LockedTokensService {
 			return existing;
 		}
 
-		const data = await this.fillTokensData([
+		const { data, errors } = await this.fillTokensDataWithErrors([
 			BridgingModeEnum.Skyline,
 			BridgingModeEnum.LayerZero,
 		]);
+
+		// A snapshot row is immutable and written once per UTC midnight, so a day
+		// stored while a chain's RPC was down would under-report that day forever.
+		// Better to fail and let the next run write it.
+		const failed = Object.keys(errors);
+		if (failed.length > 0) {
+			throw new Error(
+				`refusing to snapshot ${snapshotAt.toISOString()}: could not read ${failed.join(', ')}`,
+			);
+		}
 
 		const tvlByChain = this.sumLockedByChain(data.chains);
 		const tvbByChain = data.totalTransferred;
@@ -492,7 +527,8 @@ export class LockedTokensService {
 			}
 		}
 
-		await this.cacheManager.set(cacheKey, result, 30);
+		// milliseconds in cache-manager v7 - this was 30ms, i.e. no cache at all
+		await this.cacheManager.set(cacheKey, result, 30_000);
 
 		return result;
 	}

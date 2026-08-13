@@ -1,0 +1,81 @@
+{
+	"_comment": [
+		"Display metadata for chains on MAINNET: the accent color the UI paints a",
+		"chain in (chart segments, chain labels). The testnet deployment reads",
+		"chainInfos.testnet.json; the file is picked by the app.isMainnet setting.",
+		"",
+		"This file is the source of truth - recoloring a chain is an edit here, no",
+		"frontend rebuild and no redeploy. Edits are picked up on the next request",
+		"(the file is re-read whenever its mtime changes), so no restart either.",
+		"",
+		"\"chain\" is the id the rest of the API uses (see enabledChains in /settings)",
+		"and is read lowercase. An entry for a chain this deployment does not serve",
+		"is simply unused, and a chain with no entry falls back to unknownChain -",
+		"and to the UI's own default accent when that is not set either.",
+		"",
+		"Which chains exist and what the UI names them stays out of this file: it",
+		"only says what color they are."
+	],
+	"unknownChain": {
+		"chain": "",
+		"color": "#3B92FF"
+	},
+	"chains": [
+		{
+			"chain": "prime",
+			"color": "#3B92FF"
+		},
+		{
+			"chain": "cardano",
+			"color": "#22C1E4"
+		},
+		{
+			"chain": "vector",
+			"color": "#C99BFF"
+		},
+		{
+			"chain": "nexus",
+			"color": "#7CC4FF"
+		},
+		{
+			"chain": "base",
+			"color": "#63B6FF"
+		},
+		{
+			"chain": "bsc",
+			"color": "#F0B429"
+		},
+		{
+			"chain": "polygon",
+			"color": "#8247E5"
+		},
+		{
+			"chain": "ethereum",
+			"color": "#8A92B2"
+		},
+		{
+			"chain": "katana",
+			"color": "#E8734A"
+		},
+		{
+			"chain": "sei",
+			"color": "#9E1F19"
+		},
+		{
+			"chain": "arbitrum",
+			"color": "#2D9BF0"
+		},
+		{
+			"chain": "scroll",
+			"color": "#EBC28E"
+		},
+		{
+			"chain": "unichain",
+			"color": "#FF007A"
+		},
+		{
+			"chain": "solana",
+			"color": "#9945FF"
+		}
+	]
+}

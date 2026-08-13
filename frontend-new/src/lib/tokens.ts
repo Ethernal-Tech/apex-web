@@ -7,6 +7,12 @@ import primeIcon from "@/assets/chains/prime.svg?url";
 
 export const LovelaceTokenName = "lovelace";
 
+/**
+ * Accent used for a token until `GET /tokenInfo` says otherwise, and for one the
+ * tokenInfos config gives no color at all. See useTokenColor.
+ */
+export const DEFAULT_TOKEN_COLOR = "#3B92FF";
+
 export type BridgeToken = {
   id: string;
   tokenID: number;

@@ -1,13 +1,37 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ExternalLink, TrendingUp } from "lucide-react";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkToggle } from "@/components/NetworkToggle";
+import { useBridgeStats } from "@/hooks/use-bridge-stats";
+import { useBridgeHistory } from "@/hooks/use-bridge-history";
+import {
+  useLockedBreakdown,
+  WORLD_KEYS,
+  type ChainAddressRows,
+  type ChainRows,
+  type TokenRow,
+  type WorldBreakdown,
+  type WorldKey,
+} from "@/hooks/use-locked-breakdown";
+import {
+  priceByTokenName,
+  tokenPricesQueryOptions,
+} from "@/lib/api/tokenPrice";
+import { useTokenColor } from "@/hooks/use-token-infos";
+import { useChainColor } from "@/hooks/use-chain-infos";
+import { formatUsdFull } from "@/lib/usd";
+import { CHAIN_META } from "@/lib/chains";
+import { explorerAddressUrl } from "@/lib/explorers";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
-import primeIcon from "@/assets/chains/prime.svg?url";
-import nexusIcon from "@/assets/chains/nexus.svg?url";
-import vectorIcon from "@/assets/chains/vector.svg?url";
-import adaIcon from "@/assets/chains/cardano.svg?url";
 
 export const Route = createFileRoute("/audit")({
   head: () => ({
@@ -33,139 +57,73 @@ export const Route = createFileRoute("/audit")({
 });
 
 // ── Token prices (USD) ────────────────────────────────────────────────
-const AP3X_USD = 0.01598;
-const ADA_USD = 0.1751;
-// Wrapped variants are pegged to their underlying
-const PRICE: Record<string, number> = {
-  AP3X: AP3X_USD,
-  cAP3X: AP3X_USD,
-  bAP3X: AP3X_USD,
-  bnAP3X: AP3X_USD,
-  ADA: ADA_USD,
-  xADA: ADA_USD,
-};
-const COIN_COLOR: Record<string, string> = {
-  AP3X: "#3B92FF",
-  cAP3X: "#8B7CFF",
-  bAP3X: "#22C1E4",
-  bnAP3X: "#F0B429",
-  ADA: "#4F7BFF",
-  xADA: "#2FD3A5",
-};
-const CHAIN_COLOR: Record<string, string> = {
-  Cardano: "#22C1E4",
-  Prime: "#3B92FF",
-  Vector: "#c99bff",
-  Nexus: "#7cc4ff",
-  Base: "#63b6ff",
-  BSC: "#F0B429",
-};
-const CHAIN_ICON: Record<string, string | undefined> = {
-  Cardano: adaIcon,
-  Prime: primeIcon,
-  Vector: vectorIcon,
-  Nexus: nexusIcon,
+/**
+ * Token name -> USD. Comes from `GET /tokenPrice`, which already prices every
+ * wrapped representation under its own name, so `cAP3X` and `xADA` resolve
+ * without any pegging table here. 0 for an asset the price cron does not track
+ * (and for every asset until the first response lands).
+ */
+type PriceOf = (coin: string) => number;
+/** null until the first `GET /tokenPrice` response lands. */
+const PriceContext = createContext<PriceOf | null>(null);
+const UNPRICED: PriceOf = () => 0;
+const usePriceOf = (): PriceOf => useContext(PriceContext) ?? UNPRICED;
+
+// ── Worlds ────────────────────────────────────────────────────────────
+/** Tab labels. The keys are the chain categories from CHAIN_META. */
+const WORLD_LABELS: Record<WorldKey, string> = {
+  utxo: "UTxO World",
+  evm: "EVM World",
+  svm: "SOL World",
 };
 
-// ── Data (exact amounts from the reference design) ────────────────────
-type CoinRow = { c: string; v: number };
-type ChainRows = { chain: string; rows: CoinRow[] };
-type WorldData = {
-  key: "utxo" | "evm";
-  name: string;
-  tag: string;
-  summaryLocked: CoinRow[];
-  summaryBridged: CoinRow[];
-  lockedNote?: string;
-  lockedChain: ChainRows[];
-  bridgedChain: ChainRows[];
-};
+function usdOfRows(rows: TokenRow[], priceOf: PriceOf) {
+  return rows.reduce((s, r) => s + r.amount * priceOf(r.name), 0);
+}
 
-const UTXO: WorldData = {
-  key: "utxo",
-  name: "UTxO World",
-  tag: "Cardano · Prime · Vector",
-  summaryLocked: [
-    { c: "AP3X", v: 19_131_409.32 },
-    { c: "ADA", v: 37_995.28 },
-  ],
-  lockedNote: "+ 2,980,870,611.75 cAP3X collateral held on Cardano",
-  summaryBridged: [
-    { c: "AP3X", v: 87_477_319.83 },
-    { c: "ADA", v: 59_956.31 },
-  ],
-  lockedChain: [
-    {
-      chain: "Cardano",
-      rows: [
-        { c: "cAP3X", v: 2_980_870_611.75 },
-        { c: "ADA", v: 37_995.28 },
-      ],
-    },
-    { chain: "Prime", rows: [{ c: "AP3X", v: 19_131_194.24 }] },
-    {
-      chain: "Vector",
-      rows: [
-        { c: "xADA", v: 44_999_962_942.53 },
-        { c: "AP3X", v: 215.08 },
-      ],
-    },
-  ],
-  bridgedChain: [
-    {
-      chain: "Cardano",
-      rows: [
-        { c: "cAP3X", v: 34_171_856.23 },
-        { c: "ADA", v: 49_412.77 },
-      ],
-    },
-    { chain: "Prime", rows: [{ c: "AP3X", v: 53_305_435.47 }] },
-    {
-      chain: "Vector",
-      rows: [
-        { c: "xADA", v: 10_543.53 },
-        { c: "AP3X", v: 28.12 },
-      ],
-    },
-  ],
-};
-
-const EVM: WorldData = {
-  key: "evm",
-  name: "EVM World",
-  tag: "Nexus · Base · BSC",
-  summaryLocked: [{ c: "AP3X", v: 15_130_179.88 }],
-  summaryBridged: [{ c: "AP3X", v: 55_296_927.66 }],
-  lockedChain: [{ chain: "Nexus", rows: [{ c: "AP3X", v: 15_130_179.88 }] }],
-  bridgedChain: [
-    {
-      chain: "Nexus",
-      rows: [
-        { c: "AP3X", v: 33_992_406.96 },
-        { c: "xADA", v: 2.0 },
-      ],
-    },
-    { chain: "Base", rows: [{ c: "bAP3X", v: 21_304_419.59 }] },
-    { chain: "BSC", rows: [{ c: "bnAP3X", v: 101.1 }] },
-  ],
-};
-
-// Totals across the whole network (from design)
-const TOTAL_LOCKED_USD = sumUsd(UTXO.lockedChain) + sumUsd(EVM.lockedChain);
-const TOTAL_BRIDGED_USD = sumUsd(UTXO.bridgedChain) + sumUsd(EVM.bridgedChain);
-
-function sumUsd(chains: ChainRows[]) {
-  return chains.reduce(
-    (s, ch) => s + ch.rows.reduce((a, r) => a + r.v * (PRICE[r.c] ?? 0), 0),
-    0,
+/** `Cardano · Prime · Vector` — the chains this world actually holds. */
+const chainTag = (world: WorldBreakdown) =>
+  [...new Set([...world.locked, ...world.bridged].map((c) => c.label))].join(
+    " · ",
   );
-}
-function usdOfRows(rows: CoinRow[]) {
-  return rows.reduce((s, r) => s + r.v * (PRICE[r.c] ?? 0), 0);
-}
+
+/** Biggest holdings first, so dust rows sink to the bottom of a card. */
+const byUsdDesc =
+  (priceOf: PriceOf) =>
+  (a: TokenRow, b: TokenRow): number =>
+    b.amount * priceOf(b.name) - a.amount * priceOf(a.name) ||
+    b.amount - a.amount;
+
+const sortWorld = (world: WorldBreakdown, priceOf: PriceOf): WorldBreakdown => {
+  const sortChains = (chains: ChainRows[]) =>
+    chains.map((chain) => ({
+      ...chain,
+      rows: [...chain.rows].sort(byUsdDesc(priceOf)),
+    }));
+  /** Fullest address first, so the chain's main custody account leads the list. */
+  const sortHolders = (chains: ChainAddressRows[]) =>
+    chains.map((chain) => ({
+      ...chain,
+      addresses: chain.addresses
+        .map((holder) => ({
+          ...holder,
+          rows: [...holder.rows].sort(byUsdDesc(priceOf)),
+        }))
+        .sort(
+          (a, b) => usdOfRows(b.rows, priceOf) - usdOfRows(a.rows, priceOf),
+        ),
+    }));
+  return {
+    ...world,
+    locked: sortChains(world.locked),
+    bridged: sortChains(world.bridged),
+    summaryLocked: [...world.summaryLocked].sort(byUsdDesc(priceOf)),
+    summaryBridged: [...world.summaryBridged].sort(byUsdDesc(priceOf)),
+    holders: sortHolders(world.holders),
+  };
+};
 
 type Mode = "overview" | "full";
-type WorldKey = "utxo" | "evm";
 
 // ── Formatting ────────────────────────────────────────────────────────
 const fmtUsdCompact = (n: number) =>
@@ -176,12 +134,17 @@ const fmtUsdCompact = (n: number) =>
       : n >= 1_000
         ? `$${(n / 1_000).toFixed(1)}K`
         : `$${n.toFixed(2)}`;
-const fmtUsdFull = (n: number) =>
-  `$${n.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
 const fmtTok = (n: number) =>
   n.toLocaleString("en-US", {
     maximumFractionDigits: 2,
     minimumFractionDigits: 2,
+  });
+/** `12 Jul` — snapshots are UTC midnight, so read them back in UTC. */
+const fmtDay = (d: Date) =>
+  d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
   });
 
 // Ease-out cubic count-up, mirrors the reference html (1600ms)
@@ -205,8 +168,11 @@ function useCountUp(target: number, duration = 1600) {
   return val;
 }
 
-// ── Charts (illustrative) ─────────────────────────────────────────────
-function sparkPath(points: number[], w = 120, h = 34) {
+// ── Charts ────────────────────────────────────────────────────────────
+/** Null for a series too short to be a line. */
+function sparkPath(points: number[], w = 120, h = 34): string | null {
+  if (points.length < 2) return null;
+
   const min = Math.min(...points);
   const max = Math.max(...points);
   const range = max - min || 1;
@@ -219,27 +185,29 @@ function sparkPath(points: number[], w = 120, h = 34) {
     })
     .join(" ");
 }
-const TVL_SPARK = [
-  4.2, 4.6, 4.5, 5.1, 5.4, 5.2, 5.8, 6.3, 6.1, 6.8, 7.2, 7.0, 7.6, 8.1,
-];
-const TVB_SPARK = [
-  3.1, 3.4, 3.8, 4.2, 4.0, 4.6, 5.1, 5.4, 5.8, 6.2, 6.7, 7.1, 7.6, 8.4,
-];
 
-const CHART_DAYS = 30;
+/**
+ * Percentage change across the window. Undefined when it cannot be stated: too
+ * few points, or a zero baseline, where any rise is an infinite percentage.
+ */
+function pctChange(series: number[]): number | undefined {
+  if (series.length < 2) return undefined;
+
+  const first = series[0];
+  const last = series[series.length - 1];
+  if (first === 0) return undefined;
+
+  return ((last - first) / first) * 100;
+}
+
+/** Window the metric cards trend over, independent of the chart's range. */
+const METRIC_TREND_DAYS = 7;
+
 const CHART_W = 900;
 const CHART_H = 220;
-function makeSeries(seed: number, base: number) {
-  const arr: number[] = [];
-  let v = base;
-  for (let i = 0; i < CHART_DAYS; i++) {
-    v +=
-      Math.sin((i + seed) * 0.42) * base * 0.04 +
-      Math.cos(i * 0.7 + seed) * base * 0.015;
-    arr.push(Math.max(v, base * 0.6));
-  }
-  return arr;
-}
+const RANGE_DAYS = { "7D": 7, "30D": 30, "90D": 90 } as const;
+type Range = keyof typeof RANGE_DAYS;
+
 function areaAndLine(series: number[], yMin: number, yMax: number) {
   const stepX = CHART_W / (series.length - 1);
   const scaleY = (v: number) =>
@@ -258,29 +226,107 @@ function areaAndLine(series: number[], yMin: number, yMax: number) {
   return { line, area, last };
 }
 
+/** One donut arc - a chain's share of the world's locked USD, ready for SVG. */
+type DonutSegment = {
+  label: string;
+  color: string;
+  usd: number;
+  /** 0..1 share of the world's locked USD. */
+  pct: number;
+  dash: string;
+  offset: number;
+};
+
+/** One bar - a chain's share of the world's bridged USD. */
+type DistributionBar = {
+  label: string;
+  color: string;
+  usd: number;
+  /** CSS width, as a percentage of the world's bridged total. */
+  width: string;
+};
+
+/** Feeds the page the live USD prices every card reads off the context. */
 function AuditPage() {
+  const { data: prices } = useQuery(tokenPricesQueryOptions);
+  const priceOf = useMemo<PriceOf | null>(() => {
+    if (!prices) return null;
+    const byName = priceByTokenName(prices);
+    return (coin) => byName.get(coin.toUpperCase()) ?? 0;
+  }, [prices]);
+
+  return (
+    <PriceContext.Provider value={priceOf}>
+      <AuditContent />
+    </PriceContext.Provider>
+  );
+}
+
+function AuditContent() {
   const [mode, setMode] = useState<Mode>("overview");
   const [world, setWorld] = useState<WorldKey>("utxo");
-  const [range, setRange] = useState<"7D" | "30D" | "90D">("30D");
+  const [range, setRange] = useState<Range>("30D");
 
-  const data = world === "utxo" ? UTXO : EVM;
+  const prices = useContext(PriceContext);
+  const priceOf = prices ?? UNPRICED;
+  const chainColorOf = useChainColor();
 
+  // Per-chain and per-token amounts, straight from GET /lockedTokens.
+  const { worlds, isLoading: breakdownLoading } = useLockedBreakdown();
+  const data = useMemo(
+    () => sortWorld(worlds[world], priceOf),
+    [worlds, world, priceOf],
+  );
+  const chainCount = new Set(
+    [...data.locked, ...data.bridged].map((c) => c.chain),
+  ).size;
+  // A single-chain world would draw a 100% donut, so it shows summaries alone.
+  const showComposition = data.locked.length > 1;
+  const isEmpty = chainCount === 0;
+
+  // Both headline figures come from chain state - locked balances and the
+  // cumulative transferred totals - priced by the same /tokenPrice endpoint.
+  const { tvlUsd, tvbUsd } = useBridgeStats();
+
+  // The cards trend over a fixed week, whatever range the chart below is on.
+  const { points: week } = useBridgeHistory(METRIC_TREND_DAYS);
+  const trend = useMemo(() => {
+    const tvl = week.map((point) => point.tvlUsd);
+    const tvb = week.map((point) => point.tvbUsd);
+    return {
+      tvl,
+      tvb,
+      tvlPct: pctChange(tvl),
+      tvbPct: pctChange(tvb),
+    };
+  }, [week]);
+
+  // Locked vs. bridged over time, from the daily snapshots the web-api keeps.
+  const { points, isLoading: historyLoading } = useBridgeHistory(
+    RANGE_DAYS[range],
+  );
   const chart = useMemo(() => {
-    const tvl = makeSeries(3, 60);
-    const tvb = makeSeries(9, 45);
-    const yMax = Math.max(...tvl, ...tvb) * 1.1;
+    // A single point cannot be drawn as a line, so it counts as no chart.
+    if (points.length < 2) return null;
+    const tvl = points.map((p) => p.tvlUsd);
+    const tvb = points.map((p) => p.tvbUsd);
+    // A flat all-zero history would divide by zero, so keep a floor on the axis
+    const yMax = Math.max(...tvl, ...tvb, 1) * 1.1;
     return {
       tvl: areaAndLine(tvl, 0, yMax),
       tvb: areaAndLine(tvb, 0, yMax),
+      from: points[0].at,
+      mid: points[Math.floor((points.length - 1) / 2)].at,
+      to: points[points.length - 1].at,
     };
-  }, []);
+  }, [points]);
 
   // Donut: locked composition by chain (USD)
   const donut = useMemo(() => {
-    const perChain = data.lockedChain.map((ch) => ({
-      label: ch.chain,
-      color: CHAIN_COLOR[ch.chain] ?? "#3B92FF",
-      usd: ch.rows.reduce((s, r) => s + r.v * (PRICE[r.c] ?? 0), 0),
+    const perChain = data.locked.map((ch) => ({
+      label: ch.label,
+      color: chainColorOf(ch.chain),
+      usd: usdOfRows(ch.rows, priceOf),
     }));
     const total = perChain.reduce((s, x) => s + x.usd, 0) || 1;
     let offset = 0;
@@ -292,21 +338,21 @@ function AuditPage() {
       offset -= pct * C;
       return seg;
     });
-  }, [data]);
+  }, [data, priceOf, chainColorOf]);
 
   // Bars: bridged distribution by chain (USD)
   const bars = useMemo(() => {
-    const perChain = data.bridgedChain.map((ch) => ({
-      label: ch.chain,
-      color: CHAIN_COLOR[ch.chain] ?? "#3B92FF",
-      usd: ch.rows.reduce((s, r) => s + r.v * (PRICE[r.c] ?? 0), 0),
+    const perChain = data.bridged.map((ch) => ({
+      label: ch.label,
+      color: chainColorOf(ch.chain),
+      usd: usdOfRows(ch.rows, priceOf),
     }));
     const total = perChain.reduce((s, x) => s + x.usd, 0) || 1;
     return perChain.map((b) => ({
       ...b,
       width: `${((b.usd / total) * 100).toFixed(1)}%`,
     }));
-  }, [data]);
+  }, [data, priceOf, chainColorOf]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -356,8 +402,8 @@ function AuditPage() {
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
               A live, public ledger of everything locked in and moved across the
-              Skyline network — spanning Cardano, Apex Fusion and EVM chains,
-              verifiable on-chain and updated continuously.
+              Skyline network — spanning Cardano, Apex Fusion, EVM chains and
+              Solana, verifiable on-chain and updated continuously.
             </p>
           </div>
 
@@ -365,23 +411,21 @@ function AuditPage() {
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             <MetricCard
               label="Total Value Locked · TVL"
-              usd={TOTAL_LOCKED_USD}
-              delta="+2.4%"
+              usd={tvlUsd}
+              deltaPct={trend.tvlPct}
               deltaLabel="7d"
               accent="#3B92FF"
-              spark={TVL_SPARK}
+              spark={trend.tvl}
               note="Assets held in Skyline's audited lock contracts, fully redeemable 1:1."
-              tokens={["AP3X", "cAP3X", "ADA", "xADA"]}
             />
             <MetricCard
               label="Total Value Bridged · TVB"
-              usd={TOTAL_BRIDGED_USD}
-              delta="+5.1%"
+              usd={tvbUsd}
+              deltaPct={trend.tvbPct}
               deltaLabel="7d"
               accent="#22C1E4"
-              spark={TVB_SPARK}
+              spark={trend.tvb}
               note="Cumulative value transferred across every supported chain since launch."
-              tokens={["AP3X", "cAP3X", "bAP3X", "bnAP3X", "ADA", "xADA"]}
             />
           </div>
 
@@ -393,14 +437,15 @@ function AuditPage() {
                   Locked vs. Bridged
                 </div>
                 <div className="mt-0.5 text-xs text-muted-foreground">
-                  Rolling {range} view · illustrative history
+                  Rolling {range} view · daily snapshots, valued at today's
+                  prices
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <Legend color="#3B92FF" label="TVL" />
                 <Legend color="#22C1E4" label="TVB" />
                 <div className="inline-flex gap-0.5 rounded-lg border border-white/10 bg-white/[0.03] p-0.5">
-                  {(["7D", "30D", "90D"] as const).map((r) => (
+                  {(Object.keys(RANGE_DAYS) as Range[]).map((r) => (
                     <button
                       key={r}
                       type="button"
@@ -418,79 +463,91 @@ function AuditPage() {
               </div>
             </div>
 
-            <svg
-              viewBox={`0 0 ${CHART_W} ${CHART_H}`}
-              preserveAspectRatio="none"
-              className="mt-4 block h-[220px] w-full"
-            >
-              <defs>
-                <linearGradient id="a-tvb" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#22C1E4" stopOpacity="0.34" />
-                  <stop offset="1" stopColor="#22C1E4" stopOpacity="0" />
-                </linearGradient>
-                <linearGradient id="a-tvl" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#3B92FF" stopOpacity="0.32" />
-                  <stop offset="1" stopColor="#3B92FF" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              {[0.25, 0.5, 0.75].map((f) => (
-                <line
-                  key={f}
-                  x1="0"
-                  y1={CHART_H * f}
-                  x2={CHART_W}
-                  y2={CHART_H * f}
-                  stroke="rgba(255,255,255,0.05)"
-                />
-              ))}
-              <path d={chart.tvb.area} fill="url(#a-tvb)" />
-              <path
-                d={chart.tvb.line}
-                fill="none"
-                stroke="#22C1E4"
-                strokeWidth="2.4"
-                vectorEffect="non-scaling-stroke"
-              />
-              <path d={chart.tvl.area} fill="url(#a-tvl)" />
-              <path
-                d={chart.tvl.line}
-                fill="none"
-                stroke="#3B92FF"
-                strokeWidth="2.4"
-                vectorEffect="non-scaling-stroke"
-              />
-              <circle
-                cx={chart.tvb.last.x}
-                cy={chart.tvb.last.y}
-                r="9"
-                fill="#22C1E4"
-                opacity="0.22"
-              />
-              <circle
-                cx={chart.tvb.last.x}
-                cy={chart.tvb.last.y}
-                r="4"
-                fill="#22C1E4"
-              />
-              <circle
-                cx={chart.tvl.last.x}
-                cy={chart.tvl.last.y}
-                r="9"
-                fill="#3B92FF"
-                opacity="0.22"
-              />
-              <circle
-                cx={chart.tvl.last.x}
-                cy={chart.tvl.last.y}
-                r="4"
-                fill="#3B92FF"
-              />
-            </svg>
-            <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
-              <span>30 days ago</span>
-              <span>15 days ago</span>
-              <span>Today</span>
-            </div>
+            {chart ? (
+              <>
+                <svg
+                  viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+                  preserveAspectRatio="none"
+                  className="mt-4 block h-[220px] w-full"
+                >
+                  <defs>
+                    <linearGradient id="a-tvb" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stopColor="#22C1E4" stopOpacity="0.34" />
+                      <stop offset="1" stopColor="#22C1E4" stopOpacity="0" />
+                    </linearGradient>
+                    <linearGradient id="a-tvl" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stopColor="#3B92FF" stopOpacity="0.32" />
+                      <stop offset="1" stopColor="#3B92FF" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  {[0.25, 0.5, 0.75].map((f) => (
+                    <line
+                      key={f}
+                      x1="0"
+                      y1={CHART_H * f}
+                      x2={CHART_W}
+                      y2={CHART_H * f}
+                      stroke="rgba(255,255,255,0.05)"
+                    />
+                  ))}
+                  <path d={chart.tvb.area} fill="url(#a-tvb)" />
+                  <path
+                    d={chart.tvb.line}
+                    fill="none"
+                    stroke="#22C1E4"
+                    strokeWidth="2.4"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <path d={chart.tvl.area} fill="url(#a-tvl)" />
+                  <path
+                    d={chart.tvl.line}
+                    fill="none"
+                    stroke="#3B92FF"
+                    strokeWidth="2.4"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <circle
+                    cx={chart.tvb.last.x}
+                    cy={chart.tvb.last.y}
+                    r="9"
+                    fill="#22C1E4"
+                    opacity="0.22"
+                  />
+                  <circle
+                    cx={chart.tvb.last.x}
+                    cy={chart.tvb.last.y}
+                    r="4"
+                    fill="#22C1E4"
+                  />
+                  <circle
+                    cx={chart.tvl.last.x}
+                    cy={chart.tvl.last.y}
+                    r="9"
+                    fill="#3B92FF"
+                    opacity="0.22"
+                  />
+                  <circle
+                    cx={chart.tvl.last.x}
+                    cy={chart.tvl.last.y}
+                    r="4"
+                    fill="#3B92FF"
+                  />
+                </svg>
+                <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+                  <span>{fmtDay(chart.from)}</span>
+                  <span>{fmtDay(chart.mid)}</span>
+                  <span>{fmtDay(chart.to)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="mt-4 flex h-[220px] items-center justify-center rounded-xl border border-dashed border-white/10 px-6 text-center text-xs text-muted-foreground">
+                {historyLoading
+                  ? "Loading history…"
+                  : points.length === 1
+                    ? "Only one snapshot so far — the chart needs at least two days of history."
+                    : "No history yet — snapshots are taken daily at 00:00 UTC."}
+              </div>
+            )}
           </div>
 
           {/* Overview / Full Audit selector */}
@@ -518,7 +575,7 @@ function AuditPage() {
 
           {/* World tabs */}
           <div className="mt-8 flex items-end gap-6 border-b border-white/10">
-            {(["utxo", "evm"] as WorldKey[]).map((w) => (
+            {WORLD_KEYS.map((w) => (
               <button
                 key={w}
                 type="button"
@@ -529,154 +586,81 @@ function AuditPage() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {w === "utxo" ? "UTxO World" : "EVM World"}
+                {WORLD_LABELS[w]}
                 {world === w && (
                   <span className="absolute -bottom-px left-0 right-0 h-0.5 rounded-full bg-[oklch(0.72_0.19_245)]" />
                 )}
               </button>
             ))}
             <span className="ml-auto pb-3 text-xs text-muted-foreground">
-              {mode === "overview"
-                ? `${data.tag} · snapshot, updated continuously`
-                : "Every value, straight from chain state"}
+              {isEmpty
+                ? "Nothing locked or bridged on these chains yet"
+                : mode === "overview"
+                  ? `${chainTag(data)} · snapshot, updated continuously`
+                  : "Every value, straight from chain state"}
             </span>
           </div>
 
-          {mode === "overview" ? (
-            <div className="mt-6 grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
-              <div className="flex flex-col gap-4">
-                <SummaryCard
-                  title="Total Locked"
-                  rows={data.summaryLocked}
-                  note={data.lockedNote}
-                />
-                <SummaryCard title="Total Bridged" rows={data.summaryBridged} />
-              </div>
-
-              <div className="card-glow rounded-2xl p-5 md:p-6">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                  Locked composition · by chain
-                </div>
-                <div className="mt-4 flex items-center gap-5">
-                  <svg
-                    width="132"
-                    height="132"
-                    viewBox="0 0 120 120"
-                    className="flex-none"
-                  >
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="52"
-                      fill="none"
-                      stroke="rgba(255,255,255,0.06)"
-                      strokeWidth="15"
-                    />
-                    {donut.map((seg, i) => (
-                      <circle
-                        key={i}
-                        cx="60"
-                        cy="60"
-                        r="52"
-                        fill="none"
-                        stroke={seg.color}
-                        strokeWidth="15"
-                        strokeDasharray={seg.dash}
-                        strokeDashoffset={seg.offset}
-                        transform="rotate(-90 60 60)"
-                        strokeLinecap="butt"
-                      />
-                    ))}
-                  </svg>
-                  <div className="flex flex-1 flex-col gap-2">
-                    {donut.map((seg, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-2 text-[13px] font-medium"
-                      >
-                        <span
-                          className="h-2.5 w-2.5 flex-none rounded-full"
-                          style={{ background: seg.color }}
-                        />
-                        <span className="flex-1 truncate">{seg.label}</span>
-                        <span className="tabular-nums text-muted-foreground">
-                          {(seg.pct * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="mt-6 border-t border-white/5 pt-4">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Bridged distribution · by chain
-                  </div>
-                  <div className="mt-3 flex flex-col gap-3">
-                    {bars.map((b, i) => (
-                      <div key={i}>
-                        <div className="flex justify-between text-xs font-medium">
-                          <span>{b.label}</span>
-                          <span className="tabular-nums text-muted-foreground">
-                            {fmtUsdCompact(b.usd)}
-                          </span>
-                        </div>
-                        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/[0.05]">
-                          <div
-                            className="h-full rounded-full"
-                            style={{ width: b.width, background: b.color }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          {isEmpty ? (
+            <div className="mt-6 flex h-40 items-center justify-center rounded-2xl border border-dashed border-white/10 px-6 text-center text-xs text-muted-foreground">
+              {breakdownLoading
+                ? "Loading balances…"
+                : `No locked or bridged balances reported for ${WORLD_LABELS[world]}.`}
+            </div>
+          ) : mode === "overview" ? (
+            /* Composition pair on top, the token lists they break down below -
+               so a world with many tokens grows downward instead of leaving the
+               charts stranded beside one long column. */
+            <div className="mt-6 grid gap-4 lg:grid-cols-2 lg:items-start">
+              {showComposition && (
+                <>
+                  <LockedCompositionCard segments={donut} />
+                  <BridgedDistributionCard bars={bars} />
+                </>
+              )}
+              <SummaryCard title="Total Locked" rows={data.summaryLocked} />
+              <SummaryCard title="Total Bridged" rows={data.summaryBridged} />
             </div>
           ) : (
             (() => {
-              // Union of chain names, preserving locked order first
-              const chainOrder: string[] = [];
-              for (const c of data.lockedChain)
-                if (!chainOrder.includes(c.chain)) chainOrder.push(c.chain);
-              for (const c of data.bridgedChain)
-                if (!chainOrder.includes(c.chain)) chainOrder.push(c.chain);
+              // Union of the world's chains, locked order first
               const lockedByChain = new Map(
-                data.lockedChain.map((c) => [c.chain, c]),
+                data.locked.map((c) => [c.chain, c]),
               );
               const bridgedByChain = new Map(
-                data.bridgedChain.map((c) => [c.chain, c]),
+                data.bridged.map((c) => [c.chain, c]),
               );
+              const chainOrder = [
+                ...new Set([...lockedByChain.keys(), ...bridgedByChain.keys()]),
+              ];
               return (
-                <div className="mt-6 grid gap-4 lg:grid-cols-2 lg:items-start">
-                  {/* Row 1 — summary cards */}
-                  <SummaryOnly title="Total Locked" rows={data.summaryLocked} />
-                  <SummaryOnly
-                    title="Total Bridged"
-                    rows={data.summaryBridged}
-                  />
+                <>
+                  <div className="mt-6 grid gap-4 lg:grid-cols-2 lg:items-start">
+                    {/* Row 1 — summary cards */}
+                    <SummaryOnly
+                      title="Total Locked"
+                      rows={data.summaryLocked}
+                    />
+                    <SummaryOnly
+                      title="Total Bridged"
+                      rows={data.summaryBridged}
+                    />
 
-                  {/* Row 2 — note band (spacer keeps right col aligned) */}
-                  <NoteBand note={data.lockedNote} />
-                  <NoteBand />
+                    {/* Row 2 — per-chain headers */}
+                    <SectionLabel>Total Locked Per Chain</SectionLabel>
+                    <SectionLabel>Total Bridged Per Chain</SectionLabel>
 
-                  {/* Row 3 — per-chain headers */}
-                  <SectionLabel>Total Locked Per Chain</SectionLabel>
-                  <SectionLabel>Total Bridged Per Chain</SectionLabel>
+                    {/* Rows 3..N — chain pairs, one grid row per chain */}
+                    {chainOrder.map((chain) => (
+                      <div key={chain} className="contents">
+                        <ChainCard entry={lockedByChain.get(chain)} />
+                        <ChainCard entry={bridgedByChain.get(chain)} />
+                      </div>
+                    ))}
+                  </div>
 
-                  {/* Rows 4..N — chain pairs, one grid row per chain */}
-                  {chainOrder.map((chain) => (
-                    <div key={chain} className="contents">
-                      <ChainCard
-                        chain={chain}
-                        rows={lockedByChain.get(chain)?.rows}
-                      />
-                      <ChainCard
-                        chain={chain}
-                        rows={bridgedByChain.get(chain)?.rows}
-                      />
-                    </div>
-                  ))}
-                </div>
+                  <HoldersSection chains={data.holders} world={world} />
+                </>
               );
             })()
           )}
@@ -686,7 +670,7 @@ function AuditPage() {
               <TrendingUp className="h-3.5 w-3.5 text-[oklch(0.85_0.15_235)]" />
               Updated 2m ago · figures verified against on-chain state ·{" "}
               <span className="tabular-nums">
-                AP3X ${AP3X_USD.toFixed(5)} · ADA ${ADA_USD.toFixed(4)}
+                AP3X ${priceOf("AP3X").toFixed(5)} · ADA ${priceOf("ADA").toFixed(4)}
               </span>
             </div>
             <a href="#" className="inline-flex items-center gap-1.5 text-[oklch(0.85_0.15_235)] hover:underline">
@@ -720,22 +704,25 @@ function AuditPage() {
 function MetricCard({
   label,
   usd,
-  delta,
+  deltaPct,
   deltaLabel,
   accent,
   spark,
   note,
-  tokens,
 }: {
   label: string;
-  usd: number;
-  delta: string;
+  /** Undefined until the figure has loaded. */
+  usd: number | undefined;
+  /** Change over `deltaLabel`, in percent. Undefined when not yet computable. */
+  deltaPct: number | undefined;
   deltaLabel: string;
   accent: string;
+  /** USD per day, oldest first. Fewer than two points draws nothing. */
   spark: number[];
   note: string;
-  tokens: string[];
 }) {
+  const counted = useCountUp(usd ?? 0);
+  const trend = sparkPath(spark);
   return (
     <div
       className="relative overflow-hidden rounded-2xl border border-white/10 p-6"
@@ -747,32 +734,64 @@ function MetricCard({
         <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
           {label}
         </span>
-        <span className="rounded-md bg-[oklch(0.75_0.18_155_/_0.15)] px-2 py-1 text-[10px] font-semibold text-[oklch(0.85_0.18_155)]">
-          ▲ {delta} · {deltaLabel}
-        </span>
+        <DeltaChip pct={deltaPct} label={deltaLabel} />
       </div>
       <div className="mt-4 font-display text-4xl font-bold tabular-nums leading-none">
-        {fmtUsdFull(useCountUp(usd))}
+        {usd === undefined ? "—" : formatUsdFull(counted)}
       </div>
 
       <div className="mt-4 max-w-xs text-xs leading-relaxed text-muted-foreground">
         {note}
       </div>
-      <svg
-        width="120"
-        height="34"
-        viewBox="0 0 120 34"
-        className="absolute bottom-5 right-5 opacity-90"
-      >
-        <path
-          d={sparkPath(spark)}
-          fill="none"
-          stroke={accent}
-          strokeWidth="2.2"
-          strokeLinecap="round"
-        />
-      </svg>
+      {trend && (
+        <svg
+          width="120"
+          height="34"
+          viewBox="0 0 120 34"
+          className="absolute bottom-5 right-5 opacity-90"
+        >
+          <path
+            d={trend}
+            fill="none"
+            stroke={accent}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          />
+        </svg>
+      )}
     </div>
+  );
+}
+
+/**
+ * Change over the trend window. A fall has to read as a fall, and an
+ * uncomputable change as unknown - not as a green rise.
+ */
+function DeltaChip({ pct, label }: { pct: number | undefined; label: string }) {
+  if (pct === undefined || !Number.isFinite(pct)) {
+    return (
+      <span className="rounded-md bg-white/[0.06] px-2 py-1 text-[10px] font-semibold text-muted-foreground">
+        — · {label}
+      </span>
+    );
+  }
+
+  const rising = pct > 0;
+  const flat = Math.abs(pct) < 0.05;
+  const tone = flat
+    ? "bg-white/[0.06] text-muted-foreground"
+    : rising
+      ? "bg-[oklch(0.75_0.18_155_/_0.15)] text-[oklch(0.85_0.18_155)]"
+      : "bg-[oklch(0.65_0.2_25_/_0.15)] text-[oklch(0.78_0.19_25)]";
+
+  return (
+    <span
+      className={`rounded-md px-2 py-1 text-[10px] font-semibold tabular-nums ${tone}`}
+    >
+      {flat ? "" : rising ? "▲ " : "▼ "}
+      {pct > 0 ? "+" : ""}
+      {pct.toFixed(1)}% · {label}
+    </span>
   );
 }
 
@@ -785,58 +804,112 @@ function Legend({ color, label }: { color: string; label: string }) {
   );
 }
 
-function SummaryCard({
-  title,
-  rows,
-  note,
-}: {
-  title: string;
-  rows: CoinRow[];
-  note?: string;
-}) {
-  const totalUsd = usdOfRows(rows);
+/**
+ * Locked USD split across the world's chains. `self-stretch` keeps it level with
+ * the distribution card beside it, and the centred body means the taller of the
+ * two never leaves the other with a blank foot.
+ */
+function LockedCompositionCard({ segments }: { segments: DonutSegment[] }) {
   return (
-    <div className="card-glow rounded-2xl p-5 md:p-6">
-      <div className="flex items-center justify-between">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          {title}
-        </div>
-        <div className="text-[11px] font-semibold tabular-nums text-[oklch(0.85_0.15_235)]">
-          {fmtUsdCompact(totalUsd)}
-        </div>
+    <div className="card-glow flex flex-col rounded-2xl p-5 md:p-6 lg:self-stretch">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        Locked composition · by chain
       </div>
-      <div className="mt-3 divide-y divide-white/5">
-        {rows.map((row, i) => (
-          <div key={i} className="flex items-center justify-between py-3">
-            <span className="inline-flex items-center gap-3">
+      <div className="mt-4 flex flex-1 items-center gap-6">
+        <svg
+          width="132"
+          height="132"
+          viewBox="0 0 120 120"
+          className="flex-none"
+        >
+          <circle
+            cx="60"
+            cy="60"
+            r="52"
+            fill="none"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth="15"
+          />
+          {segments.map((seg, i) => (
+            <circle
+              key={i}
+              cx="60"
+              cy="60"
+              r="52"
+              fill="none"
+              stroke={seg.color}
+              strokeWidth="15"
+              strokeDasharray={seg.dash}
+              strokeDashoffset={seg.offset}
+              transform="rotate(-90 60 60)"
+              strokeLinecap="butt"
+            />
+          ))}
+        </svg>
+        <div className="flex flex-1 flex-col gap-2.5">
+          {segments.map((seg, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-2 text-[13px] font-medium"
+            >
               <span
-                className="h-2.5 w-2.5 flex-none rounded-sm"
-                style={{ background: COIN_COLOR[row.c] ?? "#3B92FF" }}
+                className="h-2.5 w-2.5 flex-none rounded-full"
+                style={{ background: seg.color }}
               />
-              <span className="text-sm font-semibold">{row.c}</span>
-            </span>
-            <span className="text-right">
-              <span className="font-display text-base font-semibold tabular-nums">
-                {fmtTok(row.v)}
+              <span className="flex-1 truncate">{seg.label}</span>
+              <span className="tabular-nums text-muted-foreground">
+                {fmtUsdCompact(seg.usd)}
               </span>
-              <span className="block text-[11px] tabular-nums text-muted-foreground">
-                {fmtUsdCompact(row.v * (PRICE[row.c] ?? 0))}
+              <span className="w-14 flex-none text-right font-semibold tabular-nums">
+                {(seg.pct * 100).toFixed(1)}%
               </span>
-            </span>
-          </div>
-        ))}
+            </div>
+          ))}
+        </div>
       </div>
-      {note && (
-        <div className="mt-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-          {note}
+    </div>
+  );
+}
+
+/** Bridged USD split across the world's chains, as proportional bars. */
+function BridgedDistributionCard({ bars }: { bars: DistributionBar[] }) {
+  return (
+    <div className="card-glow flex flex-col rounded-2xl p-5 md:p-6 lg:self-stretch">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        Bridged distribution · by chain
+      </div>
+      {bars.length === 0 ? (
+        <div className="mt-4 flex flex-1 items-center text-[11px] text-muted-foreground">
+          Nothing bridged out of these chains yet.
+        </div>
+      ) : (
+        <div className="mt-4 flex flex-1 flex-col justify-center gap-3.5">
+          {bars.map((b, i) => (
+            <div key={i}>
+              <div className="flex justify-between text-xs font-medium">
+                <span>{b.label}</span>
+                <span className="tabular-nums text-muted-foreground">
+                  {fmtUsdCompact(b.usd)}
+                </span>
+              </div>
+              <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/[0.05]">
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: b.width, background: b.color }}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
   );
 }
 
-function SummaryOnly({ title, rows }: { title: string; rows: CoinRow[] }) {
-  const totalUsd = usdOfRows(rows);
+function SummaryCard({ title, rows }: { title: string; rows: TokenRow[] }) {
+  const priceOf = usePriceOf();
+  const colorOf = useTokenColor();
+  const totalUsd = usdOfRows(rows, priceOf);
   return (
     <div className="card-glow rounded-2xl p-5 md:p-6">
       <div className="flex items-center justify-between">
@@ -848,6 +921,47 @@ function SummaryOnly({ title, rows }: { title: string; rows: CoinRow[] }) {
         </div>
       </div>
       <div className="mt-3 divide-y divide-white/5">
+        {rows.length === 0 && <EmptyRows />}
+        {rows.map((row, i) => (
+          <div key={i} className="flex items-center justify-between py-3">
+            <span className="inline-flex items-center gap-3">
+              <span
+                className="h-2.5 w-2.5 flex-none rounded-sm"
+                style={{ background: colorOf(row.tokenID) }}
+              />
+              <span className="text-sm font-semibold">{row.name}</span>
+            </span>
+            <span className="text-right">
+              <span className="font-display text-base font-semibold tabular-nums">
+                {fmtTok(row.amount)}
+              </span>
+              <span className="block text-[11px] tabular-nums text-muted-foreground">
+                {fmtUsdCompact(row.amount * priceOf(row.name))}
+              </span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SummaryOnly({ title, rows }: { title: string; rows: TokenRow[] }) {
+  const priceOf = usePriceOf();
+  const colorOf = useTokenColor();
+  const totalUsd = usdOfRows(rows, priceOf);
+  return (
+    <div className="card-glow rounded-2xl p-5 md:p-6">
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          {title}
+        </div>
+        <div className="text-[11px] font-semibold tabular-nums text-[oklch(0.85_0.15_235)]">
+          {fmtUsdCompact(totalUsd)}
+        </div>
+      </div>
+      <div className="mt-3 divide-y divide-white/5">
+        {rows.length === 0 && <EmptyRows />}
         {rows.map((row, i) => (
           <div
             key={i}
@@ -856,14 +970,14 @@ function SummaryOnly({ title, rows }: { title: string; rows: CoinRow[] }) {
             <span className="inline-flex items-center gap-2">
               <span
                 className="h-2 w-2 rounded-sm"
-                style={{ background: COIN_COLOR[row.c] ?? "#3B92FF" }}
+                style={{ background: colorOf(row.tokenID) }}
               />
-              {row.c}
+              {row.name}
             </span>
             <span className="text-right tabular-nums">
-              <span className="font-semibold">{fmtTok(row.v)}</span>
+              <span className="font-semibold">{fmtTok(row.amount)}</span>
               <span className="ml-2 text-[11px] text-muted-foreground">
-                {fmtUsdCompact(row.v * (PRICE[row.c] ?? 0))}
+                {fmtUsdCompact(row.amount * priceOf(row.name))}
               </span>
             </span>
           </div>
@@ -873,17 +987,11 @@ function SummaryOnly({ title, rows }: { title: string; rows: CoinRow[] }) {
   );
 }
 
-function NoteBand({ note }: { note?: string }) {
-  // When there's no note, render an invisible placeholder of the same shape so
-  // the sibling column stays vertically aligned in the shared grid row.
+/** A card whose token list came back empty - nothing held, not an error. */
+function EmptyRows() {
   return (
-    <div
-      className={`rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2 text-[11px] leading-relaxed text-muted-foreground ${
-        note ? "" : "invisible"
-      }`}
-      aria-hidden={!note}
-    >
-      {note ?? "placeholder"}
+    <div className="py-3 text-[11px] text-muted-foreground">
+      No balances reported.
     </div>
   );
 }
@@ -896,52 +1004,206 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ChainCard({ chain, rows }: { chain: string; rows?: CoinRow[] }) {
-  if (!rows) {
+/** A chain's icon and name, in its own accent - the head of every chain card. */
+function ChainHeading({
+  chain,
+  label,
+  children,
+}: {
+  chain: string;
+  label: string;
+  /** Right-hand side of the row, typically the chain's headline figure. */
+  children?: React.ReactNode;
+}) {
+  const chainColorOf = useChainColor();
+  const icon = CHAIN_META[chain]?.icon;
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="inline-flex min-w-0 items-center gap-2.5">
+        {icon ? (
+          <img
+            src={icon}
+            alt={label}
+            className="h-6 w-6 flex-none rounded-full"
+          />
+        ) : (
+          <span
+            className="h-2.5 w-2.5 flex-none rounded-sm"
+            style={{ background: chainColorOf(chain) }}
+          />
+        )}
+        <span
+          className="truncate text-[12px] font-semibold uppercase tracking-[0.1em]"
+          style={{ color: chainColorOf(chain) }}
+        >
+          {label}
+        </span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function ChainCard({ entry }: { entry?: ChainRows }) {
+  const priceOf = usePriceOf();
+  if (!entry) {
     // Empty slot: keeps the grid row height honest so the paired card aligns.
     return <div aria-hidden className="hidden lg:block" />;
   }
-  const icon = CHAIN_ICON[chain];
-  const chainUsd = rows.reduce((s, r) => s + r.v * (PRICE[r.c] ?? 0), 0);
+  const { chain, label, rows } = entry;
+  const chainUsd = usdOfRows(rows, priceOf);
   return (
     <div className="card-glow rounded-2xl p-4 md:p-5">
-      <div className="flex items-center justify-between">
-        <div className="inline-flex items-center gap-2.5">
-          {icon ? (
-            <img src={icon} alt={chain} className="h-6 w-6 rounded-full" />
-          ) : (
-            <span
-              className="h-2.5 w-2.5 rounded-sm"
-              style={{ background: CHAIN_COLOR[chain] ?? "#3B92FF" }}
-            />
-          )}
-          <span
-            className="text-[12px] font-semibold uppercase tracking-[0.1em]"
-            style={{ color: CHAIN_COLOR[chain] ?? "#3B92FF" }}
-          >
-            {chain}
-          </span>
-        </div>
-        <span className="text-[11px] tabular-nums text-muted-foreground">
+      <ChainHeading chain={chain} label={label}>
+        <span className="flex-none text-[11px] tabular-nums text-muted-foreground">
           {fmtUsdCompact(chainUsd)}
         </span>
-      </div>
+      </ChainHeading>
       <div className="mt-2 divide-y divide-white/5">
         {rows.map((row, i) => (
           <div
             key={i}
             className="flex items-center justify-between py-2 text-[13px]"
           >
-            <span className="text-muted-foreground">{row.c}</span>
+            <span className="text-muted-foreground">{row.name}</span>
             <span className="text-right tabular-nums">
-              <span>{fmtTok(row.v)}</span>
+              <span>{fmtTok(row.amount)}</span>
               <span className="ml-2 text-[11px] text-muted-foreground">
-                {fmtUsdCompact(row.v * (PRICE[row.c] ?? 0))}
+                {fmtUsdCompact(row.amount * priceOf(row.name))}
               </span>
             </span>
           </div>
         ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * Where the locked funds actually sit: every holding address of every chain in
+ * the world, with what it holds and a link to check it on chain.
+ *
+ * Locked only - a bridged total is the sum of past transfers out of a chain, not
+ * a balance, so no address holds it.
+ */
+function HoldersSection({
+  chains,
+  world,
+}: {
+  chains: ChainAddressRows[];
+  world: WorldKey;
+}) {
+  const addressCount = chains.reduce((n, c) => n + c.addresses.length, 0);
+  return (
+    <div className="mt-10">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <div className="font-display text-base font-semibold">
+            Per-address breakdown · by chain
+          </div>
+          <div className="mt-0.5 max-w-2xl text-xs text-muted-foreground">
+            Every address holding locked funds on the chains above, and what
+            each one holds. Open any of them in its explorer to verify the
+            balance against chain state.
+          </div>
+        </div>
+        {addressCount > 0 && (
+          <span className="text-[11px] tabular-nums text-muted-foreground">
+            {addressCount} address{addressCount === 1 ? "" : "es"} ·{" "}
+            {chains.length} chain{chains.length === 1 ? "" : "s"}
+          </span>
+        )}
+      </div>
+
+      {chains.length === 0 ? (
+        <div className="mt-4 flex h-28 items-center justify-center rounded-2xl border border-dashed border-white/10 px-6 text-center text-xs text-muted-foreground">
+          No holding addresses reported for {WORLD_LABELS[world]}.
+        </div>
+      ) : (
+        <div className="mt-4 flex flex-col gap-4">
+          {chains.map((entry) => (
+            <HolderCard key={entry.chain} entry={entry} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** One chain's holding addresses, fullest first. */
+function HolderCard({ entry }: { entry: ChainAddressRows }) {
+  const priceOf = usePriceOf();
+  const { chain, label, addresses } = entry;
+  const chainUsd = addresses.reduce(
+    (sum, holder) => sum + usdOfRows(holder.rows, priceOf),
+    0,
+  );
+  return (
+    <div className="card-glow rounded-2xl p-4 md:p-5">
+      <ChainHeading chain={chain} label={label}>
+        <span className="flex-none text-[11px] tabular-nums text-muted-foreground">
+          {addresses.length} address{addresses.length === 1 ? "" : "es"} ·{" "}
+          {fmtUsdCompact(chainUsd)}
+        </span>
+      </ChainHeading>
+      <div className="mt-1 divide-y divide-white/5">
+        {addresses.map((holder) => (
+          <div
+            key={holder.address}
+            className="flex flex-col gap-2 py-3 md:flex-row md:items-start md:justify-between md:gap-8"
+          >
+            <AddressLink chain={chain} address={holder.address} />
+            <div className="flex flex-none flex-col gap-1">
+              {holder.rows.map((row) => (
+                <div
+                  key={row.tokenID}
+                  className="flex items-baseline justify-between gap-4 text-[13px] md:justify-end"
+                >
+                  <span className="text-muted-foreground md:w-14 md:text-right">
+                    {row.name}
+                  </span>
+                  <span className="tabular-nums md:w-36 md:text-right">
+                    {fmtTok(row.amount)}
+                  </span>
+                  <span className="w-16 text-right text-[11px] tabular-nums text-muted-foreground">
+                    {fmtUsdCompact(row.amount * priceOf(row.name))}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The address in full, linked to its explorer. Shown as plain text for a chain
+ * with no explorer listed for this network, rather than linked somewhere the
+ * address does not exist.
+ */
+function AddressLink({ chain, address }: { chain: string; address: string }) {
+  const url = explorerAddressUrl(chain, address);
+  if (!url) {
+    return (
+      <span className="min-w-0 break-all font-mono text-[11px] leading-relaxed text-muted-foreground">
+        {address}
+      </span>
+    );
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      title="Open in explorer"
+      className="group inline-flex min-w-0 items-start gap-1.5 text-muted-foreground transition-colors hover:text-[oklch(0.85_0.15_235)]"
+    >
+      <span className="break-all font-mono text-[11px] leading-relaxed">
+        {address}
+      </span>
+      <ExternalLink className="mt-0.5 h-3 w-3 flex-none opacity-60 transition-opacity group-hover:opacity-100" />
+    </a>
   );
 }
