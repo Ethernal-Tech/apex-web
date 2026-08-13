@@ -365,6 +365,8 @@ func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(
 // @Failure 401 {object} response.ErrorResponse "Unauthorized – API key missing or invalid."
 // @Security ApiKeyAuth
 // @Router /CardanoTx/GetBalance [get]
+//
+//nolint:dupl
 func (c *ReactorTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Request) {
 	c.logger.Debug("getBalance request", "url", r.URL)
 

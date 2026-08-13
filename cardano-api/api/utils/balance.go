@@ -34,6 +34,7 @@ func FetchCardanoAddressBalance(
 	}
 
 	sum := wallet.GetUtxosSum(utxos)
+
 	tokens, err := wallet.GetTokensFromSumMap(sum)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse token balances: %w", err)
