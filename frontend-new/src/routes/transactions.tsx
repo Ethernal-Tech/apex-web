@@ -5,6 +5,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkToggle } from "@/components/NetworkToggle";
 import {
+  ArrowDown,
   ArrowRight,
   CheckCircle2,
   ChevronDown,
@@ -457,8 +458,8 @@ function TransactionsPage() {
       <main className="bg-hero-glow relative flex-1 overflow-hidden">
         <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[900px] max-w-[140vw] -translate-x-1/2 rounded-full bg-[oklch(0.55_0.22_250_/_0.2)] blur-3xl" />
 
-        <div className="container-page relative py-6 md:py-8">
-          <div className="mx-auto mb-6 flex max-w-6xl flex-col gap-4 md:mb-8 md:flex-row md:items-end md:justify-between">
+        <div className="relative mx-auto w-full max-w-[1400px] px-5 py-6 md:px-8 md:py-8">
+          <div className="mb-6 flex flex-col gap-4 md:mb-8 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[oklch(0.85_0.15_235)]">
                 Bridging history
@@ -501,7 +502,7 @@ function TransactionsPage() {
           </div>
 
           {/* History scope switch */}
-          <div className="mx-auto mb-4 flex max-w-6xl flex-wrap items-center gap-3">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
             <div className="inline-flex gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1">
               <button
                 type="button"
@@ -542,30 +543,42 @@ function TransactionsPage() {
           </div>
 
           {/* Card containing table */}
-          <div className="mx-auto max-w-6xl">
+          <div>
             <div className="card-glow relative overflow-hidden rounded-3xl">
               <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.72_0.19_245_/_0.6)] to-transparent" />
 
-              <div className="overflow-x-auto">
+              <div
+                className={isCompact ? "overflow-x-auto" : "overflow-x-hidden"}
+              >
                 <table
-                  className={`w-full border-collapse text-sm ${isCompact ? "min-w-[600px]" : "min-w-[880px]"}`}
+                  className={`w-full border-collapse text-sm ${
+                    isCompact ? "min-w-[580px]" : "table-fixed"
+                  }`}
                 >
                   <thead>
                     <tr className="text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      <Th
-                        onClick={() => toggleSort("origin")}
-                        active={sortKey === "origin"}
-                        dir={sortDir}
-                      >
-                        Origin
-                      </Th>
-                      <Th
-                        onClick={() => toggleSort("destination")}
-                        active={sortKey === "destination"}
-                        dir={sortDir}
-                      >
-                        {isCompact ? "Dest" : "Destination"}
-                      </Th>
+                      {isCompact ? (
+                        <th className="min-w-[10rem] px-4 py-4 text-center">
+                          Route
+                        </th>
+                      ) : (
+                        <>
+                          <Th
+                            onClick={() => toggleSort("origin")}
+                            active={sortKey === "origin"}
+                            dir={sortDir}
+                          >
+                            Origin
+                          </Th>
+                          <Th
+                            onClick={() => toggleSort("destination")}
+                            active={sortKey === "destination"}
+                            dir={sortDir}
+                          >
+                            Destination
+                          </Th>
+                        </>
+                      )}
                       <Th
                         onClick={() => toggleSort("amount")}
                         active={sortKey === "amount"}
@@ -580,7 +593,8 @@ function TransactionsPage() {
                       >
                         Token amount
                       </Th>
-                      <th className="px-5 py-4">Receiver</th>
+                      {!isCompact && <th className="px-5 py-4">Sender</th>}
+                      {!isCompact && <th className="px-5 py-4">Receiver</th>}
                       <Th
                         onClick={() => toggleSort("createdAt")}
                         active={sortKey === "createdAt"}
@@ -611,7 +625,7 @@ function TransactionsPage() {
                     {isLoading && paged.length === 0 && (
                       <tr>
                         <td
-                          colSpan={isCompact ? 8 : 9}
+                          colSpan={isCompact ? 6 : 10}
                           className="px-5 py-14 text-center text-sm text-muted-foreground"
                         >
                           <span className="inline-flex items-center gap-2">
@@ -624,7 +638,7 @@ function TransactionsPage() {
                     {listQuery.isError && paged.length === 0 && (
                       <tr>
                         <td
-                          colSpan={isCompact ? 8 : 9}
+                          colSpan={isCompact ? 6 : 10}
                           className="px-5 py-14 text-center text-sm text-[oklch(0.8_0.2_27)]"
                         >
                           {(listQuery.error as Error)?.message ||
@@ -639,7 +653,7 @@ function TransactionsPage() {
                     {!isLoading && !listQuery.isError && paged.length === 0 && (
                       <tr>
                         <td
-                          colSpan={isCompact ? 8 : 9}
+                          colSpan={isCompact ? 6 : 10}
                           className="px-5 py-14 text-center text-sm text-muted-foreground"
                         >
                           {view === "user" && !isConnected
@@ -802,12 +816,25 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
       {...rowProps}
       className={`border-t border-white/5 transition-colors hover:bg-white/[0.02] ${compact ? "cursor-pointer" : ""}`}
     >
-      <td className="px-5 py-4">
-        <ChainCell chain={origin} compact={compact} />
-      </td>
-      <td className="px-5 py-4">
-        <ChainCell chain={dest} compact={compact} />
-      </td>
+      {compact ? (
+        <td className="min-w-[10rem] px-4 py-4">
+          <RouteCell
+            origin={origin}
+            dest={dest}
+            sender={tx.sender}
+            receiver={tx.receiver}
+          />
+        </td>
+      ) : (
+        <>
+          <td className="px-5 py-4">
+            <ChainCell chain={origin} />
+          </td>
+          <td className="px-5 py-4">
+            <ChainCell chain={dest} />
+          </td>
+        </>
+      )}
       <td className="px-5 py-4">
         <div className="font-display text-sm font-semibold text-foreground">
           {tx.amountDisplay}
@@ -832,22 +859,16 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
           <span className="text-muted-foreground">—</span>
         )}
       </td>
-      <td className="px-5 py-4">
-        <div className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
-          {shortHash(tx.receiver)}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigator.clipboard?.writeText(tx.receiver);
-            }}
-            className="text-muted-foreground/60 transition-colors hover:text-foreground"
-            aria-label="Copy address"
-          >
-            <Clipboard className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </td>
+      {!compact && (
+        <td className="px-5 py-4">
+          <AddressCell address={tx.sender} />
+        </td>
+      )}
+      {!compact && (
+        <td className="px-5 py-4">
+          <AddressCell address={tx.receiver} />
+        </td>
+      )}
       <td className="px-5 py-4 text-xs text-muted-foreground">
         {formatDate(tx.createdAt)}
       </td>
@@ -875,29 +896,66 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
   );
 }
 
-function ChainCell({
-  chain,
-  compact,
-}: {
-  chain?: ChainMeta;
-  compact?: boolean;
-}) {
+function ChainCell({ chain }: { chain?: ChainMeta }) {
   if (!chain) return <span className="text-muted-foreground">—</span>;
   return (
-    <div className="flex items-center gap-2.5">
-      <div
-        className="h-7 w-7 overflow-hidden rounded-full"
-        title={compact ? chain.label : undefined}
-      >
-        <img
-          src={chain.icon}
-          alt={chain.label}
-          className="h-full w-full object-cover"
-        />
+    <div className="flex min-w-0 items-center gap-2.5">
+      <ChainIcon chain={chain} />
+      <span className="truncate font-medium text-foreground">
+        {chain.label}
+      </span>
+    </div>
+  );
+}
+
+function ChainIcon({ chain }: { chain: ChainMeta }) {
+  return (
+    <div
+      className="h-7 w-7 shrink-0 overflow-hidden rounded-full"
+      title={chain.label}
+    >
+      <img
+        src={chain.icon}
+        alt={chain.label}
+        className="h-full w-full object-cover"
+      />
+    </div>
+  );
+}
+
+function RouteCell({
+  origin,
+  dest,
+  sender,
+  receiver,
+}: {
+  origin?: ChainMeta;
+  dest?: ChainMeta;
+  sender: string;
+  receiver: string;
+}) {
+  return (
+    <div className="grid grid-cols-[1.75rem_1fr] items-center gap-x-2">
+      <div className="flex justify-center">
+        {origin ? (
+          <ChainIcon chain={origin} />
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
       </div>
-      {!compact && (
-        <span className="font-medium text-foreground">{chain.label}</span>
-      )}
+      <AddressCell address={sender} compactHash />
+      <div className="flex justify-center py-0.5">
+        <ArrowDown className="h-3 w-3 text-muted-foreground/70" />
+      </div>
+      <span />
+      <div className="flex justify-center">
+        {dest ? (
+          <ChainIcon chain={dest} />
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </div>
+      <AddressCell address={receiver} compactHash />
     </div>
   );
 }
@@ -1189,6 +1247,39 @@ function NumField({
 function formatAddress(a: string | null) {
   if (!a) return "";
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
+}
+
+function AddressCell({
+  address,
+  nowrap,
+  compactHash,
+}: {
+  address: string;
+  nowrap?: boolean;
+  compactHash?: boolean;
+}) {
+  if (!address) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+
+  return (
+    <div className="flex min-w-0 items-center gap-1.5 font-mono text-xs text-muted-foreground">
+      <span className={nowrap ? "whitespace-nowrap" : "truncate"}>
+        {compactHash ? formatAddress(address) : shortHash(address)}
+      </span>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigator.clipboard?.writeText(address);
+        }}
+        className="shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground"
+        aria-label="Copy address"
+      >
+        <Clipboard className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
 }
 
 function shortHash(a: string) {

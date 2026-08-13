@@ -99,8 +99,7 @@ function Header() {
           ))}
         </nav>
 
-        {/* Burger-mode stats — centered in the header once the desktop nav collapses */}
-        <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 min-[1130px]:hidden">
+        <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-2 min-[875px]:max-[1129px]:flex">
           <Link
             to="/audit"
             title="View full audit"
@@ -151,6 +150,16 @@ function Header() {
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
+      </div>
+
+      {/* Mobile stats — below the logo so they never overlap it */}
+      <div className="flex w-full items-center justify-center gap-3 px-4 pb-3 min-[875px]:hidden">
+        <Link to="/audit" title="View full audit" aria-label="View full audit">
+          <StatChip label="TVL" value={tvl} compact interactive />
+        </Link>
+        <Link to="/audit" title="View full audit" aria-label="View full audit">
+          <StatChip label="TVB" value={tvb} compact interactive />
+        </Link>
       </div>
       {open && (
         <div className="border-t border-white/5 bg-background/95 min-[1130px]:hidden">
