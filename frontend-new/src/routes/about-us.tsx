@@ -17,9 +17,9 @@ import heroImg from "@/assets/about/about-hero.jpg";
 import bridgeImg from "@/assets/about/about-bridge.jpg";
 import agentsImg from "@/assets/about/about-agents.jpg";
 import tradfiImg from "@/assets/about/about-tradfi.jpg";
-import teamSrdjan from "@/assets/about/team-srdjan.jpg";
-import teamNemanja from "@/assets/about/team-nemanja.jpg";
-import teamDarko from "@/assets/about/team-darko.jpg";
+import teamSrdjan from "@/assets/about/team-srdjan.jpeg";
+import teamNemanja from "@/assets/about/team-nemanja.jpeg";
+import teamDarko from "@/assets/about/team-darko.jpeg";
 
 export const Route = createFileRoute("/about-us")({
   head: () => ({

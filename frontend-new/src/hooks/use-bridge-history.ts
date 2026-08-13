@@ -83,7 +83,7 @@ export function useBridgeHistory(days: number): BridgeHistory {
 
     const priceMap = priceByTokenId(prices);
     // LayerZero APEX is stored on its own, priced as prime's native currency
-    const apexTokenID = getCurrencyID(settings, "prime");
+    const apexTokenID = settings ? getCurrencyID(settings, "prime") : undefined;
     const apexPrice =
       apexTokenID === undefined ? undefined : priceMap.get(apexTokenID);
 

@@ -86,6 +86,11 @@ const convertApexToEvmDfm = (apex: string | number): string => {
 	return toWei(apex, 'ether');
 };
 
+export const convertApexToWei = (apex: string | number): string => {
+	if (typeof apex === 'number') apex = apex.toString();
+	return toWei(apex, 'ether');
+};
+
 export const convertSolanaDfmToApex = (dfm: string | number): string => {
 	return fromWei(dfm, 9);
 };

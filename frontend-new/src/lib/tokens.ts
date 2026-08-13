@@ -1,9 +1,10 @@
+import type { SettingsResponse } from "@/lib/api/settings";
+import { getTokenInfo } from "@/lib/tokenInfo";
 import type {
-  DirectionConfigEntry,
-  SettingsResponse,
-} from "@/lib/api/settings";
-import { CHAIN_META } from "@/lib/chains";
-import primeIcon from "@/assets/chains/prime.svg?url";
+  BridgingSettingsDirectionConfigDto,
+  BridgingSettingsEcosystemTokenDto,
+  BridgingSettingsTokenDto,
+} from "@/swagger/apexBridgeApiService";
 
 export const LovelaceTokenName = "lovelace";
 
@@ -12,6 +13,12 @@ export const LovelaceTokenName = "lovelace";
  * tokenInfos config gives no color at all. See useTokenColor.
  */
 export const DEFAULT_TOKEN_COLOR = "#3B92FF";
+export const apexID = 1;
+
+export interface IDirectionFullConfig {
+  directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto };
+  ecosystemTokens: BridgingSettingsEcosystemTokenDto[];
+}
 
 export type BridgeToken = {
   id: string;
@@ -31,48 +38,87 @@ export function getTokenConfig(
   settings: SettingsResponse | undefined,
   chain: string,
   tokenID: number,
-): DirectionConfigEntry["tokens"][string] | undefined {
+): BridgingSettingsTokenDto | undefined {
   return getDirectionConfig(settings)[chain]?.tokens?.[tokenID];
 }
 
-/** Native currency token id for a chain (`chainSpecific === 'lovelace'`). */
-export function getCurrencyID(
-  settings: SettingsResponse | undefined,
+export const getCurrencyID = (
+  settings: IDirectionFullConfig,
   chain: string,
-): number | undefined {
-  const tokens = getDirectionConfig(settings)[chain]?.tokens;
-  if (!tokens) return undefined;
-  const currencyID = Object.keys(tokens).find(
-    (id) => tokens[+id].chainSpecific === LovelaceTokenName,
+): number | undefined => {
+  if (
+    !settings.directionConfig[chain] ||
+    !settings.directionConfig[chain].tokens
+  ) {
+    return;
+  }
+
+  const currencyID = Object.keys(settings.directionConfig[chain].tokens).find(
+    (x: string) =>
+      settings.directionConfig[chain].tokens[+x].chainSpecific ===
+      LovelaceTokenName,
   );
+
   return currencyID ? +currencyID : undefined;
-}
+};
+
+export const getWrappedCurrencyID = (
+  settings: IDirectionFullConfig,
+  chain: string,
+): number | undefined => {
+  if (
+    !settings.directionConfig[chain] ||
+    !settings.directionConfig[chain].tokens
+  ) {
+    return;
+  }
+
+  const wrappedCurrencyID = Object.keys(
+    settings.directionConfig[chain].tokens,
+  ).find(
+    (x: string) => settings.directionConfig[chain].tokens[+x].isWrappedCurrency,
+  );
+
+  return wrappedCurrencyID ? +wrappedCurrencyID : undefined;
+};
+
+export const getRealTokenIDFromEntity = (
+  settings: IDirectionFullConfig,
+  transaction:
+    | {
+        tokenID?: number;
+        nativeTokenAmount?: string;
+        originChain: string;
+      }
+    | undefined,
+) => {
+  if (!transaction) return apexID;
+
+  if (transaction.tokenID) return transaction.tokenID;
+
+  if (BigInt(transaction.nativeTokenAmount || "0") === BigInt(0)) {
+    const currencyID = getCurrencyID(settings, transaction.originChain);
+
+    return currencyID || apexID;
+  }
+
+  // for backward compatibility reasons
+  const wrappedCurrencyID = getWrappedCurrencyID(
+    settings,
+    transaction.originChain,
+  );
+
+  return wrappedCurrencyID || apexID;
+};
 
 export function getTokenDisplayName(
-  settings: SettingsResponse | undefined,
+  _settings: SettingsResponse | undefined,
   tokenID: number | undefined,
 ): string {
-  if (tokenID === undefined) return "";
-  return (
-    settings?.ecosystemTokens?.find((t) => t.id === tokenID)?.name ??
-    `Token ${tokenID}`
-  );
+  return getTokenInfo(tokenID).label;
 }
 
-function resolveTokenIcon(symbol: string): string {
-  const s = symbol.toUpperCase();
-  if (s.includes("AP3X") || s.includes("APEX")) return CHAIN_META.prime.icon;
-  if (s.includes("ADA")) return CHAIN_META.cardano.icon;
-  if (s.includes("SOL")) return CHAIN_META.solana.icon;
-  if (s.includes("BNB") || s.includes("BSC")) return CHAIN_META.bsc.icon;
-  if (s.includes("POL") || s.includes("MATIC")) return CHAIN_META.polygon.icon;
-  if (s.includes("SEI")) return CHAIN_META.sei.icon;
-  if (s.includes("ETH") || s.includes("BASE") || s.includes("ARB"))
-    return CHAIN_META.ethereum.icon;
-  return primeIcon;
-}
-
-/** Source tokens allowed for a src -> dst pair. */
+/** Source tokens allowed for a src -> dst pair. Labels/icons from GET /tokenInfo. */
 export function getSupportedSourceTokens(
   settings: SettingsResponse | undefined,
   srcChain: string | undefined,
@@ -82,19 +128,16 @@ export function getSupportedSourceTokens(
 
   const directions = getDirectionConfig(settings);
   const pairs = directions[srcChain]?.destChain?.[dstChain] ?? [];
-  const nameById = new Map(
-    (settings.ecosystemTokens ?? []).map((t) => [t.id, t.name] as const),
-  );
 
   return pairs.map((pair) => {
-    const name = nameById.get(pair.srcTokenID) ?? `Token ${pair.srcTokenID}`;
+    const info = getTokenInfo(pair.srcTokenID);
     return {
       id: String(pair.srcTokenID),
       tokenID: pair.srcTokenID,
       dstTokenID: pair.dstTokenID,
-      symbol: name,
-      name,
-      icon: resolveTokenIcon(name),
+      symbol: info.label,
+      name: info.label,
+      icon: info.icon,
     };
   });
 }

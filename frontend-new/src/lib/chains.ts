@@ -13,6 +13,7 @@ import scrollIcon from "@/assets/chains/scroll.svg?url";
 import seiIcon from "@/assets/chains/sei.svg?url";
 import uniIcon from "@/assets/chains/unichain.svg?url";
 import type { SettingsResponse } from "@/lib/api/settings";
+import { ChainApexBridgeEnum, ChainEnum } from "@/swagger/apexBridgeApiService";
 
 export type ChainCategory = "apex" | "utxo" | "evm" | "svm";
 
@@ -54,31 +55,34 @@ const APEX_BRIDGE_CHAINS = new Set([
 
 export function isEvmChain(chain: string): boolean {
   return (
-    chain === "nexus" ||
-    chain === "base" ||
-    chain === "bsc" ||
-    chain === "polygon" ||
-    chain === "ethereum" ||
-    chain === "katana" ||
-    chain === "sei" ||
-    chain === "arbitrum" ||
-    chain === "scroll" ||
-    chain === "unichain"
+    chain === ChainEnum.Nexus ||
+    chain === ChainEnum.Base ||
+    chain === ChainEnum.Bsc ||
+    chain === ChainEnum.Polygon ||
+    chain === ChainEnum.Ethereum ||
+    chain === ChainEnum.Katana ||
+    chain === ChainEnum.Sei ||
+    chain === ChainEnum.Arbitrum ||
+    chain === ChainEnum.Scroll ||
+    chain === ChainEnum.Unichain
   );
 }
 
 export function isCardanoChain(chain: string): boolean {
-  return chain === "prime" || chain === "vector" || chain === "cardano";
+  return (
+    chain === ChainEnum.Prime ||
+    chain === ChainEnum.Vector ||
+    chain === ChainEnum.Cardano
+  );
 }
 
 export function isSolanaChain(chain: string): boolean {
-  return chain === "solana";
+  return chain === ChainEnum.Solana;
 }
 
 export function isLZBridging(origin: string, destination: string): boolean {
-  return (
-    !APEX_BRIDGE_CHAINS.has(origin) || !APEX_BRIDGE_CHAINS.has(destination)
-  );
+  const apexChains = new Set<string>(Object.values(ChainApexBridgeEnum));
+  return !apexChains.has(origin) || !apexChains.has(destination);
 }
 
 export type ChainMeta = {

@@ -1,9 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import appSettings from "@/settings/appSettings";
-import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
+import { captureAndThrowError } from "@/lib/wallet/errors";
 import {
+  confirmTransactionSignature,
   getBalanceLamports,
   getSplTokenBalancesByMintLamports,
+  sendRawTransactionBase64,
 } from "@/lib/wallet/solanaRpc";
+import {
+  base64ToUint8Array,
+  createPhantomTransactionAdapter,
+  uint8ArrayToBase64,
+} from "@/lib/wallet/solanaTx";
 
 type WalletInfo = {
   name: string;
@@ -106,19 +114,56 @@ class SolWalletHandler {
         "getSplTokenBalancesByMint",
       );
     }
+    return getSplTokenBalancesByMintLamports(this._address, this._useMainnet);
+  };
+
+  signAndSendTransaction = async (txRawBase64: string): Promise<string> => {
+    if (!this._address || !this._provider) {
+      captureAndThrowError(
+        "Wallet not enabled.",
+        "solWallet.ts",
+        "signAndSendTransaction",
+      );
+    }
+
+    const serializedTx = base64ToUint8Array(txRawBase64);
+    const adapter = createPhantomTransactionAdapter(serializedTx);
+
     try {
-      return await getSplTokenBalancesByMintLamports(
-        this._address,
+      if (this._provider.signAndSendTransaction) {
+        const result = await this._provider.signAndSendTransaction(adapter);
+        const signature =
+          typeof result === "string" ? result : result?.signature;
+
+        if (!signature) {
+          throw new Error("Phantom did not return a transaction signature");
+        }
+
+        await confirmTransactionSignature(signature, this._useMainnet);
+        return signature;
+      }
+
+      const signedTx = await this._provider.signTransaction(adapter);
+      const signedBytes =
+        typeof signedTx?.serialize === "function"
+          ? signedTx.serialize()
+          : signedTx;
+
+      const signedBase64 = uint8ArrayToBase64(
+        signedBytes instanceof Uint8Array
+          ? signedBytes
+          : new Uint8Array(signedBytes),
+      );
+      const signature = await sendRawTransactionBase64(
+        signedBase64,
         this._useMainnet,
       );
-    } catch (err) {
-      captureException(err, {
-        tags: {
-          component: "solWallet.ts",
-          action: "getSplTokenBalancesByMint",
-        },
-      });
-      return {};
+      await confirmTransactionSignature(signature, this._useMainnet);
+      return signature;
+    } catch (err: any) {
+      console.error("Full error:", JSON.stringify(err, null, 2));
+      console.error("Logs:", err?.logs);
+      throw err;
     }
   };
 }

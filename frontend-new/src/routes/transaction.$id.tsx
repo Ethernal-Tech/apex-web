@@ -1,69 +1,54 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Check,
+  Copy,
   X as XIcon,
   Wallet,
   ExternalLink,
   History,
-  AlertCircle,
   ChevronDown,
+  Loader2,
+  AlertCircle,
+  Undo2,
 } from "lucide-react";
-import { z } from "zod";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkBadge } from "@/components/NetworkToggle";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
+import { convertDfmToApex, toFixedAmount } from "@/lib/amount";
+import { settingsQueryOptions } from "@/lib/api/settings";
+import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
+import { getAction } from "@/lib/api/transaction";
+import {
+  buildBridgingStepsFromStatus,
+  getOverallStatusLabel,
+  getReleaseStepDescription,
+  isStatusFinal,
+  statusToStages,
+  type DetailState,
+  type DetailStep,
+  type StageStatus,
+} from "@/lib/bridging/txStatusUi";
+import { CHAIN_META } from "@/lib/chains";
+import { getExplorerUrl, openExplorer } from "@/lib/explorer";
+import { ErrorResponse, tryCatchJsonByAction } from "@/lib/fetchUtils";
+import {
+  getCurrencyID,
+  getRealTokenIDFromEntity,
+  getTokenDisplayName,
+} from "@/lib/tokens";
+import {
+  TransactionStatusEnum,
+  type BridgeTransactionDto,
+} from "@/swagger/apexBridgeApiService";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
+import { useLiveTxBalances } from "@/hooks/use-live-tx-balances";
 import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
-import ethIcon from "@/assets/chains/ethereum.svg?url";
-import solIcon from "@/assets/chains/solana.svg?url";
-import adaIcon from "@/assets/chains/cardano.svg?url";
-import polyIcon from "@/assets/chains/polygon.svg?url";
-import bnbIcon from "@/assets/chains/bnb.svg?url";
-import baseIcon from "@/assets/chains/coinbase.svg?url";
-import primeIcon from "@/assets/chains/prime.svg?url";
-import nexusIcon from "@/assets/chains/nexus.svg?url";
-import vectorIcon from "@/assets/chains/vector.svg?url";
-import arbIcon from "@/assets/chains/arbi.svg?url";
-import katanaIcon from "@/assets/chains/katana.svg?url";
-import scrollIcon from "@/assets/chains/scroll.svg?url";
-import seiIcon from "@/assets/chains/sei.svg?url";
-import uniIcon from "@/assets/chains/unichain.svg?url";
-
-const CHAIN_META: Record<
-  string,
-  { label: string; icon: string; symbol: string }
-> = {
-  prime: { label: "Prime", icon: primeIcon, symbol: "AP3X" },
-  nexus: { label: "Nexus", icon: nexusIcon, symbol: "AP3X" },
-  vector: { label: "Vector", icon: vectorIcon, symbol: "AP3X" },
-  eth: { label: "Ethereum", icon: ethIcon, symbol: "ETH" },
-  sol: { label: "Solana", icon: solIcon, symbol: "SOL" },
-  ada: { label: "Cardano", icon: adaIcon, symbol: "ADA" },
-  bnb: { label: "BNB Chain", icon: bnbIcon, symbol: "BNB" },
-  sei: { label: "Sei", icon: seiIcon, symbol: "SEI" },
-  base: { label: "Base", icon: baseIcon, symbol: "ETH" },
-  arb: { label: "Arbitrum", icon: arbIcon, symbol: "ETH" },
-  poly: { label: "Polygon", icon: polyIcon, symbol: "POL" },
-  uni: { label: "Unichain", icon: uniIcon, symbol: "ETH" },
-  scroll: { label: "Scroll", icon: scrollIcon, symbol: "ETH" },
-  katana: { label: "Katana", icon: katanaIcon, symbol: "ETH" },
-};
-
-const searchSchema = z.object({
-  src: z.string().default("nexus"),
-  dst: z.string().default("prime"),
-  amount: z.string().default("0"),
-  addr: z.string().default(""),
-  sender: z.string().default(""),
-  // Optional forced-fail index for demo/testing: ?fail=0|1|2
-  fail: z.coerce.number().int().min(0).max(2).optional(),
-});
 
 export const Route = createFileRoute("/transaction/$id")({
-  validateSearch: (s) => searchSchema.parse(s),
   head: () => ({
     meta: [
       { title: "Skyline Bridge — Transaction" },
@@ -75,8 +60,6 @@ export const Route = createFileRoute("/transaction/$id")({
   }),
   component: TransactionPage,
 });
-
-type StageStatus = "pending" | "active" | "success" | "failed";
 
 const STAGE_LABELS = [
   {
@@ -96,115 +79,21 @@ const STAGE_LABELS = [
   },
 ] as const;
 
-type DetailState = "done" | "active" | "pending" | "failed";
-
-type DetailStep = {
-  key: string;
-  title: string;
-  description: string;
+function StepIcon({
+  state,
+  refundDone,
+}: {
   state: DetailState;
-};
-
-// Plain-language copy for each raw bridging status, written for non-technical users.
-const STATUS_COPY: Record<
-  string,
-  {
-    title: (s: string, d: string) => string;
-    desc: (s: string, d: string) => string;
-  }
-> = {
-  DiscoveredOnSource: {
-    title: (s) => `Detected on ${s}`,
-    desc: (s) =>
-      `We've spotted your transfer on the ${s} chain and are checking that everything looks right.`,
-  },
-  SubmittedToBridge: {
-    title: () => "Handed to the Skyline bridge",
-    desc: () =>
-      "Your transfer has been passed to the Skyline bridge, which now takes it from here.",
-  },
-  IncludedInBatch: {
-    title: () => "Bundled for settlement",
-    desc: () =>
-      "Your transfer was grouped together with others into one secure batch to keep fees low and settlement fast.",
-  },
-  SubmittedToDestination: {
-    title: (_s, d) => `Sent to ${d}`,
-    desc: (_s, d) =>
-      `The bridge is now releasing your assets onto the ${d} chain.`,
-  },
-  ExecutedOnDestination: {
-    title: (_s, d) => `Arrived on ${d}`,
-    desc: (_s, d) =>
-      `Your assets have landed on the ${d} chain — the transfer is complete.`,
-  },
-  InvalidRequest: {
-    title: () => "Request couldn't be validated",
-    desc: () =>
-      "Some details of the transfer didn't check out, so it was stopped safely before any funds were moved.",
-  },
-  FailedToExecuteOnDestination: {
-    title: (_s, d) => `Couldn't complete on ${d}`,
-    desc: (_s, d) =>
-      `The assets couldn't be released on the ${d} chain. Your funds are safe — please reach out to support to resolve it.`,
-  },
-};
-
-// The happy-path order of statuses a transfer moves through.
-const HAPPY_PATH = [
-  "DiscoveredOnSource",
-  "SubmittedToBridge",
-  "IncludedInBatch",
-  "SubmittedToDestination",
-  "ExecutedOnDestination",
-] as const;
-
-// Derive the fine-grained, ordered status list from the 3 coarse loader stages.
-function buildBridgingSteps(
-  stages: StageStatus[],
-  sourceLabel: string,
-  destLabel: string,
-): DetailStep[] {
-  const mk = (key: string, state: DetailState): DetailStep => ({
-    key,
-    state,
-    title: STATUS_COPY[key].title(sourceLabel, destLabel),
-    description: STATUS_COPY[key].desc(sourceLabel, destLabel),
-  });
-
-  const failedStage = stages.findIndex((s) => s === "failed");
-  const successes = stages.filter((s) => s === "success").length;
-  // How many happy-path steps are fully complete for a given number of finished stages.
-  const doneCount = [0, 1, 3, 5][successes];
-
-  if (failedStage === -1) {
-    return HAPPY_PATH.map((key, i) =>
-      mk(key, i < doneCount ? "done" : i === doneCount ? "active" : "pending"),
-    );
-  }
-
-  // Destination failure: everything up to the release step happened, then it failed there.
-  if (failedStage === 2) {
-    return [
-      mk("DiscoveredOnSource", "done"),
-      mk("SubmittedToBridge", "done"),
-      mk("IncludedInBatch", "done"),
-      mk("SubmittedToDestination", "done"),
-      mk("FailedToExecuteOnDestination", "failed"),
-    ];
-  }
-
-  // Earlier failure: the request was rejected as invalid before it could be relayed.
-  const reached = failedStage === 0 ? 1 : 2;
-  return [
-    ...HAPPY_PATH.slice(0, reached).map((key) => mk(key, "done")),
-    mk("InvalidRequest", "failed"),
-    ...HAPPY_PATH.slice(reached).map((key) => mk(key, "pending")),
-  ];
-}
-
-function StepIcon({ state }: { state: DetailState }) {
+  refundDone?: boolean;
+}) {
   if (state === "done") {
+    if (refundDone) {
+      return (
+        <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[oklch(0.78_0.14_85)] text-[oklch(0.14_0.03_260)] ring-2 ring-[oklch(0.78_0.14_85_/_0.3)]">
+          <Undo2 className="h-3.5 w-3.5" strokeWidth={3} />
+        </span>
+      );
+    }
     return (
       <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[oklch(0.7_0.18_165)] text-[oklch(0.14_0.03_260)] ring-2 ring-[oklch(0.7_0.18_165_/_0.3)]">
         <Check className="h-3.5 w-3.5" strokeWidth={3} />
@@ -232,12 +121,18 @@ function StepIcon({ state }: { state: DetailState }) {
   );
 }
 
-function BridgingDetail({ steps }: { steps: DetailStep[] }) {
+function BridgingDetail({
+  steps,
+  isRefund,
+}: {
+  steps: DetailStep[];
+  isRefund: boolean;
+}) {
   return (
     <ol className="mt-4 grid gap-3 border-t border-white/5 pt-4">
-      {steps.map((s) => (
+      {steps.map((s, i) => (
         <li key={s.key} className="flex items-start gap-3">
-          <StepIcon state={s.state} />
+          <StepIcon state={s.state} refundDone={isRefund && i > 0} />
           <div className="min-w-0">
             <div
               className={`text-sm font-medium leading-tight ${
@@ -258,84 +153,139 @@ function BridgingDetail({ steps }: { steps: DetailStep[] }) {
   );
 }
 
+function chainView(chainId: string | undefined) {
+  const meta = chainId ? CHAIN_META[chainId] : undefined;
+  return {
+    id: chainId ?? "",
+    label: meta?.label ?? chainId ?? "—",
+    icon: meta?.icon ?? CHAIN_META.prime.icon,
+    symbol: meta?.symbol ?? "TOKEN",
+  };
+}
+
 function TransactionPage() {
   const { id } = Route.useParams();
-  const { src, dst, amount, addr, sender, fail } = Route.useSearch();
   const isCompact = useMediaQuery("(max-width: 1000px)");
+  const [showDetails, setShowDetails] = useState(false);
   const { tvlUsd, tvbUsd } = useBridgeStats();
 
-  const source = CHAIN_META[src] ?? CHAIN_META.nexus;
-  const destination = CHAIN_META[dst] ?? CHAIN_META.prime;
+  const txId = Number.parseInt(id, 10);
+  const settingsQuery = useQuery(settingsQueryOptions);
+  useQuery(tokenInfosQueryOptions);
 
-  // Mock wallet balances of the transferred token on each chain (placeholder data).
-  const sourceBalance = "5.999990";
-  const destBalance = "12.480000";
+  const txQuery = useQuery({
+    queryKey: ["bridgeTransaction", txId] as const,
+    enabled: Number.isFinite(txId),
+    queryFn: async (): Promise<BridgeTransactionDto> => {
+      const response = await tryCatchJsonByAction(
+        getAction.bind(null, txId),
+        false,
+      );
+      if (response instanceof ErrorResponse) {
+        throw new Error(response.err);
+      }
+      return response;
+    },
+    refetchInterval: (query) => {
+      const tx = query.state.data;
+      if (!tx || isStatusFinal(tx.status)) return false;
+      return 5000;
+    },
+  });
 
-  // If fail is not explicitly set via search, randomly fail ~15% and pick a stage.
-  const forcedFail = useMemo(() => {
-    if (typeof fail === "number") return fail;
-    if (Math.random() < 0.15) return Math.floor(Math.random() * 3);
-    return -1;
-  }, [fail]);
+  const tx = txQuery.data;
+  const settings = settingsQuery.data;
 
-  const [stages, setStages] = useState<StageStatus[]>([
-    "active",
-    "pending",
-    "pending",
-  ]);
-  const [startedAt] = useState<Date>(new Date());
-  const [finishedAt, setFinishedAt] = useState<Date | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
+  const source = chainView(tx?.originChain);
+  const destination = chainView(tx?.destinationChain);
 
-  const detailSteps = buildBridgingSteps(
-    stages,
+  const amountDisplay = useMemo(() => {
+    if (!tx) return "0";
+    return toFixedAmount(convertDfmToApex(tx.amount, tx.originChain), 6);
+  }, [tx]);
+
+  const tokenAmountDisplay = useMemo(() => {
+    if (!tx?.nativeTokenAmount) return null;
+    if (BigInt(tx.nativeTokenAmount || "0") === BigInt(0)) return null;
+    return toFixedAmount(
+      convertDfmToApex(tx.nativeTokenAmount, tx.originChain),
+      6,
+    );
+  }, [tx]);
+
+  const currencyID =
+    tx && settings ? getCurrencyID(settings, tx.originChain) : undefined;
+  const currencySymbol =
+    getTokenDisplayName(settings, currencyID) || source.symbol;
+
+  const realTokenID = settings
+    ? getRealTokenIDFromEntity(settings, tx)
+    : undefined;
+  const tokenSymbol = getTokenDisplayName(settings, realTokenID);
+
+  const sender = tx?.senderAddress ?? "";
+  const receiver = tx?.receiverAddresses ?? "";
+  const startedAt = tx?.createdAt ?? null;
+  const finishedAt = tx?.finishedAt ?? null;
+
+  const rawStatus = tx?.status ?? TransactionStatusEnum.Pending;
+  const isRefund = !!tx?.isRefund;
+
+  const [statusToShow, setStatusToShow] = useState(rawStatus);
+  useEffect(() => {
+    setStatusToShow(rawStatus);
+  }, [txId]);
+  useEffect(() => {
+    setStatusToShow((prev) => {
+      if (
+        prev === TransactionStatusEnum.SubmittedToDestination &&
+        (rawStatus === TransactionStatusEnum.IncludedInBatch ||
+          rawStatus === TransactionStatusEnum.FailedToExecuteOnDestination)
+      ) {
+        return prev;
+      }
+      return rawStatus;
+    });
+  }, [rawStatus]);
+
+  const stages = statusToStages(statusToShow);
+  const detailSteps = buildBridgingStepsFromStatus(
+    statusToShow,
     source.label,
     destination.label,
+    isRefund,
   );
-
-  const overallDone = stages.every((s) => s === "success");
-  const overallFailed = stages.some((s) => s === "failed");
-
+  const overallDone =
+    statusToShow === TransactionStatusEnum.ExecutedOnDestination;
+  const overallFailed = statusToShow === TransactionStatusEnum.InvalidRequest;
+  // Refund styling for in-progress/complete refunds; failed invalid-request keeps error styling.
+  const showAsRefund = isRefund && !overallFailed;
+  const statusLabel = getOverallStatusLabel(statusToShow, isRefund);
+  const showFinalDetails = !!tx && isStatusFinal(rawStatus);
+  // Keep balances visible after finalization if the user watched this tx
+  // while it was still in progress (so the destination bump stays on screen).
+  // Opening an already-final tx from history does not show balances.
+  const [shouldTrackBalances, setShouldTrackBalances] = useState(false);
   useEffect(() => {
-    let cancelled = false;
-    const durations = [2500, 3200, 2400];
+    setShouldTrackBalances(false);
+  }, [txId]);
+  useEffect(() => {
+    if (tx && !isStatusFinal(rawStatus)) {
+      setShouldTrackBalances(true);
+    }
+  }, [tx, rawStatus]);
 
-    const runStage = (i: number) => {
-      if (cancelled || i >= 3) return;
-      setStages((prev) => prev.map((s, idx) => (idx === i ? "active" : s)));
-      const t = setTimeout(() => {
-        if (cancelled) return;
-        if (i === forcedFail) {
-          setStages((prev) => prev.map((s, idx) => (idx === i ? "failed" : s)));
-          setFinishedAt(new Date());
-          return;
-        }
-        setStages((prev) => prev.map((s, idx) => (idx === i ? "success" : s)));
-        if (i === 2) {
-          setFinishedAt(new Date());
-        } else {
-          runStage(i + 1);
-        }
-      }, durations[i]);
-      return () => clearTimeout(t);
-    };
-
-    const cleanup = runStage(0);
-    return () => {
-      cancelled = true;
-      cleanup?.();
-    };
-  }, [forcedFail]);
-
-  const statusLabel = overallFailed
-    ? "Transfer failed"
-    : overallDone
-      ? "Transfer complete"
-      : "Transfer in progress";
+  const liveBalances = useLiveTxBalances({
+    tx,
+    settings,
+    sourceLabel: source.label,
+    destinationLabel: destination.label,
+    isFinal: !!tx && isStatusFinal(rawStatus),
+    shouldTrackBalances,
+  });
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
         <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
           <Link
@@ -423,7 +373,6 @@ function TransactionPage() {
         </div>
       </header>
 
-      {/* Body */}
       <main className="bg-hero-glow relative flex-1 overflow-hidden">
         <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[900px] max-w-[140vw] -translate-x-1/2 rounded-full bg-[oklch(0.55_0.22_250_/_0.2)] blur-3xl" />
 
@@ -439,149 +388,215 @@ function TransactionPage() {
             <div className="card-glow relative mt-4 animate-bridge-step-in rounded-3xl p-5 md:p-8">
               <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.72_0.19_245_/_0.6)] to-transparent" />
 
-              <div className="grid gap-8 md:grid-cols-2">
-                {/* Left: summary / details */}
-                <div className="relative grid content-start gap-4">
-                  <div
-                    key={finishedAt ? "details" : "summary"}
-                    className="animate-panel-swap grid content-start gap-4"
-                  >
-                    {finishedAt ? (
-                      <TransactionDetails
-                        source={source.label}
-                        destination={destination.label}
-                        amount={amount}
-                        symbol={source.symbol}
-                        sender={sender}
-                        receiver={addr}
-                        started={startedAt}
-                        finished={finishedAt}
-                        failed={overallFailed}
-                      />
-                    ) : (
-                      <>
-                        <ChainSummary label="Source" chain={source} />
-                        <ChainSummary label="Destination" chain={destination} />
-                        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                            Amount
-                          </div>
-                          <div className="mt-1 font-display text-2xl font-semibold text-foreground">
-                            {amount || "0"}{" "}
-                            <span className="text-sm font-medium text-muted-foreground">
-                              {source.symbol}
-                            </span>
-                          </div>
-                          <div className="mt-3 grid grid-cols-2 gap-3 border-t border-white/5 pt-3">
-                            <div>
-                              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Balance on {source.label}
-                              </div>
-                              <div className="mt-1 font-display text-base font-semibold text-foreground">
-                                {sourceBalance}{" "}
-                                <span className="text-xs font-medium text-muted-foreground">
-                                  {source.symbol}
-                                </span>
-                              </div>
-                            </div>
-                            <div>
-                              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                                Balance on {destination.label}
-                              </div>
-                              <div className="mt-1 font-display text-base font-semibold text-foreground">
-                                {destBalance}{" "}
-                                <span className="text-xs font-medium text-muted-foreground">
-                                  {source.symbol}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
+              {txQuery.isLoading && (
+                <div className="flex min-h-[280px] flex-col items-center justify-center gap-3 text-muted-foreground">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                  <p className="text-sm">Loading transaction…</p>
                 </div>
+              )}
 
-                {/* Right: progress */}
-                <div className="relative flex flex-col rounded-2xl border border-white/10 bg-[oklch(0.14_0.03_260_/_0.5)] p-5 md:p-6">
-                  <div className="flex items-center justify-center gap-2">
-                    <span
-                      className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.2em] ${
-                        overallFailed
-                          ? "text-[oklch(0.78_0.19_25)]"
-                          : overallDone
-                            ? "text-[oklch(0.85_0.15_165)]"
-                            : "text-[oklch(0.85_0.15_235)]"
-                      }`}
+              {txQuery.isError && (
+                <div className="flex min-h-[280px] flex-col items-center justify-center gap-3 text-center">
+                  <AlertCircle className="h-8 w-8 text-[oklch(0.78_0.19_25)]" />
+                  <p className="text-sm text-foreground">
+                    Couldn&apos;t load transaction #{id}
+                  </p>
+                  <p className="max-w-md text-xs text-muted-foreground">
+                    {txQuery.error instanceof Error
+                      ? txQuery.error.message
+                      : "Unknown error"}
+                  </p>
+                </div>
+              )}
+
+              {tx && (
+                <div className="grid gap-8 md:grid-cols-2">
+                  <div className="relative grid content-start gap-4">
+                    <div
+                      key={showFinalDetails ? "details" : "summary"}
+                      className="animate-panel-swap grid content-start gap-4"
                     >
-                      {statusLabel}
-                    </span>
-                    {!overallDone && !overallFailed && <SmallSpinner />}
+                      {showFinalDetails ? (
+                        <TransactionDetails
+                          source={source.label}
+                          destination={destination.label}
+                          amount={amountDisplay}
+                          symbol={currencySymbol}
+                          tokenAmount={tokenAmountDisplay}
+                          tokenSymbol={tokenSymbol}
+                          sender={sender}
+                          receiver={receiver}
+                          started={startedAt ?? new Date()}
+                          finished={finishedAt ?? new Date()}
+                          failed={overallFailed}
+                          isRefund={isRefund}
+                          statusLabel={statusLabel}
+                        />
+                      ) : (
+                        <>
+                          <ChainSummary label="Source" chain={source} />
+                          <ChainSummary
+                            label="Destination"
+                            chain={destination}
+                          />
+                          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                              Amount
+                            </div>
+                            <div className="mt-1 font-display text-2xl font-semibold text-foreground">
+                              {amountDisplay}{" "}
+                              <span className="text-sm font-medium text-muted-foreground">
+                                {currencySymbol}
+                              </span>
+                            </div>
+                            {tokenAmountDisplay && (
+                              <>
+                                <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                  Token amount
+                                </div>
+                                <div className="mt-1 font-display text-xl font-semibold text-foreground">
+                                  {tokenAmountDisplay}{" "}
+                                  <span className="text-sm font-medium text-muted-foreground">
+                                    {tokenSymbol}
+                                  </span>
+                                </div>
+                              </>
+                            )}
+                            {tx.sourceTxHash && (
+                              <div className="mt-3 border-t border-white/5 pt-3">
+                                <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                  Source tx
+                                </div>
+                                <div className="mt-1 break-all font-mono text-xs text-foreground">
+                                  {tx.sourceTxHash}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="mt-6 grid grid-cols-3 items-start gap-2">
-                    {stages.map((status, i) => (
-                      <StageColumn
-                        key={i}
-                        index={i}
-                        status={status}
-                        title={STAGE_LABELS[i].title}
-                        chainIcon={
-                          i === 0
-                            ? source.icon
-                            : i === 2
-                              ? destination.icon
-                              : undefined
-                        }
-                        chainLabel={
-                          i === 0
-                            ? source.label
-                            : i === 2
-                              ? destination.label
-                              : "Bridge"
-                        }
-                        description={STAGE_LABELS[i].describe(
-                          source.label,
-                          destination.label,
+                  <div className="relative flex flex-col rounded-2xl border border-white/10 bg-[oklch(0.14_0.03_260_/_0.5)] p-5 md:p-6">
+                    <div className="flex items-center justify-center gap-2">
+                      <span
+                        className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.2em] ${
+                          overallFailed
+                            ? "text-[oklch(0.78_0.19_25)]"
+                            : showAsRefund
+                              ? "text-[oklch(0.88_0.12_85)]"
+                              : overallDone
+                                ? "text-[oklch(0.85_0.15_165)]"
+                                : "text-[oklch(0.85_0.15_235)]"
+                        }`}
+                      >
+                        {showAsRefund && (
+                          <Undo2 className="h-3.5 w-3.5" strokeWidth={2.5} />
                         )}
-                      />
-                    ))}
-                  </div>
+                        {statusLabel}
+                      </span>
+                      {!overallDone && !overallFailed && <SmallSpinner />}
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setShowDetails((v) => !v)}
-                    aria-expanded={showDetails}
-                    className="mt-6 inline-flex items-center justify-center gap-1.5 self-center rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {showDetails
-                      ? "Hide detailed status"
-                      : "View detailed status"}
-                    <ChevronDown
-                      className={`h-3.5 w-3.5 transition-transform ${showDetails ? "rotate-180" : ""}`}
-                    />
-                  </button>
+                    <div className="mt-6 grid grid-cols-3 items-start gap-2">
+                      {stages.map((stageStatus, i) => (
+                        <StageColumn
+                          key={i}
+                          index={i}
+                          status={stageStatus}
+                          title={STAGE_LABELS[i].title}
+                          isRefund={isRefund}
+                          chainIcon={
+                            i === 0
+                              ? source.icon
+                              : i === 2
+                                ? isRefund
+                                  ? source.icon
+                                  : destination.icon
+                                : undefined
+                          }
+                          chainLabel={
+                            i === 0
+                              ? source.label
+                              : i === 2
+                                ? isRefund
+                                  ? source.label
+                                  : destination.label
+                                : "Bridge"
+                          }
+                          description={
+                            i === 2
+                              ? getReleaseStepDescription(
+                                  source.label,
+                                  destination.label,
+                                  isRefund,
+                                )
+                              : STAGE_LABELS[i].describe(
+                                  source.label,
+                                  destination.label,
+                                )
+                          }
+                        />
+                      ))}
+                    </div>
 
-                  {showDetails && <BridgingDetail steps={detailSteps} />}
+                    {(liveBalances.source || liveBalances.destination) && (
+                      <div className="mt-6 grid gap-2 border-t border-white/5 pt-4 sm:grid-cols-2">
+                        {liveBalances.source && (
+                          <LiveBalanceCard
+                            title="Source wallet"
+                            balance={liveBalances.source}
+                          />
+                        )}
+                        {liveBalances.destination && (
+                          <LiveBalanceCard
+                            title="Destination wallet"
+                            balance={liveBalances.destination}
+                          />
+                        )}
+                      </div>
+                    )}
 
-                  <div className="mt-auto grid grid-cols-2 gap-2 pt-8">
-                    <Link
-                      to="/transactions"
-                      className="btn-primary-glow inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em]"
-                    >
-                      <History className="h-3.5 w-3.5 shrink-0" /> Bridging
-                      history
-                    </Link>
                     <button
                       type="button"
-                      className="btn-primary-glow inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em]"
+                      onClick={() => setShowDetails((v) => !v)}
+                      aria-expanded={showDetails}
+                      className="mt-6 inline-flex items-center justify-center gap-1.5 self-center rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      <ExternalLink className="h-3.5 w-3.5 shrink-0" /> View
-                      explorer
+                      {showDetails
+                        ? "Hide detailed status"
+                        : "View detailed status"}
+                      <ChevronDown
+                        className={`h-3.5 w-3.5 transition-transform ${showDetails ? "rotate-180" : ""}`}
+                      />
                     </button>
+
+                    {showDetails && (
+                      <BridgingDetail steps={detailSteps} isRefund={isRefund} />
+                    )}
+
+                    <div className="mt-auto grid grid-cols-2 gap-2 pt-8">
+                      <Link
+                        to="/transactions"
+                        className="btn-primary-glow inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em]"
+                      >
+                        <History className="h-3.5 w-3.5 shrink-0" /> Bridging
+                        history
+                      </Link>
+                      <button
+                        type="button"
+                        disabled={!getExplorerUrl(tx)}
+                        onClick={() => openExplorer(tx)}
+                        className="btn-primary-glow inline-flex w-full items-center justify-center gap-1.5 rounded-full px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.14em] disabled:opacity-40"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0" /> View
+                        Explorer
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -598,7 +613,6 @@ function TransactionPage() {
           <FooterSocials className="md:flex-1 md:justify-center" />
           <div className="flex items-center gap-2 md:flex-1 md:justify-end">
             <span className="text-muted-foreground/70">Network:</span>
-            {/* Read-only — the transfer is bound to the network it was started on. */}
             <NetworkBadge className="inline-flex" />
           </div>
         </div>
@@ -638,6 +652,42 @@ function ChainSummary({
   );
 }
 
+function LiveBalanceCard({
+  title,
+  balance,
+}: {
+  title: string;
+  balance: {
+    chainLabel: string;
+    address: string;
+    symbol: string;
+    amountDisplay: string | null;
+    isLoading: boolean;
+    isError: boolean;
+  };
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-3">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        {title}
+      </div>
+      <div className="mt-1 text-xs text-muted-foreground">
+        {balance.chainLabel} ·{" "}
+        <span className="font-mono">{shortAddr(balance.address)}</span>
+      </div>
+      <div className="mt-2 font-display text-lg font-semibold text-foreground">
+        {balance.isError
+          ? "—"
+          : balance.amountDisplay != null
+            ? `${balance.amountDisplay} ${balance.symbol}`
+            : balance.isLoading
+              ? "Loading…"
+              : "—"}
+      </div>
+    </div>
+  );
+}
+
 function StageColumn({
   index,
   status,
@@ -645,6 +695,7 @@ function StageColumn({
   chainIcon,
   chainLabel,
   description,
+  isRefund,
 }: {
   index: number;
   status: StageStatus;
@@ -652,6 +703,7 @@ function StageColumn({
   chainIcon?: string;
   chainLabel: string;
   description: string;
+  isRefund: boolean;
 }) {
   return (
     <div className="flex flex-col items-center text-center">
@@ -660,8 +712,13 @@ function StageColumn({
         status={status}
         chainIcon={chainIcon}
         chainLabel={chainLabel}
+        isRefund={isRefund}
       />
-      <StatusBadge status={status} index={index} />
+      <StatusBadge
+        status={status}
+        index={index}
+        refundDone={isRefund && index > 0}
+      />
       <div className="mt-3 font-display text-sm font-semibold text-foreground">
         {title}
       </div>
@@ -677,15 +734,27 @@ function StageOrb({
   status,
   chainIcon,
   chainLabel,
+  isRefund,
 }: {
   index: number;
   status: StageStatus;
   chainIcon?: string;
   chainLabel: string;
+  isRefund: boolean;
 }) {
   const active = status === "active";
   const failed = status === "failed";
   const done = status === "success";
+  const refundDone = isRefund && done && index > 0;
+  const doneGlow = refundDone
+    ? "bg-[oklch(0.78_0.14_85_/_0.28)]"
+    : "bg-[oklch(0.7_0.18_165_/_0.28)]";
+  const doneBorder = refundDone
+    ? "border-[oklch(0.78_0.14_85_/_0.55)]"
+    : "border-[oklch(0.7_0.18_165_/_0.55)]";
+  const doneFill = refundDone
+    ? "bg-[oklch(0.78_0.14_85_/_0.35)]"
+    : "bg-[oklch(0.7_0.18_165_/_0.35)]";
 
   return (
     <div className="relative flex h-20 w-20 items-center justify-center">
@@ -696,7 +765,7 @@ function StageOrb({
         <div className="absolute inset-0 rounded-full bg-[oklch(0.62_0.22_25_/_0.35)] blur-xl" />
       )}
       {done && (
-        <div className="absolute inset-0 rounded-full bg-[oklch(0.7_0.18_165_/_0.28)] blur-xl" />
+        <div className={`absolute inset-0 rounded-full ${doneGlow} blur-xl`} />
       )}
 
       {index === 1 ? (
@@ -707,7 +776,7 @@ function StageOrb({
               : failed
                 ? "border-[oklch(0.62_0.22_25_/_0.6)]"
                 : done
-                  ? "border-[oklch(0.7_0.18_165_/_0.55)]"
+                  ? doneBorder
                   : "border-white/10"
           } bg-white/[0.03]`}
         >
@@ -718,7 +787,7 @@ function StageOrb({
                 : failed
                   ? "bg-[oklch(0.62_0.22_25_/_0.4)]"
                   : done
-                    ? "bg-[oklch(0.7_0.18_165_/_0.35)]"
+                    ? doneFill
                     : "bg-white/5"
             }`}
           />
@@ -731,7 +800,7 @@ function StageOrb({
               : failed
                 ? "border-[oklch(0.62_0.22_25_/_0.6)]"
                 : done
-                  ? "border-[oklch(0.7_0.18_165_/_0.55)]"
+                  ? doneBorder
                   : "border-white/10"
           } bg-white/[0.03]`}
         >
@@ -751,11 +820,20 @@ function StageOrb({
 function StatusBadge({
   status,
   index,
+  refundDone,
 }: {
   status: StageStatus;
   index: number;
+  refundDone?: boolean;
 }) {
   if (status === "success") {
+    if (refundDone) {
+      return (
+        <span className="mt-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[oklch(0.78_0.14_85)] text-[oklch(0.14_0.03_260)] ring-2 ring-[oklch(0.78_0.14_85_/_0.3)]">
+          <Undo2 className="h-3.5 w-3.5" strokeWidth={3} />
+        </span>
+      );
+    }
     return (
       <span className="mt-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[oklch(0.7_0.18_165)] text-[oklch(0.14_0.03_260)] ring-2 ring-[oklch(0.7_0.18_165_/_0.3)]">
         <Check className="h-3.5 w-3.5" strokeWidth={3} />
@@ -823,21 +901,29 @@ function TransactionDetails({
   destination,
   amount,
   symbol,
+  tokenAmount,
+  tokenSymbol,
   sender,
   receiver,
   started,
   finished,
   failed,
+  isRefund,
+  statusLabel,
 }: {
   source: string;
   destination: string;
   amount: string;
   symbol: string;
+  tokenAmount: string | null;
+  tokenSymbol: string;
   sender: string;
   receiver: string;
   started: Date;
   finished: Date;
   failed: boolean;
+  isRefund: boolean;
+  statusLabel: string;
 }) {
   return (
     <div>
@@ -848,14 +934,19 @@ function TransactionDetails({
         <DetailRow label="Source chain" value={source} />
         <DetailRow label="Destination chain" value={destination} />
         <DetailRow label="Amount" value={`${amount} ${symbol}`} />
-        <DetailRow label="Token amount" value={`${amount || "0"} ${symbol}`} />
+        {tokenAmount && (
+          <DetailRow
+            label="Token amount"
+            value={`${tokenAmount} ${tokenSymbol}`}
+          />
+        )}
         <DetailRow
           label="Sender address"
-          value={<span className="font-mono">{shortAddr(sender)}</span>}
+          value={<CopyableAddress address={sender} />}
         />
         <DetailRow
           label="Receiver address"
-          value={<span className="font-mono">{shortAddr(receiver)}</span>}
+          value={<CopyableAddress address={receiver} />}
         />
         <DetailRow label="Date created" value={started.toLocaleString()} />
         <DetailRow label="Date finished" value={finished.toLocaleString()} />
@@ -864,11 +955,15 @@ function TransactionDetails({
           value={
             failed ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-[oklch(0.62_0.22_25_/_0.15)] px-2 py-0.5 text-[oklch(0.85_0.19_25)]">
-                <XIcon className="h-3 w-3" strokeWidth={3} /> Failed
+                <XIcon className="h-3 w-3" strokeWidth={3} /> {statusLabel}
+              </span>
+            ) : isRefund ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[oklch(0.78_0.14_85_/_0.15)] px-2 py-0.5 text-[oklch(0.88_0.12_85)]">
+                <Undo2 className="h-3 w-3" strokeWidth={3} /> {statusLabel}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 rounded-full bg-[oklch(0.7_0.18_165_/_0.15)] px-2 py-0.5 text-[oklch(0.85_0.15_165)]">
-                <Check className="h-3 w-3" strokeWidth={3} /> Success
+                <Check className="h-3 w-3" strokeWidth={3} /> {statusLabel}
               </span>
             )
           }
@@ -882,6 +977,41 @@ function TransactionDetails({
         Close
       </Link>
     </div>
+  );
+}
+
+function CopyableAddress({ address }: { address: string }) {
+  const [copied, setCopied] = useState(false);
+  if (!address) {
+    return <span className="font-mono">—</span>;
+  }
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="font-mono">{shortAddr(address)}</span>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label="Copy address"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {copied ? (
+          <Check className="h-3.5 w-3.5 text-[oklch(0.85_0.15_235)]" />
+        ) : (
+          <Copy className="h-3.5 w-3.5" />
+        )}
+      </button>
+    </span>
   );
 }
 

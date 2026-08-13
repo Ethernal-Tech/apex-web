@@ -105,3 +105,75 @@ export async function getSplTokenBalancesByMintLamports(
   }
   return balances;
 }
+
+export async function getFeeForMessageLamports(
+  messageBase64: string,
+  useMainnet?: boolean,
+): Promise<bigint> {
+  const result = await solanaRpcCall<{ value: number | null }>(
+    "getFeeForMessage",
+    [messageBase64, { commitment: "confirmed" }],
+    useMainnet,
+  );
+
+  if (result.value == null) {
+    throw new Error("Solana fee estimation returned no value.");
+  }
+
+  return BigInt(result.value);
+}
+
+export async function sendRawTransactionBase64(
+  transactionBase64: string,
+  useMainnet?: boolean,
+): Promise<string> {
+  return solanaRpcCall<string>(
+    "sendTransaction",
+    [
+      transactionBase64,
+      {
+        encoding: "base64",
+        skipPreflight: false,
+        preflightCommitment: "confirmed",
+      },
+    ],
+    useMainnet,
+  );
+}
+
+export async function confirmTransactionSignature(
+  signature: string,
+  useMainnet?: boolean,
+  timeoutMs = 60_000,
+): Promise<void> {
+  const started = Date.now();
+
+  while (Date.now() - started < timeoutMs) {
+    const result = await solanaRpcCall<{
+      value: Array<{
+        confirmationStatus?: string;
+        err: unknown;
+      } | null>;
+    }>(
+      "getSignatureStatuses",
+      [[signature], { searchTransactionHistory: true }],
+      useMainnet,
+    );
+
+    const status = result.value[0];
+    if (status?.err) {
+      throw new Error(`Transaction failed: ${JSON.stringify(status.err)}`);
+    }
+
+    if (
+      status?.confirmationStatus === "confirmed" ||
+      status?.confirmationStatus === "finalized"
+    ) {
+      return;
+    }
+
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+
+  throw new Error(`Timed out waiting for Solana confirmation: ${signature}`);
+}

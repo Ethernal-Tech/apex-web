@@ -54,6 +54,7 @@ import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
 import { serializeSolanaTxRawStorage } from 'src/utils/solanaTxRaw';
+import { convertDfmToWeiByChain } from 'src/utils/generalUtils';
 import { isAddress } from 'web3-validator';
 import { createHash } from 'crypto';
 
@@ -386,6 +387,12 @@ export class TransactionService {
 			(destinationChain as ChainApexBridgeEnum) ?? entity.destinationChain;
 		entity.amount = (amount ?? '').trim() || entity.amount;
 		entity.nativeTokenAmount = enNativeTokenAmount;
+		entity.amountWei = String(
+			convertDfmToWeiByChain(entity.amount || '0', originChain),
+		);
+		entity.tokenAmountWei = String(
+			convertDfmToWeiByChain(enNativeTokenAmount || '0', originChain),
+		);
 		entity.tokenID = enTokenID;
 		entity.originChain = originChain;
 		entity.createdAt = new Date();

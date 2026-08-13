@@ -1,34 +1,60 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  useNavigate,
+  useRouterState,
+} from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
-function newTransactionId() {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return (
-    "0x" + Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")
-  );
-}
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useBridgeFees } from "@/hooks/use-bridge-fees";
+import { useReactorValidatorStatus } from "@/hooks/use-reactor-validator-status";
 import { useWalletBalances } from "@/hooks/use-wallet-balances";
+import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkBadge, NetworkToggle } from "@/components/NetworkToggle";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  convertApexToDfm,
+  convertDfmToApex,
   convertDfmToDisplay,
   formatBalanceParts,
   toFixedAmount,
+  toFixedFloor,
 } from "@/lib/amount";
+import { bridgingAddressesQueryOptions } from "@/lib/api/bridgingAddresses";
 import { settingsQueryOptions } from "@/lib/api/settings";
+import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
+import {
+  getAdjustedBridgeTxFee,
+  getDefaultBridgeTxFee,
+} from "@/lib/bridging/adjustedBridgeFee";
+import { submitBridgeTransfer } from "@/lib/bridging/bridgeSubmit";
+import { getEstimatedBridgeTime } from "@/lib/bridging/estimatedBridgeTime";
+import { resolveBridgeMaxAmounts } from "@/lib/bridging/maxAmount";
+import { BridgingModeEnum, getBridgingMode } from "@/lib/bridging/mode";
+import type {
+  SubmitLoadingState,
+  UpdateSubmitLoadingState,
+} from "@/lib/bridging/statusUtils";
 import {
   CHAIN_FILTERS,
   CHAIN_META,
   chainMatchesFilter,
   getDstChains,
   getSrcChains,
+  isLZBridging,
   type BridgeChain,
   type ChainFilterId,
 } from "@/lib/chains";
+import { getExplorerTxUrl } from "@/lib/explorer";
 import {
   getCurrencyID,
   getSupportedSourceTokens,
@@ -36,10 +62,13 @@ import {
   type BridgeToken,
 } from "@/lib/tokens";
 import type { SettingsResponse } from "@/lib/api/settings";
+import appSettings from "@/settings/appSettings";
+import { ChainEnum } from "@/swagger/apexBridgeApiService";
 import {
-  connectWallet,
-  disconnectWallet,
-  type WalletSession,
+  loadStoredDestinationChain,
+  loadStoredSourceChain,
+  persistDestinationChain,
+  persistSourceChain,
 } from "@/lib/wallet/connect";
 import { createPortal } from "react-dom";
 import {
@@ -77,6 +106,14 @@ export const Route = createFileRoute("/bridge-app")({
   }),
   component: BridgeApp,
 });
+
+function readReturnTo(search: Record<string, unknown>): string | undefined {
+  const raw = search.returnTo;
+  if (typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//")) {
+    return raw;
+  }
+  return undefined;
+}
 
 type Chain = BridgeChain;
 
@@ -674,8 +711,14 @@ function TokenRow({
 }
 
 function BridgeApp() {
+  const navigate = useNavigate();
+  const returnTo = useRouterState({
+    select: (s) => readReturnTo(s.location.search as Record<string, unknown>),
+  });
   const { data: settings, isLoading: settingsLoading } =
     useQuery(settingsQueryOptions);
+  // Hydrates token label/icon registry used by getSupportedSourceTokens / getTokenInfo.
+  useQuery(tokenInfosQueryOptions);
 
   const sourceChains = useMemo(() => getSrcChains(settings), [settings]);
   const [source, setSource] = useState<Chain | null>(null);
@@ -686,42 +729,57 @@ function BridgeApp() {
     [source?.id, settings],
   );
 
-  const [walletSession, setWalletSession] = useState<WalletSession | null>(
-    null,
-  );
-  const [connecting, setConnecting] = useState(false);
+  const {
+    account,
+    isFullyLoggedIn,
+    isConnecting: connecting,
+    connect: connectSession,
+    disconnect: disconnectSession,
+  } = useWalletSession();
+
   const [step, setStep] = useState<"select" | "transfer">("select");
   const isCompact = useMediaQuery("(max-width: 1000px)");
   const { tvlUsd, tvbUsd } = useBridgeStats();
 
-  const walletAddress = walletSession?.account.account ?? null;
+  const walletAddress = account?.account ?? null;
+  const isConnected = isFullyLoggedIn;
 
-  const connectHandlers = useMemo(
-    () => ({
-      onSession: setWalletSession,
-      onError: (message: string) => toast.error(message),
-    }),
-    [],
-  );
+  // History → connect → return to the page that asked for the wallet.
+  useEffect(() => {
+    if (!returnTo || !isFullyLoggedIn) return;
+    void navigate({ to: returnTo });
+  }, [returnTo, isFullyLoggedIn, navigate]);
+
+  const { data: bridgingAddresses = [] } = useQuery({
+    ...bridgingAddressesQueryOptions(source?.id),
+    enabled: Boolean(walletAddress && source?.id),
+  });
 
   useEffect(() => {
-    if (
-      (!source || !sourceChains.some((c) => c.id === source.id)) &&
-      sourceChains.length > 0
-    ) {
-      setSource(sourceChains[0]);
-    }
+    if (sourceChains.length === 0) return;
+    if (source && sourceChains.some((c) => c.id === source.id)) return;
+    const storedSrc = loadStoredSourceChain();
+    setSource(sourceChains.find((c) => c.id === storedSrc) ?? sourceChains[0]);
   }, [source, sourceChains]);
 
   useEffect(() => {
-    if (
-      (!destination ||
-        !destinationChains.some((c) => c.id === destination.id)) &&
-      destinationChains.length > 0
-    ) {
-      setDestination(destinationChains[0]);
+    if (!source || destinationChains.length === 0) return;
+    if (destination && destinationChains.some((c) => c.id === destination.id)) {
+      return;
     }
-  }, [destination, destinationChains]);
+    const storedDst = loadStoredDestinationChain();
+    setDestination(
+      destinationChains.find((c) => c.id === storedDst) ?? destinationChains[0],
+    );
+  }, [source, destination, destinationChains]);
+
+  useEffect(() => {
+    if (source) persistSourceChain(source.id);
+  }, [source]);
+
+  useEffect(() => {
+    if (destination) persistDestinationChain(destination.id);
+  }, [destination]);
 
   const canSwap = useMemo(() => {
     if (!source || !destination) return false;
@@ -730,30 +788,18 @@ function BridgeApp() {
     );
   }, [source, destination, settings]);
 
-  const isConnected = Boolean(walletAddress);
-
   const connect = useCallback(async () => {
     if (!settings || !source || !destination) {
       toast.error("Networks are still loading. Please try again.");
       return false;
     }
-    setConnecting(true);
-    try {
-      return await connectWallet(
-        source.id,
-        destination.id,
-        settings,
-        connectHandlers,
-      );
-    } finally {
-      setConnecting(false);
-    }
-  }, [settings, source, destination, connectHandlers]);
+    return connectSession(source.id, destination.id, settings);
+  }, [settings, source, destination, connectSession]);
 
   const disconnect = useCallback(async () => {
-    await disconnectWallet(connectHandlers);
+    await disconnectSession();
     setStep("select");
-  }, [connectHandlers]);
+  }, [disconnectSession]);
 
   const swap = () => {
     if (!source || !destination || !canSwap) return;
@@ -976,6 +1022,7 @@ function BridgeApp() {
                   destination={destination}
                   settings={settings}
                   walletAddress={walletAddress ?? ""}
+                  bridgingAddresses={bridgingAddresses}
                   onDiscard={() => setStep("select")}
                 />
               ) : (
@@ -1064,24 +1111,41 @@ function TransferForm({
   destination,
   settings,
   walletAddress,
+  bridgingAddresses,
   onDiscard,
 }: {
   source: Chain;
   destination: Chain;
   settings: SettingsResponse | undefined;
   walletAddress: string;
+  bridgingAddresses: string[];
   onDiscard: () => void;
 }) {
   const [destAddress, setDestAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [copied, setCopied] = useState(false);
-  const [status, setStatus] = useState<"idle" | "preparing" | "signing">(
-    "idle",
-  );
+  const [loadingState, setLoadingState] = useState<
+    SubmitLoadingState | undefined
+  >();
+  const [adjustedBridgeTxFeeDfm, setAdjustedBridgeTxFeeDfm] = useState("0");
+
+  const updateLoadingState = (newState: UpdateSubmitLoadingState) => {
+    setLoadingState(
+      (prev) =>
+        ({
+          content: newState.content ?? prev?.content ?? "",
+          txHash: newState.txHash ?? prev?.txHash,
+        }) as SubmitLoadingState,
+    );
+  };
+
+  const reactorValidatorChangeInProgress = useReactorValidatorStatus();
+  const { data: tokenInfos } = useQuery(tokenInfosQueryOptions);
 
   const availableTokens = useMemo(
     () => getSupportedSourceTokens(settings, source.id, destination.id),
-    [settings, source.id, destination.id],
+    // tokenInfos hydrates getTokenInfo() used inside getSupportedSourceTokens.
+    [settings, source.id, destination.id, tokenInfos],
   );
 
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
@@ -1105,10 +1169,13 @@ function TransferForm({
   });
 
   const currencyID = useMemo(
-    () => getCurrencyID(settings, source.id),
+    () => (settings ? getCurrencyID(settings, source.id) : undefined),
     [settings, source.id],
   );
-  const currencyLabel = getTokenDisplayName(settings, currencyID);
+  const currencyLabel = useMemo(
+    () => getTokenDisplayName(settings, currencyID),
+    [settings, currencyID, tokenInfos],
+  );
   const token = selectedToken?.symbol ?? "";
 
   const currencyBalanceDisplay = useMemo(() => {
@@ -1126,12 +1193,183 @@ function TransferForm({
     return toFixedAmount(convertDfmToDisplay(raw, source.id), 6);
   }, [balances, selectedToken, currencyID, source.id]);
 
-  const selectedTokenBalanceForMax = useMemo(() => {
-    if (!selectedToken) return "0";
-    const raw = balances[selectedToken.tokenID];
-    if (raw === undefined) return "0";
-    return convertDfmToDisplay(raw, source.id);
-  }, [balances, selectedToken, source.id]);
+  const currencyBalanceDfm =
+    currencyID !== undefined ? (balances[currencyID] ?? "0") : "0";
+
+  const fees = useBridgeFees({
+    enabled: Boolean(walletAddress && settings && selectedToken),
+    settings,
+    srcChain: source.id,
+    dstChain: destination.id,
+    senderAddress: walletAddress,
+    destinationAddress: destAddress,
+    amountDisplay: amount,
+    tokenID: selectedToken?.tokenID,
+    currencyID,
+    currencyBalanceDfm,
+  });
+
+  const bridgingModeInfo = useMemo(() => {
+    if (!settings || !selectedToken) {
+      return { bridgingMode: BridgingModeEnum.Unknown as BridgingModeEnum };
+    }
+    return getBridgingMode(
+      settings,
+      source.id as ChainEnum,
+      destination.id as ChainEnum,
+      selectedToken.tokenID,
+    );
+  }, [settings, selectedToken, source.id, destination.id]);
+
+  const bridgingSettings =
+    bridgingModeInfo.settings?.bridgingSettings || undefined;
+
+  const changeMinUtxo = useMemo(() => {
+    const fromMode = bridgingSettings?.minUtxoChainValue?.[source.id];
+    const fromApp = appSettings.minUtxoChainValue[source.id];
+    return fromMode ?? fromApp ?? 0;
+  }, [bridgingSettings, source.id]);
+
+  const defaultBridgeTxFeeDfm = useMemo(
+    () =>
+      getDefaultBridgeTxFee({
+        chain: source.id,
+        sourceTokenID: selectedToken?.tokenID,
+        currencyID,
+        minChainFeeForBridging: bridgingSettings?.minChainFeeForBridging,
+        minChainFeeForBridgingTokens:
+          bridgingSettings?.minChainFeeForBridgingTokens,
+      }),
+    [
+      source.id,
+      selectedToken?.tokenID,
+      currencyID,
+      bridgingSettings?.minChainFeeForBridging,
+      bridgingSettings?.minChainFeeForBridgingTokens,
+    ],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    const bridgeTxFeeDfm = fees.bridgeTxFeeDfm || defaultBridgeTxFeeDfm;
+    setAdjustedBridgeTxFeeDfm(bridgeTxFeeDfm);
+
+    void getAdjustedBridgeTxFee({
+      settings,
+      bridgingAddresses,
+      chain: source.id,
+      sourceTokenID: selectedToken?.tokenID,
+      currencyID,
+      amountDisplay: amount,
+      bridgeTxFeeDfm,
+      defaultBridgeTxFeeDfm,
+      minUtxoValue: changeMinUtxo,
+    }).then((fee) => {
+      if (!cancelled) setAdjustedBridgeTxFeeDfm(fee);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    settings,
+    bridgingAddresses,
+    source.id,
+    selectedToken?.tokenID,
+    currencyID,
+    amount,
+    fees.bridgeTxFeeDfm,
+    defaultBridgeTxFeeDfm,
+    changeMinUtxo,
+  ]);
+
+  const { maxAmounts, currencyMaxAmount, maxSendable } = useMemo(
+    () =>
+      resolveBridgeMaxAmounts({
+        bridgingMode:
+          fees.bridgingMode !== BridgingModeEnum.Unknown
+            ? fees.bridgingMode
+            : bridgingModeInfo.bridgingMode,
+        totalBalance: balances,
+        sourceTokenID: selectedToken?.tokenID,
+        currencyID,
+        chain: source.id,
+        maxAmountAllowedToBridge:
+          bridgingSettings?.maxAmountAllowedToBridge || "0",
+        maxTokenAmountAllowedToBridge:
+          bridgingSettings?.maxTokenAmountAllowedToBridge || "0",
+        changeMinUtxo,
+        userWalletFeeDfm: fees.userWalletFeeDfm || "0",
+        bridgeTxFeeDfm: adjustedBridgeTxFeeDfm || "0",
+        operationFeeDfm: fees.operationFeeDfm || "0",
+      }),
+    [
+      fees.bridgingMode,
+      fees.userWalletFeeDfm,
+      fees.operationFeeDfm,
+      adjustedBridgeTxFeeDfm,
+      bridgingModeInfo.bridgingMode,
+      balances,
+      selectedToken?.tokenID,
+      currencyID,
+      source.id,
+      bridgingSettings?.maxAmountAllowedToBridge,
+      bridgingSettings?.maxTokenAmountAllowedToBridge,
+      changeMinUtxo,
+    ],
+  );
+
+  const enteredDfm = useMemo(() => {
+    if (!amount.trim()) return BigInt(0);
+    try {
+      return BigInt(convertApexToDfm(amount || "0", source.id));
+    } catch {
+      return BigInt(0);
+    }
+  }, [amount, source.id]);
+
+  const insufficientBalance = enteredDfm > maxAmounts.maxByBalance;
+  const overMaxAllowed =
+    enteredDfm > maxAmounts.maxByAllowed && maxAmounts.maxByAllowed > BigInt(0);
+  const insufficientCurrency = currencyMaxAmount < BigInt(0);
+
+  const feeTokenLabel = currencyLabel || token || "TOKEN";
+
+  const amountError = insufficientBalance
+    ? "Insufficient funds"
+    : overMaxAllowed
+      ? "Over maximum allowed"
+      : insufficientCurrency
+        ? `Insufficient ${feeTokenLabel}`
+        : null;
+
+  const formatFeeDfm = (dfm: string | undefined) => {
+    if (dfm === undefined) return `— ${feeTokenLabel}`;
+    if (BigInt(dfm || "0") <= BigInt(0)) return `0 ${feeTokenLabel}`;
+    return `${toFixedAmount(convertDfmToApex(dfm, source.id), 6)} ${feeTokenLabel}`;
+  };
+
+  const walletFeeLabel =
+    fees.bridgingMode === BridgingModeEnum.LayerZero
+      ? "Estimated Network Fee"
+      : "User Wallet Fee";
+
+  const estimatedTime = getEstimatedBridgeTime(
+    fees.bridgingMode,
+    source.id as ChainEnum,
+    destination.id as ChainEnum,
+  );
+
+  const showOperationFee =
+    fees.bridgingMode === BridgingModeEnum.Skyline &&
+    BigInt(fees.operationFeeDfm || "0") > BigInt(0);
+
+  const isFeeInformation =
+    bridgingModeInfo.bridgingMode !== BridgingModeEnum.Reactor ||
+    !reactorValidatorChangeInProgress;
+  const reactorSubmitBlocked =
+    bridgingModeInfo.bridgingMode === BridgingModeEnum.Reactor &&
+    reactorValidatorChangeInProgress !== false;
 
   const paste = async () => {
     try {
@@ -1152,51 +1390,66 @@ function TransferForm({
     }
   };
 
-  const setMax = () => setAmount(selectedTokenBalanceForMax);
+  const setMax = () => {
+    if (maxSendable <= BigInt(0)) return;
+    setAmount(
+      toFixedFloor(convertDfmToApex(maxSendable.toString(10), source.id), 6),
+    );
+  };
 
   const canMoveFunds =
     Boolean(selectedToken) &&
     destAddress.trim() !== "" &&
     amount.trim() !== "" &&
-    Number(amount) > 0;
+    enteredDfm > BigInt(0) &&
+    !insufficientBalance &&
+    !overMaxAllowed &&
+    !insufficientCurrency &&
+    !reactorSubmitBlocked;
 
   const navigate = useNavigate();
 
   const handleMoveFunds = async () => {
-    if (!canMoveFunds) return;
-    setStatus("preparing");
+    if (!canMoveFunds || !settings || !selectedToken || reactorSubmitBlocked) {
+      return;
+    }
+    updateLoadingState({ content: "Preparing the transaction..." });
 
-    // ─────────────────────────────────────────────────────────────
-    // WALLET INTEGRATION PLACEHOLDER
-    // Trigger the wallet popup here and await the user's confirmation,
-    // e.g.  await wallet.requestSignature({ from: source, to: destination, amount })
-    await new Promise((resolve) => setTimeout(resolve, 2200));
-    // ─────────────────────────────────────────────────────────────
+    try {
+      const response = await submitBridgeTransfer({
+        settings,
+        srcChain: source.id,
+        dstChain: destination.id,
+        senderAddress: walletAddress,
+        destinationAddress: destAddress.trim(),
+        amountDisplay: amount.trim(),
+        tokenID: selectedToken.tokenID,
+        updateLoadingState,
+      });
 
-    setStatus("signing");
+      if (!response) {
+        setLoadingState(undefined);
+        return;
+      }
 
-    // ─────────────────────────────────────────────────────────────
-    // BRIDGE SUBMISSION PLACEHOLDER
-    // Sign and broadcast the bridging transaction here,
-    // e.g.  await bridge.submit({ signedTx })
-    await new Promise((resolve) => setTimeout(resolve, 3500));
-    // ─────────────────────────────────────────────────────────────
-
-    const id = newTransactionId();
-    navigate({
-      to: "/transaction/$id",
-      params: { id },
-      search: {
-        src: source.id,
-        dst: destination.id,
-        amount: amount.trim(),
-        addr: destAddress.trim(),
-        sender: walletAddress,
-      },
-    });
+      navigate({
+        to: "/transaction/$id",
+        params: { id: String(response.id) },
+      });
+    } catch {
+      setLoadingState(undefined);
+    }
   };
 
-  const isProcessing = status !== "idle";
+  const isProcessing = !!loadingState;
+  const submitExplorerUrl =
+    loadingState?.txHash &&
+    getExplorerTxUrl(
+      source.id as ChainEnum,
+      loadingState.txHash,
+      isLZBridging(source.id, destination.id),
+      true,
+    );
 
   return (
     <div className="relative">
@@ -1417,35 +1670,81 @@ function TransferForm({
               <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 Enter amount to send
               </label>
-              <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 focus-within:border-[oklch(0.72_0.19_245_/_0.5)]">
+              <div
+                className={`flex items-center gap-3 rounded-2xl border bg-white/[0.03] px-4 py-3 focus-within:border-[oklch(0.72_0.19_245_/_0.5)] ${
+                  amountError
+                    ? "border-[oklch(0.62_0.22_25_/_0.55)]"
+                    : "border-white/10"
+                }`}
+              >
                 <input
                   value={amount}
-                  onChange={(e) =>
-                    setAmount(e.target.value.replace(/[^0-9.]/g, ""))
-                  }
+                  onChange={(e) => {
+                    const next = e.target.value.replace(/[^0-9.]/g, "");
+                    const [, right] = next.split(".");
+                    if (right && right.length > 6) return;
+                    setAmount(next);
+                  }}
                   placeholder="0.000000"
                   inputMode="decimal"
-                  className="w-full bg-transparent font-display text-2xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none"
+                  disabled={isProcessing}
+                  className="w-full bg-transparent font-display text-2xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none disabled:opacity-60"
                 />
-                <button
-                  type="button"
-                  onClick={setMax}
-                  className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[oklch(0.85_0.15_235)] transition-colors hover:text-foreground"
-                >
-                  Max
-                </button>
+                {maxSendable > BigInt(0) && (
+                  <button
+                    type="button"
+                    onClick={setMax}
+                    disabled={isProcessing}
+                    className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[oklch(0.85_0.15_235)] transition-colors hover:text-foreground disabled:opacity-50"
+                  >
+                    Max
+                  </button>
+                )}
               </div>
+              {amountError && (
+                <p className="mt-1.5 text-xs text-[oklch(0.78_0.19_25)]">
+                  {amountError}
+                </p>
+              )}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 text-xs">
-              <FeeRow label="User Wallet Fee" hint value={`0 ${token}`} />
-              <FeeRow
-                label="Bridge Transaction Fee"
-                hint
-                value={`1.000010 ${token}`}
-              />
-              <FeeRow label="Estimated time" value="16-20 minutes" />
-            </div>
+            {isFeeInformation ? (
+              <TooltipProvider delayDuration={200}>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 text-xs">
+                  <FeeRow
+                    label={walletFeeLabel}
+                    hint={`This is the fee paid to process your transaction on the ${source.label} blockchain. Larger transactions have higher fees.`}
+                    value={formatFeeDfm(fees.userWalletFeeDfm)}
+                    loading={fees.loading}
+                  />
+                  <FeeRow
+                    label="Bridge Transaction Fee"
+                    hint={
+                      fees.bridgingMode === BridgingModeEnum.LayerZero
+                        ? "This fee covers the bridge blockchain transaction costs."
+                        : `This fee covers the bridge blockchain transaction costs. This fee is set to the predefined minimum. When bridging native tokens, the minimum ${feeTokenLabel} required to hold those tokens on ${source.label} is added.`
+                    }
+                    value={formatFeeDfm(adjustedBridgeTxFeeDfm)}
+                    loading={fees.loading}
+                  />
+                  {showOperationFee && (
+                    <FeeRow
+                      label="Bridge Operation Fee"
+                      hint="This fee covers the cost of operating the bridge, including maintaining balance between ADA and APEX during bridging."
+                      value={formatFeeDfm(fees.operationFeeDfm)}
+                      loading={fees.loading}
+                    />
+                  )}
+                  <FeeRow label="Estimated time" value={estimatedTime} />
+                </div>
+              </TooltipProvider>
+            ) : (
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-5 text-center text-sm font-semibold text-foreground">
+                Bridge validator set change in progress.
+                <br />
+                Bridging is not possible at the moment.
+              </div>
+            )}
           </div>
         </div>
 
@@ -1461,7 +1760,7 @@ function TransferForm({
           <button
             type="button"
             onClick={handleMoveFunds}
-            disabled={!canMoveFunds}
+            disabled={!canMoveFunds || isProcessing}
             className="btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-50"
           >
             Move Funds <ArrowRight className="h-4 w-4" />
@@ -1476,12 +1775,21 @@ function TransferForm({
             <TransferSpinner />
             <div className="flex flex-col items-center gap-2">
               <p
-                key={status}
-                className="animate-bridge-step-in font-display text-lg font-semibold text-foreground"
+                key={loadingState?.content}
+                className="animate-bridge-step-in inline-flex items-center gap-2 font-display text-lg font-semibold text-foreground"
               >
-                {status === "preparing"
-                  ? "Preparing the transaction…"
-                  : "Signing and submitting the bridging transaction…"}
+                {loadingState?.content}
+                {!!submitExplorerUrl && (
+                  <a
+                    href={submitExplorerUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex text-foreground transition-colors hover:text-[oklch(0.85_0.15_235)]"
+                    aria-label="Open transaction in explorer"
+                  >
+                    <ExternalLink className="h-5 w-5" />
+                  </a>
+                )}
               </p>
               <p className="flex items-center gap-1.5 text-xs font-medium text-[oklch(0.78_0.19_25)]">
                 <AlertCircle className="h-3.5 w-3.5" />
@@ -1508,18 +1816,43 @@ function FeeRow({
   label,
   value,
   hint,
+  loading,
 }: {
   label: string;
   value: string;
-  hint?: boolean;
+  hint?: string;
+  loading?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between py-1.5 first:pt-0 last:pb-0">
       <span className="flex items-center gap-1.5 text-muted-foreground">
         {label}
-        {hint && <HelpCircle className="h-3 w-3 text-muted-foreground/70" />}
+        {hint && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={`${label} info`}
+                className="inline-flex text-muted-foreground/70 transition-colors hover:text-muted-foreground"
+              >
+                <HelpCircle className="h-3 w-3" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent
+              side="right"
+              align="start"
+              className="max-w-xs border border-white/10 bg-[oklch(0.16_0.03_262_/_0.85)] px-2.5 py-1.5 text-[11px] font-normal leading-relaxed text-foreground/80 shadow-none backdrop-blur-sm"
+            >
+              {hint}
+            </TooltipContent>
+          </Tooltip>
+        )}
       </span>
-      <span className="font-semibold text-foreground">{value}</span>
+      <span
+        className={`font-semibold text-foreground ${loading ? "animate-pulse opacity-70" : ""}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }

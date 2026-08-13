@@ -170,16 +170,14 @@ export function useLockedBreakdown(): LockedBreakdown {
      * at zero, the way the old frontend's EVM panel did: "nothing is held
      * there" is an audit statement, not a missing value.
      */
-    const apexTokenID = getCurrencyID(settings, "prime");
+    const apexTokenID = settings ? getCurrencyID(settings, "prime") : undefined;
     const keepZeros = new Set<string>();
     if (layerZeroLockedApex !== undefined && apexTokenID !== undefined) {
       addTo(lockedTotals, "nexus", apexTokenID, layerZeroLockedApex);
       keepZeros.add(`nexus:${apexTokenID}`);
       // The contract itself is the holder, so the per-address view can account
       // for this balance the way it accounts for every other one.
-      const oftAddress = settings?.layerZeroChains?.find(
-        (c) => c.chain === "nexus",
-      )?.oftAddress;
+      const oftAddress = settings?.layerZeroChains?.nexus?.oftAddress;
       if (oftAddress) {
         addToHolder(
           holderTotals,

@@ -1,9 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkToggle } from "@/components/NetworkToggle";
 import {
+  ArrowDown,
   ArrowRight,
   CheckCircle2,
   ChevronDown,
@@ -11,24 +13,43 @@ import {
   ChevronRight,
   ChevronsUpDown,
   Clipboard,
-  ExternalLink,
   Filter,
+  Loader2,
   Search,
+  Undo2,
   Wallet,
   X,
   XCircle,
   Clock,
 } from "lucide-react";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
+import {
+  convertApexToWei,
+  convertDfmToApex,
+  toFixedAmount,
+} from "@/lib/amount";
+import { fetchBridgeTransactions } from "@/lib/api/bridgeTransactions";
+import { settingsQueryOptions } from "@/lib/api/settings";
+import type { SettingsResponse } from "@/lib/api/settings";
+import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
+import {
+  isStatusFinal,
+  getStatusIconAndLabel,
+} from "@/lib/bridging/statusUtils";
+import type { StatusKind } from "@/lib/bridging/statusUtils";
+import { CHAIN_META } from "@/lib/chains";
+import {
+  getCurrencyID,
+  getRealTokenIDFromEntity,
+  getTokenDisplayName,
+} from "@/lib/tokens";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
+import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
 import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
-import primeIcon from "@/assets/chains/prime.svg?url";
-import nexusIcon from "@/assets/chains/nexus.svg?url";
-import vectorIcon from "@/assets/chains/vector.svg?url";
-import adaIcon from "@/assets/chains/cardano.svg?url";
-import ethIcon from "@/assets/chains/ethereum.svg?url";
-import bnbIcon from "@/assets/chains/bnb.svg?url";
-import baseIcon from "@/assets/chains/coinbase.svg?url";
+import {
+  BridgeTransactionDto,
+  TransactionStatusEnum,
+} from "@/swagger/apexBridgeApiService";
 
 export const Route = createFileRoute("/transactions")({
   head: () => ({
@@ -46,191 +67,92 @@ export const Route = createFileRoute("/transactions")({
 
 type ChainMeta = { id: string; label: string; icon: string; symbol: string };
 
-const CHAINS: Record<string, ChainMeta> = {
-  prime: { id: "prime", label: "Prime", icon: primeIcon, symbol: "AP3X" },
-  nexus: { id: "nexus", label: "Nexus", icon: nexusIcon, symbol: "AP3X" },
-  vector: { id: "vector", label: "Vector", icon: vectorIcon, symbol: "AP3X" },
-  ada: { id: "ada", label: "Cardano", icon: adaIcon, symbol: "ADA" },
-  eth: { id: "eth", label: "Ethereum", icon: ethIcon, symbol: "ETH" },
-  bnb: { id: "bnb", label: "BNB Chain", icon: bnbIcon, symbol: "BNB" },
-  base: { id: "base", label: "Base", icon: baseIcon, symbol: "ETH" },
-};
+const CHAINS: Record<string, ChainMeta> = Object.fromEntries(
+  Object.entries(CHAIN_META).map(([id, meta]) => [
+    id,
+    {
+      id,
+      label: meta.label,
+      icon: meta.icon,
+      symbol: meta.symbol ?? "TOKEN",
+    },
+  ]),
+);
 
-type Status = "success" | "pending" | "failed";
+type Status = StatusKind;
 
 type Tx = {
   id: string;
   origin: string;
   destination: string;
   amount: number;
+  amountDisplay: string;
+  currencyLabel: string;
   tokenAmount: number | null;
+  tokenAmountDisplay: string | null;
+  tokenLabel: string | null;
   receiver: string;
   sender: string;
   createdAt: Date;
   finishedAt: Date | null;
   status: Status;
+  statusLabel: string;
+  rawStatus: TransactionStatusEnum;
+  isRefund: boolean;
 };
 
-const RECEIVER_A =
-  "addr_test1qrsknr4y5znjqz3xnp8sdvhur0k5adfhcprujfjcv8fyz4nu5xr6ldyfxu4yggkjunlkm9x5rq0mne4d4vgz3xchw2sqnr3wh";
-const RECEIVER_B = "0x7a2cF4d9b1eE8d3cA0f6B91C2E5a7D9b3c4e8F1a";
-const RECEIVER_C = "0x9b3c4e8F1a7a2cF4d9b1eE8d3cA0f6B91C2E5a7D";
+function mapDtoToTx(
+  dto: BridgeTransactionDto,
+  settings: SettingsResponse | undefined,
+): Tx {
+  const amountDisplay = toFixedAmount(
+    convertDfmToApex(dto.amount, dto.originChain),
+    6,
+  );
+  const hasToken =
+    dto.nativeTokenAmount != null &&
+    BigInt(dto.nativeTokenAmount || "0") > BigInt(0);
+  const tokenAmountDisplay = hasToken
+    ? toFixedAmount(convertDfmToApex(dto.nativeTokenAmount, dto.originChain), 6)
+    : null;
 
-// Senders are assigned round-robin below. RECEIVER_B matches the demo wallet in
-// connect(), so several transactions belong to the connected user's own history.
-const SENDERS = [RECEIVER_B, RECEIVER_A, RECEIVER_C];
+  const currencyID = settings
+    ? getCurrencyID(settings, dto.originChain)
+    : undefined;
+  const currencyLabel =
+    getTokenDisplayName(settings, currencyID) ||
+    CHAINS[dto.originChain]?.symbol ||
+    "TOKEN";
 
-function h(id: string) {
-  return "0x" + id.padEnd(32, "0").slice(0, 32);
+  const realTokenID = settings
+    ? getRealTokenIDFromEntity(settings, dto)
+    : undefined;
+  const tokenLabel = hasToken
+    ? getTokenDisplayName(settings, realTokenID) || null
+    : null;
+
+  const statusMeta = getStatusIconAndLabel(dto.status, !!dto.isRefund);
+
+  return {
+    id: String(dto.id),
+    origin: dto.originChain,
+    destination: dto.destinationChain,
+    amount: Number(amountDisplay),
+    amountDisplay,
+    currencyLabel,
+    tokenAmount: tokenAmountDisplay != null ? Number(tokenAmountDisplay) : null,
+    tokenAmountDisplay,
+    tokenLabel,
+    receiver: dto.receiverAddresses,
+    sender: dto.senderAddress,
+    createdAt: dto.createdAt,
+    finishedAt: dto.finishedAt ?? null,
+    status: statusMeta.kind,
+    statusLabel: statusMeta.label,
+    rawStatus: dto.status,
+    isRefund: !!dto.isRefund,
+  };
 }
-
-const MOCK_TXS: Tx[] = (
-  [
-    {
-      id: h("a1"),
-      origin: "prime",
-      destination: "ada",
-      amount: 2.00001,
-      tokenAmount: null,
-      receiver: RECEIVER_A,
-      createdAt: new Date("2026-07-13T12:09:24"),
-      finishedAt: new Date("2026-07-13T12:20:00"),
-      status: "success",
-    },
-    {
-      id: h("a2"),
-      origin: "prime",
-      destination: "ada",
-      amount: 2.00001,
-      tokenAmount: null,
-      receiver: RECEIVER_A,
-      createdAt: new Date("2026-07-11T10:23:46"),
-      finishedAt: new Date("2026-07-11T10:32:40"),
-      status: "success",
-    },
-    {
-      id: h("a3"),
-      origin: "prime",
-      destination: "ada",
-      amount: 2.00001,
-      tokenAmount: null,
-      receiver: RECEIVER_A,
-      createdAt: new Date("2026-07-08T11:40:23"),
-      finishedAt: new Date("2026-07-08T11:53:30"),
-      status: "success",
-    },
-    {
-      id: h("a4"),
-      origin: "nexus",
-      destination: "prime",
-      amount: 148.42,
-      tokenAmount: 148.42,
-      receiver: RECEIVER_B,
-      createdAt: new Date("2026-07-05T09:14:00"),
-      finishedAt: new Date("2026-07-05T09:22:11"),
-      status: "success",
-    },
-    {
-      id: h("a5"),
-      origin: "vector",
-      destination: "nexus",
-      amount: 12.5,
-      tokenAmount: 12.5,
-      receiver: RECEIVER_B,
-      createdAt: new Date("2026-07-02T16:44:00"),
-      finishedAt: null,
-      status: "pending",
-    },
-    {
-      id: h("a6"),
-      origin: "eth",
-      destination: "base",
-      amount: 0.42,
-      tokenAmount: 0.42,
-      receiver: RECEIVER_C,
-      createdAt: new Date("2026-06-29T18:02:19"),
-      finishedAt: new Date("2026-06-29T18:07:04"),
-      status: "success",
-    },
-    {
-      id: h("a7"),
-      origin: "bnb",
-      destination: "eth",
-      amount: 4.9,
-      tokenAmount: 4.9,
-      receiver: RECEIVER_C,
-      createdAt: new Date("2026-06-24T08:12:56"),
-      finishedAt: new Date("2026-06-24T08:18:41"),
-      status: "failed",
-    },
-    {
-      id: h("a8"),
-      origin: "prime",
-      destination: "vector",
-      amount: 501,
-      tokenAmount: 501,
-      receiver: RECEIVER_A,
-      createdAt: new Date("2026-06-19T21:04:00"),
-      finishedAt: new Date("2026-06-19T21:12:20"),
-      status: "success",
-    },
-    {
-      id: h("a9"),
-      origin: "nexus",
-      destination: "ada",
-      amount: 78.11,
-      tokenAmount: 78.11,
-      receiver: RECEIVER_A,
-      createdAt: new Date("2026-06-14T14:33:47"),
-      finishedAt: new Date("2026-06-14T14:41:00"),
-      status: "success",
-    },
-    {
-      id: h("aa"),
-      origin: "base",
-      destination: "eth",
-      amount: 1.02,
-      tokenAmount: 1.02,
-      receiver: RECEIVER_C,
-      createdAt: new Date("2026-06-11T07:20:00"),
-      finishedAt: new Date("2026-06-11T07:26:13"),
-      status: "success",
-    },
-    {
-      id: h("ab"),
-      origin: "prime",
-      destination: "nexus",
-      amount: 25,
-      tokenAmount: 25,
-      receiver: RECEIVER_B,
-      createdAt: new Date("2026-06-08T13:12:00"),
-      finishedAt: new Date("2026-06-08T13:18:20"),
-      status: "success",
-    },
-    {
-      id: h("ac"),
-      origin: "vector",
-      destination: "ada",
-      amount: 3.33,
-      tokenAmount: 3.33,
-      receiver: RECEIVER_A,
-      createdAt: new Date("2026-06-04T11:00:00"),
-      finishedAt: new Date("2026-06-04T11:09:44"),
-      status: "success",
-    },
-    {
-      id: h("ad"),
-      origin: "eth",
-      destination: "bnb",
-      amount: 0.9,
-      tokenAmount: 0.9,
-      receiver: RECEIVER_C,
-      createdAt: new Date("2026-05-30T19:22:14"),
-      finishedAt: null,
-      status: "pending",
-    },
-  ] as Omit<Tx, "sender">[]
-).map((t, i) => ({ ...t, sender: SENDERS[i % SENDERS.length] }));
 
 type SortKey =
   | "createdAt"
@@ -267,8 +189,21 @@ const EMPTY_FILTERS: Filters = {
 function TransactionsPage() {
   const isCompact = useMediaQuery("(max-width: 1000px)");
   const { tvlUsd, tvbUsd } = useBridgeStats();
+  const navigate = useNavigate();
+  const { data: settings } = useQuery(settingsQueryOptions);
+  useQuery(tokenInfosQueryOptions);
+  const {
+    account,
+    isFullyLoggedIn,
+    isConnecting: isRestoring,
+    sourceChain: sessionSourceChain,
+    disconnect: disconnectSession,
+  } = useWalletSession();
 
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const walletAddress = account?.account ?? null;
+  const isConnected = isFullyLoggedIn;
+  const sourceChain = isConnected ? sessionSourceChain : null;
+
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -277,119 +212,118 @@ function TransactionsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [view, setView] = useState<"world" | "user">("world");
+  // Until the user clicks World/Your, connected ⇒ Your history.
+  const viewTouchedRef = useRef(false);
 
-  const isConnected = Boolean(walletAddress);
-  const connect = () =>
-    setWalletAddress("0x7a2cF4d9b1eE8d3cA0f6B91C2E5a7D9b3c4e8F1a");
-  const disconnect = () => {
-    setWalletAddress(null);
+  useEffect(() => {
+    if (!isConnected) {
+      viewTouchedRef.current = false;
+      setView("world");
+      return;
+    }
+    if (!viewTouchedRef.current) {
+      setView("user");
+    }
+  }, [isConnected]);
+
+  const connect = () => {
+    navigate({
+      to: "/bridge-app",
+      search: { returnTo: "/transactions" },
+    });
+  };
+  const disconnect = async () => {
+    await disconnectSession();
+    viewTouchedRef.current = false;
     setView("world");
   };
 
   const changeView = (v: "world" | "user") => {
     if (v === "user" && !isConnected) return;
+    viewTouchedRef.current = true;
     setView(v);
     setPage(1);
-    // Origin/sender filters only exist in world view — drop them when leaving it.
     if (v === "user") setFilters((f) => ({ ...f, origin: "", sender: "" }));
   };
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const base =
-      view === "user" && walletAddress
-        ? MOCK_TXS.filter(
-            (t) => t.sender === walletAddress || t.receiver === walletAddress,
-          )
-        : MOCK_TXS;
-    return base.filter((t) => {
-      if (q) {
-        const hay =
-          `${t.id} ${CHAINS[t.origin]?.label} ${CHAINS[t.destination]?.label} ${t.sender} ${t.receiver}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      if (filters.destination && t.destination !== filters.destination)
-        return false;
-      if (
-        filters.receiver &&
-        !t.receiver.toLowerCase().includes(filters.receiver.toLowerCase())
-      )
-        return false;
-      if (filters.amountFrom && t.amount < Number(filters.amountFrom))
-        return false;
-      if (filters.amountTo && t.amount > Number(filters.amountTo)) return false;
-      if (
-        filters.tokenFrom &&
-        (t.tokenAmount ?? -Infinity) < Number(filters.tokenFrom)
-      )
-        return false;
-      if (
-        filters.tokenTo &&
-        (t.tokenAmount ?? Infinity) > Number(filters.tokenTo)
-      )
-        return false;
-      // Origin chain and sender address are only filterable in the network-wide view.
-      if (view === "world") {
-        if (filters.origin && t.origin !== filters.origin) return false;
-        if (
-          filters.sender &&
-          !t.sender.toLowerCase().includes(filters.sender.toLowerCase())
-        )
-          return false;
-      }
-      return true;
-    });
-  }, [search, filters, view, walletAddress]);
+  const listQuery = useQuery({
+    queryKey: [
+      "bridgeTransactions",
+      view,
+      walletAddress,
+      sourceChain,
+      page,
+      pageSize,
+      sortKey,
+      sortDir,
+      filters,
+      search,
+    ] as const,
+    enabled: view === "world" || Boolean(walletAddress),
+    queryFn: async () => {
+      // User history: sender = live account, origin = restored source chain.
+      // World history: omit sender unless filtered.
+      const senderAddress =
+        view === "user" ? walletAddress! : filters.sender.trim() || undefined;
 
-  const sorted = useMemo(() => {
-    const list = [...filtered];
-    list.sort((a, b) => {
-      let av: number | string = 0;
-      let bv: number | string = 0;
-      switch (sortKey) {
-        case "createdAt":
-          av = a.createdAt.getTime();
-          bv = b.createdAt.getTime();
-          break;
-        case "finishedAt":
-          av = a.finishedAt?.getTime() ?? 0;
-          bv = b.finishedAt?.getTime() ?? 0;
-          break;
-        case "amount":
-          av = a.amount;
-          bv = b.amount;
-          break;
-        case "tokenAmount":
-          av = a.tokenAmount ?? -1;
-          bv = b.tokenAmount ?? -1;
-          break;
-        case "origin":
-          av = a.origin;
-          bv = b.origin;
-          break;
-        case "destination":
-          av = a.destination;
-          bv = b.destination;
-          break;
-        case "status":
-          av = a.status;
-          bv = b.status;
-          break;
-      }
-      if (av < bv) return sortDir === "asc" ? -1 : 1;
-      if (av > bv) return sortDir === "asc" ? 1 : -1;
-      return 0;
-    });
-    return list;
-  }, [filtered, sortKey, sortDir]);
+      const originChain =
+        view === "user"
+          ? sourceChain || undefined
+          : filters.origin || undefined;
 
-  const total = sorted.length;
+      const convertAmount = (value: string) => {
+        if (!value.trim()) return undefined;
+        return convertApexToWei(value);
+      };
+
+      const orderByMap: Record<SortKey, string> = {
+        createdAt: "createdAt",
+        finishedAt: "finishedAt",
+        amount: "amountWei",
+        tokenAmount: "tokenAmountWei",
+        origin: "originChain",
+        destination: "destinationChain",
+        status: "status",
+      };
+
+      // Receiver filter / search → SQL LIKE (wildcards for partial match).
+      const receiverAddress = filters.receiver.trim()
+        ? filters.receiver.trim()
+        : search.trim()
+          ? `%${search.trim()}%`
+          : undefined;
+
+      return fetchBridgeTransactions({
+        page: page - 1,
+        perPage: pageSize,
+        orderBy: orderByMap[sortKey],
+        order: sortDir,
+        senderAddress,
+        originChain,
+        destinationChain: filters.destination || undefined,
+        receiverAddress,
+        amountFrom: convertAmount(filters.amountFrom),
+        amountTo: convertAmount(filters.amountTo),
+        nativeTokenAmountFrom: convertAmount(filters.tokenFrom),
+        nativeTokenAmountTo: convertAmount(filters.tokenTo),
+      });
+    },
+    refetchInterval: (query) => {
+      const items = query.state.data?.items ?? [];
+      if (items.length === 0) return false;
+      if (items.every((x) => isStatusFinal(x.status))) return false;
+      return 5000;
+    },
+  });
+
+  const paged = useMemo(
+    () => (listQuery.data?.items ?? []).map((dto) => mapDtoToTx(dto, settings)),
+    [listQuery.data, settings],
+  );
+
+  const total = listQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const paged = sorted.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
   const rangeStart = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = Math.min(currentPage * pageSize, total);
 
@@ -399,6 +333,7 @@ function TransactionsPage() {
       setSortKey(key);
       setSortDir("desc");
     }
+    setPage(1);
   };
 
   const applyFilters = (next: Filters) => {
@@ -412,6 +347,7 @@ function TransactionsPage() {
   };
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  const isLoading = listQuery.isLoading || listQuery.isFetching;
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -473,10 +409,19 @@ function TransactionsPage() {
             <button
               type="button"
               onClick={isConnected ? disconnect : connect}
-              className="btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold"
+              disabled={isRestoring}
+              className="btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
             >
-              <Wallet className="h-4 w-4" />
-              {isConnected ? formatAddress(walletAddress) : "Connect Wallet"}
+              {isRestoring ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Wallet className="h-4 w-4" />
+              )}
+              {isRestoring
+                ? "Connecting…"
+                : isConnected
+                  ? formatAddress(walletAddress)
+                  : "Connect Wallet"}
             </button>
           </div>
         </div>
@@ -513,8 +458,8 @@ function TransactionsPage() {
       <main className="bg-hero-glow relative flex-1 overflow-hidden">
         <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[900px] max-w-[140vw] -translate-x-1/2 rounded-full bg-[oklch(0.55_0.22_250_/_0.2)] blur-3xl" />
 
-        <div className="container-page relative py-6 md:py-8">
-          <div className="mx-auto mb-6 flex max-w-6xl flex-col gap-4 md:mb-8 md:flex-row md:items-end md:justify-between">
+        <div className="relative mx-auto w-full max-w-[1400px] px-5 py-6 md:px-8 md:py-8">
+          <div className="mb-6 flex flex-col gap-4 md:mb-8 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[oklch(0.85_0.15_235)]">
                 Bridging history
@@ -537,7 +482,7 @@ function TransactionsPage() {
                     setSearch(e.target.value);
                     setPage(1);
                   }}
-                  placeholder="Search hash, chain, address…"
+                  placeholder="Search by receiver address…"
                   className="h-10 w-full rounded-full border border-white/10 bg-white/[0.04] pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none md:w-72"
                 />
               </div>
@@ -557,7 +502,7 @@ function TransactionsPage() {
           </div>
 
           {/* History scope switch */}
-          <div className="mx-auto mb-4 flex max-w-6xl flex-wrap items-center gap-3">
+          <div className="mb-4 flex flex-wrap items-center gap-3">
             <div className="inline-flex gap-1 rounded-xl border border-white/10 bg-white/[0.04] p-1">
               <button
                 type="button"
@@ -593,35 +538,47 @@ function TransactionsPage() {
             <span className="text-xs text-muted-foreground">
               {view === "world"
                 ? "Every transfer across the Skyline network."
-                : "Only transfers involving your connected wallet."}
+                : "Transfers from your connected wallet and source chain."}
             </span>
           </div>
 
           {/* Card containing table */}
-          <div className="mx-auto max-w-6xl">
+          <div>
             <div className="card-glow relative overflow-hidden rounded-3xl">
               <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.72_0.19_245_/_0.6)] to-transparent" />
 
-              <div className="overflow-x-auto">
+              <div
+                className={isCompact ? "overflow-x-auto" : "overflow-x-hidden"}
+              >
                 <table
-                  className={`w-full border-collapse text-sm ${isCompact ? "min-w-[600px]" : "min-w-[880px]"}`}
+                  className={`w-full border-collapse text-sm ${
+                    isCompact ? "min-w-[580px]" : "table-fixed"
+                  }`}
                 >
                   <thead>
                     <tr className="text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      <Th
-                        onClick={() => toggleSort("origin")}
-                        active={sortKey === "origin"}
-                        dir={sortDir}
-                      >
-                        Origin
-                      </Th>
-                      <Th
-                        onClick={() => toggleSort("destination")}
-                        active={sortKey === "destination"}
-                        dir={sortDir}
-                      >
-                        {isCompact ? "Dest" : "Destination"}
-                      </Th>
+                      {isCompact ? (
+                        <th className="min-w-[10rem] px-4 py-4 text-center">
+                          Route
+                        </th>
+                      ) : (
+                        <>
+                          <Th
+                            onClick={() => toggleSort("origin")}
+                            active={sortKey === "origin"}
+                            dir={sortDir}
+                          >
+                            Origin
+                          </Th>
+                          <Th
+                            onClick={() => toggleSort("destination")}
+                            active={sortKey === "destination"}
+                            dir={sortDir}
+                          >
+                            Destination
+                          </Th>
+                        </>
+                      )}
                       <Th
                         onClick={() => toggleSort("amount")}
                         active={sortKey === "amount"}
@@ -636,7 +593,8 @@ function TransactionsPage() {
                       >
                         Token amount
                       </Th>
-                      <th className="px-5 py-4">Receiver</th>
+                      {!isCompact && <th className="px-5 py-4">Sender</th>}
+                      {!isCompact && <th className="px-5 py-4">Receiver</th>}
                       <Th
                         onClick={() => toggleSort("createdAt")}
                         active={sortKey === "createdAt"}
@@ -664,16 +622,43 @@ function TransactionsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {paged.map((t) => (
-                      <TxRow key={t.id} tx={t} compact={isCompact} />
-                    ))}
-                    {paged.length === 0 && (
+                    {isLoading && paged.length === 0 && (
                       <tr>
                         <td
-                          colSpan={isCompact ? 8 : 9}
+                          colSpan={isCompact ? 6 : 10}
                           className="px-5 py-14 text-center text-sm text-muted-foreground"
                         >
-                          No transactions match your filters.
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Loading transactions…
+                          </span>
+                        </td>
+                      </tr>
+                    )}
+                    {listQuery.isError && paged.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={isCompact ? 6 : 10}
+                          className="px-5 py-14 text-center text-sm text-[oklch(0.8_0.2_27)]"
+                        >
+                          {(listQuery.error as Error)?.message ||
+                            "Failed to load transactions."}
+                        </td>
+                      </tr>
+                    )}
+                    {!listQuery.isError &&
+                      paged.map((t) => (
+                        <TxRow key={t.id} tx={t} compact={isCompact} />
+                      ))}
+                    {!isLoading && !listQuery.isError && paged.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={isCompact ? 6 : 10}
+                          className="px-5 py-14 text-center text-sm text-muted-foreground"
+                        >
+                          {view === "user" && !isConnected
+                            ? "Connect your wallet to view your bridging history."
+                            : "No transactions match your filters."}
                         </td>
                       </tr>
                     )}
@@ -810,13 +795,6 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
   const linkProps = {
     to: "/transaction/$id" as const,
     params: { id: tx.id },
-    search: {
-      src: tx.origin,
-      dst: tx.destination,
-      amount: String(tx.amount),
-      addr: tx.receiver,
-      sender: tx.receiver,
-    },
   };
 
   const rowProps = compact
@@ -838,45 +816,59 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
       {...rowProps}
       className={`border-t border-white/5 transition-colors hover:bg-white/[0.02] ${compact ? "cursor-pointer" : ""}`}
     >
-      <td className="px-5 py-4">
-        <ChainCell chain={origin} compact={compact} />
-      </td>
-      <td className="px-5 py-4">
-        <ChainCell chain={dest} compact={compact} />
-      </td>
+      {compact ? (
+        <td className="min-w-[10rem] px-4 py-4">
+          <RouteCell
+            origin={origin}
+            dest={dest}
+            sender={tx.sender}
+            receiver={tx.receiver}
+          />
+        </td>
+      ) : (
+        <>
+          <td className="px-5 py-4">
+            <ChainCell chain={origin} />
+          </td>
+          <td className="px-5 py-4">
+            <ChainCell chain={dest} />
+          </td>
+        </>
+      )}
       <td className="px-5 py-4">
         <div className="font-display text-sm font-semibold text-foreground">
-          {formatNumber(tx.amount)}
+          {tx.amountDisplay}
         </div>
         <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
           {origin?.symbol}
         </div>
       </td>
       <td className="px-5 py-4">
-        {tx.tokenAmount != null ? (
-          <div className="font-display text-sm text-foreground">
-            {formatNumber(tx.tokenAmount)}
-          </div>
+        {tx.tokenAmountDisplay != null ? (
+          <>
+            <div className="font-display text-sm text-foreground">
+              {tx.tokenAmountDisplay}
+            </div>
+            {tx.tokenLabel && (
+              <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                {tx.tokenLabel}
+              </div>
+            )}
+          </>
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
       </td>
-      <td className="px-5 py-4">
-        <div className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
-          {shortHash(tx.receiver)}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigator.clipboard?.writeText(tx.receiver);
-            }}
-            className="text-muted-foreground/60 transition-colors hover:text-foreground"
-            aria-label="Copy address"
-          >
-            <Clipboard className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      </td>
+      {!compact && (
+        <td className="px-5 py-4">
+          <AddressCell address={tx.sender} />
+        </td>
+      )}
+      {!compact && (
+        <td className="px-5 py-4">
+          <AddressCell address={tx.receiver} />
+        </td>
+      )}
       <td className="px-5 py-4 text-xs text-muted-foreground">
         {formatDate(tx.createdAt)}
       </td>
@@ -888,7 +880,7 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
         )}
       </td>
       <td className="px-5 py-4">
-        <StatusPill status={tx.status} />
+        <StatusPill status={tx.status} label={tx.statusLabel} />
       </td>
       {!compact && (
         <td className="px-5 py-4 text-right">
@@ -904,49 +896,94 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
   );
 }
 
-function ChainCell({
-  chain,
-  compact,
-}: {
-  chain?: ChainMeta;
-  compact?: boolean;
-}) {
+function ChainCell({ chain }: { chain?: ChainMeta }) {
   if (!chain) return <span className="text-muted-foreground">—</span>;
   return (
-    <div className="flex items-center gap-2.5">
-      <div
-        className="h-7 w-7 overflow-hidden rounded-full"
-        title={compact ? chain.label : undefined}
-      >
-        <img
-          src={chain.icon}
-          alt={chain.label}
-          className="h-full w-full object-cover"
-        />
-      </div>
-      {!compact && (
-        <span className="font-medium text-foreground">{chain.label}</span>
-      )}
+    <div className="flex min-w-0 items-center gap-2.5">
+      <ChainIcon chain={chain} />
+      <span className="truncate font-medium text-foreground">
+        {chain.label}
+      </span>
     </div>
   );
 }
 
-function StatusPill({ status }: { status: Status }) {
+function ChainIcon({ chain }: { chain: ChainMeta }) {
+  return (
+    <div
+      className="h-7 w-7 shrink-0 overflow-hidden rounded-full"
+      title={chain.label}
+    >
+      <img
+        src={chain.icon}
+        alt={chain.label}
+        className="h-full w-full object-cover"
+      />
+    </div>
+  );
+}
+
+function RouteCell({
+  origin,
+  dest,
+  sender,
+  receiver,
+}: {
+  origin?: ChainMeta;
+  dest?: ChainMeta;
+  sender: string;
+  receiver: string;
+}) {
+  return (
+    <div className="grid grid-cols-[1.75rem_1fr] items-center gap-x-2">
+      <div className="flex justify-center">
+        {origin ? (
+          <ChainIcon chain={origin} />
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </div>
+      <AddressCell address={sender} compactHash />
+      <div className="flex justify-center py-0.5">
+        <ArrowDown className="h-3 w-3 text-muted-foreground/70" />
+      </div>
+      <span />
+      <div className="flex justify-center">
+        {dest ? (
+          <ChainIcon chain={dest} />
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </div>
+      <AddressCell address={receiver} compactHash />
+    </div>
+  );
+}
+
+function StatusPill({ status, label }: { status: Status; label: string }) {
+  const caption = label.charAt(0).toUpperCase() + label.slice(1);
+
   if (status === "success")
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.72_0.19_155_/_0.4)] bg-[oklch(0.72_0.19_155_/_0.12)] px-2.5 py-1 text-[11px] font-semibold text-[oklch(0.85_0.18_155)]">
-        <CheckCircle2 className="h-3.5 w-3.5" /> Success
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.72_0.19_155_/_0.4)] bg-[oklch(0.72_0.19_155_/_0.12)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[oklch(0.85_0.18_155)]">
+        <CheckCircle2 className="h-3.5 w-3.5" /> {caption}
       </span>
     );
   if (status === "failed")
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.62_0.24_27_/_0.5)] bg-[oklch(0.62_0.24_27_/_0.12)] px-2.5 py-1 text-[11px] font-semibold text-[oklch(0.8_0.2_27)]">
-        <XCircle className="h-3.5 w-3.5" /> Failed
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.62_0.24_27_/_0.5)] bg-[oklch(0.62_0.24_27_/_0.12)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[oklch(0.8_0.2_27)]">
+        <XCircle className="h-3.5 w-3.5" /> {caption}
+      </span>
+    );
+  if (status === "refunded" || status === "refunding")
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.78_0.14_85_/_0.45)] bg-[oklch(0.78_0.14_85_/_0.12)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[oklch(0.88_0.12_85)]">
+        <Undo2 className="h-3.5 w-3.5" /> {caption}
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.72_0.19_245_/_0.4)] bg-[oklch(0.72_0.19_245_/_0.12)] px-2.5 py-1 text-[11px] font-semibold text-[oklch(0.85_0.15_235)]">
-      <Clock className="h-3.5 w-3.5 animate-pulse" /> Pending
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.72_0.19_245_/_0.4)] bg-[oklch(0.72_0.19_245_/_0.12)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[oklch(0.85_0.15_235)]">
+      <Clock className="h-3.5 w-3.5 animate-pulse" /> {caption}
     </span>
   );
 }
@@ -1184,10 +1221,12 @@ function NumField({
   label,
   value,
   onChange,
+  disabled,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  disabled?: boolean;
 }) {
   return (
     <div>
@@ -1196,9 +1235,10 @@ function NumField({
         type="number"
         inputMode="decimal"
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
         placeholder="0.00"
-        className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none"
+        className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none disabled:cursor-not-allowed disabled:opacity-40"
       />
     </div>
   );
@@ -1209,16 +1249,42 @@ function formatAddress(a: string | null) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
 }
 
+function AddressCell({
+  address,
+  nowrap,
+  compactHash,
+}: {
+  address: string;
+  nowrap?: boolean;
+  compactHash?: boolean;
+}) {
+  if (!address) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+
+  return (
+    <div className="flex min-w-0 items-center gap-1.5 font-mono text-xs text-muted-foreground">
+      <span className={nowrap ? "whitespace-nowrap" : "truncate"}>
+        {compactHash ? formatAddress(address) : shortHash(address)}
+      </span>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigator.clipboard?.writeText(address);
+        }}
+        className="shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground"
+        aria-label="Copy address"
+      >
+        <Clipboard className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
 function shortHash(a: string) {
   if (a.length <= 14) return a;
   return `${a.slice(0, 8)}…${a.slice(-6)}`;
-}
-
-function formatNumber(n: number) {
-  return n.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
-  });
 }
 
 function formatDate(d: Date) {

@@ -17,8 +17,8 @@ const NEXUS_RPC_URLS = {
 } as const;
 
 /**
- * Native APEX held by the Nexus OFT contract. Read straight from the chain,
- * the way the old frontend did — it is not part of `GET /lockedTokens`.
+ * Native APEX held by the Nexus OFT contract. Read straight from the chain —
+ * it is not part of `GET /lockedTokens`.
  *
  * Plain JSON-RPC rather than web3, so the landing page does not have to pull
  * the whole web3 bundle in just for a balance read.
@@ -85,9 +85,7 @@ function toUsd(
  */
 export function useLayerZeroLockedApex(): bigint | undefined {
   const { data: settings } = useQuery(settingsQueryOptions);
-  const oftAddress = settings?.layerZeroChains?.find(
-    (c) => c.chain === "nexus",
-  )?.oftAddress;
+  const oftAddress = settings?.layerZeroChains?.nexus?.oftAddress;
 
   const { data } = useQuery({
     queryKey: ["layerZeroLockedApex", oftAddress] as const,
@@ -110,7 +108,6 @@ export type BridgeStats = {
 /**
  * TVL / TVB in USD.
  *
- * Same inputs as the old frontend — `GET /lockedTokens` plus the LayerZero
  * locked APEX read from Nexus — but instead of expressing everything in APEX,
  * every token total is multiplied by its USD price from `GET /tokenPrice` and
  * summed.
@@ -145,7 +142,7 @@ export function useBridgeStats(): BridgeStats {
     }
 
     // APEX locked in the Nexus OFT contract is priced as prime's native currency
-    const apexTokenID = getCurrencyID(settings, "prime");
+    const apexTokenID = settings ? getCurrencyID(settings, "prime") : undefined;
     if (layerZeroLockedApex && apexTokenID !== undefined) {
       addAmount(lockedTotals, apexTokenID, layerZeroLockedApex);
     }

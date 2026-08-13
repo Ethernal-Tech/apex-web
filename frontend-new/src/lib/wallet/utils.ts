@@ -22,8 +22,28 @@ export const shortRetryOptions = {
   waitTime: 1000,
 };
 
+export const longRetryOptions = {
+  retryCnt: 20,
+  waitTime: 5000,
+};
+
 export const wait = async (durationMs: number) =>
   new Promise((res) => setTimeout(res, durationMs));
+
+export async function retryForever<T>(
+  callback: () => Promise<T> | T,
+  retryDelayMs = 1000,
+): Promise<T> {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      return await callback();
+    } catch (e) {
+      console.log("Error while retryForever", e);
+      await wait(retryDelayMs);
+    }
+  }
+}
 
 export async function retry<T>(
   callback: () => Promise<T> | T,

@@ -28,3 +28,8 @@ export enum ApexBridgeNetwork {
   TestnetUnichain = "TestnetUnichain",
   TestnetSolana = "TestnetSolana",
 }
+
+export enum UtxoRetrieverEnum {
+  Wallet = "wallet",
+  WebApi = "web-api",
+}

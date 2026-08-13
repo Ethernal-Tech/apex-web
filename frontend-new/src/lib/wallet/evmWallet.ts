@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Web3 from "web3";
 import { toHex } from "web3-utils";
+import type { BlockNumberOrTag, Numbers, Transaction } from "web3-types";
+
+type SendTransactionOptions = {
+  checkRevertBeforeSending?: boolean;
+};
 import { ERC20_MIN_ABI } from "@/lib/wallet/abi";
 import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
 import { shortRetryOptions, wait } from "@/lib/wallet/utils";
@@ -208,6 +213,50 @@ class EvmWalletHandler {
       });
       return "0";
     }
+  };
+
+  submitTx = (tx: Transaction, opts?: SendTransactionOptions) => {
+    this._checkWalletAndThrow();
+    return this.getWeb3()!.eth.sendTransaction(tx, undefined, opts);
+  };
+
+  estimateGas = async (tx: Transaction) => {
+    this._checkWalletAndThrow();
+    return await this.getWeb3()!.eth.estimateGas(tx);
+  };
+
+  getFeeHistory = async (
+    blockCount: Numbers,
+    newestBlock: BlockNumberOrTag | undefined,
+    rewardPercentiles: Numbers[],
+  ) => {
+    this._checkWalletAndThrow();
+    return await this.getWeb3()!.eth.getFeeHistory(
+      blockCount,
+      newestBlock,
+      rewardPercentiles,
+    );
+  };
+
+  getGasPrice = async () => {
+    this._checkWalletAndThrow();
+    return await this.getWeb3()!.eth.getGasPrice();
+  };
+
+  getTransactionReceipt = async (txHash: string) => {
+    this._checkWalletAndThrow();
+    return await this.getWeb3()!.eth.getTransactionReceipt(txHash);
+  };
+
+  getBlock = async (
+    blockNumberOrHash: BlockNumberOrTag | string = "latest",
+    returnTransactionObjects = false,
+  ) => {
+    this._checkWalletAndThrow();
+    return await this.getWeb3()!.eth.getBlock(
+      blockNumberOrHash,
+      returnTransactionObjects,
+    );
   };
 }
 
