@@ -85,9 +85,7 @@ function toUsd(
  */
 export function useLayerZeroLockedApex(): bigint | undefined {
   const { data: settings } = useQuery(settingsQueryOptions);
-  const oftAddress = settings?.layerZeroChains?.find(
-    (c) => c.chain === "nexus",
-  )?.oftAddress;
+  const oftAddress = settings?.layerZeroChains?.nexus?.oftAddress;
 
   const { data } = useQuery({
     queryKey: ["layerZeroLockedApex", oftAddress] as const,
