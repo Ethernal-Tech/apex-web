@@ -7,9 +7,11 @@ import {
 	IsNotEmpty,
 	IsOptional,
 	IsString,
+	Matches,
 	ValidateNested,
 } from 'class-validator';
-import { TokenNetworkEnum } from './tokenInfo.config';
+import { ConfigNetworkEnum } from 'src/appConfig/configNetwork';
+import { HEX_COLOR_PATTERN } from 'src/utils/colorUtils';
 
 export class TokenInfoDto {
 	@IsNotEmpty()
@@ -45,18 +47,29 @@ export class TokenInfoDto {
 		example: 'https://cdn.apexfusion.org/tokens/ap3x.svg',
 	})
 	iconUrl?: string;
+
+	@IsOptional()
+	@IsString()
+	@Matches(HEX_COLOR_PATTERN)
+	@ApiPropertyOptional({
+		description:
+			'Accent color of the token in the UI (legend dots, chart series), as a hex ' +
+			'string. Absent when the config sets none - the UI then uses its default accent.',
+		example: '#3B92FF',
+	})
+	color?: string;
 }
 
 export class TokenInfosResponseDto {
 	@IsNotEmpty()
-	@IsEnum(TokenNetworkEnum)
+	@IsEnum(ConfigNetworkEnum)
 	@ApiProperty({
 		description: 'Network this instance serves the metadata for',
-		enum: TokenNetworkEnum,
-		enumName: 'TokenNetworkEnum',
-		example: TokenNetworkEnum.Testnet,
+		enum: ConfigNetworkEnum,
+		enumName: 'ConfigNetworkEnum',
+		example: ConfigNetworkEnum.Testnet,
 	})
-	network: TokenNetworkEnum;
+	network: ConfigNetworkEnum;
 
 	@IsArray()
 	@ValidateNested({ each: true })

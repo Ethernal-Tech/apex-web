@@ -5,6 +5,7 @@ import { DFM_UNIT, lockedTokensQueryOptions } from "@/lib/api/lockedTokens";
 import { priceByTokenId, tokenPricesQueryOptions } from "@/lib/api/tokenPrice";
 import { settingsQueryOptions } from "@/lib/api/settings";
 import { getCurrencyID } from "@/lib/tokens";
+import { isUnreportedChain } from "@/lib/chains";
 import appSettings from "@/settings/appSettings";
 
 /** LayerZero balances come back in wei (18 decimals). */
@@ -134,7 +135,8 @@ export function useBridgeStats(): BridgeStats {
     const priceMap = priceByTokenId(prices);
 
     const lockedTotals = new Map<number, bigint>();
-    for (const tokenMap of Object.values(lockedTokens.chains ?? {})) {
+    for (const [chain, tokenMap] of Object.entries(lockedTokens.chains ?? {})) {
+      if (isUnreportedChain(chain)) continue;
       for (const [tokenID, addressMap] of Object.entries(tokenMap ?? {})) {
         for (const amount of Object.values(addressMap ?? {})) {
           addAmount(lockedTotals, Number(tokenID), amount);
@@ -149,7 +151,10 @@ export function useBridgeStats(): BridgeStats {
     }
 
     const bridgedTotals = new Map<number, bigint>();
-    for (const tokenMap of Object.values(lockedTokens.totalTransferred ?? {})) {
+    for (const [chain, tokenMap] of Object.entries(
+      lockedTokens.totalTransferred ?? {},
+    )) {
+      if (isUnreportedChain(chain)) continue;
       for (const [tokenID, amount] of Object.entries(tokenMap ?? {})) {
         addAmount(bridgedTotals, Number(tokenID), amount);
       }

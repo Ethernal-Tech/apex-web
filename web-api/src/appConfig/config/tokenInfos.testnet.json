@@ -11,33 +11,43 @@
 		"\"icon\" is a key the frontend resolves to a bundled asset. Known keys:",
 		"apex, eth, polygon, sei, solana, unknown. An unknown key falls back to the",
 		"unknown icon, so a brand new asset can ship with \"icon\": \"unknown\" and an",
-		"optional \"iconUrl\" pointing at a hosted image until the asset is bundled."
+		"optional \"iconUrl\" pointing at a hosted image until the asset is bundled.",
+		"",
+		"\"color\" is the accent the UI paints the token in (legend dots, chart",
+		"series), as a hex string. Optional: a token without one falls back to the",
+		"unknownToken color, and to the UI's own default accent if that is unset too.",
+		"The throwaway test tokens below deliberately have none."
 	],
 	"unknownToken": {
 		"tokenID": 0,
 		"icon": "apex",
-		"label": ""
+		"label": "",
+		"color": "#3B92FF"
 	},
 	"tokens": [
 		{
 			"tokenID": 1,
 			"icon": "apex",
-			"label": "AP3X"
+			"label": "AP3X",
+			"color": "#3B92FF"
 		},
 		{
 			"tokenID": 2,
 			"icon": "unknown",
-			"label": "ADA"
+			"label": "ADA",
+			"color": "#4F7BFF"
 		},
 		{
 			"tokenID": 3,
 			"icon": "apex",
-			"label": "cAP3X"
+			"label": "cAP3X",
+			"color": "#8B7CFF"
 		},
 		{
 			"tokenID": 4,
 			"icon": "unknown",
-			"label": "xADA"
+			"label": "xADA",
+			"color": "#2FD3A5"
 		},
 		{
 			"tokenID": 5,
@@ -87,122 +97,146 @@
 		{
 			"tokenID": 14,
 			"icon": "polygon",
-			"label": "POL"
+			"label": "POL",
+			"color": "#8247E5"
 		},
 		{
 			"tokenID": 15,
 			"icon": "polygon",
-			"label": "xPOL"
+			"label": "xPOL",
+			"color": "#A374F0"
 		},
 		{
 			"tokenID": 16,
 			"icon": "apex",
-			"label": "pAP3X"
+			"label": "pAP3X",
+			"color": "#A78BFA"
 		},
 		{
 			"tokenID": 17,
 			"icon": "polygon",
-			"label": "cPOL"
+			"label": "cPOL",
+			"color": "#C2A0F7"
 		},
 		{
 			"tokenID": 18,
 			"icon": "eth",
-			"label": "ETH"
+			"label": "ETH",
+			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 19,
 			"icon": "eth",
-			"label": "cKatanaETH"
+			"label": "cKatanaETH",
+			"color": "#E8734A"
 		},
 		{
 			"tokenID": 20,
 			"icon": "eth",
-			"label": "ETH"
+			"label": "ETH",
+			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 21,
 			"icon": "eth",
-			"label": "cETH"
+			"label": "cETH",
+			"color": "#A6B0CF"
 		},
 		{
 			"tokenID": 22,
 			"icon": "sei",
-			"label": "SEI"
+			"label": "SEI",
+			"color": "#9E1F19"
 		},
 		{
 			"tokenID": 23,
 			"icon": "sei",
-			"label": "cSEI"
+			"label": "cSEI",
+			"color": "#C25A54"
 		},
 		{
 			"tokenID": 24,
 			"icon": "eth",
-			"label": "ETH"
+			"label": "ETH",
+			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 25,
 			"icon": "eth",
-			"label": "cArbitrumETH"
+			"label": "cArbitrumETH",
+			"color": "#2D9BF0"
 		},
 		{
 			"tokenID": 26,
 			"icon": "eth",
-			"label": "ETH"
+			"label": "ETH",
+			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 27,
 			"icon": "eth",
-			"label": "cScrollETH"
+			"label": "cScrollETH",
+			"color": "#EBC28E"
 		},
 		{
 			"tokenID": 28,
 			"icon": "eth",
-			"label": "ETH"
+			"label": "ETH",
+			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 29,
 			"icon": "eth",
-			"label": "cUnichainETH"
+			"label": "cUnichainETH",
+			"color": "#FF007A"
 		},
 		{
 			"tokenID": 30,
 			"icon": "solana",
-			"label": "SOL"
+			"label": "SOL",
+			"color": "#9945FF"
 		},
 		{
 			"tokenID": 31,
 			"icon": "solana",
-			"label": "wSOL"
+			"label": "wSOL",
+			"color": "#14F195"
 		},
 		{
 			"tokenID": 32,
 			"icon": "solana",
-			"label": "aSOL"
+			"label": "aSOL",
+			"color": "#7CC4FF"
 		},
 		{
 			"tokenID": 33,
 			"icon": "apex",
-			"label": "sAP3X"
+			"label": "sAP3X",
+			"color": "#7B5CFF"
 		},
 		{
 			"tokenID": 1000001,
 			"icon": "eth",
-			"label": "ETH"
+			"label": "ETH",
+			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 1000002,
 			"icon": "apex",
-			"label": "bAP3X"
+			"label": "bAP3X",
+			"color": "#22C1E4"
 		},
 		{
 			"tokenID": 1000003,
 			"icon": "apex",
-			"label": "bnAP3X"
+			"label": "bnAP3X",
+			"color": "#F0B429"
 		},
 		{
 			"tokenID": 1000004,
 			"icon": "unknown",
-			"label": "BNB"
+			"label": "BNB",
+			"color": "#F3BA2F"
 		}
 	]
 }

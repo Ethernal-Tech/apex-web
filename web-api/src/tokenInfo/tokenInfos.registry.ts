@@ -1,20 +1,22 @@
-import { Injectable, Logger } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
-import { resolveConfigDir } from 'src/appConfig/appConfig.helper';
+import { Injectable } from '@nestjs/common';
+import {
+	ConfigNetworkEnum,
+	configNetworkOf,
+} from 'src/appConfig/configNetwork';
+import { JsonConfigFile } from 'src/appConfig/jsonConfigFile';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
+import { asHexColor } from 'src/utils/colorUtils';
 import {
 	DEFAULT_TOKEN_INFOS,
 	TokenInfo,
 	TokenInfosConfig,
-	TokenNetworkEnum,
 } from './tokenInfo.config';
 
 /**
  * One file per network, looked up in the same folders as the other appConfig
  * JSON files. Each deployment only carries the file of the network it serves.
  */
-export const tokenInfosFileName = (network: TokenNetworkEnum): string =>
+export const tokenInfosFileName = (network: ConfigNetworkEnum): string =>
 	`tokenInfos.${network}.json`;
 
 const summary = (config: TokenInfosConfig): string =>
@@ -25,7 +27,10 @@ const parseTokenInfo = (raw: unknown, at: string): TokenInfo => {
 		throw new Error(`${at}: expected an object`);
 	}
 
-	const { tokenID, label, icon, iconUrl } = raw as Record<string, unknown>;
+	const { tokenID, label, icon, iconUrl, color } = raw as Record<
+		string,
+		unknown
+	>;
 
 	if (typeof tokenID !== 'number' || !Number.isInteger(tokenID)) {
 		throw new Error(`${at}: "tokenID" must be an integer`);
@@ -47,11 +52,18 @@ const parseTokenInfo = (raw: unknown, at: string): TokenInfo => {
 			`${at} (tokenID ${tokenID}): "iconUrl" must be a non-empty string when set`,
 		);
 	}
+	const parsedColor = color === undefined ? undefined : asHexColor(color);
+	if (color !== undefined && parsedColor === undefined) {
+		throw new Error(
+			`${at} (tokenID ${tokenID}): "color" must be a hex color like #3B92FF when set`,
+		);
+	}
 	return {
 		tokenID,
 		label: label.trim(),
 		icon: icon.trim(),
 		...(iconUrl ? { iconUrl: iconUrl.trim() } : {}),
+		...(parsedColor ? { color: parsedColor } : {}),
 	};
 };
 
@@ -97,7 +109,7 @@ export const parseTokenInfos = (raw: unknown): TokenInfosConfig => {
 };
 
 /**
- * Source of truth for the token display metadata (label, icon).
+ * Source of truth for the token display metadata (label, icon, color).
  *
  * The data lives in a JSON file next to the other appConfig JSON files -
  * tokenInfos.<network>.json, the network coming from app.isMainnet. It is
@@ -109,92 +121,30 @@ export const parseTokenInfos = (raw: unknown): TokenInfosConfig => {
  */
 @Injectable()
 export class TokenInfosRegistry {
-	private config: TokenInfosConfig = DEFAULT_TOKEN_INFOS;
-	private filePath?: string;
-	private filePathResolved = false;
-	private loadedMtimeMs?: number;
-	private missingFileLogged = false;
+	private readonly file: JsonConfigFile<TokenInfosConfig>;
 
-	constructor(private readonly appConfig: AppConfigService) {}
-
-	/** Network this instance serves. */
-	get network(): TokenNetworkEnum {
-		return this.appConfig.app.isMainnet
-			? TokenNetworkEnum.Mainnet
-			: TokenNetworkEnum.Testnet;
+	constructor(private readonly appConfig: AppConfigService) {
+		this.file = new JsonConfigFile({
+			fileName: tokenInfosFileName(this.network),
+			label: 'Token infos',
+			parse: parseTokenInfos,
+			summary,
+			fallback: DEFAULT_TOKEN_INFOS,
+		});
 	}
 
-	/**
-	 * The current metadata. Reloads first when the file changed, so callers
-	 * always see the latest config without holding on to a stale copy.
-	 */
+	/** Network this instance serves. */
+	get network(): ConfigNetworkEnum {
+		return configNetworkOf(this.appConfig.app.isMainnet);
+	}
+
+	/** The current metadata, reloaded when the file changed. */
 	getTokens(): readonly TokenInfo[] {
-		this.reloadIfChanged();
-		return this.config.tokens;
+		return this.file.get().tokens;
 	}
 
 	/** Metadata served for a token ID that is not in the list. */
 	getUnknownToken(): TokenInfo {
-		this.reloadIfChanged();
-		return this.config.unknownToken;
-	}
-
-	private reloadIfChanged(): void {
-		const filePath = this.resolveFilePath();
-		if (!filePath) {
-			return;
-		}
-
-		let mtimeMs: number;
-		try {
-			mtimeMs = fs.statSync(filePath).mtimeMs;
-		} catch {
-			if (!this.missingFileLogged) {
-				Logger.warn(
-					`Token infos file not found at ${filePath}, serving the built-in config: ${summary(this.config)}`,
-				);
-				this.missingFileLogged = true;
-			}
-			return;
-		}
-
-		this.missingFileLogged = false;
-		if (this.loadedMtimeMs === mtimeMs) {
-			return;
-		}
-
-		// remembered even on failure, so a broken file is not re-parsed (and
-		// re-logged) on every request - only once per change
-		this.loadedMtimeMs = mtimeMs;
-
-		try {
-			const parsed = parseTokenInfos(
-				JSON.parse(fs.readFileSync(filePath, 'utf8')),
-			);
-			this.config = parsed;
-			Logger.log(`Token infos loaded from ${filePath}: ${summary(parsed)}`);
-		} catch (error) {
-			Logger.error(
-				`Invalid token infos file ${filePath}: ${error instanceof Error ? error.message : error}. Keeping the current config: ${summary(this.config)}`,
-			);
-		}
-	}
-
-	/** Resolved once - the folder does not move while the process is running. */
-	private resolveFilePath(): string | undefined {
-		if (this.filePathResolved) {
-			return this.filePath;
-		}
-		this.filePathResolved = true;
-
-		const fileName = tokenInfosFileName(this.network);
-		const dir = resolveConfigDir(fileName);
-		this.filePath = dir ? path.join(dir, fileName) : undefined;
-		if (!this.filePath) {
-			Logger.warn(
-				`No ${fileName} found, serving the built-in config: ${summary(this.config)}`,
-			);
-		}
-		return this.filePath;
+		return this.file.get().unknownToken;
 	}
 }

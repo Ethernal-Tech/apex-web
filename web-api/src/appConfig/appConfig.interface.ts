@@ -20,6 +20,12 @@ export interface EvmAddressConfig {
 	address: `0x${string}`;
 }
 
+/** `chain::value` pair, for per-chain config whose value is not an EVM address. */
+export interface ChainValueConfig {
+	chain: string;
+	value: string;
+}
+
 export interface AppConfig {
 	app: {
 		logLevel: LogLevel;
@@ -37,8 +43,14 @@ export interface AppConfig {
 		ethTxTtlInc: number;
 		recentInputsThresholdMinutes: number;
 		addresses: {
+			/**
+			 * Fallback only, for as long as the oracle build that serves EVM
+			 * bridging addresses is not deployed. The addresses actually
+			 * used are resolved at startup by settings/gatewayAddresses.helper.ts,
+			 * which prefers cardano-api and drops to this. The native token wallet
+			 * has no entry here at all - it is always read off the chain.
+			 */
 			skylineGateway: EvmAddressConfig[];
-			skylineNativeTokenWallet: EvmAddressConfig[];
 			reactorNexusGateway: `0x${string}`;
 			reactorNexusCentralizedGateway: `0x${string}`;
 		};
@@ -49,6 +61,17 @@ export interface AppConfig {
 		cardanoApiSkylineUrl: string;
 		cardanoApiReactorUrl: string;
 		centralizedApiUrl: string;
+	};
+	/** Node endpoints for reading balances off non-Cardano chains. */
+	rpc: {
+		/** `chain::url` per EVM chain. */
+		evmUrls: ChainValueConfig[];
+		solanaUrl: string;
+		/**
+		 * `chain::address` fallback for the account holding locked funds on a
+		 * Solana-type chain, used while the oracle does not serve one.
+		 */
+		solanaHolders: ChainValueConfig[];
 	};
 	database: {
 		host: string;

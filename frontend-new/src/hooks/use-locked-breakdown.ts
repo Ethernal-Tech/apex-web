@@ -3,7 +3,11 @@ import { useMemo } from "react";
 
 import { DFM_UNIT, lockedTokensQueryOptions } from "@/lib/api/lockedTokens";
 import { settingsQueryOptions } from "@/lib/api/settings";
-import { CHAIN_META, type ChainCategory } from "@/lib/chains";
+import {
+  CHAIN_META,
+  isUnreportedChain,
+  type ChainCategory,
+} from "@/lib/chains";
 import { getCurrencyID, getTokenDisplayName } from "@/lib/tokens";
 import { useLayerZeroLockedApex } from "./use-bridge-stats";
 
@@ -21,6 +25,19 @@ export type ChainRows = {
   rows: TokenRow[];
 };
 
+/** Everything one holder address holds on one chain. */
+export type AddressRows = {
+  address: string;
+  rows: TokenRow[];
+};
+
+/** The addresses one chain's locked funds actually sit in. */
+export type ChainAddressRows = {
+  chain: string;
+  label: string;
+  addresses: AddressRows[];
+};
+
 /** The chain families the audit page shows as tabs. */
 export type WorldKey = Extract<ChainCategory, "utxo" | "evm" | "svm">;
 export const WORLD_KEYS: WorldKey[] = ["utxo", "evm", "svm"];
@@ -33,6 +50,12 @@ export type WorldBreakdown = {
   /** Per token, summed across the world's chains. */
   summaryLocked: TokenRow[];
   summaryBridged: TokenRow[];
+  /**
+   * The same locked balances as `locked`, broken down by the address holding
+   * them - the bridging addresses on a UTxO chain, the native token wallet on an
+   * EVM one, the token accounts on Solana. In CHAIN_META order.
+   */
+  holders: ChainAddressRows[];
 };
 
 export type LockedBreakdown = {
@@ -46,6 +69,7 @@ const emptyWorld = (key: WorldKey): WorldBreakdown => ({
   bridged: [],
   summaryLocked: [],
   summaryBridged: [],
+  holders: [],
 });
 
 const emptyWorlds = (): Record<WorldKey, WorldBreakdown> => ({
@@ -69,16 +93,41 @@ const worldOf = (chain: string): WorldKey => {
 /** Sums per chain -> tokenID, dropping the addresses the API breaks locked amounts by. */
 type Totals = Map<string, Map<number, bigint>>;
 
-function addTo(totals: Totals, chain: string, tokenID: number, raw: string) {
-  let value: bigint;
+/** Sums per chain -> address -> tokenID, keeping them. */
+type HolderTotals = Map<string, Map<string, Map<number, bigint>>>;
+
+/** Undefined for an amount the API served in a shape BigInt cannot read. */
+function toAmount(raw: string): bigint | undefined {
   try {
-    value = BigInt(raw || "0");
+    return BigInt(raw || "0");
   } catch {
-    return;
+    return undefined;
   }
+}
+
+function addTo(
+  totals: Totals,
+  chain: string,
+  tokenID: number,
+  value: bigint,
+): void {
   const perToken = totals.get(chain) ?? new Map<number, bigint>();
   perToken.set(tokenID, (perToken.get(tokenID) ?? BigInt(0)) + value);
   totals.set(chain, perToken);
+}
+
+function addToHolder(
+  totals: HolderTotals,
+  chain: string,
+  address: string,
+  tokenID: number,
+  value: bigint,
+): void {
+  const byAddress = totals.get(chain) ?? new Map<string, Map<number, bigint>>();
+  const perToken = byAddress.get(address) ?? new Map<number, bigint>();
+  perToken.set(tokenID, (perToken.get(tokenID) ?? BigInt(0)) + value);
+  byAddress.set(address, perToken);
+  totals.set(chain, byAddress);
 }
 
 /**
@@ -99,10 +148,17 @@ export function useLockedBreakdown(): LockedBreakdown {
     }
 
     const lockedTotals: Totals = new Map();
+    const holderTotals: HolderTotals = new Map();
     for (const [chain, tokenMap] of Object.entries(lockedTokens.chains ?? {})) {
+      // Dropped here rather than further down, so an unreported chain reaches
+      // neither a card nor a chart nor the per-token summaries.
+      if (isUnreportedChain(chain)) continue;
       for (const [tokenID, addressMap] of Object.entries(tokenMap ?? {})) {
-        for (const amount of Object.values(addressMap ?? {})) {
-          addTo(lockedTotals, chain, Number(tokenID), amount);
+        for (const [address, amount] of Object.entries(addressMap ?? {})) {
+          const value = toAmount(amount);
+          if (value === undefined) continue;
+          addTo(lockedTotals, chain, Number(tokenID), value);
+          addToHolder(holderTotals, chain, address, Number(tokenID), value);
         }
       }
     }
@@ -117,16 +173,33 @@ export function useLockedBreakdown(): LockedBreakdown {
     const apexTokenID = getCurrencyID(settings, "prime");
     const keepZeros = new Set<string>();
     if (layerZeroLockedApex !== undefined && apexTokenID !== undefined) {
-      addTo(lockedTotals, "nexus", apexTokenID, layerZeroLockedApex.toString());
+      addTo(lockedTotals, "nexus", apexTokenID, layerZeroLockedApex);
       keepZeros.add(`nexus:${apexTokenID}`);
+      // The contract itself is the holder, so the per-address view can account
+      // for this balance the way it accounts for every other one.
+      const oftAddress = settings?.layerZeroChains?.find(
+        (c) => c.chain === "nexus",
+      )?.oftAddress;
+      if (oftAddress) {
+        addToHolder(
+          holderTotals,
+          "nexus",
+          oftAddress,
+          apexTokenID,
+          layerZeroLockedApex,
+        );
+      }
     }
 
     const bridgedTotals: Totals = new Map();
     for (const [chain, tokenMap] of Object.entries(
       lockedTokens.totalTransferred ?? {},
     )) {
+      if (isUnreportedChain(chain)) continue;
       for (const [tokenID, amount] of Object.entries(tokenMap ?? {})) {
-        addTo(bridgedTotals, chain, Number(tokenID), amount);
+        const value = toAmount(amount);
+        if (value === undefined) continue;
+        addTo(bridgedTotals, chain, Number(tokenID), value);
       }
     }
 
@@ -157,6 +230,41 @@ export function useLockedBreakdown(): LockedBreakdown {
             (CHAIN_META[b.chain]?.order ?? 99),
         );
 
+    /**
+     * The same balances as toChainRows, split by holder instead of summed.
+     *
+     * An address holding nothing is not a holder, so a zero row drops out and an
+     * address left with none drops with it - including the EVM native token
+     * wallets the API reports at zero, which the chain cards already omit.
+     */
+    const toChainAddressRows = (totals: HolderTotals): ChainAddressRows[] =>
+      [...totals.entries()]
+        .map(([chain, byAddress]) => ({
+          chain,
+          label: CHAIN_META[chain]?.label ?? chain,
+          addresses: [...byAddress.entries()]
+            .map(([address, perToken]) => ({
+              address,
+              rows: [...perToken.entries()]
+                .filter(([, amount]) => amount > BigInt(0))
+                .map(([tokenID, amount]) => ({
+                  tokenID,
+                  name: getTokenDisplayName(settings, tokenID),
+                  amount: Number(amount) / DFM_UNIT,
+                }))
+                .sort((a, b) => a.tokenID - b.tokenID),
+            }))
+            .filter((holder) => holder.rows.length > 0)
+            // Stable order for the page to re-sort by value once prices land.
+            .sort((a, b) => a.address.localeCompare(b.address)),
+        }))
+        .filter((entry) => entry.addresses.length > 0)
+        .sort(
+          (a, b) =>
+            (CHAIN_META[a.chain]?.order ?? 99) -
+            (CHAIN_META[b.chain]?.order ?? 99),
+        );
+
     /** One row per token, summed over the chains of a world. */
     const summarise = (chains: ChainRows[]): TokenRow[] => {
       const byToken = new Map<number, TokenRow>();
@@ -179,6 +287,9 @@ export function useLockedBreakdown(): LockedBreakdown {
     }
     for (const chainRows of toChainRows(bridgedTotals)) {
       worlds[worldOf(chainRows.chain)].bridged.push(chainRows);
+    }
+    for (const chainAddresses of toChainAddressRows(holderTotals)) {
+      worlds[worldOf(chainAddresses.chain)].holders.push(chainAddresses);
     }
     for (const world of Object.values(worlds)) {
       world.summaryLocked = summarise(world.locked);

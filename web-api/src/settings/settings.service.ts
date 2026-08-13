@@ -17,6 +17,10 @@ import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { Cron, SchedulerRegistry } from '@nestjs/schedule';
 import { getReactorValidatorChangeStatus } from './settings.helper';
 import { getCurrencyIDFromDirectionConfig, Lovelace } from './utils';
+import {
+	evmChainsFromDirectionConfig,
+	resolveSkylineEvmAddresses,
+} from './gatewayAddresses.helper';
 
 const RETRY_DELAY_MS = 5000;
 const settingsApiPath = `/api/CardanoTx/GetSettings`;
@@ -274,6 +278,23 @@ export class SettingsService {
 		this.SettingsResponse.directionConfig = directionConfig;
 		this.SettingsResponse.enabledChains = Array.from(enabledChains);
 		this.SettingsResponse.ecosystemTokens = ecosystemTokens;
+
+		// After the settings are merged, because which EVM chains exist is decided
+		// by them. Retried forever like the settings fetch above: the gateway is
+		// the `to` of every skyline EVM withdrawal, so coming up without it would
+		// mean serving an API that cannot build those transactions.
+		const evmChains = evmChainsFromDirectionConfig(
+			skylineSettings.bridgingSettings.directionConfig,
+		);
+
+		Logger.log(
+			`resolving skyline gateway addresses for: ${evmChains.join(', ') || '(none)'}`,
+		);
+
+		await retryForever(
+			() => resolveSkylineEvmAddresses(this.appConfig, evmChains),
+			RETRY_DELAY_MS,
+		);
 
 		Logger.debug(
 			`settings dto ${JSON.stringify(this.SettingsResponse, undefined, ' ')}`,

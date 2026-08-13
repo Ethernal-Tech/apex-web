@@ -9,6 +9,7 @@ import { DFM_UNIT } from "@/lib/api/lockedTokens";
 import { priceByTokenId, tokenPricesQueryOptions } from "@/lib/api/tokenPrice";
 import { settingsQueryOptions } from "@/lib/api/settings";
 import { getCurrencyID } from "@/lib/tokens";
+import { isUnreportedChain } from "@/lib/chains";
 
 export type BridgeHistoryPoint = {
   at: Date;
@@ -22,13 +23,17 @@ export type BridgeHistory = {
   isLoading: boolean;
 };
 
-/** Σ amount × USD price over a chain -> tokenID -> amount map. */
+/**
+ * Σ amount × USD price over a chain -> tokenID -> amount map, skipping the
+ * chains no reported figure includes - so the curve matches the totals above it.
+ */
 function toUsd(
   byChain: ChainTokenAmounts,
   prices: Map<number, number>,
 ): number {
   let usd = 0;
-  for (const tokenMap of Object.values(byChain ?? {})) {
+  for (const [chain, tokenMap] of Object.entries(byChain ?? {})) {
+    if (isUnreportedChain(chain)) continue;
     for (const [tokenID, amount] of Object.entries(tokenMap ?? {})) {
       const price = prices.get(Number(tokenID));
       if (!price) continue;

@@ -16,6 +16,27 @@ import type { SettingsResponse } from "@/lib/api/settings";
 
 export type ChainCategory = "apex" | "utxo" | "evm" | "svm";
 
+/**
+ * Accent used for a chain until `GET /chainInfo` says otherwise, and for one the
+ * chainInfos config does not list. See useChainColor.
+ */
+export const DEFAULT_CHAIN_COLOR = "#3B92FF";
+
+/**
+ * Chains kept out of every reported figure - TVL, TVB, the history chart and the
+ * whole audit breakdown. Whatever `GET /lockedTokens` reports for them is
+ * dropped before it is counted, listed, charted or labelled, so neither the
+ * chain nor the tokens it holds are named anywhere.
+ *
+ * Reporting only: they stay bridgeable, since the bridge's own chain lists come
+ * from the settings' `directionConfig`, not from here.
+ */
+export const UNREPORTED_CHAINS = new Set(["arbitrum", "scroll"]);
+
+/** True for a chain no reported figure may include. See UNREPORTED_CHAINS. */
+export const isUnreportedChain = (chain: string): boolean =>
+  UNREPORTED_CHAINS.has(chain.toLowerCase());
+
 const APEX_BRIDGE_CHAINS = new Set([
   "prime",
   "vector",

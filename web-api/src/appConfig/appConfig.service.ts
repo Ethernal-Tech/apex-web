@@ -97,6 +97,9 @@ export class AppConfigService {
 	get centralizedApiUrl() {
 		return this.config.services.centralizedApiUrl;
 	}
+	get rpc() {
+		return this.config.rpc;
+	}
 	get db() {
 		return this.config.database;
 	}

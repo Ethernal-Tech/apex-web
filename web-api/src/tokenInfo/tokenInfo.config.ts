@@ -1,9 +1,3 @@
-/** Network the running instance serves, selected by app.isMainnet. */
-export enum TokenNetworkEnum {
-	Mainnet = 'mainnet',
-	Testnet = 'testnet',
-}
-
 /**
  * How a token is presented in the UI. Purely cosmetic - the bridging config
  * (which token can go where, its chain specific id, ...) stays in the settings
@@ -26,6 +20,12 @@ export interface TokenInfo {
 	 * hatch for a brand new token whose icon is not in the frontend yet.
 	 */
 	iconUrl?: string;
+	/**
+	 * Accent color the UI paints this token in - legend dots, chart series - as
+	 * a hex string (#RGB, #RRGGBB, optionally with alpha). Optional: a token
+	 * without one is drawn in the UI's own default accent.
+	 */
+	color?: string;
 }
 
 export interface TokenInfosConfig {
