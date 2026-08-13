@@ -1,5 +1,3 @@
-import { captureException } from "@/lib/wallet/errors";
-import appSettings from "@/settings/appSettings";
 import { isEvmChain, isSolanaChain } from "@/lib/chains";
 import { UtxoRetrieverEnum } from "@/lib/wallet/enums";
 import cardanoWalletHandler from "@/lib/wallet/cardanoWallet";
@@ -16,44 +14,8 @@ export const getUtxoRetrieverType = (chain: string): UtxoRetrieverEnum => {
   }
 
   const walletVersion = cardanoWalletHandler.version();
-  const utxoRetrieverConfig =
-    !!appSettings.utxoRetriever && appSettings.utxoRetriever[chain];
-
-  if (
-    utxoRetrieverConfig &&
-    (utxoRetrieverConfig.force || !walletSupported(walletVersion))
-  ) {
-    if (utxoRetrieverConfig.url) {
-      if (utxoRetrieverConfig.type === UtxoRetrieverEnum.Blockfrost) {
-        return UtxoRetrieverEnum.Blockfrost;
-      } else if (utxoRetrieverConfig.type === UtxoRetrieverEnum.Ogmios) {
-        return UtxoRetrieverEnum.Ogmios;
-      } else {
-        console.log(`Unknown utxo retriever type: ${utxoRetrieverConfig.type}`);
-        captureException(
-          `Unknown utxo retriever type: ${utxoRetrieverConfig.type}`,
-          {
-            tags: {
-              component: "utxoRetrieverType.ts",
-              action: "getUtxoRetrieverType",
-            },
-          },
-        );
-      }
-    } else {
-      console.log(
-        `utxo retriever url not provided for: ${utxoRetrieverConfig.type}`,
-      );
-      captureException(
-        `utxo retriever url not provided for: ${utxoRetrieverConfig.type}`,
-        {
-          tags: {
-            component: "utxoRetrieverType.ts",
-            action: "getUtxoRetrieverType",
-          },
-        },
-      );
-    }
+  if (!walletSupported(walletVersion)) {
+    return UtxoRetrieverEnum.WebApi;
   }
 
   return UtxoRetrieverEnum.Wallet;

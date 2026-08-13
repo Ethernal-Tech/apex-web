@@ -31,6 +31,5 @@ export enum ApexBridgeNetwork {
 
 export enum UtxoRetrieverEnum {
   Wallet = "wallet",
-  Blockfrost = "blockfrost",
-  Ogmios = "ogmios",
+  WebApi = "web-api",
 }

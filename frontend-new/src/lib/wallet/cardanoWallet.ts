@@ -3,7 +3,6 @@ import { getAssetsSumMap, type SimpleUtxo } from "@/lib/cardano/utxoMinValue";
 import { NewAddressFromBytes } from "@/lib/wallet/address/addreses";
 import { ApexBridgeNetwork } from "@/lib/wallet/enums";
 import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
-import type { UtxoRetriever } from "@/lib/wallet/utxoRetriever";
 import { toBytes } from "@/lib/wallet/utils";
 
 type WalletInfo = {
@@ -49,7 +48,7 @@ const ETERNL_NETWORK_ID_TO_APEX_BRIDGE_NETWORK: Record<
   afpm: ApexBridgeNetwork.MainnetPrime,
 };
 
-class CardanoWalletHandler implements UtxoRetriever {
+class CardanoWalletHandler {
   private _enabledWallet: Cip30Api | undefined;
 
   getNativeAPI = () => this._enabledWallet;

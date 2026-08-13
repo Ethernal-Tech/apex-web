@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Check,
+  Copy,
   X as XIcon,
   Wallet,
   ExternalLink,
@@ -941,11 +942,11 @@ function TransactionDetails({
         )}
         <DetailRow
           label="Sender address"
-          value={<span className="font-mono">{shortAddr(sender)}</span>}
+          value={<CopyableAddress address={sender} />}
         />
         <DetailRow
           label="Receiver address"
-          value={<span className="font-mono">{shortAddr(receiver)}</span>}
+          value={<CopyableAddress address={receiver} />}
         />
         <DetailRow label="Date created" value={started.toLocaleString()} />
         <DetailRow label="Date finished" value={finished.toLocaleString()} />
@@ -976,6 +977,41 @@ function TransactionDetails({
         Close
       </Link>
     </div>
+  );
+}
+
+function CopyableAddress({ address }: { address: string }) {
+  const [copied, setCopied] = useState(false);
+  if (!address) {
+    return <span className="font-mono">—</span>;
+  }
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="font-mono">{shortAddr(address)}</span>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label="Copy address"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {copied ? (
+          <Check className="h-3.5 w-3.5 text-[oklch(0.85_0.15_235)]" />
+        ) : (
+          <Copy className="h-3.5 w-3.5" />
+        )}
+      </button>
+    </span>
   );
 }
 

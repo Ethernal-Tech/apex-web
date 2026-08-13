@@ -1,22 +1,12 @@
 import developmentSettings from "./appSettings_development.json";
 import productionSettings from "./appSettings_production.json";
 
-type UtxoRetrieverConfig = {
-  [key: string]: {
-    type: string;
-    url: string;
-    dmtrApiKey: string | undefined;
-    force: boolean;
-  };
-};
-
 type AppSettingsJson = {
   apiUrl: string;
   sentryDsn: string;
   minUtxoChainValue: { [key: string]: number };
   minChainFeeForBridging: { [key: string]: string };
   minOperationFee: { [key: string]: string };
-  utxoRetriever?: UtxoRetrieverConfig;
   maxAmountAllowedToBridge: string;
   maxTokenAmountAllowedToBridge: string;
   minValueToBridge: number;
@@ -34,7 +24,6 @@ class AppSettings {
   private _minUtxoChainValue: { [key: string]: number } = {};
   private _minChainFeeForBridging: { [key: string]: string } = {};
   private _minOperationFee: { [key: string]: string } = {};
-  private _utxoRetriever: UtxoRetrieverConfig = {};
   private _maxAmountAllowedToBridge = "0";
   private _maxTokenAmountAllowedToBridge = "0";
   private _minValueToBridge = 0;
@@ -55,7 +44,6 @@ class AppSettings {
     this._minUtxoChainValue = settingsJson.minUtxoChainValue;
     this._minChainFeeForBridging = settingsJson.minChainFeeForBridging;
     this._minOperationFee = settingsJson.minOperationFee;
-    this._utxoRetriever = settingsJson.utxoRetriever ?? {};
     this._maxAmountAllowedToBridge = settingsJson.maxAmountAllowedToBridge;
     this._maxTokenAmountAllowedToBridge =
       settingsJson.maxTokenAmountAllowedToBridge;
@@ -86,10 +74,6 @@ class AppSettings {
 
   get minOperationFee(): { [key: string]: string } {
     return this._minOperationFee;
-  }
-
-  get utxoRetriever(): UtxoRetrieverConfig {
-    return this._utxoRetriever;
   }
 
   get maxAmountAllowedToBridge(): string {
