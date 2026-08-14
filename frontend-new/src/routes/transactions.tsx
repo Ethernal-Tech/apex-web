@@ -603,7 +603,7 @@ function TransactionsPage() {
                             onClick={() => toggleSort("destination")}
                             active={sortKey === "destination"}
                             dir={sortDir}
-                            className="min-w-[4.75rem] min-[1200px]:w-[10.5rem]"
+                            className="w-[8rem] min-[1200px]:w-[10.5rem]"
                           >
                             Destination
                           </Th>
@@ -613,6 +613,7 @@ function TransactionsPage() {
                         onClick={() => toggleSort("amount")}
                         active={sortKey === "amount"}
                         dir={sortDir}
+                        className="w-[5.25rem]"
                       >
                         Amount
                       </Th>
@@ -620,6 +621,7 @@ function TransactionsPage() {
                         onClick={() => toggleSort("tokenAmount")}
                         active={sortKey === "tokenAmount"}
                         dir={sortDir}
+                        className="w-[9rem]"
                       >
                         Token amount
                       </Th>
@@ -637,6 +639,7 @@ function TransactionsPage() {
                           onClick={() => toggleSort("receiver")}
                           active={sortKey === "receiver"}
                           dir={sortDir}
+                          className="min-w-[8.75rem]"
                         >
                           Receiver
                         </Th>
@@ -645,6 +648,7 @@ function TransactionsPage() {
                         onClick={() => toggleSort("createdAt")}
                         active={sortKey === "createdAt"}
                         dir={sortDir}
+                        className="min-w-[7.25rem]"
                       >
                         Created
                       </Th>
@@ -652,6 +656,7 @@ function TransactionsPage() {
                         onClick={() => toggleSort("finishedAt")}
                         active={sortKey === "finishedAt"}
                         dir={sortDir}
+                        className="min-w-[8.25rem]"
                       >
                         Finished
                       </Th>
@@ -659,7 +664,7 @@ function TransactionsPage() {
                         onClick={() => toggleSort("status")}
                         active={sortKey === "status"}
                         dir={sortDir}
-                        className="w-[9rem] pr-2"
+                        className="min-w-[6.5rem] w-[6.5rem] pr-2"
                       >
                         Status
                       </Th>
@@ -889,12 +894,12 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
           <td className="min-w-[4.75rem] px-5 py-4 min-[1200px]:w-[10.5rem]">
             <ChainCell chain={origin} />
           </td>
-          <td className="min-w-[4.75rem] px-5 py-4 min-[1200px]:w-[10.5rem]">
+          <td className="w-[8rem] px-5 py-4 min-[1200px]:w-[10.5rem]">
             <ChainCell chain={dest} />
           </td>
         </>
       )}
-      <td className="px-5 py-4">
+      <td className="w-[5.25rem] px-5 py-4">
         <div className="font-display text-sm font-semibold text-foreground">
           {tx.amountDisplay}
         </div>
@@ -902,7 +907,7 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
           {origin?.symbol}
         </div>
       </td>
-      <td className="px-5 py-4">
+      <td className="w-[9rem] px-5 py-4">
         {tx.tokenAmountDisplay != null ? (
           <>
             <div className="font-display text-sm text-foreground">
@@ -924,21 +929,21 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
         </td>
       )}
       {!compact && (
-        <td className="px-5 py-4">
+        <td className="min-w-[8.75rem] px-5 py-4">
           <AddressCell address={tx.receiver} />
         </td>
       )}
-      <td className="px-5 py-4 text-xs text-muted-foreground">
+      <td className="min-w-[7.25rem] px-5 py-4 text-xs text-muted-foreground">
         {formatDate(tx.createdAt)}
       </td>
-      <td className="px-5 py-4 text-xs text-muted-foreground">
+      <td className="min-w-[8.25rem] px-5 py-4 text-xs text-muted-foreground">
         {tx.finishedAt ? (
           formatDate(tx.finishedAt)
         ) : (
           <span className="text-[oklch(0.85_0.15_235)]">Pending</span>
         )}
       </td>
-      <td className="py-4 pl-5 pr-2">
+      <td className="min-w-[6.5rem] w-[6.5rem] py-4 pl-5 pr-2">
         <StatusPill status={tx.status} label={tx.statusLabel} />
       </td>
       {!compact && (
