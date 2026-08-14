@@ -35,3 +35,35 @@ export const lockedTokensQueryOptions = queryOptions({
   staleTime: 60_000,
   refetchInterval: 60_000,
 });
+
+/**
+ * `GET /lockedTokens/summary` — TVL and TVB already summed and priced, in USD.
+ *
+ * The full `/lockedTokens` payload takes seconds to produce (an external API
+ * call, DB aggregates and a balance read per chain), so the headline figures
+ * are computed and cached by the web-api instead of being re-derived here.
+ */
+export type LockedTokensSummary = {
+  tvlUsd: number;
+  tvbUsd: number;
+  /** ISO 8601, when the web-api last recomputed the figures. */
+  computedAt: string;
+};
+
+export async function fetchLockedTokensSummary(): Promise<LockedTokensSummary> {
+  const res = await fetch(
+    `${appSettings.apiUrl}/lockedTokens/summary?allowedBridgingModes=${ALLOWED_BRIDGING_MODES.join(",")}`,
+    { headers: { Accept: "application/json" } },
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to load the locked tokens summary (${res.status})`);
+  }
+  return res.json() as Promise<LockedTokensSummary>;
+}
+
+export const lockedTokensSummaryQueryOptions = queryOptions({
+  queryKey: ["lockedTokensSummary"] as const,
+  queryFn: fetchLockedTokensSummary,
+  staleTime: 60_000,
+  refetchInterval: 60_000,
+});

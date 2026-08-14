@@ -12,6 +12,7 @@ import { LockedTokensService } from './lockedTokens.service';
 import {
 	HistoricalSnapshotDto,
 	LockedTokensDto,
+	LockedTokensSummaryDto,
 	TransferredTokensByDay,
 } from './lockedTokens.dto';
 import { BridgingModeEnum, GroupByTimePeriod } from 'src/common/enum';
@@ -53,6 +54,41 @@ export class LockedTokensController {
 		const allowedBridgingModes = (modes ?? []) as BridgingModeEnum[];
 
 		return await this.lockedTokensService.fillTokensData(allowedBridgingModes);
+	}
+
+	@ApiOperation({
+		summary: 'Get TVL and TVB in USD',
+		description:
+			'The headline figures only, served from a cache so a page header does not wait on the full locked tokens computation. ' +
+			'The cache is refreshed by every `GET /lockedTokens` call and in the background once it ages past a minute.',
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'OK - Cached TVL / TVB.',
+		type: LockedTokensSummaryDto,
+	})
+	@ApiQuery({
+		name: 'allowedBridgingModes',
+		required: false,
+		isArray: true,
+		enum: BridgingModeEnum,
+		enumName: 'BridgingModeEnum',
+		style: 'form',
+		explode: false,
+		description: 'all suported bridging modes that goes into sum',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Get('summary')
+	async getSummary(
+		@Query(
+			'allowedBridgingModes',
+			new ParseArrayPipe({ items: String, separator: ',', optional: true }),
+		)
+		modes?: string[],
+	): Promise<LockedTokensSummaryDto> {
+		const allowedBridgingModes = (modes ?? []) as BridgingModeEnum[];
+
+		return await this.lockedTokensService.getSummary(allowedBridgingModes);
 	}
 
 	@ApiOperation({

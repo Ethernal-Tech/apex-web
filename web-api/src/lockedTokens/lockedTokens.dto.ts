@@ -28,6 +28,31 @@ export class LockedTokensDto {
 	totalTransferred: { [key: string]: { [innerKey: string]: string } };
 }
 
+/**
+ * The headline figures only. Computing them takes everything `/lockedTokens`
+ * does plus the cached token prices, so they are served from a cache the
+ * locked-tokens computation refreshes - see `LockedTokensService.getSummary`.
+ */
+export class LockedTokensSummaryDto {
+	@ApiProperty({
+		description: 'Total value locked, in USD.',
+		example: 12450238.71,
+	})
+	tvlUsd: number;
+
+	@ApiProperty({
+		description: 'Total value bridged, in USD.',
+		example: 84120933.4,
+	})
+	tvbUsd: number;
+
+	@ApiProperty({
+		description: 'When these figures were computed (ISO 8601).',
+		example: '2026-08-14T09:12:04.180Z',
+	})
+	computedAt: string;
+}
+
 export class LockedTokensResponse {
 	@ApiProperty({
 		description: 'Per chain → token → address → amoumt.',
