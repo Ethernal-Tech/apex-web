@@ -10,6 +10,11 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { FooterSocials } from "@/components/ui/footer-socials";
+import {
+  ETHERNAL_GITHUB_URL,
+  externalAnchorProps,
+  SKYLINE_DOCUMENTATION_URL,
+} from "@/lib/utils";
 import { submitContactForm } from "@/lib/api/contact";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 
@@ -112,8 +117,8 @@ function Footer() {
               {
                 title: "Developers",
                 links: [
-                  { label: "Docs", href: "#" },
-                  { label: "GitHub", href: "#" },
+                  { label: "Docs", href: SKYLINE_DOCUMENTATION_URL },
+                  { label: "GitHub", href: ETHERNAL_GITHUB_URL },
                 ],
               },
               {
@@ -133,6 +138,7 @@ function Footer() {
                     <li key={l.label}>
                       <a
                         href={l.href}
+                        {...externalAnchorProps(l.href)}
                         className="text-sm text-muted-foreground hover:text-foreground"
                       >
                         {l.label}
@@ -379,6 +385,27 @@ function ContactForm() {
                     </p>
                   )}
                 </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  By sending this message, you agree to our{" "}
+                  <Link
+                    to="/privacy-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[oklch(0.85_0.15_235)] hover:underline"
+                  >
+                    Privacy
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    to="/terms-of-service"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[oklch(0.85_0.15_235)] hover:underline"
+                  >
+                    Terms
+                  </Link>
+                  .
+                </p>
                 <button
                   type="submit"
                   disabled={status === "submitting"}

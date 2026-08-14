@@ -410,18 +410,28 @@ function TransactionsPage() {
               type="button"
               onClick={isConnected ? disconnect : connect}
               disabled={isRestoring}
-              className="btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
+              title={isConnected ? "Disconnect" : undefined}
+              className="group btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
             >
               {isRestoring ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Wallet className="h-4 w-4" />
               )}
-              {isRestoring
-                ? "Connecting…"
-                : isConnected
-                  ? formatAddress(walletAddress)
-                  : "Connect Wallet"}
+              {isRestoring ? (
+                "Connecting…"
+              ) : isConnected ? (
+                <span className="relative inline-grid justify-items-center">
+                  <span className="col-start-1 row-start-1 group-hover:opacity-0">
+                    {formatAddress(walletAddress)}
+                  </span>
+                  <span className="col-start-1 row-start-1 opacity-0 group-hover:opacity-100">
+                    Disconnect
+                  </span>
+                </span>
+              ) : (
+                "Connect Wallet"
+              )}
             </button>
           </div>
         </div>

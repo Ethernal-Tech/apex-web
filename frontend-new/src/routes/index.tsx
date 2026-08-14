@@ -27,7 +27,11 @@ import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { formatUsdCompact } from "@/lib/usd";
 import { getEnabledChainNodes } from "@/lib/chains";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
-import { SKYLINE_DOCUMENTATION_URL } from "@/lib/utils";
+import {
+  ETHERNAL_GITHUB_URL,
+  externalAnchorProps,
+  SKYLINE_DOCUMENTATION_URL,
+} from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   component: Landing,
@@ -92,6 +96,7 @@ function Header() {
             <a
               key={n.label}
               href={n.href}
+              {...externalAnchorProps(n.href)}
               className="pointer-events-auto text-[15px] font-medium text-foreground/90 transition-colors hover:text-[oklch(0.85_0.15_235)]"
             >
               {n.label}
@@ -168,6 +173,7 @@ function Header() {
               <a
                 key={n.label}
                 href={n.href}
+                {...externalAnchorProps(n.href)}
                 onClick={() => setOpen(false)}
                 className="rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground"
               >
@@ -918,8 +924,8 @@ function Footer() {
               {
                 title: "Developers",
                 links: [
-                  { label: "Docs", href: "#" },
-                  { label: "GitHub", href: "#" },
+                  { label: "Docs", href: SKYLINE_DOCUMENTATION_URL },
+                  { label: "GitHub", href: ETHERNAL_GITHUB_URL },
                 ],
               },
               {
@@ -939,6 +945,7 @@ function Footer() {
                     <li key={l.label}>
                       <a
                         href={l.href}
+                        {...externalAnchorProps(l.href)}
                         className="text-sm text-muted-foreground hover:text-foreground"
                       >
                         {l.label}

@@ -51,6 +51,7 @@ import {
   getDstChains,
   getSrcChains,
   isLZBridging,
+  resolveDestinationAddressPlaceholder,
   type BridgeChain,
   type ChainFilterId,
 } from "@/lib/chains";
@@ -92,6 +93,7 @@ import {
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
+import { externalAnchorProps, SKYLINE_DOCUMENTATION_URL } from "@/lib/utils";
 
 export const Route = createFileRoute("/bridge-app")({
   head: () => ({
@@ -886,18 +888,28 @@ function BridgeApp() {
               onClick={() => {
                 void (isConnected ? disconnect() : connect());
               }}
-              className="btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
+              title={isConnected ? "Disconnect" : undefined}
+              className="group btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
             >
               {connecting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Wallet className="h-4 w-4" />
               )}
-              {connecting
-                ? "Connecting…"
-                : isConnected
-                  ? formatAddress(walletAddress)
-                  : "Connect Wallet"}
+              {connecting ? (
+                "Connecting…"
+              ) : isConnected ? (
+                <span className="relative inline-grid justify-items-center">
+                  <span className="col-start-1 row-start-1 group-hover:opacity-0">
+                    {formatAddress(walletAddress)}
+                  </span>
+                  <span className="col-start-1 row-start-1 opacity-0 group-hover:opacity-100">
+                    Disconnect
+                  </span>
+                </span>
+              ) : (
+                "Connect Wallet"
+              )}
             </button>
           </div>
         </div>
@@ -1035,7 +1047,8 @@ function BridgeApp() {
             <p className="mt-3 text-center text-xs text-muted-foreground">
               Need help? Read the{" "}
               <a
-                href="#docs"
+                href={SKYLINE_DOCUMENTATION_URL}
+                {...externalAnchorProps(SKYLINE_DOCUMENTATION_URL)}
                 className="text-[oklch(0.85_0.15_235)] hover:underline"
               >
                 bridge docs
@@ -1640,7 +1653,10 @@ function TransferForm({
                 <input
                   value={destAddress}
                   onChange={(e) => setDestAddress(e.target.value)}
-                  placeholder="0x…"
+                  placeholder={resolveDestinationAddressPlaceholder(
+                    destination.id,
+                    appSettings.isMainnet,
+                  )}
                   className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
                 />
                 <button
