@@ -21,6 +21,7 @@ export type BridgeTxListQuery = {
   amountTo?: string;
   nativeTokenAmountFrom?: string;
   nativeTokenAmountTo?: string;
+  displayStatus?: string;
 };
 
 export async function fetchBridgeTransactions(
@@ -43,6 +44,7 @@ export async function fetchBridgeTransactions(
     amountTo: query.amountTo || undefined,
     nativeTokenAmountFrom: query.nativeTokenAmountFrom || undefined,
     nativeTokenAmountTo: query.nativeTokenAmountTo || undefined,
+    displayStatus: query.displayStatus || undefined,
     onlyReactor: appSettings.isSkyline ? undefined : true,
   });
 

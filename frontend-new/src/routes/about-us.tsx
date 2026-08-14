@@ -11,6 +11,11 @@ import {
   GitBranch,
 } from "lucide-react";
 import { FooterSocials } from "@/components/ui/footer-socials";
+import {
+  ETHERNAL_GITHUB_URL,
+  externalAnchorProps,
+  SKYLINE_DOCUMENTATION_URL,
+} from "@/lib/utils";
 import { settingsQueryOptions } from "@/lib/api/settings";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 import heroImg from "@/assets/about/about-hero.jpg";
@@ -413,8 +418,8 @@ function Footer() {
               {
                 title: "Developers",
                 links: [
-                  { label: "Docs", href: "#" },
-                  { label: "GitHub", href: "#" },
+                  { label: "Docs", href: SKYLINE_DOCUMENTATION_URL },
+                  { label: "GitHub", href: ETHERNAL_GITHUB_URL },
                 ],
               },
               {
@@ -434,6 +439,7 @@ function Footer() {
                     <li key={l.label}>
                       <a
                         href={l.href}
+                        {...externalAnchorProps(l.href)}
                         className="text-sm text-muted-foreground hover:text-foreground"
                       >
                         {l.label}

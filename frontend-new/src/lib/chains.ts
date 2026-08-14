@@ -80,6 +80,21 @@ export function isSolanaChain(chain: string): boolean {
   return chain === ChainEnum.Solana;
 }
 
+/** Input hint for a destination address on this chain. */
+export function resolveDestinationAddressPlaceholder(
+  chain: string,
+  isMainnet: boolean,
+): string {
+  if (isEvmChain(chain)) return "0x…";
+  if (isSolanaChain(chain)) return "base58…";
+  if (isCardanoChain(chain)) {
+    // Vector is always mainnet-style; prime/cardano follow the build network.
+    const useAddr = isMainnet || chain === ChainEnum.Vector;
+    return useAddr ? "addr1…" : "addr_test1…";
+  }
+  return "0x…";
+}
+
 export function isLZBridging(origin: string, destination: string): boolean {
   const apexChains = new Set<string>(Object.values(ChainApexBridgeEnum));
   return !apexChains.has(origin) || !apexChains.has(destination);

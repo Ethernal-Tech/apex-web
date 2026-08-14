@@ -18,8 +18,10 @@ import appCss from "../styles.css?url";
 import { reactorValidatorStatusQueryOptions } from "../lib/api/reactorValidatorStatus";
 import { WalletSessionProvider } from "../lib/wallet/WalletSessionProvider";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import CookieConsent from "../components/CookieConsent";
 import { IntroAnimation } from "../components/IntroAnimation";
 import { Toaster } from "../components/ui/sonner";
+import { InitSentry } from "../lib/sentry";
 
 function ReactorValidatorStatusPoller() {
   useQuery(reactorValidatorStatusQueryOptions());
@@ -162,6 +164,10 @@ function RootComponent() {
   const showIntro =
     pathname === "/" || pathname === "/landing" || pathname === "/bridge-app";
 
+  useEffect(() => {
+    InitSentry();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <WalletSessionProvider>
@@ -169,6 +175,7 @@ function RootComponent() {
         {showIntro && <IntroAnimation />}
         <Outlet />
         <Toaster />
+        <CookieConsent />
       </WalletSessionProvider>
     </QueryClientProvider>
   );

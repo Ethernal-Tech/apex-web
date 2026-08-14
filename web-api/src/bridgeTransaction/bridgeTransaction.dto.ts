@@ -1,7 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { PaginatedDto } from 'src/common/dto';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import {
+	BridgeTxDisplayStatusEnum,
+	ChainEnum,
+	TransactionStatusEnum,
+} from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
 export class BridgeTransactionDto {
@@ -195,6 +199,18 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 		required: false,
 	})
 	onlyReactor?: boolean;
+
+	@IsOptional()
+	@IsEnum(BridgeTxDisplayStatusEnum)
+	@ApiProperty({
+		description:
+			'Filter by the status shown in history (success, failed, pending, refunded, refunding).',
+		enum: BridgeTxDisplayStatusEnum,
+		enumName: 'BridgeTxDisplayStatusEnum',
+		nullable: true,
+		required: false,
+	})
+	displayStatus?: BridgeTxDisplayStatusEnum;
 }
 
 export class BridgeTransactionResponseDto {

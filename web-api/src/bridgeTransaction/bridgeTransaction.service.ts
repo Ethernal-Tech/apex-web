@@ -32,6 +32,7 @@ import {
 } from './bridgeTransaction.helper';
 import {
 	BridgingModeEnum,
+	BridgeTxDisplayStatusEnum,
 	ChainEnum,
 	TransactionStatusEnum,
 } from 'src/common/enum';
@@ -122,6 +123,8 @@ export class BridgeTransactionService {
 			baseWhere.tokenID = 0;
 		}
 
+		applyDisplayStatusFilter(baseWhere, model.displayStatus);
+
 		const where: FindOptionsWhere<BridgeTransaction>[] = [
 			{
 				...baseWhere,
@@ -137,12 +140,11 @@ export class BridgeTransactionService {
 		const take = model.perPage || 10;
 		const skip = page * take;
 
-		let order: FindOptionsOrder<BridgeTransaction> | undefined = {
-			createdAt: 'desc',
+		const orderColumn = resolveOrderByColumn(model.orderBy);
+		const orderDirection = model.order === 'asc' ? 'asc' : 'desc';
+		const order: FindOptionsOrder<BridgeTransaction> = {
+			[orderColumn]: orderDirection,
 		};
-		if (model.orderBy && model.order) {
-			order = { [model.orderBy]: model.order };
-		}
 
 		const [entities, total] =
 			await this.bridgeTransactionRepository.findAndCount({
@@ -345,4 +347,53 @@ export class BridgeTransactionService {
 			Logger.debug('Job updateStatusesJob executed');
 		}
 	}
+}
+
+function applyDisplayStatusFilter(
+	baseWhere: FindOptionsWhere<BridgeTransaction>,
+	displayStatus?: BridgeTxDisplayStatusEnum,
+) {
+	if (!displayStatus) {
+		return;
+	}
+
+	switch (displayStatus) {
+		case BridgeTxDisplayStatusEnum.Success:
+			baseWhere.status = TransactionStatusEnum.ExecutedOnDestination;
+			baseWhere.isRefund = false;
+			return;
+		case BridgeTxDisplayStatusEnum.Failed:
+			baseWhere.status = TransactionStatusEnum.InvalidRequest;
+			return;
+		case BridgeTxDisplayStatusEnum.Pending:
+			baseWhere.status = In(BridgingRequestNotFinalStates);
+			baseWhere.isRefund = false;
+			return;
+		case BridgeTxDisplayStatusEnum.Refunded:
+			baseWhere.status = TransactionStatusEnum.ExecutedOnDestination;
+			baseWhere.isRefund = true;
+			return;
+		case BridgeTxDisplayStatusEnum.Refunding:
+			baseWhere.status = In(BridgingRequestNotFinalStates);
+			baseWhere.isRefund = true;
+			return;
+	}
+}
+
+const ORDER_BY_COLUMNS: Record<string, keyof BridgeTransaction> = {
+	createdAt: 'createdAt',
+	finishedAt: 'finishedAt',
+	originChain: 'originChain',
+	destinationChain: 'destinationChain',
+	status: 'status',
+	senderAddress: 'senderAddress',
+	receiverAddresses: 'receiverAddresses',
+	amount: 'amountWei',
+	amountWei: 'amountWei',
+	nativeTokenAmount: 'tokenAmountWei',
+	tokenAmountWei: 'tokenAmountWei',
+};
+
+function resolveOrderByColumn(orderBy?: string): keyof BridgeTransaction {
+	return (orderBy && ORDER_BY_COLUMNS[orderBy]) || 'createdAt';
 }

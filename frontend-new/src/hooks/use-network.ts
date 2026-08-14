@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import appSettings from "@/settings/appSettings";
 
 export type SkylineNetwork = "mainnet" | "testnet";
 
@@ -7,64 +7,45 @@ export const NETWORKS: { id: SkylineNetwork; label: string }[] = [
   { id: "testnet", label: "Testnet" },
 ];
 
-const STORAGE_KEY = "skyline-network";
+/** Live mainnet still runs the previous frontend. */
+export const SKYLINE_MAINNET_URL = "https://skylinebridge.tech";
 
-// Tiny cross-component store so every network switch in the app stays in sync,
-// and the choice survives navigation and reloads.
-const listeners = new Set<() => void>();
-let current: SkylineNetwork = "mainnet";
-let hydrated = false;
+/** Testnet deployment of this app. */
+export const SKYLINE_TESTNET_URL = "https://skyline.testnet.ethernal.work";
 
-function read(): SkylineNetwork {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === "testnet" ? "testnet" : "mainnet";
-  } catch {
-    return "mainnet";
-  }
-}
-
-function emit() {
-  for (const l of listeners) l();
-}
-
-function handleStorage(e: StorageEvent) {
-  if (e.key !== STORAGE_KEY) return;
-  current = read();
-  emit();
-}
-
-function subscribe(cb: () => void) {
-  listeners.add(cb);
-  window.addEventListener("storage", handleStorage);
-  return () => {
-    listeners.delete(cb);
-    if (listeners.size === 0) window.removeEventListener("storage", handleStorage);
-  };
-}
-
-function getSnapshot(): SkylineNetwork {
-  if (!hydrated) {
-    hydrated = true;
-    current = read();
-  }
-  return current;
-}
-
-// SSR always renders mainnet; React re-checks the store right after hydration.
-const getServerSnapshot = (): SkylineNetwork => "mainnet";
-
-export function setNetwork(next: SkylineNetwork) {
-  if (next === current) return;
-  current = next;
-  hydrated = true;
-  try {
-    localStorage.setItem(STORAGE_KEY, next);
-  } catch {
-    /* ignore */
-  }
-  emit();
+export function currentNetwork(): SkylineNetwork {
+  return appSettings.isMainnet ? "mainnet" : "testnet";
 }
 
 export function useNetwork(): SkylineNetwork {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return currentNetwork();
+}
+
+/**
+ * New-app path → old Skyline mainnet path. Unlisted paths (transactions,
+ * audit, privacy, terms, /transaction/:id) are the same on both.
+ */
+const NEW_TO_OLD_MAINNET: Record<string, string> = {
+  "/": "/landing",
+  "/landing": "/landing",
+  "/bridge-app": "/app",
+  "/about-us": "/landing",
+  "/contact": "/landing",
+};
+
+function pathOnPeerNetwork(pathname: string, dest: SkylineNetwork): string {
+  if (dest === "mainnet") {
+    return NEW_TO_OLD_MAINNET[pathname] ?? pathname;
+  }
+  return pathname;
+}
+
+/** Leave this deployment for the equivalent page on the other network. */
+export function setNetwork(next: SkylineNetwork) {
+  if (next === currentNetwork()) return;
+  const origin = next === "mainnet" ? SKYLINE_MAINNET_URL : SKYLINE_TESTNET_URL;
+  const path = pathOnPeerNetwork(window.location.pathname, next);
+  window.location.assign(
+    `${origin}${path}${window.location.search}${window.location.hash}`,
+  );
 }
