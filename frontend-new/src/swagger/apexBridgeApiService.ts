@@ -3377,6 +3377,8 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
     receiverAddress?: string | undefined;
     /** Retrieve transaction which are bridged with Reactor bridge */
     onlyReactor?: boolean | undefined;
+    /** Filter by the status shown in history */
+    displayStatus?: string | undefined;
 
     [key: string]: any;
 
@@ -3408,6 +3410,7 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
             this.order = _data["order"];
             this.receiverAddress = _data["receiverAddress"];
             this.onlyReactor = _data["onlyReactor"];
+            this.displayStatus = _data["displayStatus"];
         }
     }
 
@@ -3437,6 +3440,7 @@ export class BridgeTransactionFilterDto implements IBridgeTransactionFilterDto {
         data["order"] = this.order;
         data["receiverAddress"] = this.receiverAddress;
         data["onlyReactor"] = this.onlyReactor;
+        data["displayStatus"] = this.displayStatus;
         return data;
     }
 }
@@ -3466,6 +3470,8 @@ export interface IBridgeTransactionFilterDto {
     receiverAddress?: string | undefined;
     /** Retrieve transaction which are bridged with Reactor bridge */
     onlyReactor?: boolean | undefined;
+    /** Filter by the status shown in history */
+    displayStatus?: string | undefined;
 
     [key: string]: any;
 }

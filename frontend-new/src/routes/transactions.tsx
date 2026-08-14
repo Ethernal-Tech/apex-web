@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkToggle } from "@/components/NetworkToggle";
@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsUpDown,
+  ChevronUp,
   Clipboard,
   Filter,
   Loader2,
@@ -46,6 +47,7 @@ import {
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
 import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
+import { cn } from "@/lib/utils";
 import {
   BridgeTransactionDto,
   TransactionStatusEnum,
@@ -161,6 +163,8 @@ type SortKey =
   | "tokenAmount"
   | "origin"
   | "destination"
+  | "sender"
+  | "receiver"
   | "status";
 type SortDir = "asc" | "desc";
 
@@ -173,6 +177,7 @@ type Filters = {
   amountTo: string;
   tokenFrom: string;
   tokenTo: string;
+  status: Status | "";
 };
 
 const EMPTY_FILTERS: Filters = {
@@ -184,7 +189,16 @@ const EMPTY_FILTERS: Filters = {
   amountTo: "",
   tokenFrom: "",
   tokenTo: "",
+  status: "",
 };
+
+const STATUS_FILTERS: { value: Status; label: string }[] = [
+  { value: "success", label: "Success" },
+  { value: "failed", label: "Failed" },
+  { value: "pending", label: "Pending" },
+  { value: "refunded", label: "Refunded" },
+  { value: "refunding", label: "Refunding" },
+];
 
 function TransactionsPage() {
   const isCompact = useMediaQuery("(max-width: 1000px)");
@@ -260,6 +274,7 @@ function TransactionsPage() {
       search,
     ] as const,
     enabled: view === "world" || Boolean(walletAddress),
+    placeholderData: keepPreviousData,
     queryFn: async () => {
       // User history: sender = live account, origin = restored source chain.
       // World history: omit sender unless filtered.
@@ -283,6 +298,8 @@ function TransactionsPage() {
         tokenAmount: "tokenAmountWei",
         origin: "originChain",
         destination: "destinationChain",
+        sender: "senderAddress",
+        receiver: "receiverAddresses",
         status: "status",
       };
 
@@ -306,6 +323,7 @@ function TransactionsPage() {
         amountTo: convertAmount(filters.amountTo),
         nativeTokenAmountFrom: convertAmount(filters.tokenFrom),
         nativeTokenAmountTo: convertAmount(filters.tokenTo),
+        displayStatus: filters.status || undefined,
       });
     },
     refetchInterval: (query) => {
@@ -577,6 +595,7 @@ function TransactionsPage() {
                             onClick={() => toggleSort("origin")}
                             active={sortKey === "origin"}
                             dir={sortDir}
+                            className="min-w-[4.75rem] min-[1200px]:w-[10.5rem]"
                           >
                             Origin
                           </Th>
@@ -584,6 +603,7 @@ function TransactionsPage() {
                             onClick={() => toggleSort("destination")}
                             active={sortKey === "destination"}
                             dir={sortDir}
+                            className="min-w-[4.75rem] min-[1200px]:w-[10.5rem]"
                           >
                             Destination
                           </Th>
@@ -603,8 +623,24 @@ function TransactionsPage() {
                       >
                         Token amount
                       </Th>
-                      {!isCompact && <th className="px-5 py-4">Sender</th>}
-                      {!isCompact && <th className="px-5 py-4">Receiver</th>}
+                      {!isCompact && (
+                        <Th
+                          onClick={() => toggleSort("sender")}
+                          active={sortKey === "sender"}
+                          dir={sortDir}
+                        >
+                          Sender
+                        </Th>
+                      )}
+                      {!isCompact && (
+                        <Th
+                          onClick={() => toggleSort("receiver")}
+                          active={sortKey === "receiver"}
+                          dir={sortDir}
+                        >
+                          Receiver
+                        </Th>
+                      )}
                       <Th
                         onClick={() => toggleSort("createdAt")}
                         active={sortKey === "createdAt"}
@@ -623,11 +659,14 @@ function TransactionsPage() {
                         onClick={() => toggleSort("status")}
                         active={sortKey === "status"}
                         dir={sortDir}
+                        className="w-[9rem] pr-2"
                       >
                         Status
                       </Th>
                       {!isCompact && (
-                        <th className="px-5 py-4 text-right">Actions</th>
+                        <th className="w-[6.5rem] py-4 pl-2 pr-5 text-right">
+                          Actions
+                        </th>
                       )}
                     </tr>
                   </thead>
@@ -773,25 +812,35 @@ function Th({
   onClick,
   active,
   dir,
+  className = "",
 }: {
   children: React.ReactNode;
   onClick: () => void;
   active: boolean;
   dir: SortDir;
+  className?: string;
 }) {
   return (
-    <th className="px-5 py-4">
+    <th className={cn("px-5 py-4", className)}>
       <button
         type="button"
         onClick={onClick}
-        className={`inline-flex items-center gap-1.5 uppercase tracking-[0.18em] transition-colors ${
+        className={`inline-flex items-center gap-1.5 whitespace-nowrap uppercase tracking-[0.18em] transition-colors ${
           active ? "text-[oklch(0.85_0.15_235)]" : "hover:text-foreground"
         }`}
       >
         {children}
-        <ChevronsUpDown
-          className={`h-3 w-3 ${active ? (dir === "asc" ? "rotate-180" : "") : "opacity-60"}`}
-        />
+        <span className="inline-flex h-3 w-3 shrink-0 items-center justify-center">
+          {active ? (
+            dir === "asc" ? (
+              <ChevronUp className="h-3 w-3" />
+            ) : (
+              <ChevronDown className="h-3 w-3" />
+            )
+          ) : (
+            <ChevronsUpDown className="h-3 w-3 opacity-60" />
+          )}
+        </span>
       </button>
     </th>
   );
@@ -837,10 +886,10 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
         </td>
       ) : (
         <>
-          <td className="px-5 py-4">
+          <td className="min-w-[4.75rem] px-5 py-4 min-[1200px]:w-[10.5rem]">
             <ChainCell chain={origin} />
           </td>
-          <td className="px-5 py-4">
+          <td className="min-w-[4.75rem] px-5 py-4 min-[1200px]:w-[10.5rem]">
             <ChainCell chain={dest} />
           </td>
         </>
@@ -889,11 +938,11 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
           <span className="text-[oklch(0.85_0.15_235)]">Pending</span>
         )}
       </td>
-      <td className="px-5 py-4">
+      <td className="py-4 pl-5 pr-2">
         <StatusPill status={tx.status} label={tx.statusLabel} />
       </td>
       {!compact && (
-        <td className="px-5 py-4 text-right">
+        <td className="py-4 pl-2 pr-5 text-right">
           <Link
             {...linkProps}
             className="inline-flex items-center gap-1 text-xs font-semibold text-[oklch(0.85_0.15_235)] hover:underline"
@@ -909,9 +958,9 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
 function ChainCell({ chain }: { chain?: ChainMeta }) {
   if (!chain) return <span className="text-muted-foreground">—</span>;
   return (
-    <div className="flex min-w-0 items-center gap-2.5">
+    <div className="flex items-center gap-2.5" title={chain.label}>
       <ChainIcon chain={chain} />
-      <span className="truncate font-medium text-foreground">
+      <span className="hidden whitespace-nowrap font-medium text-foreground min-[1200px]:inline">
         {chain.label}
       </span>
     </div>
@@ -953,7 +1002,7 @@ function RouteCell({
           <span className="text-muted-foreground">—</span>
         )}
       </div>
-      <AddressCell address={sender} compactHash />
+      <AddressCell address={sender} />
       <div className="flex justify-center py-0.5">
         <ArrowDown className="h-3 w-3 text-muted-foreground/70" />
       </div>
@@ -965,7 +1014,7 @@ function RouteCell({
           <span className="text-muted-foreground">—</span>
         )}
       </div>
-      <AddressCell address={receiver} compactHash />
+      <AddressCell address={receiver} />
     </div>
   );
 }
@@ -1165,6 +1214,31 @@ function FilterModal({
             />
           </div>
 
+          <div>
+            <Label>Status</Label>
+            <div className="relative">
+              <select
+                value={draft.status}
+                onChange={(e) => set("status", e.target.value as Status | "")}
+                className="h-10 w-full appearance-none rounded-xl border border-white/10 bg-white/[0.04] px-3 pr-9 text-sm text-foreground [color-scheme:dark] focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none"
+              >
+                <option value="" className="bg-[#141a2c] text-foreground">
+                  Any status
+                </option>
+                {STATUS_FILTERS.map((s) => (
+                  <option
+                    key={s.value}
+                    value={s.value}
+                    className="bg-[#141a2c] text-foreground"
+                  >
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <NumField
               label="Amount from"
@@ -1259,42 +1333,46 @@ function formatAddress(a: string | null) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
 }
 
-function AddressCell({
-  address,
-  nowrap,
-  compactHash,
-}: {
-  address: string;
-  nowrap?: boolean;
-  compactHash?: boolean;
-}) {
+function AddressCell({ address }: { address: string }) {
   if (!address) {
     return <span className="text-muted-foreground">—</span>;
   }
 
+  const head = 6;
+  const tail = 4;
+  const collapsed = address.length > head + tail;
+
   return (
     <div className="flex min-w-0 items-center gap-1.5 font-mono text-xs text-muted-foreground">
-      <span className={nowrap ? "whitespace-nowrap" : "truncate"}>
-        {compactHash ? formatAddress(address) : shortHash(address)}
-      </span>
+      {collapsed ? (
+        <span className="flex min-w-0 flex-1 overflow-hidden">
+          <span className="shrink-0">{address.slice(0, head)}</span>
+          <span className="shrink-0">…</span>
+          <span
+            className="min-w-0 overflow-hidden whitespace-nowrap [unicode-bidi:isolate]"
+            dir="rtl"
+          >
+            <span dir="ltr">{address.slice(-tail)}</span>
+          </span>
+        </span>
+      ) : (
+        <span className="min-w-0 flex-1 overflow-hidden whitespace-nowrap">
+          {address}
+        </span>
+      )}
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           navigator.clipboard?.writeText(address);
         }}
-        className="shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground"
+        className="relative shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground"
         aria-label="Copy address"
       >
         <Clipboard className="h-3.5 w-3.5" />
       </button>
     </div>
   );
-}
-
-function shortHash(a: string) {
-  if (a.length <= 14) return a;
-  return `${a.slice(0, 8)}…${a.slice(-6)}`;
 }
 
 function formatDate(d: Date) {
