@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   createContext,
+  Fragment,
   useContext,
   useEffect,
   useMemo,
@@ -283,6 +284,12 @@ function AuditContent() {
   // A single-chain world would draw a 100% donut, so it shows summaries alone.
   const showComposition = data.locked.length > 1;
   const isEmpty = chainCount === 0;
+  /** What the world tabs say about the figures below them. */
+  const worldNote = isEmpty
+    ? "Nothing locked or bridged on these chains yet"
+    : mode === "overview"
+      ? `${chainTag(data)} · snapshot, updated continuously`
+      : "Every value, straight from chain state";
 
   // Both headline figures come from chain state - locked balances and the
   // cumulative transferred totals - priced by the same /tokenPrice endpoint.
@@ -415,7 +422,7 @@ function AuditContent() {
           {/* TVL / TVB cards */}
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             <MetricCard
-              label="Total Value Locked · TVL"
+              label={["Total Value", "Locked · TVL"]}
               usd={tvlUsd}
               deltaPct={trend.tvlPct}
               deltaLabel="7d"
@@ -424,7 +431,7 @@ function AuditContent() {
               note="Assets held in Skyline's audited lock contracts, fully redeemable 1:1."
             />
             <MetricCard
-              label="Total Value Bridged · TVB"
+              label={["Total Value", "Bridged · TVB"]}
               usd={tvbUsd}
               deltaPct={trend.tvbPct}
               deltaLabel="7d"
@@ -578,32 +585,34 @@ function AuditContent() {
             </span>
           </div>
 
-          {/* World tabs */}
-          <div className="mt-8 flex items-end gap-6 border-b border-white/10">
-            {WORLD_KEYS.map((w) => (
-              <button
-                key={w}
-                type="button"
-                onClick={() => setWorld(w)}
-                className={`relative pb-3 text-sm font-semibold transition-colors ${
-                  world === w
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {WORLD_LABELS[w]}
-                {world === w && (
-                  <span className="absolute -bottom-px left-0 right-0 h-0.5 rounded-full bg-[oklch(0.72_0.19_245)]" />
-                )}
-              </button>
-            ))}
-            <span className="ml-auto pb-3 text-xs text-muted-foreground">
-              {isEmpty
-                ? "Nothing locked or bridged on these chains yet"
-                : mode === "overview"
-                  ? `${chainTag(data)} · snapshot, updated continuously`
-                  : "Every value, straight from chain state"}
-            </span>
+          {/* World tabs — the note sits below them on a phone, where sharing the
+              row would squeeze the tab labels onto two lines each. */}
+          <div className="mt-8">
+            <div className="flex items-end gap-5 border-b border-white/10 md:gap-6">
+              {WORLD_KEYS.map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  onClick={() => setWorld(w)}
+                  className={`relative flex-none whitespace-nowrap pb-3 text-sm font-semibold transition-colors ${
+                    world === w
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {WORLD_LABELS[w]}
+                  {world === w && (
+                    <span className="absolute -bottom-px left-0 right-0 h-0.5 rounded-full bg-[oklch(0.72_0.19_245)]" />
+                  )}
+                </button>
+              ))}
+              <span className="ml-auto hidden pb-3 text-xs text-muted-foreground md:block">
+                {worldNote}
+              </span>
+            </div>
+            <div className="mt-2 text-xs text-muted-foreground md:hidden">
+              {worldNote}
+            </div>
           </div>
 
           {isEmpty ? (
@@ -615,8 +624,11 @@ function AuditContent() {
           ) : mode === "overview" ? (
             /* Composition pair on top, the token lists they break down below -
                so a world with many tokens grows downward instead of leaving the
-               charts stranded beside one long column. */
-            <div className="mt-6 grid gap-4 lg:grid-cols-2 lg:items-start">
+               charts stranded beside one long column.
+               grid-cols-1 rather than an implicit track: an auto track takes the
+               widest card's min-content, which on a phone pushes every card in
+               the column past the screen edge. */
+            <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
               {showComposition && (
                 <>
                   <LockedCompositionCard segments={donut} />
@@ -640,7 +652,7 @@ function AuditContent() {
               ];
               return (
                 <>
-                  <div className="mt-6 grid gap-4 lg:grid-cols-2 lg:items-start">
+                  <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
                     {/* Row 1 — summary cards */}
                     <SummaryOnly
                       title="Total Locked"
@@ -715,7 +727,11 @@ function MetricCard({
   spark,
   note,
 }: {
-  label: string;
+  /**
+   * The card's title in two parts - one line normally, one part per line at
+   * 360px and under, where the whole title beside the delta chip is a squeeze.
+   */
+  label: [string, string];
   /** Undefined until the figure has loaded. */
   usd: number | undefined;
   /** Change over `deltaLabel`, in percent. Undefined when not yet computable. */
@@ -735,9 +751,12 @@ function MetricCard({
         background: `linear-gradient(180deg, ${accent}22, rgba(255,255,255,0.02))`,
       }}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-          {label}
+          {/* max-[361px] rather than max-[360px]: the variant is an exclusive
+              upper bound, and 360 itself has to break. */}
+          <span className="max-[382px]:block">{label[0]}</span>{" "}
+          <span>{label[1]}</span>
         </span>
         <DeltaChip pct={deltaPct} label={deltaLabel} />
       </div>
@@ -745,15 +764,17 @@ function MetricCard({
         {usd === undefined ? "—" : formatUsdFull(counted)}
       </div>
 
-      <div className="mt-4 max-w-xs text-xs leading-relaxed text-muted-foreground">
+      {/* The sparkline is pinned to the card's bottom-right corner, so the note
+          has to stop short of it: it gives up the graph's width plus its inset,
+          and wraps into three shorter lines alongside instead. Two thresholds
+          because the graph is smaller under 500px — see its classes below. */}
+      <div className="mt-4 max-w-[min(12.5rem,calc(100%-7.75rem))] text-xs leading-relaxed text-muted-foreground min-[500px]:max-w-[min(20rem,calc(100%-8.75rem))]">
         {note}
       </div>
       {trend && (
         <svg
-          width="120"
-          height="34"
           viewBox="0 0 120 34"
-          className="absolute bottom-5 right-5 opacity-90"
+          className="absolute bottom-5 right-5 h-[26px] w-[92px] opacity-90 min-[500px]:h-[34px] min-[500px]:w-[120px]"
         >
           <path
             d={trend}
@@ -820,12 +841,12 @@ function LockedCompositionCard({ segments }: { segments: DonutSegment[] }) {
       <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
         Locked composition · by chain
       </div>
-      <div className="mt-4 flex flex-1 items-center gap-6">
+      {/* Stacked until the row has space for the legend's three columns - on a
+          phone the donut beside them squeezes the percentages off the card. */}
+      <div className="mt-4 flex flex-1 flex-col items-center gap-5 sm:flex-row sm:gap-6">
         <svg
-          width="132"
-          height="132"
           viewBox="0 0 120 120"
-          className="flex-none"
+          className="h-28 w-28 flex-none sm:h-[132px] sm:w-[132px]"
         >
           <circle
             cx="60"
@@ -851,21 +872,21 @@ function LockedCompositionCard({ segments }: { segments: DonutSegment[] }) {
             />
           ))}
         </svg>
-        <div className="flex flex-1 flex-col gap-2.5">
+        <div className="flex w-full min-w-0 flex-1 flex-col gap-2.5">
           {segments.map((seg, i) => (
             <div
               key={i}
-              className="flex items-center gap-2 text-[13px] font-medium"
+              className="flex min-w-0 items-center gap-2 text-[13px] font-medium"
             >
               <span
                 className="h-2.5 w-2.5 flex-none rounded-full"
                 style={{ background: seg.color }}
               />
-              <span className="flex-1 truncate">{seg.label}</span>
-              <span className="tabular-nums text-muted-foreground">
+              <span className="min-w-0 flex-1 truncate">{seg.label}</span>
+              <span className="flex-none tabular-nums text-muted-foreground">
                 {fmtUsdCompact(seg.usd)}
               </span>
-              <span className="w-14 flex-none text-right font-semibold tabular-nums">
+              <span className="w-12 flex-none text-right font-semibold tabular-nums sm:w-14">
                 {(seg.pct * 100).toFixed(1)}%
               </span>
             </div>
@@ -891,9 +912,9 @@ function BridgedDistributionCard({ bars }: { bars: DistributionBar[] }) {
         <div className="mt-4 flex flex-1 flex-col justify-center gap-3.5">
           {bars.map((b, i) => (
             <div key={i}>
-              <div className="flex justify-between text-xs font-medium">
-                <span>{b.label}</span>
-                <span className="tabular-nums text-muted-foreground">
+              <div className="flex items-baseline justify-between gap-2 text-xs font-medium">
+                <span className="min-w-0 truncate">{b.label}</span>
+                <span className="flex-none tabular-nums text-muted-foreground">
                   {fmtUsdCompact(b.usd)}
                 </span>
               </div>
@@ -1158,22 +1179,23 @@ function HolderCard({ entry }: { entry: ChainAddressRows }) {
             className="flex flex-col gap-2 py-3 md:flex-row md:items-start md:justify-between md:gap-8"
           >
             <AddressLink chain={chain} address={holder.address} />
-            <div className="flex flex-none flex-col gap-1">
+            {/* Declared column tracks, not per-row flex: a token name wider than
+                its column used to drag that row's figures out of line with the
+                rows around it. The name column takes the slack, so amounts and
+                USD stay in the same place in every row of every card. */}
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(7rem,auto)_minmax(4rem,auto)] items-baseline gap-x-3 gap-y-1 text-[13px] md:w-80 md:flex-none md:gap-x-4">
               {holder.rows.map((row) => (
-                <div
-                  key={row.tokenID}
-                  className="flex items-baseline justify-between gap-4 text-[13px] md:justify-end"
-                >
-                  <span className="text-muted-foreground md:w-14 md:text-right">
+                <Fragment key={row.tokenID}>
+                  <span className="min-w-0 break-words text-muted-foreground">
                     {row.name}
                   </span>
-                  <span className="tabular-nums md:w-36 md:text-right">
+                  <span className="text-right tabular-nums">
                     {fmtTok(row.amount)}
                   </span>
-                  <span className="w-16 text-right text-[11px] tabular-nums text-muted-foreground">
+                  <span className="text-right text-[11px] tabular-nums text-muted-foreground">
                     {fmtUsdCompact(row.amount * priceOf(row.name))}
                   </span>
-                </div>
+                </Fragment>
               ))}
             </div>
           </div>
