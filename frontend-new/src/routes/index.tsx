@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { FooterSocials } from "@/components/ui/footer-socials";
 import { settingsQueryOptions } from "@/lib/api/settings";
+import { landingStatsQueryOptions } from "@/lib/api/stats";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { formatUsdCompact } from "@/lib/usd";
 import { getEnabledChainNodes } from "@/lib/chains";
@@ -195,6 +196,7 @@ function Header() {
 
 function Hero() {
   const { data: settings } = useQuery(settingsQueryOptions);
+  const { tvbUsd } = useBridgeStats();
   const chainsConnected = settings?.enabledChains.length;
   const tokensEnabled = settings?.ecosystemTokens.length;
 
@@ -205,8 +207,7 @@ function Hero() {
     },
     // TODO: update with actual number of apps
     { label: "Skyline apps", value: "3+" },
-    // TODO: update with actual volume routed
-    { label: "Volume routed", value: "$1.2B" },
+    { label: "TVB", value: formatUsdCompact(tvbUsd) },
     {
       label: "DIFFERENT TOKENS",
       value: tokensEnabled != null ? String(tokensEnabled) : "—",
@@ -409,14 +410,27 @@ function Pillars() {
   );
 }
 
+/** `1.24M` — a plain count, in the same shorthand as the USD figures. */
+function formatCountCompact(value: number | undefined): string {
+  if (value === undefined || !Number.isFinite(value)) return "—";
+
+  if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
+  if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
+  if (value >= 1e3) return `${(value / 1e3).toFixed(1)}K`;
+  return String(value);
+}
+
 function Analytics() {
   const { data: settings } = useQuery(settingsQueryOptions);
+  // The same figures the header reports, so the page cannot contradict itself.
+  const { tvlUsd, tvbUsd } = useBridgeStats();
+  const { data: landingStats } = useQuery(landingStatsQueryOptions);
   const chainsConnected = settings?.enabledChains.length;
 
   const stats = {
-    tvl: "$42.7M",
-    tvb: "$186.4M",
-    transactions: "1.24M",
+    tvl: formatUsdCompact(tvlUsd),
+    tvb: formatUsdCompact(tvbUsd),
+    transactions: formatCountCompact(landingStats?.bridgingTransactions),
     chains: chainsConnected != null ? String(chainsConnected) : "—",
   };
 

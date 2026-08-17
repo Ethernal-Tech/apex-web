@@ -7,6 +7,7 @@ import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entit
 import { SettingsModule } from 'src/settings/settings.module';
 import { HistoricalSnapshot } from './historicalSnapshot.entity';
 import { MultiChainTvlService } from './multiChainTvl.service';
+import { TokenPriceModule } from 'src/tokenPrice/tokenPrice.module';
 
 @Module({
 	imports: [
@@ -15,6 +16,8 @@ import { MultiChainTvlService } from './multiChainTvl.service';
 		// `max` is not part of v7's options and was ignored.
 		CacheModule.register({ ttl: 30_000 }),
 		SettingsModule,
+		// the summary prices the locked amounts with the cached token prices
+		TokenPriceModule,
 	],
 	providers: [LockedTokensService, MultiChainTvlService],
 	controllers: [LockedTokensController],

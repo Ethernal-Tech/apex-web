@@ -1,11 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 
-import { DFM_UNIT, lockedTokensQueryOptions } from "@/lib/api/lockedTokens";
-import { priceByTokenId, tokenPricesQueryOptions } from "@/lib/api/tokenPrice";
+import { lockedTokensSummaryQueryOptions } from "@/lib/api/lockedTokens";
 import { settingsQueryOptions } from "@/lib/api/settings";
-import { getCurrencyID } from "@/lib/tokens";
-import { isUnreportedChain } from "@/lib/chains";
 import appSettings from "@/settings/appSettings";
 
 /** LayerZero balances come back in wei (18 decimals). */
@@ -51,37 +47,9 @@ async function fetchLayerZeroLockedApexDfm(
   return BigInt(body.result) / WEI_PER_DFM;
 }
 
-function addAmount(
-  totals: Map<number, bigint>,
-  tokenID: number,
-  amount: string | bigint,
-): void {
-  let value: bigint;
-  try {
-    value = typeof amount === "bigint" ? amount : BigInt(amount || "0");
-  } catch {
-    return;
-  }
-  totals.set(tokenID, (totals.get(tokenID) ?? BigInt(0)) + value);
-}
-
-/** Σ amount × USD price. Tokens without a cached price are skipped. */
-function toUsd(
-  totals: Map<number, bigint>,
-  prices: Map<number, number>,
-): number {
-  let usd = 0;
-  for (const [tokenID, amount] of totals) {
-    const price = prices.get(tokenID);
-    if (!price) continue;
-    usd += (Number(amount) / DFM_UNIT) * price;
-  }
-  return usd;
-}
-
 /**
- * APEX in the Nexus OFT contract, in DFM. Shared so the audit breakdown counts
- * the same balance the TVL figure does - react-query dedupes the read.
+ * APEX in the Nexus OFT contract, in DFM. The audit breakdown adds it to the
+ * chain balances the way the web-api adds it to the TVL it serves.
  */
 export function useLayerZeroLockedApex(): bigint | undefined {
   const { data: settings } = useQuery(settingsQueryOptions);
@@ -106,68 +74,20 @@ export type BridgeStats = {
 };
 
 /**
- * TVL / TVB in USD.
+ * TVL / TVB in USD, from `GET /lockedTokens/summary`.
  *
- * locked APEX read from Nexus — but instead of expressing everything in APEX,
- * every token total is multiplied by its USD price from `GET /tokenPrice` and
- * summed.
+ * Summed and priced by the web-api rather than here: deriving them needs the
+ * whole locked tokens payload, every token price and the Nexus OFT balance, and
+ * waiting on all three left the header on "—" for seconds. The web-api keeps
+ * the figures cached and recomputes them whenever `/lockedTokens` is queried,
+ * so this is a single fast request.
  */
 export function useBridgeStats(): BridgeStats {
-  const { data: settings } = useQuery(settingsQueryOptions);
-  const { data: lockedTokens, isPending: lockedPending } = useQuery(
-    lockedTokensQueryOptions,
-  );
-  const { data: prices, isPending: pricesPending } = useQuery(
-    tokenPricesQueryOptions,
-  );
+  const { data, isPending } = useQuery(lockedTokensSummaryQueryOptions);
 
-  const layerZeroLockedApex = useLayerZeroLockedApex();
-
-  return useMemo(() => {
-    const isLoading = lockedPending || pricesPending;
-    if (!lockedTokens || !prices) {
-      return { tvlUsd: undefined, tvbUsd: undefined, isLoading };
-    }
-
-    const priceMap = priceByTokenId(prices);
-
-    const lockedTotals = new Map<number, bigint>();
-    for (const [chain, tokenMap] of Object.entries(lockedTokens.chains ?? {})) {
-      if (isUnreportedChain(chain)) continue;
-      for (const [tokenID, addressMap] of Object.entries(tokenMap ?? {})) {
-        for (const amount of Object.values(addressMap ?? {})) {
-          addAmount(lockedTotals, Number(tokenID), amount);
-        }
-      }
-    }
-
-    // APEX locked in the Nexus OFT contract is priced as prime's native currency
-    const apexTokenID = settings ? getCurrencyID(settings, "prime") : undefined;
-    if (layerZeroLockedApex && apexTokenID !== undefined) {
-      addAmount(lockedTotals, apexTokenID, layerZeroLockedApex);
-    }
-
-    const bridgedTotals = new Map<number, bigint>();
-    for (const [chain, tokenMap] of Object.entries(
-      lockedTokens.totalTransferred ?? {},
-    )) {
-      if (isUnreportedChain(chain)) continue;
-      for (const [tokenID, amount] of Object.entries(tokenMap ?? {})) {
-        addAmount(bridgedTotals, Number(tokenID), amount);
-      }
-    }
-
-    return {
-      tvlUsd: toUsd(lockedTotals, priceMap),
-      tvbUsd: toUsd(bridgedTotals, priceMap),
-      isLoading,
-    };
-  }, [
-    settings,
-    lockedTokens,
-    prices,
-    layerZeroLockedApex,
-    lockedPending,
-    pricesPending,
-  ]);
+  return {
+    tvlUsd: data?.tvlUsd,
+    tvbUsd: data?.tvbUsd,
+    isLoading: isPending,
+  };
 }
