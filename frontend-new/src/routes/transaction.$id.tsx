@@ -14,10 +14,9 @@ import {
   AlertCircle,
   Undo2,
 } from "lucide-react";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkBadge } from "@/components/NetworkToggle";
-import logoAsset from "@/assets/skyline-logo-transparent.png";
+import { BridgeHeader } from "@/components/BridgeHeader";
 import { convertDfmToApex, toFixedAmount } from "@/lib/amount";
 import { settingsQueryOptions } from "@/lib/api/settings";
 import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
@@ -44,11 +43,14 @@ import {
   TransactionStatusEnum,
   type BridgeTransactionDto,
 } from "@/swagger/apexBridgeApiService";
-import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { useLiveTxBalances } from "@/hooks/use-live-tx-balances";
-import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
+import { parseReturnTo, readReturnTo } from "@/lib/returnTo";
 
 export const Route = createFileRoute("/transaction/$id")({
+  validateSearch: (search: Record<string, unknown>): { returnTo?: string } => {
+    const returnTo = readReturnTo(search);
+    return returnTo ? { returnTo } : {};
+  },
   head: () => ({
     meta: [
       { title: "Skyline Bridge — Transaction" },
@@ -165,9 +167,9 @@ function chainView(chainId: string | undefined) {
 
 function TransactionPage() {
   const { id } = Route.useParams();
-  const isCompact = useMediaQuery("(max-width: 1000px)");
+  const { returnTo } = Route.useSearch();
+  const backTo = parseReturnTo(returnTo);
   const [showDetails, setShowDetails] = useState(false);
-  const { tvlUsd, tvbUsd } = useBridgeStats();
 
   const txId = Number.parseInt(id, 10);
   const settingsQuery = useQuery(settingsQueryOptions);
@@ -286,104 +288,26 @@ function TransactionPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
-        <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
-          <Link
-            to="/"
-            className="flex items-center gap-2"
-            aria-label="Skyline home"
-          >
-            <img
-              src={logoAsset}
-              alt="Skyline"
-              className="h-8 w-auto md:h-9"
-              data-skyline-logo-target
-            />
-          </Link>
-
-          <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-3 min-[875px]:flex">
-            <Link
-              to="/audit"
-              title="Open the full proof-of-reserves audit"
-              aria-label="Open the full proof-of-reserves audit"
-              className="pointer-events-auto group"
-            >
-              <StatChip
-                label="TVL"
-                value={
-                  isCompact ? formatUsdCompact(tvlUsd) : formatUsdFull(tvlUsd)
-                }
-                interactive
-              />
-            </Link>
-            <div className="h-6 w-px bg-white/10" />
-            <Link
-              to="/audit"
-              title="Open the full proof-of-reserves audit"
-              aria-label="Open the full proof-of-reserves audit"
-              className="pointer-events-auto group"
-            >
-              <StatChip
-                label="TVB"
-                value={
-                  isCompact ? formatUsdCompact(tvbUsd) : formatUsdFull(tvbUsd)
-                }
-                interactive
-              />
-            </Link>
+      <BridgeHeader>
+        {sender && (
+          <div className="btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold">
+            <Wallet className="h-4 w-4" />
+            {shortAddr(sender)}
           </div>
-
-          <div className="flex items-center gap-3">
-            {sender && (
-              <div className="btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold">
-                <Wallet className="h-4 w-4" />
-                {shortAddr(sender)}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex w-full items-center justify-center gap-3 px-4 pb-3 min-[875px]:hidden">
-          <Link
-            to="/audit"
-            title="Open the full proof-of-reserves audit"
-            aria-label="Open audit"
-            className="group"
-          >
-            <StatChip
-              label="TVL"
-              value={formatUsdCompact(tvlUsd)}
-              compact
-              interactive
-            />
-          </Link>
-          <Link
-            to="/audit"
-            title="Open the full proof-of-reserves audit"
-            aria-label="Open audit"
-            className="group"
-          >
-            <StatChip
-              label="TVB"
-              value={formatUsdCompact(tvbUsd)}
-              compact
-              interactive
-            />
-          </Link>
-        </div>
-      </header>
+        )}
+      </BridgeHeader>
 
       <main className="bg-hero-glow relative flex-1 overflow-hidden">
         <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[900px] max-w-[140vw] -translate-x-1/2 rounded-full bg-[oklch(0.55_0.22_250_/_0.2)] blur-3xl" />
 
         <div className="container-page relative py-6 md:py-8">
           <div className="mx-auto max-w-5xl">
-            <Link
-              to="/bridge-app"
-              className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" /> Back to bridge
-            </Link>
+            <DetailReturnLink className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+              <ArrowLeft className="h-4 w-4" />
+              {backTo.to === "/transactions"
+                ? "Back to history"
+                : "Back to bridge"}
+            </DetailReturnLink>
 
             <div className="card-glow relative mt-4 animate-bridge-step-in rounded-3xl p-5 md:p-8">
               <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.72_0.19_245_/_0.6)] to-transparent" />
@@ -867,35 +791,6 @@ function SmallSpinner() {
   );
 }
 
-function StatChip({
-  label,
-  value,
-  compact,
-  interactive,
-}: {
-  label: string;
-  value: string;
-  compact?: boolean;
-  interactive?: boolean;
-}) {
-  return (
-    <div
-      className={`pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur transition-colors ${
-        compact ? "px-3 py-1" : "px-3.5 py-1.5"
-      } ${interactive ? "group-hover:border-[oklch(0.72_0.19_245_/_0.55)] group-hover:bg-white/[0.07]" : ""}`}
-    >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">
-        {label}
-      </span>
-      <span
-        className={`font-display font-semibold text-foreground ${compact ? "text-xs" : "text-sm"}`}
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
 function TransactionDetails({
   source,
   destination,
@@ -970,13 +865,32 @@ function TransactionDetails({
         />
       </div>
 
-      <Link
-        to="/bridge-app"
-        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[oklch(0.62_0.22_25_/_0.5)] bg-[oklch(0.62_0.22_25_/_0.08)] px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[oklch(0.78_0.19_25)] transition-colors hover:bg-[oklch(0.62_0.22_25_/_0.15)]"
-      >
+      <DetailReturnLink className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[oklch(0.62_0.22_25_/_0.5)] bg-[oklch(0.62_0.22_25_/_0.08)] px-5 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-[oklch(0.78_0.19_25)] transition-colors hover:bg-[oklch(0.62_0.22_25_/_0.15)]">
         Close
-      </Link>
+      </DetailReturnLink>
     </div>
+  );
+}
+
+function DetailReturnLink({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const dest = parseReturnTo(Route.useSearch({ select: (s) => s.returnTo }));
+  if (dest.to === "/transactions") {
+    return (
+      <Link to="/transactions" search={dest.search ?? {}} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <Link to="/bridge-app" className={className}>
+      {children}
+    </Link>
   );
 }
 
@@ -997,7 +911,7 @@ function CopyableAddress({ address }: { address: string }) {
   };
 
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="inline-flex items-center justify-end gap-2">
       <span className="font-mono">{shortAddr(address)}</span>
       <button
         type="button"
@@ -1023,9 +937,13 @@ function DetailRow({
   value: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-3 text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground">{value}</span>
+    <div className="flex items-start justify-between gap-4 px-4 py-3 text-sm">
+      <span className="max-w-[42%] shrink-0 text-muted-foreground">
+        {label}
+      </span>
+      <span className="min-w-0 text-right font-medium text-foreground">
+        {value}
+      </span>
     </div>
   );
 }

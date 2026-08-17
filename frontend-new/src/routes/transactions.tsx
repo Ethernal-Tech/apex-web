@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkToggle } from "@/components/NetworkToggle";
+import { BridgeHeader } from "@/components/BridgeHeader";
 import {
   ArrowDown,
   ArrowRight,
@@ -23,7 +24,6 @@ import {
   XCircle,
   Clock,
 } from "lucide-react";
-import logoAsset from "@/assets/skyline-logo-transparent.png";
 import {
   convertApexToWei,
   convertDfmToApex,
@@ -44,16 +44,23 @@ import {
   getRealTokenIDFromEntity,
   getTokenDisplayName,
 } from "@/lib/tokens";
-import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
-import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
 import { cn } from "@/lib/utils";
+import { historyReturnTo } from "@/lib/returnTo";
 import {
   BridgeTransactionDto,
   TransactionStatusEnum,
 } from "@/swagger/apexBridgeApiService";
 
 export const Route = createFileRoute("/transactions")({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { view?: "world" | "user" } => ({
+    view:
+      search.view === "user" || search.view === "world"
+        ? search.view
+        : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Bridging History — Skyline Bridge" },
@@ -202,8 +209,8 @@ const STATUS_FILTERS: { value: Status; label: string }[] = [
 
 function TransactionsPage() {
   const isCompact = useMediaQuery("(max-width: 1000px)");
-  const { tvlUsd, tvbUsd } = useBridgeStats();
   const navigate = useNavigate();
+  const { view: searchView } = Route.useSearch();
   const { data: settings } = useQuery(settingsQueryOptions);
   useQuery(tokenInfosQueryOptions);
   const {
@@ -230,6 +237,16 @@ function TransactionsPage() {
   const viewTouchedRef = useRef(false);
 
   useEffect(() => {
+    if (searchView === "user" || searchView === "world") {
+      if (searchView === "user" && !isConnected) {
+        viewTouchedRef.current = false;
+        setView("world");
+        return;
+      }
+      viewTouchedRef.current = true;
+      setView(searchView);
+      return;
+    }
     if (!isConnected) {
       viewTouchedRef.current = false;
       setView("world");
@@ -238,7 +255,7 @@ function TransactionsPage() {
     if (!viewTouchedRef.current) {
       setView("user");
     }
-  }, [isConnected]);
+  }, [isConnected, searchView]);
 
   const connect = () => {
     navigate({
@@ -250,6 +267,7 @@ function TransactionsPage() {
     await disconnectSession();
     viewTouchedRef.current = false;
     setView("world");
+    void navigate({ to: "/transactions", search: {}, replace: true });
   };
 
   const changeView = (v: "world" | "user") => {
@@ -258,6 +276,11 @@ function TransactionsPage() {
     setView(v);
     setPage(1);
     if (v === "user") setFilters((f) => ({ ...f, origin: "", sender: "" }));
+    void navigate({
+      to: "/transactions",
+      search: { view: v },
+      replace: true,
+    });
   };
 
   const listQuery = useQuery({
@@ -369,118 +392,41 @@ function TransactionsPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      {/* Header — mirrors bridge-app */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
-        <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
-          <Link
-            to="/"
-            className="flex items-center gap-2"
-            aria-label="Skyline home"
-          >
-            <img
-              src={logoAsset}
-              alt="Skyline"
-              className="h-8 w-auto md:h-9"
-              data-skyline-logo-target
-            />
-          </Link>
-
-          <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-3 min-[875px]:flex">
-            <Link
-              to="/audit"
-              title="Open the full proof-of-reserves audit"
-              aria-label="Open the full proof-of-reserves audit"
-              className="pointer-events-auto group"
-            >
-              <StatChip
-                label="TVL"
-                value={
-                  isCompact ? formatUsdCompact(tvlUsd) : formatUsdFull(tvlUsd)
-                }
-                interactive
-              />
-            </Link>
-            <div className="h-6 w-px bg-white/10" />
-            <Link
-              to="/audit"
-              title="Open the full proof-of-reserves audit"
-              aria-label="Open the full proof-of-reserves audit"
-              className="pointer-events-auto group"
-            >
-              <StatChip
-                label="TVB"
-                value={
-                  isCompact ? formatUsdCompact(tvbUsd) : formatUsdFull(tvbUsd)
-                }
-                interactive
-              />
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/bridge-app"
-              className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground md:inline-flex"
-            >
-              Transfer <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-            <button
-              type="button"
-              onClick={isConnected ? disconnect : connect}
-              disabled={isRestoring}
-              title={isConnected ? "Disconnect" : undefined}
-              className="group btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
-            >
-              {isRestoring ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Wallet className="h-4 w-4" />
-              )}
-              {isRestoring ? (
-                "Connecting…"
-              ) : isConnected ? (
-                <span className="relative inline-grid justify-items-center">
-                  <span className="col-start-1 row-start-1 group-hover:opacity-0">
-                    {formatAddress(walletAddress)}
-                  </span>
-                  <span className="col-start-1 row-start-1 opacity-0 group-hover:opacity-100">
-                    Disconnect
-                  </span>
-                </span>
-              ) : (
-                "Connect Wallet"
-              )}
-            </button>
-          </div>
-        </div>
-
-        <div className="flex w-full items-center justify-center gap-3 px-4 pb-3 min-[875px]:hidden">
-          <Link
-            to="/audit"
-            title="Open the full proof-of-reserves audit"
-            aria-label="Open audit"
-          >
-            <StatChip
-              label="TVL"
-              value={formatUsdCompact(tvlUsd)}
-              compact
-              interactive
-            />
-          </Link>
-          <Link
-            to="/audit"
-            title="Open the full proof-of-reserves audit"
-            aria-label="Open audit"
-          >
-            <StatChip
-              label="TVB"
-              value={formatUsdCompact(tvbUsd)}
-              compact
-              interactive
-            />
-          </Link>
-        </div>
-      </header>
+      <BridgeHeader>
+        <Link
+          to="/bridge-app"
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Transfer <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
+        <button
+          type="button"
+          onClick={isConnected ? disconnect : connect}
+          disabled={isRestoring}
+          title={isConnected ? "Disconnect" : undefined}
+          className="group btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
+        >
+          {isRestoring ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Wallet className="h-4 w-4" />
+          )}
+          {isRestoring ? (
+            "Connecting…"
+          ) : isConnected ? (
+            <span className="relative inline-grid justify-items-center">
+              <span className="col-start-1 row-start-1 group-hover:opacity-0">
+                {formatAddress(walletAddress)}
+              </span>
+              <span className="col-start-1 row-start-1 opacity-0 group-hover:opacity-100">
+                Disconnect
+              </span>
+            </span>
+          ) : (
+            "Connect Wallet"
+          )}
+        </button>
+      </BridgeHeader>
 
       {/* Body */}
       <main className="bg-hero-glow relative flex-1 overflow-hidden">
@@ -702,7 +648,12 @@ function TransactionsPage() {
                     )}
                     {!listQuery.isError &&
                       paged.map((t) => (
-                        <TxRow key={t.id} tx={t} compact={isCompact} />
+                        <TxRow
+                          key={t.id}
+                          tx={t}
+                          compact={isCompact}
+                          returnTo={historyReturnTo(view)}
+                        />
                       ))}
                     {!isLoading && !listQuery.isError && paged.length === 0 && (
                       <tr>
@@ -851,7 +802,15 @@ function Th({
   );
 }
 
-function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
+function TxRow({
+  tx,
+  compact,
+  returnTo,
+}: {
+  tx: Tx;
+  compact: boolean;
+  returnTo: string;
+}) {
   const origin = CHAINS[tx.origin];
   const dest = CHAINS[tx.destination];
   const navigate = useNavigate();
@@ -859,6 +818,7 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
   const linkProps = {
     to: "/transaction/$id" as const,
     params: { id: tx.id },
+    search: { returnTo },
   };
 
   const rowProps = compact
@@ -1070,35 +1030,6 @@ function PageBtn({
     >
       {children}
     </button>
-  );
-}
-
-function StatChip({
-  label,
-  value,
-  compact,
-  interactive,
-}: {
-  label: string;
-  value: string;
-  compact?: boolean;
-  interactive?: boolean;
-}) {
-  return (
-    <div
-      className={`pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur transition-colors ${
-        compact ? "px-3 py-1" : "px-3.5 py-1.5"
-      } ${interactive ? "group-hover:border-[oklch(0.72_0.19_245_/_0.55)] group-hover:bg-white/[0.07]" : ""}`}
-    >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">
-        {label}
-      </span>
-      <span
-        className={`font-display font-semibold text-foreground ${compact ? "text-xs" : "text-sm"}`}
-      >
-        {value}
-      </span>
-    </div>
   );
 }
 

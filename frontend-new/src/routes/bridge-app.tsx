@@ -8,13 +8,13 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { useBridgeFees } from "@/hooks/use-bridge-fees";
 import { useReactorValidatorStatus } from "@/hooks/use-reactor-validator-status";
 import { useWalletBalances } from "@/hooks/use-wallet-balances";
 import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { NetworkBadge, NetworkToggle } from "@/components/NetworkToggle";
+import { BridgeHeader } from "@/components/BridgeHeader";
 import {
   Tooltip,
   TooltipContent,
@@ -90,9 +90,7 @@ import {
   History,
   Loader2,
 } from "lucide-react";
-import logoAsset from "@/assets/skyline-logo-transparent.png";
-import { useBridgeStats } from "@/hooks/use-bridge-stats";
-import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
+import { readReturnTo } from "@/lib/returnTo";
 import { externalAnchorProps, SKYLINE_DOCUMENTATION_URL } from "@/lib/utils";
 
 export const Route = createFileRoute("/bridge-app")({
@@ -108,14 +106,6 @@ export const Route = createFileRoute("/bridge-app")({
   }),
   component: BridgeApp,
 });
-
-function readReturnTo(search: Record<string, unknown>): string | undefined {
-  const raw = search.returnTo;
-  if (typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//")) {
-    return raw;
-  }
-  return undefined;
-}
 
 type Chain = BridgeChain;
 
@@ -740,8 +730,6 @@ function BridgeApp() {
   } = useWalletSession();
 
   const [step, setStep] = useState<"select" | "transfer">("select");
-  const isCompact = useMediaQuery("(max-width: 1000px)");
-  const { tvlUsd, tvbUsd } = useBridgeStats();
 
   const walletAddress = account?.account ?? null;
   const isConnected = isFullyLoggedIn;
@@ -820,128 +808,49 @@ function BridgeApp() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
-        <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
-          <Link
-            to="/"
-            className="flex items-center gap-2"
-            aria-label="Skyline home"
-          >
-            <img
-              src={logoAsset}
-              alt="Skyline"
-              className="h-8 w-auto md:h-9"
-              data-skyline-logo-target
-            />
-          </Link>
-
-          {/* TVL / TVB centered stat pill — click to open the audit page */}
-          <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-3 min-[875px]:flex">
-            <Link
-              to="/audit"
-              title="Open the full proof-of-reserves audit"
-              aria-label="Open the full proof-of-reserves audit"
-              className="pointer-events-auto group"
-            >
-              <StatChip
-                label="TVL"
-                value={
-                  isCompact ? formatUsdCompact(tvlUsd) : formatUsdFull(tvlUsd)
-                }
-                interactive
-              />
-            </Link>
-            <div className="h-6 w-px bg-white/10" />
-            <Link
-              to="/audit"
-              title="Open the full proof-of-reserves audit"
-              aria-label="Open the full proof-of-reserves audit"
-              className="pointer-events-auto group"
-            >
-              <StatChip
-                label="TVB"
-                value={
-                  isCompact ? formatUsdCompact(tvbUsd) : formatUsdFull(tvbUsd)
-                }
-                interactive
-              />
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/transactions"
-              className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] hover:text-foreground md:inline-flex"
-            >
-              <History className="h-3.5 w-3.5" /> History
-            </Link>
-            <Link
-              to="/audit"
-              className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] hover:text-foreground md:inline-flex"
-            >
-              Audit <ExternalLink className="h-3.5 w-3.5" />
-            </Link>
-            <button
-              type="button"
-              disabled={connecting}
-              onClick={() => {
-                void (isConnected ? disconnect() : connect());
-              }}
-              title={isConnected ? "Disconnect" : undefined}
-              className="group btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
-            >
-              {connecting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Wallet className="h-4 w-4" />
-              )}
-              {connecting ? (
-                "Connecting…"
-              ) : isConnected ? (
-                <span className="relative inline-grid justify-items-center">
-                  <span className="col-start-1 row-start-1 group-hover:opacity-0">
-                    {formatAddress(walletAddress)}
-                  </span>
-                  <span className="col-start-1 row-start-1 opacity-0 group-hover:opacity-100">
-                    Disconnect
-                  </span>
-                </span>
-              ) : (
-                "Connect Wallet"
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile stats */}
-        <div className="flex w-full items-center justify-center gap-3 px-4 pb-3 min-[875px]:hidden">
-          <Link
-            to="/audit"
-            title="Open the full proof-of-reserves audit"
-            aria-label="Open audit"
-          >
-            <StatChip
-              label="TVL"
-              value={formatUsdCompact(tvlUsd)}
-              compact
-              interactive
-            />
-          </Link>
-          <Link
-            to="/audit"
-            title="Open the full proof-of-reserves audit"
-            aria-label="Open audit"
-          >
-            <StatChip
-              label="TVB"
-              value={formatUsdCompact(tvbUsd)}
-              compact
-              interactive
-            />
-          </Link>
-        </div>
-      </header>
+      <BridgeHeader>
+        <Link
+          to="/transactions"
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] hover:text-foreground"
+        >
+          <History className="h-3.5 w-3.5" /> History
+        </Link>
+        <Link
+          to="/audit"
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] hover:text-foreground"
+        >
+          Audit <ExternalLink className="h-3.5 w-3.5" />
+        </Link>
+        <button
+          type="button"
+          disabled={connecting}
+          onClick={() => {
+            void (isConnected ? disconnect() : connect());
+          }}
+          title={isConnected ? "Disconnect" : undefined}
+          className="group btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
+        >
+          {connecting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Wallet className="h-4 w-4" />
+          )}
+          {connecting ? (
+            "Connecting…"
+          ) : isConnected ? (
+            <span className="relative inline-grid justify-items-center">
+              <span className="col-start-1 row-start-1 group-hover:opacity-0">
+                {formatAddress(walletAddress)}
+              </span>
+              <span className="col-start-1 row-start-1 opacity-0 group-hover:opacity-100">
+                Disconnect
+              </span>
+            </span>
+          ) : (
+            "Connect Wallet"
+          )}
+        </button>
+      </BridgeHeader>
 
       {/* Body */}
       <main className="bg-hero-glow relative flex-1 overflow-hidden">
@@ -1007,11 +916,21 @@ function BridgeApp() {
 
                       <button
                         type="button"
+                        disabled
+                        className="btn-primary-glow mt-4 inline-flex w-full flex-col items-center justify-center gap-0.5 rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-60 md:hidden"
+                      >
+                        Unsupported device
+                        <span className="text-[11px] font-medium">
+                          Support for mobile devices is coming soon
+                        </span>
+                      </button>
+                      <button
+                        type="button"
                         disabled={connecting}
                         onClick={() => {
                           void proceed();
                         }}
-                        className="btn-primary-glow mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold disabled:opacity-60"
+                        className="btn-primary-glow mt-4 hidden w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold disabled:opacity-60 md:inline-flex"
                       >
                         {connecting ? (
                           <>
@@ -1086,35 +1005,6 @@ function BridgeApp() {
           </div>
         </div>
       </footer>
-    </div>
-  );
-}
-
-function StatChip({
-  label,
-  value,
-  compact,
-  interactive,
-}: {
-  label: string;
-  value: string;
-  compact?: boolean;
-  interactive?: boolean;
-}) {
-  return (
-    <div
-      className={`pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur transition-colors ${
-        compact ? "px-3 py-1" : "px-3.5 py-1.5"
-      } ${interactive ? "group-hover:border-[oklch(0.72_0.19_245_/_0.55)] group-hover:bg-white/[0.07]" : ""}`}
-    >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">
-        {label}
-      </span>
-      <span
-        className={`font-display font-semibold text-foreground ${compact ? "text-xs" : "text-sm"}`}
-      >
-        {value}
-      </span>
     </div>
   );
 }
@@ -1448,6 +1338,7 @@ function TransferForm({
       navigate({
         to: "/transaction/$id",
         params: { id: String(response.id) },
+        search: { returnTo: "/bridge-app" },
       });
     } catch {
       setLoadingState(undefined);

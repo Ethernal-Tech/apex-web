@@ -358,13 +358,17 @@ function AuditContent() {
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
-        <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
+        <div className="@container relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
           <Link
             to="/"
-            className="flex items-center gap-2"
+            className="flex shrink-0 items-center gap-2"
             aria-label="Skyline home"
           >
-            <img src={logoAsset} alt="Skyline" className="h-8 w-auto md:h-9" />
+            <img
+              src={logoAsset}
+              alt="Skyline"
+              className="h-8 w-auto max-w-none shrink-0 md:h-9"
+            />
           </Link>
 
           <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-3 md:flex">
@@ -373,13 +377,14 @@ function AuditContent() {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <Link
               to="/bridge-app"
+              aria-label="Back to Bridge"
               className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] hover:text-foreground"
             >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Back to Bridge
+              <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden @[24rem]:inline">Back to Bridge</span>
             </Link>
             <span className="hidden md:inline-flex">
               <NetworkToggle />
