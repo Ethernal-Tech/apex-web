@@ -91,6 +91,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { readReturnTo } from "@/lib/returnTo";
+import { useIsUnsupportedDevice } from "@/hooks/use-unsupported-device";
 import { externalAnchorProps, SKYLINE_DOCUMENTATION_URL } from "@/lib/utils";
 
 export const Route = createFileRoute("/bridge-app")({
@@ -730,6 +731,7 @@ function BridgeApp() {
   } = useWalletSession();
 
   const [step, setStep] = useState<"select" | "transfer">("select");
+  const isUnsupportedDevice = useIsUnsupportedDevice();
 
   const walletAddress = account?.account ?? null;
   const isConnected = isFullyLoggedIn;
@@ -826,35 +828,37 @@ function BridgeApp() {
           </>
         }
       >
-        <button
-          type="button"
-          disabled={connecting}
-          onClick={() => {
-            void (isConnected ? disconnect() : connect());
-          }}
-          title={isConnected ? "Disconnect" : undefined}
-          className="group btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
-        >
-          {connecting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Wallet className="h-4 w-4" />
-          )}
-          {connecting ? (
-            "Connecting…"
-          ) : isConnected ? (
-            <span className="relative inline-grid justify-items-center">
-              <span className="col-start-1 row-start-1 group-hover:opacity-0">
-                {formatAddress(walletAddress)}
+        {isUnsupportedDevice ? null : (
+          <button
+            type="button"
+            disabled={connecting}
+            onClick={() => {
+              void (isConnected ? disconnect() : connect());
+            }}
+            title={isConnected ? "Disconnect" : undefined}
+            className="group btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
+          >
+            {connecting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Wallet className="h-4 w-4" />
+            )}
+            {connecting ? (
+              "Connecting…"
+            ) : isConnected ? (
+              <span className="relative inline-grid justify-items-center">
+                <span className="col-start-1 row-start-1 group-hover:opacity-0">
+                  {formatAddress(walletAddress)}
+                </span>
+                <span className="col-start-1 row-start-1 opacity-0 group-hover:opacity-100">
+                  Disconnect
+                </span>
               </span>
-              <span className="col-start-1 row-start-1 opacity-0 group-hover:opacity-100">
-                Disconnect
-              </span>
-            </span>
-          ) : (
-            "Connect Wallet"
-          )}
-        </button>
+            ) : (
+              "Connect Wallet"
+            )}
+          </button>
+        )}
       </BridgeHeader>
 
       {/* Body */}
@@ -919,36 +923,39 @@ function BridgeApp() {
                         chains={destinationChains}
                       />
 
-                      <button
-                        type="button"
-                        disabled
-                        className="btn-primary-glow mt-4 inline-flex w-full flex-col items-center justify-center gap-0.5 rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-60 md:hidden"
-                      >
-                        Unsupported device
-                        <span className="text-[11px] font-medium">
-                          Support for mobile devices is coming soon
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        disabled={connecting}
-                        onClick={() => {
-                          void proceed();
-                        }}
-                        className="btn-primary-glow mt-4 hidden w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold disabled:opacity-60 md:inline-flex"
-                      >
-                        {connecting ? (
-                          <>
-                            Connecting…
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          </>
-                        ) : (
-                          <>
-                            {isConnected ? "Move funds" : "Connect Wallet"}
-                            <ArrowRight className="h-4 w-4" />
-                          </>
-                        )}
-                      </button>
+                      {isUnsupportedDevice ? (
+                        <button
+                          type="button"
+                          disabled
+                          className="btn-primary-glow mt-4 inline-flex w-full flex-col items-center justify-center gap-0.5 rounded-full px-5 py-3 text-sm font-semibold disabled:opacity-60"
+                        >
+                          Unsupported device
+                          <span className="text-[11px] font-medium">
+                            Support for mobile devices is coming soon
+                          </span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={connecting}
+                          onClick={() => {
+                            void proceed();
+                          }}
+                          className="btn-primary-glow mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold disabled:opacity-60"
+                        >
+                          {connecting ? (
+                            <>
+                              Connecting…
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            </>
+                          ) : (
+                            <>
+                              {isConnected ? "Move funds" : "Connect Wallet"}
+                              <ArrowRight className="h-4 w-4" />
+                            </>
+                          )}
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
