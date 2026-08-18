@@ -808,19 +808,24 @@ function BridgeApp() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <BridgeHeader>
-        <Link
-          to="/transactions"
-          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] hover:text-foreground"
-        >
-          <History className="h-3.5 w-3.5" /> History
-        </Link>
-        <Link
-          to="/audit"
-          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] hover:text-foreground"
-        >
-          Audit <ExternalLink className="h-3.5 w-3.5" />
-        </Link>
+      <BridgeHeader
+        nav={
+          <>
+            <Link
+              to="/transactions"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] hover:text-foreground"
+            >
+              <History className="h-3.5 w-3.5" /> History
+            </Link>
+            <Link
+              to="/audit"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] hover:text-foreground"
+            >
+              Audit <ExternalLink className="h-3.5 w-3.5" />
+            </Link>
+          </>
+        }
+      >
         <button
           type="button"
           disabled={connecting}
@@ -986,15 +991,15 @@ function BridgeApp() {
       </main>
 
       <footer className="border-t border-white/5 bg-background">
-        <div className="flex w-full flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground md:flex-row md:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 md:flex-1 md:justify-start">
+        <div className="flex w-full flex-col items-center justify-between gap-3 px-4 py-4 text-xs text-muted-foreground md:flex-row md:gap-2 md:px-6 lg:px-8">
+          <div className="order-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 md:order-1 md:flex-1 md:justify-start">
             <span>
               © {new Date().getFullYear()} Skyline. All rights reserved.
             </span>
             <FooterLegal />
           </div>
-          <FooterSocials className="md:flex-1 md:justify-center" />
-          <div className="flex items-center gap-2 md:flex-1 md:justify-end">
+          <FooterSocials className="order-2 md:flex-1 md:justify-center" />
+          <div className="order-1 flex items-center gap-2 md:order-3 md:flex-1 md:justify-end">
             <span className="text-muted-foreground/70">Network:</span>
             {/* Locked once the transfer is underway — the funds are already bound to this network. */}
             {step === "transfer" ? (

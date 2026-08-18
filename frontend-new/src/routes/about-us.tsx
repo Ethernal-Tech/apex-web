@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -9,6 +10,8 @@ import {
   Bot,
   Landmark,
   GitBranch,
+  Menu,
+  X,
 } from "lucide-react";
 import { FooterSocials } from "@/components/ui/footer-socials";
 import {
@@ -48,46 +51,81 @@ export const Route = createFileRoute("/about-us")({
   component: AboutPage,
 });
 
+const NAV_LINKS = [
+  { to: "/", label: "Home" },
+  { to: "/bridge-app", label: "Bridge" },
+  { to: "/audit", label: "Audit" },
+] as const;
+
 function Header() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
-      <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-8">
+      <div className="@container relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-8">
         <Link
           to="/"
-          className="flex items-center gap-2"
+          className="flex shrink-0 items-center gap-2"
           aria-label="Skyline home"
         >
-          <img src={logoAsset} alt="Skyline" className="h-8 w-auto md:h-9" />
+          <img
+            src={logoAsset}
+            alt="Skyline"
+            className="h-8 w-auto max-w-none shrink-0 md:h-9"
+          />
         </Link>
         <nav className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
-          <Link
-            to="/"
-            className="pointer-events-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Home
-          </Link>
-          <Link
-            to="/bridge-app"
-            className="pointer-events-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Bridge
-          </Link>
-          <Link
-            to="/audit"
-            className="pointer-events-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Audit
-          </Link>
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="pointer-events-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
-        <div className="hidden items-center justify-end gap-3 md:flex">
+        <div className="flex shrink-0 items-center gap-2">
           <Link
             to="/"
+            aria-label="Back"
             className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.06]"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back
+            <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
+            <span className="hidden @[24rem]:inline">Back</span>
           </Link>
+          <button
+            type="button"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground md:hidden"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
+          </button>
         </div>
       </div>
+
+      {menuOpen && (
+        <div className="border-t border-white/5 bg-background/95 md:hidden">
+          <div className="flex flex-col gap-1 px-4 py-3">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setMenuOpen(false)}
+                className="rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

@@ -8,6 +8,8 @@ import {
   Send,
   CheckCircle,
   AlertCircle,
+  Menu,
+  X,
 } from "lucide-react";
 import { FooterSocials } from "@/components/ui/footer-socials";
 import {
@@ -40,44 +42,42 @@ export const Route = createFileRoute("/contact")({
   component: ContactPage,
 });
 
+const NAV_LINKS = [
+  { to: "/", label: "Home" },
+  { to: "/bridge-app", label: "Bridge" },
+  { to: "/audit", label: "Audit" },
+  { to: "/about-us", label: "About" },
+] as const;
+
 function Header() {
+  const [open, setOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
       <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-8">
         <Link
           to="/"
-          className="flex items-center gap-2"
+          className="flex shrink-0 items-center gap-2"
           aria-label="Skyline home"
         >
-          <img src={logoAsset} alt="Skyline" className="h-8 w-auto md:h-9" />
+          <img
+            src={logoAsset}
+            alt="Skyline"
+            className="h-8 w-auto max-w-none shrink-0 md:h-9"
+          />
         </Link>
-        <nav className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
-          <Link
-            to="/"
-            className="pointer-events-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Home
-          </Link>
-          <Link
-            to="/bridge-app"
-            className="pointer-events-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Bridge
-          </Link>
-          <Link
-            to="/audit"
-            className="pointer-events-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Audit
-          </Link>
-          <Link
-            to="/about-us"
-            className="pointer-events-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            About
-          </Link>
+        <nav className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 min-[880px]:flex">
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="pointer-events-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
-        <div className="hidden items-center justify-end gap-3 md:flex">
+        <div className="hidden items-center justify-end gap-3 min-[880px]:flex">
           <Link
             to="/bridge-app"
             className="btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold"
@@ -85,7 +85,41 @@ function Header() {
             Open Bridge <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
+
+        <button
+          type="button"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground min-[880px]:hidden"
+          onClick={() => setOpen((v) => !v)}
+          aria-label="Toggle menu"
+          aria-expanded={open}
+        >
+          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
       </div>
+
+      {open && (
+        <div className="border-t border-white/5 bg-background/95 min-[880px]:hidden">
+          <div className="container-page flex flex-col gap-1 py-3">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setOpen(false)}
+                className="rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <Link
+              to="/bridge-app"
+              onClick={() => setOpen(false)}
+              className="btn-primary-glow mt-2 inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold"
+            >
+              Open Bridge <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

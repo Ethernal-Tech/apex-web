@@ -378,7 +378,7 @@ function AuditContent() {
             />
           </Link>
 
-          <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-3 md:flex">
+          <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-3 lg:flex">
             <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[oklch(0.72_0.19_245)]">
               Skyline Bridge · Proof of Reserves
             </span>
@@ -404,9 +404,16 @@ function AuditContent() {
         <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[900px] max-w-[140vw] -translate-x-1/2 rounded-full bg-[oklch(0.55_0.22_250_/_0.2)] blur-3xl" />
 
         <div className="container-page relative py-10 md:py-14">
+          <div className="mb-8 flex items-center justify-center gap-2 md:hidden">
+            {/* Same treatment as the header bar, so the toggle reads as part of it. */}
+            <span className="rounded-full bg-background/70 backdrop-blur-xl">
+              <NetworkToggle />
+            </span>
+          </div>
+
           {/* Hero */}
           <div className="max-w-3xl">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[oklch(0.85_0.15_235)]">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[oklch(0.85_0.15_235)] lg:hidden">
               Skyline Bridge · Proof of Reserves
             </div>
             <h1 className="text-gradient-sky mt-4 text-balance font-display text-4xl font-semibold leading-[1.02] md:text-5xl">
@@ -698,17 +705,17 @@ function AuditContent() {
       </main>
 
       <footer className="border-t border-white/5 bg-background">
-        <div className="flex w-full flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground md:flex-row md:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 md:flex-1 md:justify-start">
+        <div className="flex w-full flex-col items-center justify-between gap-3 px-4 py-4 text-xs text-muted-foreground md:flex-row md:gap-2 md:px-6 lg:px-8">
+          <div className="order-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 md:order-1 md:flex-1 md:justify-start">
             <span>
               © {new Date().getFullYear()} Skyline. All rights reserved.
             </span>
             <FooterLegal />
           </div>
-          <FooterSocials className="md:flex-1 md:justify-center" />
+          <FooterSocials className="order-2 md:flex-1 md:justify-center" />
           <Link
             to="/bridge-app"
-            className="text-[oklch(0.85_0.15_235)] hover:underline md:flex-1 md:text-right"
+            className="order-1 text-[oklch(0.85_0.15_235)] hover:underline md:order-3 md:flex-1 md:text-right"
           >
             Return to Bridge →
           </Link>

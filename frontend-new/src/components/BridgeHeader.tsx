@@ -39,10 +39,21 @@ function StatChip({
 const menuLinkClass =
   "rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground";
 
-export function BridgeHeader({ children }: { children?: ReactNode }) {
+/**
+ * `nav` holds links the burger menu also offers, so they can fold away before
+ * they reach the centered TVL/TVB chips. `children` are the page's own actions.
+ */
+export function BridgeHeader({
+  nav,
+  children,
+}: {
+  nav?: ReactNode;
+  children?: ReactNode;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const isCompact = useMediaQuery("(max-width: 1000px)");
   const { tvlUsd, tvbUsd } = useBridgeStats();
+  const burgerVisibility = nav ? "min-[1150px]:hidden" : "md:hidden";
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
@@ -93,10 +104,15 @@ export function BridgeHeader({ children }: { children?: ReactNode }) {
         </div>
 
         <div className="flex items-center gap-3">
+          {nav ? (
+            <div className="hidden items-center gap-3 min-[1150px]:flex">
+              {nav}
+            </div>
+          ) : null}
           <div className="hidden items-center gap-3 md:flex">{children}</div>
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground md:hidden"
+            className={`inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground ${burgerVisibility}`}
             onClick={() => setMenuOpen((v) => !v)}
             aria-label="Toggle menu"
             aria-expanded={menuOpen}
@@ -111,7 +127,9 @@ export function BridgeHeader({ children }: { children?: ReactNode }) {
       </div>
 
       {menuOpen && (
-        <div className="border-t border-white/5 bg-background/95 md:hidden">
+        <div
+          className={`border-t border-white/5 bg-background/95 ${burgerVisibility}`}
+        >
           <div className="flex flex-col gap-1 px-4 py-3">
             <Link
               to="/transactions"
