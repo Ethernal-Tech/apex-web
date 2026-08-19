@@ -8,10 +8,18 @@
 		"frontend rebuild and no redeploy. Edits are picked up on the next request",
 		"(the file is re-read whenever its mtime changes), so no restart either.",
 		"",
-		"\"icon\" is a key the frontend resolves to a bundled asset. Known keys:",
-		"apex, eth, polygon, sei, solana, unknown. An unknown key falls back to the",
-		"unknown icon, so a brand new asset can ship with \"icon\": \"unknown\" and an",
-		"optional \"iconUrl\" pointing at a hosted image until the asset is bundled.",
+		"\"icon\" is the file name of an icon THIS API serves under /icons/tokens/, so",
+		"\"apex.svg\" is loaded from <apiUrl>/icons/tokens/apex.svg. Updating an icon",
+		"is an overwrite of that file - browsers revalidate hourly, so it appears",
+		"within the hour. Append a query to force it sooner (\"apex.svg?v=2\" is a new",
+		"URL to a browser and the same file to this API). A name with no file behind",
+		"it falls back to the UI's bundled unknown icon, as does a missing tokenID.",
+		"",
+		"\"iconUrl\" overrides \"icon\" with an absolute URL, for a logo hosted",
+		"somewhere else. It must point straight at an image: a github.com/<org>/",
+		"<repo>/blob/... link serves HTML and will not render - use the",
+		"raw.githubusercontent.com form instead, and note that GitHub caches for",
+		"only 5 minutes even for a commit-pinned URL.",
 		"",
 		"\"color\" is the accent the UI paints the token in (legend dots, chart",
 		"series), as a hex string. Optional: a token without one falls back to the",
@@ -20,221 +28,221 @@
 	],
 	"unknownToken": {
 		"tokenID": 0,
-		"icon": "apex",
+		"icon": "apex.svg",
 		"label": "",
 		"color": "#3B92FF"
 	},
 	"tokens": [
 		{
 			"tokenID": 1,
-			"icon": "apex",
+			"icon": "apex.svg",
 			"label": "AP3X",
 			"color": "#3B92FF"
 		},
 		{
 			"tokenID": 2,
-			"icon": "unknown",
+			"icon": "unknown.svg",
 			"label": "ADA",
 			"color": "#4F7BFF"
 		},
 		{
 			"tokenID": 3,
-			"icon": "apex",
+			"icon": "apex.svg",
 			"label": "cAP3X",
 			"color": "#8B7CFF"
 		},
 		{
 			"tokenID": 4,
-			"icon": "unknown",
+			"icon": "unknown.svg",
 			"label": "xADA",
 			"color": "#2FD3A5"
 		},
 		{
 			"tokenID": 5,
-			"icon": "unknown",
+			"icon": "unknown.svg",
 			"label": "myTestToken"
 		},
 		{
 			"tokenID": 6,
-			"icon": "unknown",
+			"icon": "unknown.svg",
 			"label": "TokN2"
 		},
 		{
 			"tokenID": 7,
-			"icon": "unknown",
+			"icon": "unknown.svg",
 			"label": "TokN3"
 		},
 		{
 			"tokenID": 8,
-			"icon": "unknown",
+			"icon": "unknown.svg",
 			"label": "TokC1"
 		},
 		{
 			"tokenID": 9,
-			"icon": "unknown",
+			"icon": "unknown.svg",
 			"label": "TokC2"
 		},
 		{
 			"tokenID": 10,
-			"icon": "unknown",
+			"icon": "unknown.svg",
 			"label": "TokC3"
 		},
 		{
 			"tokenID": 11,
-			"icon": "unknown",
+			"icon": "unknown.svg",
 			"label": "TokV1"
 		},
 		{
 			"tokenID": 12,
-			"icon": "unknown",
+			"icon": "unknown.svg",
 			"label": "TokV2"
 		},
 		{
 			"tokenID": 13,
-			"icon": "unknown",
+			"icon": "unknown.svg",
 			"label": "TokV3"
 		},
 		{
 			"tokenID": 14,
-			"icon": "polygon",
+			"icon": "polygon.svg",
 			"label": "POL",
 			"color": "#8247E5"
 		},
 		{
 			"tokenID": 15,
-			"icon": "polygon",
+			"icon": "polygon.svg",
 			"label": "xPOL",
 			"color": "#A374F0"
 		},
 		{
 			"tokenID": 16,
-			"icon": "apex",
+			"icon": "apex.svg",
 			"label": "pAP3X",
 			"color": "#A78BFA"
 		},
 		{
 			"tokenID": 17,
-			"icon": "polygon",
+			"icon": "polygon.svg",
 			"label": "cPOL",
 			"color": "#C2A0F7"
 		},
 		{
 			"tokenID": 18,
-			"icon": "eth",
+			"icon": "eth.svg",
 			"label": "ETH",
 			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 19,
-			"icon": "eth",
+			"icon": "eth.svg",
 			"label": "cKatanaETH",
 			"color": "#E8734A"
 		},
 		{
 			"tokenID": 20,
-			"icon": "eth",
+			"icon": "eth.svg",
 			"label": "ETH",
 			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 21,
-			"icon": "eth",
+			"icon": "eth.svg",
 			"label": "cETH",
 			"color": "#A6B0CF"
 		},
 		{
 			"tokenID": 22,
-			"icon": "sei",
+			"icon": "sei.svg",
 			"label": "SEI",
 			"color": "#9E1F19"
 		},
 		{
 			"tokenID": 23,
-			"icon": "sei",
+			"icon": "sei.svg",
 			"label": "cSEI",
 			"color": "#C25A54"
 		},
 		{
 			"tokenID": 24,
-			"icon": "eth",
+			"icon": "eth.svg",
 			"label": "ETH",
 			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 25,
-			"icon": "eth",
+			"icon": "eth.svg",
 			"label": "cArbitrumETH",
 			"color": "#2D9BF0"
 		},
 		{
 			"tokenID": 26,
-			"icon": "eth",
+			"icon": "eth.svg",
 			"label": "ETH",
 			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 27,
-			"icon": "eth",
+			"icon": "eth.svg",
 			"label": "cScrollETH",
 			"color": "#EBC28E"
 		},
 		{
 			"tokenID": 28,
-			"icon": "eth",
+			"icon": "eth.svg",
 			"label": "ETH",
 			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 29,
-			"icon": "eth",
+			"icon": "eth.svg",
 			"label": "cUnichainETH",
 			"color": "#FF007A"
 		},
 		{
 			"tokenID": 30,
-			"icon": "solana",
+			"icon": "solana.svg",
 			"label": "SOL",
 			"color": "#9945FF"
 		},
 		{
 			"tokenID": 31,
-			"icon": "solana",
+			"icon": "solana.svg",
 			"label": "wSOL",
 			"color": "#14F195"
 		},
 		{
 			"tokenID": 32,
-			"icon": "solana",
+			"icon": "solana.svg",
 			"label": "aSOL",
 			"color": "#7CC4FF"
 		},
 		{
 			"tokenID": 33,
-			"icon": "apex",
+			"icon": "apex.svg",
 			"label": "sAP3X",
 			"color": "#7B5CFF"
 		},
 		{
 			"tokenID": 1000001,
-			"icon": "eth",
+			"icon": "eth.svg",
 			"label": "ETH",
 			"color": "#8A92B2"
 		},
 		{
 			"tokenID": 1000002,
-			"icon": "apex",
+			"icon": "apex.svg",
 			"label": "bAP3X",
 			"color": "#22C1E4"
 		},
 		{
 			"tokenID": 1000003,
-			"icon": "apex",
+			"icon": "apex.svg",
 			"label": "bnAP3X",
 			"color": "#F0B429"
 		},
 		{
 			"tokenID": 1000004,
-			"icon": "unknown",
+			"icon": "unknown.svg",
 			"label": "BNB",
 			"color": "#F3BA2F"
 		}

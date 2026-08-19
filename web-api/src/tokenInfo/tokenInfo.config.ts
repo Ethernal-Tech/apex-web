@@ -10,14 +10,18 @@ export interface TokenInfo {
 	/** Short name shown next to the amount, e.g. AP3X. */
 	label: string;
 	/**
-	 * Key of the icon asset bundled in the frontend (apex, eth, polygon, sei,
-	 * solana, unknown). An unrecognized key is expected to fall back to the
-	 * unknown icon, so a new token can ship before its asset does.
+	 * File name of an icon this API serves under /icons/tokens/, so "apex.svg" is
+	 * loaded from <apiUrl>/icons/tokens/apex.svg. Updating an icon is an overwrite
+	 * of that file; browsers revalidate hourly, and a query appended here
+	 * ("apex.svg?v=2") forces it through sooner. A name with no file behind it
+	 * falls back to the UI's bundled unknown icon, so a new token can ship before
+	 * its icon does.
 	 */
 	icon: string;
 	/**
-	 * Optional hosted image to use instead of the bundled asset. The escape
-	 * hatch for a brand new token whose icon is not in the frontend yet.
+	 * Optional absolute URL of an icon hosted elsewhere, loaded directly by the
+	 * browser. Wins over "icon". Must point straight at an image - a GitHub
+	 * /blob/ link serves HTML and will not render.
 	 */
 	iconUrl?: string;
 	/**
@@ -43,7 +47,7 @@ export const DEFAULT_TOKEN_INFOS: TokenInfosConfig = {
 	unknownToken: {
 		tokenID: 0,
 		label: '',
-		icon: 'unknown',
+		icon: 'unknown.svg',
 	},
 	tokens: [],
 };

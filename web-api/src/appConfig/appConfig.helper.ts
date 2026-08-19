@@ -30,6 +30,32 @@ export const resolveConfigDir = (configName: string): string => {
 	return hit;
 };
 
+/** URL prefix the icon files are served under. */
+export const ICONS_URL_PREFIX = '/icons/';
+
+/**
+ * Directory served at /icons - the chain and token logos the chainInfos and
+ * tokenInfos configs name in their "icon" fields. Always public/icons, looked up
+ * relative to the process working directory the way resolveConfigDir does, since
+ * compiled __dirname is dist/src.
+ */
+export const resolveIconsDir = (): string => {
+	const candidates = [
+		path.resolve(process.cwd(), 'public', 'icons'),
+		path.resolve(__dirname, '../../../public/icons'),
+	];
+	const hit = candidates.find((p) => fs.existsSync(p));
+	if (!hit) {
+		Logger.warn(
+			`Icons folder not found. Looked in: ${candidates.join(' , ')}. ` +
+				`Chain and token logos will 404 - ensure public/icons ships with the app.`,
+		);
+	}
+
+	// still returned when missing, so the static handler simply 404s
+	return hit ?? candidates[0];
+};
+
 export function safeReadJson<T>(p?: string): DeepPartial<T> {
 	if (!p || !fs.existsSync(p)) {
 		return {} as DeepPartial<T>;

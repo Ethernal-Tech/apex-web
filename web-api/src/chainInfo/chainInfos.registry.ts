@@ -7,6 +7,8 @@ import { JsonConfigFile } from 'src/appConfig/jsonConfigFile';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { asHexColor } from 'src/utils/colorUtils';
 import {
+	CHAIN_CATEGORIES,
+	ChainCategory,
 	ChainInfo,
 	ChainInfosConfig,
 	DEFAULT_CHAIN_INFOS,
@@ -23,15 +25,96 @@ const summary = (config: ChainInfosConfig): string =>
 	`${config.chains.length} chain(s)`;
 
 /**
+ * A trimmed non-empty string, or undefined when the field is absent. Throws for
+ * a value of the wrong type, so a typo is caught at load rather than reaching
+ * the UI as a blank label.
+ */
+const optionalText = (
+	raw: unknown,
+	at: string,
+	field: string,
+): string | undefined => {
+	if (raw === undefined || raw === null) {
+		return undefined;
+	}
+	if (typeof raw !== 'string') {
+		throw new Error(`${at}: "${field}" must be a string`);
+	}
+	const text = raw.trim();
+
+	return text === '' ? undefined : text;
+};
+
+const optionalOrder = (raw: unknown, at: string): number | undefined => {
+	if (raw === undefined || raw === null) {
+		return undefined;
+	}
+	if (typeof raw !== 'number' || !Number.isFinite(raw)) {
+		throw new Error(`${at}: "order" must be a number`);
+	}
+
+	return raw;
+};
+
+const optionalCategory = (
+	raw: unknown,
+	at: string,
+): ChainCategory | undefined => {
+	if (raw === undefined || raw === null) {
+		return undefined;
+	}
+	if (typeof raw !== 'string') {
+		throw new Error(`${at}: "category" must be a string`);
+	}
+	const category = raw.trim().toLowerCase();
+	if (!(CHAIN_CATEGORIES as readonly string[]).includes(category)) {
+		throw new Error(
+			`${at}: "category" must be one of ${CHAIN_CATEGORIES.join(', ')}`,
+		);
+	}
+
+	return category as ChainCategory;
+};
+
+const optionalFlag = (
+	raw: unknown,
+	at: string,
+	field: string,
+): boolean | undefined => {
+	if (raw === undefined || raw === null) {
+		return undefined;
+	}
+	if (typeof raw !== 'boolean') {
+		throw new Error(`${at}: "${field}" must be true or false`);
+	}
+
+	return raw;
+};
+
+/**
  * Chain ids are lowercase everywhere else in the API, so the file is read that
  * way too - `Prime` in the config still colors `prime`.
+ *
+ * Only "chain" and "color" are required. Every display field is optional and
+ * omitted from the result when unset, so the UI applies its own fallback rather
+ * than rendering an empty label or a missing logo.
  */
 const parseChainInfo = (raw: unknown, at: string): ChainInfo => {
 	if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
 		throw new Error(`${at}: expected an object`);
 	}
 
-	const { chain, color } = raw as Record<string, unknown>;
+	const {
+		chain,
+		color,
+		label,
+		icon,
+		iconUrl,
+		order,
+		category,
+		symbol,
+		apexFusion,
+	} = raw as Record<string, unknown>;
 
 	// the unknown chain entry stands for every chain, so it names none
 	if (typeof chain !== 'string') {
@@ -44,7 +127,26 @@ const parseChainInfo = (raw: unknown, at: string): ChainInfo => {
 		);
 	}
 
-	return { chain: chain.trim().toLowerCase(), color: parsedColor };
+	const where = chain ? `${at} (chain ${chain})` : at;
+	const parsedLabel = optionalText(label, where, 'label');
+	const parsedIcon = optionalText(icon, where, 'icon');
+	const parsedIconUrl = optionalText(iconUrl, where, 'iconUrl');
+	const parsedOrder = optionalOrder(order, where);
+	const parsedCategory = optionalCategory(category, where);
+	const parsedSymbol = optionalText(symbol, where, 'symbol');
+	const parsedApexFusion = optionalFlag(apexFusion, where, 'apexFusion');
+
+	return {
+		chain: chain.trim().toLowerCase(),
+		color: parsedColor,
+		...(parsedLabel === undefined ? {} : { label: parsedLabel }),
+		...(parsedIcon === undefined ? {} : { icon: parsedIcon }),
+		...(parsedIconUrl === undefined ? {} : { iconUrl: parsedIconUrl }),
+		...(parsedOrder === undefined ? {} : { order: parsedOrder }),
+		...(parsedCategory === undefined ? {} : { category: parsedCategory }),
+		...(parsedSymbol === undefined ? {} : { symbol: parsedSymbol }),
+		...(parsedApexFusion === undefined ? {} : { apexFusion: parsedApexFusion }),
+	};
 };
 
 /**
@@ -91,12 +193,14 @@ export const parseChainInfos = (raw: unknown): ChainInfosConfig => {
 };
 
 /**
- * Source of truth for the chain display metadata (color).
+ * Source of truth for the chain display metadata - color, label, logo, order,
+ * family, symbol.
  *
  * The data lives in a JSON file next to the other appConfig JSON files -
  * chainInfos.<network>.json, the network coming from app.isMainnet. It is
- * re-read whenever the file changes on disk, so recoloring a chain is an edit
- * of that file - no rebuild, no redeploy, no restart.
+ * re-read whenever the file changes on disk, so recoloring, renaming or
+ * relogo-ing a chain is an edit of that file - no rebuild, no redeploy, no
+ * restart.
  *
  * DEFAULT_CHAIN_INFOS is used when the file is missing, and the last good
  * config is kept when the file is present but invalid.

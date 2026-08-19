@@ -3,11 +3,8 @@ import { useMemo } from "react";
 
 import { DFM_UNIT, lockedTokensQueryOptions } from "@/lib/api/lockedTokens";
 import { settingsQueryOptions } from "@/lib/api/settings";
-import {
-  CHAIN_META,
-  isUnreportedChain,
-  type ChainCategory,
-} from "@/lib/chains";
+import { isUnreportedChain, type ChainCategory } from "@/lib/chains";
+import { useChainMeta, type ChainMetaOf } from "@/hooks/use-chain-infos";
 import { getCurrencyID, getTokenDisplayName } from "@/lib/tokens";
 import { useLayerZeroLockedApex } from "./use-bridge-stats";
 
@@ -44,7 +41,7 @@ export const WORLD_KEYS: WorldKey[] = ["utxo", "evm", "svm"];
 
 export type WorldBreakdown = {
   key: WorldKey;
-  /** Chains in this world that hold something, in CHAIN_META order. */
+  /** Chains in this world that hold something, in the chainInfos order. */
   locked: ChainRows[];
   bridged: ChainRows[];
   /** Per token, summed across the world's chains. */
@@ -53,7 +50,7 @@ export type WorldBreakdown = {
   /**
    * The same locked balances as `locked`, broken down by the address holding
    * them - the bridging addresses on a UTxO chain, the native token wallet on an
-   * EVM one, the token accounts on Solana. In CHAIN_META order.
+   * EVM one, the token accounts on Solana. In the chainInfos order.
    */
   holders: ChainAddressRows[];
 };
@@ -79,13 +76,15 @@ const emptyWorlds = (): Record<WorldKey, WorldBreakdown> => ({
 });
 
 /**
- * A chain CHAIN_META does not know yet still has to land somewhere, and new
- * chains are EVM rollups far more often than not - so it shows there, labelled
- * by its raw id, rather than being silently dropped from the audit.
+ * A chain the chainInfos config does not categorize still has to land somewhere,
+ * and new chains are EVM rollups far more often than not - so it shows there,
+ * labelled by its raw id, rather than being silently dropped from the audit.
+ * chainMetaFrom already defaults an unlisted chain to "evm"; this only guards
+ * against a category with no tab of its own, such as "apex".
  */
-const worldOf = (chain: string): WorldKey => {
-  const category = CHAIN_META[chain]?.category;
-  return category && (WORLD_KEYS as string[]).includes(category)
+const worldOf = (chainMetaOf: ChainMetaOf, chain: string): WorldKey => {
+  const { category } = chainMetaOf(chain);
+  return (WORLD_KEYS as string[]).includes(category)
     ? (category as WorldKey)
     : "evm";
 };
@@ -141,6 +140,7 @@ export function useLockedBreakdown(): LockedBreakdown {
   const { data: settings } = useQuery(settingsQueryOptions);
   const { data: lockedTokens, isPending } = useQuery(lockedTokensQueryOptions);
   const layerZeroLockedApex = useLayerZeroLockedApex();
+  const chainMetaOf = useChainMeta();
 
   return useMemo(() => {
     if (!lockedTokens) {
@@ -208,7 +208,7 @@ export function useLockedBreakdown(): LockedBreakdown {
       [...totals.entries()]
         .map(([chain, perToken]) => ({
           chain,
-          label: CHAIN_META[chain]?.label ?? chain,
+          label: chainMetaOf(chain).label,
           rows: [...perToken.entries()]
             .filter(
               ([tokenID, amount]) =>
@@ -223,9 +223,7 @@ export function useLockedBreakdown(): LockedBreakdown {
         }))
         .filter((entry) => entry.rows.length > 0)
         .sort(
-          (a, b) =>
-            (CHAIN_META[a.chain]?.order ?? 99) -
-            (CHAIN_META[b.chain]?.order ?? 99),
+          (a, b) => chainMetaOf(a.chain).order - chainMetaOf(b.chain).order,
         );
 
     /**
@@ -239,7 +237,7 @@ export function useLockedBreakdown(): LockedBreakdown {
       [...totals.entries()]
         .map(([chain, byAddress]) => ({
           chain,
-          label: CHAIN_META[chain]?.label ?? chain,
+          label: chainMetaOf(chain).label,
           addresses: [...byAddress.entries()]
             .map(([address, perToken]) => ({
               address,
@@ -258,9 +256,7 @@ export function useLockedBreakdown(): LockedBreakdown {
         }))
         .filter((entry) => entry.addresses.length > 0)
         .sort(
-          (a, b) =>
-            (CHAIN_META[a.chain]?.order ?? 99) -
-            (CHAIN_META[b.chain]?.order ?? 99),
+          (a, b) => chainMetaOf(a.chain).order - chainMetaOf(b.chain).order,
         );
 
     /** One row per token, summed over the chains of a world. */
@@ -281,13 +277,15 @@ export function useLockedBreakdown(): LockedBreakdown {
 
     const worlds = emptyWorlds();
     for (const chainRows of toChainRows(lockedTotals, keepZeros)) {
-      worlds[worldOf(chainRows.chain)].locked.push(chainRows);
+      worlds[worldOf(chainMetaOf, chainRows.chain)].locked.push(chainRows);
     }
     for (const chainRows of toChainRows(bridgedTotals)) {
-      worlds[worldOf(chainRows.chain)].bridged.push(chainRows);
+      worlds[worldOf(chainMetaOf, chainRows.chain)].bridged.push(chainRows);
     }
     for (const chainAddresses of toChainAddressRows(holderTotals)) {
-      worlds[worldOf(chainAddresses.chain)].holders.push(chainAddresses);
+      worlds[worldOf(chainMetaOf, chainAddresses.chain)].holders.push(
+        chainAddresses,
+      );
     }
     for (const world of Object.values(worlds)) {
       world.summaryLocked = summarise(world.locked);
@@ -295,5 +293,5 @@ export function useLockedBreakdown(): LockedBreakdown {
     }
 
     return { worlds, isLoading: isPending };
-  }, [settings, lockedTokens, layerZeroLockedApex, isPending]);
+  }, [settings, lockedTokens, layerZeroLockedApex, isPending, chainMetaOf]);
 }

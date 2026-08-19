@@ -1,8 +1,9 @@
 import appSettings from "@/settings/appSettings";
 
 /**
- * Block explorer per chain, keyed by the web-api's chain ids - same keys as
- * CHAIN_META. Every one of these serves an address at `/address/<addr>`.
+ * Block explorer per chain, keyed by the web-api's chain ids - the same ids the
+ * chainInfos config uses. Every one of these serves an address at
+ * `/address/<addr>`.
  *
  * Which side is used comes from the build's `isMainnet`, deliberately not from
  * the header's network toggle: that toggle is presentational, while the

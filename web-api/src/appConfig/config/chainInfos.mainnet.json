@@ -1,20 +1,46 @@
 {
 	"_comment": [
-		"Display metadata for chains on MAINNET: the accent color the UI paints a",
-		"chain in (chart segments, chain labels). The testnet deployment reads",
-		"chainInfos.testnet.json; the file is picked by the app.isMainnet setting.",
+		"Display metadata for chains on MAINNET: how the UI presents each chain -",
+		"accent color, name, logo, list order, family and native currency symbol.",
+		"The testnet deployment reads chainInfos.testnet.json; the file is picked by",
+		"the app.isMainnet setting.",
 		"",
-		"This file is the source of truth - recoloring a chain is an edit here, no",
-		"frontend rebuild and no redeploy. Edits are picked up on the next request",
-		"(the file is re-read whenever its mtime changes), so no restart either.",
+		"This file is the source of truth - restyling or renaming a chain is an edit",
+		"here, no frontend rebuild and no redeploy. Edits are picked up on the next",
+		"request (the file is re-read whenever its mtime changes), so no restart",
+		"either.",
 		"",
 		"\"chain\" is the id the rest of the API uses (see enabledChains in /settings)",
-		"and is read lowercase. An entry for a chain this deployment does not serve",
-		"is simply unused, and a chain with no entry falls back to unknownChain -",
-		"and to the UI's own default accent when that is not set either.",
+		"and is read lowercase. Only \"chain\" and \"color\" are required; every other",
+		"field falls back to a UI default when it is omitted. A chain with no entry",
+		"at all takes its accent from unknownChain - and the UI's own default accent",
+		"when that is not set either.",
 		"",
-		"Which chains exist and what the UI names them stays out of this file: it",
-		"only says what color they are."
+		"\"label\" is the name shown for the chain, defaulting to the capitalized id.",
+		"\"order\" places it in every chain list the UI draws, lowest first; entries",
+		"without one sort last. \"category\" is the chain family - utxo, evm or svm -",
+		"and picks the audit page tab and the bridge network filter, defaulting to",
+		"evm. \"symbol\" is the native currency ticker and \"apexFusion\" marks an Apex",
+		"Fusion chain, which the bridge can filter on.",
+		"",
+		"\"icon\" is the file name of a logo THIS API serves under /icons/chains/, so",
+		"\"prime.svg\" is loaded from <apiUrl>/icons/chains/prime.svg. Updating a logo",
+		"is an overwrite of that file - browsers revalidate hourly, so it appears",
+		"within the hour. Append a query to force it sooner (\"prime.svg?v=2\" is a",
+		"new URL to a browser and the same file to this API). A name with no file",
+		"behind it falls back to the UI's bundled unknown logo, as does a missing",
+		"entry.",
+		"",
+		"\"iconUrl\" overrides \"icon\" with an absolute URL, for a logo hosted",
+		"somewhere else. It must point straight at an image: a github.com/<org>/",
+		"<repo>/blob/... link serves HTML and will not render - use the",
+		"raw.githubusercontent.com form instead, and note that GitHub caches for",
+		"only 5 minutes even for a commit-pinned URL.",
+		"",
+		"Which chains the bridge serves stays in enabledChains, but the UI only",
+		"draws a chain it finds here, so an entry is also what makes an enabled",
+		"chain visible. An entry for a chain this deployment does not serve is",
+		"simply unused."
 	],
 	"unknownChain": {
 		"chain": "",
@@ -23,59 +49,132 @@
 	"chains": [
 		{
 			"chain": "prime",
-			"color": "#3B92FF"
+			"label": "Prime",
+			"icon": "prime.svg",
+			"color": "#3B92FF",
+			"order": 1,
+			"category": "utxo",
+			"symbol": "AP3X",
+			"apexFusion": true
 		},
 		{
 			"chain": "cardano",
-			"color": "#22C1E4"
+			"label": "Cardano",
+			"icon": "cardano.svg",
+			"color": "#22C1E4",
+			"order": 2,
+			"category": "utxo",
+			"symbol": "ADA"
 		},
 		{
 			"chain": "vector",
-			"color": "#C99BFF"
+			"label": "Vector",
+			"icon": "vector.svg",
+			"color": "#C99BFF",
+			"order": 3,
+			"category": "utxo",
+			"symbol": "AP3X",
+			"apexFusion": true
 		},
 		{
 			"chain": "nexus",
-			"color": "#7CC4FF"
+			"label": "Nexus",
+			"icon": "nexus.svg",
+			"color": "#7CC4FF",
+			"order": 4,
+			"category": "evm",
+			"symbol": "AP3X",
+			"apexFusion": true
 		},
 		{
 			"chain": "base",
-			"color": "#63B6FF"
+			"label": "Base",
+			"icon": "base.svg",
+			"color": "#63B6FF",
+			"order": 5,
+			"category": "evm",
+			"symbol": "ETH"
 		},
 		{
 			"chain": "bsc",
-			"color": "#F0B429"
+			"label": "BNB Chain",
+			"icon": "bsc.svg",
+			"color": "#F0B429",
+			"order": 6,
+			"category": "evm",
+			"symbol": "BNB"
 		},
 		{
 			"chain": "polygon",
-			"color": "#8247E5"
+			"label": "Polygon",
+			"icon": "polygon.svg",
+			"color": "#8247E5",
+			"order": 7,
+			"category": "evm",
+			"symbol": "POL"
 		},
 		{
 			"chain": "ethereum",
-			"color": "#8A92B2"
+			"label": "Ethereum",
+			"icon": "ethereum.svg",
+			"color": "#8A92B2",
+			"order": 8,
+			"category": "evm",
+			"symbol": "ETH"
 		},
 		{
 			"chain": "katana",
-			"color": "#E8734A"
+			"label": "Katana",
+			"icon": "katana.svg",
+			"color": "#E8734A",
+			"order": 9,
+			"category": "evm",
+			"symbol": "ETH"
 		},
 		{
 			"chain": "sei",
-			"color": "#9E1F19"
+			"label": "Sei",
+			"icon": "sei.svg",
+			"color": "#9E1F19",
+			"order": 10,
+			"category": "evm",
+			"symbol": "SEI"
 		},
 		{
 			"chain": "arbitrum",
-			"color": "#2D9BF0"
+			"label": "Arbitrum",
+			"icon": "arbitrum.svg",
+			"color": "#2D9BF0",
+			"order": 11,
+			"category": "evm",
+			"symbol": "ETH"
 		},
 		{
 			"chain": "scroll",
-			"color": "#EBC28E"
+			"label": "Scroll",
+			"icon": "scroll.svg",
+			"color": "#EBC28E",
+			"order": 12,
+			"category": "evm",
+			"symbol": "ETH"
 		},
 		{
 			"chain": "unichain",
-			"color": "#FF007A"
+			"label": "Unichain",
+			"icon": "unichain.svg",
+			"color": "#FF007A",
+			"order": 13,
+			"category": "evm",
+			"symbol": "ETH"
 		},
 		{
 			"chain": "solana",
-			"color": "#9945FF"
+			"label": "Solana",
+			"icon": "solana.svg",
+			"color": "#9945FF",
+			"order": 14,
+			"category": "svm",
+			"symbol": "SOL"
 		}
 	]
 }

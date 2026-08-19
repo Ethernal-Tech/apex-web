@@ -2,7 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import {
+  useChainList,
+  useChainMeta,
+  type ChainMetaOf,
+} from "@/hooks/use-chain-infos";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
+import { AssetIcon } from "@/components/ui/asset-icon";
 import { NetworkToggle } from "@/components/NetworkToggle";
 import { BridgeHeader } from "@/components/BridgeHeader";
 import {
@@ -38,7 +44,6 @@ import {
   getStatusIconAndLabel,
 } from "@/lib/bridging/statusUtils";
 import type { StatusKind } from "@/lib/bridging/statusUtils";
-import { CHAIN_META } from "@/lib/chains";
 import {
   getCurrencyID,
   getRealTokenIDFromEntity,
@@ -74,19 +79,18 @@ export const Route = createFileRoute("/transactions")({
   component: TransactionsPage,
 });
 
-type ChainMeta = { id: string; label: string; icon: string; symbol: string };
+/** A chain as this page draws it, resolved from `GET /chainInfo`. */
+type ChainView = { id: string; label: string; icon: string; symbol: string };
 
-const CHAINS: Record<string, ChainMeta> = Object.fromEntries(
-  Object.entries(CHAIN_META).map(([id, meta]) => [
+const toChainView = (chainMetaOf: ChainMetaOf, id: string): ChainView => {
+  const meta = chainMetaOf(id);
+  return {
     id,
-    {
-      id,
-      label: meta.label,
-      icon: meta.icon,
-      symbol: meta.symbol ?? "TOKEN",
-    },
-  ]),
-);
+    label: meta.label,
+    icon: meta.icon,
+    symbol: meta.symbol ?? "TOKEN",
+  };
+};
 
 type Status = StatusKind;
 
@@ -113,6 +117,7 @@ type Tx = {
 function mapDtoToTx(
   dto: BridgeTransactionDto,
   settings: SettingsResponse | undefined,
+  chainMetaOf: ChainMetaOf,
 ): Tx {
   const amountDisplay = toFixedAmount(
     convertDfmToApex(dto.amount, dto.originChain),
@@ -130,7 +135,7 @@ function mapDtoToTx(
     : undefined;
   const currencyLabel =
     getTokenDisplayName(settings, currencyID) ||
-    CHAINS[dto.originChain]?.symbol ||
+    chainMetaOf(dto.originChain).symbol ||
     "TOKEN";
 
   const realTokenID = settings
@@ -213,6 +218,7 @@ function TransactionsPage() {
   const { view: searchView } = Route.useSearch();
   const { data: settings } = useQuery(settingsQueryOptions);
   useQuery(tokenInfosQueryOptions);
+  const chainMetaOf = useChainMeta();
   const {
     account,
     isFullyLoggedIn,
@@ -358,8 +364,11 @@ function TransactionsPage() {
   });
 
   const paged = useMemo(
-    () => (listQuery.data?.items ?? []).map((dto) => mapDtoToTx(dto, settings)),
-    [listQuery.data, settings],
+    () =>
+      (listQuery.data?.items ?? []).map((dto) =>
+        mapDtoToTx(dto, settings, chainMetaOf),
+      ),
+    [listQuery.data, settings, chainMetaOf],
   );
 
   const total = listQuery.data?.total ?? 0;
@@ -811,8 +820,9 @@ function TxRow({
   compact: boolean;
   returnTo: string;
 }) {
-  const origin = CHAINS[tx.origin];
-  const dest = CHAINS[tx.destination];
+  const chainMetaOf = useChainMeta();
+  const origin = toChainView(chainMetaOf, tx.origin);
+  const dest = toChainView(chainMetaOf, tx.destination);
   const navigate = useNavigate();
 
   const linkProps = {
@@ -920,7 +930,7 @@ function TxRow({
   );
 }
 
-function ChainCell({ chain }: { chain?: ChainMeta }) {
+function ChainCell({ chain }: { chain?: ChainView }) {
   if (!chain) return <span className="text-muted-foreground">—</span>;
   return (
     <div className="flex items-center gap-2.5" title={chain.label}>
@@ -932,13 +942,13 @@ function ChainCell({ chain }: { chain?: ChainMeta }) {
   );
 }
 
-function ChainIcon({ chain }: { chain: ChainMeta }) {
+function ChainIcon({ chain }: { chain: ChainView }) {
   return (
     <div
       className="h-7 w-7 shrink-0 overflow-hidden rounded-full"
       title={chain.label}
     >
-      <img
+      <AssetIcon
         src={chain.icon}
         alt={chain.label}
         className="h-full w-full object-cover"
@@ -953,8 +963,8 @@ function RouteCell({
   sender,
   receiver,
 }: {
-  origin?: ChainMeta;
-  dest?: ChainMeta;
+  origin?: ChainView;
+  dest?: ChainView;
   sender: string;
   receiver: string;
 }) {
@@ -1047,6 +1057,7 @@ function FilterModal({
   onClear: () => void;
 }) {
   const [draft, setDraft] = useState<Filters>(initial);
+  const chainList = useChainList();
   const set = <K extends keyof Filters>(k: K, v: Filters[K]) =>
     setDraft({ ...draft, [k]: v });
 
@@ -1088,7 +1099,7 @@ function FilterModal({
                   <option value="" className="bg-[#141a2c] text-foreground">
                     Any chain
                   </option>
-                  {Object.values(CHAINS).map((c) => (
+                  {chainList.map((c) => (
                     <option
                       key={c.id}
                       value={c.id}
@@ -1114,7 +1125,7 @@ function FilterModal({
                 <option value="" className="bg-[#141a2c] text-foreground">
                   Any chain
                 </option>
-                {Object.values(CHAINS).map((c) => (
+                {chainList.map((c) => (
                   <option
                     key={c.id}
                     value={c.id}

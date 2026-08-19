@@ -13,6 +13,7 @@ import { useReactorValidatorStatus } from "@/hooks/use-reactor-validator-status"
 import { useWalletBalances } from "@/hooks/use-wallet-balances";
 import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
+import { AssetIcon } from "@/components/ui/asset-icon";
 import { NetworkBadge, NetworkToggle } from "@/components/NetworkToggle";
 import { BridgeHeader } from "@/components/BridgeHeader";
 import {
@@ -37,6 +38,7 @@ import {
   getDefaultBridgeTxFee,
 } from "@/lib/bridging/adjustedBridgeFee";
 import { submitBridgeTransfer } from "@/lib/bridging/bridgeSubmit";
+import { useChainInfos } from "@/hooks/use-chain-infos";
 import { getEstimatedBridgeTime } from "@/lib/bridging/estimatedBridgeTime";
 import { resolveBridgeMaxAmounts } from "@/lib/bridging/maxAmount";
 import { BridgingModeEnum, getBridgingMode } from "@/lib/bridging/mode";
@@ -46,7 +48,6 @@ import type {
 } from "@/lib/bridging/statusUtils";
 import {
   CHAIN_FILTERS,
-  CHAIN_META,
   chainMatchesFilter,
   getDstChains,
   getSrcChains,
@@ -143,7 +144,7 @@ function ChainSelect({
         className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:border-white/10"
       >
         <span className="flex items-center gap-3">
-          <img
+          <AssetIcon
             src={value.icon}
             alt={value.label}
             className="h-8 w-8 rounded-full"
@@ -398,7 +399,7 @@ function ChainRow({
         } ${disabled ? "cursor-not-allowed opacity-55" : ""}`}
       >
         <span className="relative">
-          <img
+          <AssetIcon
             src={chain.icon}
             alt={chain.label}
             className="h-9 w-9 rounded-full"
@@ -470,7 +471,7 @@ function TokenSelect({
         className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] disabled:cursor-default disabled:hover:border-white/10"
       >
         <span className="flex items-center gap-3">
-          <img
+          <AssetIcon
             src={value.icon}
             alt={value.name}
             className="h-8 w-8 rounded-full"
@@ -677,7 +678,7 @@ function TokenRow({
         }`}
       >
         <span className="relative">
-          <img
+          <AssetIcon
             src={token.icon}
             alt={token.name}
             className="h-9 w-9 rounded-full"
@@ -712,14 +713,20 @@ function BridgeApp() {
     useQuery(settingsQueryOptions);
   // Hydrates token label/icon registry used by getSupportedSourceTokens / getTokenInfo.
   useQuery(tokenInfosQueryOptions);
+  // Hydrates the chain display registry getSrcChains/getDstChains read; kept in
+  // the memo deps below so the pickers rebuild once the payload lands.
+  const chainInfos = useChainInfos();
 
-  const sourceChains = useMemo(() => getSrcChains(settings), [settings]);
+  const sourceChains = useMemo(
+    () => getSrcChains(settings),
+    [settings, chainInfos],
+  );
   const [source, setSource] = useState<Chain | null>(null);
   const [destination, setDestination] = useState<Chain | null>(null);
 
   const destinationChains = useMemo(
     () => getDstChains(source?.id, settings),
-    [source?.id, settings],
+    [source?.id, settings, chainInfos],
   );
 
   const {
@@ -749,14 +756,24 @@ function BridgeApp() {
 
   useEffect(() => {
     if (sourceChains.length === 0) return;
-    if (source && sourceChains.some((c) => c.id === source.id)) return;
+    // Re-take the entry from the current list instead of keeping the selected
+    // object: its label and logo were resolved when it was picked, and
+    // /chainInfo may only have landed afterwards - see getChainMeta.
+    const current = source && sourceChains.find((c) => c.id === source.id);
+    if (current) {
+      if (current !== source) setSource(current);
+      return;
+    }
     const storedSrc = loadStoredSourceChain();
     setSource(sourceChains.find((c) => c.id === storedSrc) ?? sourceChains[0]);
   }, [source, sourceChains]);
 
   useEffect(() => {
     if (!source || destinationChains.length === 0) return;
-    if (destination && destinationChains.some((c) => c.id === destination.id)) {
+    const current =
+      destination && destinationChains.find((c) => c.id === destination.id);
+    if (current) {
+      if (current !== destination) setDestination(current);
       return;
     }
     const storedDst = loadStoredDestinationChain();
@@ -778,7 +795,7 @@ function BridgeApp() {
     return getDstChains(destination.id, settings).some(
       (c) => c.id === source.id,
     );
-  }, [source, destination, settings]);
+  }, [source, destination, settings, chainInfos]);
 
   const connect = useCallback(async () => {
     if (!settings || !source || !destination) {
@@ -1071,8 +1088,12 @@ function TransferForm({
       return;
     }
     setSelectedToken((prev) => {
-      if (prev && availableTokens.some((t) => t.id === prev.id)) return prev;
-      return availableTokens[0];
+      if (!prev) return availableTokens[0];
+      // Same reason as the chain effects above: re-take the entry so a label or
+      // icon resolved once /tokenInfo landed replaces the one captured before it.
+      return (
+        availableTokens.find((t) => t.id === prev.id) ?? availableTokens[0]
+      );
     });
   }, [availableTokens]);
 
@@ -1385,7 +1406,7 @@ function TransferForm({
                 Source
               </label>
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                <img
+                <AssetIcon
                   src={source.icon}
                   alt={source.label}
                   className="h-8 w-8 rounded-full"
@@ -1537,7 +1558,7 @@ function TransferForm({
                 Destination
               </label>
               <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-                <img
+                <AssetIcon
                   src={destination.icon}
                   alt={destination.label}
                   className="h-8 w-8 rounded-full"

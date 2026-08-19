@@ -1,17 +1,4 @@
-import ethIcon from "@/assets/chains/ethereum.svg?url";
-import solIcon from "@/assets/chains/solana.svg?url";
-import adaIcon from "@/assets/chains/cardano.svg?url";
-import polyIcon from "@/assets/chains/polygon.svg?url";
-import bnbIcon from "@/assets/chains/bnb.svg?url";
-import baseIcon from "@/assets/chains/coinbase.svg?url";
-import primeIcon from "@/assets/chains/prime.svg?url";
-import nexusIcon from "@/assets/chains/nexus.svg?url";
-import vectorIcon from "@/assets/chains/vector.svg?url";
-import arbIcon from "@/assets/chains/arbi.svg?url";
-import katanaIcon from "@/assets/chains/katana.svg?url";
-import scrollIcon from "@/assets/chains/scroll.svg?url";
-import seiIcon from "@/assets/chains/sei.svg?url";
-import uniIcon from "@/assets/chains/unichain.svg?url";
+import { resolveAssetIconUrl } from "@/lib/assetIcons";
 import type { SettingsResponse } from "@/lib/api/settings";
 import { ChainApexBridgeEnum, ChainEnum } from "@/swagger/apexBridgeApiService";
 
@@ -22,6 +9,12 @@ export type ChainCategory = "apex" | "utxo" | "evm" | "svm";
  * chainInfos config does not list. See useChainColor.
  */
 export const DEFAULT_CHAIN_COLOR = "#3B92FF";
+
+/** Family assumed for a chain the config gives no category - new ones are usually rollups. */
+const DEFAULT_CHAIN_CATEGORY: ChainCategory = "evm";
+
+/** Sorts after every chain the config placed explicitly. */
+export const DEFAULT_CHAIN_ORDER = 99;
 
 /**
  * Chains kept out of every reported figure - TVL, TVB, the history chart and the
@@ -37,21 +30,6 @@ export const UNREPORTED_CHAINS = new Set(["arbitrum", "scroll"]);
 /** True for a chain no reported figure may include. See UNREPORTED_CHAINS. */
 export const isUnreportedChain = (chain: string): boolean =>
   UNREPORTED_CHAINS.has(chain.toLowerCase());
-
-const APEX_BRIDGE_CHAINS = new Set([
-  "prime",
-  "vector",
-  "nexus",
-  "cardano",
-  "polygon",
-  "ethereum",
-  "katana",
-  "sei",
-  "arbitrum",
-  "scroll",
-  "unichain",
-  "solana",
-]);
 
 export function isEvmChain(chain: string): boolean {
   return (
@@ -100,8 +78,46 @@ export function isLZBridging(origin: string, destination: string): boolean {
   return !apexChains.has(origin) || !apexChains.has(destination);
 }
 
+/**
+ * `GET /chainInfo` entry - how the web-api's chainInfos config says a chain is
+ * presented. Only `chain` and `color` are always served; the rest is optional
+ * and falls back per field in chainMetaFrom.
+ */
+export type ChainInfo = {
+  /** Chain id as `enabledChains` spells it, lowercase. */
+  chain: string;
+  color: string;
+  label?: string;
+  /** Logo file name served at `<apiUrl>/icons/chains/`. Ignored when iconUrl is set. */
+  icon?: string;
+  /** Absolute URL of a logo hosted elsewhere, used as-is. Wins over `icon`. */
+  iconUrl?: string;
+  order?: number;
+  category?: ChainCategory;
+  symbol?: string;
+  apexFusion?: boolean;
+};
+
+export type ChainInfosResponse = {
+  network: "mainnet" | "testnet";
+  chains: ChainInfo[];
+  /** Served for a chain the config does not list, when it sets one. */
+  unknownChain?: ChainInfo;
+};
+
+/**
+ * Resolved URL for `<img src>` - the logo the web-api serves under
+ * /icons/chains/, a hosted `iconUrl` overriding it, or the bundled fallback.
+ * See resolveAssetIconUrl.
+ */
+export const resolveChainIconUrl = (
+  icon: string | undefined,
+  iconUrl?: string,
+): string => resolveAssetIconUrl("chain", icon, iconUrl);
+
 export type ChainMeta = {
   label: string;
+  /** Resolved URL for `<img src>`. See resolveChainIconUrl. */
   icon: string;
   order: number;
   category: ChainCategory;
@@ -109,110 +125,104 @@ export type ChainMeta = {
   symbol?: string;
 };
 
-/** Display metadata keyed by web-api `enabledChains` / ChainEnum ids. */
-export const CHAIN_META: Record<string, ChainMeta> = {
-  prime: {
-    label: "Prime",
-    icon: primeIcon,
-    order: 1,
-    category: "utxo",
-    apexFusion: true,
-    symbol: "AP3X",
-  },
-  cardano: {
-    label: "Cardano",
-    icon: adaIcon,
-    order: 2,
-    category: "utxo",
-    symbol: "ADA",
-  },
-  vector: {
-    label: "Vector",
-    icon: vectorIcon,
-    order: 3,
-    category: "utxo",
-    apexFusion: true,
-    symbol: "AP3X",
-  },
-  nexus: {
-    label: "Nexus",
-    icon: nexusIcon,
-    order: 4,
-    category: "evm",
-    apexFusion: true,
-    symbol: "AP3X",
-  },
-  base: {
-    label: "Base",
-    icon: baseIcon,
-    order: 5,
-    category: "evm",
-    symbol: "ETH",
-  },
-  bsc: {
-    label: "BNB Chain",
-    icon: bnbIcon,
-    order: 6,
-    category: "evm",
-    symbol: "BNB",
-  },
-  polygon: {
-    label: "Polygon",
-    icon: polyIcon,
-    order: 7,
-    category: "evm",
-    symbol: "POL",
-  },
-  ethereum: {
-    label: "Ethereum",
-    icon: ethIcon,
-    order: 8,
-    category: "evm",
-    symbol: "ETH",
-  },
-  katana: {
-    label: "Katana",
-    icon: katanaIcon,
-    order: 9,
-    category: "evm",
-    symbol: "ETH",
-  },
-  sei: {
-    label: "Sei",
-    icon: seiIcon,
-    order: 10,
-    category: "evm",
-    symbol: "SEI",
-  },
-  arbitrum: {
-    label: "Arbitrum",
-    icon: arbIcon,
-    order: 11,
-    category: "evm",
-    symbol: "ETH",
-  },
-  scroll: {
-    label: "Scroll",
-    icon: scrollIcon,
-    order: 12,
-    category: "evm",
-    symbol: "ETH",
-  },
-  unichain: {
-    label: "Unichain",
-    icon: uniIcon,
-    order: 13,
-    category: "evm",
-    symbol: "ETH",
-  },
-  solana: {
-    label: "Solana",
-    icon: solIcon,
-    order: 14,
-    category: "svm",
-    symbol: "SOL",
-  },
+/** The `/chainInfo` payload in the shape the lookups below want it. */
+export type ChainInfoLookup = {
+  byChain: Map<string, ChainInfo>;
+  unknownChain?: ChainInfo;
 };
+
+const EMPTY_LOOKUP: ChainInfoLookup = { byChain: new Map() };
+
+export function toChainInfoLookup(
+  payload: ChainInfosResponse | undefined,
+): ChainInfoLookup {
+  if (!payload) return EMPTY_LOOKUP;
+  return {
+    byChain: new Map(
+      (payload.chains ?? []).map((info) => [info.chain.toLowerCase(), info]),
+    ),
+    ...(payload.unknownChain ? { unknownChain: payload.unknownChain } : {}),
+  };
+}
+
+/** "unichain" -> "Unichain", for a chain the config did not name. */
+const capitalize = (id: string): string =>
+  id ? id[0].toUpperCase() + id.slice(1) : id;
+
+/**
+ * Display metadata for a chain id. Always resolves: each field falls back on its
+ * own, so a config that names a chain but gives it no logo still gets a label,
+ * and a chain the config omits entirely still renders under its raw id.
+ */
+export function chainMetaFrom(
+  lookup: ChainInfoLookup,
+  chain: string,
+): ChainMeta {
+  const id = chain.toLowerCase();
+  const info = lookup.byChain.get(id);
+  const fallback = lookup.unknownChain;
+
+  // Whichever entry supplies the logo supplies BOTH of its fields: iconUrl wins
+  // over icon, so mixing this chain's icon with unknownChain's iconUrl would
+  // paint every keyed chain with the fallback image.
+  const logo = info?.icon || info?.iconUrl ? info : fallback;
+
+  return {
+    label: info?.label ?? capitalize(id),
+    icon: resolveChainIconUrl(logo?.icon, logo?.iconUrl),
+    order: info?.order ?? DEFAULT_CHAIN_ORDER,
+    category: info?.category ?? fallback?.category ?? DEFAULT_CHAIN_CATEGORY,
+    ...(info?.symbol ? { symbol: info.symbol } : {}),
+    ...(info?.apexFusion ? { apexFusion: info.apexFusion } : {}),
+  };
+}
+
+/**
+ * Every chain the config lists, in its order - for the filters and pickers that
+ * offer all known chains rather than only the ones a route enables.
+ */
+export function listChainsFrom(
+  lookup: ChainInfoLookup,
+): Array<{ id: string } & ChainMeta> {
+  return [...lookup.byChain.keys()]
+    .map((id) => ({ id, ...chainMetaFrom(lookup, id) }))
+    .sort((a, b) => a.order - b.order);
+}
+
+/**
+ * Whether the UI draws this chain at all. An entry in chainInfos is what makes
+ * an enabled chain visible - but while that config has not loaded, or could not
+ * be loaded, nothing is gated: a failed cosmetic request must not empty the
+ * bridge's own chain pickers.
+ */
+export function isChainListedIn(
+  lookup: ChainInfoLookup,
+  chain: string,
+): boolean {
+  return lookup.byChain.size === 0 || lookup.byChain.has(chain.toLowerCase());
+}
+
+/**
+ * Last `/chainInfo` payload, for the callers that cannot await one - the wallet
+ * connect flow (lib/wallet/connect.ts) reaches for the chain list outside React.
+ * Populated by the query in lib/api/chainInfo.ts.
+ *
+ * Components should use useChainMeta/useChainColor instead, so they re-render
+ * when the payload lands; a memo that calls into here needs the query data in
+ * its dependency list to recompute.
+ */
+let registry: ChainInfoLookup = EMPTY_LOOKUP;
+
+/** Populate from `GET /chainInfo` (also keeps the sync helpers below working). */
+export function setChainInfosRegistry(
+  payload: ChainInfosResponse | undefined,
+): void {
+  registry = toChainInfoLookup(payload);
+}
+
+/** Display metadata from the last `/chainInfo` payload. See chainMetaFrom. */
+export const getChainMeta = (chain: string): ChainMeta =>
+  chainMetaFrom(registry, chain);
 
 export type BridgeChain = {
   id: string;
@@ -246,8 +256,8 @@ export function chainMatchesFilter(
 export function getEnabledChainNodes(enabledChains: string[] | undefined) {
   if (!enabledChains?.length) return [];
   return enabledChains.flatMap((id) => {
-    const meta = CHAIN_META[id];
-    if (!meta) return [];
+    if (!isChainListedIn(registry, id)) return [];
+    const meta = getChainMeta(id);
     return [{ id, label: meta.label, img: meta.icon }];
   });
 }
@@ -257,9 +267,7 @@ function getDirectionConfig(settings: SettingsResponse | undefined) {
   return settings.directionConfig ?? {};
 }
 
-function toBridgeChain(id: string): BridgeChain | null {
-  const meta = CHAIN_META[id];
-  if (!meta) return null;
+function toBridgeChain(id: string, meta: ChainMeta): BridgeChain {
   return {
     id,
     label: meta.label,
@@ -276,12 +284,13 @@ function prepareChainsList(
   settings: SettingsResponse,
 ): BridgeChain[] {
   return ids
-    .filter((id) => settings.enabledChains.includes(id) && CHAIN_META[id])
-    .sort((a, b) => CHAIN_META[a].order - CHAIN_META[b].order)
-    .flatMap((id) => {
-      const chain = toBridgeChain(id);
-      return chain ? [chain] : [];
-    });
+    .filter(
+      (id) =>
+        settings.enabledChains.includes(id) && isChainListedIn(registry, id),
+    )
+    .map((id) => ({ id, meta: getChainMeta(id) }))
+    .sort((a, b) => a.meta.order - b.meta.order)
+    .map(({ id, meta }) => toBridgeChain(id, meta));
 }
 
 /** Source chains that have at least one destination. */

@@ -22,11 +22,13 @@ import {
   Sparkles,
 } from "lucide-react";
 import { FooterSocials } from "@/components/ui/footer-socials";
+import { AssetIcon } from "@/components/ui/asset-icon";
 import { settingsQueryOptions } from "@/lib/api/settings";
 import { landingStatsQueryOptions } from "@/lib/api/stats";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { formatUsdCompact } from "@/lib/usd";
 import { getEnabledChainNodes } from "@/lib/chains";
+import { useChainInfos } from "@/hooks/use-chain-infos";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 import {
   ETHERNAL_GITHUB_URL,
@@ -596,7 +598,7 @@ function Orbit({
                       <div className="flex flex-col items-center gap-1.5">
                         <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[oklch(0.72_0.19_245_/_0.5)] bg-gradient-to-br from-[oklch(0.72_0.19_245)] to-[oklch(0.4_0.22_265)] shadow-[0_10px_30px_-6px_oklch(0.55_0.22_250_/_0.7)]">
                           {n.img ? (
-                            <img
+                            <AssetIcon
                               src={n.img}
                               alt={n.label}
                               className="h-7 w-7"
@@ -619,7 +621,11 @@ function Orbit({
                         aria-label={n.label}
                       >
                         {n.img ? (
-                          <img src={n.img} alt={n.label} className="h-5 w-5" />
+                          <AssetIcon
+                            src={n.img}
+                            alt={n.label}
+                            className="h-5 w-5"
+                          />
                         ) : n.icon ? (
                           <n.icon className="h-4 w-4" strokeWidth={1.8} />
                         ) : null}
@@ -639,6 +645,8 @@ function Orbit({
 function Connecting() {
   const ellipseMode = true;
   const { data: settings } = useQuery(settingsQueryOptions);
+  // getEnabledChainNodes reads the chain display registry this query populates.
+  useChainInfos();
   const chainsConnected = settings?.enabledChains.length;
   const bridgeRing: OrbitNode[] = [
     { icon: ArrowLeftRight, label: "Bridge", tone: "primary" },

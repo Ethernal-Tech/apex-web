@@ -1,23 +1,19 @@
 import { queryOptions } from "@tanstack/react-query";
 import appSettings from "@/settings/appSettings";
+import {
+  setChainInfosRegistry,
+  type ChainInfo,
+  type ChainInfosResponse,
+} from "@/lib/chains";
 
 /**
- * `GET /chainInfo` — the accent color of each chain, per chain id. The web-api
- * reads it from a config file it re-checks on every request, so the palette can
- * change without a frontend deploy.
+ * `GET /chainInfo` — how each chain is presented: accent color, name, logo, list
+ * order, family and native symbol. The web-api reads it from a config file it
+ * re-checks on every request, so all of that can change without a frontend
+ * deploy. The payload shape lives in lib/chains.ts, next to the fallbacks that
+ * fill in whatever the config leaves out.
  */
-export type ChainInfo = {
-  /** Chain id as `enabledChains` spells it, lowercase. */
-  chain: string;
-  color: string;
-};
-
-export type ChainInfosResponse = {
-  network: "mainnet" | "testnet";
-  chains: ChainInfo[];
-  /** Served for a chain the config does not list, when it sets one. */
-  unknownChain?: ChainInfo;
-};
+export type { ChainInfo, ChainInfosResponse };
 
 export async function fetchChainInfos(): Promise<ChainInfosResponse> {
   const res = await fetch(`${appSettings.apiUrl}/chainInfo`, {
@@ -26,7 +22,11 @@ export async function fetchChainInfos(): Promise<ChainInfosResponse> {
   if (!res.ok) {
     throw new Error(`Failed to load chain infos (${res.status})`);
   }
-  return res.json() as Promise<ChainInfosResponse>;
+
+  const payload = (await res.json()) as ChainInfosResponse;
+  // keeps getChainMeta/getSrcChains working outside React — see lib/chains.ts
+  setChainInfosRegistry(payload);
+  return payload;
 }
 
 export const chainInfosQueryOptions = queryOptions({

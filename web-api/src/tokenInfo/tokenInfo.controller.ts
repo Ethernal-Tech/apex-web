@@ -11,8 +11,9 @@ export class TokenInfoController {
 	@ApiOperation({
 		summary: 'Get token display metadata',
 		description:
-			'Returns the label, icon key and accent color for each bridge token ID, ' +
-			'so the UI does not have to hardcode them. ' +
+			'Returns the label, icon file name and accent color for each bridge token ' +
+			'ID, so the UI does not have to hardcode them. Icons themselves are served ' +
+			'by this API under /icons/tokens/. ' +
 			'The list comes from a config file of the network this instance serves, ' +
 			're-read on change - a new token needs a config edit only, no frontend ' +
 			'rebuild and no redeploy.',

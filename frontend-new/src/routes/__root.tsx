@@ -22,6 +22,7 @@ import CookieConsent from "../components/CookieConsent";
 import { IntroAnimation } from "../components/IntroAnimation";
 import { Toaster } from "../components/ui/sonner";
 import { InitSentry } from "../lib/sentry";
+import appSettings from "../settings/appSettings";
 
 function ReactorValidatorStatusPoller() {
   useQuery(reactorValidatorStatusQueryOptions());
@@ -125,6 +126,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           href: appCss,
         },
         { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+        // The API is a separate origin and is on the critical path twice over:
+        // every page fetches its settings and chain/token metadata from it, and
+        // the chain and token logos those responses name are served from it too.
+        // Warming the connection here overlaps that handshake with the bundle.
+        {
+          rel: "preconnect",
+          href: appSettings.apiUrl,
+          crossOrigin: "anonymous",
+        },
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
         {
           rel: "preconnect",

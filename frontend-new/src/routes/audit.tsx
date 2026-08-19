@@ -11,6 +11,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ExternalLink, TrendingUp } from "lucide-react";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
+import { AssetIcon } from "@/components/ui/asset-icon";
 import { NetworkToggle } from "@/components/NetworkToggle";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { useBridgeHistory } from "@/hooks/use-bridge-history";
@@ -28,9 +29,8 @@ import {
   tokenPricesQueryOptions,
 } from "@/lib/api/tokenPrice";
 import { useTokenColor } from "@/hooks/use-token-infos";
-import { useChainColor } from "@/hooks/use-chain-infos";
+import { useChainColor, useChainMeta } from "@/hooks/use-chain-infos";
 import { formatUsdFull } from "@/lib/usd";
-import { CHAIN_META } from "@/lib/chains";
 import { explorerAddressUrl } from "@/lib/explorers";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 
@@ -71,7 +71,7 @@ const UNPRICED: PriceOf = () => 0;
 const usePriceOf = (): PriceOf => useContext(PriceContext) ?? UNPRICED;
 
 // ── Worlds ────────────────────────────────────────────────────────────
-/** Tab labels. The keys are the chain categories from CHAIN_META. */
+/** Tab labels. The keys are the chain categories from the chainInfos config. */
 const WORLD_LABELS: Record<WorldKey, string> = {
   utxo: "UTxO World",
   evm: "EVM World",
@@ -1049,22 +1049,17 @@ function ChainHeading({
   children?: React.ReactNode;
 }) {
   const chainColorOf = useChainColor();
-  const icon = CHAIN_META[chain]?.icon;
+  const chainMetaOf = useChainMeta();
+  // always resolves - a chain the config does not list gets the unknown logo
+  const { icon } = chainMetaOf(chain);
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="inline-flex min-w-0 items-center gap-2.5">
-        {icon ? (
-          <img
-            src={icon}
-            alt={label}
-            className="h-6 w-6 flex-none rounded-full"
-          />
-        ) : (
-          <span
-            className="h-2.5 w-2.5 flex-none rounded-sm"
-            style={{ background: chainColorOf(chain) }}
-          />
-        )}
+        <AssetIcon
+          src={icon}
+          alt={label}
+          className="h-6 w-6 flex-none rounded-full"
+        />
         <span
           className="truncate text-[12px] font-semibold uppercase tracking-[0.1em]"
           style={{ color: chainColorOf(chain) }}

@@ -33,9 +33,9 @@ export class TokenInfoDto {
 	@IsString()
 	@ApiProperty({
 		description:
-			'Key of the icon asset (apex, eth, polygon, sei, solana, unknown). ' +
-			'Unrecognized keys should fall back to the unknown icon.',
-		example: 'apex',
+			'File name of an icon served by this API under /icons/tokens/. A name with ' +
+			"no file behind it falls back to the UI's bundled unknown icon.",
+		example: 'apex.svg',
 	})
 	icon: string;
 
@@ -43,7 +43,8 @@ export class TokenInfoDto {
 	@IsString()
 	@ApiPropertyOptional({
 		description:
-			'Hosted image to use instead of the bundled asset, for tokens whose icon is not in the frontend yet',
+			'Absolute URL of an icon hosted elsewhere, loaded directly by the browser. ' +
+			'Wins over "icon". Must point straight at an image.',
 		example: 'https://cdn.apexfusion.org/tokens/ap3x.svg',
 	})
 	iconUrl?: string;

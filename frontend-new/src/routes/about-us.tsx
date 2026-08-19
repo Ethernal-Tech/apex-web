@@ -79,7 +79,7 @@ function Header() {
             <Link
               key={link.to}
               to={link.to}
-              className="pointer-events-auto text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="pointer-events-auto text-[15px] font-medium text-foreground/90 transition-colors hover:text-[oklch(0.85_0.15_235)]"
             >
               {link.label}
             </Link>

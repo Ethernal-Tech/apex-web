@@ -11,10 +11,12 @@ export class ChainInfoController {
 	@ApiOperation({
 		summary: 'Get chain display metadata',
 		description:
-			'Returns the accent color of each chain, so the UI does not have to ' +
-			'hardcode a palette. The list comes from a config file of the network ' +
-			'this instance serves, re-read on change - recoloring a chain needs a ' +
-			'config edit only, no frontend rebuild and no redeploy.',
+			'Returns how each chain is presented - accent color, name, logo file name, ' +
+			'list order, family and native symbol - so the UI does not have to hardcode ' +
+			'any of it. Logos themselves are served by this API under /icons/chains/. ' +
+			'The list comes from a config file of the network this ' +
+			'instance serves, re-read on change, so restyling or renaming a chain ' +
+			'needs a config edit only, no frontend rebuild and no redeploy.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,

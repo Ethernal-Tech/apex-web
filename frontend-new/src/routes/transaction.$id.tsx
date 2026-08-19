@@ -15,6 +15,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
+import { AssetIcon } from "@/components/ui/asset-icon";
 import { NetworkBadge } from "@/components/NetworkToggle";
 import { BridgeHeader } from "@/components/BridgeHeader";
 import { convertDfmToApex, toFixedAmount } from "@/lib/amount";
@@ -31,7 +32,7 @@ import {
   type DetailStep,
   type StageStatus,
 } from "@/lib/bridging/txStatusUi";
-import { CHAIN_META } from "@/lib/chains";
+import { useChainMeta, type ChainMetaOf } from "@/hooks/use-chain-infos";
 import { getExplorerUrl, openExplorer } from "@/lib/explorer";
 import { ErrorResponse, tryCatchJsonByAction } from "@/lib/fetchUtils";
 import {
@@ -155,13 +156,16 @@ function BridgingDetail({
   );
 }
 
-function chainView(chainId: string | undefined) {
-  const meta = chainId ? CHAIN_META[chainId] : undefined;
+function chainView(chainMetaOf: ChainMetaOf, chainId: string | undefined) {
+  if (!chainId) {
+    return { id: "", label: "—", icon: chainMetaOf("").icon, symbol: "TOKEN" };
+  }
+  const meta = chainMetaOf(chainId);
   return {
-    id: chainId ?? "",
-    label: meta?.label ?? chainId ?? "—",
-    icon: meta?.icon ?? CHAIN_META.prime.icon,
-    symbol: meta?.symbol ?? "TOKEN",
+    id: chainId,
+    label: meta.label,
+    icon: meta.icon,
+    symbol: meta.symbol ?? "TOKEN",
   };
 }
 
@@ -174,6 +178,7 @@ function TransactionPage() {
   const txId = Number.parseInt(id, 10);
   const settingsQuery = useQuery(settingsQueryOptions);
   useQuery(tokenInfosQueryOptions);
+  const chainMetaOf = useChainMeta();
 
   const txQuery = useQuery({
     queryKey: ["bridgeTransaction", txId] as const,
@@ -198,8 +203,8 @@ function TransactionPage() {
   const tx = txQuery.data;
   const settings = settingsQuery.data;
 
-  const source = chainView(tx?.originChain);
-  const destination = chainView(tx?.destinationChain);
+  const source = chainView(chainMetaOf, tx?.originChain);
+  const destination = chainView(chainMetaOf, tx?.destinationChain);
 
   const amountDisplay = useMemo(() => {
     if (!tx) return "0";
@@ -558,7 +563,7 @@ function ChainSummary({
         {label}
       </div>
       <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-        <img
+        <AssetIcon
           src={chain.icon}
           alt={chain.label}
           className="h-9 w-9 rounded-full"
@@ -729,7 +734,7 @@ function StageOrb({
           } bg-white/[0.03]`}
         >
           {chainIcon ? (
-            <img
+            <AssetIcon
               src={chainIcon}
               alt={chainLabel}
               className={`h-full w-full rounded-full ${status === "pending" ? "opacity-50 grayscale" : ""}`}

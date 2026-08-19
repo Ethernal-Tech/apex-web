@@ -1,15 +1,11 @@
-import apexIcon from "@/assets/token-icons/apex.svg?url";
-import ethIcon from "@/assets/token-icons/eth.svg?url";
-import polygonIcon from "@/assets/token-icons/polygon.svg?url";
-import seiIcon from "@/assets/token-icons/sei.svg?url";
-import solanaIcon from "@/assets/token-icons/solana.svg?url";
-import unknownIcon from "@/assets/token-icons/unknown.svg?url";
-import adaIcon from "@/assets/token-icons/ada.svg?url";
+import { resolveAssetIconUrl } from "@/lib/assetIcons";
 
 export type TokenInfoDto = {
   tokenID: number;
   label: string;
+  /** Icon file name served at `<apiUrl>/icons/tokens/`. Ignored when iconUrl is set. */
   icon: string;
+  /** Absolute URL of an icon hosted elsewhere, used as-is. Wins over `icon`. */
   iconUrl?: string;
 };
 
@@ -22,24 +18,19 @@ export type TokenInfosResponse = {
 export type TokenInfo = {
   tokenID: number;
   label: string;
-  /** Resolved URL for `<img src>` (bundled asset or remote iconUrl). */
+  /** Resolved URL for `<img src>`. See resolveTokenIconUrl. */
   icon: string;
 };
 
-const ICON_BY_KEY: Record<string, string> = {
-  apex: apexIcon,
-  eth: ethIcon,
-  polygon: polygonIcon,
-  sei: seiIcon,
-  solana: solanaIcon,
-  ada: adaIcon,
-  unknown: unknownIcon,
-};
-
+/**
+ * Stands in until `GET /tokenInfo` lands, and when it names no unknownToken. It
+ * carries no icon on purpose: resolveTokenIconUrl then yields the bundled
+ * fallback rather than a URL the web-api may not serve.
+ */
 const DEFAULT_UNKNOWN: TokenInfoDto = {
   tokenID: 0,
   label: "",
-  icon: "unknown",
+  icon: "",
 };
 
 let byId = new Map<number, TokenInfoDto>();
@@ -62,19 +53,21 @@ export function setTokenNames(
     byId.set(t.id, {
       tokenID: t.id,
       label: t.name,
-      icon: "unknown",
+      // name only - the icon comes from /tokenInfo, which knows the file name
+      icon: "",
     });
   }
 }
 
-export function resolveTokenIconUrl(
-  iconKey: string | undefined,
+/**
+ * Resolved URL for `<img src>` - the icon the web-api serves under
+ * /icons/tokens/, a hosted `iconUrl` overriding it, or the bundled fallback.
+ * See resolveAssetIconUrl.
+ */
+export const resolveTokenIconUrl = (
+  icon: string | undefined,
   iconUrl?: string,
-): string {
-  if (iconUrl) return iconUrl;
-  if (iconKey && ICON_BY_KEY[iconKey]) return ICON_BY_KEY[iconKey];
-  return ICON_BY_KEY.unknown;
-}
+): string => resolveAssetIconUrl("token", icon, iconUrl);
 
 export function getTokenInfo(tokenID: number | undefined): TokenInfo {
   if (tokenID === undefined) {
