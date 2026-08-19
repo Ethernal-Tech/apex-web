@@ -18,27 +18,17 @@ import {
   SKYLINE_DOCUMENTATION_URL,
 } from "@/lib/utils";
 import { submitContactForm } from "@/lib/api/contact";
+import { pageHead } from "@/lib/seo";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 
 export const Route = createFileRoute("/contact")({
-  head: () => ({
-    meta: [
-      { title: "Get in Touch — Skyline Bridge" },
-      {
-        name: "description",
-        content:
-          "Have a question about Skyline, our cross-chain bridge, or a partnership? Send us a message and we’ll get back to you as soon as possible.",
-      },
-      { property: "og:title", content: "Get in Touch — Skyline Bridge" },
-      {
-        property: "og:description",
-        content:
-          "Have a question about Skyline, our cross-chain bridge, or a partnership? Send us a message and we’ll get back to you as soon as possible.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Get in Touch — Skyline Bridge",
+      description:
+        "Have a question about Skyline, our cross-chain bridge, or a partnership? Send us a message and we’ll get back to you as soon as possible.",
+      path: "/contact",
+    }),
   component: ContactPage,
 });
 

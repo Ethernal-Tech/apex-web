@@ -94,18 +94,17 @@ import {
 import { readReturnTo } from "@/lib/returnTo";
 import { useIsUnsupportedDevice } from "@/hooks/use-unsupported-device";
 import { externalAnchorProps, SKYLINE_DOCUMENTATION_URL } from "@/lib/utils";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/bridge-app")({
-  head: () => ({
-    meta: [
-      { title: "Skyline Bridge — Move assets across chains" },
-      {
-        name: "description",
-        content:
-          "The Skyline Bridge app. Move native assets across 10+ chains in seconds.",
-      },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Skyline Bridge — Move assets across chains",
+      description:
+        "The Skyline Bridge app. Move native assets across 10+ chains in seconds.",
+      path: "/bridge-app",
+      index: false,
+    }),
   component: BridgeApp,
 });
 

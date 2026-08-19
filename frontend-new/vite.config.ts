@@ -6,10 +6,34 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+const PUBLIC_PATHS = [
+  "/",
+  "/about-us",
+  "/contact",
+  "/audit",
+  "/privacy-policy",
+  "/terms-of-service",
+];
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+    spa: {
+      enabled: true,
+      prerender: { outputPath: "/index.html" },
+    },
+    // Write real HTML for public pages so Telegram/Google see the right title
+    // without running JS. Deploy is still a static folder.
+    prerender: {
+      enabled: true,
+      crawlLinks: false,
+      autoStaticPathsDiscovery: false,
+      failOnError: true,
+    },
+    pages: PUBLIC_PATHS.map((path) => ({ path })),
+    sitemap: { enabled: false },
   },
+  nitro: false,
 });

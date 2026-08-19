@@ -23,6 +23,7 @@ import { IntroAnimation } from "../components/IntroAnimation";
 import { Toaster } from "../components/ui/sonner";
 import { InitSentry } from "../lib/sentry";
 import appSettings from "../settings/appSettings";
+import { pageHead } from "../lib/seo";
 
 function ReactorValidatorStatusPoller() {
   useQuery(reactorValidatorStatusQueryOptions());
@@ -92,35 +93,23 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+const DEFAULT_HEAD = pageHead({
+  title: "Skyline — The Universal Bridge for On-Chain and Real-World Finance",
+  description:
+    "Skyline connects every chain, agent, and dollar. Bridge assets instantly today — soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
+  path: "/",
+});
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {
     head: () => ({
       meta: [
         { charSet: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
-        {
-          title:
-            "Skyline — The Universal Bridge for On-Chain and Real-World Finance",
-        },
-        {
-          name: "description",
-          content:
-            "Skyline connects every chain, agent, and dollar. Bridge assets instantly today — soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
-        },
-        {
-          property: "og:title",
-          content:
-            "Skyline — The Universal Bridge for On-Chain and Real-World Finance",
-        },
-        {
-          property: "og:description",
-          content:
-            "Bridge assets instantly across chains. Coming soon: AI agentic finance and TradFi rails via Stripe and stablecoins.",
-        },
-        { property: "og:type", content: "website" },
-        { name: "twitter:card", content: "summary_large_image" },
+        ...DEFAULT_HEAD.meta,
       ],
       links: [
+        ...DEFAULT_HEAD.links,
         {
           rel: "stylesheet",
           href: appCss,

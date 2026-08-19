@@ -1,25 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
+import { pageHead } from "@/lib/seo";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 
 export const Route = createFileRoute("/privacy-policy")({
-  head: () => ({
-    meta: [
-      { title: "Privacy Policy — Skyline Bridge" },
-      {
-        name: "description",
-        content: "Read the Personal Data Protection Policy for Skyline Bridge.",
-      },
-      { property: "og:title", content: "Privacy Policy — Skyline Bridge" },
-      {
-        property: "og:description",
-        content: "Read the Personal Data Protection Policy for Skyline Bridge.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Privacy Policy — Skyline Bridge",
+      description:
+        "Read the Personal Data Protection Policy for Skyline Bridge.",
+      path: "/privacy-policy",
+    }),
   component: PrivacyPage,
 });
 

@@ -52,6 +52,7 @@ import {
 import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
 import { cn } from "@/lib/utils";
 import { historyReturnTo } from "@/lib/returnTo";
+import { pageHead } from "@/lib/seo";
 import {
   BridgeTransactionDto,
   TransactionStatusEnum,
@@ -66,16 +67,14 @@ export const Route = createFileRoute("/transactions")({
         ? search.view
         : undefined,
   }),
-  head: () => ({
-    meta: [
-      { title: "Bridging History — Skyline Bridge" },
-      {
-        name: "description",
-        content:
-          "Browse, filter, and sort every bridge transaction across the Skyline network.",
-      },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Bridging History — Skyline Bridge",
+      description:
+        "Browse, filter, and sort every bridge transaction across the Skyline network.",
+      path: "/transactions",
+      index: false,
+    }),
   component: TransactionsPage,
 });
 

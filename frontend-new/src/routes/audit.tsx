@@ -33,27 +33,16 @@ import { useChainColor, useChainMeta } from "@/hooks/use-chain-infos";
 import { formatUsdFull } from "@/lib/usd";
 import { explorerAddressUrl } from "@/lib/explorers";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/audit")({
-  head: () => ({
-    meta: [
-      { title: "Skyline Bridge — Proof of Reserves & Audit" },
-      {
-        name: "description",
-        content:
-          "A live, public ledger of everything locked in and moved across the Skyline network — verifiable on-chain and updated continuously.",
-      },
-      {
-        property: "og:title",
-        content: "Skyline Bridge — Proof of Reserves & Audit",
-      },
-      {
-        property: "og:description",
-        content:
-          "Every asset, fully accounted for. Live TVL, TVB and per-chain breakdown across the Skyline network.",
-      },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Skyline Bridge — Proof of Reserves & Audit",
+      description:
+        "A live, public ledger of everything locked in and moved across the Skyline network — verifiable on-chain and updated continuously.",
+      path: "/audit",
+    }),
   component: AuditPage,
 });
 

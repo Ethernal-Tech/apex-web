@@ -1,27 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
+import { pageHead } from "@/lib/seo";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 
 export const Route = createFileRoute("/terms-of-service")({
-  head: () => ({
-    meta: [
-      { title: "Terms of Use — Skyline Bridge" },
-      {
-        name: "description",
-        content:
-          "Read the Terms of Use for Skyline Bridge, the universal bridge for cross-chain assets.",
-      },
-      { property: "og:title", content: "Terms of Use — Skyline Bridge" },
-      {
-        property: "og:description",
-        content:
-          "Read the Terms of Use for Skyline Bridge, the universal bridge for cross-chain assets.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Terms of Use — Skyline Bridge",
+      description:
+        "Read the Terms of Use for Skyline Bridge, the universal bridge for cross-chain assets.",
+      path: "/terms-of-service",
+    }),
   component: TermsPage,
 });
 

@@ -3,6 +3,8 @@ import productionSettings from "./appSettings_production.json";
 
 type AppSettingsJson = {
   apiUrl: string;
+  /** Public origin of this frontend, no trailing slash. Used for canonical/og URLs. */
+  siteUrl: string;
   sentryDsn: string;
   minUtxoChainValue: { [key: string]: number };
   minChainFeeForBridging: { [key: string]: string };
@@ -20,6 +22,7 @@ type AppSettingsJson = {
 
 class AppSettings {
   private _apiUrl = "http://localhost:30000";
+  private _siteUrl = "http://localhost:8080";
   private _sentryDsn = "";
   private _minUtxoChainValue: { [key: string]: number } = {};
   private _minChainFeeForBridging: { [key: string]: string } = {};
@@ -40,6 +43,7 @@ class AppSettings {
     ) as AppSettingsJson;
 
     this._apiUrl = settingsJson.apiUrl.replace(/\/$/, "");
+    this._siteUrl = settingsJson.siteUrl.replace(/\/$/, "");
     this._sentryDsn = settingsJson.sentryDsn;
     this._minUtxoChainValue = settingsJson.minUtxoChainValue;
     this._minChainFeeForBridging = settingsJson.minChainFeeForBridging;
@@ -58,6 +62,10 @@ class AppSettings {
 
   get apiUrl(): string {
     return this._apiUrl;
+  }
+
+  get siteUrl(): string {
+    return this._siteUrl;
   }
 
   get sentryDsn(): string {

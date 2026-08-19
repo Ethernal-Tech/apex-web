@@ -46,21 +46,20 @@ import {
 } from "@/swagger/apexBridgeApiService";
 import { useLiveTxBalances } from "@/hooks/use-live-tx-balances";
 import { parseReturnTo, readReturnTo } from "@/lib/returnTo";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/transaction/$id")({
   validateSearch: (search: Record<string, unknown>): { returnTo?: string } => {
     const returnTo = readReturnTo(search);
     return returnTo ? { returnTo } : {};
   },
-  head: () => ({
-    meta: [
-      { title: "Skyline Bridge — Transaction" },
-      {
-        name: "description",
-        content: "Track your Skyline bridging transaction across chains.",
-      },
-    ],
-  }),
+  head: ({ params }) =>
+    pageHead({
+      title: "Skyline Bridge — Transaction",
+      description: "Track your Skyline bridging transaction across chains.",
+      path: `/transaction/${params.id}`,
+      index: false,
+    }),
   component: TransactionPage,
 });
 

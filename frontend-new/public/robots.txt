@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /bridge-app
+Disallow: /transactions
+Disallow: /transaction
+Disallow: /landing
+
+Sitemap: https://skyline.testnet.ethernal.work/sitemap.xml

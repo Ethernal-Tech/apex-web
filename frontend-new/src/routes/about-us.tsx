@@ -21,6 +21,7 @@ import {
 } from "@/lib/utils";
 import { settingsQueryOptions } from "@/lib/api/settings";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
+import { pageHead } from "@/lib/seo";
 import heroImg from "@/assets/about/about-hero.jpg";
 import bridgeImg from "@/assets/about/about-bridge.jpg";
 import agentsImg from "@/assets/about/about-agents.jpg";
@@ -30,24 +31,13 @@ import teamNemanja from "@/assets/about/team-nemanja.jpeg";
 import teamDarko from "@/assets/about/team-darko.jpeg";
 
 export const Route = createFileRoute("/about-us")({
-  head: () => ({
-    meta: [
-      { title: "Who We Are — Skyline Bridge" },
-      {
-        name: "description",
-        content:
-          "Skyline is the universal bridge for on-chain and real-world finance — connecting UTxO and EVM networks today, AI agents and fiat rails next.",
-      },
-      { property: "og:title", content: "Who We Are — Skyline Bridge" },
-      {
-        property: "og:description",
-        content:
-          "Meet the team building Skyline: trust-minimised cross-chain bridging, agentic finance, and stablecoin rails for traditional finance.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Who We Are — Skyline Bridge",
+      description:
+        "Skyline is the universal bridge for on-chain and real-world finance — connecting UTxO and EVM networks today, AI agents and fiat rails next.",
+      path: "/about-us",
+    }),
   component: AboutPage,
 });
 
