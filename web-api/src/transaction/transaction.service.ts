@@ -28,6 +28,7 @@ import {
 	mapBridgeTransactionToResponse,
 } from 'src/bridgeTransaction/bridgeTransaction.helper';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
+import { convertDfmToWeiByChain } from 'src/utils/generalUtils';
 import { SettingsService } from 'src/settings/settings.service';
 import { Utxo } from 'src/blockchain/dto';
 import { Logger } from '@nestjs/common';
@@ -237,6 +238,10 @@ export class TransactionService {
 		entity.destinationChain =
 			(destinationChain as ChainEnum) ?? entity.destinationChain;
 		entity.amount = (amount ?? '').trim() || entity.amount;
+		entity.amountWei = convertDfmToWeiByChain(
+			entity.amount || '0',
+			originChain,
+		);
 
 		entity.originChain = originChain;
 		entity.createdAt = new Date();
