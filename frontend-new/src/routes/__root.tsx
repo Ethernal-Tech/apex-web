@@ -23,7 +23,7 @@ import { IntroAnimation } from "../components/IntroAnimation";
 import { Toaster } from "../components/ui/sonner";
 import { InitSentry } from "../lib/sentry";
 import appSettings from "../settings/appSettings";
-import { pageHead } from "../lib/seo";
+import { pageHead, SITE } from "../lib/seo";
 
 function ReactorValidatorStatusPoller() {
   useQuery(reactorValidatorStatusQueryOptions());
@@ -94,9 +94,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 const DEFAULT_HEAD = pageHead({
-  title: "Skyline — The Universal Bridge for On-Chain and Real-World Finance",
-  description:
-    "Skyline connects every chain, agent, and dollar. Bridge assets instantly today — soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
+  title: SITE.name,
+  description: SITE.description,
   path: "/",
 });
 
@@ -107,14 +106,60 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { charSet: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         ...DEFAULT_HEAD.meta,
+        // Mirrored by theme_color/background_color in public/site.webmanifest,
+        // so the mobile browser chrome, the installed-app splash screen, and the
+        // page itself are all the same colour.
+        { name: "theme-color", content: SITE.themeColor },
+        // Mirrors short_name in the manifest — this is the iOS equivalent.
+        { name: "apple-mobile-web-app-title", content: SITE.shortName },
       ],
       links: [
-        ...DEFAULT_HEAD.links,
+        // Only DEFAULT_HEAD.meta is spread here, never DEFAULT_HEAD.links.
+        // Meta is deduped by name/property, so a route's title/description/og
+        // override these defaults; links are concatenated instead, so spreading
+        // them would leave every route with the root's `canonical` of "/" next
+        // to its own — and Google ignores all of them when they conflict.
+        // Every route sets its own head via pageHead(), so the canonical is
+        // already covered.
         {
           rel: "stylesheet",
           href: appCss,
         },
-        { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+        // Square artwork everywhere the icon is shown on its own edge-to-edge
+        // (tab, taskbar, iOS/Android home screen). The one round icon is for
+        // consumers that crop to a circle — chiefly Google Search results —
+        // which is why it is the only 192px `rel="icon"`: tabs resolve to the
+        // 16/32 entries above it, and Google prefers a multiple of 48px.
+        {
+          rel: "icon",
+          href: "/favicon.ico",
+          type: "image/x-icon",
+          sizes: "16x16 24x24 32x32 48x48 64x64",
+        },
+        {
+          rel: "icon",
+          href: "/favicon-16x16.png",
+          type: "image/png",
+          sizes: "16x16",
+        },
+        {
+          rel: "icon",
+          href: "/favicon-32x32.png",
+          type: "image/png",
+          sizes: "32x32",
+        },
+        {
+          rel: "icon",
+          href: "/favicon-round-192x192.png",
+          type: "image/png",
+          sizes: "192x192",
+        },
+        {
+          rel: "apple-touch-icon",
+          href: "/apple-touch-icon.png",
+          sizes: "180x180",
+        },
+        { rel: "manifest", href: "/site.webmanifest" },
         // The API is a separate origin and is on the critical path twice over:
         // every page fetches its settings and chain/token metadata from it, and
         // the chain and token logos those responses name are served from it too.
@@ -145,7 +190,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang={SITE.lang} className="dark">
       <head>
         <HeadContent />
       </head>

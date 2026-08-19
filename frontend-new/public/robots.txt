@@ -1,8 +1,32 @@
 User-agent: *
 Allow: /
-Disallow: /bridge-app
-Disallow: /transactions
-Disallow: /transaction
-Disallow: /landing
+
+# AI / LLM crawlers and agents.
+
+# A named group replaces the "*" group outright rather than adding to it, so any
+# rule added above must be repeated here to apply to these agents too.
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: OAI-SearchBot
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: Claude-Web
+User-agent: anthropic-ai
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: Amazonbot
+User-agent: YouBot
+Allow: /
+Allow: /llms.txt
+Allow: /llm.txt
 
 Sitemap: https://skyline.testnet.ethernal.work/sitemap.xml
+
+# LLM discovery files. "LLMs:" is not part of the robots.txt standard and no
+# crawler parses it — it carries over from the previous frontend as a hint for
+# humans. Actual discovery is the well-known path itself: /llms.txt
+LLMs: https://skyline.testnet.ethernal.work/llms.txt
+LLMs: https://skyline.testnet.ethernal.work/llm.txt

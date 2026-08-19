@@ -2,6 +2,27 @@ import appSettings from "@/settings/appSettings";
 
 const OG_IMAGE_PATH = "/og.png";
 
+/**
+ * Site identity shared by the document head and `public/site.webmanifest`.
+ *
+ * The manifest is a static file served straight out of `public/`, so it cannot
+ * import this — its `name`, `short_name`, `description`, `theme_color`,
+ * `background_color`, and `lang` mirror these values by hand. Change both together.
+ */
+export const SITE = {
+  name: "Skyline — The Universal Bridge for On-Chain and Real-World Finance",
+  shortName: "Skyline",
+  description:
+    "Skyline connects every chain, agent, and dollar. Bridge assets instantly today — soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
+  /**
+   * `--background` from styles.css converted to sRGB hex. It has to be hex here:
+   * manifest colors go through a plain CSS color parse, and oklch() — the form
+   * the stylesheet uses — is not reliably supported by manifest parsers.
+   */
+  themeColor: "#030915",
+  lang: "en",
+} as const;
+
 function absoluteUrl(path: string): string {
   const origin = appSettings.siteUrl.replace(/\/$/, "");
   if (path === "/" || path === "") return `${origin}/`;
