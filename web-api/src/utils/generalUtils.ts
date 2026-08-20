@@ -2,6 +2,8 @@ import { Logger } from '@nestjs/common';
 import Web3 from 'web3';
 import { Numbers } from 'web3-types';
 import { EtherUnits } from 'web3-utils';
+import { ChainEnum } from 'src/common/enum';
+import { isCardanoChain } from './chainUtils';
 
 const DEFAULT_RETRY_DELAY_MS = 1000;
 
@@ -74,4 +76,12 @@ export const convertWeiToDfm = (wei: string | number): string => {
 
 export const convertDfmToWei = (dfm: string | number): string => {
 	return toWei(dfm, 12);
+};
+
+// Cardano chains express amounts in dfm, while Nexus already works in wei.
+export const convertDfmToWeiByChain = (
+	dfm: string | number,
+	chain: ChainEnum,
+): string => {
+	return isCardanoChain(chain) ? convertDfmToWei(dfm) : String(dfm);
 };

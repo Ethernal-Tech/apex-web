@@ -24,24 +24,38 @@ const RETRY_WAIT_TIME = 1000;
 class EvmWalletHandler {
 	private _enabled = false;
 	private web3: Web3 | undefined;
+	private provider: any | undefined;
 	private onAccountsChanged: (accounts: string[]) => Promise<void> = () =>
 		new Promise<void>(() => undefined);
 	private onChainChanged: (chainId: string) => Promise<void> = () =>
 		new Promise<void>(() => undefined);
 
-	getInstalledWallets = (): Wallet[] => {
-		if (typeof window.ethereum === 'undefined') return [];
+	private getMetaMaskProvider = (): any | undefined => {
+		const injected = window.ethereum;
+		if (!injected) return undefined;
 
-		return EVM_SUPPORTED_WALLETS;
+		if (Array.isArray(injected.providers)) {
+			return injected.providers.find(
+				(p: any) => p.isMetaMask && !p.isPhantom,
+			);
+		}
+
+		return injected.isMetaMask && !injected.isPhantom
+			? injected
+			: undefined;
 	};
+
+	getInstalledWallets = (): Wallet[] =>
+		this.getMetaMaskProvider() ? EVM_SUPPORTED_WALLETS : [];
 
 	getWeb3 = (): Web3 | undefined => {
 		if (this.web3 === undefined) {
-			if (typeof window.ethereum === 'undefined') {
+			this.provider = this.getMetaMaskProvider();
+			if (!this.provider) {
 				return;
 			}
 
-			this.web3 = new Web3(window.ethereum);
+			this.web3 = new Web3(this.provider);
 			this.web3.transactionBlockTimeout = 200;
 		}
 
@@ -66,13 +80,13 @@ class EvmWalletHandler {
 
 		this.onAccountsChanged = onAccountsChanged;
 		this.onChainChanged = onChainChanged;
-		window.ethereum.on('accountsChanged', this.accountsChanged);
-		window.ethereum.on('chainChanged', this.chainChanged);
+		this.provider.on('accountsChanged', this.accountsChanged);
+		this.provider.on('chainChanged', this.chainChanged);
 
 		await this.forceChainWithRetry(expectedChainId);
 
 		try {
-			await window.ethereum.request({ method: 'eth_requestAccounts' });
+			await this.provider.request({ method: 'eth_requestAccounts' });
 		} catch (error) {
 			console.error('User denied account access');
 			this._enabled = false;
@@ -83,13 +97,15 @@ class EvmWalletHandler {
 
 	clearEnabledWallet = () => {
 		this._enabled = false;
-		if (typeof window.ethereum !== 'undefined') {
-			window.ethereum.removeListener(
+		if (this.provider) {
+			this.provider.removeListener(
 				'accountsChanged',
 				this.accountsChanged,
 			);
-			window.ethereum.removeListener('chainChanged', this.chainChanged);
+			this.provider.removeListener('chainChanged', this.chainChanged);
 		}
+		this.provider = undefined;
+		this.web3 = undefined;
 	};
 
 	private _isEnabled = () => !!this._enabled && !!this.getWeb3();
@@ -108,7 +124,7 @@ class EvmWalletHandler {
 	): Promise<void> => {
 		let wrongChain = false;
 		try {
-			const chainId = (await window.ethereum.request({
+			const chainId = (await this.provider.request({
 				method: 'eth_chainId',
 			})) as unknown as string;
 			wrongChain = parseChainId(chainId) !== expectedChainId;
@@ -132,7 +148,7 @@ class EvmWalletHandler {
 
 		if (wrongChain) {
 			try {
-				await window.ethereum.request({
+				await this.provider.request({
 					method: 'wallet_switchEthereumChain',
 					params: [{ chainId: toHex(expectedChainId) }],
 				});
