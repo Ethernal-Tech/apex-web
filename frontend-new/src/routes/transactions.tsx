@@ -51,7 +51,6 @@ import {
 } from "@/lib/tokens";
 import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
 import { cn } from "@/lib/utils";
-import { historyReturnTo } from "@/lib/returnTo";
 import { pageHead } from "@/lib/seo";
 import {
   BridgeTransactionDto,
@@ -660,7 +659,6 @@ function TransactionsPage() {
                           key={t.id}
                           tx={t}
                           compact={isCompact}
-                          returnTo={historyReturnTo(view)}
                         />
                       ))}
                     {!isLoading && !listQuery.isError && paged.length === 0 && (
@@ -813,11 +811,9 @@ function Th({
 function TxRow({
   tx,
   compact,
-  returnTo,
 }: {
   tx: Tx;
   compact: boolean;
-  returnTo: string;
 }) {
   const chainMetaOf = useChainMeta();
   const origin = toChainView(chainMetaOf, tx.origin);
@@ -827,7 +823,6 @@ function TxRow({
   const linkProps = {
     to: "/transaction/$id" as const,
     params: { id: tx.id },
-    search: { returnTo },
   };
 
   const rowProps = compact

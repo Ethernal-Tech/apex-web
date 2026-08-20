@@ -1370,7 +1370,6 @@ function TransferForm({
       navigate({
         to: "/transaction/$id",
         params: { id: String(response.id) },
-        search: { returnTo: "/bridge-app" },
       });
     } catch {
       setLoadingState(undefined);

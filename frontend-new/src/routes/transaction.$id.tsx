@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -45,14 +45,9 @@ import {
   type BridgeTransactionDto,
 } from "@/swagger/apexBridgeApiService";
 import { useLiveTxBalances } from "@/hooks/use-live-tx-balances";
-import { parseReturnTo, readReturnTo } from "@/lib/returnTo";
 import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/transaction/$id")({
-  validateSearch: (search: Record<string, unknown>): { returnTo?: string } => {
-    const returnTo = readReturnTo(search);
-    return returnTo ? { returnTo } : {};
-  },
   head: ({ params }) =>
     pageHead({
       title: "Skyline Bridge — Transaction",
@@ -170,8 +165,6 @@ function chainView(chainMetaOf: ChainMetaOf, chainId: string | undefined) {
 
 function TransactionPage() {
   const { id } = Route.useParams();
-  const { returnTo } = Route.useSearch();
-  const backTo = parseReturnTo(returnTo);
   const [showDetails, setShowDetails] = useState(false);
 
   const txId = Number.parseInt(id, 10);
@@ -308,9 +301,7 @@ function TransactionPage() {
           <div className="mx-auto max-w-5xl">
             <DetailReturnLink className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
               <ArrowLeft className="h-4 w-4" />
-              {backTo.to === "/transactions"
-                ? "Back to history"
-                : "Back to bridge"}
+              Back
             </DetailReturnLink>
 
             <div className="card-glow relative mt-4 animate-bridge-step-in rounded-3xl p-5 md:p-8">
@@ -883,18 +874,21 @@ function DetailReturnLink({
   className?: string;
   children: React.ReactNode;
 }) {
-  const dest = parseReturnTo(Route.useSearch({ select: (s) => s.returnTo }));
-  if (dest.to === "/transactions") {
-    return (
-      <Link to="/transactions" search={dest.search ?? {}} className={className}>
-        {children}
-      </Link>
-    );
-  }
+  const router = useRouter();
   return (
-    <Link to="/bridge-app" className={className}>
+    <button
+      type="button"
+      className={className}
+      onClick={() => {
+        if (router.history.canGoBack()) {
+          router.history.back();
+          return;
+        }
+        void router.navigate({ to: "/transactions" });
+      }}
+    >
       {children}
-    </Link>
+    </button>
   );
 }
 
