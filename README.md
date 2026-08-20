@@ -1,7 +1,7 @@
 # Apex Web documentation
 
 ## Prerequisites
-node v16.x.x
+node v24.x.x
 
 postgres v14.x
 
