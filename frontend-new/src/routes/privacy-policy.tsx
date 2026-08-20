@@ -7,7 +7,7 @@ import logoAsset from "@/assets/skyline-logo-transparent.png";
 export const Route = createFileRoute("/privacy-policy")({
   head: () =>
     pageHead({
-      title: "Privacy Policy — Skyline Bridge",
+      title: "Privacy Policy — Skyline",
       description:
         "Read the Personal Data Protection Policy for Skyline Bridge.",
       path: "/privacy-policy",

@@ -40,8 +40,7 @@ import { pageHead } from "@/lib/seo";
 export const Route = createFileRoute("/")({
   head: () =>
     pageHead({
-      title:
-        "Skyline — The Universal Bridge for On-Chain and Real-World Finance",
+      title: "Skyline",
       description:
         "Skyline connects every chain, agent, and dollar. Bridge assets instantly today — soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
       path: "/",

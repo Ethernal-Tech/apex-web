@@ -7,7 +7,7 @@ import logoAsset from "@/assets/skyline-logo-transparent.png";
 export const Route = createFileRoute("/terms-of-service")({
   head: () =>
     pageHead({
-      title: "Terms of Use — Skyline Bridge",
+      title: "Terms of Use — Skyline",
       description:
         "Read the Terms of Use for Skyline Bridge, the universal bridge for cross-chain assets.",
       path: "/terms-of-service",

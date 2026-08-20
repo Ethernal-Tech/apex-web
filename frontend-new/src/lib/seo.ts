@@ -10,7 +10,7 @@ const OG_IMAGE_PATH = "/og.png";
  * `background_color`, and `lang` mirror these values by hand. Change both together.
  */
 export const SITE = {
-  name: "Skyline — The Universal Bridge for On-Chain and Real-World Finance",
+  name: "Skyline",
   shortName: "Skyline",
   description:
     "Skyline connects every chain, agent, and dollar. Bridge assets instantly today — soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
