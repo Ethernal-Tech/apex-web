@@ -31,6 +31,9 @@ export default defineConfig({
       crawlLinks: false,
       autoStaticPathsDiscovery: false,
       failOnError: true,
+      // about-us.html instead of about-us/index.html — pm2 serve returns 500
+      // (EISDIR) when the URL matches a directory.
+      autoSubfolderIndex: false,
     },
     pages: PUBLIC_PATHS.map((path) => ({ path })),
     sitemap: { enabled: false },
