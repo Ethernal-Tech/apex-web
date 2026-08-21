@@ -33,7 +33,7 @@ import teamDarko from "@/assets/about/team-darko.jpeg";
 export const Route = createFileRoute("/about-us")({
   head: () =>
     pageHead({
-      title: "Who We Are — Skyline",
+      title: "Who We Are - Skyline",
       description:
         "Skyline is the universal bridge for on-chain and real-world finance — connecting UTxO and EVM networks today, AI agents and fiat rails next.",
       path: "/about-us",

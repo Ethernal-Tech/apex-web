@@ -1,4 +1,9 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -45,6 +50,7 @@ import {
   type BridgeTransactionDto,
 } from "@/swagger/apexBridgeApiService";
 import { useLiveTxBalances } from "@/hooks/use-live-tx-balances";
+import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
 import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/transaction/$id")({
@@ -165,7 +171,26 @@ function chainView(chainMetaOf: ChainMetaOf, chainId: string | undefined) {
 
 function TransactionPage() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
+  const {
+    account,
+    isFullyLoggedIn,
+    isConnecting: isRestoring,
+    disconnect: disconnectSession,
+  } = useWalletSession();
+  const walletAddress = account?.account ?? null;
+  const isConnected = isFullyLoggedIn;
+
+  const connect = () => {
+    void navigate({
+      to: "/bridge-app",
+      search: { returnTo: `/transaction/${id}` },
+    });
+  };
+  const disconnect = async () => {
+    await disconnectSession();
+  };
 
   const txId = Number.parseInt(id, 10);
   const settingsQuery = useQuery(settingsQueryOptions);
@@ -286,12 +311,33 @@ function TransactionPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <BridgeHeader>
-        {sender && (
-          <div className="btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold">
+        <button
+          type="button"
+          onClick={isConnected ? disconnect : connect}
+          disabled={isRestoring}
+          title={isConnected ? "Disconnect" : undefined}
+          className="group btn-primary-glow inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold disabled:opacity-60"
+        >
+          {isRestoring ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
             <Wallet className="h-4 w-4" />
-            {shortAddr(sender)}
-          </div>
-        )}
+          )}
+          {isRestoring ? (
+            "Connecting…"
+          ) : isConnected && walletAddress ? (
+            <span className="relative inline-grid justify-items-center">
+              <span className="col-start-1 row-start-1 group-hover:opacity-0">
+                {shortAddr(walletAddress)}
+              </span>
+              <span className="col-start-1 row-start-1 opacity-0 group-hover:opacity-100">
+                Disconnect
+              </span>
+            </span>
+          ) : (
+            "Connect Wallet"
+          )}
+        </button>
       </BridgeHeader>
 
       <main className="bg-hero-glow relative flex-1 overflow-hidden">

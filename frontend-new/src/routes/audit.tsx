@@ -38,7 +38,7 @@ import { pageHead } from "@/lib/seo";
 export const Route = createFileRoute("/audit")({
   head: () =>
     pageHead({
-      title: "Proof of Reserves & Audit — Skyline Bridge",
+      title: "Proof of Reserves & Audit - Skyline Bridge",
       description:
         "A live, public ledger of everything locked in and moved across the Skyline network — verifiable on-chain and updated continuously.",
       path: "/audit",

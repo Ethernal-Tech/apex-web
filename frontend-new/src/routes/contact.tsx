@@ -24,7 +24,7 @@ import logoAsset from "@/assets/skyline-logo-transparent.png";
 export const Route = createFileRoute("/contact")({
   head: () =>
     pageHead({
-      title: "Get in Touch — Skyline",
+      title: "Get in Touch - Skyline",
       description:
         "Have a question about Skyline, our cross-chain bridge, or a partnership? Send us a message and we’ll get back to you as soon as possible.",
       path: "/contact",

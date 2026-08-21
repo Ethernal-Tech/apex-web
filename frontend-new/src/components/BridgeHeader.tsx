@@ -153,6 +153,11 @@ export function BridgeHeader({
             >
               Docs
             </a>
+            {children ? (
+              <div className="mt-2" onClick={() => setMenuOpen(false)}>
+                {children}
+              </div>
+            ) : null}
           </div>
         </div>
       )}
