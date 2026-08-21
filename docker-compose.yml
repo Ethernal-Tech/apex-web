@@ -1,0 +1,48 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: myapp
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d myapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+
+  web-api:
+    image: web-api
+    container_name: web-api
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: myapp
+    ports:
+      - "3000:3000"
+  frontend:
+    image: frontend
+    container_name: frontend
+    ports:
+      - "80:80"
+  cardano-api:
+    image: cardano-api
+    container_name: cardano-api
+    volumes:
+      - "./config.json:/app/config.json"
+
+volumes:
+  db_data:
