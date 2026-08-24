@@ -13,6 +13,8 @@ const PUBLIC_PATHS = [
   "/audit",
   "/privacy-policy",
   "/terms-of-service",
+  "/transactions",
+  "/bridge-app",
 ];
 
 export default defineConfig({
@@ -22,7 +24,15 @@ export default defineConfig({
     server: { entry: "server" },
     spa: {
       enabled: true,
-      prerender: { outputPath: "/index.html" },
+      // maskPath must not be `/`: Start dedupes prerender jobs by path, so
+      // prerendering `/` (the real home) would skip the shell (or vice versa).
+      // `/landing` exists, is not in PUBLIC_PATHS, and returns 200.
+      maskPath: "/landing",
+      prerender: {
+        // `_shell` → `_shell.html`. Nginx catch-all:
+        //   try_files $uri $uri.html $uri/ /_shell.html;
+        outputPath: "/_shell",
+      },
     },
     // Write real HTML for public pages so Telegram/Google see the right title
     // without running JS. Deploy is still a static folder.

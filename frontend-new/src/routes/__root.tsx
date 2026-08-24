@@ -204,9 +204,11 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const showIntro =
-    pathname === "/" || pathname === "/landing" || pathname === "/bridge-app";
+    !router.isShell() &&
+    (pathname === "/" || pathname === "/landing" || pathname === "/bridge-app");
 
   useEffect(() => {
     InitSentry();
