@@ -757,7 +757,7 @@ function BridgeApp() {
   // History → connect → return to the page that asked for the wallet.
   useEffect(() => {
     if (!returnTo || !isFullyLoggedIn) return;
-    void navigate({ to: returnTo });
+    void navigate({ to: returnTo, replace: true });
   }, [returnTo, isFullyLoggedIn, navigate]);
 
   const { data: bridgingAddresses = [] } = useQuery({

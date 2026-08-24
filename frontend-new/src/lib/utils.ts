@@ -5,8 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const SKYLINE_DOCUMENTATION_URL =
-  "https://ethernal-6.gitbook.io/skyline";
+export const SKYLINE_DOCUMENTATION_URL = "https://docs.skylinebridge.tech/";
 
 export const ETHERNAL_GITHUB_URL = "https://github.com/Ethernal-Tech";
 

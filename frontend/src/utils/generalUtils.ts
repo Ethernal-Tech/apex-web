@@ -30,8 +30,7 @@ import { captureAndThrowError, captureException } from '../features/sentry';
 import Web3 from 'web3';
 import { EtherUnits } from 'web3-utils';
 
-export const SKYLINE_DOCUMENTATION_URL =
-	'https://ethernal-6.gitbook.io/skyline';
+export const SKYLINE_DOCUMENTATION_URL = 'https://docs.skylinebridge.tech/';
 
 export const capitalizeWord = (word: string): string => {
 	if (!word || word.length === 0) {

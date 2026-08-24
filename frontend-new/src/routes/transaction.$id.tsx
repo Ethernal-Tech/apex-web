@@ -1,9 +1,4 @@
-import {
-  createFileRoute,
-  Link,
-  useNavigate,
-  useRouter,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -926,21 +921,10 @@ function DetailReturnLink({
   className?: string;
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   return (
-    <button
-      type="button"
-      className={className}
-      onClick={() => {
-        if (router.history.canGoBack()) {
-          router.history.back();
-          return;
-        }
-        void router.navigate({ to: "/transactions" });
-      }}
-    >
+    <Link to="/transactions" className={className}>
       {children}
-    </button>
+    </Link>
   );
 }
 
