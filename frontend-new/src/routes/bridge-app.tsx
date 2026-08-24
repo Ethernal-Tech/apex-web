@@ -448,11 +448,13 @@ function TokenSelect({
   value,
   onChange,
   tokens,
+  id,
 }: {
   label: string;
   value: Token;
   onChange: (t: Token) => void;
   tokens: Token[];
+  id?: string;
 }) {
   const [open, setOpen] = useState(false);
   const canChange = tokens.length > 1;
@@ -463,6 +465,7 @@ function TokenSelect({
       </label>
       <button
         type="button"
+        id={id}
         disabled={!canChange}
         onClick={() => {
           if (canChange) setOpen(true);
@@ -590,6 +593,7 @@ function TokenPickerModal({
           <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 focus-within:border-[oklch(0.72_0.19_245_/_0.6)]">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
+              id="search-tokens"
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -847,6 +851,7 @@ function BridgeApp() {
         {isUnsupportedDevice ? null : (
           <button
             type="button"
+            id="basic-button"
             disabled={connecting}
             onClick={() => {
               void (isConnected ? disconnect() : connect());
@@ -953,6 +958,13 @@ function BridgeApp() {
                       ) : (
                         <button
                           type="button"
+                          id={
+                            connecting
+                              ? undefined
+                              : isConnected
+                                ? "move-funds"
+                                : "bridge-connect"
+                          }
                           disabled={connecting}
                           onClick={() => {
                             void proceed();
@@ -1573,6 +1585,7 @@ function TransferForm({
               </label>
               <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 focus-within:border-[oklch(0.72_0.19_245_/_0.5)]">
                 <input
+                  id="dest-addr"
                   value={destAddress}
                   onChange={(e) => setDestAddress(e.target.value)}
                   placeholder={resolveDestinationAddressPlaceholder(
@@ -1593,6 +1606,7 @@ function TransferForm({
 
             {selectedToken ? (
               <TokenSelect
+                id="src-tokens"
                 label="Source Token"
                 value={selectedToken}
                 onChange={setSelectedToken}
@@ -1616,6 +1630,7 @@ function TransferForm({
                 }`}
               >
                 <input
+                  id="bridge-amount"
                   value={amount}
                   onChange={(e) => {
                     const next = e.target.value.replace(/[^0-9.]/g, "");
@@ -1697,6 +1712,7 @@ function TransferForm({
           </button>
           <button
             type="button"
+            id="bridge-tx"
             onClick={handleMoveFunds}
             disabled={!canMoveFunds || isProcessing}
             className="btn-primary-glow inline-flex items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold uppercase tracking-[0.14em] disabled:cursor-not-allowed disabled:opacity-50"
@@ -1797,5 +1813,5 @@ function FeeRow({
 
 function formatAddress(address: string | null) {
   if (!address) return "";
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  return `${address.slice(0, 7)}...${address.slice(-5)}`;
 }

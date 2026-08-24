@@ -392,7 +392,7 @@ function AuditContent() {
       <main className="bg-hero-glow relative flex-1 overflow-hidden">
         <div className="pointer-events-none absolute left-1/2 top-0 h-[420px] w-[900px] max-w-[140vw] -translate-x-1/2 rounded-full bg-[oklch(0.55_0.22_250_/_0.2)] blur-3xl" />
 
-        <div className="container-page relative py-10 md:py-14">
+        <div id="audit" className="container-page relative py-10 md:py-14">
           <div className="mb-8 flex items-center justify-center gap-2 md:hidden">
             {/* Same treatment as the header bar, so the toggle reads as part of it. */}
             <span className="rounded-full bg-background/70 backdrop-blur-xl">

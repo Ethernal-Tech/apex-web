@@ -64,6 +64,8 @@ export const Route = createFileRoute("/transaction/$id")({
   component: TransactionPage,
 });
 
+const STAGE_STEP_IDS = ["src-status", "bridge-status", "dest-status"] as const;
+
 const STAGE_LABELS = [
   {
     title: "Source lock",
@@ -313,6 +315,7 @@ function TransactionPage() {
       <BridgeHeader>
         <button
           type="button"
+          id={isConnected ? "basic-button" : undefined}
           onClick={isConnected ? disconnect : connect}
           disabled={isRestoring}
           title={isConnected ? "Disconnect" : undefined}
@@ -468,6 +471,7 @@ function TransactionPage() {
                       {stages.map((stageStatus, i) => (
                         <StageColumn
                           key={i}
+                          id={STAGE_STEP_IDS[i]}
                           index={i}
                           status={stageStatus}
                           title={STAGE_LABELS[i].title}
@@ -654,6 +658,7 @@ function LiveBalanceCard({
 }
 
 function StageColumn({
+  id,
   index,
   status,
   title,
@@ -662,6 +667,7 @@ function StageColumn({
   description,
   isRefund,
 }: {
+  id?: string;
   index: number;
   status: StageStatus;
   title: string;
@@ -671,7 +677,7 @@ function StageColumn({
   isRefund: boolean;
 }) {
   return (
-    <div className="flex flex-col items-center text-center">
+    <div id={id} className="flex flex-col items-center text-center">
       <StageOrb
         index={index}
         status={status}

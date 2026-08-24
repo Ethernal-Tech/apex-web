@@ -408,6 +408,7 @@ function TransactionsPage() {
         </Link>
         <button
           type="button"
+          id={isConnected ? "basic-button" : undefined}
           onClick={isConnected ? disconnect : connect}
           disabled={isRestoring}
           title={isConnected ? "Disconnect" : undefined}
@@ -655,11 +656,7 @@ function TransactionsPage() {
                     )}
                     {!listQuery.isError &&
                       paged.map((t) => (
-                        <TxRow
-                          key={t.id}
-                          tx={t}
-                          compact={isCompact}
-                        />
+                        <TxRow key={t.id} tx={t} compact={isCompact} />
                       ))}
                     {!isLoading && !listQuery.isError && paged.length === 0 && (
                       <tr>
@@ -808,13 +805,7 @@ function Th({
   );
 }
 
-function TxRow({
-  tx,
-  compact,
-}: {
-  tx: Tx;
-  compact: boolean;
-}) {
+function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
   const chainMetaOf = useChainMeta();
   const origin = toChainView(chainMetaOf, tx.origin);
   const dest = toChainView(chainMetaOf, tx.destination);
@@ -1109,9 +1100,12 @@ function FilterModal({
           )}
 
           <div>
-            <Label>Destination chain</Label>
+            <Label id="destination-chain-label" htmlFor="destination-chain">
+              Destination chain
+            </Label>
             <div className="relative">
               <select
+                id="destination-chain"
                 value={draft.destination}
                 onChange={(e) => set("destination", e.target.value)}
                 className="h-10 w-full appearance-none rounded-xl border border-white/10 bg-white/[0.04] px-3 pr-9 text-sm text-foreground [color-scheme:dark] focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none"
@@ -1146,8 +1140,9 @@ function FilterModal({
           )}
 
           <div>
-            <Label>Receiver address</Label>
+            <Label htmlFor="receiver-address">Receiver address</Label>
             <input
+              id="receiver-address"
               value={draft.receiver}
               onChange={(e) => set("receiver", e.target.value)}
               placeholder="Search by address…"
@@ -1182,21 +1177,25 @@ function FilterModal({
 
           <div className="grid grid-cols-2 gap-3">
             <NumField
+              id="amount-from"
               label="Amount from"
               value={draft.amountFrom}
               onChange={(v) => set("amountFrom", v)}
             />
             <NumField
+              id="amount-to"
               label="Amount to"
               value={draft.amountTo}
               onChange={(v) => set("amountTo", v)}
             />
             <NumField
+              id="native-token-amount-from"
               label="Token amount from"
               value={draft.tokenFrom}
               onChange={(v) => set("tokenFrom", v)}
             />
             <NumField
+              id="native-token-amount-to"
               label="Token amount to"
               value={draft.tokenTo}
               onChange={(v) => set("tokenTo", v)}
@@ -1234,12 +1233,25 @@ function FilterModal({
   );
 }
 
-function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-      {children}
-    </div>
-  );
+function Label({
+  children,
+  id,
+  htmlFor,
+}: {
+  children: React.ReactNode;
+  id?: string;
+  htmlFor?: string;
+}) {
+  const className =
+    "mb-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground";
+  if (id || htmlFor) {
+    return (
+      <label id={id} htmlFor={htmlFor} className={`block ${className}`}>
+        {children}
+      </label>
+    );
+  }
+  return <div className={className}>{children}</div>;
 }
 
 function NumField({
@@ -1247,16 +1259,19 @@ function NumField({
   value,
   onChange,
   disabled,
+  id,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   disabled?: boolean;
+  id?: string;
 }) {
   return (
     <div>
-      <Label>{label}</Label>
+      <Label htmlFor={id}>{label}</Label>
       <input
+        id={id}
         type="number"
         inputMode="decimal"
         value={value}
