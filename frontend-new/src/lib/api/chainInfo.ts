@@ -7,7 +7,7 @@ import {
 } from "@/lib/chains";
 
 /**
- * `GET /chainInfo` — how each chain is presented: accent color, name, logo, list
+ * `GET /chainInfo` - how each chain is presented: accent color, name, logo, list
  * order, family and native symbol. The web-api reads it from a config file it
  * re-checks on every request, so all of that can change without a frontend
  * deploy. The payload shape lives in lib/chains.ts, next to the fallbacks that
@@ -24,7 +24,7 @@ export async function fetchChainInfos(): Promise<ChainInfosResponse> {
   }
 
   const payload = (await res.json()) as ChainInfosResponse;
-  // keeps getChainMeta/getSrcChains working outside React — see lib/chains.ts
+  // keeps getChainMeta/getSrcChains working outside React - see lib/chains.ts
   setChainInfosRegistry(payload);
   return payload;
 }

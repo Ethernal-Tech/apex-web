@@ -1,6 +1,11 @@
-import { NETWORKS, setNetwork, useNetwork, type SkylineNetwork } from "@/hooks/use-network";
+import {
+  NETWORKS,
+  setNetwork,
+  useNetwork,
+  type SkylineNetwork,
+} from "@/hooks/use-network";
 
-/** Accent per network — mainnet keeps the Skyline blue, testnet warns in amber. */
+/** Accent per network - mainnet keeps the Skyline blue, testnet warns in amber. */
 const ACCENT: Record<
   SkylineNetwork,
   { dot: string; text: string; pill: string; highlight: string }
@@ -21,7 +26,13 @@ const ACCENT: Record<
   },
 };
 
-function Dot({ network, active }: { network: SkylineNetwork; active: boolean }) {
+function Dot({
+  network,
+  active,
+}: {
+  network: SkylineNetwork;
+  active: boolean;
+}) {
   return (
     <span className="relative flex h-1.5 w-1.5">
       {active && (
@@ -61,7 +72,9 @@ export function NetworkToggle({ className = "" }: { className?: string }) {
             aria-pressed={active}
             onClick={() => setNetwork(n.id)}
             className={`relative z-10 inline-flex items-center justify-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[oklch(0.72_0.19_245_/_0.6)] ${
-              active ? ACCENT[n.id].text : "text-muted-foreground hover:text-foreground"
+              active
+                ? ACCENT[n.id].text
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Dot network={n.id} active={active} />

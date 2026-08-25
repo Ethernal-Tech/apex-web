@@ -396,7 +396,7 @@ export type EstimateBridgeFeesParams = {
   amountDisplay: string;
   tokenID: number;
   currencyID: number | undefined;
-  /** Currency balance in dfm — used as EVM/Solana estimate amount when form amount empty. */
+  /** Currency balance in dfm - used as EVM/Solana estimate amount when form amount empty. */
   currencyBalanceDfm: string;
 };
 

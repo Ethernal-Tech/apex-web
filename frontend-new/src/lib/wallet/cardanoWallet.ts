@@ -228,7 +228,7 @@ class CardanoWalletHandler {
       return getAssetsSumMap(allUtxos);
     }
 
-    // Prefer CIP-30 Value CBOR — no per-UTXO address decode needed for display.
+    // Prefer CIP-30 Value CBOR - no per-UTXO address decode needed for display.
     const balanceHex = await this._enabledWallet!.getBalance();
     return parseCip30Value(balanceHex);
   };
@@ -259,7 +259,7 @@ class CardanoWalletHandler {
 /**
  * Port of MeshSDK `BrowserWallet.addBrowserWitnesses`.
  *
- * Must keep the original tx body bytes — re-encoding via `Transaction.new()`
+ * Must keep the original tx body bytes - re-encoding via `Transaction.new()`
  * changes the body CBOR and invalidates wallet signatures (Eternl TxSendError 3100).
  * `FixedTransaction` preserves the raw body while attaching vkey witnesses.
  */

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 /**
  * Phones and tablets cannot run the wallet extensions the bridge relies on, so
- * bridging is gated on the device platform rather than on the viewport width —
+ * bridging is gated on the device platform rather than on the viewport width -
  * a desktop browser in a narrow window still connects fine.
  */
 function detectUnsupportedDevice(): boolean {

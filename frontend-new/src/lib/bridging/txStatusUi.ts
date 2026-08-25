@@ -45,7 +45,7 @@ const STATUS_COPY: Record<string, StatusCopy> = {
   ExecutedOnDestination: {
     title: (_s, d) => `Arrived on ${d}`,
     desc: (_s, d) =>
-      `Your assets have landed on the ${d} chain — the transfer is complete.`,
+      `Your assets have landed on the ${d} chain - the transfer is complete.`,
   },
   InvalidRequest: {
     title: () => "Request couldn't be validated",
@@ -54,7 +54,7 @@ const STATUS_COPY: Record<string, StatusCopy> = {
   },
 };
 
-/** Overrides for refund txs — late steps return funds to source, not destination. */
+/** Overrides for refund txs - late steps return funds to source, not destination. */
 const REFUND_STATUS_COPY: Partial<Record<string, StatusCopy>> = {
   SubmittedToDestination: {
     title: (s) => `Returning to ${s}`,
@@ -63,7 +63,7 @@ const REFUND_STATUS_COPY: Partial<Record<string, StatusCopy>> = {
   ExecutedOnDestination: {
     title: (s) => `Refunded on ${s}`,
     desc: (s) =>
-      `Your assets have been returned to the ${s} chain — the refund is complete.`,
+      `Your assets have been returned to the ${s} chain - the refund is complete.`,
   },
 };
 

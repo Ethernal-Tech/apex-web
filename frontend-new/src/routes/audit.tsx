@@ -40,7 +40,7 @@ export const Route = createFileRoute("/audit")({
     pageHead({
       title: "Proof of Reserves & Audit - Skyline Bridge",
       description:
-        "A live, public ledger of everything locked in and moved across the Skyline network — verifiable on-chain and updated continuously.",
+        "A live, public ledger of everything locked in and moved across the Skyline network - verifiable on-chain and updated continuously.",
       path: "/audit",
     }),
   component: AuditPage,
@@ -71,7 +71,7 @@ function usdOfRows(rows: TokenRow[], priceOf: PriceOf) {
   return rows.reduce((s, r) => s + r.amount * priceOf(r.name), 0);
 }
 
-/** `Cardano · Prime · Vector` — the chains this world actually holds. */
+/** `Cardano · Prime · Vector` - the chains this world actually holds. */
 const chainTag = (world: WorldBreakdown) =>
   [...new Set([...world.locked, ...world.bridged].map((c) => c.label))].join(
     " · ",
@@ -129,7 +129,7 @@ const fmtTok = (n: number) =>
     maximumFractionDigits: 2,
     minimumFractionDigits: 2,
   });
-/** `12 Jul` — snapshots are UTC midnight, so read them back in UTC. */
+/** `12 Jul` - snapshots are UTC midnight, so read them back in UTC. */
 const fmtDay = (d: Date) =>
   d.toLocaleDateString("en-GB", {
     day: "numeric",
@@ -410,7 +410,7 @@ function AuditContent() {
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
               A live, public ledger of everything locked in and moved across the
-              Skyline network — spanning Cardano, Apex Fusion, EVM chains and
+              Skyline network - spanning Cardano, Apex Fusion, EVM chains and
               Solana, verifiable on-chain and updated continuously.
             </p>
           </div>
@@ -552,8 +552,8 @@ function AuditContent() {
                 {historyLoading
                   ? "Loading history…"
                   : points.length === 1
-                    ? "Only one snapshot so far — the chart needs at least two days of history."
-                    : "No history yet — snapshots are taken daily at 00:00 UTC."}
+                    ? "Only one snapshot so far - the chart needs at least two days of history."
+                    : "No history yet - snapshots are taken daily at 00:00 UTC."}
               </div>
             )}
           </div>
@@ -581,7 +581,7 @@ function AuditContent() {
             </span>
           </div>
 
-          {/* World tabs — the note sits below them on a phone, where sharing the
+          {/* World tabs - the note sits below them on a phone, where sharing the
               row would squeeze the tab labels onto two lines each. */}
           <div className="mt-8">
             <div className="flex items-end gap-5 border-b border-white/10 md:gap-6">
@@ -649,7 +649,7 @@ function AuditContent() {
               return (
                 <>
                   <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
-                    {/* Row 1 — summary cards */}
+                    {/* Row 1 - summary cards */}
                     <SummaryOnly
                       title="Total Locked"
                       rows={data.summaryLocked}
@@ -659,11 +659,11 @@ function AuditContent() {
                       rows={data.summaryBridged}
                     />
 
-                    {/* Row 2 — per-chain headers */}
+                    {/* Row 2 - per-chain headers */}
                     <SectionLabel>Total Locked Per Chain</SectionLabel>
                     <SectionLabel>Total Bridged Per Chain</SectionLabel>
 
-                    {/* Rows 3..N — chain pairs, one grid row per chain */}
+                    {/* Rows 3..N - chain pairs, one grid row per chain */}
                     {chainOrder.map((chain) => (
                       <div key={chain} className="contents">
                         <ChainCard entry={lockedByChain.get(chain)} />
@@ -763,7 +763,7 @@ function MetricCard({
       {/* The sparkline is pinned to the card's bottom-right corner, so the note
           has to stop short of it: it gives up the graph's width plus its inset,
           and wraps into three shorter lines alongside instead. Two thresholds
-          because the graph is smaller under 500px — see its classes below. */}
+          because the graph is smaller under 500px - see its classes below. */}
       <div className="mt-4 max-w-[min(12.5rem,calc(100%-7.75rem))] text-xs leading-relaxed text-muted-foreground min-[500px]:max-w-[min(20rem,calc(100%-8.75rem))]">
         {note}
       </div>

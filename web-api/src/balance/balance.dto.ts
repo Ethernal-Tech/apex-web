@@ -32,7 +32,7 @@ export class AddressBalanceDto {
 	tokens: BalanceTokenDto[];
 }
 
-/** Documented for Swagger only — query params are read via @Query. */
+/** Documented for Swagger only - query params are read via @Query. */
 export class AddressBalanceQueryDocs {
 	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
 	chain: ChainEnum;

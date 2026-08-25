@@ -37,7 +37,7 @@ export function getDefaultBridgeTxFee(params: {
 
 /**
  * When bridging Cardano native tokens, add the min ADA required to carry
- * those tokens to the bridge address — but only while the displayed fee is
+ * those tokens to the bridge address - but only while the displayed fee is
  * still the predefined minimum (live create-fee has not replaced it yet).
  */
 export async function getAdjustedBridgeTxFee(params: {

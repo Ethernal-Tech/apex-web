@@ -1,8 +1,8 @@
 /** Shared USD formatting for the TVL / TVB stat chips. */
 
-/** `$12.45M` — for tight spots (mobile header, compact chips). */
+/** `$12.45M` - for tight spots (mobile header, compact chips). */
 export function formatUsdCompact(value: number | undefined): string {
-  if (value === undefined || !Number.isFinite(value)) return "—";
+  if (value === undefined || !Number.isFinite(value)) return "-";
 
   const abs = Math.abs(value);
   if (abs >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
@@ -11,7 +11,7 @@ export function formatUsdCompact(value: number | undefined): string {
   return `$${value.toFixed(2)}`;
 }
 
-/** `$12,450,238.71` — for the wide header. */
+/** `$12,450,238.71` - for the wide header. */
 export function formatUsdFull(value: number | undefined): string {
   if (value === undefined || !Number.isFinite(value)) return "—";
 

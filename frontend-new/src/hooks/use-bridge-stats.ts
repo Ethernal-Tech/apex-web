@@ -13,7 +13,7 @@ const NEXUS_RPC_URLS = {
 } as const;
 
 /**
- * Native APEX held by the Nexus OFT contract. Read straight from the chain —
+ * Native APEX held by the Nexus OFT contract. Read straight from the chain -
  * it is not part of `GET /lockedTokens`.
  *
  * Plain JSON-RPC rather than web3, so the landing page does not have to pull
@@ -78,7 +78,7 @@ export type BridgeStats = {
  *
  * Summed and priced by the web-api rather than here: deriving them needs the
  * whole locked tokens payload, every token price and the Nexus OFT balance, and
- * waiting on all three left the header on "—" for seconds. The web-api keeps
+ * waiting on all three left the header on "-" for seconds. The web-api keeps
  * the figures cached and recomputes them whenever `/lockedTokens` is queried,
  * so this is a single fast request.
  */

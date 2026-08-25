@@ -39,7 +39,7 @@ function emitDone() {
 
 export function IntroAnimation() {
   // Start as "playing" on both SSR and client so the overlay paints on the
-  // very first frame — no flash of the page before the intro kicks in.
+  // very first frame - no flash of the page before the intro kicks in.
   // We synchronously clear it in useLayoutEffect if this session already saw it.
   const [active, setActive] = useState(true);
   const [phase, setPhase] = useState<Phase>("horizon");
@@ -61,7 +61,7 @@ export function IntroAnimation() {
   }, []);
 
   // Preload the intro sound so it's ready to play the instant the user enters.
-  // We do NOT call play() here — browsers block audio without a user gesture,
+  // We do NOT call play() here - browsers block audio without a user gesture,
   // so playback happens in the "wait" phase's interaction handler below.
   useEffect(() => {
     if (!active) return;
@@ -78,7 +78,7 @@ export function IntroAnimation() {
   }, [active]);
 
   // Logo "load" sequence: horizon reveals, then the text appears. This part is
-  // unskippable — no interaction listeners are attached until the "wait" phase.
+  // unskippable - no interaction listeners are attached until the "wait" phase.
   useEffect(() => {
     if (!active) return;
     const t1 = setTimeout(() => setPhase("text"), D.horizon);
@@ -96,7 +96,7 @@ export function IntroAnimation() {
       if (withSound && audioRef.current) {
         // The gesture that got us here satisfies the browser's autoplay policy.
         audioRef.current.play().catch((err) => {
-          // Still possible to fail (codec, muted device, etc.) — fly on anyway.
+          // Still possible to fail (codec, muted device, etc.) - fly on anyway.
           console.debug("Intro sound failed to play:", err);
         });
       }

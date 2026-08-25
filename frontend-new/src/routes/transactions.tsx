@@ -68,7 +68,7 @@ export const Route = createFileRoute("/transactions")({
   }),
   head: () =>
     pageHead({
-      title: "Bridging History — Skyline Bridge",
+      title: "Bridging History - Skyline Bridge",
       description:
         "Browse, filter, and sort every bridge transaction across the Skyline network.",
       path: "/transactions",
@@ -458,7 +458,7 @@ function TransactionsPage() {
                 Every hop across the Skyline
               </h1>
               <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
-                Search, sort, and filter every bridge transaction — from source
+                Search, sort, and filter every bridge transaction - from source
                 lock to destination release.
               </p>
             </div>

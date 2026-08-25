@@ -26,7 +26,7 @@ Allow: /llm.txt
 Sitemap: https://skyline.testnet.ethernal.work/sitemap.xml
 
 # LLM discovery files. "LLMs:" is not part of the robots.txt standard and no
-# crawler parses it — it carries over from the previous frontend as a hint for
+# crawler parses it - it carries over from the previous frontend as a hint for
 # humans. Actual discovery is the well-known path itself: /llms.txt
 LLMs: https://skyline.testnet.ethernal.work/llms.txt
 LLMs: https://skyline.testnet.ethernal.work/llm.txt

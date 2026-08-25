@@ -1,11 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
 import appSettings from "@/settings/appSettings";
 
-/** Every amount the web-api serves is in DFM — 6 decimals. */
+/** Every amount the web-api serves is in DFM - 6 decimals. */
 export const DFM_UNIT = 1_000_000;
 
 /**
- * `GET /lockedTokens` — amounts are strings in DFM (6 decimals) for every
+ * `GET /lockedTokens` - amounts are strings in DFM (6 decimals) for every
  * chain, the web-api normalises EVM wei before serving them.
  */
 export type LockedTokensResponse = {
@@ -37,7 +37,7 @@ export const lockedTokensQueryOptions = queryOptions({
 });
 
 /**
- * `GET /lockedTokens/summary` — TVL and TVB already summed and priced, in USD.
+ * `GET /lockedTokens/summary` - TVL and TVB already summed and priced, in USD.
  *
  * The full `/lockedTokens` payload takes seconds to produce (an external API
  * call, DB aggregates and a balance read per chain), so the headline figures

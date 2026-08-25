@@ -37,7 +37,7 @@
 :root,
 .dark {
   --radius: 0.5rem;
-  /* Dark (default) — derived from Skyline logo: deep midnight navy → electric blue glow */
+  /* Dark (default) - derived from Skyline logo: deep midnight navy → electric blue glow */
   --background: oklch(0.14 0.03 260);
   --foreground: oklch(0.97 0.005 250);
   --surface: oklch(0.18 0.035 262);

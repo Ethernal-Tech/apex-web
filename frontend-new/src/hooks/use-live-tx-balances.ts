@@ -89,7 +89,7 @@ export function useLiveTxBalances(params: {
   /** When true, fetch a fresh snapshot (Finished / Refunded / …). */
   isFinal: boolean;
   /**
-   * True after this visit saw the tx in progress — keeps balances visible
+   * True after this visit saw the tx in progress - keeps balances visible
    * through finalization. False for already-final history opens.
    */
   shouldTrackBalances?: boolean;

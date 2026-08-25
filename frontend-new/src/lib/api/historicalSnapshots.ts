@@ -5,7 +5,7 @@ import appSettings from "@/settings/appSettings";
 export type ChainTokenAmounts = Record<string, Record<string, string>>;
 
 /**
- * `GET /lockedTokens/historical` — one row per daily UTC-midnight snapshot of
+ * `GET /lockedTokens/historical` - one row per daily UTC-midnight snapshot of
  * what the bridge held and had moved, ordered by `snapshotAt` ascending.
  *
  * Amounts only: the web-api stores no historical prices, so a USD series built

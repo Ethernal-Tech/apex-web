@@ -6,18 +6,18 @@ const OG_IMAGE_PATH = "/og.png";
  * Site identity shared by the document head and `public/site.webmanifest`.
  *
  * The manifest is a static file served straight out of `public/`, so it cannot
- * import this — its `name`, `short_name`, `description`, `theme_color`,
+ * import this - its `name`, `short_name`, `description`, `theme_color`,
  * `background_color`, and `lang` mirror these values by hand. Change both together.
  */
 export const SITE = {
   name: "Skyline",
   shortName: "Skyline",
   description:
-    "Skyline connects every chain, agent, and dollar. Bridge assets instantly today — soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
+    "Skyline connects every chain, agent, and dollar. Bridge assets instantly today - soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
   /**
    * `--background` from styles.css converted to sRGB hex. It has to be hex here:
-   * manifest colors go through a plain CSS color parse, and oklch() — the form
-   * the stylesheet uses — is not reliably supported by manifest parsers.
+   * manifest colors go through a plain CSS color parse, and oklch() - the form
+   * the stylesheet uses - is not reliably supported by manifest parsers.
    */
   themeColor: "#030915",
   lang: "en",
@@ -31,7 +31,7 @@ function absoluteUrl(path: string): string {
 
 /**
  * One place for the tags crawlers and chat-app previews actually read.
- * `path` is the site path (e.g. `/audit`), not a full URL — siteUrl comes from settings.
+ * `path` is the site path (e.g. `/audit`), not a full URL - siteUrl comes from settings.
  */
 export function pageHead({
   title,

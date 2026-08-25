@@ -110,7 +110,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         // so the mobile browser chrome, the installed-app splash screen, and the
         // page itself are all the same colour.
         { name: "theme-color", content: SITE.themeColor },
-        // Mirrors short_name in the manifest — this is the iOS equivalent.
+        // Mirrors short_name in the manifest - this is the iOS equivalent.
         { name: "apple-mobile-web-app-title", content: SITE.shortName },
       ],
       links: [
@@ -118,7 +118,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         // Meta is deduped by name/property, so a route's title/description/og
         // override these defaults; links are concatenated instead, so spreading
         // them would leave every route with the root's `canonical` of "/" next
-        // to its own — and Google ignores all of them when they conflict.
+        // to its own - and Google ignores all of them when they conflict.
         // Every route sets its own head via pageHead(), so the canonical is
         // already covered.
         {
@@ -127,7 +127,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         },
         // Square artwork everywhere the icon is shown on its own edge-to-edge
         // (tab, taskbar, iOS/Android home screen). The one round icon is for
-        // consumers that crop to a circle — chiefly Google Search results —
+        // consumers that crop to a circle - chiefly Google Search results -
         // which is why it is the only 192px `rel="icon"`: tabs resolve to the
         // 16/32 entries above it, and Google prefers a multiple of 48px.
         {

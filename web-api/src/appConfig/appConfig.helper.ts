@@ -114,7 +114,7 @@ export const evmAddressConfig = makeValidator((x) => {
 });
 
 /**
- * `chain::value,chain::value` — like evmAddressConfig
+ * `chain::value,chain::value` - like evmAddressConfig
  */
 export const chainValueConfig = makeValidator((x) => {
 	if (!x) return [];

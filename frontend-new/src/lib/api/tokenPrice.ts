@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import appSettings from "@/settings/appSettings";
 
 /**
- * `GET /tokenPrice` — one entry per bridge token ID, so a price can be joined
+ * `GET /tokenPrice` - one entry per bridge token ID, so a price can be joined
  * straight onto amounts keyed by token ID. Representations of the same asset
  * repeat the price under their own ID (ADA and xADA are both priced as ADA).
  */

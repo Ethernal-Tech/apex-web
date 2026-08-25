@@ -2,7 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import appSettings from "@/settings/appSettings";
 
 /**
- * `GET /tokenInfo` — how a bridge token is presented, per token ID. The web-api
+ * `GET /tokenInfo` - how a bridge token is presented, per token ID. The web-api
  * reads it from a config file it re-checks on every request, so a label, icon
  * or color can change without a frontend deploy.
  */

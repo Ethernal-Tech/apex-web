@@ -35,7 +35,7 @@ export const Route = createFileRoute("/about-us")({
     pageHead({
       title: "Who We Are - Skyline",
       description:
-        "Skyline is the universal bridge for on-chain and real-world finance — connecting UTxO and EVM networks today, AI agents and fiat rails next.",
+        "Skyline is the universal bridge for on-chain and real-world finance - connecting UTxO and EVM networks today, AI agents and fiat rails next.",
       path: "/about-us",
     }),
   component: AboutPage,
@@ -140,7 +140,7 @@ function Hero() {
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-pretty text-base text-muted-foreground md:text-lg">
           Skyline is built by engineers who believe moving value between
-          networks should feel like sending a message — instant, verifiable, and
+          networks should feel like sending a message - instant, verifiable, and
           boring in the best possible way. We connect every chain, every agent,
           and every dollar.
         </p>
@@ -268,7 +268,7 @@ function Values() {
     {
       icon: Globe,
       title: "Chain-agnostic",
-      text: "UTxO, EVM, SVM — we treat each execution model on its own terms instead of forcing one design onto all of them.",
+      text: "UTxO, EVM, SVM - we treat each execution model on its own terms instead of forcing one design onto all of them.",
     },
     {
       icon: GitBranch,
@@ -322,7 +322,7 @@ function Team() {
     {
       name: "Srdjan Vukmirovic",
       image: teamSrdjan,
-      // role: "Technical lead — protocol & validators",
+      // role: "Technical lead - protocol & validators",
       text: "Srdjan, a full professor at the Faculty of Technical Sciences, University of Novi Sad, teaches Cloud Computing, AI and Blockchain, and leads technology across several startups with a focus on promoting new ways of thinking about innovation.",
     },
     {
@@ -498,7 +498,7 @@ function AboutPage() {
           eyebrow="The origin"
           title="Bridges shouldn’t be the weakest link"
           body={[
-            "Skyline started with a simple frustration: the fastest way to lose money in crypto was to move it. Bridges were opaque, custodial, slow, and — too often — the headline of the next exploit.",
+            "Skyline started with a simple frustration: the fastest way to lose money in crypto was to move it. Bridges were opaque, custodial, slow, and - too often - the headline of the next exploit.",
             "So we rebuilt the flow from the lock contract up. Assets are locked and minted through a verifiable, non-custodial pipeline that spans UTxO chains like Prime and Vector and EVM networks like Nexus, with reserves published live for anyone to audit.",
           ]}
           image={bridgeImg}
@@ -509,7 +509,7 @@ function AboutPage() {
           eyebrow="What’s next"
           title="Finance that agents can operate"
           body={[
-            "The next wave of on-chain activity won’t be typed into a form — it will be initiated by autonomous agents rebalancing, settling, and routing liquidity around the clock.",
+            "The next wave of on-chain activity won’t be typed into a form - it will be initiated by autonomous agents rebalancing, settling, and routing liquidity around the clock.",
             "We’re making Skyline machine-native: deterministic quotes, programmatic transfer intents, and guardrails that let an agent move value across chains with the same safety envelope a human gets in the app.",
           ]}
           image={agentsImg}
@@ -521,7 +521,7 @@ function AboutPage() {
           title="Connecting the dollar economy"
           body={[
             "Cross-chain liquidity only matters if it can reach the real world. That means stablecoins, card rails, and payout networks sitting on the same side of the bridge as your on-chain balance.",
-            "Our TradFi track brings fiat on- and off-ramps into the Skyline flow, so a transfer can start as a card payment and end as a token on the chain of your choice — with one audit trail across the whole journey.",
+            "Our TradFi track brings fiat on- and off-ramps into the Skyline flow, so a transfer can start as a card payment and end as a token on the chain of your choice - with one audit trail across the whole journey.",
           ]}
           image={tradfiImg}
           alt="Digital dollar and stablecoin flowing along light rails into a blockchain grid"

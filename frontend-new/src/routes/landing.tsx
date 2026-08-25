@@ -7,7 +7,7 @@ export const Route = createFileRoute("/landing")({
     pageHead({
       title: "Skyline",
       description:
-        "Skyline connects every chain, agent, and dollar. Bridge assets instantly today — soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
+        "Skyline connects every chain, agent, and dollar. Bridge assets instantly today - soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
       path: "/",
       index: false,
     }),

@@ -49,7 +49,7 @@ function toUsd(
   return usd;
 }
 
-/** UTC midnight, `days` back — stable within a day, so the query key is too. */
+/** UTC midnight, `days` back - stable within a day, so the query key is too. */
 function utcMidnightDaysAgo(days: number): string {
   const date = new Date();
   date.setUTCHours(0, 0, 0, 0);
@@ -61,7 +61,7 @@ function utcMidnightDaysAgo(days: number): string {
  * TVL / TVB over time, from the web-api's daily snapshots.
  *
  * The snapshots hold amounts, not prices, so every point is valued at today's
- * rates — the curve tracks what the bridge held, not what it was worth on the
+ * rates - the curve tracks what the bridge held, not what it was worth on the
  * day. `useBridgeStats` is the same computation for right now.
  */
 export function useBridgeHistory(days: number): BridgeHistory {

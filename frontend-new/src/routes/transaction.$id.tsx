@@ -51,7 +51,7 @@ import { pageHead } from "@/lib/seo";
 export const Route = createFileRoute("/transaction/$id")({
   head: ({ params }) =>
     pageHead({
-      title: "Skyline Bridge — Transaction",
+      title: "Skyline Bridge - Transaction",
       description: "Track your Skyline bridging transaction across chains.",
       path: `/transaction/${params.id}`,
       index: false,

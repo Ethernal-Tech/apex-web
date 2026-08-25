@@ -1,7 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import appSettings from "@/settings/appSettings";
 
-/** `GET /stats` — the landing page's network-wide counters. */
+/** `GET /stats` - the landing page's network-wide counters. */
 export type LandingStats = {
   /** Every bridging transaction the web-api has recorded. */
   bridgingTransactions: number;

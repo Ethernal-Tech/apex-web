@@ -99,7 +99,7 @@ import { pageHead } from "@/lib/seo";
 export const Route = createFileRoute("/bridge-app")({
   head: () =>
     pageHead({
-      title: "Skyline Bridge — Move assets across chains",
+      title: "Skyline Bridge - Move assets across chains",
       description:
         "The Skyline Bridge app. Move native assets across 10+ chains in seconds.",
       path: "/bridge-app",
@@ -1044,7 +1044,7 @@ function BridgeApp() {
           <FooterSocials className="order-2 md:flex-1 md:justify-center" />
           <div className="order-1 flex items-center gap-2 md:order-3 md:flex-1 md:justify-end">
             <span className="text-muted-foreground/70">Network:</span>
-            {/* Locked once the transfer is underway — the funds are already bound to this network. */}
+            {/* Locked once the transfer is underway - the funds are already bound to this network. */}
             {step === "transfer" ? (
               <NetworkBadge className="inline-flex" />
             ) : (

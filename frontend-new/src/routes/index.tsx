@@ -42,7 +42,7 @@ export const Route = createFileRoute("/")({
     pageHead({
       title: "Skyline",
       description:
-        "Skyline connects every chain, agent, and dollar. Bridge assets instantly today — soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
+        "Skyline connects every chain, agent, and dollar. Bridge assets instantly today - soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
       path: "/",
     }),
   component: Landing,
@@ -168,7 +168,7 @@ function Header() {
         </button>
       </div>
 
-      {/* Mobile stats — below the logo so they never overlap it */}
+      {/* Mobile stats - below the logo so they never overlap it */}
       <div className="flex w-full items-center justify-center gap-3 px-4 pb-3 min-[875px]:hidden">
         <Link to="/audit" title="View full audit" aria-label="View full audit">
           <StatChip label="TVL" value={tvl} compact interactive />
@@ -247,7 +247,7 @@ function Hero() {
         <div className="mx-auto max-w-3xl text-center">
           <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs text-muted-foreground backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.85_0.18_235)] shadow-[0_0_8px_oklch(0.85_0.18_235)]" />
-            Bridge is live — AI &amp; TradFi rails coming soon
+            Bridge is live - AI &amp; TradFi rails coming soon
           </div>
           <h1 className="text-gradient-sky text-balance text-5xl font-semibold leading-[1.05] md:text-7xl">
             One skyline
@@ -257,7 +257,7 @@ function Hero() {
           <p className="mx-auto mt-6 max-w-xl text-balance text-base text-muted-foreground md:text-lg">
             Move assets between blockchains in seconds. Soon, let AI agents
             settle on your behalf and reach the dollar economy through Stripe
-            and stablecoins — all from one horizon.
+            and stablecoins - all from one horizon.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <a
@@ -323,7 +323,7 @@ function Pillars() {
       icon: Bot,
       title: "AI Agentic Finance",
       description:
-        "Delegate on-chain strategies to autonomous agents. Set intent — rebalance, yield-farm, or DCA — and let Skyline execute across every chain, 24/7.",
+        "Delegate on-chain strategies to autonomous agents. Set intent - rebalance, yield-farm, or DCA - and let Skyline execute across every chain, 24/7.",
       bullets: [
         "Intent-based execution",
         "Programmable guardrails",
@@ -338,7 +338,7 @@ function Pillars() {
       icon: Landmark,
       title: "TradFi Connector",
       description:
-        "Bridge on-chain liquidity to the real dollar economy. Off-ramp via Stripe and settle in regulated stablecoins — with the compliance stack built in.",
+        "Bridge on-chain liquidity to the real dollar economy. Off-ramp via Stripe and settle in regulated stablecoins - with the compliance stack built in.",
       bullets: [
         "Stripe payouts & payments",
         "Stablecoin settlement (USDC, PYUSD)",
@@ -359,7 +359,7 @@ function Pillars() {
             Three rails. <span className="text-gradient-sky">One horizon.</span>
           </h2>
           <p className="mt-4 text-balance text-muted-foreground">
-            Built as a modular network — start with the bridge you need today,
+            Built as a modular network - start with the bridge you need today,
             and grow into the AI and fiat rails as they land.
           </p>
         </div>
@@ -420,7 +420,7 @@ function Pillars() {
   );
 }
 
-/** `1.24M` — a plain count, in the same shorthand as the USD figures. */
+/** `1.24M` - a plain count, in the same shorthand as the USD figures. */
 function formatCountCompact(value: number | undefined): string {
   if (value === undefined || !Number.isFinite(value)) return "—";
 
@@ -549,7 +549,7 @@ function Orbit({
         transform: `rotate(${tilt}deg)`,
       }}
     >
-      {/* Ring — borderRadius must be 50%: rounded-full (9999px) turns a
+      {/* Ring - borderRadius must be 50%: rounded-full (9999px) turns a
           non-square box into a pill with straight sides, not an ellipse */}
       <div
         className="absolute inset-0 border"
@@ -593,7 +593,7 @@ function Orbit({
                   style={{ animation: counterSpin }}
                 >
                   {/* Center content on the pivot, undo the squash, undo the tilt.
-                      Order matters — the parent chain rotate(tilt) · scaleY(squash)
+                      Order matters - the parent chain rotate(tilt) · scaleY(squash)
                       inverts as scaleY(1/squash) · rotate(-tilt); swapping them
                       shears the icons because scale and rotate don't commute */}
                   <div

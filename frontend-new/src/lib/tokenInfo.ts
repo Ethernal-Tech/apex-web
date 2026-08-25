@@ -47,7 +47,7 @@ export function setTokenNames(
   tokens: Array<{ id: number; name: string }> | undefined,
 ): void {
   if (!tokens?.length) return;
-  // Only fill gaps until /tokenInfo loads — do not overwrite API metadata.
+  // Only fill gaps until /tokenInfo loads - do not overwrite API metadata.
   for (const t of tokens) {
     if (byId.has(t.id)) continue;
     byId.set(t.id, {
