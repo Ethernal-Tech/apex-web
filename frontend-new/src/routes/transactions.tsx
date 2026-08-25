@@ -157,8 +157,8 @@ function mapDtoToTx(
     tokenLabel,
     receiver: dto.receiverAddresses,
     sender: dto.senderAddress,
-    createdAt: dto.createdAt,
-    finishedAt: dto.finishedAt ?? null,
+    createdAt: toDate(dto.createdAt) ?? new Date(0),
+    finishedAt: toDate(dto.finishedAt),
     status: statusMeta.kind,
     statusLabel: statusMeta.label,
     rawStatus: dto.status,
@@ -361,13 +361,21 @@ function TransactionsPage() {
     },
   });
 
-  const paged = useMemo(
-    () =>
-      (listQuery.data?.items ?? []).map((dto) =>
-        mapDtoToTx(dto, settings, chainMetaOf),
-      ),
-    [listQuery.data, settings, chainMetaOf],
-  );
+  const paged = useMemo(() => {
+    const rows = (listQuery.data?.items ?? []).map((dto) =>
+      mapDtoToTx(dto, settings, chainMetaOf),
+    );
+    if (sortKey !== "finishedAt") return rows;
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      const at = a.finishedAt?.getTime();
+      const bt = b.finishedAt?.getTime();
+      if (at == null && bt == null) return 0;
+      if (at == null) return 1;
+      if (bt == null) return -1;
+      return (at - bt) * dir;
+    });
+  }, [listQuery.data, settings, chainMetaOf, sortKey, sortDir]);
 
   const total = listQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -1329,6 +1337,12 @@ function AddressCell({ address }: { address: string }) {
       </button>
     </div>
   );
+}
+
+function toDate(value: Date | string | null | undefined): Date | null {
+  if (value == null || value === "") return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 }
 
 function formatDate(d: Date) {

@@ -119,5 +119,47 @@ describe('BridgeTransactionService', () => {
 			expect(result.items.length).toBe(0);
 			expect(result.total).toBe(0);
 		});
+
+		it('orders finishedAt with nulls last', async () => {
+			const spy = jest
+				.spyOn(bridgeTransactionRepository, 'findAndCount')
+				.mockResolvedValue([[], 0]);
+
+			await service.getAllFiltered({
+				orderBy: 'finishedAt',
+				order: 'desc',
+			});
+
+			expect(spy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					order: {
+						finishedAt: { direction: 'desc', nulls: 'LAST' },
+					},
+				}),
+			);
+		});
+
+		it('orders status by display kind so success and refunded do not interleave', async () => {
+			const qb = {
+				setFindOptions: jest.fn(),
+				orderBy: jest.fn().mockReturnThis(),
+				setParameters: jest.fn().mockReturnThis(),
+				getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+			};
+			jest
+				.spyOn(bridgeTransactionRepository, 'createQueryBuilder')
+				.mockReturnValue(qb as never);
+
+			await service.getAllFiltered({
+				orderBy: 'status',
+				order: 'asc',
+			});
+
+			expect(qb.orderBy).toHaveBeenCalledWith(
+				expect.stringContaining('isRefund'),
+				'ASC',
+			);
+			expect(qb.getManyAndCount).toHaveBeenCalled();
+		});
 	});
 });

@@ -142,17 +142,21 @@ export class BridgeTransactionService {
 
 		const orderColumn = resolveOrderByColumn(model.orderBy);
 		const orderDirection = model.order === 'asc' ? 'asc' : 'desc';
-		const order: FindOptionsOrder<BridgeTransaction> = {
-			[orderColumn]: orderDirection,
-		};
 
 		const [entities, total] =
-			await this.bridgeTransactionRepository.findAndCount({
-				where: where,
-				take,
-				skip,
-				order,
-			});
+			orderColumn === 'status'
+				? await this.findFilteredOrderedByDisplayStatus(
+						where,
+						skip,
+						take,
+						orderDirection,
+					)
+				: await this.bridgeTransactionRepository.findAndCount({
+						where,
+						take,
+						skip,
+						order: this.buildColumnOrder(orderColumn, orderDirection),
+					});
 
 		return {
 			items: entities.map((entity) => mapBridgeTransactionToResponse(entity)),
@@ -346,6 +350,52 @@ export class BridgeTransactionService {
 
 			Logger.debug('Job updateStatusesJob executed');
 		}
+	}
+
+	private buildColumnOrder(
+		orderColumn: keyof BridgeTransaction,
+		orderDirection: 'asc' | 'desc',
+	): FindOptionsOrder<BridgeTransaction> {
+		if (orderColumn === 'finishedAt') {
+			return {
+				finishedAt: {
+					direction: orderDirection,
+					nulls: 'LAST',
+				},
+			};
+		}
+		return { [orderColumn]: orderDirection };
+	}
+
+	/**
+	 * History shows success vs refunded (and pending vs refunding) from
+	 * `status` + `isRefund`. Sorting the raw `status` column interleaves them.
+	 * Rank matches the UI labels alphabetically: failed, pending, refunded,
+	 * refunding, success.
+	 */
+	private findFilteredOrderedByDisplayStatus(
+		where: FindOptionsWhere<BridgeTransaction>[],
+		skip: number,
+		take: number,
+		orderDirection: 'asc' | 'desc',
+	): Promise<[BridgeTransaction[], number]> {
+		const direction = orderDirection.toUpperCase() as 'ASC' | 'DESC';
+		const qb = this.bridgeTransactionRepository.createQueryBuilder('tx');
+		qb.setFindOptions({ where, skip, take });
+		qb.orderBy(
+			`CASE
+				WHEN tx.status = :invalidRequest THEN 0
+				WHEN tx.isRefund = true AND tx.status = :executed THEN 2
+				WHEN tx.isRefund = true THEN 3
+				WHEN tx.status = :executed THEN 4
+				ELSE 1
+			END`,
+			direction,
+		).setParameters({
+			invalidRequest: TransactionStatusEnum.InvalidRequest,
+			executed: TransactionStatusEnum.ExecutedOnDestination,
+		});
+		return qb.getManyAndCount();
 	}
 }
 
