@@ -89,6 +89,7 @@ import {
   Clipboard,
   AlertCircle,
   History,
+  FileSearchCorner,
   Loader2,
 } from "lucide-react";
 import { readReturnTo } from "@/lib/returnTo";
@@ -851,7 +852,7 @@ function BridgeApp() {
               to="/audit"
               className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-[oklch(0.72_0.19_245_/_0.5)] hover:text-foreground"
             >
-              Audit <ExternalLink className="h-3.5 w-3.5" />
+              <FileSearchCorner className="h-3.5 w-3.5" /> Audit
             </Link>
           </>
         }
