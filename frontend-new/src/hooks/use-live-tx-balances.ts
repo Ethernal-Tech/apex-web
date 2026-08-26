@@ -76,10 +76,25 @@ export type LiveWalletBalance = {
   isError: boolean;
 };
 
+/** True when the connected wallet is this tx's sender (EVM checksum-insensitive). */
+function isConnectedSender(
+  walletAddress: string | undefined,
+  senderAddress: string | undefined,
+  originChain: string | undefined,
+): boolean {
+  if (!walletAddress || !senderAddress || !originChain) return false;
+  if (isEvmChain(originChain)) {
+    return walletAddress.toLowerCase() === senderAddress.toLowerCase();
+  }
+  return walletAddress === senderAddress;
+}
+
 /**
  * Source + destination balances for a bridging tx status view.
  * Source: connected wallet. Destination: web-api `GET /balance`.
  * Fetches once when the page loads, then again when the tx reaches a final status.
+ * Only for the connected wallet's own txs - otherwise the wallet would report
+ * its balance as "source" on someone else's pending transfer.
  */
 export function useLiveTxBalances(params: {
   tx: BridgeTransactionDto | undefined;
@@ -106,6 +121,11 @@ export function useLiveTxBalances(params: {
     shouldTrackBalances = false,
   } = params;
   const { account, isFullyLoggedIn } = useWalletSession();
+  const isOwnTx = isConnectedSender(
+    account?.account,
+    tx?.senderAddress,
+    tx?.originChain,
+  );
 
   const srcTokenID =
     settings && tx ? getRealTokenIDFromEntity(settings, tx) : undefined;
@@ -132,6 +152,7 @@ export function useLiveTxBalances(params: {
 
   const canFetchSourceWallet = Boolean(
     shouldTrackBalances &&
+    isOwnTx &&
     isFullyLoggedIn &&
     account?.account &&
     tx &&
@@ -169,11 +190,14 @@ export function useLiveTxBalances(params: {
       phase,
     }),
     enabled: Boolean(
-      shouldTrackBalances && tx?.destinationChain && tx?.receiverAddresses,
+      shouldTrackBalances &&
+      isOwnTx &&
+      tx?.destinationChain &&
+      tx?.receiverAddresses,
     ),
   });
 
-  if (!shouldTrackBalances) {
+  if (!shouldTrackBalances || !isOwnTx) {
     return { source: null, destination: null };
   }
 

@@ -64,13 +64,13 @@
 		},
 		{
 			"tokenID": 1000002,
-			"icon": "apex.svg",
+			"icon": "apex.svg?v=3",
 			"label": "bAP3X",
 			"color": "#22C1E4"
 		},
 		{
 			"tokenID": 1000003,
-			"icon": "apex.svg",
+			"icon": "apex.svg?v=3",
 			"label": "bnAP3X",
 			"color": "#F0B429"
 		},

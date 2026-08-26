@@ -286,6 +286,8 @@ function TransactionPage() {
   // Keep balances visible after finalization if the user watched this tx
   // while it was still in progress (so the destination bump stays on screen).
   // Opening an already-final tx from history does not show balances.
+  // Someone else's pending tx never shows them either - the hook only
+  // reports balances when the connected wallet is this tx's sender.
   const [shouldTrackBalances, setShouldTrackBalances] = useState(false);
   useEffect(() => {
     setShouldTrackBalances(false);

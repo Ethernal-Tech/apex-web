@@ -28,14 +28,14 @@
 	],
 	"unknownToken": {
 		"tokenID": 0,
-		"icon": "apex.svg",
+		"icon": "apex.svg?v=3",
 		"label": "",
 		"color": "#3B92FF"
 	},
 	"tokens": [
 		{
 			"tokenID": 1,
-			"icon": "apex.svg",
+			"icon": "apex.svg?v=3",
 			"label": "AP3X",
 			"color": "#3B92FF"
 		},
@@ -47,7 +47,7 @@
 		},
 		{
 			"tokenID": 3,
-			"icon": "apex.svg",
+			"icon": "apex.svg?v=3",
 			"label": "cAP3X",
 			"color": "#8B7CFF"
 		},
@@ -116,7 +116,7 @@
 		},
 		{
 			"tokenID": 16,
-			"icon": "apex.svg",
+			"icon": "apex.svg?v=3",
 			"label": "pAP3X",
 			"color": "#A78BFA"
 		},
@@ -218,7 +218,7 @@
 		},
 		{
 			"tokenID": 33,
-			"icon": "apex.svg",
+			"icon": "apex.svg?v=3",
 			"label": "sAP3X",
 			"color": "#7B5CFF"
 		},
@@ -230,13 +230,13 @@
 		},
 		{
 			"tokenID": 1000002,
-			"icon": "apex.svg",
+			"icon": "apex.svg?v=3",
 			"label": "bAP3X",
 			"color": "#22C1E4"
 		},
 		{
 			"tokenID": 1000003,
-			"icon": "apex.svg",
+			"icon": "apex.svg?v=3",
 			"label": "bnAP3X",
 			"color": "#F0B429"
 		},
