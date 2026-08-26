@@ -76,6 +76,15 @@ export const catchError = (error: any, showUIError = true): ErrorResponse => {
     return toErrResponse(err);
   }
 
+  if (error.status === 404) {
+    const err =
+      typeof error.message === "string" && error.message.trim()
+        ? error.message
+        : "Not found";
+    showUIError && toast.error(err);
+    return new ErrorResponse({ err });
+  }
+
   if (error instanceof TypeError) {
     const err = error.toString();
     showUIError && toast.error(err);

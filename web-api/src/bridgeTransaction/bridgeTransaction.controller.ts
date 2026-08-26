@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	Body,
 	Controller,
 	Get,
@@ -14,6 +15,9 @@ import {
 	BridgeTransactionFilterDto,
 	BridgeTransactionResponseDto,
 } from './bridgeTransaction.dto';
+
+/** Postgres `integer` max — `bridgeTransactions.id` is an int4 PK. */
+const PG_INT4_MAX = 2_147_483_647;
 
 @ApiTags('BridgeTransaction')
 @Controller('bridgeTransaction')
@@ -33,13 +37,21 @@ export class BridgeTransactionController {
 		description: 'OK - Returns bridging transaction.',
 	})
 	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request - id is not a positive 32-bit integer.',
+	})
+	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
 		description: 'Not Found - Bridging transaction not found.',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get(':id')
-	async get(@Param('id') id: number): Promise<BridgeTransactionDto> {
-		return this.bridgeTransactionService.get(id);
+	async get(@Param('id') id: string): Promise<BridgeTransactionDto> {
+		const n = Number(id);
+		if (!Number.isInteger(n) || n < 1 || n > PG_INT4_MAX) {
+			throw new BadRequestException('Invalid id');
+		}
+		return this.bridgeTransactionService.get(n);
 	}
 
 	@ApiOperation({

@@ -59,6 +59,15 @@ export const Route = createFileRoute("/transaction/$id")({
   component: TransactionPage,
 });
 
+/** `bridgeTransactions.id` is a Postgres int4 PK. */
+const PG_INT4_MAX = 2_147_483_647;
+
+function parseTransactionRouteId(raw: string): number | undefined {
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1 || n > PG_INT4_MAX) return undefined;
+  return n;
+}
+
 const STAGE_STEP_IDS = ["src-status", "bridge-status", "dest-status"] as const;
 
 const STAGE_LABELS = [
@@ -189,15 +198,20 @@ function TransactionPage() {
     await disconnectSession();
   };
 
-  const txId = Number.parseInt(id, 10);
+  const txId = parseTransactionRouteId(id);
+  const idIsValid = txId !== undefined;
   const settingsQuery = useQuery(settingsQueryOptions);
   useQuery(tokenInfosQueryOptions);
   const chainMetaOf = useChainMeta();
 
   const txQuery = useQuery({
     queryKey: ["bridgeTransaction", txId] as const,
-    enabled: Number.isFinite(txId),
+    enabled: idIsValid,
+    retry: false,
     queryFn: async (): Promise<BridgeTransactionDto> => {
+      if (txId === undefined) {
+        throw new Error("Invalid id");
+      }
       const response = await tryCatchJsonByAction(
         getAction.bind(null, txId),
         false,
@@ -216,6 +230,11 @@ function TransactionPage() {
 
   const tx = txQuery.data;
   const settings = settingsQuery.data;
+  const loadError =
+    txQuery.error instanceof Error ? txQuery.error.message : null;
+  const isMissingTx =
+    !idIsValid ||
+    (txQuery.isError && /not found|invalid id/i.test(loadError ?? ""));
 
   const source = chainView(chainMetaOf, tx?.originChain);
   const destination = chainView(chainMetaOf, tx?.destinationChain);
@@ -360,17 +379,28 @@ function TransactionPage() {
                 </div>
               )}
 
-              {txQuery.isError && (
+              {(txQuery.isError || !idIsValid) && (
                 <div className="flex min-h-[280px] flex-col items-center justify-center gap-3 text-center">
                   <AlertCircle className="h-8 w-8 text-[oklch(0.78_0.19_25)]" />
-                  <p className="text-sm text-foreground">
-                    Couldn&apos;t load transaction #{id}
-                  </p>
-                  <p className="max-w-md text-xs text-muted-foreground">
-                    {txQuery.error instanceof Error
-                      ? txQuery.error.message
-                      : "Unknown error"}
-                  </p>
+                  {isMissingTx ? (
+                    <>
+                      <p className="text-sm text-foreground">
+                        Transaction #{id} wasn&apos;t found
+                      </p>
+                      <p className="max-w-md text-xs text-muted-foreground">
+                        There&apos;s no bridging transaction with this ID.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-foreground">
+                        Couldn&apos;t load transaction #{id}
+                      </p>
+                      <p className="max-w-md text-xs text-muted-foreground">
+                        {loadError ?? "Something went wrong. Please try again."}
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
 
