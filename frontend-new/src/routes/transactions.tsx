@@ -538,7 +538,11 @@ function TransactionsPage() {
               <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.72_0.19_245_/_0.6)] to-transparent" />
 
               <div
-                className={isCompact ? "overflow-x-auto" : "overflow-x-hidden"}
+                className={
+                  isCompact
+                    ? "overflow-x-auto scrollbar-sky"
+                    : "overflow-x-hidden"
+                }
               >
                 <table
                   className={`w-full border-collapse text-sm ${

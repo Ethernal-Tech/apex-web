@@ -14,6 +14,7 @@ import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { NetworkToggle } from "@/components/NetworkToggle";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
+import { useHeadroom, headroomClass } from "@/hooks/use-headroom";
 import { useBridgeHistory } from "@/hooks/use-bridge-history";
 import {
   useLockedBreakdown,
@@ -253,6 +254,7 @@ function AuditPage() {
 }
 
 function AuditContent() {
+  const headerHidden = useHeadroom();
   const [mode, setMode] = useState<Mode>("overview");
   const [world, setWorld] = useState<WorldKey>("utxo");
   const [range, setRange] = useState<Range>("30D");
@@ -353,7 +355,9 @@ function AuditContent() {
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
+      <header
+        className={`sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl ${headroomClass(headerHidden)}`}
+      >
         <div className="@container relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-6 lg:px-8">
           <Link
             to="/"

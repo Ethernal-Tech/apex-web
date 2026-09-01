@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { ReactNode, RefObject } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft,
   ArrowRight,
   Shield,
   Zap,
@@ -10,22 +10,33 @@ import {
   Bot,
   Landmark,
   GitBranch,
-  Menu,
-  X,
+  Blocks,
+  Building2,
+  FileCheck2,
+  LineChart,
 } from "lucide-react";
 import { FooterSocials } from "@/components/ui/footer-socials";
+import { SiteHeader, type HeaderTheme } from "@/components/SiteHeader";
 import {
   ETHERNAL_GITHUB_URL,
   externalAnchorProps,
   SKYLINE_DOCUMENTATION_URL,
 } from "@/lib/utils";
 import { settingsQueryOptions } from "@/lib/api/settings";
-import logoAsset from "@/assets/skyline-logo-transparent.png";
 import { pageHead } from "@/lib/seo";
 import heroImg from "@/assets/about/about-hero.jpg";
-import bridgeImg from "@/assets/about/about-bridge.jpg";
-import agentsImg from "@/assets/about/about-agents.jpg";
-import tradfiImg from "@/assets/about/about-tradfi.jpg";
+import teamImg from "@/assets/about/about-team.jpg";
+import bladeLogo from "@/assets/projects/blade.svg";
+import polygonEdgeLogo from "@/assets/projects/polygon-edge.svg";
+import agglayerLogo from "@/assets/projects/agglayer.jpg";
+import polygonLogo from "@/assets/projects/polygon.svg";
+import availLogo from "@/assets/projects/avail.svg";
+import gravityLogo from "@/assets/projects/gravity-bridge.svg";
+import cosmosLogo from "@/assets/projects/cosmos.svg";
+import hydroLogo from "@/assets/projects/hydro.svg";
+import filecoinLogo from "@/assets/projects/filecoin.svg";
+import apexLogo from "@/assets/projects/apex-fusion.svg";
+import moduloLogo from "@/assets/projects/modulo.svg";
 import teamSrdjan from "@/assets/about/team-srdjan.jpeg";
 import teamNemanja from "@/assets/about/team-nemanja.jpeg";
 import teamDarko from "@/assets/about/team-darko.jpeg";
@@ -35,102 +46,144 @@ export const Route = createFileRoute("/about-us")({
     pageHead({
       title: "Who We Are - Skyline",
       description:
-        "Skyline is the universal bridge for on-chain and real-world finance - connecting UTxO and EVM networks today, AI agents and fiat rails next.",
+        "Skyline is the universal bridge for on-chain and real-world finance - connecting UTxO, EVM and SVM networks today, AI agents and fiat rails next.",
       path: "/about-us",
     }),
   component: AboutPage,
 });
 
-const NAV_LINKS = [
-  { to: "/", label: "Home" },
-  { to: "/bridge-app", label: "Bridge" },
-  { to: "/audit", label: "Audit" },
-] as const;
+/**
+ * Sections run the full height of the screen and pass under the translucent
+ * header, so the header tints itself from whichever one is behind it instead
+ * of showing the tail end of the previous section.
+ */
+function useHeaderTheme(scrollRef: RefObject<HTMLDivElement | null>) {
+  const [theme, setTheme] = useState<HeaderTheme>("dark");
 
-function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    let frame = 0;
+    const probe = () => {
+      frame = 0;
+      const headerMiddle = container.getBoundingClientRect().top + 32;
+      const sections = container.querySelectorAll<HTMLElement>("[data-header]");
+      for (const section of sections) {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= headerMiddle && rect.bottom > headerMiddle) {
+          setTheme(section.dataset.header === "light" ? "light" : "dark");
+          return;
+        }
+      }
+      setTheme("dark");
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(probe);
+    };
+
+    container.addEventListener("scroll", onScroll, { passive: true });
+    probe();
+    return () => {
+      container.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, [scrollRef]);
+
+  return theme;
+}
+
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+/** Below this the text gets too small to read, so the section flows instead. */
+const MIN_FIT_SCALE = 0.7;
+
+/**
+ * One snap point = one screen. When a section's content is taller than the
+ * screen it is scaled down to fit, so every snap point lands on a full view.
+ * Phones keep their natural flow - the sections there are several screens of
+ * content and scaling them would shrink the text to nothing.
+ */
+function SnapSection({
+  children,
+  className = "",
+  backdrop,
+  headerTheme = "dark",
+}: {
+  children: ReactNode;
+  className?: string;
+  backdrop?: ReactNode;
+  headerTheme?: HeaderTheme;
+}) {
+  const frameRef = useRef<HTMLElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useIsomorphicLayoutEffect(() => {
+    const frame = frameRef.current;
+    const content = contentRef.current;
+    if (!frame || !content) return;
+
+    const fit = () => {
+      if (!window.matchMedia("(min-width: 768px)").matches) {
+        setScale(1);
+        return;
+      }
+      // Read the slot from min-height, not from the frame's current height:
+      // the frame only gets pinned while scaling, so measuring it would loop.
+      // offsetHeight is the unscaled layout height, so it never feeds back.
+      const frameStyle = getComputedStyle(frame);
+      const slot =
+        parseFloat(frameStyle.minHeight) - parseFloat(frameStyle.paddingTop);
+      const ratio = slot / content.offsetHeight;
+      setScale(ratio >= 1 || ratio < MIN_FIT_SCALE ? 1 : ratio);
+    };
+
+    const observer = new ResizeObserver(fit);
+    observer.observe(frame);
+    observer.observe(content);
+    fit();
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
-      <div className="@container relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-8">
-        <Link
-          to="/"
-          className="flex shrink-0 items-center gap-2"
-          aria-label="Skyline home"
-        >
-          <img
-            src={logoAsset}
-            alt="Skyline"
-            className="h-8 w-auto max-w-none shrink-0 md:h-9"
-          />
-        </Link>
-        <nav className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-8 md:flex">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="pointer-events-auto text-[15px] font-medium text-foreground/90 transition-colors hover:text-[oklch(0.85_0.15_235)]"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="flex shrink-0 items-center gap-2">
-          <Link
-            to="/"
-            aria-label="Back"
-            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.06]"
-          >
-            <ArrowLeft className="h-3.5 w-3.5 shrink-0" />
-            <span className="hidden @[24rem]:inline">Back</span>
-          </Link>
-          <button
-            type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground md:hidden"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Toggle menu"
-            aria-expanded={menuOpen}
-          >
-            {menuOpen ? (
-              <X className="h-5 w-5" />
-            ) : (
-              <Menu className="h-5 w-5" />
-            )}
-          </button>
-        </div>
+    <section
+      ref={frameRef}
+      data-header={headerTheme}
+      className={`relative flex min-h-[100svh] snap-start items-center pt-16 ${
+        scale < 1 ? "overflow-hidden md:h-[100svh]" : ""
+      } ${className}`}
+    >
+      {backdrop}
+      <div
+        ref={contentRef}
+        style={scale < 1 ? { transform: `scale(${scale})` } : undefined}
+        className="relative w-full origin-center"
+      >
+        {children}
       </div>
-
-      {menuOpen && (
-        <div className="border-t border-white/5 bg-background/95 md:hidden">
-          <div className="flex flex-col gap-1 px-4 py-3">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMenuOpen(false)}
-                className="rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-    </header>
+    </section>
   );
 }
 
 function Hero() {
   return (
-    <section className="relative flex min-h-[calc(100svh-4rem)] snap-start items-center overflow-hidden border-b border-white/5">
-      <img
-        src={heroImg}
-        alt="Abstract skyline of luminous data towers connected by arcs of light"
-        width={1920}
-        height={960}
-        className="absolute inset-0 h-full w-full object-cover opacity-40"
-      />
-      <div className="bg-hero-glow absolute inset-0 opacity-60" />
+    <SnapSection
+      className="border-b border-white/5"
+      backdrop={
+        <>
+          <img
+            src={heroImg}
+            alt="Abstract skyline of luminous data towers connected by arcs of light"
+            width={1920}
+            height={960}
+            className="absolute inset-0 h-full w-full object-cover opacity-40"
+          />
+          <div className="bg-hero-glow absolute inset-0 opacity-60" />
+        </>
+      }
+    >
       <div className="container-page relative w-full py-16 text-center">
         <div className="mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-muted-foreground">
           Who we are
@@ -160,7 +213,7 @@ function Hero() {
         </div>
         <Stats />
       </div>
-    </section>
+    </SnapSection>
   );
 }
 
@@ -173,7 +226,7 @@ function Stats() {
       label: "Networks connected",
       value: chainsConnected != null ? String(chainsConnected) : "—",
     },
-    { label: "Worlds bridged", value: "UTxO ↔ EVM" },
+    { label: "Worlds bridged", value: "UTxO · EVM · SVM" },
     { label: "Custody model", value: "Non-custodial" },
     { label: "Reserves published", value: "Live, on-chain" },
   ];
@@ -201,6 +254,8 @@ function Split({
   alt,
   reverse,
   cta,
+  black,
+  portrait,
 }: {
   eyebrow: string;
   title: string;
@@ -209,9 +264,13 @@ function Split({
   alt: string;
   reverse?: boolean;
   cta?: { label: string; to: string };
+  black?: boolean;
+  portrait?: boolean;
 }) {
   return (
-    <section className="flex min-h-[calc(100svh-4rem)] snap-start items-center border-b border-white/5">
+    <SnapSection
+      className={`border-b border-white/5 ${black ? "bg-black" : ""}`}
+    >
       <div
         className={`container-page grid w-full items-center gap-10 py-16 md:grid-cols-2 md:gap-14 ${
           reverse ? "md:[&>figure]:order-first" : ""
@@ -238,18 +297,388 @@ function Split({
             </Link>
           )}
         </div>
-        <figure className="card-glow overflow-hidden rounded-2xl">
+        <figure
+          className={`card-glow overflow-hidden rounded-2xl ${
+            portrait ? "mx-auto w-full md:w-fit" : ""
+          }`}
+        >
           <img
             src={image}
             alt={alt}
-            width={1536}
-            height={1024}
+            width={portrait ? 736 : 1536}
+            height={portrait ? 1349 : 1024}
             loading="lazy"
-            className="h-full w-full object-cover"
+            className={`object-cover ${
+              portrait
+                ? "h-auto w-full md:max-h-[72svh] md:w-auto"
+                : "h-full w-full"
+            }`}
           />
         </figure>
       </div>
-    </section>
+    </SnapSection>
+  );
+}
+
+function Audits() {
+  const clients = [
+    {
+      name: "Polygon",
+      url: "https://polygon.technology",
+      scope: "Heimdall v2, ABCI++, Cosmos SDK modules, CometBFT fork, Bor",
+      years: "2025",
+    },
+    {
+      name: "dYdX",
+      url: "https://dydx.exchange/",
+      scope: "v4 chain modules, x/clob, liquidations, megavault, CosmWasm",
+      years: "2023-2025",
+    },
+    {
+      name: "Celestia",
+      url: "https://celestia.org/",
+      scope: "NMT and rsmt2d libraries, Blobstream, Rollkit, celestia-app",
+      years: "2023-2024",
+    },
+    {
+      name: "Stride",
+      url: "https://stride.zone/",
+      scope: "StakeIBC, autopilot, rate limiter, LSM, vault contracts",
+      years: "2022-2025",
+    },
+    {
+      name: "Osmosis",
+      url: "https://osmosis.zone",
+      scope: "Token factory, pools, concentrated liquidity, superfluid staking",
+      years: "2022-2023",
+    },
+    {
+      name: "Namada",
+      url: "https://namada.net/",
+      scope: "Multi-asset shielded pool, ABCI, IBC and MASP integration",
+      years: "2023-2024",
+    },
+    {
+      name: "Neutron",
+      url: "https://neutron.org/",
+      scope: "Protocol analysis, flashloans, state verifier, MM vault contract",
+      years: "2023-2025",
+    },
+    {
+      name: "Union",
+      url: "https://union.build/",
+      scope: "IBC in Solidity, CometBLS, uniond, Cosmos SDK fork",
+      years: "2024",
+    },
+    {
+      name: "Gear-Vara",
+      url: "https://vara.network/",
+      scope: "Vara bridges, ZK prover and Ethereum smart contracts",
+      years: "2024-2025",
+    },
+    {
+      name: "Apex Nexus EVM Chain",
+      url: "https://apexfusion.org/",
+      scope: "IBFT, Nexus consensus layer and engine, Route3 wallet",
+      years: "2024-2025",
+    },
+    {
+      name: "Figure",
+      url: "https://www.figure.com/",
+      scope: "Provenance smart contracts, ATS and funding trading bridge",
+      years: "2023-2024",
+    },
+    {
+      name: "Archway",
+      url: "https://archway.io/",
+      scope: "Vesting and withdrawal contracts, callback, CWfees, CWica",
+      years: "2023-2024",
+    },
+    {
+      name: "Polymer",
+      url: "https://www.polymerlabs.org",
+      scope: "IBC cross-chain communication, vIBC contracts, light clients",
+      years: "2024",
+    },
+    {
+      name: "Router",
+      url: "https://www.routerprotocol.com/",
+      scope: "Router chain modules, gateway and asset bridge contracts",
+      years: "2023",
+    },
+    {
+      name: "Babylon",
+      url: "https://babylonlabs.io",
+      scope: "Genesis V2 upgrade",
+      years: "2025",
+    },
+    {
+      name: "Ripple EVM Sidechain",
+      url: "https://www.xrplevm.org/",
+      scope: "XRPL EVM node and EVMOS blockchain client",
+      years: "2025",
+    },
+    {
+      name: "Skip",
+      url: "https://skip.money/",
+      scope: "MEV Tendermint, Slinky distributed oracle",
+      years: "2023",
+    },
+    {
+      name: "Duality",
+      url: "https://duality.xyz/",
+      scope: "DEX combining AMM and order book design, incentives module",
+      years: "2023",
+    },
+    {
+      name: "Interchain Foundation",
+      url: "https://interchain.io/",
+      scope: "Interchain Security modules",
+      years: "2023",
+    },
+    {
+      name: "Axelar",
+      url: "https://axelar.network",
+      scope: "axelarnet",
+      years: "2023",
+    },
+    {
+      name: "B-Harvest",
+      url: "https://bharvest.io/",
+      scope: "Precompiles and x/inflation",
+      years: "2025",
+    },
+    {
+      name: "Icon",
+      url: "https://icon.community/",
+      scope: "IBC implementation",
+      years: "2023",
+    },
+    {
+      name: "Timewave",
+      url: "https://timewave.computer/",
+      scope: "Stride LP covenant",
+      years: "2023",
+    },
+  ];
+
+  const stats = [
+    { value: "79", label: "Audit engagements" },
+    { value: "23", label: "Protocols reviewed" },
+    { value: "2022", label: "Auditing since" },
+  ];
+
+  return (
+    <SnapSection className="border-b border-white/5">
+      <div className="container-page w-full py-16">
+        <div className="mx-auto max-w-2xl text-center">
+          <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[oklch(0.85_0.15_235)]">
+            Security audits
+          </div>
+          <h2 className="font-display text-3xl font-semibold text-foreground md:text-4xl">
+            Security proven on other teams’ code
+          </h2>
+          <p className="mt-4 text-sm text-muted-foreground md:text-base">
+            Our engineers are paid to break consensus layers, bridges and smart
+            contracts that other protocols run in production. That review
+            discipline is what secures this bridge.
+          </p>
+        </div>
+        <div className="mx-auto mt-8 flex max-w-lg items-start justify-center gap-10">
+          {stats.map((s) => (
+            <div key={s.label} className="text-center">
+              <div className="font-display text-2xl font-semibold text-foreground md:text-3xl">
+                {s.value}
+              </div>
+              <div className="mt-1 text-[11px] uppercase tracking-wider text-muted-foreground">
+                {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-10 grid gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+          {clients.map((c) => (
+            <a
+              key={c.name}
+              href={c.url}
+              {...externalAnchorProps(c.url)}
+              className="group border-t border-white/10 pt-3"
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-sm font-medium text-foreground transition-colors group-hover:text-[oklch(0.85_0.15_235)]">
+                  {c.name}
+                </span>
+                <span className="shrink-0 text-[11px] text-muted-foreground">
+                  {c.years}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                {c.scope}
+              </p>
+            </a>
+          ))}
+        </div>
+        <p className="mt-8 text-center text-[11px] text-muted-foreground">
+          Some engagements were delivered in partnership with Informal Systems.
+        </p>
+      </div>
+    </SnapSection>
+  );
+}
+
+function Projects() {
+  const [flipped, setFlipped] = useState<string | null>(null);
+
+  const projects: {
+    name: string;
+    text: string;
+    image?: string;
+    icon?: typeof Blocks;
+  }[] = [
+    {
+      name: "Blade",
+      image: bladeLogo,
+      text: "A high-performance, EVM-compatible blockchain designed for enterprise-grade applications.",
+    },
+    {
+      name: "Polygon Edge",
+      image: polygonEdgeLogo,
+      text: "The Polygon protocol layer that serves as the core system of the Polygon ecosystem.",
+    },
+    {
+      name: "Polygon AggLayer",
+      image: agglayerLogo,
+      text: "A cross-chain settlement layer connecting the liquidity and users of any blockchain.",
+    },
+    {
+      name: "Polygon OMS",
+      image: polygonLogo,
+      text: "Open Money Stack: one enterprise API linking fiat rails - ACH, wire, SWIFT - with instant stablecoin settlement.",
+    },
+    {
+      name: "Avail",
+      image: availLogo,
+      text: "A data availability layer in the Polygon ecosystem, built to serve rollups.",
+    },
+    {
+      name: "Cosmos Hub",
+      image: cosmosLogo,
+      text: "Maintenance of the Cosmos SDK and the IBC protocol, plus bug fixes and security patches for the Hub.",
+    },
+    {
+      name: "Gravity Bridge",
+      image: gravityLogo,
+      text: "A bridge between Ethereum and Cosmos SDK chains, designed for maximum simplicity and efficiency.",
+    },
+    {
+      name: "Filecoin FVM",
+      image: filecoinLogo,
+      text: "Audits and smart contract library design and development for the Filecoin Virtual Machine.",
+    },
+    {
+      name: "Cosmos Hydro",
+      image: hydroLogo,
+      text: "A platform where ATOM stakers lock tokens for voting power and back bids for protocol-owned liquidity.",
+    },
+    {
+      name: "Apex Fusion",
+      image: apexLogo,
+      text: "Core development of the Cardano-EVM bridge connecting the Prime, Vector and Nexus chains.",
+    },
+    {
+      name: "Interchain Security",
+      image: cosmosLogo,
+      text: "The Cosmos take on shared security, letting chains lease their security to consumer chains.",
+    },
+    {
+      name: "Modulo Finance",
+      image: moduloLogo,
+      text: "Vault infrastructure to hold, swap and transfer assets on Canton without ever handling private keys.",
+    },
+    {
+      name: "Blockchain Explorer",
+      icon: Blocks,
+      text: "Block explorers for EVM chains and for Cardano.",
+    },
+    {
+      name: "Fluxion RWA",
+      icon: Building2,
+      text: "A marketplace platform for real-world assets.",
+    },
+    {
+      name: "Verifiable Invoice Financing",
+      icon: FileCheck2,
+      text: "An invoice financing solution that verifies invoices with a zero-knowledge proof protocol.",
+    },
+    {
+      name: "11D Terminal",
+      icon: LineChart,
+      text: "A multi-chain portfolio platform with tax reporting, cost-basis tracking and institutional-grade analytics.",
+    },
+  ];
+
+  return (
+    <SnapSection className="border-b border-white/5">
+      <div className="container-page w-full py-16">
+        <div className="mx-auto max-w-2xl text-center">
+          <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[oklch(0.85_0.15_235)]">
+            Track record
+          </div>
+          <h2 className="font-display text-3xl font-semibold text-foreground md:text-4xl">
+            The protocols we have already built
+          </h2>
+          <p className="mt-4 text-sm text-muted-foreground md:text-base">
+            Core infrastructure across the Polygon, Cosmos, Filecoin and Cardano
+            ecosystems. Hover a project to see what we worked on.
+          </p>
+        </div>
+        <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {projects.map((p) => (
+            <button
+              key={p.name}
+              type="button"
+              onClick={() =>
+                setFlipped((current) => (current === p.name ? null : p.name))
+              }
+              aria-label={`${p.name}: ${p.text}`}
+              className="group aspect-square w-full cursor-pointer perspective-[1000px] sm:aspect-[4/3] lg:aspect-[2/1]"
+            >
+              <div
+                className={`relative h-full w-full transition-transform duration-500 transform-3d group-hover:rotate-y-180 group-focus-visible:rotate-y-180 ${
+                  flipped === p.name ? "rotate-y-180" : ""
+                }`}
+              >
+                <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-white/10 bg-white p-6 backface-hidden">
+                  {p.image ? (
+                    <img
+                      src={p.image}
+                      alt={p.name}
+                      loading="lazy"
+                      className="max-h-16 w-full object-contain lg:max-h-20"
+                    />
+                  ) : (
+                    p.icon && (
+                      <p.icon
+                        className="h-11 w-11 text-neutral-800"
+                        strokeWidth={1.25}
+                      />
+                    )
+                  )}
+                </div>
+                <div className="card-glow absolute inset-0 flex rotate-y-180 flex-col justify-center gap-1.5 rounded-2xl p-4 text-left backface-hidden lg:gap-2 lg:p-5">
+                  <div className="font-display text-[13px] font-semibold text-foreground lg:text-sm">
+                    {p.name}
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground lg:text-xs">
+                    {p.text}
+                  </p>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </SnapSection>
   );
 }
 
@@ -287,7 +716,7 @@ function Values() {
     },
   ];
   return (
-    <section className="flex min-h-[calc(100svh-4rem)] snap-start items-center border-b border-white/5">
+    <SnapSection className="border-b border-white/5">
       <div className="container-page w-full py-16">
         <div className="mx-auto max-w-2xl text-center">
           <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[oklch(0.85_0.15_235)]">
@@ -313,7 +742,7 @@ function Values() {
           ))}
         </div>
       </div>
-    </section>
+    </SnapSection>
   );
 }
 
@@ -339,14 +768,14 @@ function Team() {
     },
   ];
   return (
-    <section className="flex min-h-[calc(100svh-4rem)] snap-start items-center border-b border-white/5">
+    <SnapSection className="border-b border-white/5">
       <div className="container-page w-full py-16">
         <div className="mx-auto max-w-2xl text-center">
           <div className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-[oklch(0.85_0.15_235)]">
             The people
           </div>
           <h2 className="font-display text-3xl font-semibold text-foreground md:text-4xl">
-            Small team, serious infrastructure
+            Serious team, serious infrastructure
           </h2>
           <p className="mt-4 text-sm text-muted-foreground md:text-base">
             Skyline is built by a compact group of protocol, security, and
@@ -383,13 +812,16 @@ function Team() {
           ))}
         </div>
       </div>
-    </section>
+    </SnapSection>
   );
 }
 
 function CTA() {
+  // The glow reaches the top of the view so the header floats over it the way
+  // it does on the hero, instead of the glow cutting a seam below it. The extra
+  // top padding stands in for the header's height.
   return (
-    <section className="relative flex flex-1 items-center overflow-hidden py-20">
+    <section className="relative flex flex-1 items-center overflow-hidden pb-20 pt-36 [@media(max-height:820px)]:pb-14 [@media(max-height:820px)]:pt-30">
       <div className="bg-hero-glow absolute inset-0 opacity-70" />
       <div className="container-page relative text-center">
         <h2 className="text-balance font-display text-4xl font-semibold md:text-5xl">
@@ -439,6 +871,7 @@ function Footer() {
                 title: "Product",
                 links: [
                   { label: "Bridge", href: "/bridge-app" },
+                  { label: "Roadmap", href: "/roadmap" },
                   { label: "Agents", href: "#" },
                   { label: "TradFi", href: "#" },
                 ],
@@ -489,46 +922,39 @@ function Footer() {
 }
 
 function AboutPage() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const headerTheme = useHeaderTheme(scrollRef);
+
   return (
-    <div className="h-[100svh] snap-y snap-mandatory overflow-y-auto bg-background text-foreground [&>section]:scroll-mt-16 [&_section]:scroll-mt-16">
-      <Header />
+    <div
+      ref={scrollRef}
+      className="h-[100svh] snap-y snap-mandatory overflow-y-auto bg-background text-foreground"
+    >
+      <SiteHeader theme={headerTheme} scrollRef={scrollRef} />
       <main>
         <Hero />
         <Split
-          eyebrow="The origin"
-          title="Bridges shouldn’t be the weakest link"
+          eyebrow="The team"
+          title="Built by people who have done this before"
           body={[
-            "Skyline started with a simple frustration: the fastest way to lose money in crypto was to move it. Bridges were opaque, custodial, slow, and - too often - the headline of the next exploit.",
-            "So we rebuilt the flow from the lock contract up. Assets are locked and minted through a verifiable, non-custodial pipeline that spans UTxO chains like Prime and Vector and EVM networks like Nexus, with reserves published live for anyone to audit.",
+            "The team behind Skyline has substantial relevant experience and has built this kind of technology before. It represents a perfect match of industry project leaders and exceptionally skilled engineers working on the development of relevant blockchain projects.",
+            "That combination matters more than it sounds. Cross-chain infrastructure touches consensus, cryptography and custody at the same time, and every assumption you make is eventually tested by someone with real money on the line. Our engineers have shipped validators, relayers and settlement systems that run in production, while our project leads have taken protocols all the way from research to audited mainnet releases.",
+            "We work in the open, review each other’s code, and treat security as a design constraint rather than a final checklist - the same discipline we brought to the networks we helped build long before Skyline.",
           ]}
-          image={bridgeImg}
-          alt="Glowing arc of light bridging two blockchain node networks"
-          cta={{ label: "View live reserves", to: "/audit" }}
-        />
-        <Split
-          eyebrow="What’s next"
-          title="Finance that agents can operate"
-          body={[
-            "The next wave of on-chain activity won’t be typed into a form - it will be initiated by autonomous agents rebalancing, settling, and routing liquidity around the clock.",
-            "We’re making Skyline machine-native: deterministic quotes, programmatic transfer intents, and guardrails that let an agent move value across chains with the same safety envelope a human gets in the app.",
-          ]}
-          image={agentsImg}
-          alt="Network of connected AI agent nodes exchanging data"
+          image={teamImg}
+          alt="Skyline engineers reviewing system architecture together in a meeting room"
           reverse
+          black
+          portrait
         />
-        <Split
-          eyebrow="The bigger picture"
-          title="Connecting the dollar economy"
-          body={[
-            "Cross-chain liquidity only matters if it can reach the real world. That means stablecoins, card rails, and payout networks sitting on the same side of the bridge as your on-chain balance.",
-            "Our TradFi track brings fiat on- and off-ramps into the Skyline flow, so a transfer can start as a card payment and end as a token on the chain of your choice - with one audit trail across the whole journey.",
-          ]}
-          image={tradfiImg}
-          alt="Digital dollar and stablecoin flowing along light rails into a blockchain grid"
-        />
+        <Projects />
+        <Audits />
         <Values />
         <Team />
-        <div className="flex min-h-[calc(100svh-4rem)] snap-start scroll-mt-16 flex-col">
+        <div
+          data-header="dark"
+          className="flex min-h-[100svh] snap-start flex-col"
+        >
           <CTA />
           <Footer />
         </div>

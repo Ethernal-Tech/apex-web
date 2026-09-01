@@ -6,8 +6,6 @@ import {
   ArrowLeftRight,
   Bot,
   Landmark,
-  Menu,
-  X,
   ShieldCheck,
   Zap,
   Globe2,
@@ -22,14 +20,16 @@ import {
   Sparkles,
 } from "lucide-react";
 import { FooterSocials } from "@/components/ui/footer-socials";
+import { SiteHeader } from "@/components/SiteHeader";
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { settingsQueryOptions } from "@/lib/api/settings";
 import { landingStatsQueryOptions } from "@/lib/api/stats";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { formatUsdCompact } from "@/lib/usd";
 import { getEnabledChainNodes } from "@/lib/chains";
-import { useChainInfos } from "@/hooks/use-chain-infos";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
+import roadmapHorizon from "@/assets/roadmap-horizon.webp";
+import { useChainInfos } from "@/hooks/use-chain-infos";
 import {
   ETHERNAL_GITHUB_URL,
   externalAnchorProps,
@@ -77,130 +77,27 @@ function StatChip({
   );
 }
 
-function Header() {
-  const [open, setOpen] = useState(false);
+/** TVL and TVB in the bar, each opening the full proof-of-reserves page. */
+function HeaderStats() {
   const { tvlUsd, tvbUsd } = useBridgeStats();
-  const tvl = formatUsdCompact(tvlUsd);
-  const tvb = formatUsdCompact(tvbUsd);
-  const nav = [
-    { label: "Ecosystem", href: "#ecosystem" },
-    { label: "Roadmap", href: "#roadmap" },
-    { label: "Docs", href: SKYLINE_DOCUMENTATION_URL },
+  const figures = [
+    { label: "TVL", value: formatUsdCompact(tvlUsd) },
+    { label: "TVB", value: formatUsdCompact(tvbUsd) },
   ];
   return (
-    <header className="sticky top-0 z-50 border-b border-white/5 bg-background/70 backdrop-blur-xl">
-      <div className="relative flex h-16 w-full items-center justify-between gap-4 px-4 md:px-8">
+    <>
+      {figures.map((figure) => (
         <Link
-          to="/"
-          className="flex items-center gap-2"
-          aria-label="Skyline home"
+          key={figure.label}
+          to="/audit"
+          title="View full audit"
+          aria-label="View full audit"
+          className="group inline-flex"
         >
-          <img
-            src={logoAsset}
-            alt="Skyline"
-            className="h-8 w-auto md:h-9"
-            data-skyline-logo-target
-          />
+          <StatChip label={figure.label} value={figure.value} interactive />
         </Link>
-        <nav className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-9 min-[1130px]:flex">
-          {nav.map((n) => (
-            <a
-              key={n.label}
-              href={n.href}
-              {...externalAnchorProps(n.href)}
-              className="pointer-events-auto text-[15px] font-medium text-foreground/90 transition-colors hover:text-[oklch(0.85_0.15_235)]"
-            >
-              {n.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="pointer-events-none absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-2 min-[875px]:max-[1129px]:flex">
-          <Link
-            to="/audit"
-            title="View full audit"
-            aria-label="View full audit"
-            className="group pointer-events-auto"
-          >
-            <StatChip label="TVL" value={tvl} interactive />
-          </Link>
-          <Link
-            to="/audit"
-            title="View full audit"
-            aria-label="View full audit"
-            className="group pointer-events-auto"
-          >
-            <StatChip label="TVB" value={tvb} interactive />
-          </Link>
-        </div>
-
-        <div className="hidden items-center justify-end gap-2 min-[1130px]:flex">
-          <Link
-            to="/audit"
-            title="View full audit"
-            aria-label="View full audit"
-            className="group pointer-events-auto inline-flex"
-          >
-            <StatChip label="TVL" value={tvl} interactive />
-          </Link>
-          <Link
-            to="/audit"
-            title="View full audit"
-            aria-label="View full audit"
-            className="group pointer-events-auto inline-flex"
-          >
-            <StatChip label="TVB" value={tvb} interactive />
-          </Link>
-          <a
-            href="/bridge-app"
-            className="btn-primary-glow ml-1 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold"
-          >
-            Open Bridge <ArrowRight className="h-3.5 w-3.5" />
-          </a>
-        </div>
-
-        <button
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground min-[1130px]:hidden"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-      </div>
-
-      {/* Mobile stats - below the logo so they never overlap it */}
-      <div className="flex w-full items-center justify-center gap-3 px-4 pb-3 min-[875px]:hidden">
-        <Link to="/audit" title="View full audit" aria-label="View full audit">
-          <StatChip label="TVL" value={tvl} compact interactive />
-        </Link>
-        <Link to="/audit" title="View full audit" aria-label="View full audit">
-          <StatChip label="TVB" value={tvb} compact interactive />
-        </Link>
-      </div>
-      {open && (
-        <div className="border-t border-white/5 bg-background/95 min-[1130px]:hidden">
-          <div className="container-page flex flex-col gap-1 py-3">
-            {nav.map((n) => (
-              <a
-                key={n.label}
-                href={n.href}
-                {...externalAnchorProps(n.href)}
-                onClick={() => setOpen(false)}
-                className="rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground"
-              >
-                {n.label}
-              </a>
-            ))}
-            <a
-              href="/bridge-app"
-              className="btn-primary-glow mt-2 inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold"
-            >
-              Open Bridge <ArrowRight className="h-3.5 w-3.5" />
-            </a>
-          </div>
-        </div>
-      )}
-    </header>
+      ))}
+    </>
   );
 }
 
@@ -318,7 +215,7 @@ function Pillars() {
     },
     {
       id: "agents",
-      status: "Coming Q2",
+      status: "Coming Q2 2027",
       statusTone: "soon" as const,
       icon: Bot,
       title: "AI Agentic Finance",
@@ -333,7 +230,7 @@ function Pillars() {
     },
     {
       id: "tradfi",
-      status: "Coming soon",
+      status: "Coming H2 2028",
       statusTone: "soon" as const,
       icon: Landmark,
       title: "TradFi Connector",
@@ -604,16 +501,16 @@ function Orbit({
                   >
                     {isPrimary ? (
                       <div className="flex flex-col items-center gap-1.5">
-                        <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[oklch(0.72_0.19_245_/_0.5)] bg-gradient-to-br from-[oklch(0.72_0.19_245)] to-[oklch(0.4_0.22_265)] shadow-[0_10px_30px_-6px_oklch(0.55_0.22_250_/_0.7)]">
+                        <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[oklch(0.72_0.19_245_/_0.5)] bg-gradient-to-br from-[oklch(0.72_0.19_245)] to-[oklch(0.4_0.22_265)] shadow-[0_10px_30px_-6px_oklch(0.55_0.22_250_/_0.7)]">
                           {n.img ? (
                             <AssetIcon
                               src={n.img}
                               alt={n.label}
-                              className="h-7 w-7"
+                              className="h-6 w-6"
                             />
                           ) : n.icon ? (
                             <n.icon
-                              className="h-6 w-6 text-white"
+                              className="h-5 w-5 text-white"
                               strokeWidth={2}
                             />
                           ) : null}
@@ -624,7 +521,7 @@ function Orbit({
                       </div>
                     ) : (
                       <div
-                        className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-[oklch(0.85_0.15_235)] backdrop-blur"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-[oklch(0.85_0.15_235)] backdrop-blur"
                         title={n.label}
                         aria-label={n.label}
                       >
@@ -680,7 +577,7 @@ function Connecting() {
   return (
     <section
       id="connecting"
-      className="relative overflow-hidden py-24 md:py-32"
+      className="relative overflow-hidden pb-20 pt-12 md:pb-28 md:pt-16"
     >
       <div className="pointer-events-none absolute inset-0 bg-hero-glow opacity-40" />
       <div className="container-page relative">
@@ -697,7 +594,7 @@ function Connecting() {
           </p>
         </div>
 
-        <div className="relative z-0 mx-auto mt-16 aspect-square w-full max-w-[720px]">
+        <div className="relative z-0 mx-auto mt-4 h-[340px] w-full max-w-[580px] scale-[0.66] sm:mt-6 sm:h-[500px] sm:scale-100">
           {/* Soft background glow */}
           <div className="pointer-events-none absolute left-1/2 top-1/2 h-[70%] w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[oklch(0.55_0.22_250_/_0.18)] blur-3xl" />
 
@@ -705,8 +602,8 @@ function Connecting() {
           {ellipseMode ? (
             <>
               <Orbit
-                width={650}
-                height={400}
+                width={520}
+                height={330}
                 tilt={45}
                 duration={90}
                 reverse
@@ -714,15 +611,15 @@ function Connecting() {
                 ringOpacity={0.28}
               />
               <Orbit
-                width={650}
-                height={400}
+                width={520}
+                height={330}
                 tilt={-45}
                 duration={60}
                 nodes={agentRing}
                 ringOpacity={0.28}
               />
               <Orbit
-                size={280}
+                size={240}
                 duration={35}
                 reverse
                 nodes={bridgeRing}
@@ -757,7 +654,7 @@ function Connecting() {
           {/* Central hub */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <div
-              className="flex h-24 w-24 items-center justify-center rounded-full border border-white/15 bg-gradient-to-br from-[oklch(0.28_0.05_262)] to-[oklch(0.14_0.03_260)] backdrop-blur"
+              className="flex h-20 w-20 items-center justify-center rounded-full border border-white/15 bg-gradient-to-br from-[oklch(0.28_0.05_262)] to-[oklch(0.14_0.03_260)] backdrop-blur"
               style={{ animation: "skyline-hub-glow 4s ease-in-out infinite" }}
             >
               <img
@@ -769,7 +666,7 @@ function Connecting() {
           </div>
         </div>
 
-        <div className="mx-auto mt-12 grid max-w-3xl gap-3 sm:grid-cols-3">
+        <div className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-3">
           {[
             {
               label: "Bridge",
@@ -797,64 +694,45 @@ function Connecting() {
   );
 }
 
+/**
+ * The landing page teases the roadmap with one image rather than the timeline
+ * itself - /roadmap owns the milestones. The horizon sits at the exact vertical
+ * centre of the source, so the copy is bottom-aligned in the top half and lands
+ * in the sky above it whatever the crop.
+ */
 function Roadmap() {
-  const { data: settings } = useQuery(settingsQueryOptions);
-  const chainsConnected = settings?.enabledChains.length;
-  const tokensEnabled = settings?.ecosystemTokens.length;
-  const chainsLabel = chainsConnected != null ? String(chainsConnected) : "—";
-  const tokensLabel = tokensEnabled != null ? String(tokensEnabled) : "—";
-
-  const items = [
-    {
-      q: "Now",
-      title: "Bridge Mainnet",
-      body: `${chainsLabel} chains, ${tokensLabel} native assets, validator protected routing.`,
-    },
-    {
-      q: "Q3 2026",
-      title: "Agent SDK Alpha",
-      body: "Publish and subscribe to on-chain strategies with programmable guardrails.",
-    },
-    {
-      q: "Q1 2027",
-      title: "Stripe & Stablecoin Rails",
-      body: "On/off-ramp via Stripe, settlement in USDC and PYUSD, KYB-ready.",
-    },
-    {
-      q: "Q2 2027",
-      title: "Skyline Network v2",
-      body: "Unified intent layer across chains, agents, and fiat rails.",
-    },
-  ];
   return (
     <section id="roadmap" className="relative py-24 md:py-32">
-      <div className="container-page">
-        <div className="mx-auto max-w-2xl text-center">
+      {/* Full bleed: no container, and the cap on height keeps a wide viewport
+          from turning the 16:9 band into a screen and a half of scrolling. The
+          crop it forces is symmetric, so the horizon stays on the centre line. */}
+      <div className="relative aspect-[1376/768] max-h-[78svh] min-h-[400px] w-full overflow-hidden">
+        <img
+          src={roadmapHorizon}
+          alt=""
+          aria-hidden
+          width={1376}
+          height={768}
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+        {/* Equal fades top and bottom - anything uneven would shift the
+            apparent centre away from the horizon. */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-background to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background to-transparent" />
+        <div className="absolute inset-x-0 top-0 flex h-1/2 flex-col items-center justify-end px-5 pb-12 text-center md:pb-20">
           <div className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-[oklch(0.78_0.13_240)]">
             Roadmap
           </div>
-          <h2 className="text-balance text-4xl font-semibold md:text-5xl">
+          <h2 className="text-balance text-3xl font-semibold md:text-5xl">
             Building toward the horizon.
           </h2>
-        </div>
-        <div className="mx-auto mt-12 max-w-4xl">
-          <ol className="relative border-l border-white/10 pl-8">
-            {items.map((it, i) => (
-              <li
-                key={it.title}
-                className={i !== items.length - 1 ? "pb-10" : ""}
-              >
-                <span className="absolute -left-[7px] mt-1.5 h-3 w-3 rounded-full bg-[oklch(0.85_0.15_235)] shadow-[0_0_16px_oklch(0.85_0.15_235)]" />
-                <div className="text-xs font-semibold uppercase tracking-wider text-[oklch(0.78_0.13_240)]">
-                  {it.q}
-                </div>
-                <h3 className="mt-1 font-display text-xl font-semibold text-foreground">
-                  {it.title}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">{it.body}</p>
-              </li>
-            ))}
-          </ol>
+          <Link
+            to="/roadmap"
+            className="mt-7 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] px-5 py-2.5 text-sm font-medium backdrop-blur transition-colors hover:bg-white/[0.12]"
+          >
+            See the full roadmap <ArrowRight className="h-4 w-4 shrink-0" />
+          </Link>
         </div>
       </div>
     </section>
@@ -947,6 +825,7 @@ function Footer() {
                 title: "Product",
                 links: [
                   { label: "Bridge", href: "/bridge-app" },
+                  { label: "Roadmap", href: "/roadmap" },
                   { label: "Agents", href: "#" },
                   { label: "TradFi", href: "#" },
                 ],
@@ -999,7 +878,7 @@ function Footer() {
 export function Landing() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Header />
+      <SiteHeader stats={<HeaderStats />} />
       <main>
         <Hero />
         <Pillars />

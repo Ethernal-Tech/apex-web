@@ -12,6 +12,7 @@ const PUBLIC_PATHS = [
   "/contact",
   "/audit",
   "/privacy-policy",
+  "/roadmap",
   "/terms-of-service",
   "/transactions",
   "/bridge-app",

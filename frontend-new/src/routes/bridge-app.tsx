@@ -311,7 +311,7 @@ function ChainPickerModal({
         </div>
 
         <div className="relative mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-3 pb-5">
+          <div className="flex-1 overflow-y-auto scrollbar-sky px-3 pb-5">
             {filtered.length === 0 ? (
               <div className="px-4 py-10 text-center text-sm text-muted-foreground">
                 {chains.length === 0
@@ -623,7 +623,7 @@ function TokenPickerModal({
         </div>
 
         <div className="relative mt-4 flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto px-3 pb-5">
+          <div className="flex-1 overflow-y-auto scrollbar-sky px-3 pb-5">
             {filtered.length === 0 && (
               <div className="px-4 py-10 text-center text-sm text-muted-foreground">
                 {query

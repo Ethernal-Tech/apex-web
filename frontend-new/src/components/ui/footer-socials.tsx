@@ -16,7 +16,8 @@ function XLogo({ className }: { className?: string }) {
   );
 }
 
-const SOCIALS = [
+/** Shared with the header's Resources menu, so the two cannot drift apart. */
+export const SOCIAL_LINKS = [
   {
     label: "Contact Skyline",
     href: "/contact",
@@ -37,7 +38,7 @@ const SOCIALS = [
 export function FooterSocials({ className }: { className?: string }) {
   return (
     <div className={`flex items-center gap-2 ${className ?? ""}`}>
-      {SOCIALS.map((s) => (
+      {SOCIAL_LINKS.map((s) => (
         <a
           key={s.label}
           href={s.href}
