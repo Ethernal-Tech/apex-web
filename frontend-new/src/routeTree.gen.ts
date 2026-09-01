@@ -16,10 +16,13 @@ import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as LandingRouteImport } from './routes/landing'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as BridgeAppRouteImport } from './routes/bridge-app'
+import { Route as BlogRouteImport } from './routes/blog'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as AboutUsRouteImport } from './routes/about-us'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as TransactionIdRouteImport } from './routes/transaction.$id'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
@@ -56,6 +59,11 @@ const BridgeAppRoute = BridgeAppRouteImport.update({
   path: '/bridge-app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogRoute = BlogRouteImport.update({
+  id: '/blog',
+  path: '/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuditRoute = AuditRouteImport.update({
   id: '/audit',
   path: '/audit',
@@ -71,16 +79,27 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BlogRoute,
+} as any)
 const TransactionIdRoute = TransactionIdRouteImport.update({
   id: '/transaction/$id',
   path: '/transaction/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BlogRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about-us': typeof AboutUsRoute
   '/audit': typeof AuditRoute
+  '/blog': typeof BlogRouteWithChildren
   '/bridge-app': typeof BridgeAppRoute
   '/contact': typeof ContactRoute
   '/landing': typeof LandingRoute
@@ -88,7 +107,9 @@ export interface FileRoutesByFullPath {
   '/roadmap': typeof RoadmapRoute
   '/terms-of-service': typeof TermsOfServiceRoute
   '/transactions': typeof TransactionsRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/transaction/$id': typeof TransactionIdRoute
+  '/blog/': typeof BlogIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,13 +122,16 @@ export interface FileRoutesByTo {
   '/roadmap': typeof RoadmapRoute
   '/terms-of-service': typeof TermsOfServiceRoute
   '/transactions': typeof TransactionsRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/transaction/$id': typeof TransactionIdRoute
+  '/blog': typeof BlogIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about-us': typeof AboutUsRoute
   '/audit': typeof AuditRoute
+  '/blog': typeof BlogRouteWithChildren
   '/bridge-app': typeof BridgeAppRoute
   '/contact': typeof ContactRoute
   '/landing': typeof LandingRoute
@@ -115,7 +139,9 @@ export interface FileRoutesById {
   '/roadmap': typeof RoadmapRoute
   '/terms-of-service': typeof TermsOfServiceRoute
   '/transactions': typeof TransactionsRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/transaction/$id': typeof TransactionIdRoute
+  '/blog/': typeof BlogIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -123,6 +149,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about-us'
     | '/audit'
+    | '/blog'
     | '/bridge-app'
     | '/contact'
     | '/landing'
@@ -130,7 +157,9 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/terms-of-service'
     | '/transactions'
+    | '/blog/$slug'
     | '/transaction/$id'
+    | '/blog/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -143,12 +172,15 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/terms-of-service'
     | '/transactions'
+    | '/blog/$slug'
     | '/transaction/$id'
+    | '/blog'
   id:
     | '__root__'
     | '/'
     | '/about-us'
     | '/audit'
+    | '/blog'
     | '/bridge-app'
     | '/contact'
     | '/landing'
@@ -156,13 +188,16 @@ export interface FileRouteTypes {
     | '/roadmap'
     | '/terms-of-service'
     | '/transactions'
+    | '/blog/$slug'
     | '/transaction/$id'
+    | '/blog/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutUsRoute: typeof AboutUsRoute
   AuditRoute: typeof AuditRoute
+  BlogRoute: typeof BlogRouteWithChildren
   BridgeAppRoute: typeof BridgeAppRoute
   ContactRoute: typeof ContactRoute
   LandingRoute: typeof LandingRoute
@@ -224,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BridgeAppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog': {
+      id: '/blog'
+      path: '/blog'
+      fullPath: '/blog'
+      preLoaderRoute: typeof BlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/audit': {
       id: '/audit'
       path: '/audit'
@@ -245,6 +287,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof BlogRoute
+    }
     '/transaction/$id': {
       id: '/transaction/$id'
       path: '/transaction/$id'
@@ -252,13 +301,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TransactionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof BlogRoute
+    }
   }
 }
+
+interface BlogRouteChildren {
+  BlogSlugRoute: typeof BlogSlugRoute
+  BlogIndexRoute: typeof BlogIndexRoute
+}
+
+const BlogRouteChildren: BlogRouteChildren = {
+  BlogSlugRoute: BlogSlugRoute,
+  BlogIndexRoute: BlogIndexRoute,
+}
+
+const BlogRouteWithChildren = BlogRoute._addFileChildren(BlogRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutUsRoute: AboutUsRoute,
   AuditRoute: AuditRoute,
+  BlogRoute: BlogRouteWithChildren,
   BridgeAppRoute: BridgeAppRoute,
   ContactRoute: ContactRoute,
   LandingRoute: LandingRoute,

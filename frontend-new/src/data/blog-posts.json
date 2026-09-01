@@ -1,0 +1,18 @@
+{
+  "posts": [
+    {
+      "slug": "interoperability-cant-wait",
+      "title": "Why interoperability can’t wait",
+      "date": "2026-09-01",
+      "summary": "Every chain that ships in isolation adds another island for users and another integration for builders. A look at why Skyline treats routing between ecosystems as infrastructure rather than a feature.",
+      "cover": "/blog-covers/bridge.webp",
+      "coverAlt": "",
+      "body": [
+        "A new chain launches with its own execution model, its own tooling and its own liquidity. For the people building on it, that is a fresh start. For everyone holding assets somewhere else, it is one more island - and the boat between islands is usually a bridge someone bolted on afterwards.",
+        "We think that order is backwards. Routing value between ecosystems is not a feature you add once a chain is popular enough to justify it; it is the part that decides whether the chain is usable at all. So Skyline starts from the route: which asset moves, over which path, with what guarantees at each hop.",
+        "That framing changes the engineering. Instead of one contract per pair of chains, there is a single set of validators watching every supported chain and a routing layer that treats UTxO, EVM and SVM on their own terms rather than forcing one model onto all three.",
+        "It also changes what we owe you. Every asset the bridge holds is published on the audit page, so the claim that a route is backed one-for-one is something you can check rather than something you have to take on trust."
+      ]
+    }
+  ]
+}

@@ -5,10 +5,15 @@
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+// The blog feed, so every post gets a prerendered page. Posts added to the
+// live copy on GitHub after a build render client-side instead - see
+// src/lib/api/blog.ts.
+import blogFeed from "./src/data/blog-posts.json";
 
 const PUBLIC_PATHS = [
   "/",
   "/about-us",
+  "/blog",
   "/contact",
   "/audit",
   "/privacy-policy",
@@ -46,7 +51,10 @@ export default defineConfig({
       // (EISDIR) when the URL matches a directory.
       autoSubfolderIndex: false,
     },
-    pages: PUBLIC_PATHS.map((path) => ({ path })),
+    pages: [
+      ...PUBLIC_PATHS,
+      ...blogFeed.posts.map((post) => `/blog/${post.slug}`),
+    ].map((path) => ({ path })),
     sitemap: { enabled: false },
   },
   nitro: false,

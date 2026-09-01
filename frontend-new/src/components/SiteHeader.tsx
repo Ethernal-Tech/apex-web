@@ -100,7 +100,12 @@ const NAV_GROUPS: {
         blurb: "Milestones and target dates",
         to: "/roadmap",
       },
-      { label: "Blog", icon: Newspaper, soon: "Coming soon" },
+      {
+        label: "Blog",
+        icon: Newspaper,
+        blurb: "Notes from the team",
+        to: "/blog",
+      },
       { label: "Publications", icon: FileText, soon: "Coming soon" },
       {
         label: "Docs",
