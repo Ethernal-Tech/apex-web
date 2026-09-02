@@ -33,6 +33,8 @@ export const capexID = 3;
 export const xadaID = 4;
 export const polID = 5;
 export const papexID = 6;
+export const ethID = 7;
+export const eapexID = 8;
 
 export const lzEthID = 1000001;
 export const bapexID = 1000002;
@@ -282,6 +284,18 @@ const mainnetTokenInfos: Record<number, TokenInfo> = {
 		tokenID: papexID,
 		icon: ApexIcon,
 		label: 'pAP3X',
+		borderColor: '#0538AF',
+	},
+	[ethID]: {
+		tokenID: ethID,
+		icon: EthIcon,
+		label: 'ETH',
+		borderColor: '#8A92B2',
+	},
+	[eapexID]: {
+		tokenID: eapexID,
+		icon: ApexIcon,
+		label: 'eAP3X',
 		borderColor: '#0538AF',
 	},
 	[lzEthID]: {
