@@ -441,20 +441,40 @@ export const mapBridgeTransactionToResponse = (
 	return response;
 };
 
+export const parseConstructedTtl = (txRaw: string): bigint | undefined => {
+	try {
+		const parsed = JSON.parse(txRaw) as { constructedTtl?: unknown };
+		if (typeof parsed?.constructedTtl === 'string' && parsed.constructedTtl) {
+			return BigInt(parsed.constructedTtl);
+		}
+	} catch {
+		return undefined;
+	}
+};
+
+export const serializeConstructedTxRaw = (ttl: bigint): string =>
+	JSON.stringify({ constructedTtl: ttl.toString() });
+
 export const getTxTTL = (
 	chainId: string,
 	txRaw: string,
 ): bigint | undefined => {
-	let ttl: bigint | undefined;
-	if (isCardanoChain(chainId as ChainEnum)) {
-		ttl = getCardanoTTL(txRaw);
-	} else if (isSolanaChain(chainId as ChainEnum)) {
-		ttl = getSolanaTTL(txRaw);
-	} else {
-		ttl = getEthTTL(txRaw);
+	if (!txRaw) {
+		return undefined;
 	}
 
-	return ttl;
+	const constructed = parseConstructedTtl(txRaw);
+	if (constructed !== undefined) {
+		return constructed;
+	}
+
+	if (isCardanoChain(chainId as ChainEnum)) {
+		return getCardanoTTL(txRaw);
+	}
+	if (isSolanaChain(chainId as ChainEnum)) {
+		return getSolanaTTL(txRaw);
+	}
+	return getEthTTL(txRaw);
 };
 
 export const getInputUtxos = (txRaw: string): Utxo[] => {

@@ -32,7 +32,6 @@ import { MoreThan, Repository } from 'typeorm';
 import {
 	getInputUtxos,
 	mapBridgeTransactionToResponse,
-	getTxTTL,
 } from 'src/bridgeTransaction/bridgeTransaction.helper';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 import { SettingsService } from 'src/settings/settings.service';
@@ -53,9 +52,9 @@ import {
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
-import { serializeSolanaTxRawStorage } from 'src/utils/solanaTxRaw';
 import { isAddress } from 'web3-validator';
 import { createHash } from 'crypto';
+import { resolveTxRaw } from 'src/bridgeTransaction/txTtl';
 
 @Injectable()
 export class TransactionService {
@@ -374,11 +373,6 @@ export class TransactionService {
 		const enTokenID =
 			tokenID !== currencyID || nNativeTokenAmount > BigInt(0) ? tokenID : 0;
 
-		const txRawWithSolana =
-			isSolanaChain(originChain) && lastValidBlockHeight
-				? serializeSolanaTxRawStorage(txRaw, lastValidBlockHeight)
-				: txRaw;
-
 		entity.sourceTxHash = (originTxHash ?? '').trim();
 		entity.senderAddress = (senderAddress ?? '').trim() || entity.senderAddress;
 		entity.receiverAddresses = receiverAddresses ?? entity.receiverAddresses;
@@ -390,10 +384,7 @@ export class TransactionService {
 		entity.originChain = originChain;
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;
-		entity.txRaw =
-			getTxTTL(originChain, txRawWithSolana) !== undefined
-				? txRawWithSolana
-				: '';
+		entity.txRaw = await resolveTxRaw(originChain, txRaw, lastValidBlockHeight);
 		entity.isCentralized = isFallback;
 		entity.isLayerZero = isLayerZero;
 		entity.activeFrom = activate
@@ -451,7 +442,7 @@ export class TransactionService {
 
 		// Apply updates
 		if (txRaw !== undefined) {
-			entity.txRaw = getTxTTL(originChain, txRaw) !== undefined ? txRaw : '';
+			entity.txRaw = await resolveTxRaw(originChain, txRaw);
 		}
 		entity.activeFrom = new Date();
 		entity.clientID = null;

@@ -138,11 +138,12 @@ export class TransactionSubmittedDto {
 	})
 	tokenID: number;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@ApiProperty({
 		description: 'Transaction raw data on source chain',
+		required: false,
 	})
-	txRaw: string;
+	txRaw?: string;
 
 	@IsOptional()
 	@ApiProperty({
@@ -178,11 +179,12 @@ export class TransactionUpdateDto {
 	})
 	originTxHash: string;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@ApiProperty({
 		description: 'Transaction raw data on source chain',
+		required: false,
 	})
-	txRaw: string;
+	txRaw?: string;
 }
 
 export class TransactionActivateDeleteDto {

@@ -136,6 +136,34 @@ export const isEvmChain = (chain: ChainEnum) =>
 
 export const isSolanaChain = (chain: ChainEnum) => chain === ChainEnum.Solana;
 
+export const RPC_URLS: {
+	mainnet: { [key: string]: string };
+	testnet: { [key: string]: string };
+} = {
+	mainnet: {
+		[ChainEnum.Nexus]: 'https://rpc.nexus.mainnet.apexfusion.org',
+		[ChainEnum.Polygon]: 'https://polygon-rpc.com',
+		[ChainEnum.Ethereum]: 'https://rpc.mevblocker.io',
+		[ChainEnum.Solana]: 'https://api.mainnet-beta.solana.com',
+	},
+	testnet: {
+		[ChainEnum.Nexus]: 'https://rpc.nexus.testnet.apexfusion.org',
+		[ChainEnum.Polygon]: 'https://polygon-amoy.drpc.org',
+		[ChainEnum.Katana]: 'https://rpc-bokuto.katanarpc.com',
+		[ChainEnum.Ethereum]: 'https://ethereum-sepolia-rpc.publicnode.com',
+		[ChainEnum.Sei]: 'https://evm-rpc-testnet.sei-apis.com',
+		[ChainEnum.Arbitrum]: 'https://sepolia-rollup.arbitrum.io/rpc',
+		[ChainEnum.Scroll]: 'https://scroll-sepolia-rpc.publicnode.com',
+		[ChainEnum.Unichain]: 'https://sepolia.unichain.org',
+		[ChainEnum.Solana]: 'https://api.devnet.solana.com',
+	},
+};
+
+export const getChainRpcUrl = (
+	chain: ChainEnum,
+	isMainnet: boolean,
+): string | undefined => RPC_URLS[isMainnet ? 'mainnet' : 'testnet'][chain];
+
 const isAllowedDirection = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,
