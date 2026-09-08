@@ -83,6 +83,7 @@ func (c *SkylineTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
 		{Path: "GetLockedTokens", Method: http.MethodGet, Handler: c.getLockedAmountOfTokens},
 		{Path: "GetBridgingAddresses", Method: http.MethodGet, Handler: c.getBridgingAddresses},
+		{Path: "GetLatestSlot", Method: http.MethodGet, Handler: c.getLatestSlot},
 	}
 }
 
@@ -949,6 +950,67 @@ func (c *SkylineTxControllerImpl) getBridgingAddresses(w http.ResponseWriter, r 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		bridgingAddresses, c.logger)
+}
+
+// @Summary Get latest slot for a Cardano chain
+// @Description Returns the current tip slot for the given chain ID using the chain's configured tx provider (Ogmios/Blockfrost/socket).
+// @Tags CardanoTx
+// @Produce json
+// @Param chainId query string true "Chain ID"
+// @Success 200 {object} response.LatestSlotResponse "OK - Returns the latest slot."
+// @Failure 400 {object} response.ErrorResponse "Bad Request – chainId is missing or the tip could not be retrieved."
+// @Failure 401 {object} response.ErrorResponse "Unauthorized – API key missing or invalid."
+// @Security ApiKeyAuth
+// @Router /CardanoTx/GetLatestSlot [get]
+//
+//nolint:dupl
+func (c *SkylineTxControllerImpl) getLatestSlot(w http.ResponseWriter, r *http.Request) {
+	c.logger.Debug("getLatestSlot request", "url", r.URL)
+
+	queryValues := r.URL.Query()
+
+	chainIDArr, exists := queryValues["chainId"]
+	if !exists || len(chainIDArr) == 0 {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			errors.New("chainId missing from query"), c.logger)
+
+		return
+	}
+
+	chainID := chainIDArr[0]
+
+	chainConfig, exists := c.appConfig.CardanoChains[chainID]
+	if !exists || chainConfig == nil || !chainConfig.IsEnabled || chainConfig.ChainSpecific == nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("cardano chain not found or disabled: %s", chainID), c.logger)
+
+		return
+	}
+
+	txProvider, err := chainConfig.ChainSpecific.CreateTxProvider()
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("create tx provider: %w", err), c.logger)
+
+		return
+	}
+	defer txProvider.Dispose()
+
+	tip, err := txProvider.GetTip(r.Context())
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("get tip: %w", err), c.logger)
+
+		return
+	}
+
+	utils.WriteResponse(
+		w, r, http.StatusOK,
+		commonResponse.NewLatestSlotResponse(tip.Slot), c.logger)
 }
 
 func (c *SkylineTxControllerImpl) getAddressToBridgeTo(
