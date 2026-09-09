@@ -352,6 +352,11 @@ export class BridgeTransactionService {
 		}
 	}
 
+	/**
+	 * `id` is always appended as the last sort key. The chosen column can hold
+	 * duplicates (e.g. several pending txs), and without a unique tiebreaker
+	 * the DB is free to return those rows in a different order on every fetch.
+	 */
 	private buildColumnOrder(
 		orderColumn: keyof BridgeTransaction,
 		orderDirection: 'asc' | 'desc',
@@ -362,9 +367,10 @@ export class BridgeTransactionService {
 					direction: orderDirection,
 					nulls: 'LAST',
 				},
+				id: 'desc',
 			};
 		}
-		return { [orderColumn]: orderDirection };
+		return { [orderColumn]: orderDirection, id: 'desc' };
 	}
 
 	/**
@@ -391,10 +397,12 @@ export class BridgeTransactionService {
 				ELSE 1
 			END`,
 			direction,
-		).setParameters({
-			invalidRequest: TransactionStatusEnum.InvalidRequest,
-			executed: TransactionStatusEnum.ExecutedOnDestination,
-		});
+		)
+			.addOrderBy('tx.id', 'DESC')
+			.setParameters({
+				invalidRequest: TransactionStatusEnum.InvalidRequest,
+				executed: TransactionStatusEnum.ExecutedOnDestination,
+			});
 		return qb.getManyAndCount();
 	}
 }

@@ -134,6 +134,7 @@ describe('BridgeTransactionService', () => {
 				expect.objectContaining({
 					order: {
 						finishedAt: { direction: 'desc', nulls: 'LAST' },
+						id: 'desc',
 					},
 				}),
 			);
@@ -143,6 +144,7 @@ describe('BridgeTransactionService', () => {
 			const qb = {
 				setFindOptions: jest.fn(),
 				orderBy: jest.fn().mockReturnThis(),
+				addOrderBy: jest.fn().mockReturnThis(),
 				setParameters: jest.fn().mockReturnThis(),
 				getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
 			};
@@ -159,7 +161,25 @@ describe('BridgeTransactionService', () => {
 				expect.stringContaining('isRefund'),
 				'ASC',
 			);
+			expect(qb.addOrderBy).toHaveBeenCalledWith('tx.id', 'DESC');
 			expect(qb.getManyAndCount).toHaveBeenCalled();
+		});
+
+		it('breaks ties on id so repeated fetches keep the same order', async () => {
+			const spy = jest
+				.spyOn(bridgeTransactionRepository, 'findAndCount')
+				.mockResolvedValue([[], 0]);
+
+			await service.getAllFiltered({
+				orderBy: 'originChain',
+				order: 'asc',
+			});
+
+			expect(spy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					order: { originChain: 'asc', id: 'desc' },
+				}),
+			);
 		});
 	});
 });
