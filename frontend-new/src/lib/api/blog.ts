@@ -12,7 +12,7 @@ import { blogFeedSchema, fallbackPosts, type BlogPost } from "@/data/blog";
  */
 export const BLOG_POSTS_URL: string =
   import.meta.env.VITE_BLOG_POSTS_URL ??
-  "https://raw.githubusercontent.com/Ethernal-Tech/apex-web/feat/skyline/frontend-new/src/data/blog-posts.json";
+  "https://raw.githubusercontent.com/Ethernal-Tech/apex-web/feat/skyline-web-redesign/frontend-new/src/data/blog-posts.json";
 
 export async function fetchBlogPosts(): Promise<BlogPost[]> {
   const res = await fetch(BLOG_POSTS_URL, {

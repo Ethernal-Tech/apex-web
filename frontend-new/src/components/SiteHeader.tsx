@@ -106,7 +106,12 @@ const NAV_GROUPS: {
         blurb: "Notes from the team",
         to: "/blog",
       },
-      { label: "Publications", icon: FileText, soon: "Coming soon" },
+      {
+        label: "Publications",
+        icon: FileText,
+        blurb: "Papers from the team",
+        to: "/publications",
+      },
       {
         label: "Docs",
         icon: BookOpen,

@@ -1,0 +1,18 @@
+{
+  "publications": [
+    {
+      "id": "zk-friendly-hash-functions",
+      "title": "A short survey of zk-Friendly Hash Functions",
+      "venue": "2025 24th International Symposium INFOTEH-JAHORINA (INFOTEH)",
+      "doi": "10.1109/INFOTEH64129.2025.10959296",
+      "authors": [
+        "Jelena Sekulić",
+        "Darko Čapko",
+        "Aleksandar Erdeljan",
+        "Tatjana Grbić",
+        "Kosa Nenadić"
+      ],
+      "kind": "Paper"
+    }
+  ]
+}

@@ -1,6 +1,21 @@
 {
   "posts": [
     {
+      "slug": "ethereum-live-on-skyline-mainnet",
+      "title": "Ethereum is live on Skyline mainnet",
+      "date": "2026-09-09",
+      "summary": "AP3X now moves between Vector and Ethereum on mainnet, arriving on the other side as eAP3X - and back again whenever you want it home.",
+      "cover": "/blog-covers/ethereum-route.webp",
+      "coverAlt": "AP3X moving both ways between Vector and Ethereum, where it is held as eAP3X",
+      "body": [
+        "Ethereum is live on Skyline mainnet. Bridge AP3X out of Vector and it arrives on Ethereum as eAP3X; send eAP3X back and the AP3X is released on Vector. That is the whole route, and it is open now.",
+        "It is deliberately the same shape as the Polygon route we opened last month. eAP3X is not a separate asset with its own economics - it is the Ethereum representation of AP3X, minted one-for-one against the AP3X the bridge holds on Vector. The same validator set watches both chains, so adding Ethereum did not add a trust assumption that only Ethereum users carry.",
+        "What does differ is what the chain underneath charges you. Ethereum settles on its own schedule and prices its own blockspace, so a transfer to and from mainnet costs more in gas than the Polygon route and takes longer to confirm. The bridge shows you the fee before you sign rather than after.",
+        "Every AP3X locked behind eAP3X is published on the audit page alongside everything else the bridge holds, so the one-for-one claim above is something you can check rather than something you have to take on trust.",
+        "Solana is next, and it is the last of this year's production integrations on the roadmap."
+      ]
+    },
+    {
       "slug": "interoperability-cant-wait",
       "title": "Why interoperability can’t wait",
       "date": "2026-09-01",
@@ -12,6 +27,21 @@
         "We think that order is backwards. Routing value between ecosystems is not a feature you add once a chain is popular enough to justify it; it is the part that decides whether the chain is usable at all. So Skyline starts from the route: which asset moves, over which path, with what guarantees at each hop.",
         "That framing changes the engineering. Instead of one contract per pair of chains, there is a single set of validators watching every supported chain and a routing layer that treats UTxO, EVM and SVM on their own terms rather than forcing one model onto all three.",
         "It also changes what we owe you. Every asset the bridge holds is published on the audit page, so the claim that a route is backed one-for-one is something you can check rather than something you have to take on trust."
+      ]
+    },
+    {
+      "slug": "polygon-live-on-skyline-mainnet",
+      "title": "Polygon is live on Skyline mainnet",
+      "date": "2026-08-10",
+      "summary": "AP3X now moves between Vector and Polygon on mainnet, arriving on the other side as pAP3X, with the same validator set watching both ends.",
+      "cover": "/blog-covers/polygon-route.webp",
+      "coverAlt": "AP3X moving both ways between Vector and Polygon, where it is held as pAP3X",
+      "body": [
+        "Polygon is live on Skyline mainnet. AP3X on Vector now has a route to Polygon and back: bridge it across and it arrives as pAP3X, bridge it home and the AP3X is released on Vector again.",
+        "Skyline has spoken EVM since Nexus. What is new here is whose EVM it is: Polygon is a chain we did not build, with users, tooling and liquidity that were already there before we arrived. AP3X now reaches all three without leaving the guarantees it had on Vector.",
+        "pAP3X is minted one-for-one against AP3X the bridge holds on Vector - no fractional reserve, no separate float to keep an eye on. The validators that were already watching Vector watch Polygon too, which is why the route did not need a new set of assumptions to go live.",
+        "Open the bridge, pick Vector on one side and Polygon on the other, connect the wallet you already use on each, and send. What the bridge holds on both ends is published on the audit page.",
+        "Ethereum is next on the roadmap."
       ]
     }
   ]

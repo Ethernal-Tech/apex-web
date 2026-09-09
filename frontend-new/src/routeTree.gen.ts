@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as TermsOfServiceRouteImport } from './routes/terms-of-service'
 import { Route as RoadmapRouteImport } from './routes/roadmap'
+import { Route as PublicationsRouteImport } from './routes/publications'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as LandingRouteImport } from './routes/landing'
 import { Route as ContactRouteImport } from './routes/contact'
@@ -37,6 +38,11 @@ const TermsOfServiceRoute = TermsOfServiceRouteImport.update({
 const RoadmapRoute = RoadmapRouteImport.update({
   id: '/roadmap',
   path: '/roadmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PublicationsRoute = PublicationsRouteImport.update({
+  id: '/publications',
+  path: '/publications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
@@ -104,6 +110,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/landing': typeof LandingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/publications': typeof PublicationsRoute
   '/roadmap': typeof RoadmapRoute
   '/terms-of-service': typeof TermsOfServiceRoute
   '/transactions': typeof TransactionsRoute
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/landing': typeof LandingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/publications': typeof PublicationsRoute
   '/roadmap': typeof RoadmapRoute
   '/terms-of-service': typeof TermsOfServiceRoute
   '/transactions': typeof TransactionsRoute
@@ -136,6 +144,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/landing': typeof LandingRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/publications': typeof PublicationsRoute
   '/roadmap': typeof RoadmapRoute
   '/terms-of-service': typeof TermsOfServiceRoute
   '/transactions': typeof TransactionsRoute
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/landing'
     | '/privacy-policy'
+    | '/publications'
     | '/roadmap'
     | '/terms-of-service'
     | '/transactions'
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/landing'
     | '/privacy-policy'
+    | '/publications'
     | '/roadmap'
     | '/terms-of-service'
     | '/transactions'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/landing'
     | '/privacy-policy'
+    | '/publications'
     | '/roadmap'
     | '/terms-of-service'
     | '/transactions'
@@ -202,6 +214,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   LandingRoute: typeof LandingRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  PublicationsRoute: typeof PublicationsRoute
   RoadmapRoute: typeof RoadmapRoute
   TermsOfServiceRoute: typeof TermsOfServiceRoute
   TransactionsRoute: typeof TransactionsRoute
@@ -229,6 +242,13 @@ declare module '@tanstack/react-router' {
       path: '/roadmap'
       fullPath: '/roadmap'
       preLoaderRoute: typeof RoadmapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/publications': {
+      id: '/publications'
+      path: '/publications'
+      fullPath: '/publications'
+      preLoaderRoute: typeof PublicationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy-policy': {
@@ -332,6 +352,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   LandingRoute: LandingRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
+  PublicationsRoute: PublicationsRoute,
   RoadmapRoute: RoadmapRoute,
   TermsOfServiceRoute: TermsOfServiceRoute,
   TransactionsRoute: TransactionsRoute,

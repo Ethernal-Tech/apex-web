@@ -17,6 +17,7 @@ const PUBLIC_PATHS = [
   "/contact",
   "/audit",
   "/privacy-policy",
+  "/publications",
   "/roadmap",
   "/terms-of-service",
   "/transactions",

@@ -61,7 +61,10 @@ function StatChip({
 }) {
   return (
     <div
-      className={`pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur transition-colors ${
+      // Deliberately no backdrop-blur: the header sets one of its own, which
+      // re-roots a nested blur so it buys nothing - and a backdrop-filter here
+      // paints the chip above an open nav dropdown whatever its z-index.
+      className={`pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] transition-colors ${
         compact ? "px-3 py-1" : "px-3.5 py-1.5"
       } ${interactive ? "group-hover:border-[oklch(0.72_0.19_245_/_0.55)] group-hover:bg-white/[0.07]" : ""}`}
     >
