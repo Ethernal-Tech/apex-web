@@ -8,12 +8,10 @@
     "isMainnet": false
   },
   "features": {
-    "useCentralizedBridge": false,
     "statusUpdateModesSupported": [
       "reactor",
       "skyline",
-      "layerzero",
-      "centralized"
+      "layerzero"
     ]
   },
   "bridge": {
@@ -24,8 +22,7 @@
     "oracleSkylineUrl": "http://validator-1-skyline-partner.testnet.ethernal.work:10003",
     "oracleReactorUrl": "http://bridge-api-testnet.apexfusion.org:10003",
     "cardanoSkylineApiUrl": "http://localhost:41003",
-    "cardanoReactorApiUrl": "http://localhost:41001",
-    "centralizedApiUrl": "https://developers.apexfusion.org"
+    "cardanoReactorApiUrl": "http://localhost:41001"
   },
   "database": {
     "host": "localhost",

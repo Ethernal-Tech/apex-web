@@ -7,6 +7,23 @@ import {
 } from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
+import { Request } from 'express';
+
+export function formatRequestInfo(request: Request): string {
+	const method = request.method ?? '';
+	const parts = [
+		`Method: ${method}`,
+		`Path: ${request.url ?? ''}`,
+		`Query: ${JSON.stringify(request.query ?? {})}`,
+		`Params: ${JSON.stringify(request.params ?? {})}`,
+	];
+
+	if (method.toUpperCase() === 'POST') {
+		parts.push(`Body: ${JSON.stringify(request.body ?? {})}`);
+	}
+
+	return parts.join(', ');
+}
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -14,11 +31,15 @@ export class LoggingInterceptor implements NestInterceptor {
 
 	intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
 		const now = Date.now();
-		const request = context.switchToHttp().getRequest();
-		const { method, url, params, query } = request;
+		const request = context.switchToHttp().getRequest<Request>();
+		const requestInfo = formatRequestInfo(request);
+		const isPost = (request.method ?? '').toUpperCase() === 'POST';
 
-		const requestInfo = `Method: ${method} Path: ${url}, Query: ${JSON.stringify(query)}, Params: ${JSON.stringify(params)}`;
-		Logger.debug(`Incoming request - ${requestInfo}`);
+		if (isPost) {
+			Logger.log(`Incoming request - ${requestInfo}`);
+		} else {
+			Logger.debug(`Incoming request - ${requestInfo}`);
+		}
 
 		return next.handle().pipe(
 			tap(() => {

@@ -6,8 +6,7 @@
             "networkID": 0,
             "bridgingAddresses": {
                 "address": "",
-                "feeAddress": "addr_test1xz429ta7d8akqvk6rtkavja8kshy4m3dplm2sgx60rp0fk3pmuk902u7lh609tzz54f32s49s5uf6sphu2zer00a2k4qkq40f9",
-                "fallbackAddress": "addr_test1xp3g6ayyt3e0m9w3jtxr84mf877nhqh4snt2g7ww43yf6lx4w8kmdszpx27e3wpawvkcqcrhrl9ra09stpe8ahtznzesm8x8rk"
+                "feeAddress": "addr_test1xz429ta7d8akqvk6rtkavja8kshy4m3dplm2sgx60rp0fk3pmuk902u7lh609tzz54f32s49s5uf6sphu2zer00a2k4qkq40f9"
             },
             "chainSpecific": {
                 "ogmiosUrl": "https://preview-ogmios.onprem.ethernal.work",
@@ -28,8 +27,7 @@
             "networkID": 0,
             "bridgingAddresses": {
                 "address": "",
-                "feeAddress": "addr_test1xr06xce9aq6atg0hwuucxe7eu5g6nx8mmnvw2d2e848cz4y93epqj6zxan4pykvt4ux34uzwcwnts4akrfrus070ntss82juq8",
-                "fallbackAddress": "addr_test1xzg90aa683qrmp7nplcpvjrh33wj0l77wmuzl9fyeljzjwnu8600uw5fkfran3y3knsvvaleyf0u73xdn5gytsqmu9gqjjclpu"
+                "feeAddress": "addr_test1xr06xce9aq6atg0hwuucxe7eu5g6nx8mmnvw2d2e848cz4y93epqj6zxan4pykvt4ux34uzwcwnts4akrfrus070ntss82juq8"
             },
             "chainSpecific": {
                 "ogmiosUrl": "http://ogmios.prime.testnet.apexfusion.org:1337",

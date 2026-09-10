@@ -12,7 +12,10 @@ const defaultUrl = 'http://localhost:40000';
 
 const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
 	app: { port: 3500, isMainnet: false, txValidityPeriod: 30000 }, //in milliseconds
-	bridge: { recentInputsThresholdMinutes: 5, ethTxTtlInc: 50 },
+	bridge: {
+		recentInputsThresholdMinutes: 5,
+		ethTxTtlInc: 50,
+	},
 	services: {
 		oracleSkylineUrl: defaultUrl,
 		oracleReactorUrl: defaultUrl,
@@ -85,9 +88,6 @@ export class AppConfigService {
 	}
 	get cardanoReactorApiUrl() {
 		return this.config.services.cardanoApiReactorUrl;
-	}
-	get centralizedApiUrl() {
-		return this.config.services.centralizedApiUrl;
 	}
 	get db() {
 		return this.config.database;

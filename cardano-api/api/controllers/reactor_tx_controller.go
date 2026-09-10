@@ -52,6 +52,7 @@ func (c *ReactorTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
 		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
+		{Path: "GetLatestSlot", Method: http.MethodGet, Handler: c.getLatestSlot},
 	}
 }
 
@@ -139,6 +140,56 @@ func (c *ReactorTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Req
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		commonResponse.NewReactorSettingsResponse(c.appConfig), c.logger)
+}
+
+//nolint:dupl
+func (c *ReactorTxControllerImpl) getLatestSlot(w http.ResponseWriter, r *http.Request) {
+	c.logger.Debug("getLatestSlot request", "url", r.URL)
+
+	queryValues := r.URL.Query()
+
+	chainIDArr, exists := queryValues["chainId"]
+	if !exists || len(chainIDArr) == 0 {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			errors.New("chainId missing from query"), c.logger)
+
+		return
+	}
+
+	chainID := chainIDArr[0]
+
+	chainConfig, exists := c.appConfig.CardanoChains[chainID]
+	if !exists || chainConfig == nil || !chainConfig.IsEnabled || chainConfig.ChainSpecific == nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("cardano chain not found or disabled: %s", chainID), c.logger)
+
+		return
+	}
+
+	txProvider, err := chainConfig.ChainSpecific.CreateTxProvider()
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("create tx provider: %w", err), c.logger)
+
+		return
+	}
+	defer txProvider.Dispose()
+
+	tip, err := txProvider.GetTip(r.Context())
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest,
+			fmt.Errorf("get tip: %w", err), c.logger)
+
+		return
+	}
+
+	utils.WriteResponse(
+		w, r, http.StatusOK,
+		commonResponse.NewLatestSlotResponse(tip.Slot), c.logger)
 }
 
 func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
@@ -330,7 +381,7 @@ func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(
 ) (
 	*sendtx.TxSender, []sendtx.BridgingTxReceiver, error,
 ) {
-	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
+	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate configuration")
 	}

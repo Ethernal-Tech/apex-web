@@ -51,5 +51,4 @@ export enum BridgingModeEnum {
 	Reactor = 'reactor',
 	Skyline = 'skyline',
 	LayerZero = 'layerzero',
-	Centralized = 'centralized',
 }
