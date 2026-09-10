@@ -15,28 +15,28 @@ import (
 )
 
 const (
-	primeNetworkIDFlag               = "prime-network-id"
-	primeNetworkMagicFlag            = "prime-network-magic"
-	primeBridgingFeeAddressFlag      = "prime-bridging-fee-address"
-	primeTreasuryAddressFlag         = "prime-treasury-address"
-	primeOgmiosURLFlag               = "prime-ogmios-url"
-	primeBlockfrostURLFlag           = "prime-blockfrost-url"
-	primeBlockfrostAPIKeyFlag        = "prime-blockfrost-api-key"
-	primeSocketPathFlag              = "prime-socket-path"
-	primeTTLSlotIncFlag              = "prime-ttl-slot-inc"
-	primeCardanoCliBinaryNameFlag    = "prime-cardano-cli-binary-name"
+	primeNetworkIDFlag            = "prime-network-id"
+	primeNetworkMagicFlag         = "prime-network-magic"
+	primeBridgingFeeAddressFlag   = "prime-bridging-fee-address"
+	primeTreasuryAddressFlag      = "prime-treasury-address"
+	primeOgmiosURLFlag            = "prime-ogmios-url"
+	primeBlockfrostURLFlag        = "prime-blockfrost-url"
+	primeBlockfrostAPIKeyFlag     = "prime-blockfrost-api-key"
+	primeSocketPathFlag           = "prime-socket-path"
+	primeTTLSlotIncFlag           = "prime-ttl-slot-inc"
+	primeCardanoCliBinaryNameFlag = "prime-cardano-cli-binary-name"
 
-	vectorNetworkIDFlag               = "vector-network-id"
-	vectorNetworkMagicFlag            = "vector-network-magic"
-	vectorBridgingFeeAddressFlag      = "vector-bridging-fee-address"
-	vectorTreasuryAddressFlag         = "vector-treasury-address"
-	vectorOgmiosURLFlag               = "vector-ogmios-url"
-	vectorBlockfrostURLFlag           = "vector-blockfrost-url"
-	vectorBlockfrostAPIKeyFlag        = "vector-blockfrost-api-key"
-	vectorSocketPathFlag              = "vector-socket-path"
-	vectorTTLSlotIncFlag              = "vector-ttl-slot-inc"
-	vectorIsEnabledFlag               = "vector-is-enabled"
-	vectorCardanoCliBinaryNameFlag    = "vector-cardano-cli-binary-name"
+	vectorNetworkIDFlag            = "vector-network-id"
+	vectorNetworkMagicFlag         = "vector-network-magic"
+	vectorBridgingFeeAddressFlag   = "vector-bridging-fee-address"
+	vectorTreasuryAddressFlag      = "vector-treasury-address"
+	vectorOgmiosURLFlag            = "vector-ogmios-url"
+	vectorBlockfrostURLFlag        = "vector-blockfrost-url"
+	vectorBlockfrostAPIKeyFlag     = "vector-blockfrost-api-key"
+	vectorSocketPathFlag           = "vector-socket-path"
+	vectorTTLSlotIncFlag           = "vector-ttl-slot-inc"
+	vectorIsEnabledFlag            = "vector-is-enabled"
+	vectorCardanoCliBinaryNameFlag = "vector-cardano-cli-binary-name"
 
 	nexusIsEnabledFlag    = "nexus-is-enabled"
 	polygonIsEnabledFlag  = "polygon-is-enabled"
@@ -63,28 +63,28 @@ const (
 	outputDirFlag      = "output-dir"
 	outputFileNameFlag = "output-file-name"
 
-	primeNetworkIDFlagDesc               = "prime network id"
-	primeNetworkMagicFlagDesc            = "prime network magic (default 0)"
-	primeBridgingFeeAddressFlagDesc      = "prime bridging fee address"
-	primeTreasuryAddressFlagDesc         = "prime treasury address"
-	primeOgmiosURLFlagDesc               = "ogmios URL for prime network"
-	primeBlockfrostURLFlagDesc           = "blockfrost URL for prime network"
-	primeBlockfrostAPIKeyFlagDesc        = "blockfrost API key for prime network" //nolint:gosec
-	primeSocketPathFlagDesc              = "socket path for prime network"
-	primeTTLSlotIncFlagDesc              = "TTL slot increment for prime"
-	primeCardanoCliBinaryNameFlagDesc    = "name of the cardano-cli binary to use for the prime chain"
+	primeNetworkIDFlagDesc            = "prime network id"
+	primeNetworkMagicFlagDesc         = "prime network magic (default 0)"
+	primeBridgingFeeAddressFlagDesc   = "prime bridging fee address"
+	primeTreasuryAddressFlagDesc      = "prime treasury address"
+	primeOgmiosURLFlagDesc            = "ogmios URL for prime network"
+	primeBlockfrostURLFlagDesc        = "blockfrost URL for prime network"
+	primeBlockfrostAPIKeyFlagDesc     = "blockfrost API key for prime network" //nolint:gosec
+	primeSocketPathFlagDesc           = "socket path for prime network"
+	primeTTLSlotIncFlagDesc           = "TTL slot increment for prime"
+	primeCardanoCliBinaryNameFlagDesc = "name of the cardano-cli binary to use for the prime chain"
 
-	vectorNetworkIDFlagDesc               = "vector network id"
-	vectorNetworkMagicFlagDesc            = "vector network magic (default 0)"
-	vectorBridgingFeeAddressFlagDesc      = "vector bridging fee address"
-	vectorTreasuryAddressFlagDesc         = "vector treasury address"
-	vectorOgmiosURLFlagDesc               = "ogmios URL for vector network"
-	vectorBlockfrostURLFlagDesc           = "blockfrost URL for vector network"
-	vectorBlockfrostAPIKeyFlagDesc        = "blockfrost API key for vector network" //nolint:gosec
-	vectorSocketPathFlagDesc              = "socket path for vector network"
-	vectorTTLSlotIncFlagDesc              = "TTL slot increment for vector"
-	vectorIsEnabledFlagDesc               = "chain enable flag for vector"
-	vectorCardanoCliBinaryNameFlagDesc    = "name of the cardano-cli binary to use for the vector chain"
+	vectorNetworkIDFlagDesc            = "vector network id"
+	vectorNetworkMagicFlagDesc         = "vector network magic (default 0)"
+	vectorBridgingFeeAddressFlagDesc   = "vector bridging fee address"
+	vectorTreasuryAddressFlagDesc      = "vector treasury address"
+	vectorOgmiosURLFlagDesc            = "ogmios URL for vector network"
+	vectorBlockfrostURLFlagDesc        = "blockfrost URL for vector network"
+	vectorBlockfrostAPIKeyFlagDesc     = "blockfrost API key for vector network" //nolint:gosec
+	vectorSocketPathFlagDesc           = "socket path for vector network"
+	vectorTTLSlotIncFlagDesc           = "TTL slot increment for vector"
+	vectorIsEnabledFlagDesc            = "chain enable flag for vector"
+	vectorCardanoCliBinaryNameFlagDesc = "name of the cardano-cli binary to use for the vector chain"
 
 	nexusIsEnabledFlagDesc    = "chain enable flag for nexus"
 	polygonIsEnabledFlagDesc  = "chain enable flag for polygon"
@@ -126,22 +126,22 @@ const (
 )
 
 type generateConfigsParams struct {
-	primeNetworkID               uint32
-	primeNetworkMagic            uint32
-	primeOgmiosURL               string
-	primeBlockfrostURL           string
-	primeBlockfrostAPIKey        string
-	primeSocketPath              string
-	primeTTLSlotInc              uint64
+	primeNetworkID        uint32
+	primeNetworkMagic     uint32
+	primeOgmiosURL        string
+	primeBlockfrostURL    string
+	primeBlockfrostAPIKey string
+	primeSocketPath       string
+	primeTTLSlotInc       uint64
 
-	vectorNetworkID               uint32
-	vectorNetworkMagic            uint32
-	vectorOgmiosURL               string
-	vectorBlockfrostURL           string
-	vectorBlockfrostAPIKey        string
-	vectorSocketPath              string
-	vectorTTLSlotInc              uint64
-	vectorIsEnabled               bool
+	vectorNetworkID        uint32
+	vectorNetworkMagic     uint32
+	vectorOgmiosURL        string
+	vectorBlockfrostURL    string
+	vectorBlockfrostAPIKey string
+	vectorSocketPath       string
+	vectorTTLSlotInc       uint64
+	vectorIsEnabled        bool
 
 	nexusIsEnabled bool
 
