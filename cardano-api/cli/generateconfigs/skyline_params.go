@@ -15,66 +15,66 @@ import (
 )
 
 const (
-	cardanoNetworkIDFlag               = "cardano-network-id"
-	cardanoNetworkMagicFlag            = "cardano-network-magic"
-	cardanoBridgingFeeAddressFlag      = "cardano-bridging-fee-address"
-	cardanoTreasuryAddressFlag         = "cardano-treasury-address"
-	cardanoOgmiosURLFlag               = "cardano-ogmios-url"
-	cardanoBlockfrostURLFlag           = "cardano-blockfrost-url"
-	cardanoBlockfrostAPIKeyFlag        = "cardano-blockfrost-api-key" //nolint:gosec
-	cardanoSocketPathFlag              = "cardano-socket-path"
-	cardanoTTLSlotIncFlag              = "cardano-ttl-slot-inc"
-	cardanoCardanoCliBinaryNameFlag    = "cardano-cardano-cli-binary-name"
+	cardanoNetworkIDFlag            = "cardano-network-id"
+	cardanoNetworkMagicFlag         = "cardano-network-magic"
+	cardanoBridgingFeeAddressFlag   = "cardano-bridging-fee-address"
+	cardanoTreasuryAddressFlag      = "cardano-treasury-address"
+	cardanoOgmiosURLFlag            = "cardano-ogmios-url"
+	cardanoBlockfrostURLFlag        = "cardano-blockfrost-url"
+	cardanoBlockfrostAPIKeyFlag     = "cardano-blockfrost-api-key" //nolint:gosec
+	cardanoSocketPathFlag           = "cardano-socket-path"
+	cardanoTTLSlotIncFlag           = "cardano-ttl-slot-inc"
+	cardanoCardanoCliBinaryNameFlag = "cardano-cardano-cli-binary-name"
 
-	cardanoNetworkIDFlagDesc               = "cardano network id"
-	cardanoNetworkMagicFlagDesc            = "cardano network magic (default 0)"
-	cardanoBridgingFeeAddressFlagDesc      = "cardano bridging fee address"
-	cardanoTreasuryAddressFlagDesc         = "cardano treasury address"
-	cardanoOgmiosURLFlagDesc               = "ogmios URL for cardano network"
-	cardanoBlockfrostURLFlagDesc           = "blockfrost URL for cardano network"
-	cardanoBlockfrostAPIKeyFlagDesc        = "blockfrost API key for cardano network" //nolint:gosec
-	cardanoSocketPathFlagDesc              = "socket path for cardano network"
-	cardanoTTLSlotIncFlagDesc              = "TTL slot increment for cardano"
-	cardanoCardanoCliBinaryNameFlagDesc    = "name of the cardano-cli binary to use for the cardano chain"
+	cardanoNetworkIDFlagDesc            = "cardano network id"
+	cardanoNetworkMagicFlagDesc         = "cardano network magic (default 0)"
+	cardanoBridgingFeeAddressFlagDesc   = "cardano bridging fee address"
+	cardanoTreasuryAddressFlagDesc      = "cardano treasury address"
+	cardanoOgmiosURLFlagDesc            = "ogmios URL for cardano network"
+	cardanoBlockfrostURLFlagDesc        = "blockfrost URL for cardano network"
+	cardanoBlockfrostAPIKeyFlagDesc     = "blockfrost API key for cardano network" //nolint:gosec
+	cardanoSocketPathFlagDesc           = "socket path for cardano network"
+	cardanoTTLSlotIncFlagDesc           = "TTL slot increment for cardano"
+	cardanoCardanoCliBinaryNameFlagDesc = "name of the cardano-cli binary to use for the cardano chain"
 
 	defaultCardanoBlockConfirmationCount = 10
 	defaultCardanoTTLSlotNumberInc       = 1800 + defaultCardanoBlockConfirmationCount*10 // BlockTimeSeconds
 )
 
 type skylineGenerateConfigsParams struct {
-	primeNetworkID               uint32
-	primeNetworkMagic            uint32
-	primeBridgingFeeAddress      string
-	primeTreasuryAddress         string
-	primeOgmiosURL               string
-	primeBlockfrostURL           string
-	primeBlockfrostAPIKey        string
-	primeSocketPath              string
-	primeTTLSlotInc              uint64
-	primeCardanoCliBinaryName    string
+	primeNetworkID            uint32
+	primeNetworkMagic         uint32
+	primeBridgingFeeAddress   string
+	primeTreasuryAddress      string
+	primeOgmiosURL            string
+	primeBlockfrostURL        string
+	primeBlockfrostAPIKey     string
+	primeSocketPath           string
+	primeTTLSlotInc           uint64
+	primeCardanoCliBinaryName string
 
-	cardanoNetworkID               uint32
-	cardanoNetworkMagic            uint32
-	cardanoBridgingFeeAddress      string
-	cardanoTreasuryAddress         string
-	cardanoOgmiosURL               string
-	cardanoBlockfrostURL           string
-	cardanoBlockfrostAPIKey        string
-	cardanoSocketPath              string
-	cardanoTTLSlotInc              uint64
-	cardanoCardanoCliBinaryName    string
+	cardanoNetworkID            uint32
+	cardanoNetworkMagic         uint32
+	cardanoBridgingFeeAddress   string
+	cardanoTreasuryAddress      string
+	cardanoOgmiosURL            string
+	cardanoBlockfrostURL        string
+	cardanoBlockfrostAPIKey     string
+	cardanoSocketPath           string
+	cardanoTTLSlotInc           uint64
+	cardanoCardanoCliBinaryName string
 
-	vectorNetworkID               uint32
-	vectorNetworkMagic            uint32
-	vectorBridgingFeeAddress      string
-	vectorTreasuryAddress         string
-	vectorOgmiosURL               string
-	vectorBlockfrostURL           string
-	vectorBlockfrostAPIKey        string
-	vectorSocketPath              string
-	vectorTTLSlotInc              uint64
-	vectorIsEnabled               bool
-	vectorCardanoCliBinaryName    string
+	vectorNetworkID            uint32
+	vectorNetworkMagic         uint32
+	vectorBridgingFeeAddress   string
+	vectorTreasuryAddress      string
+	vectorOgmiosURL            string
+	vectorBlockfrostURL        string
+	vectorBlockfrostAPIKey     string
+	vectorSocketPath           string
+	vectorTTLSlotInc           uint64
+	vectorIsEnabled            bool
+	vectorCardanoCliBinaryName string
 
 	nexusIsEnabled    bool
 	polygonIsEnabled  bool
@@ -519,7 +519,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 				NetworkID:    wallet.CardanoNetworkType(p.primeNetworkID),
 				NetworkMagic: p.primeNetworkMagic,
 				BridgingAddresses: core.BridgingAddresses{
-					FeeAddress:      p.primeBridgingFeeAddress,
+					FeeAddress: p.primeBridgingFeeAddress,
 				},
 				TreasuryAddress: p.primeTreasuryAddress,
 				ChainSpecific: &cardanotx.CardanoChainConfig{
@@ -537,7 +537,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 				NetworkID:    wallet.CardanoNetworkType(p.cardanoNetworkID),
 				NetworkMagic: p.cardanoNetworkMagic,
 				BridgingAddresses: core.BridgingAddresses{
-					FeeAddress:      p.cardanoBridgingFeeAddress,
+					FeeAddress: p.cardanoBridgingFeeAddress,
 				},
 				TreasuryAddress: p.cardanoTreasuryAddress,
 				ChainSpecific: &cardanotx.CardanoChainConfig{
@@ -556,7 +556,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 				NetworkID:    wallet.CardanoNetworkType(p.vectorNetworkID),
 				NetworkMagic: p.vectorNetworkMagic,
 				BridgingAddresses: core.BridgingAddresses{
-					FeeAddress:      p.vectorBridgingFeeAddress,
+					FeeAddress: p.vectorBridgingFeeAddress,
 				},
 				TreasuryAddress: p.vectorTreasuryAddress,
 				ChainSpecific: &cardanotx.CardanoChainConfig{
