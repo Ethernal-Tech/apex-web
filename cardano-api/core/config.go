@@ -32,7 +32,6 @@ type APIConfig struct {
 type BridgingAddresses struct {
 	BridgingAddress string `json:"address"`
 	FeeAddress      string `json:"feeAddress"`
-	FallbackAddress string `json:"fallbackAddress"`
 }
 
 type EthChainConfig struct {
@@ -347,13 +346,13 @@ func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig,
 
 	return nil, nil, nil
 }
-func (appConfig *AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]sendtx.ChainConfig, error) {
+func (appConfig *AppConfig) ToSendTxChainConfigs() (map[string]sendtx.ChainConfig, error) {
 	appConfig.cardanoChainsMu.RLock()
 
 	result := make(map[string]sendtx.ChainConfig, len(appConfig.CardanoChains)+len(appConfig.EthChains))
 
 	for chainID, cardanoConfig := range appConfig.CardanoChains {
-		cfg, err := cardanoConfig.ToSendTxChainConfig(appConfig, useFallback)
+		cfg, err := cardanoConfig.ToSendTxChainConfig(appConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -464,17 +463,10 @@ func (appConfig *AppConfig) CreateEnabledChains() []string {
 	return enabledChains
 }
 
-func (config CardanoChainConfig) ToSendTxChainConfig(
-	appConfig *AppConfig, useFallback bool,
-) (res sendtx.ChainConfig, err error) {
+func (config CardanoChainConfig) ToSendTxChainConfig(appConfig *AppConfig) (res sendtx.ChainConfig, err error) {
 	txProvider, err := config.ChainSpecific.CreateTxProvider()
 	if err != nil {
 		return res, err
-	}
-
-	bridgingAddress := config.BridgingAddresses.BridgingAddress
-	if useFallback {
-		bridgingAddress = config.BridgingAddresses.FallbackAddress
 	}
 
 	var (
@@ -515,7 +507,7 @@ func (config CardanoChainConfig) ToSendTxChainConfig(
 	return sendtx.ChainConfig{
 		CardanoCliBinary:           cardanowallet.ResolveCardanoCliBinary(config.ChainSpecific.CardanoCliBinaryName),
 		TxProvider:                 txProvider,
-		MultiSigAddr:               bridgingAddress,
+		MultiSigAddr:               config.BridgingAddresses.BridgingAddress,
 		TestNetMagic:               uint(config.NetworkMagic),
 		TTLSlotNumberInc:           config.ChainSpecific.TTLSlotNumberInc,
 		MinUtxoValue:               minUtxoValue,

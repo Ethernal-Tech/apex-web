@@ -360,7 +360,6 @@ const BridgeInput = ({
 					approvalTxFee = await estimateEthTxFee(
 						approvalTx,
 						TxTypeEnum.London,
-						false,
 					);
 
 					const totalTxFee =
@@ -373,7 +372,6 @@ const BridgeInput = ({
 					const fee = await estimateEthTxFee(
 						feeResp.bridgingTx.ethTx,
 						TxTypeEnum.London,
-						bridgingTx.isFallback,
 					);
 
 					setUserWalletFee(fee.toString());

@@ -153,11 +153,6 @@ export class TransactionSubmittedDto {
 	lastValidBlockHeight?: string;
 
 	@ApiProperty({
-		description: 'Indicates is fallback mechanism used',
-	})
-	isFallback: boolean;
-
-	@ApiProperty({
 		description: 'Indicates if Layer Zero bridging is used',
 	})
 	isLayerZero: boolean;
@@ -245,11 +240,6 @@ export class CreateCardanoTransactionResponseDto {
 	})
 	operationFee: string;
 
-	@ApiProperty({
-		description: 'Indicates is fallback mechanism used',
-	})
-	isFallback: boolean;
-
 	@IsNotEmpty()
 	@ApiProperty({
 		description: 'Amount of currency to be bridged, expressed in Lovelace',
@@ -328,9 +318,6 @@ export class BridgingEthTransactionResponseDto {
 
 	@ApiProperty()
 	tokenID: number;
-
-	@ApiProperty()
-	isFallback: boolean;
 }
 
 @ApiExtraModels(EthTransactionResponseDto, BridgingEthTransactionResponseDto)
@@ -394,9 +381,6 @@ export class BridgingSolanaTransactionResponseDto {
 
 	@ApiProperty()
 	tokenID: number;
-
-	@ApiProperty()
-	isFallback: boolean;
 }
 
 @ApiExtraModels(

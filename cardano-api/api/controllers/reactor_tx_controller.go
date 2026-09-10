@@ -381,7 +381,7 @@ func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(
 ) (
 	*sendtx.TxSender, []sendtx.BridgingTxReceiver, error,
 ) {
-	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
+	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate configuration")
 	}

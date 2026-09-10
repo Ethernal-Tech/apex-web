@@ -342,7 +342,6 @@ export class TransactionService {
 			tokenID,
 			txRaw,
 			lastValidBlockHeight,
-			isFallback,
 			isLayerZero,
 		}: TransactionSubmittedDto,
 		ip: string,
@@ -385,7 +384,6 @@ export class TransactionService {
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;
 		entity.txRaw = await resolveTxRaw(originChain, txRaw, lastValidBlockHeight);
-		entity.isCentralized = isFallback;
 		entity.isLayerZero = isLayerZero;
 		entity.activeFrom = activate
 			? new Date()

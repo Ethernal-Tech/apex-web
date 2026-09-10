@@ -89,9 +89,6 @@ export class AppConfigService {
 	get cardanoReactorApiUrl() {
 		return this.config.services.cardanoApiReactorUrl;
 	}
-	get centralizedApiUrl() {
-		return this.config.services.centralizedApiUrl;
-	}
 	get db() {
 		return this.config.database;
 	}
