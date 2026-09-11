@@ -65,4 +65,8 @@ export class BridgeTransaction {
 
 	@Column({ type: 'varchar', nullable: true })
 	clientID?: string | null;
+
+	/** Imported from the oracle rather than submitted through this API. */
+	@Column({ default: false })
+	isOracleDiscovered: boolean;
 }
