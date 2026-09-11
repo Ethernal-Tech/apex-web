@@ -945,7 +945,6 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
     txRaw!: string;
     txHash!: string;
     bridgingFee!: string;
-    isFallback!: boolean;
 
     [key: string]: any;
 
@@ -967,7 +966,6 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
             this.txRaw = _data["txRaw"];
             this.txHash = _data["txHash"];
             this.bridgingFee = _data["bridgingFee"];
-            this.isFallback = _data["isFallback"];
         }
     }
 
@@ -987,7 +985,6 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
         data["txRaw"] = this.txRaw;
         data["txHash"] = this.txHash;
         data["bridgingFee"] = this.bridgingFee;
-        data["isFallback"] = this.isFallback;
         return data;
     }
 }
@@ -996,7 +993,6 @@ export interface ICreateCardanoTransactionResponseDto {
     txRaw: string;
     txHash: string;
     bridgingFee: string;
-    isFallback: boolean;
 
     [key: string]: any;
 }
@@ -1055,7 +1051,6 @@ export class CreateEthTransactionResponseDto implements ICreateEthTransactionRes
     value?: string | undefined;
     data!: string;
     bridgingFee!: string;
-    isFallback!: boolean;
 
     [key: string]: any;
 
@@ -1079,7 +1074,6 @@ export class CreateEthTransactionResponseDto implements ICreateEthTransactionRes
             this.value = _data["value"];
             this.data = _data["data"];
             this.bridgingFee = _data["bridgingFee"];
-            this.isFallback = _data["isFallback"];
         }
     }
 
@@ -1101,7 +1095,6 @@ export class CreateEthTransactionResponseDto implements ICreateEthTransactionRes
         data["value"] = this.value;
         data["data"] = this.data;
         data["bridgingFee"] = this.bridgingFee;
-        data["isFallback"] = this.isFallback;
         return data;
     }
 }
@@ -1112,7 +1105,6 @@ export interface ICreateEthTransactionResponseDto {
     value?: string | undefined;
     data: string;
     bridgingFee: string;
-    isFallback: boolean;
 
     [key: string]: any;
 }
@@ -1125,7 +1117,6 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
     receiverAddrs!: string[];
     amount!: string;
     txRaw!: string;
-    isFallback!: boolean;
 
     [key: string]: any;
 
@@ -1158,7 +1149,6 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
             }
             this.amount = _data["amount"];
             this.txRaw = _data["txRaw"];
-            this.isFallback = _data["isFallback"];
         }
     }
 
@@ -1186,7 +1176,6 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
         }
         data["amount"] = this.amount;
         data["txRaw"] = this.txRaw;
-        data["isFallback"] = this.isFallback;
         return data;
     }
 }
@@ -1199,7 +1188,6 @@ export interface ITransactionSubmittedDto {
     receiverAddrs: string[];
     amount: string;
     txRaw: string;
-    isFallback: boolean;
 
     [key: string]: any;
 }

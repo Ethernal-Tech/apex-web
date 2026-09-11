@@ -165,9 +165,9 @@ const BridgeInput = ({
 					convertApexToDfm(amount || '0', chain),
 				);
 				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				const { bridgingFee, isFallback, ...tx } = feeResp;
+				const { bridgingFee, ...tx } = feeResp;
 
-				const fee = await estimateEthGas(tx, isFallback);
+				const fee = await estimateEthGas(tx);
 				setUserWalletFee(fee.toString(10));
 
 				return;

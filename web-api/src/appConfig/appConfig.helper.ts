@@ -50,17 +50,15 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 		TX_VALIDITY_PERIOD: num({ default: undefined }),
 		HASH_SECRET: str({ default: undefined }),
 
-		USE_CENTRALIZED_BRIDGE: bool({ default: undefined }),
 		STATUS_UPDATE_MODES_SUPPORTED: list({ default: undefined }),
 
 		ETH_TX_TTL_INC: num({ default: undefined }),
 		RECENT_INPUTS_THRESHOLD_MINUTES: num({ default: undefined }),
 		NEXUS_BRIDGING_ADDR: str({ default: undefined }),
-		NEXUS_CENTRALIZED_BRIDGING_ADDR: str({ default: undefined }),
+		NEXUS_RPC_URL: str({ default: undefined }),
 
 		ORACLE_URL: str({ default: undefined }),
 		CARDANO_API_URL: str({ default: undefined }),
-		CENTRALIZED_API_URL: str({ default: undefined }),
 
 		DB_HOST: str({ default: undefined }),
 		DB_PORT: num({ default: undefined }),
@@ -88,7 +86,6 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			hashSecret: env.HASH_SECRET,
 		},
 		features: {
-			useCentralizedBridge: env.USE_CENTRALIZED_BRIDGE,
 			statusUpdateModesSupported: env.STATUS_UPDATE_MODES_SUPPORTED,
 		},
 		bridge: {
@@ -96,14 +93,12 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			recentInputsThresholdMinutes: env.RECENT_INPUTS_THRESHOLD_MINUTES,
 			addresses: {
 				nexusBridging: env.NEXUS_BRIDGING_ADDR as `0x${string}`,
-				nexusCentralizedBridging:
-					env.NEXUS_CENTRALIZED_BRIDGING_ADDR as `0x${string}`,
 			},
 		},
 		services: {
 			oracleUrl: env.ORACLE_URL,
 			cardanoApiUrl: env.CARDANO_API_URL,
-			centralizedApiUrl: env.CENTRALIZED_API_URL,
+			nexusRpcUrl: env.NEXUS_RPC_URL,
 		},
 		database: {
 			host: env.DB_HOST,
