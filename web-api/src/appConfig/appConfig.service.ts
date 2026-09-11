@@ -76,8 +76,8 @@ export class AppConfigService {
 	get cardanoApiUrl() {
 		return this.config.services.cardanoApiUrl;
 	}
-	get centralizedApiUrl() {
-		return this.config.services.centralizedApiUrl;
+	get nexusRpcUrl() {
+		return this.config.services.nexusRpcUrl;
 	}
 	get db() {
 		return this.config.database;

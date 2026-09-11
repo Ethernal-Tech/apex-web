@@ -366,9 +366,6 @@
 											"",
 											"    pm.expect(json).to.have.property(\"bridgingFee\");",
 											"    pm.expect(json.bridgingFee).to.be.a(\"string\").that.is.not.empty;",
-											"",
-											"    pm.expect(json).to.have.property(\"isFallback\");",
-											"    pm.expect(json.isFallback).to.be.a(\"boolean\");",
 											"});"
 										],
 										"type": "text/javascript",
@@ -513,7 +510,6 @@
 											"    pm.expect(json).to.have.property(\"to\");",
 											"    pm.expect(json).to.have.property(\"data\");",
 											"    pm.expect(json).to.have.property(\"bridgingFee\");",
-											"    pm.expect(json).to.have.property(\"isFallback\");",
 											"});",
 											"",
 											"pm.test(\"Optional field 'value' is valid if present\", function () {",
@@ -542,13 +538,8 @@
 											"    pm.expect(Number(json.bridgingFee)).to.be.above(0);",
 											"});",
 											"",
-											"pm.test(\"'isFallback' is boolean\", function () {",
-											"    const json = pm.response.json();",
-											"    pm.expect(json.isFallback).to.be.a(\"boolean\");",
-											"});",
-											"",
 											"pm.test(\"No unexpected fields\", function () {",
-											"    const allowed = [\"from\", \"to\", \"value\", \"data\", \"bridgingFee\", \"isFallback\"];",
+											"    const allowed = [\"from\", \"to\", \"value\", \"data\", \"bridgingFee\"];",
 											"    const json = pm.response.json();",
 											"",
 											"    Object.keys(json).forEach(k => {",
@@ -771,7 +762,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"senderAddr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"prime\",\n  \"destinationChainId\": \"vector\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n      \"amount\": 1000000\n    }\n  ],\n  \"bridgingFee\": 1000100,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
+							"raw": "{\n  \"senderAddr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"prime\",\n  \"destinationChainId\": \"vector\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n      \"amount\": 1000000\n    }\n  ],\n  \"bridgingFee\": 1000100,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -831,7 +822,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"senderAddr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"prime\",\n  \"destinationChainId\": \"vector\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n      \"amount\": 1000000\n    }\n  ],\n  \"bridgingFee\": 1000100,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
+							"raw": "{\n  \"senderAddr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"prime\",\n  \"destinationChainId\": \"vector\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n      \"amount\": 1000000\n    }\n  ],\n  \"bridgingFee\": 1000100,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
 							"options": {
 								"raw": {
 									"language": "json"

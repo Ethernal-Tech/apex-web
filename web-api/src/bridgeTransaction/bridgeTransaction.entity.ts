@@ -52,9 +52,6 @@ export class BridgeTransaction {
 	txRaw: string;
 
 	@Column({ default: false })
-	isCentralized: boolean;
-
-	@Column({ default: false })
 	isLayerZero: boolean;
 
 	@Column({ default: false })

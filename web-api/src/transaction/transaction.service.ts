@@ -24,9 +24,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThan, Repository } from 'typeorm';
 import {
 	getInputUtxos,
-	getTxTTL,
 	mapBridgeTransactionToResponse,
 } from 'src/bridgeTransaction/bridgeTransaction.helper';
+import { resolveTxRaw } from 'src/bridgeTransaction/txTtl';
 import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
 import { convertDfmToWeiByChain } from 'src/utils/generalUtils';
 import { SettingsService } from 'src/settings/settings.service';
@@ -220,7 +220,6 @@ export class TransactionService {
 			receiverAddrs,
 			amount,
 			txRaw,
-			isFallback,
 		}: TransactionSubmittedDto,
 		ip: string,
 		activate = false,
@@ -246,8 +245,7 @@ export class TransactionService {
 		entity.originChain = originChain;
 		entity.createdAt = new Date();
 		entity.status = TransactionStatusEnum.Pending;
-		entity.txRaw = getTxTTL(originChain, txRaw) !== undefined ? txRaw : '';
-		entity.isCentralized = isFallback;
+		entity.txRaw = await resolveTxRaw(originChain, txRaw);
 		entity.activeFrom = activate
 			? new Date()
 			: new Date(Date.now() + this.appConfig.txValidityPeriod);
@@ -303,7 +301,7 @@ export class TransactionService {
 
 		// Apply updates
 		if (txRaw !== undefined) {
-			entity.txRaw = getTxTTL(originChain, txRaw) !== undefined ? txRaw : '';
+			entity.txRaw = await resolveTxRaw(originChain, txRaw);
 		}
 		entity.activeFrom = new Date();
 		entity.clientID = null;

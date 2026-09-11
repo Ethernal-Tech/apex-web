@@ -17,7 +17,6 @@ import (
 const (
 	primeNetworkIDFlag               = "prime-network-id"
 	primeNetworkMagicFlag            = "prime-network-magic"
-	primeBridgingFallbackAddressFlag = "prime-bridging-fallback-address"
 	primeOgmiosURLFlag               = "prime-ogmios-url"
 	primeBlockfrostURLFlag           = "prime-blockfrost-url"
 	primeBlockfrostAPIKeyFlag        = "prime-blockfrost-api-key"
@@ -26,7 +25,6 @@ const (
 
 	vectorNetworkIDFlag               = "vector-network-id"
 	vectorNetworkMagicFlag            = "vector-network-magic"
-	vectorBridgingFallbackAddressFlag = "vector-bridging-fallback-address"
 	vectorOgmiosURLFlag               = "vector-ogmios-url"
 	vectorBlockfrostURLFlag           = "vector-blockfrost-url"
 	vectorBlockfrostAPIKeyFlag        = "vector-blockfrost-api-key"
@@ -52,7 +50,6 @@ const (
 
 	primeNetworkIDFlagDesc               = "prime network id"
 	primeNetworkMagicFlagDesc            = "prime network magic (default 0)"
-	primeBridgingFallbackAddressFlagDesc = "prime bridging fallback address"
 	primeOgmiosURLFlagDesc               = "ogmios URL for prime network"
 	primeBlockfrostURLFlagDesc           = "blockfrost URL for prime network"
 	primeBlockfrostAPIKeyFlagDesc        = "blockfrost API key for prime network" //nolint:gosec
@@ -61,7 +58,6 @@ const (
 
 	vectorNetworkIDFlagDesc               = "vector network id"
 	vectorNetworkMagicFlagDesc            = "vector network magic (default 0)"
-	vectorBridgingFallbackAddressFlagDesc = "vector bridging fallback address"
 	vectorOgmiosURLFlagDesc               = "ogmios URL for vector network"
 	vectorBlockfrostURLFlagDesc           = "blockfrost URL for vector network"
 	vectorBlockfrostAPIKeyFlagDesc        = "blockfrost API key for vector network" //nolint:gosec
@@ -102,7 +98,6 @@ const (
 type generateConfigsParams struct {
 	primeNetworkID               uint32
 	primeNetworkMagic            uint32
-	primeBridgingFallbackAddress string
 	primeOgmiosURL               string
 	primeBlockfrostURL           string
 	primeBlockfrostAPIKey        string
@@ -111,7 +106,6 @@ type generateConfigsParams struct {
 
 	vectorNetworkID               uint32
 	vectorNetworkMagic            uint32
-	vectorBridgingFallbackAddress string
 	vectorOgmiosURL               string
 	vectorBlockfrostURL           string
 	vectorBlockfrostAPIKey        string
@@ -153,13 +147,6 @@ func validateAddress(isRequired bool, address string, flag string, networkID wal
 }
 
 func (p *generateConfigsParams) validateFlags() error {
-	err := validateAddress(
-		false, p.primeBridgingFallbackAddress, primeBridgingFallbackAddressFlag,
-		wallet.CardanoNetworkType(p.primeNetworkID))
-	if err != nil {
-		return err
-	}
-
 	if p.primeBlockfrostURL == "" && p.primeSocketPath == "" && p.primeOgmiosURL == "" {
 		return fmt.Errorf("specify at least one of: %s, %s, %s",
 			primeBlockfrostURLFlag, primeSocketPathFlag, primeOgmiosURLFlag)
@@ -171,13 +158,6 @@ func (p *generateConfigsParams) validateFlags() error {
 
 	if p.primeOgmiosURL != "" && !common.IsValidHTTPURL(p.primeOgmiosURL) {
 		return fmt.Errorf("invalid prime ogmios url: %s", p.primeOgmiosURL)
-	}
-
-	err = validateAddress(
-		false, p.vectorBridgingFallbackAddress, vectorBridgingFallbackAddressFlag,
-		wallet.CardanoNetworkType(p.vectorNetworkID))
-	if err != nil {
-		return err
 	}
 
 	if p.vectorBlockfrostURL != "" && !common.IsValidHTTPURL(p.vectorBlockfrostURL) {
@@ -222,12 +202,6 @@ func (p *generateConfigsParams) setFlags(cmd *cobra.Command) {
 		primeNetworkMagicFlagDesc,
 	)
 	cmd.Flags().StringVar(
-		&p.primeBridgingFallbackAddress,
-		primeBridgingFallbackAddressFlag,
-		"",
-		primeBridgingFallbackAddressFlagDesc,
-	)
-	cmd.Flags().StringVar(
 		&p.primeOgmiosURL,
 		primeOgmiosURLFlag,
 		"",
@@ -269,12 +243,6 @@ func (p *generateConfigsParams) setFlags(cmd *cobra.Command) {
 		vectorNetworkMagicFlag,
 		defaultNetworkMagic,
 		vectorNetworkMagicFlagDesc,
-	)
-	cmd.Flags().StringVar(
-		&p.vectorBridgingFallbackAddress,
-		vectorBridgingFallbackAddressFlag,
-		"",
-		vectorBridgingFallbackAddressFlagDesc,
 	)
 	cmd.Flags().StringVar(
 		&p.vectorOgmiosURL,
@@ -390,9 +358,6 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 			common.ChainIDStrPrime: {
 				NetworkID:    wallet.CardanoNetworkType(p.primeNetworkID),
 				NetworkMagic: p.primeNetworkMagic,
-				BridgingAddresses: core.BridgingAddresses{
-					FallbackAddress: p.primeBridgingFallbackAddress,
-				},
 				ChainSpecific: &cardanotx.CardanoChainConfig{
 					OgmiosURL:        p.primeOgmiosURL,
 					BlockfrostURL:    p.primeBlockfrostURL,
@@ -407,9 +372,6 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 			common.ChainIDStrVector: {
 				NetworkID:    wallet.CardanoNetworkType(p.vectorNetworkID),
 				NetworkMagic: p.vectorNetworkMagic,
-				BridgingAddresses: core.BridgingAddresses{
-					FallbackAddress: p.vectorBridgingFallbackAddress,
-				},
 				ChainSpecific: &cardanotx.CardanoChainConfig{
 					OgmiosURL:        p.vectorOgmiosURL,
 					BlockfrostURL:    p.vectorBlockfrostURL,

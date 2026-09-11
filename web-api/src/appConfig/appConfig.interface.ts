@@ -19,7 +19,6 @@ export interface AppConfig {
 		hashSecret: string;
 	};
 	features: {
-		useCentralizedBridge: boolean;
 		statusUpdateModesSupported: string[];
 	};
 	bridge: {
@@ -27,13 +26,12 @@ export interface AppConfig {
 		recentInputsThresholdMinutes: number;
 		addresses: {
 			nexusBridging: `0x${string}`;
-			nexusCentralizedBridging: `0x${string}`;
 		};
 	};
 	services: {
 		oracleUrl: string;
 		cardanoApiUrl: string;
-		centralizedApiUrl: string;
+		nexusRpcUrl: string;
 	};
 	database: {
 		host: string;
