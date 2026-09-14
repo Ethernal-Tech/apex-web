@@ -6,7 +6,6 @@ import {
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { BridgeTransactionDto } from './bridgeTransaction.dto';
-import { capitalizeWord } from 'src/utils/stringUtils';
 import { Transaction as CardanoTransaction } from '@emurgo/cardano-serialization-lib-nodejs';
 import { Utxo } from 'src/blockchain/dto';
 import { Transaction as EthTransaction } from 'web3-types';
@@ -291,74 +290,6 @@ export const getHasTxFailedRequestState = async (
 	}
 };
 
-export const getCentralizedBridgingRequestStates = async (
-	chainId: string,
-	models: GetBridgingRequestStatesModel[],
-): Promise<{ [key: string]: BridgingRequestState }> => {
-	const states = await Promise.all(
-		models.map((model) => getCentralizedBridgingRequestState(chainId, model)),
-	);
-
-	return states.reduce((acc: { [key: string]: BridgingRequestState }, cv) => {
-		if (cv) {
-			acc[cv.sourceTxHash] = cv;
-		}
-
-		return acc;
-	}, {});
-};
-
-export const getCentralizedBridgingRequestState = async (
-	chainId: string,
-	model: GetBridgingRequestStatesModel,
-): Promise<BridgingRequestState | undefined> => {
-	const direction = `${chainId}To${capitalizeWord(model.destinationChainId)}`;
-	const statusApiUrl = `${getAppConfig().centralizedApiUrl}/api/txStatus/${direction}/${model.txHash}`;
-
-	try {
-		Logger.debug(`axios.get: ${statusApiUrl}`);
-		const statusResponse = await axios.get(statusApiUrl);
-		Logger.debug(`axios.response: ${JSON.stringify(statusResponse.data)}`);
-
-		if (!statusResponse.data?.status) {
-			return;
-		}
-
-		const status: TransactionStatusEnum = statusResponse.data.status;
-		let destinationTxHash: string = '';
-
-		if (!BridgingRequestNotFinalStatesMap[status]) {
-			const apiUrl = `${getAppConfig().centralizedApiUrl}/api/bridge/transactions?originChain=${chainId}&sourceTxHash=${model.txHash}`;
-
-			Logger.debug(`axios.get: ${apiUrl}`);
-			const response = await axios.get(apiUrl);
-			Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
-
-			if (response.data?.BridgeTransactionResponseDto?.items) {
-				const items: any[] = response.data.BridgeTransactionResponseDto.items;
-				if (items.length > 0) {
-					destinationTxHash = items[0].destinationTxHash;
-				}
-			}
-		}
-
-		return {
-			sourceTxHash: model.txHash,
-			status,
-			destinationTxHash,
-		} as BridgingRequestState;
-	} catch (e) {
-		if (e instanceof AxiosError) {
-			Logger.error(
-				`Error while getBridgingRequestState: ${e}. response: ${JSON.stringify(e.response?.data)}`,
-				e.stack,
-			);
-		} else {
-			Logger.error(`Error while getBridgingRequestState: ${e}`, e.stack);
-		}
-	}
-};
-
 export const updateBridgeTransactionStates = (
 	entities: BridgeTransaction[],
 	newBridgingRequestStates: { [key: string]: BridgingRequestState },
@@ -441,20 +372,40 @@ export const mapBridgeTransactionToResponse = (
 	return response;
 };
 
+export const parseConstructedTtl = (txRaw: string): bigint | undefined => {
+	try {
+		const parsed = JSON.parse(txRaw) as { constructedTtl?: unknown };
+		if (typeof parsed?.constructedTtl === 'string' && parsed.constructedTtl) {
+			return BigInt(parsed.constructedTtl);
+		}
+	} catch {
+		return undefined;
+	}
+};
+
+export const serializeConstructedTxRaw = (ttl: bigint): string =>
+	JSON.stringify({ constructedTtl: ttl.toString() });
+
 export const getTxTTL = (
 	chainId: string,
 	txRaw: string,
 ): bigint | undefined => {
-	let ttl: bigint | undefined;
-	if (isCardanoChain(chainId as ChainEnum)) {
-		ttl = getCardanoTTL(txRaw);
-	} else if (isSolanaChain(chainId as ChainEnum)) {
-		ttl = getSolanaTTL(txRaw);
-	} else {
-		ttl = getEthTTL(txRaw);
+	if (!txRaw) {
+		return undefined;
 	}
 
-	return ttl;
+	const constructed = parseConstructedTtl(txRaw);
+	if (constructed !== undefined) {
+		return constructed;
+	}
+
+	if (isCardanoChain(chainId as ChainEnum)) {
+		return getCardanoTTL(txRaw);
+	}
+	if (isSolanaChain(chainId as ChainEnum)) {
+		return getSolanaTTL(txRaw);
+	}
+	return getEthTTL(txRaw);
 };
 
 export const getInputUtxos = (txRaw: string): Utxo[] => {

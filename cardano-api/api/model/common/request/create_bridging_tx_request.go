@@ -35,8 +35,6 @@ type CreateBridgingTxRequest struct {
 	BridgingFee uint64 `json:"bridgingFee"`
 	// Fee covering the operational cost of processing the bridging request, expressed in Lovelace
 	OperationFee uint64 `json:"operationFee"`
-	// Indicates if fallback mechanism should be used
-	UseFallback bool `json:"useFallback"`
 	// Key used to enable caching of spent UTXOs
 	UTXOCacheKey string `json:"utxoCacheKey"`
 	// Specifies the UTXO to skip during transaction creation on the source chain

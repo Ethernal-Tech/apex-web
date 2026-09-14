@@ -138,11 +138,12 @@ export class TransactionSubmittedDto {
 	})
 	tokenID: number;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@ApiProperty({
 		description: 'Transaction raw data on source chain',
+		required: false,
 	})
-	txRaw: string;
+	txRaw?: string;
 
 	@IsOptional()
 	@ApiProperty({
@@ -150,11 +151,6 @@ export class TransactionSubmittedDto {
 		required: false,
 	})
 	lastValidBlockHeight?: string;
-
-	@ApiProperty({
-		description: 'Indicates is fallback mechanism used',
-	})
-	isFallback: boolean;
 
 	@ApiProperty({
 		description: 'Indicates if Layer Zero bridging is used',
@@ -178,11 +174,12 @@ export class TransactionUpdateDto {
 	})
 	originTxHash: string;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@ApiProperty({
 		description: 'Transaction raw data on source chain',
+		required: false,
 	})
-	txRaw: string;
+	txRaw?: string;
 }
 
 export class TransactionActivateDeleteDto {
@@ -242,11 +239,6 @@ export class CreateCardanoTransactionResponseDto {
 			'Operation fee for covering operation costs of the bridge, expressed in Lovelace',
 	})
 	operationFee: string;
-
-	@ApiProperty({
-		description: 'Indicates is fallback mechanism used',
-	})
-	isFallback: boolean;
 
 	@IsNotEmpty()
 	@ApiProperty({
@@ -326,9 +318,6 @@ export class BridgingEthTransactionResponseDto {
 
 	@ApiProperty()
 	tokenID: number;
-
-	@ApiProperty()
-	isFallback: boolean;
 }
 
 @ApiExtraModels(EthTransactionResponseDto, BridgingEthTransactionResponseDto)
@@ -392,9 +381,6 @@ export class BridgingSolanaTransactionResponseDto {
 
 	@ApiProperty()
 	tokenID: number;
-
-	@ApiProperty()
-	isFallback: boolean;
 }
 
 @ApiExtraModels(

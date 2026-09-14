@@ -193,19 +193,16 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 		TX_VALIDITY_PERIOD: num({ default: undefined }),
 		HASH_SECRET: str({ default: undefined }),
 
-		USE_CENTRALIZED_BRIDGE: bool({ default: undefined }),
 		STATUS_UPDATE_MODES_SUPPORTED: list({ default: undefined }),
 
 		ETH_TX_TTL_INC: num({ default: undefined }),
 		RECENT_INPUTS_THRESHOLD_MINUTES: num({ default: undefined }),
 		SKYLINE_GATEWAY_ADDRS: evmAddressConfig({ default: undefined }),
 		REACTOR_NEXUS_GATEWAY_ADDR: str({ default: undefined }),
-		REACTOR_NEXUS_CENTRALIZED_GATEWAY_ADDR: str({ default: undefined }),
 
 		SOLANA_RPC_URL: str({ default: undefined }),
 		SOLANA_HOLDER_ADDRS: chainValueConfig({ default: undefined }),
 
-		CENTRALIZED_API_URL: str({ default: undefined }),
 		ORACLE_SKYLINE_URL: str({ default: undefined }),
 		ORACLE_REACTOR_URL: str({ default: undefined }),
 		CARDANO_API_SKYLINE_URL: str({ default: undefined }),
@@ -248,7 +245,6 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			hashSecret: env.HASH_SECRET,
 		},
 		features: {
-			useCentralizedBridge: env.USE_CENTRALIZED_BRIDGE,
 			statusUpdateModesSupported: env.STATUS_UPDATE_MODES_SUPPORTED,
 		},
 		bridge: {
@@ -257,8 +253,6 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			addresses: {
 				skylineGateway: env.SKYLINE_GATEWAY_ADDRS,
 				reactorNexusGateway: env.REACTOR_NEXUS_GATEWAY_ADDR as `0x${string}`,
-				reactorNexusCentralizedGateway:
-					env.REACTOR_NEXUS_CENTRALIZED_GATEWAY_ADDR as `0x${string}`,
 			},
 		},
 		services: {
@@ -266,7 +260,6 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			oracleReactorUrl: env.ORACLE_REACTOR_URL,
 			cardanoApiSkylineUrl: env.CARDANO_API_SKYLINE_URL,
 			cardanoApiReactorUrl: env.CARDANO_API_REACTOR_URL,
-			centralizedApiUrl: env.CENTRALIZED_API_URL,
 		},
 		rpc: {
 			evmUrls: readEvmRpcUrls(),

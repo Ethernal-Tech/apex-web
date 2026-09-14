@@ -50,8 +50,6 @@ type TxDetailsOptions = {
   minTipCap: bigint;
 };
 
-const defaultGasLimitEstimation = 30000;
-
 const TX_SUCCESS = BigInt(1);
 
 const blockOffset = BigInt(1000);
@@ -141,7 +139,6 @@ export const signAndSubmitCardanoTx = async (
     amount: amount.toString(),
     originTxHash: createResponse.txHash,
     txRaw: createResponse.txRaw,
-    isFallback: createResponse.isFallback,
     nativeTokenAmount: nativeTokenAmount.toString(10),
     tokenID,
     isLayerZero: false,
@@ -348,7 +345,6 @@ export const signAndSubmitEthTx = async (
     amount: BigInt(createResponse.bridgingTx.ethTx.value || "0").toString(10),
     tokenID: enTokenID,
     nativeTokenAmount: enTokenAmount.toString(10),
-    isFallback: createResponse.isFallback,
     isLayerZero: false,
   };
 
@@ -568,7 +564,6 @@ export const signAndSubmitSolanaTx = async (
     txRaw,
     lastValidBlockHeight:
       createResponse.bridgingTx?.solTx?.lastValidBlockHeight,
-    isFallback: createResponse.bridgingTx.isFallback,
     nativeTokenAmount: nativeTokenAmount.toString(10),
     tokenID,
     isLayerZero: false,
@@ -709,7 +704,6 @@ export const signAndSubmitLayerZeroTx = async (
       ? "0"
       : createResponse.metadata.properties.amount,
     tokenID: isCurrency ? 0 : tokenID,
-    isFallback: false,
     isLayerZero: true,
   };
 
@@ -968,7 +962,6 @@ const populateLondonTxDetails = async (
 export const estimateEthTxFee = async (
   tx: Transaction,
   txType: TxTypeEnum,
-  isFallback: boolean,
   opts: TxDetailsOptions = defaultTxDetailsOptions,
 ): Promise<bigint> => {
   if (!evmWalletHandler.checkWallet()) {
@@ -977,11 +970,6 @@ export const estimateEthTxFee = async (
       "submitTx.ts",
       "estimateEthTxFee",
     );
-  }
-
-  if (isFallback && !tx.gas) {
-    tx.gas = defaultGasLimitEstimation;
-    tx.gasLimit = defaultGasLimitEstimation;
   }
 
   if (!tx.gas || (!tx.gasPrice && !tx.maxFeePerGas)) {

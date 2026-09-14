@@ -23,7 +23,6 @@ import {
 	BridgingRequestNotFinalStates,
 	getBridgingRequestStates,
 	GetBridgingRequestStatesModel,
-	getCentralizedBridgingRequestStates,
 	getHasTxFailedRequestStates,
 	GetLayerZeroBridgingRequestStatesModel,
 	getLayerZeroRequestStates,
@@ -193,7 +192,6 @@ export class BridgeTransactionService {
 					const modelsPendingReactor: GetBridgingRequestStatesModel[] = [];
 					const modelsSkyline: GetBridgingRequestStatesModel[] = [];
 					const modelsPendingSkyline: GetBridgingRequestStatesModel[] = [];
-					const modelsCentralized: GetBridgingRequestStatesModel[] = [];
 					const modelsLayerZero: GetLayerZeroBridgingRequestStatesModel[] = [];
 					for (const entity of entities) {
 						// handle layer zero
@@ -213,55 +211,49 @@ export class BridgeTransactionService {
 							txRaw: entity.txRaw,
 						};
 
-						if (entity.isCentralized) {
-							if (modesSupported.has(BridgingModeEnum.Centralized)) {
-								modelsCentralized.push(model);
+						const tokenID = getRealTokenIDFromEntity(
+							this.settingsService.SettingsResponse.directionConfig,
+							entity,
+						);
+						if (!tokenID) {
+							Logger.error(
+								`failed to get real tokenID for entity: ${entity.originChain} ${entity.sourceTxHash}`,
+							);
+
+							return;
+						}
+
+						const bridgingMode = getBridgingMode(
+							entity.originChain,
+							entity.destinationChain,
+							tokenID,
+							this.settingsService.SettingsResponse,
+						);
+						if (!bridgingMode) {
+							continue;
+						}
+
+						if (bridgingMode === BridgingModeEnum.Skyline) {
+							if (modesSupported.has(BridgingModeEnum.Skyline)) {
+								modelsSkyline.push(model);
 							}
 						} else {
-							const tokenID = getRealTokenIDFromEntity(
-								this.settingsService.SettingsResponse.directionConfig,
-								entity,
-							);
-							if (!tokenID) {
-								Logger.error(
-									`failed to get real tokenID for entity: ${entity.originChain} ${entity.sourceTxHash}`,
-								);
-
-								return;
+							if (modesSupported.has(BridgingModeEnum.Reactor)) {
+								modelsReactor.push(model);
 							}
+						}
 
-							const bridgingMode = getBridgingMode(
-								entity.originChain,
-								entity.destinationChain,
-								tokenID,
-								this.settingsService.SettingsResponse,
-							);
-							if (!bridgingMode) {
-								continue;
-							}
-
+						if (
+							entity.status === TransactionStatusEnum.Pending &&
+							!!entity.txRaw
+						) {
 							if (bridgingMode === BridgingModeEnum.Skyline) {
 								if (modesSupported.has(BridgingModeEnum.Skyline)) {
-									modelsSkyline.push(model);
+									modelsPendingSkyline.push(model);
 								}
 							} else {
 								if (modesSupported.has(BridgingModeEnum.Reactor)) {
-									modelsReactor.push(model);
-								}
-							}
-
-							if (
-								entity.status === TransactionStatusEnum.Pending &&
-								!!entity.txRaw
-							) {
-								if (bridgingMode === BridgingModeEnum.Skyline) {
-									if (modesSupported.has(BridgingModeEnum.Skyline)) {
-										modelsPendingSkyline.push(model);
-									}
-								} else {
-									if (modesSupported.has(BridgingModeEnum.Reactor)) {
-										modelsPendingReactor.push(model);
-									}
+									modelsPendingReactor.push(model);
 								}
 							}
 						}
@@ -270,7 +262,6 @@ export class BridgeTransactionService {
 					const [
 						statesSkyline,
 						statesReactor,
-						statesCentralized,
 						statesTxFailedSkyline,
 						statesTxFailedReactor,
 						stateslayerZero,
@@ -285,7 +276,6 @@ export class BridgeTransactionService {
 							BridgingModeEnum.Reactor,
 							modelsReactor,
 						),
-						getCentralizedBridgingRequestStates(chain, modelsCentralized),
 						getHasTxFailedRequestStates(
 							chain,
 							BridgingModeEnum.Skyline,
@@ -307,10 +297,6 @@ export class BridgeTransactionService {
 						Logger.debug(
 							`updateStatuses - got bridging request states reactor: ${JSON.stringify(statesReactor)}`,
 						);
-					Object.keys(statesCentralized).length > 0 &&
-						Logger.debug(
-							`updateStatuses - got centralized bridging request states: ${JSON.stringify(statesCentralized)}`,
-						);
 					Object.keys(statesTxFailedSkyline).length > 0 &&
 						Logger.debug(
 							`updateStatuses - got has tx failed request states skyline: ${JSON.stringify(statesTxFailedSkyline)}`,
@@ -329,7 +315,6 @@ export class BridgeTransactionService {
 						{
 							...statesSkyline,
 							...statesReactor,
-							...statesCentralized,
 							...stateslayerZero,
 						},
 						{ ...statesTxFailedReactor, ...statesTxFailedSkyline },
