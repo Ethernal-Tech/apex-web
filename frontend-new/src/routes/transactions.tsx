@@ -11,6 +11,7 @@ import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { NetworkToggle } from "@/components/NetworkToggle";
 import { BridgeHeader } from "@/components/BridgeHeader";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowDown,
   ArrowRight,
@@ -643,17 +644,40 @@ function TransactionsPage() {
                   </thead>
                   <tbody>
                     {isLoading && paged.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={isCompact ? 6 : 10}
-                          className="px-5 py-14 text-center text-sm text-muted-foreground"
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Loading transactions…
-                          </span>
-                        </td>
-                      </tr>
+                      <>
+                        {Array.from({ length: 6 }, (_, row) => (
+                          <tr
+                            key={`sk-${row}`}
+                            className="border-t border-white/5"
+                          >
+                            {Array.from(
+                              { length: isCompact ? 6 : 10 },
+                              (__, col) => (
+                                <td
+                                  key={col}
+                                  className={`py-4 ${
+                                    col === 0
+                                      ? "pl-4 pr-2"
+                                      : col === (isCompact ? 5 : 9)
+                                        ? "pl-2 pr-5"
+                                        : "px-2"
+                                  }`}
+                                >
+                                  <Skeleton
+                                    className={`h-3.5 ${
+                                      col % 3 === 0
+                                        ? "w-24"
+                                        : col % 3 === 1
+                                          ? "w-16"
+                                          : "w-20"
+                                    }`}
+                                  />
+                                </td>
+                              ),
+                            )}
+                          </tr>
+                        ))}
+                      </>
                     )}
                     {listQuery.isError && paged.length === 0 && (
                       <tr>

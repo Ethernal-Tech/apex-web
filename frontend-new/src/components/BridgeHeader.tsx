@@ -5,6 +5,7 @@ import logoAsset from "@/assets/skyline-logo-transparent.png";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { formatUsdCompact, formatUsdFull } from "@/lib/usd";
+import { ValueSkeleton } from "@/components/ui/skeleton";
 import { externalAnchorProps, SKYLINE_DOCUMENTATION_URL } from "@/lib/utils";
 
 function StatChip({
@@ -12,11 +13,13 @@ function StatChip({
   value,
   compact,
   interactive,
+  loading,
 }: {
   label: string;
   value: string;
   compact?: boolean;
   interactive?: boolean;
+  loading?: boolean;
 }) {
   return (
     <div
@@ -26,6 +29,7 @@ function StatChip({
       className={`pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] transition-colors ${
         compact ? "px-3 py-1" : "px-3.5 py-1.5"
       } ${interactive ? "group-hover:border-[oklch(0.72_0.19_245_/_0.55)] group-hover:bg-white/[0.07]" : ""}`}
+      aria-busy={loading || undefined}
     >
       <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">
         {label}
@@ -33,7 +37,11 @@ function StatChip({
       <span
         className={`font-display font-semibold text-foreground ${compact ? "text-xs" : "text-sm"}`}
       >
-        {value}
+        {loading ? (
+          <ValueSkeleton className={compact ? "w-10" : "w-[3.25rem]"} />
+        ) : (
+          value
+        )}
       </span>
     </div>
   );
@@ -55,7 +63,7 @@ export function BridgeHeader({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const isCompact = useMediaQuery("(max-width: 1000px)");
-  const { tvlUsd, tvbUsd } = useBridgeStats();
+  const { tvlUsd, tvbUsd, isLoading: statsLoading } = useBridgeStats();
   const burgerVisibility = nav ? "min-[1150px]:hidden" : "md:hidden";
 
   return (
@@ -86,6 +94,7 @@ export function BridgeHeader({
               value={
                 isCompact ? formatUsdCompact(tvlUsd) : formatUsdFull(tvlUsd)
               }
+              loading={statsLoading}
               interactive
             />
           </Link>
@@ -101,6 +110,7 @@ export function BridgeHeader({
               value={
                 isCompact ? formatUsdCompact(tvbUsd) : formatUsdFull(tvbUsd)
               }
+              loading={statsLoading}
               interactive
             />
           </Link>
@@ -175,6 +185,7 @@ export function BridgeHeader({
             label="TVL"
             value={formatUsdCompact(tvlUsd)}
             compact
+            loading={statsLoading}
             interactive
           />
         </Link>
@@ -187,6 +198,7 @@ export function BridgeHeader({
             label="TVB"
             value={formatUsdCompact(tvbUsd)}
             compact
+            loading={statsLoading}
             interactive
           />
         </Link>

@@ -23,6 +23,7 @@ import {
   SKYLINE_DOCUMENTATION_URL,
 } from "@/lib/utils";
 import { settingsQueryOptions } from "@/lib/api/settings";
+import { ValueSkeleton } from "@/components/ui/skeleton";
 import { pageHead } from "@/lib/seo";
 import heroImg from "@/assets/about/about-hero.jpg";
 import teamImg from "@/assets/about/about-team.jpg";
@@ -218,13 +219,19 @@ function Hero() {
 }
 
 function Stats() {
-  const { data: settings } = useQuery(settingsQueryOptions);
+  const { data: settings, isPending } = useQuery(settingsQueryOptions);
   const chainsConnected = settings?.enabledChains.length;
 
   const stats = [
     {
       label: "Networks connected",
-      value: chainsConnected != null ? String(chainsConnected) : "—",
+      value: isPending ? (
+        <ValueSkeleton className="mx-auto w-[2.25rem]" />
+      ) : chainsConnected != null ? (
+        String(chainsConnected)
+      ) : (
+        "—"
+      ),
     },
     { label: "Worlds bridged", value: "UTxO · EVM · SVM" },
     { label: "Custody model", value: "Non-custodial" },

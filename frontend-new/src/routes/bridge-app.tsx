@@ -16,6 +16,7 @@ import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { NetworkBadge, NetworkToggle } from "@/components/NetworkToggle";
 import { BridgeHeader } from "@/components/BridgeHeader";
+import { Skeleton, ValueSkeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -916,8 +917,14 @@ function BridgeApp() {
               {step === "select" ? (
                 <div className="grid gap-4">
                   {settingsLoading || !source || !destination ? (
-                    <div className="py-10 text-center text-sm text-muted-foreground">
-                      Loading networks…
+                    <div
+                      className="grid gap-3"
+                      role="status"
+                      aria-label="Loading networks"
+                    >
+                      <Skeleton className="h-16 w-full rounded-2xl" />
+                      <Skeleton className="h-16 w-full rounded-2xl" />
+                      <Skeleton className="h-12 w-full rounded-2xl" />
                     </div>
                   ) : (
                     <>
@@ -1006,8 +1013,13 @@ function BridgeApp() {
                   onDiscard={() => setStep("select")}
                 />
               ) : (
-                <div className="py-10 text-center text-sm text-muted-foreground">
-                  Loading networks…
+                <div
+                  className="grid gap-3 py-2"
+                  role="status"
+                  aria-label="Loading networks"
+                >
+                  <Skeleton className="h-16 w-full rounded-2xl" />
+                  <Skeleton className="h-16 w-full rounded-2xl" />
                 </div>
               )}
             </div>
@@ -1497,8 +1509,12 @@ function TransferForm({
                   </span>
                 </div>
               ) : (
-                <div className="mt-2 text-sm text-muted-foreground">
-                  {balancesLoading ? "Loading…" : "—"}
+                <div className="mt-2">
+                  {balancesLoading ? (
+                    <ValueSkeleton className="h-7 w-28" />
+                  ) : (
+                    <span className="text-sm text-muted-foreground">—</span>
+                  )}
                 </div>
               )}
 
@@ -1811,10 +1827,8 @@ function FeeRow({
           </Tooltip>
         )}
       </span>
-      <span
-        className={`font-semibold text-foreground ${loading ? "animate-pulse opacity-70" : ""}`}
-      >
-        {value}
+      <span className="font-semibold text-foreground">
+        {loading ? <ValueSkeleton className="w-16" /> : value}
       </span>
     </div>
   );
