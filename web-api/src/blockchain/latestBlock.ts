@@ -2,11 +2,7 @@ import { InternalServerErrorException, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { ChainEnum } from 'src/common/enum';
 import { getAppConfig } from 'src/appConfig/appConfig';
-import {
-	getChainRpcUrl,
-	isCardanoChain,
-	isSolanaChain,
-} from 'src/utils/chainUtils';
+import { isCardanoChain, isSolanaChain } from 'src/utils/chainUtils';
 
 const RPC_TIMEOUT_MS = 8000;
 
@@ -76,6 +72,15 @@ const getCardanoLatestSlot = async (chain: ChainEnum): Promise<bigint> => {
 	return BigInt(response.data.slot);
 };
 
+const resolveRpcUrl = (chain: ChainEnum): string | undefined => {
+	const rpc = getAppConfig().rpc;
+	if (isSolanaChain(chain)) {
+		return rpc?.solanaUrl;
+	}
+
+	return rpc?.evmUrls?.find((entry) => entry.chain === chain)?.value;
+};
+
 export const getLatestBlockOrSlot = async (
 	chain: ChainEnum,
 ): Promise<bigint> => {
@@ -84,10 +89,13 @@ export const getLatestBlockOrSlot = async (
 			return await getCardanoLatestSlot(chain);
 		}
 
-		const url = getChainRpcUrl(chain, getAppConfig().app.isMainnet);
+		const url = resolveRpcUrl(chain);
 		if (!url) {
+			const hint = isSolanaChain(chain)
+				? 'Set SOLANA_RPC_URL.'
+				: `Set EVM_RPC_URL_${chain.toUpperCase()}.`;
 			throw new InternalServerErrorException(
-				`RPC URL not configured for chain ${chain}`,
+				`RPC URL not configured for chain ${chain}. ${hint}`,
 			);
 		}
 

@@ -33,6 +33,9 @@ const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
 	features: {
 		statusUpdateModesSupported: [],
 	},
+	rpc: {
+		evmUrls: [],
+	},
 };
 
 @Injectable()
@@ -88,6 +91,9 @@ export class AppConfigService {
 	}
 	get cardanoReactorApiUrl() {
 		return this.config.services.cardanoApiReactorUrl;
+	}
+	get rpc() {
+		return this.config.rpc;
 	}
 	get db() {
 		return this.config.database;

@@ -20,6 +20,12 @@ export interface EvmAddressConfig {
 	address: `0x${string}`;
 }
 
+/** `chain::value` pair, for per-chain config whose value is not an EVM address. */
+export interface ChainValueConfig {
+	chain: string;
+	value: string;
+}
+
 export interface AppConfig {
 	app: {
 		logLevel: LogLevel;
@@ -46,6 +52,10 @@ export interface AppConfig {
 		oracleReactorUrl: string;
 		cardanoApiSkylineUrl: string;
 		cardanoApiReactorUrl: string;
+	};
+	rpc: {
+		evmUrls: ChainValueConfig[];
+		solanaUrl: string;
 	};
 	database: {
 		host: string;
