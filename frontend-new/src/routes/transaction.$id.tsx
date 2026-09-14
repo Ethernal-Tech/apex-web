@@ -48,6 +48,7 @@ import {
 import { useLiveTxBalances } from "@/hooks/use-live-tx-balances";
 import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
 import { pageHead } from "@/lib/seo";
+import { leaveHistoryForWallet } from "@/lib/transactionsListState";
 
 export const Route = createFileRoute("/transaction/$id")({
   head: ({ params }) =>
@@ -190,10 +191,8 @@ function TransactionPage() {
   const isConnected = isFullyLoggedIn;
 
   const connect = () => {
-    void navigate({
-      to: "/bridge-app",
-      search: { returnTo: `/transaction/${id}` },
-    });
+    leaveHistoryForWallet(`/transaction/${id}`);
+    void navigate({ to: "/bridge-app" });
   };
   const disconnect = async () => {
     await disconnectSession();

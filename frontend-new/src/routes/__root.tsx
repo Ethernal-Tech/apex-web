@@ -24,6 +24,7 @@ import { Toaster } from "../components/ui/sonner";
 import { InitSentry } from "../lib/sentry";
 import appSettings from "../settings/appSettings";
 import { pageHead, SITE } from "../lib/seo";
+import { TransactionsListLifetime } from "../lib/transactionsListState";
 
 function ReactorValidatorStatusPoller() {
   useQuery(reactorValidatorStatusQueryOptions());
@@ -218,6 +219,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <WalletSessionProvider>
         <ReactorValidatorStatusPoller />
+        <TransactionsListLifetime />
         {showIntro && <IntroAnimation />}
         <Outlet />
         <Toaster />

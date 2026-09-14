@@ -1,9 +1,4 @@
-import {
-  createFileRoute,
-  Link,
-  useNavigate,
-  useRouterState,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -93,7 +88,7 @@ import {
   FileSearchCorner,
   Loader2,
 } from "lucide-react";
-import { readReturnTo } from "@/lib/returnTo";
+import { peekWalletReturnTo, clearWalletReturnTo } from "@/lib/returnTo";
 import { useIsUnsupportedDevice } from "@/hooks/use-unsupported-device";
 import { externalAnchorProps, SKYLINE_DOCUMENTATION_URL } from "@/lib/utils";
 import { pageHead } from "@/lib/seo";
@@ -719,9 +714,6 @@ function TokenRow({
 
 function BridgeApp() {
   const navigate = useNavigate();
-  const returnTo = useRouterState({
-    select: (s) => readReturnTo(s.location.search as Record<string, unknown>),
-  });
   const { data: settings, isLoading: settingsLoading } =
     useQuery(settingsQueryOptions);
   // Hydrates token label/icon registry used by getSupportedSourceTokens / getTokenInfo.
@@ -756,11 +748,14 @@ function BridgeApp() {
   const walletAddress = account?.account ?? null;
   const isConnected = isFullyLoggedIn;
 
-  // History → connect → return to the page that asked for the wallet.
+  // History / tx detail → connect → return to the page that asked for the wallet.
   useEffect(() => {
-    if (!returnTo || !isFullyLoggedIn) return;
+    if (!isFullyLoggedIn) return;
+    const returnTo = peekWalletReturnTo();
+    if (!returnTo) return;
+    clearWalletReturnTo();
     void navigate({ to: returnTo, replace: true });
-  }, [returnTo, isFullyLoggedIn, navigate]);
+  }, [isFullyLoggedIn, navigate]);
 
   const { data: bridgingAddresses = [] } = useQuery({
     ...bridgingAddressesQueryOptions(source?.id),
