@@ -15,22 +15,22 @@ import (
 )
 
 const (
-	primeNetworkIDFlag               = "prime-network-id"
-	primeNetworkMagicFlag            = "prime-network-magic"
-	primeOgmiosURLFlag               = "prime-ogmios-url"
-	primeBlockfrostURLFlag           = "prime-blockfrost-url"
-	primeBlockfrostAPIKeyFlag        = "prime-blockfrost-api-key"
-	primeSocketPathFlag              = "prime-socket-path"
-	primeTTLSlotIncFlag              = "prime-ttl-slot-inc"
+	primeNetworkIDFlag        = "prime-network-id"
+	primeNetworkMagicFlag     = "prime-network-magic"
+	primeOgmiosURLFlag        = "prime-ogmios-url"
+	primeBlockfrostURLFlag    = "prime-blockfrost-url"
+	primeBlockfrostAPIKeyFlag = "prime-blockfrost-api-key"
+	primeSocketPathFlag       = "prime-socket-path"
+	primeTTLSlotIncFlag       = "prime-ttl-slot-inc"
 
-	vectorNetworkIDFlag               = "vector-network-id"
-	vectorNetworkMagicFlag            = "vector-network-magic"
-	vectorOgmiosURLFlag               = "vector-ogmios-url"
-	vectorBlockfrostURLFlag           = "vector-blockfrost-url"
-	vectorBlockfrostAPIKeyFlag        = "vector-blockfrost-api-key"
-	vectorSocketPathFlag              = "vector-socket-path"
-	vectorTTLSlotIncFlag              = "vector-ttl-slot-inc"
-	vectorIsEnabledFlag               = "vector-is-enabled"
+	vectorNetworkIDFlag        = "vector-network-id"
+	vectorNetworkMagicFlag     = "vector-network-magic"
+	vectorOgmiosURLFlag        = "vector-ogmios-url"
+	vectorBlockfrostURLFlag    = "vector-blockfrost-url"
+	vectorBlockfrostAPIKeyFlag = "vector-blockfrost-api-key"
+	vectorSocketPathFlag       = "vector-socket-path"
+	vectorTTLSlotIncFlag       = "vector-ttl-slot-inc"
+	vectorIsEnabledFlag        = "vector-is-enabled"
 
 	nexusIsEnabledFlag = "nexus-is-enabled"
 
@@ -48,22 +48,22 @@ const (
 	outputDirFlag      = "output-dir"
 	outputFileNameFlag = "output-file-name"
 
-	primeNetworkIDFlagDesc               = "prime network id"
-	primeNetworkMagicFlagDesc            = "prime network magic (default 0)"
-	primeOgmiosURLFlagDesc               = "ogmios URL for prime network"
-	primeBlockfrostURLFlagDesc           = "blockfrost URL for prime network"
-	primeBlockfrostAPIKeyFlagDesc        = "blockfrost API key for prime network" //nolint:gosec
-	primeSocketPathFlagDesc              = "socket path for prime network"
-	primeTTLSlotIncFlagDesc              = "TTL slot increment for prime"
+	primeNetworkIDFlagDesc        = "prime network id"
+	primeNetworkMagicFlagDesc     = "prime network magic (default 0)"
+	primeOgmiosURLFlagDesc        = "ogmios URL for prime network"
+	primeBlockfrostURLFlagDesc    = "blockfrost URL for prime network"
+	primeBlockfrostAPIKeyFlagDesc = "blockfrost API key for prime network" //nolint:gosec
+	primeSocketPathFlagDesc       = "socket path for prime network"
+	primeTTLSlotIncFlagDesc       = "TTL slot increment for prime"
 
-	vectorNetworkIDFlagDesc               = "vector network id"
-	vectorNetworkMagicFlagDesc            = "vector network magic (default 0)"
-	vectorOgmiosURLFlagDesc               = "ogmios URL for vector network"
-	vectorBlockfrostURLFlagDesc           = "blockfrost URL for vector network"
-	vectorBlockfrostAPIKeyFlagDesc        = "blockfrost API key for vector network" //nolint:gosec
-	vectorSocketPathFlagDesc              = "socket path for vector network"
-	vectorTTLSlotIncFlagDesc              = "TTL slot increment for vector"
-	vectorIsEnabledFlagDesc               = "chain enable flag for vector"
+	vectorNetworkIDFlagDesc        = "vector network id"
+	vectorNetworkMagicFlagDesc     = "vector network magic (default 0)"
+	vectorOgmiosURLFlagDesc        = "ogmios URL for vector network"
+	vectorBlockfrostURLFlagDesc    = "blockfrost URL for vector network"
+	vectorBlockfrostAPIKeyFlagDesc = "blockfrost API key for vector network" //nolint:gosec
+	vectorSocketPathFlagDesc       = "socket path for vector network"
+	vectorTTLSlotIncFlagDesc       = "TTL slot increment for vector"
+	vectorIsEnabledFlagDesc        = "chain enable flag for vector"
 
 	nexusIsEnabledFlagDesc = "chain enable flag for nexus"
 
@@ -96,22 +96,22 @@ const (
 )
 
 type generateConfigsParams struct {
-	primeNetworkID               uint32
-	primeNetworkMagic            uint32
-	primeOgmiosURL               string
-	primeBlockfrostURL           string
-	primeBlockfrostAPIKey        string
-	primeSocketPath              string
-	primeTTLSlotInc              uint64
+	primeNetworkID        uint32
+	primeNetworkMagic     uint32
+	primeOgmiosURL        string
+	primeBlockfrostURL    string
+	primeBlockfrostAPIKey string
+	primeSocketPath       string
+	primeTTLSlotInc       uint64
 
-	vectorNetworkID               uint32
-	vectorNetworkMagic            uint32
-	vectorOgmiosURL               string
-	vectorBlockfrostURL           string
-	vectorBlockfrostAPIKey        string
-	vectorSocketPath              string
-	vectorTTLSlotInc              uint64
-	vectorIsEnabled               bool
+	vectorNetworkID        uint32
+	vectorNetworkMagic     uint32
+	vectorOgmiosURL        string
+	vectorBlockfrostURL    string
+	vectorBlockfrostAPIKey string
+	vectorSocketPath       string
+	vectorTTLSlotInc       uint64
+	vectorIsEnabled        bool
 
 	nexusIsEnabled bool
 
