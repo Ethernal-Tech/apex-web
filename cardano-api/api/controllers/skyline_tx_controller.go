@@ -83,6 +83,7 @@ func (c *SkylineTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
 		{Path: "GetLockedTokens", Method: http.MethodGet, Handler: c.getLockedAmountOfTokens},
 		{Path: "GetBridgingAddresses", Method: http.MethodGet, Handler: c.getBridgingAddresses},
+		{Path: "GetLatestSlot", Method: http.MethodGet, Handler: c.getLatestSlot},
 	}
 }
 
@@ -741,7 +742,7 @@ func (c *SkylineTxControllerImpl) getTxSenderAndReceivers(
 ) (
 	*sendtx.TxSender, []sendtx.BridgingTxReceiver, error,
 ) {
-	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
+	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate configuration")
 	}
@@ -949,6 +950,20 @@ func (c *SkylineTxControllerImpl) getBridgingAddresses(w http.ResponseWriter, r 
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		bridgingAddresses, c.logger)
+}
+
+// @Summary Get latest slot for a Cardano chain
+// @Description Returns the current tip slot for the given chain ID using the chain's configured tx provider (Ogmios/Blockfrost/socket).
+// @Tags CardanoTx
+// @Produce json
+// @Param chainId query string true "Chain ID"
+// @Success 200 {object} response.LatestSlotResponse "OK - Returns the latest slot."
+// @Failure 400 {object} response.ErrorResponse "Bad Request – chainId is missing or the tip could not be retrieved."
+// @Failure 401 {object} response.ErrorResponse "Unauthorized – API key missing or invalid."
+// @Security ApiKeyAuth
+// @Router /CardanoTx/GetLatestSlot [get]
+func (c *SkylineTxControllerImpl) getLatestSlot(w http.ResponseWriter, r *http.Request) {
+	utils.HandleGetLatestSlot(w, r, c.appConfig, c.logger)
 }
 
 func (c *SkylineTxControllerImpl) getAddressToBridgeTo(
