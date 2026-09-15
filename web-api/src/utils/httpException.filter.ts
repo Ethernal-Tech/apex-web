@@ -5,7 +5,8 @@ import {
 	HttpException,
 	Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { formatRequestInfo } from './logging.interceptor';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -18,7 +19,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 		const status = exception.getStatus();
 
 		Logger.error(
-			`Exception intercepted - Path: ${request.url}, Status: ${status}, ex: ${JSON.stringify(exception)}`,
+			`Exception intercepted - ${formatRequestInfo(request)}, Status: ${status}, ex: ${JSON.stringify(exception)}`,
 			exception.stack,
 		);
 

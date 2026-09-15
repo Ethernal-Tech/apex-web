@@ -17,5 +17,4 @@ export enum ChainEnum {
 
 export enum BridgingModeEnum {
 	Reactor = 'reactor',
-	Centralized = 'centralized',
 }

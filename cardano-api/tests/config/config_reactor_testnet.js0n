@@ -5,8 +5,7 @@
             "networkID": 0,
             "bridgingAddresses": {
                 "address": "addr_test1wr44r7qudqwrpsgfs3m4t47x7xmw55dk4k96faak0w4aeqqxxwlvt",
-                "feeAddress": "addr_test1wzct9v2gj9j9rmwx6atkjhcesglf3zcpz6c4y99u3nvg9ksfjj3zd",
-                "fallbackAddress": "addr_test1vqfuetznnmngqzquslwcu0ygn2hq29vjlpytlpwss762vcgun5vvw"
+                "feeAddress": "addr_test1wzct9v2gj9j9rmwx6atkjhcesglf3zcpz6c4y99u3nvg9ksfjj3zd"
             },
             "chainSpecific": {
                 "ogmiosUrl": "http://ogmios.prime.testnet.apexfusion.org:1337",
@@ -22,7 +21,6 @@
             "bridgingAddresses": {
                 "address": "addr1w8nv7cp7revdt70yuc96z4ke9pasa70grc5clhyf7q70f4spev3dn",
                 "feeAddress": "addr1w8r7nnz8xg2hmudtfgp9u77uwttkuwef6g26dl6zppmwmsqknwcek",
-                "fallbackAddress": "addr1w8nv7cp7revdt70yuc96z4ke9pasa70grc5clhyf7q70f4spev3dn"
             },
             "chainSpecific": {
                 "ogmiosUrl": "https://vector-ogmios.onprem.ethernal.work",

@@ -23,7 +23,6 @@ import {
 	BridgingRequestNotFinalStates,
 	getBridgingRequestStates,
 	GetBridgingRequestStatesModel,
-	getCentralizedBridgingRequestStates,
 	getHasTxFailedRequestStates,
 	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
@@ -154,7 +153,6 @@ export class BridgeTransactionService {
 				if (entities.length > 0) {
 					const models: GetBridgingRequestStatesModel[] = [];
 					const modelsPending: GetBridgingRequestStatesModel[] = [];
-					const modelsCentralized: GetBridgingRequestStatesModel[] = [];
 					for (const entity of entities) {
 						const model: GetBridgingRequestStatesModel = {
 							txHash: entity.sourceTxHash,
@@ -162,11 +160,7 @@ export class BridgeTransactionService {
 							txRaw: entity.txRaw,
 						};
 
-						if (entity.isCentralized) {
-							if (modesSupported.has(BridgingModeEnum.Centralized)) {
-								modelsCentralized.push(model);
-							}
-						} else if (modesSupported.has(BridgingModeEnum.Reactor)) {
+						if (modesSupported.has(BridgingModeEnum.Reactor)) {
 							models.push(model);
 
 							if (
@@ -178,21 +172,14 @@ export class BridgeTransactionService {
 						}
 					}
 
-					const [states, statesCentralized, statesTxFailed] = await Promise.all(
-						[
-							getBridgingRequestStates(chain, models),
-							getCentralizedBridgingRequestStates(chain, modelsCentralized),
-							getHasTxFailedRequestStates(chain, modelsPending),
-						],
-					);
+					const [states, statesTxFailed] = await Promise.all([
+						getBridgingRequestStates(chain, models),
+						getHasTxFailedRequestStates(chain, modelsPending),
+					]);
 
 					Object.keys(states).length > 0 &&
 						Logger.debug(
 							`updateStatuses - got bridging request states: ${JSON.stringify(states)}`,
-						);
-					Object.keys(statesCentralized).length > 0 &&
-						Logger.debug(
-							`updateStatuses - got centralized bridging request states: ${JSON.stringify(statesCentralized)}`,
 						);
 					Object.keys(statesTxFailed).length > 0 &&
 						Logger.debug(
@@ -201,7 +188,7 @@ export class BridgeTransactionService {
 
 					const updatedBridgeTransactions = updateBridgeTransactionStates(
 						entities,
-						{ ...states, ...statesCentralized },
+						states,
 						statesTxFailed,
 					);
 

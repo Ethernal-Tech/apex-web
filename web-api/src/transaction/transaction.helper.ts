@@ -1,4 +1,3 @@
-import { ChainEnum } from 'src/common/enum';
 import {
 	CreateCardanoTransactionResponseDto,
 	ErrorResponseDto,
@@ -26,33 +25,20 @@ import { createHash } from 'crypto';
 const prepareCreateCardanoBridgingTx = (
 	dto: CreateTransactionDto,
 	skipUtxos: Utxo[] | undefined,
-) => {
-	// centralized bridge currently doesn't support prime->vector, vector->prime
-	const nexusInvolved =
-		dto.originChain === ChainEnum.Nexus ||
-		dto.destinationChain === ChainEnum.Nexus;
-
-	const isCentralized =
-		getAppConfig().features.useCentralizedBridge && nexusInvolved;
-
-	const body = {
-		senderAddr: dto.senderAddress,
-		sourceChainId: dto.originChain,
-		destinationChainId: dto.destinationChain,
-		transactions: [
-			{
-				addr: dto.destinationAddress,
-				amount: +dto.amount,
-			},
-		],
-		bridgingFee: dto.bridgingFee ? +dto.bridgingFee : undefined,
-		useFallback: isCentralized,
-		skipUtxos,
-		utxoCacheKey: dto.utxoCacheKey,
-	};
-
-	return body;
-};
+) => ({
+	senderAddr: dto.senderAddress,
+	sourceChainId: dto.originChain,
+	destinationChainId: dto.destinationChain,
+	transactions: [
+		{
+			addr: dto.destinationAddress,
+			amount: +dto.amount,
+		},
+	],
+	bridgingFee: dto.bridgingFee ? +dto.bridgingFee : undefined,
+	skipUtxos,
+	utxoCacheKey: dto.utxoCacheKey,
+});
 
 export const createCardanoBridgingTx = async (
 	dto: CreateTransactionDto,
@@ -75,10 +61,7 @@ export const createCardanoBridgingTx = async (
 
 		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
-		return {
-			...response.data,
-			isFallback: body.useFallback,
-		} as CreateCardanoTransactionResponseDto;
+		return response.data as CreateCardanoTransactionResponseDto;
 	} catch (error) {
 		if (error instanceof AxiosError) {
 			if (error.response) {
@@ -192,9 +175,7 @@ export const createEthBridgingTx = (
 		);
 	}
 
-	const createFunc = appConfig.features.useCentralizedBridge
-		? ethCentralizedBridgingTx
-		: ethBridgingTx;
+	const createFunc = ethBridgingTx;
 	return createFunc(dto, BigInt(dto.amount) + bridgingFee, bridgingFee);
 };
 
@@ -228,34 +209,6 @@ const ethBridgingTx = (
 		bridgingFee: web3.utils.toHex(bridgingFee),
 		value: web3.utils.toHex(value),
 		data: calldata,
-		isFallback: false,
-	};
-};
-
-const ethCentralizedBridgingTx = (
-	dto: CreateTransactionDto,
-	value: bigint,
-	bridgingFee: bigint,
-): CreateEthTransactionResponseDto => {
-	const to = getAppConfig().bridge.addresses.nexusCentralizedBridging;
-	if (!to) {
-		throw new BadRequestException('Empty to address');
-	}
-
-	const calldata = web3.utils.asciiToHex(
-		JSON.stringify({
-			destinationChain: dto.destinationChain,
-			destnationAddress: dto.destinationAddress,
-		}),
-	);
-
-	return {
-		from: dto.senderAddress,
-		to,
-		bridgingFee: web3.utils.toHex(bridgingFee),
-		value: web3.utils.toHex(value),
-		data: calldata,
-		isFallback: true,
 	};
 };
 

@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
+import {
+	IsArray,
+	IsEnum,
+	IsNotEmpty,
+	IsPositive,
+	IsOptional,
+} from 'class-validator';
 import { ChainEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
@@ -63,12 +69,9 @@ export class TransactionSubmittedDto {
 	@ApiProperty()
 	amount: string;
 
-	@IsNotEmpty()
-	@ApiProperty()
-	txRaw: string;
-
-	@ApiProperty()
-	isFallback: boolean;
+	@IsOptional()
+	@ApiProperty({ required: false })
+	txRaw?: string;
 }
 
 export class CreateCardanoTransactionResponseDto {
@@ -84,9 +87,6 @@ export class CreateCardanoTransactionResponseDto {
 	@IsPositive()
 	@ApiProperty()
 	bridgingFee: string;
-
-	@ApiProperty()
-	isFallback: boolean;
 }
 
 export class CardanoTransactionFeeResponseDto {
@@ -114,9 +114,6 @@ export class CreateEthTransactionResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	bridgingFee: string;
-
-	@ApiProperty()
-	isFallback: boolean;
 }
 
 export class ErrorResponseDto {
@@ -141,11 +138,12 @@ export class TransactionUpdateDto {
 	})
 	originTxHash: string;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@ApiProperty({
 		description: 'Transaction raw data on source chain',
+		required: false,
 	})
-	txRaw: string;
+	txRaw?: string;
 }
 
 export class TransactionActivateDeleteDto {

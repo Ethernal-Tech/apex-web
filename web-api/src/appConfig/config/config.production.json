@@ -9,17 +9,13 @@
     ],
     "isMainnet": false
   },
-  "features": {
-    "useCentralizedBridge": false
-  },
   "bridge": {
     "ethTxTtlInc": 50,
     "recentInputsThresholdMinutes": 5
   },
   "services": {
     "oracleUrl": "http://bridge-api-testnet.apexfusion.org:10003",
-    "cardanoApiUrl": "https://cardano-api.ethernal.tech",
-    "centralizedApiUrl": "https://developers.apexfusion.org"
+    "cardanoApiUrl": "https://cardano-api.ethernal.tech"
   },
   "database": {
     "host": "localhost",

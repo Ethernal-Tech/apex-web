@@ -29,7 +29,6 @@ type APIConfig struct {
 type BridgingAddresses struct {
 	BridgingAddress string `json:"address"`
 	FeeAddress      string `json:"feeAddress"`
-	FallbackAddress string `json:"fallbackAddress"`
 }
 
 type EthChainConfig struct {
@@ -197,13 +196,13 @@ func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig,
 	return nil, nil
 }
 
-func (appConfig *AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]sendtx.ChainConfig, error) {
+func (appConfig *AppConfig) ToSendTxChainConfigs() (map[string]sendtx.ChainConfig, error) {
 	result := make(map[string]sendtx.ChainConfig, len(appConfig.CardanoChains)+len(appConfig.EthChains))
 
 	appConfig.cardanoChainsMu.RLock()
 
 	for chainID, cardanoConfig := range appConfig.CardanoChains {
-		cfg, err := cardanoConfig.ToSendTxChainConfig(appConfig, useFallback)
+		cfg, err := cardanoConfig.ToSendTxChainConfig(appConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -220,23 +219,16 @@ func (appConfig *AppConfig) ToSendTxChainConfigs(useFallback bool) (map[string]s
 	return result, nil
 }
 
-func (config CardanoChainConfig) ToSendTxChainConfig(
-	appConfig *AppConfig, useFallback bool,
-) (res sendtx.ChainConfig, err error) {
+func (config CardanoChainConfig) ToSendTxChainConfig(appConfig *AppConfig) (res sendtx.ChainConfig, err error) {
 	txProvider, err := config.ChainSpecific.CreateTxProvider()
 	if err != nil {
 		return res, err
 	}
 
-	bridgingAddress := config.BridgingAddresses.BridgingAddress
-	if useFallback {
-		bridgingAddress = config.BridgingAddresses.FallbackAddress
-	}
-
 	return sendtx.ChainConfig{
 		CardanoCliBinary:     cardanowallet.ResolveCardanoCliBinary(config.NetworkID),
 		TxProvider:           txProvider,
-		MultiSigAddr:         bridgingAddress,
+		MultiSigAddr:         config.BridgingAddresses.BridgingAddress,
 		TestNetMagic:         uint(config.NetworkMagic),
 		TTLSlotNumberInc:     config.ChainSpecific.TTLSlotNumberInc,
 		MinUtxoValue:         appConfig.BridgingSettings.MinUtxoChainValue[config.ChainID],

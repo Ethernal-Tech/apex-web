@@ -60,7 +60,6 @@ export const signAndSubmitCardanoTx = async (
 		amount: amount.toString(),
 		originTxHash: createResponse.txHash,
 		txRaw: createResponse.txRaw,
-		isFallback: createResponse.isFallback,
 	});
 
 	const bindedSubmittedAction = bridgingTransactionSubmittedAction.bind(
@@ -182,7 +181,7 @@ export const signAndSubmitCardanoTx = async (
 
 const DEFAULT_GAS_PRICE = 1000000000; // TODO - adjust gas price
 
-export const fillOutEthTx = async (tx: Transaction, isFallback: boolean) => {
+export const fillOutEthTx = async (tx: Transaction) => {
 	let gasPrice = await evmWalletHandler.getGasPrice();
 	if (gasPrice === BigInt(0)) {
 		gasPrice = BigInt(DEFAULT_GAS_PRICE || 0);
@@ -191,16 +190,15 @@ export const fillOutEthTx = async (tx: Transaction, isFallback: boolean) => {
 	return {
 		...tx,
 		gasPrice,
-		gas: isFallback ? 30000 : undefined,
 	};
 };
 
-export const estimateEthGas = async (tx: Transaction, isFallback: boolean) => {
+export const estimateEthGas = async (tx: Transaction) => {
 	if (!evmWalletHandler.checkWallet()) {
 		return BigInt(0);
 	}
 
-	const filledTx = await fillOutEthTx(tx, isFallback);
+	const filledTx = await fillOutEthTx(tx);
 	const estimateTx = {
 		...filledTx,
 	};
@@ -222,8 +220,8 @@ export const signAndSubmitEthTx = async (
 		throw new Error('Wallet not connected.');
 	}
 
-	const { bridgingFee, isFallback, ...txParts } = createResponse;
-	const tx = await fillOutEthTx(txParts, isFallback);
+	const { bridgingFee, ...txParts } = createResponse;
+	const tx = await fillOutEthTx(txParts);
 
 	const amount = BigInt(bridgingFee) + BigInt(values.amount);
 
@@ -243,7 +241,6 @@ export const signAndSubmitEthTx = async (
 		senderAddress: values.senderAddress,
 		receiverAddrs: [values.destinationAddress],
 		amount: amount.toString(10),
-		isFallback: createResponse.isFallback,
 	};
 
 	const onTxHash = (txHash: any) => {
