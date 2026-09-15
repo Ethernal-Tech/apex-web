@@ -16,7 +16,7 @@ require (
 )
 
 require (
-	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20260713111327-1627e93a6210
+	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20260904095550-df7578bc2925
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
@@ -61,7 +61,7 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/Ethernal-Tech/solana-infrastructure v0.0.0-20260706172729-b8c5a70250c6
+	github.com/Ethernal-Tech/solana-infrastructure v0.0.0-20260909082252-b0b57125ba5d
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
