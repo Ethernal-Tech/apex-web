@@ -15,6 +15,7 @@ import { TokenInfoModule } from './tokenInfo/tokenInfo.module';
 import { ChainInfoModule } from './chainInfo/chainInfo.module';
 import { BalanceModule } from './balance/balance.module';
 import { OracleSyncModule } from './oracleSync/oracleSync.module';
+import { LayerZeroStatusModule } from './layerZeroStatus/layerZeroStatus.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ApiKeyGuard } from './common/guards/api-key.guard';
 
@@ -36,6 +37,7 @@ import { ApiKeyGuard } from './common/guards/api-key.guard';
 		ChainInfoModule,
 		BalanceModule,
 		OracleSyncModule,
+		LayerZeroStatusModule,
 		AppConfigModule,
 	],
 	controllers: [],
