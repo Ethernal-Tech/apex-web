@@ -106,6 +106,35 @@ export function toFixedAmount(n: number | string, decimals: number): string {
   return (+n).toFixed(decimals);
 }
 
+/**
+ * At most `maxDigits` digits, wherever the decimal point falls, so amounts stay
+ * inside a fixed width column: 11583.664579 -> 11583.664, 0.123456789 ->
+ * 0.1234567. The integer part is never shortened, the decimals take whatever
+ * room is left over, and trailing zeros go - 53602.000000 -> 53602.
+ *
+ * Decimals are cut rather than rounded, so what is shown is never more than what
+ * was bridged.
+ */
+export function formatAmountDigits(
+  value: number | string,
+  maxDigits = 8,
+): string {
+  const text = String(value);
+  // exponential notation has no decimal point to count digits on, so expand it
+  // first - past 1e21 toFixed keeps the exponent and it is left as it is
+  const decimal = /e/i.test(text) ? Number(text).toFixed(maxDigits) : text;
+
+  const sign = decimal.startsWith("-") ? "-" : "";
+  const [whole, fraction = ""] = decimal.replace(/^[+-]/, "").split(".");
+  // leading zeros are not digits worth spending the budget on, "0" itself is
+  const spent = whole.replace(/^0+(?=\d)/, "").length;
+  const trimmed = fraction
+    .slice(0, Math.max(0, maxDigits - spent))
+    .replace(/0+$/, "");
+
+  return `${sign}${whole}${trimmed ? `.${trimmed}` : ""}`;
+}
+
 export function toFixedFloor(n: number | string, decimals: number): string {
   const exp = Math.pow(10, decimals);
   return (Math.floor(+n * exp) / exp).toFixed(decimals);

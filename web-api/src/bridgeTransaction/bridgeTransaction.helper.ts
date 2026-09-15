@@ -15,6 +15,7 @@ import { isCardanoChain, isSolanaChain } from 'src/utils/chainUtils';
 import { parseSolanaTxRawStorage } from 'src/utils/solanaTxRaw';
 import { getUrlAndApiKey } from 'src/utils/generalUtils';
 import { getAppConfig } from 'src/appConfig/appConfig';
+import { getLayerZeroMessage } from 'src/layerZeroStatus/layerZeroScan.helper';
 
 export const BridgingRequestNotFinalStates = [
 	TransactionStatusEnum.Pending,
@@ -134,111 +135,17 @@ export const getHasTxFailedRequestStates = async (
 export const getLayerZeroRequestState = async (
 	model: GetLayerZeroBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
-	const layerZeroUrl = getAppConfig().layerZero.scanUrl;
-	if (!layerZeroUrl) {
-		Logger.error('layer zero scan url not set');
-
+	const message = await getLayerZeroMessage(model.txHash);
+	if (!message) {
 		return;
 	}
-	const endpointUrl = `${layerZeroUrl}/messages/tx/${model.txHash}`;
 
-	Logger.debug(`axios.get: ${endpointUrl}`);
-	try {
-		const response = await axios.get(endpointUrl);
-
-		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
-
-		const data = response.data.data[0];
-
-		/*
-			global: "INFLIGHT" //  "Source transaction sent"
-			source: "VALIDATING_TX"
-			destination: "WAITING"
-			verification.dvn: "WAITING"
-			verification.dvn.dvns: "WAITING"
-			verification.sealer: "WAITING"
-
-			global: "INFLIGHT" // Ready for DVNs to verify"
-			source: "SUCCEEDED"
-			destination: "WAITING"
-			verification.dvn: "WAITING"
-			verification.dvn.dvns: "VALIDATING_TX"
-			verification.sealer: "WAITING"
-
-			global: "INFLIGHT" // Ready for committer to commit verification
-			source: "SUCCEEDED"
-			destination: "WAITING"
-			verification.dvn: "SUCCEEDED"
-			verification.dvn.dvns: "SUCCEEDED"
-			verification.sealer: "WAITING"
-		
-			global: "INFLIGHT" // Verification committed
-			source: "SUCCEEDED"
-			destination: "WAITING"
-			verification.dvn: "SUCCEEDED"
-			verification.dvn.dvns: "SUCCEEDED"
-			verification.sealer: "SUCCEEDED"
-
-			global: "INFLIGHT" // Executor transaction confirmed
-			source: "SUCCEEDED"
-			destination: "SUCCEEDED"
-			verification.dvn: "SUCCEEDED"
-			verification.dvn.dvns: "SUCCEEDED"
-			verification.sealer: "SUCCEEDED"
-
-			global: "DELIVERED" // Executor transaction confirmed
-			source: "SUCCEEDED"
-			destination: "SUCCEEDED"
-			verification.dvn: "SUCCEEDED"
-			verification.dvn.dvns: "SUCCEEDED"
-			verification.sealer: "SUCCEEDED"
-		*/
-		let status: TransactionStatusEnum = TransactionStatusEnum.Pending;
-		switch (data['status'].name) {
-			case 'INFLIGHT':
-				if (data['destination']['status'] == 'SUCCEEDED') {
-					status = TransactionStatusEnum.SubmittedToDestination;
-				} else if (data['source']['status'] == 'SUCCEEDED') {
-					status = TransactionStatusEnum.SubmittedToBridge;
-				} else {
-					status = TransactionStatusEnum.DiscoveredOnSource;
-				}
-
-				break;
-			case 'DELIVERED':
-				status = TransactionStatusEnum.ExecutedOnDestination;
-
-				break;
-			case 'PAYLOAD_STORED':
-				status = TransactionStatusEnum.FailedToExecuteOnDestination;
-
-				break;
-			case 'CONFIRMING':
-				status = TransactionStatusEnum.SubmittedToDestination;
-
-				break;
-			case 'FAILED':
-			case 'BLOCKED':
-			case 'UNRESOLVABLE_COMMAND':
-				status = TransactionStatusEnum.InvalidRequest;
-
-				break;
-		}
-
-		return {
-			sourceTxHash: model.txHash,
-			status: status,
-		} as BridgingRequestState;
-	} catch (e) {
-		if (e instanceof AxiosError) {
-			Logger.error(
-				`Error while getLayerZeroRequestState: ${e}. response: ${JSON.stringify(e.response?.data)}`,
-				e.stack,
-			);
-		} else {
-			Logger.error(`Error while getLayerZeroRequestState: ${e}`, e.stack);
-		}
-	}
+	return {
+		sourceTxHash: model.txHash,
+		status: message.status,
+		destinationTxHash: message.destination.txHash,
+		isRefund: false,
+	};
 };
 
 export const getHasTxFailedRequestState = async (
