@@ -1913,8 +1913,6 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
     bridgingFee!: string;
     /** Operation fee for covering operation costs of the bridge, expressed in Lovelace */
     operationFee!: string;
-    /** Indicates is fallback mechanism used */
-    isFallback!: boolean;
     /** Amount of currency to be bridged, expressed in Lovelace */
     amount!: string;
     /** Amounts of tokens to be bridged */
@@ -1941,7 +1939,6 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
             this.txHash = _data["txHash"];
             this.bridgingFee = _data["bridgingFee"];
             this.operationFee = _data["operationFee"];
-            this.isFallback = _data["isFallback"];
             this.amount = _data["amount"];
             if (Array.isArray(_data["nativeTokenAmount"])) {
                 this.nativeTokenAmount = [] as any;
@@ -1968,7 +1965,6 @@ export class CreateCardanoTransactionResponseDto implements ICreateCardanoTransa
         data["txHash"] = this.txHash;
         data["bridgingFee"] = this.bridgingFee;
         data["operationFee"] = this.operationFee;
-        data["isFallback"] = this.isFallback;
         data["amount"] = this.amount;
         if (Array.isArray(this.nativeTokenAmount)) {
             data["nativeTokenAmount"] = [];
@@ -1988,8 +1984,6 @@ export interface ICreateCardanoTransactionResponseDto {
     bridgingFee: string;
     /** Operation fee for covering operation costs of the bridge, expressed in Lovelace */
     operationFee: string;
-    /** Indicates is fallback mechanism used */
-    isFallback: boolean;
     /** Amount of currency to be bridged, expressed in Lovelace */
     amount: string;
     /** Amounts of tokens to be bridged */
@@ -2127,7 +2121,6 @@ export class BridgingEthTransactionResponseDto implements IBridgingEthTransactio
     operationFee!: string;
     tokenAmount!: string;
     tokenID!: number;
-    isFallback!: boolean;
 
     [key: string]: any;
 
@@ -2154,7 +2147,6 @@ export class BridgingEthTransactionResponseDto implements IBridgingEthTransactio
             this.operationFee = _data["operationFee"];
             this.tokenAmount = _data["tokenAmount"];
             this.tokenID = _data["tokenID"];
-            this.isFallback = _data["isFallback"];
         }
     }
 
@@ -2176,7 +2168,6 @@ export class BridgingEthTransactionResponseDto implements IBridgingEthTransactio
         data["operationFee"] = this.operationFee;
         data["tokenAmount"] = this.tokenAmount;
         data["tokenID"] = this.tokenID;
-        data["isFallback"] = this.isFallback;
         return data;
     }
 }
@@ -2188,7 +2179,6 @@ export interface IBridgingEthTransactionResponseDto {
     operationFee: string;
     tokenAmount: string;
     tokenID: number;
-    isFallback: boolean;
 
     [key: string]: any;
 }
@@ -2315,7 +2305,6 @@ export class BridgingSolanaTransactionResponseDto implements IBridgingSolanaTran
     operationFee!: string;
     tokenAmount!: string;
     tokenID!: number;
-    isFallback!: boolean;
 
     [key: string]: any;
 
@@ -2342,7 +2331,6 @@ export class BridgingSolanaTransactionResponseDto implements IBridgingSolanaTran
             this.operationFee = _data["operationFee"];
             this.tokenAmount = _data["tokenAmount"];
             this.tokenID = _data["tokenID"];
-            this.isFallback = _data["isFallback"];
         }
     }
 
@@ -2364,7 +2352,6 @@ export class BridgingSolanaTransactionResponseDto implements IBridgingSolanaTran
         data["operationFee"] = this.operationFee;
         data["tokenAmount"] = this.tokenAmount;
         data["tokenID"] = this.tokenID;
-        data["isFallback"] = this.isFallback;
         return data;
     }
 }
@@ -2376,7 +2363,6 @@ export interface IBridgingSolanaTransactionResponseDto {
     operationFee: string;
     tokenAmount: string;
     tokenID: number;
-    isFallback: boolean;
 
     [key: string]: any;
 }
@@ -2477,8 +2463,6 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
     txRaw!: string;
     /** Solana block through which the tx stays valid */
     lastValidBlockHeight?: string | undefined;
-    /** Indicates is fallback mechanism used */
-    isFallback!: boolean;
     /** Indicates if Layer Zero bridging is used */
     isLayerZero!: boolean;
 
@@ -2516,7 +2500,6 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
             this.tokenID = _data["tokenID"];
             this.txRaw = _data["txRaw"];
             this.lastValidBlockHeight = _data["lastValidBlockHeight"];
-            this.isFallback = _data["isFallback"];
             this.isLayerZero = _data["isLayerZero"];
         }
     }
@@ -2548,7 +2531,6 @@ export class TransactionSubmittedDto implements ITransactionSubmittedDto {
         data["tokenID"] = this.tokenID;
         data["txRaw"] = this.txRaw;
         data["lastValidBlockHeight"] = this.lastValidBlockHeight;
-        data["isFallback"] = this.isFallback;
         data["isLayerZero"] = this.isLayerZero;
         return data;
     }
@@ -2573,8 +2555,6 @@ export interface ITransactionSubmittedDto {
     txRaw: string;
     /** Solana block through which the tx stays valid */
     lastValidBlockHeight?: string | undefined;
-    /** Indicates is fallback mechanism used */
-    isFallback: boolean;
     /** Indicates if Layer Zero bridging is used */
     isLayerZero: boolean;
 
@@ -3615,7 +3595,6 @@ export enum BridgingModeEnum {
     Reactor = "reactor",
     Skyline = "skyline",
     Layerzero = "layerzero",
-    Centralized = "centralized",
 }
 
 export class LockedTokensDto implements ILockedTokensDto {

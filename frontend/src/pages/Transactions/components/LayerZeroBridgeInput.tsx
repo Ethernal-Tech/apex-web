@@ -137,7 +137,6 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 						from: account,
 					},
 					txType,
-					false,
 				);
 			}
 
@@ -161,7 +160,6 @@ const BridgeInputLZ = ({ submit, loadingState }: BridgeInputType) => {
 					from: account,
 				},
 				txType,
-				false,
 			);
 
 			// Add a buffer to the estimate to account for fee volatility.

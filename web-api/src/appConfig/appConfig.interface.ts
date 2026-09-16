@@ -36,7 +36,6 @@ export interface AppConfig {
 		hashSecret: string;
 	};
 	features: {
-		useCentralizedBridge: boolean;
 		statusUpdateModesSupported: string[];
 	};
 	bridge: {
@@ -52,7 +51,6 @@ export interface AppConfig {
 			 */
 			skylineGateway: EvmAddressConfig[];
 			reactorNexusGateway: `0x${string}`;
-			reactorNexusCentralizedGateway: `0x${string}`;
 		};
 	};
 	services: {
@@ -60,7 +58,10 @@ export interface AppConfig {
 		oracleReactorUrl: string;
 		cardanoApiSkylineUrl: string;
 		cardanoApiReactorUrl: string;
-		centralizedApiUrl: string;
+	};
+	rpc: {
+		evmUrls: ChainValueConfig[];
+		solanaUrl: string;
 	};
 	/** Node endpoints for reading balances off non-Cardano chains. */
 	rpc: {

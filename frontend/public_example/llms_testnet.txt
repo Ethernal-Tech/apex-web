@@ -325,8 +325,7 @@ Optional fields (omit to use API-calculated defaults):
     "bridgingFee":  "100000000000000000",
     "operationFee": "50000000000000000",
     "tokenAmount":  "1000000000000000000",
-    "tokenID":      3,
-    "isFallback":   false
+    "tokenID":      3
   }
 }
 ```
@@ -352,7 +351,6 @@ Always compute and show the total cost to the user before they sign.
   "txHash":            "abc123...",
   "bridgingFee":       "1100000",
   "operationFee":      "500000",
-  "isFallback":        false,
   "amount":            "5000000",
   "nativeTokenAmount": null
 }
@@ -495,7 +493,6 @@ Content-Type: application/json
   "nativeTokenAmount": "0",
   "tokenID":           "<integer token ID>",
   "txRaw":             "<signedTxRaw from user>",
-  "isFallback":        false,
   "isLayerZero":       false
 }
 ```
@@ -504,7 +501,6 @@ Content-Type: application/json
 |---------------------|---------------------------------------------------------------------|
 | `originTxHash`      | txHash provided by the user after on-chain submission               |
 | `txRaw`             | Signed transaction hex provided by the user                         |
-| `isFallback`        | Copy from the `isFallback` field in the build response              |
 | `nativeTokenAmount` | `"0"` for lovelace bridges and for all EVM source chain bridges. For native UTXO token bridges (non-lovelace), extract from the build response `nativeTokenAmount` array: `nativeTokenAmount[0].amount` |
 | `amount`            | For EVM source chains: the full token amount in smallest unit (e.g. wei). For UTXO native token bridges: `"0"` (amount is in `nativeTokenAmount`). For UTXO lovelace bridges: the lovelace amount. |
 | `isLayerZero`       | `false` for standard Skyline bridge; `true` for LayerZero path      |
@@ -685,7 +681,7 @@ Agent collects (if not provided):
        POST /transaction/createEth
    Body: { senderAddress, originChain, destinationChain,
            destinationAddress, amount (in smallest unit), tokenID }
-   Extract: txRaw / bridgingTx, approvalTx (EVM only), isFallback
+   Extract: txRaw / bridgingTx, approvalTx (EVM only)
 
 ──── Phase 2: User signs ───────────────────────────────────────────
 
@@ -718,7 +714,7 @@ Agent collects (if not provided):
            originTxHash: txHash, senderAddress,
            receiverAddrs: [destinationAddress],
             amount, nativeTokenAmount: (nativeTokenAmount[0].amount for native token bridges, else "0"), tokenID,
-           txRaw: signedTxRaw, isFallback, isLayerZero: false }
+           txRaw: signedTxRaw, isLayerZero: false }
    Extract: id
 
 ──── Phase 5: Track ────────────────────────────────────────────────

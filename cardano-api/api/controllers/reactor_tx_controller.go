@@ -54,6 +54,7 @@ func (c *ReactorTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
 		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
 		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance},
+		{Path: "GetLatestSlot", Method: http.MethodGet, Handler: c.getLatestSlot},
 	}
 }
 
@@ -141,6 +142,10 @@ func (c *ReactorTxControllerImpl) getSettings(w http.ResponseWriter, r *http.Req
 	utils.WriteResponse(
 		w, r, http.StatusOK,
 		commonResponse.NewReactorSettingsResponse(c.appConfig), c.logger)
+}
+
+func (c *ReactorTxControllerImpl) getLatestSlot(w http.ResponseWriter, r *http.Request) {
+	utils.HandleGetLatestSlot(w, r, c.appConfig, c.logger)
 }
 
 func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
@@ -332,7 +337,7 @@ func (c *ReactorTxControllerImpl) getTxSenderAndReceivers(
 ) (
 	*sendtx.TxSender, []sendtx.BridgingTxReceiver, error,
 ) {
-	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs(requestBody.UseFallback)
+	txSenderChainsConfig, err := c.appConfig.ToSendTxChainConfigs()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate configuration")
 	}
