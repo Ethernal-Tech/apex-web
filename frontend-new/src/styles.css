@@ -278,3 +278,16 @@
 @utility animate-panel-swap {
   animation: panel-swap 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* Moving highlight across a skeleton placeholder (loading values). */
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+@utility animate-skeleton-shimmer {
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}

@@ -32,6 +32,7 @@ import {
 import { useTokenColor } from "@/hooks/use-token-infos";
 import { useChainColor, useChainMeta } from "@/hooks/use-chain-infos";
 import { formatUsdFull } from "@/lib/usd";
+import { Skeleton, ValueSkeleton } from "@/components/ui/skeleton";
 import { explorerAddressUrl } from "@/lib/explorers";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 import { pageHead } from "@/lib/seo";
@@ -276,11 +277,13 @@ function AuditContent() {
   const showComposition = data.locked.length > 1;
   const isEmpty = chainCount === 0;
   /** What the world tabs say about the figures below them. */
-  const worldNote = isEmpty
-    ? "Nothing locked or bridged on these chains yet"
-    : mode === "overview"
-      ? `${chainTag(data)} · snapshot, updated continuously`
-      : "Every value, straight from chain state";
+  const worldNote = breakdownLoading
+    ? "Fetching on-chain balances"
+    : isEmpty
+      ? "Nothing locked or bridged on these chains yet"
+      : mode === "overview"
+        ? `${chainTag(data)} · snapshot, updated continuously`
+        : "Every value, straight from chain state";
 
   // Both headline figures come from chain state - locked balances and the
   // cumulative transferred totals - priced by the same /tokenPrice endpoint.
@@ -552,12 +555,20 @@ function AuditContent() {
                 </div>
               </>
             ) : (
-              <div className="mt-4 flex h-[220px] items-center justify-center rounded-xl border border-dashed border-white/10 px-6 text-center text-xs text-muted-foreground">
-                {historyLoading
-                  ? "Loading history…"
-                  : points.length === 1
-                    ? "Only one snapshot so far - the chart needs at least two days of history."
-                    : "No history yet - snapshots are taken daily at 00:00 UTC."}
+              <div className="mt-4">
+                {historyLoading ? (
+                  <Skeleton
+                    className="h-[220px] w-full rounded-xl"
+                    role="status"
+                    aria-label="Loading history"
+                  />
+                ) : (
+                  <div className="flex h-[220px] items-center justify-center rounded-xl border border-dashed border-white/10 px-6 text-center text-xs text-muted-foreground">
+                    {points.length === 1
+                      ? "Only one snapshot so far - the chart needs at least two days of history."
+                      : "No history yet - snapshots are taken daily at 00:00 UTC."}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -616,10 +627,23 @@ function AuditContent() {
           </div>
 
           {isEmpty ? (
-            <div className="mt-6 flex h-40 items-center justify-center rounded-2xl border border-dashed border-white/10 px-6 text-center text-xs text-muted-foreground">
-              {breakdownLoading
-                ? "Loading balances…"
-                : `No locked or bridged balances reported for ${WORLD_LABELS[world]}.`}
+            <div className="mt-6">
+              {breakdownLoading ? (
+                <div
+                  className="grid grid-cols-1 gap-4 lg:grid-cols-2"
+                  role="status"
+                  aria-label="Loading balances"
+                >
+                  <Skeleton className="h-48 rounded-2xl" />
+                  <Skeleton className="h-48 rounded-2xl" />
+                  <Skeleton className="h-36 rounded-2xl" />
+                  <Skeleton className="h-36 rounded-2xl" />
+                </div>
+              ) : (
+                <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-white/10 px-6 text-center text-xs text-muted-foreground">
+                  {`No locked or bridged balances reported for ${WORLD_LABELS[world]}.`}
+                </div>
+              )}
             </div>
           ) : mode === "overview" ? (
             /* Composition pair on top, the token lists they break down below -
@@ -761,7 +785,11 @@ function MetricCard({
         <DeltaChip pct={deltaPct} label={deltaLabel} />
       </div>
       <div className="mt-4 font-display text-4xl font-bold tabular-nums leading-none">
-        {usd === undefined ? "—" : formatUsdFull(counted)}
+        {usd === undefined ? (
+          <ValueSkeleton className="w-[6.5rem]" />
+        ) : (
+          formatUsdFull(counted)
+        )}
       </div>
 
       {/* The sparkline is pinned to the card's bottom-right corner, so the note
@@ -796,8 +824,9 @@ function MetricCard({
 function DeltaChip({ pct, label }: { pct: number | undefined; label: string }) {
   if (pct === undefined || !Number.isFinite(pct)) {
     return (
-      <span className="rounded-md bg-white/[0.06] px-2 py-1 text-[10px] font-semibold text-muted-foreground">
-        — · {label}
+      <span className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.06] px-2 py-1 text-[10px] font-semibold text-muted-foreground">
+        <ValueSkeleton className="w-8" />
+        <span>· {label}</span>
       </span>
     );
   }

@@ -260,7 +260,6 @@ export class OracleSyncService {
 			? entity.createdAt
 			: undefined;
 		entity.txRaw = '';
-		entity.isCentralized = false;
 		entity.isLayerZero = false;
 		entity.isOracleDiscovered = true;
 		// these rows have no submitting client, activeFrom must stay null or history hides them

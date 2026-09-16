@@ -953,6 +953,20 @@ func (c *SkylineTxControllerImpl) getBridgingAddresses(w http.ResponseWriter, r 
 		bridgingAddresses, c.logger)
 }
 
+// @Summary Get latest slot for a Cardano chain
+// @Description Returns the current tip slot for the given chain ID using the chain's configured tx provider (Ogmios/Blockfrost/socket).
+// @Tags CardanoTx
+// @Produce json
+// @Param chainId query string true "Chain ID"
+// @Success 200 {object} response.LatestSlotResponse "OK - Returns the latest slot."
+// @Failure 400 {object} response.ErrorResponse "Bad Request – chainId is missing or the tip could not be retrieved."
+// @Failure 401 {object} response.ErrorResponse "Unauthorized – API key missing or invalid."
+// @Security ApiKeyAuth
+// @Router /CardanoTx/GetLatestSlot [get]
+func (c *SkylineTxControllerImpl) getLatestSlot(w http.ResponseWriter, r *http.Request) {
+	utils.HandleGetLatestSlot(w, r, c.appConfig, c.logger)
+}
+
 // @Summary Get address balance for a Cardano-family chain
 // @Description Returns native lovelace and aggregated native-asset balances for the given address
 // @Tags CardanoTx
@@ -1027,20 +1041,6 @@ func (c *SkylineTxControllerImpl) getBalance(w http.ResponseWriter, r *http.Requ
 	}
 
 	utils.WriteResponse(w, r, http.StatusOK, balance, c.logger)
-}
-
-// @Summary Get latest slot for a Cardano chain
-// @Description Returns the current tip slot for the given chain ID using the chain's configured tx provider (Ogmios/Blockfrost/socket).
-// @Tags CardanoTx
-// @Produce json
-// @Param chainId query string true "Chain ID"
-// @Success 200 {object} response.LatestSlotResponse "OK - Returns the latest slot."
-// @Failure 400 {object} response.ErrorResponse "Bad Request – chainId is missing or the tip could not be retrieved."
-// @Failure 401 {object} response.ErrorResponse "Unauthorized – API key missing or invalid."
-// @Security ApiKeyAuth
-// @Router /CardanoTx/GetLatestSlot [get]
-func (c *SkylineTxControllerImpl) getLatestSlot(w http.ResponseWriter, r *http.Request) {
-	utils.HandleGetLatestSlot(w, r, c.appConfig, c.logger)
 }
 
 func (c *SkylineTxControllerImpl) getAddressToBridgeTo(

@@ -18,6 +18,7 @@ import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { NetworkBadge } from "@/components/NetworkToggle";
 import { BridgeHeader } from "@/components/BridgeHeader";
+import { Skeleton, ValueSkeleton } from "@/components/ui/skeleton";
 import { convertDfmToApex, toFixedAmount } from "@/lib/amount";
 import { settingsQueryOptions } from "@/lib/api/settings";
 import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
@@ -47,6 +48,7 @@ import {
 import { useLiveTxBalances } from "@/hooks/use-live-tx-balances";
 import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
 import { pageHead } from "@/lib/seo";
+import { leaveHistoryForWallet } from "@/lib/transactionsListState";
 
 export const Route = createFileRoute("/transaction/$id")({
   head: ({ params }) =>
@@ -189,10 +191,8 @@ function TransactionPage() {
   const isConnected = isFullyLoggedIn;
 
   const connect = () => {
-    void navigate({
-      to: "/bridge-app",
-      search: { returnTo: `/transaction/${id}` },
-    });
+    leaveHistoryForWallet(`/transaction/${id}`);
+    void navigate({ to: "/bridge-app" });
   };
   const disconnect = async () => {
     await disconnectSession();
@@ -373,9 +373,18 @@ function TransactionPage() {
               <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.72_0.19_245_/_0.6)] to-transparent" />
 
               {txQuery.isLoading && (
-                <div className="flex min-h-[280px] flex-col items-center justify-center gap-3 text-muted-foreground">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                  <p className="text-sm">Loading transaction…</p>
+                <div
+                  className="space-y-5"
+                  role="status"
+                  aria-label="Loading transaction"
+                >
+                  <Skeleton className="h-8 w-48" />
+                  <Skeleton className="h-24 w-full rounded-2xl" />
+                  <Skeleton className="h-40 w-full rounded-2xl" />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Skeleton className="h-20 rounded-xl" />
+                    <Skeleton className="h-20 rounded-xl" />
+                  </div>
                 </div>
               )}
 
@@ -672,13 +681,15 @@ function LiveBalanceCard({
         <span className="font-mono">{shortAddr(balance.address)}</span>
       </div>
       <div className="mt-2 font-display text-lg font-semibold text-foreground">
-        {balance.isError
-          ? "—"
-          : balance.amountDisplay != null
-            ? `${balance.amountDisplay} ${balance.symbol}`
-            : balance.isLoading
-              ? "Loading…"
-              : "—"}
+        {balance.isError ? (
+          "—"
+        ) : balance.amountDisplay != null ? (
+          `${balance.amountDisplay} ${balance.symbol}`
+        ) : balance.isLoading ? (
+          <ValueSkeleton className="w-24" />
+        ) : (
+          "—"
+        )}
       </div>
     </div>
   );

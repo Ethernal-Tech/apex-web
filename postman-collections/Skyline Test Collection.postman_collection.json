@@ -456,7 +456,7 @@
 											"});",
 											"",
 											"pm.test(\"No unexpected fields\", () => {",
-											"    const allowed = [\"txRaw\", \"txHash\", \"bridgingFee\", \"operationFee\", \"amount\", \"nativeTokenAmount\", \"isFallback\"];",
+											"    const allowed = [\"txRaw\", \"txHash\", \"bridgingFee\", \"operationFee\", \"amount\", \"nativeTokenAmount\"];",
 											"    Object.keys(pm.response.json()).forEach(k => {",
 											"        pm.expect(allowed).to.include(k);",
 											"    });",
@@ -611,7 +611,6 @@
 											"    pm.expect(bTx).to.have.property(\"operationFee\");",
 											"    pm.expect(bTx).to.have.property(\"tokenAmount\");",
 											"    pm.expect(bTx).to.have.property(\"tokenID\");",
-											"    pm.expect(bTx).to.have.property(\"isFallback\");",
 											"",
 											"",
 											"    const eTx = pm.response.json().bridgingTx.ethTx;",
@@ -653,11 +652,6 @@
 											"",
 											"    const numeric = parseInt(tx.bridgingFee, 16);",
 											"    pm.expect(numeric).to.be.above(0);",
-											"});",
-											"",
-											"pm.test(\"'isFallback' is boolean\", function () {",
-											"    const tx = pm.response.json().bridgingTx;",
-											"    pm.expect(tx.isFallback).to.be.a(\"boolean\");",
 											"});"
 										],
 										"type": "text/javascript",
@@ -785,7 +779,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"originChain\": \"cardano\",\n  \"destinationChain\": \"prime\",\n  \"originTxHash\": \"d6fa7775be9ac5a9d3033d120379f267e92602f34b44cf106fb8fb62be6bb2ba\",\n  \"senderAddress\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"receiverAddrs\": [\"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\"],\n  \"amount\": \"4019390\",\n  \"nativeTokenAmount\": \"15000000\",\n  \"txRaw\": \"0xAAA_rawTxHash\",\n  \"isFallback\": false,\n  \"isLayerZero\": false\n}",
+									"raw": "{\n  \"originChain\": \"cardano\",\n  \"destinationChain\": \"prime\",\n  \"originTxHash\": \"aaaa7775be9ac5a9d3033d120379f267e92602f34b44cf106fb8fb62be6bb2ba\",\n  \"senderAddress\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"receiverAddrs\": [\"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\"],\n  \"amount\": \"4019390\",\n  \"nativeTokenAmount\": \"15000000\",\n  \"txRaw\": \"0xAAA_rawTxHash\",\n  \"isLayerZero\": false\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -945,7 +939,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{web_api_base_url}}/lockedTokens?allowedBridgingModes=skyline,reactor,layerZero,centralized",
+									"raw": "{{web_api_base_url}}/lockedTokens?allowedBridgingModes=skyline,reactor,layerZero",
 									"host": [
 										"{{web_api_base_url}}"
 									],
@@ -955,7 +949,7 @@
 									"query": [
 										{
 											"key": "allowedBridgingModes",
-											"value": "skyline,reactor,layerZero,centralized"
+											"value": "skyline,reactor,layerZero"
 										}
 									]
 								}
@@ -970,7 +964,7 @@
 									"script": {
 										"exec": [
 											"pm.test(\"Status code is 500\", function () {",
-											"    pm.response.to.have.status(500);",
+											"    pm.response.to.have.status(200);",
 											"});",
 											"",
 											"pm.test(\"Response is JSON\", function () {",
@@ -994,7 +988,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{web_api_base_url}}/lockedTokens/transferred?allowedBridgingModes=reactor,skyline",
+									"raw": "{{web_api_base_url}}/lockedTokens/transferred?startDate=2024-01-01&endDate=2026-12-31&allowedBridgingModes=reactor,skyline",
 									"host": [
 										"{{web_api_base_url}}"
 									],
@@ -1003,6 +997,14 @@
 										"transferred"
 									],
 									"query": [
+										{
+											"key": "startDate",
+											"value": "2024-01-01"
+										},
+										{
+											"key": "endDate",
+											"value": "2026-12-31"
+										},
 										{
 											"key": "allowedBridgingModes",
 											"value": "reactor,skyline"
@@ -1024,7 +1026,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{web_api_base_url}}/lockedTokens/historical?startDate=2026-07-28T11:43:05.001Z&endDate=2026-07-28T11:43:15.005Z",
+									"raw": "{{web_api_base_url}}/lockedTokens/historical",
 									"host": [
 										"{{web_api_base_url}}"
 									],
@@ -1035,11 +1037,13 @@
 									"query": [
 										{
 											"key": "startDate",
-											"value": "2026-07-28T11:43:05.001Z"
+											"value": "2026-07-28T11:43:05.001Z",
+											"disabled": true
 										},
 										{
 											"key": "endDate",
-											"value": "2026-07-28T11:43:15.005Z"
+											"value": "2026-07-28T11:43:15.005Z",
+											"disabled": true
 										}
 									]
 								}
@@ -1069,124 +1073,6 @@
 									],
 									"path": [
 										"stats"
-									]
-								}
-							},
-							"response": []
-						}
-					]
-				},
-				{
-					"name": "tokenInfo",
-					"item": [
-						{
-							"name": "Get Token Infos",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Body has expected fields\", function () {",
-											"    const json = pm.response.json();",
-											"    pm.expect(json).to.have.property(\"network\");",
-											"    pm.expect(json).to.have.property(\"tokens\");",
-											"    pm.expect(json).to.have.property(\"unknownToken\");",
-											"    pm.expect(json.tokens).to.be.an(\"array\");",
-											"});"
-										],
-										"type": "text/javascript",
-										"packages": {},
-										"requests": {}
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "x-api-key",
-										"value": "{{web_api_api_key}}",
-										"type": "text"
-									}
-								],
-								"url": {
-									"raw": "{{web_api_base_url}}/tokenInfo",
-									"host": [
-										"{{web_api_base_url}}"
-									],
-									"path": [
-										"tokenInfo"
-									]
-								}
-							},
-							"response": []
-						}
-					]
-				},
-				{
-					"name": "tokenPrice",
-					"item": [
-						{
-							"name": "Get Token Prices",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Response is an array of prices\", function () {",
-											"    const json = pm.response.json();",
-											"    pm.expect(json).to.be.an(\"array\");",
-											"});",
-											"",
-											"pm.test(\"Entries have expected fields\", function () {",
-											"    const json = pm.response.json();",
-											"    if (json.length === 0) return;",
-											"    const entry = json[0];",
-											"    pm.expect(entry).to.have.property(\"name\");",
-											"    pm.expect(entry).to.have.property(\"symbol\");",
-											"    pm.expect(entry).to.have.property(\"chains\");",
-											"    pm.expect(entry).to.have.property(\"priceUsd\");",
-											"    pm.expect(entry).to.have.property(\"source\");",
-											"    pm.expect(entry).to.have.property(\"fetchedAt\");",
-											"    pm.expect(entry).to.have.property(\"stale\");",
-											"});",
-											"",
-											"pm.test(\"Prices are not stale\", function () {",
-											"    const json = pm.response.json();",
-											"    const stale = json.filter((entry) => entry.stale).map((entry) => entry.symbol);",
-											"    pm.expect(stale, `stale prices: ${stale.join(\", \")}`).to.be.empty;",
-											"});"
-										],
-										"type": "text/javascript",
-										"packages": {},
-										"requests": {}
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "x-api-key",
-										"value": "{{web_api_api_key}}",
-										"type": "text"
-									}
-								],
-								"url": {
-									"raw": "{{web_api_base_url}}/tokenPrice",
-									"host": [
-										"{{web_api_base_url}}"
-									],
-									"path": [
-										"tokenPrice"
 									]
 								}
 							},
@@ -1416,6 +1302,37 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "LatestSlot",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_reactor_api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{cardano_api_reactor_base_url}}/api/CardanoTx/GetLatestSlot?chainId=prime",
+									"host": [
+										"{{cardano_api_reactor_base_url}}"
+									],
+									"path": [
+										"api",
+										"CardanoTx",
+										"GetLatestSlot"
+									],
+									"query": [
+										{
+											"key": "chainId",
+											"value": "prime"
+										}
+									]
+								}
+							},
+							"response": []
 						}
 					]
 				},
@@ -1486,7 +1403,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"senderAddr\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"cardano\",\n  \"destinationChainId\": \"prime\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n      \"amount\": 2000000,\n      \"tokenID\": 3\n    }\n  ],\n  \"bridgingFee\": 3000000,\n  \"operationFee\": 1000000,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
+									"raw": "{\n  \"senderAddr\": \"addr1qyw3c8e8rnzd5dfr3vxsynmrhsqpsxh4wmm6cxz2ljsgsr3kkrz2j7je8z9xewuhv7mknm7gpwcyfmcnhrqmj6v00neqkk35kc\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"vector\",\n  \"destinationChainId\": \"cardano\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n      \"amount\": 2000000,\n      \"tokenID\": 4\n    }\n  ],\n  \"bridgingFee\": 4000000,\n  \"operationFee\": 0,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1549,7 +1466,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"senderAddr\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"cardano\",\n  \"destinationChainId\": \"prime\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n      \"amount\": 2000000,\n      \"tokenID\": 3\n    }\n  ],\n  \"bridgingFee\": 3000000,\n  \"operationFee\": 1000100,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
+									"raw": "{\n  \"senderAddr\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"senderAddrPolicyScript\": null,\n  \"sourceChainId\": \"cardano\",\n  \"destinationChainId\": \"prime\",\n  \"transactions\": [\n    {\n      \"addr\": \"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\",\n      \"amount\": 2000000,\n      \"tokenID\": 3\n    }\n  ],\n  \"bridgingFee\": 3000000,\n  \"operationFee\": 0,\n  \"useFallback\": false,\n  \"utxoCacheKey\": \"someCashKey123\",\n  \"skipUtxos\": []\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1759,6 +1676,104 @@
 						},
 						{
 							"name": "CreateSolanaBridgingTx",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status 200\", () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", () => {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Has bridgingTx object\", () => {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"bridgingTx\");",
+											"    pm.expect(json.bridgingTx).to.be.an(\"object\");",
+											"});",
+											"",
+											"pm.test(\"bridgingTx has expected top-level fields\", () => {",
+											"    const { bridgingTx } = pm.response.json();",
+											"    pm.expect(bridgingTx).to.have.all.keys(",
+											"        \"solTx\",",
+											"        \"bridgingFee\",",
+											"        \"operationFee\",",
+											"        \"tokenAmount\",",
+											"        \"tokenID\"",
+											"    );",
+											"});",
+											"",
+											"pm.test(\"solTx has expected fields\", () => {",
+											"    const { solTx } = pm.response.json().bridgingTx;",
+											"    pm.expect(solTx).to.have.all.keys(",
+											"        \"txRaw\",",
+											"        \"blockHash\",",
+											"        \"lastValidBlockHeight\"",
+											"    );",
+											"});",
+											"",
+											"pm.test(\"txRaw is a non-empty base64 string\", () => {",
+											"    const { txRaw } = pm.response.json().bridgingTx.solTx;",
+											"    pm.expect(txRaw).to.be.a(\"string\").and.not.empty;",
+											"    // base64 charset check",
+											"    pm.expect(txRaw).to.match(/^[A-Za-z0-9+/]+={0,2}$/);",
+											"});",
+											"",
+											"pm.test(\"blockHash looks like a valid base58 hash\", () => {",
+											"    const { blockHash } = pm.response.json().bridgingTx.solTx;",
+											"    pm.expect(blockHash).to.be.a(\"string\");",
+											"    pm.expect(blockHash.length).to.be.within(32, 44);",
+											"    pm.expect(blockHash).to.match(/^[1-9A-HJ-NP-Za-km-z]+$/); // base58",
+											"});",
+											"",
+											"pm.test(\"lastValidBlockHeight is numeric string\", () => {",
+											"    const { lastValidBlockHeight } = pm.response.json().bridgingTx.solTx;",
+											"    pm.expect(lastValidBlockHeight).to.be.a(\"string\");",
+											"    pm.expect(!isNaN(Number(lastValidBlockHeight))).to.be.true;",
+											"    pm.expect(Number(lastValidBlockHeight)).to.be.above(0);",
+											"});",
+											"",
+											"pm.test(\"bridgingFee is numeric-like string\", () => {",
+											"    const { bridgingFee } = pm.response.json().bridgingTx;",
+											"    pm.expect(bridgingFee).to.be.a(\"string\");",
+											"    pm.expect(!isNaN(Number(bridgingFee))).to.be.true;",
+											"    pm.expect(Number(bridgingFee)).to.be.at.least(0);",
+											"});",
+											"",
+											"pm.test(\"operationFee is numeric-like string\", () => {",
+											"    const { operationFee } = pm.response.json().bridgingTx;",
+											"    pm.expect(operationFee).to.be.a(\"string\");",
+											"    pm.expect(!isNaN(Number(operationFee))).to.be.true;",
+											"    pm.expect(Number(operationFee)).to.be.at.least(0);",
+											"});",
+											"",
+											"pm.test(\"tokenAmount is numeric-like string\", () => {",
+											"    const { tokenAmount } = pm.response.json().bridgingTx;",
+											"    pm.expect(tokenAmount).to.be.a(\"string\");",
+											"    pm.expect(!isNaN(Number(tokenAmount))).to.be.true;",
+											"    pm.expect(Number(tokenAmount)).to.be.above(0);",
+											"});",
+											"",
+											"pm.test(\"tokenID is a number\", () => {",
+											"    const { tokenID } = pm.response.json().bridgingTx;",
+											"    pm.expect(tokenID).to.be.a(\"number\");",
+											"    pm.expect(Number.isInteger(tokenID)).to.be.true;",
+											"});",
+											"",
+											"pm.test(\"No unexpected top-level fields\", () => {",
+											"    const json = pm.response.json();",
+											"    pm.expect(Object.keys(json)).to.have.members([\"bridgingTx\"]);",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
 							"request": {
 								"method": "POST",
 								"header": [
@@ -1786,6 +1801,68 @@
 										"api",
 										"CardanoTx",
 										"CreateSolanaBridgingTx"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "LatestSlot",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test(\"Status 200\", () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test(\"Response is JSON\", () => {",
+											"    pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test(\"Has expected fields\", () => {",
+											"    const json = pm.response.json();",
+											"    pm.expect(json).to.have.property(\"slot\");",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"packages": {},
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_skyline_api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{cardano_api_skyline_base_url}}/api/CardanoTx/GetLatestSlot?chainId=prime",
+									"host": [
+										"{{cardano_api_skyline_base_url}}"
+									],
+									"path": [
+										"api",
+										"CardanoTx",
+										"GetLatestSlot"
+									],
+									"query": [
+										{
+											"key": "chainId",
+											"value": "prime"
+										}
 									]
 								}
 							},

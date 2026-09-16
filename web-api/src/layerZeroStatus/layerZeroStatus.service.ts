@@ -367,7 +367,6 @@ export class LayerZeroStatusService {
 		}
 
 		entity.txRaw = '';
-		entity.isCentralized = false;
 		entity.isLayerZero = true;
 		entity.isOracleDiscovered = true;
 		// these rows have no submitting client, activeFrom must stay null or history hides them

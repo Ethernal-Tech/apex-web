@@ -234,11 +234,7 @@ async function estimateEvmFees(
   let userWalletFeeDfm: string;
 
   if (approvalTx) {
-    const approvalTxFee = await estimateEthTxFee(
-      approvalTx,
-      TxTypeEnum.London,
-      false,
-    );
+    const approvalTxFee = await estimateEthTxFee(approvalTx, TxTypeEnum.London);
     const totalTxFee =
       approvalTxFee +
       (BigInt(Math.floor(ETH_LOCK_UNLOCK_FEE_MULTIPLIER * 100)) *
@@ -246,11 +242,7 @@ async function estimateEvmFees(
         BigInt(100);
     userWalletFeeDfm = totalTxFee.toString();
   } else {
-    const fee = await estimateEthTxFee(
-      bridgingTx.ethTx,
-      TxTypeEnum.London,
-      bridgingTx.isFallback,
-    );
+    const fee = await estimateEthTxFee(bridgingTx.ethTx, TxTypeEnum.London);
     userWalletFeeDfm = fee.toString();
   }
 
@@ -351,7 +343,6 @@ async function estimateLayerZeroFees(
         from: senderAddress,
       },
       txType,
-      false,
     );
   }
 
@@ -372,7 +363,6 @@ async function estimateLayerZeroFees(
       from: senderAddress,
     },
     txType,
-    false,
   );
 
   const baseTxFee = isEstimate

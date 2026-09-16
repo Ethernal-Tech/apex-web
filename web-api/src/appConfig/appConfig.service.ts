@@ -103,9 +103,6 @@ export class AppConfigService {
 	get rpc() {
 		return this.config.rpc;
 	}
-	get rpc() {
-		return this.config.rpc;
-	}
 	get db() {
 		return this.config.database;
 	}

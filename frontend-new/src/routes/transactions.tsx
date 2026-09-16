@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
@@ -11,6 +11,7 @@ import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { NetworkToggle } from "@/components/NetworkToggle";
 import { BridgeHeader } from "@/components/BridgeHeader";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowDown,
   ArrowRight,
@@ -54,19 +55,21 @@ import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
 import { cn } from "@/lib/utils";
 import { pageHead } from "@/lib/seo";
 import {
+  compactTransactionFilters,
+  leaveHistoryForWallet,
+  TRANSACTIONS_PAGE_SIZES,
+  useTransactionsListState,
+  type TransactionsFilters,
+  type TransactionsSortDir,
+  type TransactionsSortKey,
+  type TransactionsView,
+} from "@/lib/transactionsListState";
+import {
   BridgeTransactionDto,
   TransactionStatusEnum,
 } from "@/swagger/apexBridgeApiService";
 
 export const Route = createFileRoute("/transactions")({
-  validateSearch: (
-    search: Record<string, unknown>,
-  ): { view?: "world" | "user" } => ({
-    view:
-      search.view === "user" || search.view === "world"
-        ? search.view
-        : undefined,
-  }),
   head: () =>
     pageHead({
       title: "Bridging History - Skyline Bridge",
@@ -92,6 +95,9 @@ const toChainView = (chainMetaOf: ChainMetaOf, id: string): ChainView => {
 };
 
 type Status = StatusKind;
+type SortKey = TransactionsSortKey;
+type SortDir = TransactionsSortDir;
+type Filters = TransactionsFilters;
 
 type Tx = {
   id: string;
@@ -176,42 +182,6 @@ function mapDtoToTx(
   };
 }
 
-type SortKey =
-  | "createdAt"
-  | "finishedAt"
-  | "amount"
-  | "tokenAmount"
-  | "origin"
-  | "destination"
-  | "sender"
-  | "receiver"
-  | "status";
-type SortDir = "asc" | "desc";
-
-type Filters = {
-  origin: string;
-  destination: string;
-  sender: string;
-  receiver: string;
-  amountFrom: string;
-  amountTo: string;
-  tokenFrom: string;
-  tokenTo: string;
-  status: Status | "";
-};
-
-const EMPTY_FILTERS: Filters = {
-  origin: "",
-  destination: "",
-  sender: "",
-  receiver: "",
-  amountFrom: "",
-  amountTo: "",
-  tokenFrom: "",
-  tokenTo: "",
-  status: "",
-};
-
 const STATUS_FILTERS: { value: Status; label: string }[] = [
   { value: "success", label: "Success" },
   { value: "failed", label: "Failed" },
@@ -223,7 +193,7 @@ const STATUS_FILTERS: { value: Status; label: string }[] = [
 function TransactionsPage() {
   const isCompact = useMediaQuery("(max-width: 1000px)");
   const navigate = useNavigate();
-  const { view: searchView } = Route.useSearch();
+  const [list, setList] = useTransactionsListState();
   const { data: settings } = useQuery(settingsQueryOptions);
   useQuery(tokenInfosQueryOptions);
   const chainMetaOf = useChainMeta();
@@ -239,62 +209,35 @@ function TransactionsPage() {
   const isConnected = isFullyLoggedIn;
   const sourceChain = isConnected ? sessionSourceChain : null;
 
-  const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const view: TransactionsView =
+    list.view === "user" && !isConnected ? "world" : (list.view ?? "world");
+  const addrSearch = list.addrSearch;
+  const sortKey = list.sortKey;
+  const sortDir = list.sortDir;
+  const page = list.page;
+  const pageSize = list.pageSize;
+  const filters = list.filters;
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
-  const [view, setView] = useState<"world" | "user">("world");
-  // Until the user clicks World/Your, connected ⇒ Your history.
-  const viewTouchedRef = useRef(false);
-
-  useEffect(() => {
-    if (searchView === "user" || searchView === "world") {
-      if (searchView === "user" && !isConnected) {
-        viewTouchedRef.current = false;
-        setView("world");
-        return;
-      }
-      viewTouchedRef.current = true;
-      setView(searchView);
-      return;
-    }
-    if (!isConnected) {
-      viewTouchedRef.current = false;
-      setView("world");
-      return;
-    }
-    if (!viewTouchedRef.current) {
-      setView("user");
-    }
-  }, [isConnected, searchView]);
 
   const connect = () => {
-    navigate({
-      to: "/bridge-app",
-      search: { returnTo: "/transactions" },
-    });
+    leaveHistoryForWallet("/transactions");
+    void navigate({ to: "/bridge-app" });
   };
   const disconnect = async () => {
     await disconnectSession();
-    viewTouchedRef.current = false;
-    setView("world");
-    void navigate({ to: "/transactions", search: {}, replace: true });
+    setList({ view: "world" });
   };
 
-  const changeView = (v: "world" | "user") => {
+  const changeView = (v: TransactionsView) => {
     if (v === "user" && !isConnected) return;
-    viewTouchedRef.current = true;
-    setView(v);
-    setPage(1);
-    if (v === "user") setFilters((f) => ({ ...f, origin: "", sender: "" }));
-    void navigate({
-      to: "/transactions",
-      search: { view: v },
-      replace: true,
-    });
+    if (v === "user") {
+      const rest = { ...filters };
+      delete rest.origin;
+      delete rest.sender;
+      setList({ view: v, page: 1, filters: rest });
+      return;
+    }
+    setList({ view: v, page: 1 });
   };
 
   const listQuery = useQuery({
@@ -308,7 +251,7 @@ function TransactionsPage() {
       sortKey,
       sortDir,
       filters,
-      search,
+      addrSearch,
     ] as const,
     enabled: view === "world" || Boolean(walletAddress),
     placeholderData: keepPreviousData,
@@ -316,15 +259,15 @@ function TransactionsPage() {
       // User history: sender = live account, origin = restored source chain.
       // World history: omit sender unless filtered.
       const senderAddress =
-        view === "user" ? walletAddress! : filters.sender.trim() || undefined;
+        view === "user" ? walletAddress! : filters.sender?.trim() || undefined;
 
       const originChain =
         view === "user"
           ? sourceChain || undefined
           : filters.origin || undefined;
 
-      const convertAmount = (value: string) => {
-        if (!value.trim()) return undefined;
+      const convertAmount = (value?: string) => {
+        if (!value?.trim()) return undefined;
         return convertApexToWei(value);
       };
 
@@ -341,10 +284,10 @@ function TransactionsPage() {
       };
 
       // Receiver filter / search → SQL LIKE (wildcards for partial match).
-      const receiverAddress = filters.receiver.trim()
+      const receiverAddress = filters.receiver?.trim()
         ? filters.receiver.trim()
-        : search.trim()
-          ? `%${search.trim()}%`
+        : addrSearch.trim()
+          ? `%${addrSearch.trim()}%`
           : undefined;
 
       return fetchBridgeTransactions({
@@ -393,23 +336,23 @@ function TransactionsPage() {
   const rangeStart = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = Math.min(currentPage * pageSize, total);
 
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
-    else {
-      setSortKey(key);
-      setSortDir("desc");
+  const toggleSort = (key: TransactionsSortKey) => {
+    if (sortKey === key) {
+      setList({
+        sortDir: sortDir === "asc" ? "desc" : "asc",
+        page: 1,
+      });
+      return;
     }
-    setPage(1);
+    setList({ sortKey: key, sortDir: "desc", page: 1 });
   };
 
-  const applyFilters = (next: Filters) => {
-    setFilters(next);
-    setPage(1);
+  const applyFilters = (next: TransactionsFilters) => {
+    setList({ filters: compactTransactionFilters(next), page: 1 });
     setFiltersOpen(false);
   };
   const clearFilters = () => {
-    setFilters(EMPTY_FILTERS);
-    setPage(1);
+    setList({ filters: {}, page: 1 });
   };
 
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
@@ -477,10 +420,9 @@ function TransactionsPage() {
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
-                  value={search}
+                  value={addrSearch}
                   onChange={(e) => {
-                    setSearch(e.target.value);
-                    setPage(1);
+                    setList({ addrSearch: e.target.value, page: 1 });
                   }}
                   placeholder="Search by receiver address…"
                   className="h-10 w-full rounded-full border border-white/10 bg-white/[0.04] pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none md:w-72"
@@ -653,17 +595,40 @@ function TransactionsPage() {
                   </thead>
                   <tbody>
                     {isLoading && paged.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={isCompact ? 6 : 10}
-                          className="px-5 py-14 text-center text-sm text-muted-foreground"
-                        >
-                          <span className="inline-flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Loading transactions…
-                          </span>
-                        </td>
-                      </tr>
+                      <>
+                        {Array.from({ length: 6 }, (_, row) => (
+                          <tr
+                            key={`sk-${row}`}
+                            className="border-t border-white/5"
+                          >
+                            {Array.from(
+                              { length: isCompact ? 6 : 10 },
+                              (__, col) => (
+                                <td
+                                  key={col}
+                                  className={`py-4 ${
+                                    col === 0
+                                      ? "pl-4 pr-2"
+                                      : col === (isCompact ? 5 : 9)
+                                        ? "pl-2 pr-5"
+                                        : "px-2"
+                                  }`}
+                                >
+                                  <Skeleton
+                                    className={`h-3.5 ${
+                                      col % 3 === 0
+                                        ? "w-24"
+                                        : col % 3 === 1
+                                          ? "w-16"
+                                          : "w-20"
+                                    }`}
+                                  />
+                                </td>
+                              ),
+                            )}
+                          </tr>
+                        ))}
+                      </>
                     )}
                     {listQuery.isError && paged.length === 0 && (
                       <tr>
@@ -704,12 +669,14 @@ function TransactionsPage() {
                     <select
                       value={pageSize}
                       onChange={(e) => {
-                        setPageSize(Number(e.target.value));
-                        setPage(1);
+                        setList({
+                          pageSize: Number(e.target.value),
+                          page: 1,
+                        });
                       }}
                       className="h-8 appearance-none rounded-full border border-white/10 bg-white/[0.04] px-3 pr-7 text-xs font-semibold text-foreground [color-scheme:dark] focus:outline-none"
                     >
-                      {[5, 10, 25, 50].map((n) => (
+                      {[...TRANSACTIONS_PAGE_SIZES].map((n) => (
                         <option
                           key={n}
                           value={n}
@@ -738,14 +705,18 @@ function TransactionsPage() {
                   <span>of {total}</span>
                   <div className="ml-2 flex items-center gap-1">
                     <PageBtn
-                      onClick={() => setPage(Math.max(1, currentPage - 1))}
+                      onClick={() =>
+                        setList({ page: Math.max(1, currentPage - 1) })
+                      }
                       disabled={currentPage <= 1}
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </PageBtn>
                     <PageBtn
                       onClick={() =>
-                        setPage(Math.min(totalPages, currentPage + 1))
+                        setList({
+                          page: Math.min(totalPages, currentPage + 1),
+                        })
                       }
                       disabled={currentPage >= totalPages}
                     >
@@ -1105,8 +1076,8 @@ function FilterModal({
               <Label>Origin chain</Label>
               <div className="relative">
                 <select
-                  value={draft.origin}
-                  onChange={(e) => set("origin", e.target.value)}
+                  value={draft.origin ?? ""}
+                  onChange={(e) => set("origin", e.target.value || undefined)}
                   className="h-10 w-full appearance-none rounded-xl border border-white/10 bg-white/[0.04] px-3 pr-9 text-sm text-foreground [color-scheme:dark] focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none"
                 >
                   <option value="" className="bg-[#141a2c] text-foreground">
@@ -1134,8 +1105,10 @@ function FilterModal({
             <div className="relative">
               <select
                 id="destination-chain"
-                value={draft.destination}
-                onChange={(e) => set("destination", e.target.value)}
+                value={draft.destination ?? ""}
+                onChange={(e) =>
+                  set("destination", e.target.value || undefined)
+                }
                 className="h-10 w-full appearance-none rounded-xl border border-white/10 bg-white/[0.04] px-3 pr-9 text-sm text-foreground [color-scheme:dark] focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none"
               >
                 <option value="" className="bg-[#141a2c] text-foreground">
@@ -1159,8 +1132,8 @@ function FilterModal({
             <div>
               <Label>Sender address</Label>
               <input
-                value={draft.sender}
-                onChange={(e) => set("sender", e.target.value)}
+                value={draft.sender ?? ""}
+                onChange={(e) => set("sender", e.target.value || undefined)}
                 placeholder="Search by address…"
                 className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none"
               />
@@ -1171,8 +1144,8 @@ function FilterModal({
             <Label htmlFor="receiver-address">Receiver address</Label>
             <input
               id="receiver-address"
-              value={draft.receiver}
-              onChange={(e) => set("receiver", e.target.value)}
+              value={draft.receiver ?? ""}
+              onChange={(e) => set("receiver", e.target.value || undefined)}
               placeholder="Search by address…"
               className="h-10 w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none"
             />
@@ -1182,8 +1155,13 @@ function FilterModal({
             <Label>Status</Label>
             <div className="relative">
               <select
-                value={draft.status}
-                onChange={(e) => set("status", e.target.value as Status | "")}
+                value={draft.status ?? ""}
+                onChange={(e) =>
+                  set(
+                    "status",
+                    (e.target.value || undefined) as Status | undefined,
+                  )
+                }
                 className="h-10 w-full appearance-none rounded-xl border border-white/10 bg-white/[0.04] px-3 pr-9 text-sm text-foreground [color-scheme:dark] focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none"
               >
                 <option value="" className="bg-[#141a2c] text-foreground">
@@ -1207,26 +1185,26 @@ function FilterModal({
             <NumField
               id="amount-from"
               label="Amount from"
-              value={draft.amountFrom}
-              onChange={(v) => set("amountFrom", v)}
+              value={draft.amountFrom ?? ""}
+              onChange={(v) => set("amountFrom", v || undefined)}
             />
             <NumField
               id="amount-to"
               label="Amount to"
-              value={draft.amountTo}
-              onChange={(v) => set("amountTo", v)}
+              value={draft.amountTo ?? ""}
+              onChange={(v) => set("amountTo", v || undefined)}
             />
             <NumField
               id="native-token-amount-from"
               label="Token amount from"
-              value={draft.tokenFrom}
-              onChange={(v) => set("tokenFrom", v)}
+              value={draft.tokenFrom ?? ""}
+              onChange={(v) => set("tokenFrom", v || undefined)}
             />
             <NumField
               id="native-token-amount-to"
               label="Token amount to"
-              value={draft.tokenTo}
-              onChange={(v) => set("tokenTo", v)}
+              value={draft.tokenTo ?? ""}
+              onChange={(v) => set("tokenTo", v || undefined)}
             />
           </div>
         </div>
@@ -1234,7 +1212,7 @@ function FilterModal({
         <div className="flex items-center justify-between gap-3 border-t border-white/5 bg-white/[0.02] px-6 py-4">
           <button
             onClick={() => {
-              setDraft(EMPTY_FILTERS);
+              setDraft({});
               onClear();
             }}
             className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground"

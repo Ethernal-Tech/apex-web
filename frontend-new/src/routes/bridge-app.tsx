@@ -1,9 +1,4 @@
-import {
-  createFileRoute,
-  Link,
-  useNavigate,
-  useRouterState,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -16,6 +11,7 @@ import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { NetworkBadge, NetworkToggle } from "@/components/NetworkToggle";
 import { BridgeHeader } from "@/components/BridgeHeader";
+import { Skeleton, ValueSkeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -92,7 +88,7 @@ import {
   FileSearchCorner,
   Loader2,
 } from "lucide-react";
-import { readReturnTo } from "@/lib/returnTo";
+import { peekWalletReturnTo, clearWalletReturnTo } from "@/lib/returnTo";
 import { useIsUnsupportedDevice } from "@/hooks/use-unsupported-device";
 import { externalAnchorProps, SKYLINE_DOCUMENTATION_URL } from "@/lib/utils";
 import { pageHead } from "@/lib/seo";
@@ -718,9 +714,6 @@ function TokenRow({
 
 function BridgeApp() {
   const navigate = useNavigate();
-  const returnTo = useRouterState({
-    select: (s) => readReturnTo(s.location.search as Record<string, unknown>),
-  });
   const { data: settings, isLoading: settingsLoading } =
     useQuery(settingsQueryOptions);
   // Hydrates token label/icon registry used by getSupportedSourceTokens / getTokenInfo.
@@ -755,11 +748,14 @@ function BridgeApp() {
   const walletAddress = account?.account ?? null;
   const isConnected = isFullyLoggedIn;
 
-  // History → connect → return to the page that asked for the wallet.
+  // History / tx detail → connect → return to the page that asked for the wallet.
   useEffect(() => {
-    if (!returnTo || !isFullyLoggedIn) return;
+    if (!isFullyLoggedIn) return;
+    const returnTo = peekWalletReturnTo();
+    if (!returnTo) return;
+    clearWalletReturnTo();
     void navigate({ to: returnTo, replace: true });
-  }, [returnTo, isFullyLoggedIn, navigate]);
+  }, [isFullyLoggedIn, navigate]);
 
   const { data: bridgingAddresses = [] } = useQuery({
     ...bridgingAddressesQueryOptions(source?.id),
@@ -916,8 +912,14 @@ function BridgeApp() {
               {step === "select" ? (
                 <div className="grid gap-4">
                   {settingsLoading || !source || !destination ? (
-                    <div className="py-10 text-center text-sm text-muted-foreground">
-                      Loading networks…
+                    <div
+                      className="grid gap-3"
+                      role="status"
+                      aria-label="Loading networks"
+                    >
+                      <Skeleton className="h-16 w-full rounded-2xl" />
+                      <Skeleton className="h-16 w-full rounded-2xl" />
+                      <Skeleton className="h-12 w-full rounded-2xl" />
                     </div>
                   ) : (
                     <>
@@ -1006,8 +1008,13 @@ function BridgeApp() {
                   onDiscard={() => setStep("select")}
                 />
               ) : (
-                <div className="py-10 text-center text-sm text-muted-foreground">
-                  Loading networks…
+                <div
+                  className="grid gap-3 py-2"
+                  role="status"
+                  aria-label="Loading networks"
+                >
+                  <Skeleton className="h-16 w-full rounded-2xl" />
+                  <Skeleton className="h-16 w-full rounded-2xl" />
                 </div>
               )}
             </div>
@@ -1497,8 +1504,12 @@ function TransferForm({
                   </span>
                 </div>
               ) : (
-                <div className="mt-2 text-sm text-muted-foreground">
-                  {balancesLoading ? "Loading…" : "—"}
+                <div className="mt-2">
+                  {balancesLoading ? (
+                    <ValueSkeleton className="h-7 w-28" />
+                  ) : (
+                    <span className="text-sm text-muted-foreground">—</span>
+                  )}
                 </div>
               )}
 
@@ -1811,10 +1822,8 @@ function FeeRow({
           </Tooltip>
         )}
       </span>
-      <span
-        className={`font-semibold text-foreground ${loading ? "animate-pulse opacity-70" : ""}`}
-      >
-        {value}
+      <span className="font-semibold text-foreground">
+        {loading ? <ValueSkeleton className="w-16" /> : value}
       </span>
     </div>
   );

@@ -59,10 +59,6 @@ export interface AppConfig {
 		cardanoApiSkylineUrl: string;
 		cardanoApiReactorUrl: string;
 	};
-	rpc: {
-		evmUrls: ChainValueConfig[];
-		solanaUrl: string;
-	};
 	/** Node endpoints for reading balances off non-Cardano chains. */
 	rpc: {
 		/** `chain::url` per EVM chain. */

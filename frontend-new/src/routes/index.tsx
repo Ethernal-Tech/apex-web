@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ArrowRight,
   ArrowLeftRight,
@@ -26,6 +26,7 @@ import { settingsQueryOptions } from "@/lib/api/settings";
 import { landingStatsQueryOptions } from "@/lib/api/stats";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { formatUsdCompact } from "@/lib/usd";
+import { ValueSkeleton } from "@/components/ui/skeleton";
 import { getEnabledChainNodes } from "@/lib/chains";
 import logoAsset from "@/assets/skyline-logo-transparent.png";
 import roadmapHorizon from "@/assets/roadmap-horizon.webp";
@@ -53,11 +54,13 @@ function StatChip({
   value,
   compact,
   interactive,
+  loading,
 }: {
   label: string;
   value: string;
   compact?: boolean;
   interactive?: boolean;
+  loading?: boolean;
 }) {
   return (
     <div
@@ -67,6 +70,7 @@ function StatChip({
       className={`pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] transition-colors ${
         compact ? "px-3 py-1" : "px-3.5 py-1.5"
       } ${interactive ? "group-hover:border-[oklch(0.72_0.19_245_/_0.55)] group-hover:bg-white/[0.07]" : ""}`}
+      aria-busy={loading || undefined}
     >
       <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.15_235)]">
         {label}
@@ -74,7 +78,11 @@ function StatChip({
       <span
         className={`font-display font-semibold text-foreground ${compact ? "text-xs" : "text-sm"}`}
       >
-        {value}
+        {loading ? (
+          <ValueSkeleton className={compact ? "w-10" : "w-[3.25rem]"} />
+        ) : (
+          value
+        )}
       </span>
     </div>
   );
@@ -82,7 +90,7 @@ function StatChip({
 
 /** TVL and TVB in the bar, each opening the full proof-of-reserves page. */
 function HeaderStats() {
-  const { tvlUsd, tvbUsd } = useBridgeStats();
+  const { tvlUsd, tvbUsd, isLoading } = useBridgeStats();
   const figures = [
     { label: "TVL", value: formatUsdCompact(tvlUsd) },
     { label: "TVB", value: formatUsdCompact(tvbUsd) },
@@ -97,7 +105,12 @@ function HeaderStats() {
           aria-label="View full audit"
           className="group inline-flex"
         >
-          <StatChip label={figure.label} value={figure.value} interactive />
+          <StatChip
+            label={figure.label}
+            value={figure.value}
+            interactive
+            loading={isLoading}
+          />
         </Link>
       ))}
     </>
@@ -105,22 +118,42 @@ function HeaderStats() {
 }
 
 function Hero() {
-  const { data: settings } = useQuery(settingsQueryOptions);
-  const { tvbUsd } = useBridgeStats();
+  const { data: settings, isPending: settingsPending } =
+    useQuery(settingsQueryOptions);
+  const { tvbUsd, isLoading: statsLoading } = useBridgeStats();
   const chainsConnected = settings?.enabledChains.length;
   const tokensEnabled = settings?.ecosystemTokens.length;
 
-  const stats = [
+  const stats: { label: string; value: ReactNode }[] = [
     {
       label: "Chains connected",
-      value: chainsConnected != null ? String(chainsConnected) : "—",
+      value: settingsPending ? (
+        <ValueSkeleton className="mx-auto w-[2.25rem]" />
+      ) : chainsConnected != null ? (
+        String(chainsConnected)
+      ) : (
+        "—"
+      ),
     },
     // TODO: update with actual number of apps
     { label: "Skyline apps", value: "3+" },
-    { label: "TVB", value: formatUsdCompact(tvbUsd) },
+    {
+      label: "TVB",
+      value: statsLoading ? (
+        <ValueSkeleton className="mx-auto w-[3.5rem]" />
+      ) : (
+        formatUsdCompact(tvbUsd)
+      ),
+    },
     {
       label: "DIFFERENT TOKENS",
-      value: tokensEnabled != null ? String(tokensEnabled) : "—",
+      value: settingsPending ? (
+        <ValueSkeleton className="mx-auto w-[2.25rem]" />
+      ) : tokensEnabled != null ? (
+        String(tokensEnabled)
+      ) : (
+        "—"
+      ),
     },
   ];
 
@@ -331,18 +364,19 @@ function formatCountCompact(value: number | undefined): string {
 }
 
 function Analytics() {
-  const { data: settings } = useQuery(settingsQueryOptions);
+  const { data: settings, isPending: settingsPending } =
+    useQuery(settingsQueryOptions);
   // The same figures the header reports, so the page cannot contradict itself.
-  const { tvlUsd, tvbUsd } = useBridgeStats();
-  const { data: landingStats } = useQuery(landingStatsQueryOptions);
+  const { tvlUsd, tvbUsd, isLoading: statsLoading } = useBridgeStats();
+  const { data: landingStats, isPending: landingStatsPending } = useQuery(
+    landingStatsQueryOptions,
+  );
   const chainsConnected = settings?.enabledChains.length;
 
-  const stats = {
-    tvl: formatUsdCompact(tvlUsd),
-    tvb: formatUsdCompact(tvbUsd),
-    transactions: formatCountCompact(landingStats?.bridgingTransactions),
-    chains: chainsConnected != null ? String(chainsConnected) : "—",
-  };
+  const tvlReady = !statsLoading;
+  const tvbReady = !statsLoading;
+  const txReady = !landingStatsPending;
+  const chainsReady = !settingsPending;
 
   return (
     <section
@@ -370,7 +404,11 @@ function Analytics() {
                 Total value locked
               </div>
               <div className="mt-2 font-display text-5xl font-semibold tracking-tight text-foreground md:text-7xl">
-                {stats.tvl}
+                {tvlReady ? (
+                  formatUsdCompact(tvlUsd)
+                ) : (
+                  <ValueSkeleton className="mx-auto w-[4.5em]" />
+                )}
               </div>
             </div>
           </div>
@@ -378,16 +416,32 @@ function Analytics() {
           {/* Secondary stats */}
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
             {[
-              { label: "Total value bridged", value: stats.tvb },
-              { label: "Total transactions", value: stats.transactions },
-              { label: "Chains connected", value: stats.chains },
+              {
+                label: "Total value bridged",
+                ready: tvbReady,
+                value: formatUsdCompact(tvbUsd),
+              },
+              {
+                label: "Total transactions",
+                ready: txReady,
+                value: formatCountCompact(landingStats?.bridgingTransactions),
+              },
+              {
+                label: "Chains connected",
+                ready: chainsReady,
+                value: chainsConnected != null ? String(chainsConnected) : "—",
+              },
             ].map((s) => (
               <div
                 key={s.label}
                 className="rounded-2xl border border-white/10 bg-[oklch(0.17_0.03_262)] p-6 text-center transition-colors hover:border-[oklch(0.72_0.19_245_/_0.4)]"
               >
                 <div className="font-display text-2xl font-semibold text-foreground md:text-3xl">
-                  {s.value}
+                  {s.ready ? (
+                    s.value
+                  ) : (
+                    <ValueSkeleton className="mx-auto w-[3.5em]" />
+                  )}
                 </div>
                 <div className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
                   {s.label}
