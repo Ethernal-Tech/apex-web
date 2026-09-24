@@ -40,6 +40,14 @@
 				"coingecko": "polygon-ecosystem-token",
 				"defillama": "coingecko:polygon-ecosystem-token"
 			}
+		},
+		{
+			"symbol": "ETH",
+			"aliases": ["WETH"],
+			"ids": {
+				"coingecko": "ethereum",
+				"defillama": "coingecko:ethereum"
+			}
 		}
 	]
 }

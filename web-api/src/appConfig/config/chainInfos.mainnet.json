@@ -121,60 +121,6 @@
 			"order": 8,
 			"category": "evm",
 			"symbol": "ETH"
-		},
-		{
-			"chain": "katana",
-			"label": "Katana",
-			"icon": "katana.svg",
-			"color": "#E8734A",
-			"order": 9,
-			"category": "evm",
-			"symbol": "ETH"
-		},
-		{
-			"chain": "sei",
-			"label": "Sei",
-			"icon": "sei.svg",
-			"color": "#9E1F19",
-			"order": 10,
-			"category": "evm",
-			"symbol": "SEI"
-		},
-		{
-			"chain": "arbitrum",
-			"label": "Arbitrum",
-			"icon": "arbitrum.svg",
-			"color": "#2D9BF0",
-			"order": 11,
-			"category": "evm",
-			"symbol": "ETH"
-		},
-		{
-			"chain": "scroll",
-			"label": "Scroll",
-			"icon": "scroll.svg",
-			"color": "#EBC28E",
-			"order": 12,
-			"category": "evm",
-			"symbol": "ETH"
-		},
-		{
-			"chain": "unichain",
-			"label": "Unichain",
-			"icon": "unichain.svg",
-			"color": "#FF007A",
-			"order": 13,
-			"category": "evm",
-			"symbol": "ETH"
-		},
-		{
-			"chain": "solana",
-			"label": "Solana",
-			"icon": "solana.svg",
-			"color": "#9945FF",
-			"order": 14,
-			"category": "svm",
-			"symbol": "SOL"
 		}
 	]
 }

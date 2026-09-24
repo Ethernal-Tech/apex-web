@@ -57,6 +57,30 @@
 			"color": "#2FD3A5"
 		},
 		{
+			"tokenID": 5,
+			"icon": "polygon.svg",
+			"label": "POL",
+			"color": "#8B7CFF"
+		},
+		{
+			"tokenID": 6,
+			"icon": "apex.svg",
+			"label": "pAP3X",
+			"color": "#8B7CFF"
+		},
+		{
+			"tokenID": 7,
+			"icon": "eth.svg",
+			"label": "ETH",
+			"color": "#8A92B2"
+		},
+		{
+			"tokenID": 8,
+			"icon": "apex.svg",
+			"label": "eAP3X",
+			"color": "#8B7CFF"
+		},
+		{
 			"tokenID": 1000001,
 			"icon": "eth.svg",
 			"label": "ETH",

@@ -60,20 +60,28 @@ export const DEFAULT_TRACKED_TOKENS: readonly TrackedToken[] = [
 			[PriceProviderEnum.DefiLlama]: 'coingecko:cardano',
 		},
 	},
-	{
-		symbol: 'SOL',
-		aliases: ['WSOL'],
-		ids: {
-			[PriceProviderEnum.CoinGecko]: 'solana',
-			[PriceProviderEnum.DefiLlama]: 'coingecko:solana',
-		},
-	},
+	// {
+	// 	symbol: 'SOL',
+	// 	aliases: ['WSOL'],
+	// 	ids: {
+	// 		[PriceProviderEnum.CoinGecko]: 'solana',
+	// 		[PriceProviderEnum.DefiLlama]: 'coingecko:solana',
+	// 	},
+	// },
 	{
 		symbol: 'POL',
 		aliases: ['WPOL', 'MATIC'],
 		ids: {
 			[PriceProviderEnum.CoinGecko]: 'polygon-ecosystem-token',
 			[PriceProviderEnum.DefiLlama]: 'coingecko:polygon-ecosystem-token',
+		},
+	},
+	{
+		symbol: 'ETH',
+		aliases: ['WETH'],
+		ids: {
+			[PriceProviderEnum.CoinGecko]: 'ethereum',
+			[PriceProviderEnum.DefiLlama]: 'coingecko:ethereum',
 		},
 	},
 ];
