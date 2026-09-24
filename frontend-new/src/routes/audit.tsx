@@ -417,8 +417,8 @@ function AuditContent() {
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
               A live, public ledger of everything locked in and moved across the
-              Skyline network - spanning Cardano, Apex Fusion, EVM chains and
-              Solana, verifiable on-chain and updated continuously.
+              Skyline network - spanning Cardano, Apex Fusion and EVM chains,
+              verifiable on-chain and updated continuously.
             </p>
           </div>
 

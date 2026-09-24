@@ -37,7 +37,11 @@ export type ChainAddressRows = {
 
 /** The chain families the audit page shows as tabs. */
 export type WorldKey = Extract<ChainCategory, "utxo" | "evm" | "svm">;
-export const WORLD_KEYS: WorldKey[] = ["utxo", "evm", "svm"];
+export const WORLD_KEYS: WorldKey[] = [
+  "utxo",
+  "evm",
+  // "svm", // Solana is not enabled on this mainnet deploy
+];
 
 export type WorldBreakdown = {
   key: WorldKey;
@@ -82,11 +86,18 @@ const emptyWorlds = (): Record<WorldKey, WorldBreakdown> => ({
  * chainMetaFrom already defaults an unlisted chain to "evm"; this only guards
  * against a category with no tab of its own, such as "apex".
  */
-const worldOf = (chainMetaOf: ChainMetaOf, chain: string): WorldKey => {
+const worldOf = (
+  chainMetaOf: ChainMetaOf,
+  chain: string,
+): WorldKey | undefined => {
   const { category } = chainMetaOf(chain);
-  return (WORLD_KEYS as string[]).includes(category)
-    ? (category as WorldKey)
-    : "evm";
+  if ((WORLD_KEYS as string[]).includes(category)) {
+    return category as WorldKey;
+  }
+  // A known world we hid from WORLD_KEYS (svm while Solana is off) must not
+  // fall through into another tab.
+  if (category === "svm") return undefined;
+  return "evm";
 };
 
 /** Sums per chain -> tokenID, dropping the addresses the API breaks locked amounts by. */
@@ -277,15 +288,16 @@ export function useLockedBreakdown(): LockedBreakdown {
 
     const worlds = emptyWorlds();
     for (const chainRows of toChainRows(lockedTotals, keepZeros)) {
-      worlds[worldOf(chainMetaOf, chainRows.chain)].locked.push(chainRows);
+      const world = worldOf(chainMetaOf, chainRows.chain);
+      if (world) worlds[world].locked.push(chainRows);
     }
     for (const chainRows of toChainRows(bridgedTotals)) {
-      worlds[worldOf(chainMetaOf, chainRows.chain)].bridged.push(chainRows);
+      const world = worldOf(chainMetaOf, chainRows.chain);
+      if (world) worlds[world].bridged.push(chainRows);
     }
     for (const chainAddresses of toChainAddressRows(holderTotals)) {
-      worlds[worldOf(chainMetaOf, chainAddresses.chain)].holders.push(
-        chainAddresses,
-      );
+      const world = worldOf(chainMetaOf, chainAddresses.chain);
+      if (world) worlds[world].holders.push(chainAddresses);
     }
     for (const world of Object.values(worlds)) {
       world.summaryLocked = summarise(world.locked);
