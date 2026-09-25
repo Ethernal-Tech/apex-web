@@ -18,7 +18,6 @@ import { useHeadroom, headroomClass } from "@/hooks/use-headroom";
 import { useBridgeHistory } from "@/hooks/use-bridge-history";
 import {
   useLockedBreakdown,
-  WORLD_KEYS,
   type ChainAddressRows,
   type ChainRows,
   type TokenRow,
@@ -265,10 +264,17 @@ function AuditContent() {
   const chainColorOf = useChainColor();
 
   // Per-chain and per-token amounts, straight from GET /lockedTokens.
-  const { worlds, isLoading: breakdownLoading } = useLockedBreakdown();
+  const {
+    worlds,
+    worldKeys,
+    isLoading: breakdownLoading,
+  } = useLockedBreakdown();
+  const activeWorld = worldKeys.includes(world)
+    ? world
+    : (worldKeys[0] ?? "utxo");
   const data = useMemo(
-    () => sortWorld(worlds[world], priceOf),
-    [worlds, world, priceOf],
+    () => sortWorld(worlds[activeWorld], priceOf),
+    [worlds, activeWorld, priceOf],
   );
   const chainCount = new Set(
     [...data.locked, ...data.bridged].map((c) => c.chain),
@@ -417,8 +423,11 @@ function AuditContent() {
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
               A live, public ledger of everything locked in and moved across the
-              Skyline network - spanning Cardano, Apex Fusion and EVM chains,
-              verifiable on-chain and updated continuously.
+              Skyline network - spanning{" "}
+              {worldKeys.includes("svm")
+                ? "Cardano, Apex Fusion, EVM chains and Solana"
+                : "Cardano, Apex Fusion and EVM chains"}
+              , verifiable on-chain and updated continuously.
             </p>
           </div>
 
@@ -600,19 +609,19 @@ function AuditContent() {
               row would squeeze the tab labels onto two lines each. */}
           <div className="mt-8">
             <div className="flex items-end gap-5 border-b border-white/10 md:gap-6">
-              {WORLD_KEYS.map((w) => (
+              {worldKeys.map((w) => (
                 <button
                   key={w}
                   type="button"
                   onClick={() => setWorld(w)}
                   className={`relative flex-none whitespace-nowrap pb-3 text-sm font-semibold transition-colors ${
-                    world === w
+                    activeWorld === w
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {WORLD_LABELS[w]}
-                  {world === w && (
+                  {activeWorld === w && (
                     <span className="absolute -bottom-px left-0 right-0 h-0.5 rounded-full bg-[oklch(0.72_0.19_245)]" />
                   )}
                 </button>
@@ -641,7 +650,7 @@ function AuditContent() {
                 </div>
               ) : (
                 <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-white/10 px-6 text-center text-xs text-muted-foreground">
-                  {`No locked or bridged balances reported for ${WORLD_LABELS[world]}.`}
+                  {`No locked or bridged balances reported for ${WORLD_LABELS[activeWorld]}.`}
                 </div>
               )}
             </div>
@@ -700,7 +709,7 @@ function AuditContent() {
                     ))}
                   </div>
 
-                  <HoldersSection chains={data.holders} world={world} />
+                  <HoldersSection chains={data.holders} world={activeWorld} />
                 </>
               );
             })()

@@ -3,7 +3,13 @@ import { useMemo } from "react";
 
 import { DFM_UNIT, lockedTokensQueryOptions } from "@/lib/api/lockedTokens";
 import { settingsQueryOptions } from "@/lib/api/settings";
-import { isUnreportedChain, type ChainCategory } from "@/lib/chains";
+import {
+  isCardanoChain,
+  isEvmChain,
+  isSolanaChain,
+  isUnreportedChain,
+  type ChainCategory,
+} from "@/lib/chains";
 import { useChainMeta, type ChainMetaOf } from "@/hooks/use-chain-infos";
 import { getCurrencyID, getTokenDisplayName } from "@/lib/tokens";
 import { useLayerZeroLockedApex } from "./use-bridge-stats";
@@ -37,11 +43,31 @@ export type ChainAddressRows = {
 
 /** The chain families the audit page shows as tabs. */
 export type WorldKey = Extract<ChainCategory, "utxo" | "evm" | "svm">;
-export const WORLD_KEYS: WorldKey[] = [
-  "utxo",
-  "evm",
-  // "svm", // Solana is not enabled on this mainnet deploy
-];
+export const WORLD_KEYS: WorldKey[] = ["utxo", "evm", "svm"];
+
+/** Tab a chain id belongs to. Undefined for a chain that is none of the three. */
+function worldOfEnabledChain(chain: string): WorldKey | undefined {
+  const id = chain.toLowerCase();
+  if (isCardanoChain(id)) return "utxo";
+  if (isEvmChain(id)) return "evm";
+  if (isSolanaChain(id)) return "svm";
+  return undefined;
+}
+
+/**
+ * Worlds that have at least one chain in `enabledChains`, in `WORLD_KEYS` order.
+ * Empty until settings land, so a tab does not flash for a chain that is off.
+ */
+export function visibleWorldKeys(
+  enabledChains: string[] | undefined,
+): WorldKey[] {
+  const present = new Set<WorldKey>();
+  for (const chain of enabledChains ?? []) {
+    const world = worldOfEnabledChain(chain);
+    if (world) present.add(world);
+  }
+  return WORLD_KEYS.filter((world) => present.has(world));
+}
 
 export type WorldBreakdown = {
   key: WorldKey;
@@ -61,6 +87,8 @@ export type WorldBreakdown = {
 
 export type LockedBreakdown = {
   worlds: Record<WorldKey, WorldBreakdown>;
+  /** Tabs to draw - `WORLD_KEYS` minus worlds the settings do not enable. */
+  worldKeys: WorldKey[];
   isLoading: boolean;
 };
 
@@ -86,18 +114,11 @@ const emptyWorlds = (): Record<WorldKey, WorldBreakdown> => ({
  * chainMetaFrom already defaults an unlisted chain to "evm"; this only guards
  * against a category with no tab of its own, such as "apex".
  */
-const worldOf = (
-  chainMetaOf: ChainMetaOf,
-  chain: string,
-): WorldKey | undefined => {
+const worldOf = (chainMetaOf: ChainMetaOf, chain: string): WorldKey => {
   const { category } = chainMetaOf(chain);
-  if ((WORLD_KEYS as string[]).includes(category)) {
-    return category as WorldKey;
-  }
-  // A known world we hid from WORLD_KEYS (svm while Solana is off) must not
-  // fall through into another tab.
-  if (category === "svm") return undefined;
-  return "evm";
+  return (WORLD_KEYS as string[]).includes(category)
+    ? (category as WorldKey)
+    : "evm";
 };
 
 /** Sums per chain -> tokenID, dropping the addresses the API breaks locked amounts by. */
@@ -155,7 +176,11 @@ export function useLockedBreakdown(): LockedBreakdown {
 
   return useMemo(() => {
     if (!lockedTokens) {
-      return { worlds: emptyWorlds(), isLoading: isPending };
+      return {
+        worlds: emptyWorlds(),
+        worldKeys: visibleWorldKeys(settings?.enabledChains),
+        isLoading: isPending,
+      };
     }
 
     const lockedTotals: Totals = new Map();
@@ -288,22 +313,25 @@ export function useLockedBreakdown(): LockedBreakdown {
 
     const worlds = emptyWorlds();
     for (const chainRows of toChainRows(lockedTotals, keepZeros)) {
-      const world = worldOf(chainMetaOf, chainRows.chain);
-      if (world) worlds[world].locked.push(chainRows);
+      worlds[worldOf(chainMetaOf, chainRows.chain)].locked.push(chainRows);
     }
     for (const chainRows of toChainRows(bridgedTotals)) {
-      const world = worldOf(chainMetaOf, chainRows.chain);
-      if (world) worlds[world].bridged.push(chainRows);
+      worlds[worldOf(chainMetaOf, chainRows.chain)].bridged.push(chainRows);
     }
     for (const chainAddresses of toChainAddressRows(holderTotals)) {
-      const world = worldOf(chainMetaOf, chainAddresses.chain);
-      if (world) worlds[world].holders.push(chainAddresses);
+      worlds[worldOf(chainMetaOf, chainAddresses.chain)].holders.push(
+        chainAddresses,
+      );
     }
     for (const world of Object.values(worlds)) {
       world.summaryLocked = summarise(world.locked);
       world.summaryBridged = summarise(world.bridged);
     }
 
-    return { worlds, isLoading: isPending };
+    return {
+      worlds,
+      worldKeys: visibleWorldKeys(settings?.enabledChains),
+      isLoading: isPending,
+    };
   }, [settings, lockedTokens, layerZeroLockedApex, isPending, chainMetaOf]);
 }
