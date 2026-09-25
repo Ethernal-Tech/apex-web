@@ -48,6 +48,14 @@
 				"coingecko": "ethereum",
 				"defillama": "coingecko:ethereum"
 			}
+		},
+		{
+			"symbol": "SEI",
+			"aliases": ["WSEI"],
+			"ids": {
+				"coingecko": "sei-network",
+				"defillama": "coingecko:sei-network"
+			}
 		}
 	]
 }

@@ -99,9 +99,10 @@ export interface AppConfig {
 		/** Age after which a cached price is reported as stale. */
 		stalenessThresholdMinutes: number;
 		/**
-		 * Path to the tracked tokens JSON file. Defaults to trackedTokens.json in
-		 * the appConfig config folder; point it at a mounted file to change the
-		 * tracked tokens without rebuilding the image.
+		 * Path to the tracked tokens JSON file. Defaults to
+		 * trackedTokens.<network>.json in the appConfig config folder; point it
+		 * at a mounted file to change the tracked tokens without rebuilding the
+		 * image.
 		 */
 		trackedTokensPath?: string;
 	};

@@ -2,15 +2,23 @@ import { Injectable, Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { resolveConfigDir } from 'src/appConfig/appConfig.helper';
+import {
+	ConfigNetworkEnum,
+	configNetworkOf,
+} from 'src/appConfig/configNetwork';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import {
-	DEFAULT_TRACKED_TOKENS,
+	defaultTrackedTokens,
 	PriceProviderEnum,
 	TrackedToken,
 } from './tokenPrice.config';
 
-/** Looked up in the same folders as the other appConfig JSON files. */
-export const TRACKED_TOKENS_FILE_NAME = 'trackedTokens.json';
+/**
+ * One file per network, looked up in the same folders as the other appConfig
+ * JSON files. Each deployment only needs the file of the network it serves.
+ */
+export const trackedTokensFileName = (network: ConfigNetworkEnum): string =>
+	`trackedTokens.${network}.json`;
 
 const KNOWN_PROVIDERS = Object.values(PriceProviderEnum) as string[];
 
@@ -138,24 +146,26 @@ export const parseTrackedTokens = (raw: unknown): TrackedToken[] => {
 /**
  * Source of truth for the tokens whose price is fetched.
  *
- * The list lives in a JSON file outside the compiled code (see
- * TRACKED_TOKENS_FILE_NAME, path overridable with TRACKED_TOKENS_PATH), and is
- * re-read whenever the file changes on disk. Adding a token is therefore an
- * edit of a mounted file - no rebuild, no redeploy, no restart; the change is
- * picked up on the next price refresh.
+ * The list lives in a JSON file outside the compiled code
+ * (trackedTokens.<network>.json, path overridable with TRACKED_TOKENS_PATH),
+ * and is re-read whenever the file changes on disk. Adding a token is therefore
+ * an edit of a mounted file - no rebuild, no redeploy, no restart; the change
+ * is picked up on the next price refresh.
  *
- * DEFAULT_TRACKED_TOKENS is used when the file is missing, and the last good
- * list is kept when the file is present but invalid.
+ * The matching defaultTrackedTokens list is used when the file is missing, and
+ * the last good list is kept when the file is present but invalid.
  */
 @Injectable()
 export class TrackedTokensRegistry {
-	private tokens: readonly TrackedToken[] = DEFAULT_TRACKED_TOKENS;
+	private tokens: readonly TrackedToken[];
 	private filePath?: string;
 	private filePathResolved = false;
 	private loadedMtimeMs?: number;
 	private missingFileLogged = false;
 
-	constructor(private readonly appConfig: AppConfigService) {}
+	constructor(private readonly appConfig: AppConfigService) {
+		this.tokens = defaultTrackedTokens(this.appConfig.app.isMainnet);
+	}
 
 	/**
 	 * The current list. Reloads first when the file changed, so callers always
@@ -222,11 +232,14 @@ export class TrackedTokensRegistry {
 			return this.filePath;
 		}
 
-		const dir = resolveConfigDir(TRACKED_TOKENS_FILE_NAME);
-		this.filePath = dir ? path.join(dir, TRACKED_TOKENS_FILE_NAME) : undefined;
+		const fileName = trackedTokensFileName(
+			configNetworkOf(this.appConfig.app.isMainnet),
+		);
+		const dir = resolveConfigDir(fileName);
+		this.filePath = dir ? path.join(dir, fileName) : undefined;
 		if (!this.filePath) {
 			Logger.warn(
-				`No ${TRACKED_TOKENS_FILE_NAME} found and TRACKED_TOKENS_PATH is not set, using the built-in list: ${symbolList(this.tokens)}`,
+				`No ${fileName} found and TRACKED_TOKENS_PATH is not set, using the built-in list: ${symbolList(this.tokens)}`,
 			);
 		}
 		return this.filePath;

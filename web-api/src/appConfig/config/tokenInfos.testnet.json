@@ -129,7 +129,7 @@
 		{
 			"tokenID": 18,
 			"icon": "eth.svg",
-			"label": "ETH",
+			"label": "KatanaETH",
 			"color": "#8A92B2"
 		},
 		{
@@ -165,7 +165,7 @@
 		{
 			"tokenID": 24,
 			"icon": "eth.svg",
-			"label": "ETH",
+			"label": "ArbitrumETH",
 			"color": "#8A92B2"
 		},
 		{
@@ -177,7 +177,7 @@
 		{
 			"tokenID": 26,
 			"icon": "eth.svg",
-			"label": "ETH",
+			"label": "ScrollETH",
 			"color": "#8A92B2"
 		},
 		{
@@ -189,7 +189,7 @@
 		{
 			"tokenID": 28,
 			"icon": "eth.svg",
-			"label": "ETH",
+			"label": "UnichainETH",
 			"color": "#8A92B2"
 		},
 		{

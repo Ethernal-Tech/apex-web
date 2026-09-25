@@ -9,9 +9,10 @@ export enum PriceProviderEnum {
 
 /**
  * A token whose USD price is periodically fetched and cached.
- * To start tracking a new token, append an entry to the trackedTokens.json
- * config file (see TrackedTokensRegistry) - the cron job, the cache and the
- * endpoint pick it up on the next refresh, without a rebuild or a restart.
+ * To start tracking a new token, append an entry to the matching
+ * trackedTokens.<network>.json file (see TrackedTokensRegistry) - the cron
+ * job, the cache and the endpoint pick it up on the next refresh, without a
+ * rebuild or a restart.
  */
 export interface TrackedToken {
 	/**
@@ -39,12 +40,9 @@ export interface TrackedToken {
 	ids: Partial<Record<PriceProviderEnum, string>>;
 }
 
-/**
- * Fallback used only when no trackedTokens.json can be read. Keep it in sync
- * with src/appConfig/config/trackedTokens.json.
- */
-export const DEFAULT_TRACKED_TOKENS: readonly TrackedToken[] = [
-	{
+/** Catalog of every token the fallback knows how to price. */
+const TRACKED_TOKEN_CATALOG = {
+	APEX: {
 		symbol: 'APEX',
 		aliases: ['AP3X'],
 		ids: {
@@ -52,7 +50,7 @@ export const DEFAULT_TRACKED_TOKENS: readonly TrackedToken[] = [
 			[PriceProviderEnum.DefiLlama]: 'coingecko:apex-4',
 		},
 	},
-	{
+	ADA: {
 		symbol: 'ADA',
 		aliases: ['WADA'],
 		ids: {
@@ -60,15 +58,15 @@ export const DEFAULT_TRACKED_TOKENS: readonly TrackedToken[] = [
 			[PriceProviderEnum.DefiLlama]: 'coingecko:cardano',
 		},
 	},
-	// {
-	// 	symbol: 'SOL',
-	// 	aliases: ['WSOL'],
-	// 	ids: {
-	// 		[PriceProviderEnum.CoinGecko]: 'solana',
-	// 		[PriceProviderEnum.DefiLlama]: 'coingecko:solana',
-	// 	},
-	// },
-	{
+	SOL: {
+		symbol: 'SOL',
+		aliases: ['WSOL'],
+		ids: {
+			[PriceProviderEnum.CoinGecko]: 'solana',
+			[PriceProviderEnum.DefiLlama]: 'coingecko:solana',
+		},
+	},
+	POL: {
 		symbol: 'POL',
 		aliases: ['WPOL', 'MATIC'],
 		ids: {
@@ -76,7 +74,7 @@ export const DEFAULT_TRACKED_TOKENS: readonly TrackedToken[] = [
 			[PriceProviderEnum.DefiLlama]: 'coingecko:polygon-ecosystem-token',
 		},
 	},
-	{
+	ETH: {
 		symbol: 'ETH',
 		aliases: ['WETH'],
 		ids: {
@@ -84,7 +82,49 @@ export const DEFAULT_TRACKED_TOKENS: readonly TrackedToken[] = [
 			[PriceProviderEnum.DefiLlama]: 'coingecko:ethereum',
 		},
 	},
+	SEI: {
+		symbol: 'SEI',
+		aliases: ['WSEI'],
+		ids: {
+			[PriceProviderEnum.CoinGecko]: 'sei-network',
+			[PriceProviderEnum.DefiLlama]: 'coingecko:sei-network',
+		},
+	},
+} as const satisfies Record<string, TrackedToken>;
+
+type TrackedTokenSymbol = keyof typeof TRACKED_TOKEN_CATALOG;
+
+/** Keep in sync with trackedTokens.mainnet.json. */
+const MAINNET_TRACKED_TOKEN_KEYS: readonly TrackedTokenSymbol[] = [
+	'APEX',
+	'ADA',
+	'POL',
+	'ETH',
 ];
+
+/** Keep in sync with trackedTokens.testnet.json. */
+const TESTNET_TRACKED_TOKEN_KEYS: readonly TrackedTokenSymbol[] = [
+	'APEX',
+	'ADA',
+	'SOL',
+	'POL',
+	'ETH',
+	'SEI',
+];
+
+const tokensFor = (
+	keys: readonly TrackedTokenSymbol[],
+): readonly TrackedToken[] => keys.map((key) => TRACKED_TOKEN_CATALOG[key]);
+
+/**
+ * Fallback when the network's trackedTokens.<network>.json cannot be read.
+ */
+export const defaultTrackedTokens = (
+	isMainnet: boolean,
+): readonly TrackedToken[] =>
+	tokensFor(
+		isMainnet ? MAINNET_TRACKED_TOKEN_KEYS : TESTNET_TRACKED_TOKEN_KEYS,
+	);
 
 /** Order in which providers are tried. Overridable via TOKEN_PRICE_PROVIDERS. */
 export const DEFAULT_PROVIDER_ORDER: PriceProviderEnum[] = [
