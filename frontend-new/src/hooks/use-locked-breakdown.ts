@@ -11,7 +11,11 @@ import {
   type ChainCategory,
 } from "@/lib/chains";
 import { useChainMeta, type ChainMetaOf } from "@/hooks/use-chain-infos";
-import { getCurrencyID, getTokenDisplayName } from "@/lib/tokens";
+import {
+  getCurrencyID,
+  getTokenDisplayName,
+  TVL_EXCLUDED_TOKEN_IDS,
+} from "@/lib/tokens";
 import { useLayerZeroLockedApex } from "./use-bridge-stats";
 
 /** One token's balance on one chain, in whole tokens. */
@@ -190,6 +194,8 @@ export function useLockedBreakdown(): LockedBreakdown {
       // neither a card nor a chart nor the per-token summaries.
       if (isUnreportedChain(chain)) continue;
       for (const [tokenID, addressMap] of Object.entries(tokenMap ?? {})) {
+        // Locked only - their bridged amounts below are still listed.
+        if (TVL_EXCLUDED_TOKEN_IDS.has(Number(tokenID))) continue;
         for (const [address, amount] of Object.entries(addressMap ?? {})) {
           const value = toAmount(amount);
           if (value === undefined) continue;

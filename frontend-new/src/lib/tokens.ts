@@ -15,6 +15,15 @@ export const LovelaceTokenName = "lovelace";
 export const DEFAULT_TOKEN_COLOR = "#3B92FF";
 export const apexID = 1;
 
+/**
+ * Tokens kept out of TVL and every locked figure on the audit page: cAP3X (3)
+ * and xADA (4). Their bridged amounts are still reported.
+ *
+ * Mirrors `TVL_EXCLUDED_TOKEN_IDS` in the web-api's lockedTokensSummary.helper.ts;
+ * the two lists have to agree, or the header TVL would not match the audit page.
+ */
+export const TVL_EXCLUDED_TOKEN_IDS = new Set([3, 4]);
+
 export interface IDirectionFullConfig {
   directionConfig: { [key: string]: BridgingSettingsDirectionConfigDto };
   ecosystemTokens: BridgingSettingsEcosystemTokenDto[];

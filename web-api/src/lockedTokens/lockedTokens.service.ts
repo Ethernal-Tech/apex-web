@@ -44,7 +44,11 @@ import {
 import { adaID, apexID, isAdaToken, isApexToken } from './token';
 import { MultiChainTvlService } from './multiChainTvl.service';
 import { TokenPriceService } from 'src/tokenPrice/tokenPrice.service';
-import { sumLockedUsd, sumTransferredUsd } from './lockedTokensSummary.helper';
+import {
+	sumLockedUsd,
+	sumTransferredUsd,
+	TVL_EXCLUDED_TOKEN_IDS,
+} from './lockedTokensSummary.helper';
 
 const NEXUS_RPC_URLS = {
 	mainnet: 'https://rpc.nexus.mainnet.apexfusion.org/',
@@ -462,6 +466,8 @@ export class LockedTokensService {
 		for (const [chain, tokenMap] of Object.entries(chains || {})) {
 			result[chain] = {};
 			for (const [tokenId, addrMap] of Object.entries(tokenMap || {})) {
+				if (TVL_EXCLUDED_TOKEN_IDS.has(Number(tokenId))) continue;
+
 				let sum = BigInt(0);
 				for (const [address, amount] of Object.entries(addrMap || {})) {
 					try {

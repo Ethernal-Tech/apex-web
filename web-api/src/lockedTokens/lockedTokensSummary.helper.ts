@@ -18,6 +18,16 @@ export const UNREPORTED_CHAINS = new Set(['arbitrum', 'scroll']);
 export const isUnreportedChain = (chain: string): boolean =>
 	UNREPORTED_CHAINS.has(chain.toLowerCase());
 
+/**
+ * Tokens kept out of TVL: cAP3X (3) and xADA (4). Same IDs on mainnet and
+ * testnet, see tokenInfos.<network>.json. Their bridged amounts still count
+ * towards TVB.
+ *
+ * Mirrors `TVL_EXCLUDED_TOKEN_IDS` in `frontend-new/src/lib/tokens.ts`, which
+ * drops the same tokens from the audit page's locked breakdown.
+ */
+export const TVL_EXCLUDED_TOKEN_IDS = new Set([3, 4]);
+
 /** tokenID -> USD price, absent for a token no price is cached for. */
 export type PriceLookup = (tokenID: number) => number | undefined;
 
@@ -70,6 +80,8 @@ export function sumLockedUsd(
 		if (isUnreportedChain(chain)) continue;
 
 		for (const [tokenID, addressMap] of Object.entries(tokenMap ?? {})) {
+			if (TVL_EXCLUDED_TOKEN_IDS.has(Number(tokenID))) continue;
+
 			for (const amount of Object.values(addressMap ?? {})) {
 				addAmount(totals, Number(tokenID), toBigInt(amount));
 			}
