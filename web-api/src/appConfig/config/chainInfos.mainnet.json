@@ -93,7 +93,7 @@
 			"color": "#63B6FF",
 			"order": 5,
 			"category": "evm",
-			"symbol": "ETH"
+			"symbol": "baseETH"
 		},
 		{
 			"chain": "bsc",
