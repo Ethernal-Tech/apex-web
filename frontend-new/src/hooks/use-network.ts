@@ -28,7 +28,7 @@ export function useNetwork(): SkylineNetwork {
 const NEW_TO_OLD_MAINNET: Record<string, string> = {
   "/": "/landing",
   "/landing": "/landing",
-  "/bridge-app": "/app",
+  "/bridge-app": "/bridge-app",
   "/about-us": "/landing",
   "/contact": "/landing",
 };

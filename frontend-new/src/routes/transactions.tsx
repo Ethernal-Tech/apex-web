@@ -440,6 +440,15 @@ function TransactionsPage() {
                   </span>
                 )}
               </button>
+              {activeFilterCount > 0 && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="inline-flex h-10 items-center gap-1.5 rounded-full border border-white/10 px-4 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <X className="h-3.5 w-3.5" /> Clear filters
+                </button>
+              )}
             </div>
           </div>
 
@@ -688,14 +697,6 @@ function TransactionsPage() {
                     </select>
                     <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                   </div>
-                  {activeFilterCount > 0 && (
-                    <button
-                      onClick={clearFilters}
-                      className="ml-2 inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-3 w-3" /> Clear filters
-                    </button>
-                  )}
                 </div>
 
                 <div className="flex items-center gap-3">

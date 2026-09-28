@@ -125,11 +125,14 @@ const fmtUsdCompact = (n: number) =>
       : n >= 1_000
         ? `$${(n / 1_000).toFixed(1)}K`
         : `$${n.toFixed(2)}`;
-const fmtTok = (n: number) =>
-  n.toLocaleString("en-US", {
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 2,
+/** ETH is held in amounts too small for two decimals - 0.00123 would read 0.00. */
+const fmtTok = (n: number, name: string) => {
+  const decimals = /ETH$/.test(name) ? 5 : 2;
+  return n.toLocaleString("en-US", {
+    maximumFractionDigits: decimals,
+    minimumFractionDigits: decimals,
   });
+};
 /** `12 Jul` - snapshots are UTC midnight, so read them back in UTC. */
 const fmtDay = (d: Date) =>
   d.toLocaleDateString("en-GB", {
@@ -997,7 +1000,7 @@ function SummaryCard({ title, rows }: { title: string; rows: TokenRow[] }) {
             </span>
             <span className="text-right">
               <span className="font-display text-base font-semibold tabular-nums">
-                {fmtTok(row.amount)}
+                {fmtTok(row.amount, row.name)}
               </span>
               <span className="block text-[11px] tabular-nums text-muted-foreground">
                 {fmtUsdCompact(row.amount * priceOf(row.name))}
@@ -1039,7 +1042,9 @@ function SummaryOnly({ title, rows }: { title: string; rows: TokenRow[] }) {
               {row.name}
             </span>
             <span className="text-right tabular-nums">
-              <span className="font-semibold">{fmtTok(row.amount)}</span>
+              <span className="font-semibold">
+                {fmtTok(row.amount, row.name)}
+              </span>
               <span className="ml-2 text-[11px] text-muted-foreground">
                 {fmtUsdCompact(row.amount * priceOf(row.name))}
               </span>
@@ -1126,7 +1131,7 @@ function ChainCard({ entry }: { entry?: ChainRows }) {
           >
             <span className="text-muted-foreground">{row.name}</span>
             <span className="text-right tabular-nums">
-              <span>{fmtTok(row.amount)}</span>
+              <span>{fmtTok(row.amount, row.name)}</span>
               <span className="ml-2 text-[11px] text-muted-foreground">
                 {fmtUsdCompact(row.amount * priceOf(row.name))}
               </span>
@@ -1223,7 +1228,7 @@ function HolderCard({ entry }: { entry: ChainAddressRows }) {
                     {row.name}
                   </span>
                   <span className="text-right tabular-nums">
-                    {fmtTok(row.amount)}
+                    {fmtTok(row.amount, row.name)}
                   </span>
                   <span className="text-right text-[11px] tabular-nums text-muted-foreground">
                     {fmtUsdCompact(row.amount * priceOf(row.name))}

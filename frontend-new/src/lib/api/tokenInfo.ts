@@ -1,5 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import appSettings from "@/settings/appSettings";
+import { setTokenInfosRegistry } from "@/lib/tokenInfo";
 
 /**
  * `GET /tokenInfo` - how a bridge token is presented, per token ID. The web-api
@@ -31,7 +32,11 @@ export async function fetchTokenInfos(): Promise<TokenInfosResponse> {
   if (!res.ok) {
     throw new Error(`Failed to load token infos (${res.status})`);
   }
-  return res.json() as Promise<TokenInfosResponse>;
+  const payload = (await res.json()) as TokenInfosResponse;
+  // shares the ["tokenInfos"] cache entry with lib/api/tokenInfos - whichever
+  // runs first is the only one that runs, so both must fill the label registry
+  setTokenInfosRegistry(payload);
+  return payload;
 }
 
 export const tokenInfosQueryOptions = queryOptions({
