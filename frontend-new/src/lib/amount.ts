@@ -106,6 +106,50 @@ export function toFixedAmount(n: number | string, decimals: number): string {
   return (+n).toFixed(decimals);
 }
 
+/**
+ * At most `maxDigits` digits, wherever the decimal point falls, so amounts stay
+ * inside a fixed width column: 11583.664579 -> 11583.664, 0.123456789 ->
+ * 0.1234567. The integer part is never shortened, the decimals take whatever
+ * room is left over, and trailing zeros go - 53602.000000 -> 53602.
+ *
+ * Decimals are cut rather than rounded, so what is shown is never more than what
+ * was bridged.
+ *
+ * Past 9999999 not even the integer part fits, so only its first five digits
+ * are kept with "..." after them: 1075201007.45 -> 10752...
+ */
+export function formatAmountDigits(
+  value: number | string,
+  maxDigits = 8,
+): string {
+  const text = String(value);
+  const sign = text.startsWith("-") ? "-" : "";
+
+  if (Math.abs(Number(text)) > 9999999) {
+    // past 1e21 the digits sit in the mantissa, before the exponent, and there
+    // are always more than five of them - 1e+24 -> 10000...
+    const [mantissa, exponent] = text.split(/e/i);
+    const digits = (exponent ? mantissa : mantissa.split(".")[0])
+      .replace(/\D/g, "")
+      .replace(/^0+/, "");
+    const lead = exponent ? digits.padEnd(5, "0") : digits;
+    return `${sign}${lead.slice(0, 5)}...`;
+  }
+
+  // exponential notation has no decimal point to count digits on, so expand it
+  // first
+  const decimal = /e/i.test(text) ? Number(text).toFixed(maxDigits) : text;
+
+  const [whole, fraction = ""] = decimal.replace(/^[+-]/, "").split(".");
+  // leading zeros are not digits worth spending the budget on, "0" itself is
+  const spent = whole.replace(/^0+(?=\d)/, "").length;
+  const trimmed = fraction
+    .slice(0, Math.max(0, maxDigits - spent))
+    .replace(/0+$/, "");
+
+  return `${sign}${whole}${trimmed ? `.${trimmed}` : ""}`;
+}
+
 export function toFixedFloor(n: number | string, decimals: number): string {
   const exp = Math.pow(10, decimals);
   return (Math.floor(+n * exp) / exp).toFixed(decimals);

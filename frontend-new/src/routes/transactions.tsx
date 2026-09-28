@@ -34,6 +34,7 @@ import {
 import {
   convertApexToWei,
   convertDfmToApex,
+  formatAmountDigits,
   toFixedAmount,
 } from "@/lib/amount";
 import { fetchBridgeTransactions } from "@/lib/api/bridgeTransactions";
@@ -104,9 +105,12 @@ type Tx = {
   destination: string;
   amount: number;
   amountDisplay: string;
+  /** Unshortened, for the title of the cell the shortened one is shown in. */
+  amountFull: string;
   currencyLabel: string;
   tokenAmount: number | null;
   tokenAmountDisplay: string | null;
+  tokenAmountFull: string | null;
   tokenLabel: string | null;
   receiver: string;
   sender: string;
@@ -123,16 +127,20 @@ function mapDtoToTx(
   settings: SettingsResponse | undefined,
   chainMetaOf: ChainMetaOf,
 ): Tx {
-  const amountDisplay = toFixedAmount(
+  const amountFull = toFixedAmount(
     convertDfmToApex(dto.amount, dto.originChain),
     6,
   );
+  // the columns are a fixed width, a full six decimals runs one into the next
+  const amountDisplay = formatAmountDigits(amountFull);
   const hasToken =
     dto.nativeTokenAmount != null &&
     BigInt(dto.nativeTokenAmount || "0") > BigInt(0);
-  const tokenAmountDisplay = hasToken
+  const tokenAmountFull = hasToken
     ? toFixedAmount(convertDfmToApex(dto.nativeTokenAmount, dto.originChain), 6)
     : null;
+  const tokenAmountDisplay =
+    tokenAmountFull != null ? formatAmountDigits(tokenAmountFull) : null;
 
   const currencyID = settings
     ? getCurrencyID(settings, dto.originChain)
@@ -155,11 +163,13 @@ function mapDtoToTx(
     id: String(dto.id),
     origin: dto.originChain,
     destination: dto.destinationChain,
-    amount: Number(amountDisplay),
+    amount: Number(amountFull),
     amountDisplay,
+    amountFull,
     currencyLabel,
-    tokenAmount: tokenAmountDisplay != null ? Number(tokenAmountDisplay) : null,
+    tokenAmount: tokenAmountFull != null ? Number(tokenAmountFull) : null,
     tokenAmountDisplay,
+    tokenAmountFull,
     tokenLabel,
     receiver: dto.receiverAddresses,
     sender: dto.senderAddress,
@@ -838,7 +848,10 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
         </>
       )}
       <td className="w-[5.25rem] px-5 py-4">
-        <div className="font-display text-sm font-semibold text-foreground">
+        <div
+          className="font-display text-sm font-semibold text-foreground"
+          title={tx.amountFull}
+        >
           {tx.amountDisplay}
         </div>
         <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
@@ -848,7 +861,10 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
       <td className="w-[9rem] px-5 py-4">
         {tx.tokenAmountDisplay != null ? (
           <>
-            <div className="font-display text-sm text-foreground">
+            <div
+              className="font-display text-sm text-foreground"
+              title={tx.tokenAmountFull ?? undefined}
+            >
               {tx.tokenAmountDisplay}
             </div>
             {tx.tokenLabel && (
