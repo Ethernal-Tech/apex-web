@@ -2,8 +2,17 @@
 import { getAssetsSumMap, type SimpleUtxo } from "@/lib/cardano/utxoMinValue";
 import { NewAddressFromBytes } from "@/lib/wallet/address/addreses";
 import { ApexBridgeNetwork } from "@/lib/wallet/enums";
+import { errorFromUnknown } from "@/lib/formatUserError";
 import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
 import { toBytes } from "@/lib/wallet/utils";
+
+async function fromCip30<T>(promise: Promise<T>): Promise<T> {
+  try {
+    return await promise;
+  } catch (err) {
+    throw errorFromUnknown(err);
+  }
+}
 
 type WalletInfo = {
   name: string;
@@ -89,7 +98,7 @@ class CardanoWalletHandler {
       );
     }
 
-    this._enabledWallet = await injected.enable();
+    this._enabledWallet = await fromCip30(injected.enable());
   };
 
   clearEnabledWallet = () => {
@@ -153,7 +162,7 @@ class CardanoWalletHandler {
         );
       }
 
-      const eternlNetworkId = await getConnectedNetworkId();
+      const eternlNetworkId = await fromCip30(getConnectedNetworkId());
       return ETERNL_NETWORK_ID_TO_APEX_BRIDGE_NETWORK[eternlNetworkId];
     } catch (e) {
       console.log(e);
@@ -166,36 +175,36 @@ class CardanoWalletHandler {
   getChangeAddress = async (): Promise<string> => {
     this._checkWalletAndThrow();
 
-    try {
-      const networkId = await this.getNetworkId();
-      const changeAddr = await this._enabledWallet!.getChangeAddress();
-      const changeAddrBytes = toBytes(changeAddr);
-
-      const addr = NewAddressFromBytes(changeAddrBytes);
-      const realChangeAddr = addr?.String(networkId);
-      if (realChangeAddr) {
-        return realChangeAddr;
-      }
-    } catch (e) {
-      console.log(e);
-      captureException(e, {
-        tags: { component: "cardanoWallet.ts", action: "getChangeAddress" },
-      });
+    const changeAddr = await fromCip30(this._enabledWallet!.getChangeAddress());
+    if (changeAddr.startsWith("addr")) {
+      return changeAddr;
     }
 
-    return await this._enabledWallet!.getChangeAddress();
+    const addr = NewAddressFromBytes(toBytes(changeAddr));
+    const realChangeAddr = addr?.String();
+    if (realChangeAddr) {
+      return realChangeAddr;
+    }
+
+    captureAndThrowError(
+      "Could not decode Cardano wallet address. Please reconnect Eternl and try again.",
+      "cardanoWallet.ts",
+      "getChangeAddress",
+    );
   };
 
   getNetworkId = async (): Promise<number> => {
     this._checkWalletAndThrow();
-    return await this._enabledWallet!.getNetworkId();
+    return await fromCip30(this._enabledWallet!.getNetworkId());
   };
 
   getAllUtxos = async (includeCollateral = true): Promise<SimpleUtxo[]> => {
     this._checkWalletAndThrow();
 
     const networkId = await this.getNetworkId();
-    const changeAddrHex = await this._enabledWallet!.getChangeAddress();
+    const changeAddrHex = await fromCip30(
+      this._enabledWallet!.getChangeAddress(),
+    );
     const changeAddrBytes = toBytes(changeAddrHex);
     const displayAddress =
       NewAddressFromBytes(changeAddrBytes)?.String(networkId) ?? changeAddrHex;
@@ -212,9 +221,15 @@ class CardanoWalletHandler {
       }
     };
 
-    await collect((await this._enabledWallet!.getUtxos?.()) ?? []);
+    const utxos = await fromCip30(
+      this._enabledWallet!.getUtxos?.() ?? Promise.resolve(undefined),
+    );
+    await collect(utxos ?? []);
     if (includeCollateral) {
-      await collect((await this._enabledWallet!.getCollateral?.()) ?? []);
+      const collateral = await fromCip30(
+        this._enabledWallet!.getCollateral?.() ?? Promise.resolve(undefined),
+      );
+      await collect(collateral ?? []);
     }
 
     return Object.values(allUtxosMap);
@@ -229,8 +244,12 @@ class CardanoWalletHandler {
     }
 
     // Prefer CIP-30 Value CBOR - no per-UTXO address decode needed for display.
-    const balanceHex = await this._enabledWallet!.getBalance();
-    return parseCip30Value(balanceHex);
+    try {
+      const balanceHex = await fromCip30(this._enabledWallet!.getBalance());
+      return await parseCip30Value(balanceHex);
+    } catch (err) {
+      throw errorFromUnknown(err);
+    }
   };
 
   /**
@@ -243,16 +262,22 @@ class CardanoWalletHandler {
     partialSign?: boolean,
   ): Promise<string> => {
     this._checkWalletAndThrow();
-    const witness = await this._enabledWallet!.signTx(unsignedTx, partialSign);
+    const witness = await fromCip30(
+      this._enabledWallet!.signTx(unsignedTx, partialSign),
+    );
     if (witness === "") {
       return unsignedTx;
     }
-    return await addBrowserWitnesses(unsignedTx, witness);
+    try {
+      return await addBrowserWitnesses(unsignedTx, witness);
+    } catch (err) {
+      throw errorFromUnknown(err);
+    }
   };
 
   submitTx = async (tx: string): Promise<string> => {
     this._checkWalletAndThrow();
-    return await this._enabledWallet!.submitTx(tx);
+    return await fromCip30(this._enabledWallet!.submitTx(tx));
   };
 }
 

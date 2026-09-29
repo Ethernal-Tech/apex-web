@@ -18,6 +18,7 @@ import type { UpdateSubmitLoadingState } from "@/lib/bridging/statusUtils";
 import { validateSubmitTxInputs } from "@/lib/bridging/validate";
 import { isCardanoChain, isEvmChain, isSolanaChain } from "@/lib/chains";
 import { ErrorResponse, tryCatchJsonByAction } from "@/lib/fetchUtils";
+import { formatUserError } from "@/lib/formatUserError";
 import cardanoWalletHandler from "@/lib/wallet/cardanoWallet";
 import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
 import solWalletHandler from "@/lib/wallet/solWallet";
@@ -333,7 +334,7 @@ export async function submitBridgeTransfer(
         "Wallet account changed. It looks like you switched accounts in your wallet.",
       );
     } else {
-      toast.error(`${err}`);
+      toast.error(formatUserError(err));
     }
   }
 }

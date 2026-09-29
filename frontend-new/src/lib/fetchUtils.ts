@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { toast } from "sonner";
 import { ApiException } from "@/swagger/apexBridgeApiService";
+import { formatUserError } from "@/lib/formatUserError";
 import { captureException } from "@/lib/wallet/errors";
 
 export class ErrorResponse {
@@ -20,7 +21,7 @@ const toErrResponse = (error: any): ErrorResponse => {
         const parsed = JSON.parse(apiException?.response);
         const inner = parsed.message || parsed.err || parsed.error;
         if (inner) {
-          return new ErrorResponse({ err: `${inner}` });
+          return new ErrorResponse({ err: formatUserError(inner) });
         }
       } catch (e) {
         console.log("Failed to parse apiException.response", e);
@@ -32,9 +33,11 @@ const toErrResponse = (error: any): ErrorResponse => {
         });
       }
 
-      return new ErrorResponse({ err: `${apiException.response}` });
+      return new ErrorResponse({
+        err: formatUserError(apiException.response),
+      });
     } else if (apiException?.result) {
-      return new ErrorResponse({ err: `${apiException.result}` });
+      return new ErrorResponse({ err: formatUserError(apiException.result) });
     }
   } catch (e) {
     console.log("Error occurred while creating err response", e);
@@ -46,7 +49,7 @@ const toErrResponse = (error: any): ErrorResponse => {
     });
   }
 
-  return new ErrorResponse({ err: `${error}` });
+  return new ErrorResponse({ err: formatUserError(error) });
 };
 
 export const catchError = (error: any, showUIError = true): ErrorResponse => {

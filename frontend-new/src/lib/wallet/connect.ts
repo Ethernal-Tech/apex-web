@@ -1,6 +1,7 @@
 import { getSrcChains, isEvmChain, isSolanaChain } from "@/lib/chains";
 import type { SettingsResponse } from "@/lib/api/settings";
 import appSettings from "@/settings/appSettings";
+import { formatUserError } from "@/lib/formatUserError";
 import cardanoWalletHandler, {
   SUPPORTED_WALLETS,
 } from "@/lib/wallet/cardanoWallet";
@@ -174,12 +175,11 @@ async function onEvmAccountsChanged(
       handlers,
     );
   } catch (e) {
-    const we = `Error on evm accounts changed. ${e}`;
-    console.log(we);
+    console.log(e);
     captureException(e, {
       tags: { component: "connect.ts", action: "onEvmAccountsChanged" },
     });
-    handlers.onError?.(we);
+    handlers.onError?.(formatUserError(e));
     await disconnectWallet(handlers);
   }
 }
@@ -362,7 +362,7 @@ async function enableWallet(
       captureException(e, {
         tags: { component: "connect.ts", action: "enableWallet" },
       });
-      handlers.onError?.(`${e}`);
+      handlers.onError?.(formatUserError(e));
     }
     evmWalletHandler.clearEnabledWallet();
     return false;
@@ -382,7 +382,7 @@ async function enableWallet(
       captureException(e, {
         tags: { component: "connect.ts", action: "enableWallet" },
       });
-      handlers.onError?.(`${e}`);
+      handlers.onError?.(formatUserError(e));
     }
     void solWalletHandler.disconnect();
     return false;
@@ -401,7 +401,7 @@ async function enableWallet(
     captureException(e, {
       tags: { component: "connect.ts", action: "enableWallet" },
     });
-    handlers.onError?.(`${e}`);
+    handlers.onError?.(formatUserError(e));
   }
 
   cardanoWalletHandler.clearEnabledWallet();
@@ -444,7 +444,7 @@ export async function connectWallet(
         ? SOL_SUPPORTED_WALLETS.map((w) => w.name).join(", ")
         : SUPPORTED_WALLETS.join(", ");
     handlers.onError?.(
-      `Can not find any supported wallets installed. Supported wallets: ${supportedWallets}`,
+      `Can not find any supported wallets installed. Supported wallet for selected network: ${supportedWallets}`,
     );
     return false;
   }

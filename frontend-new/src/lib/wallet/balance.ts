@@ -149,7 +149,8 @@ async function fetchSolanaWalletBalances(
     );
   } catch (rpcError) {
     console.log(
-      `Solana RPC balance failed, falling back to web-api: ${rpcError}`,
+      "Solana RPC balance failed, falling back to web-api:",
+      rpcError,
     );
     captureException(rpcError, {
       tags: {
@@ -250,7 +251,8 @@ async function fetchEvmWalletBalances(
     );
   } catch (walletError) {
     console.log(
-      `EVM wallet balance failed, falling back to web-api: ${walletError}`,
+      "EVM wallet balance failed, falling back to web-api:",
+      walletError,
     );
     captureException(walletError, {
       tags: {
@@ -382,7 +384,8 @@ export async function fetchWalletBalances(
       };
     } catch (walletError) {
       console.log(
-        `Cardano wallet balance failed, falling back to web-api: ${walletError}`,
+        "Cardano wallet balance failed, falling back to web-api:",
+        walletError,
       );
       captureException(walletError, {
         tags: {
@@ -412,7 +415,7 @@ export async function safeFetchWalletBalances(
     const state = await fetchWalletBalances(srcChain, dstChain, settings);
     return state.balance;
   } catch (e) {
-    console.log(`Error while fetching wallet balance: ${e}`);
+    console.log("Error while fetching wallet balance:", e);
     captureException(e, {
       tags: { component: "balance.ts", action: "safeFetchWalletBalances" },
     });

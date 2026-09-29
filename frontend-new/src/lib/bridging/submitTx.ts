@@ -22,6 +22,7 @@ import {
   TransactionActivateDeleteDto,
 } from "@/swagger/apexBridgeApiService";
 import { ErrorResponse, tryCatchJsonByAction } from "@/lib/fetchUtils";
+import { formatUserError } from "@/lib/formatUserError";
 import walletHandler from "@/lib/wallet/cardanoWallet";
 import evmWalletHandler from "@/lib/wallet/evmWallet";
 import { Transaction } from "web3-types";
@@ -164,7 +165,10 @@ export const signAndSubmitCardanoTx = async (
       response.value instanceof ErrorResponse
     ) {
       captureAndThrowError(
-        "cant submit tx to the chain and the database",
+        formatUserError(
+          txResult.reason,
+          "Could not submit the transaction to the chain or record it. Please try again.",
+        ),
         "submitTx.ts",
         "signAndSubmitCardanoTx",
       );
@@ -188,7 +192,10 @@ export const signAndSubmitCardanoTx = async (
     });
 
     captureAndThrowError(
-      "transaction cant be submitted",
+      formatUserError(
+        txResult.reason,
+        "Transaction could not be submitted. Please try again.",
+      ),
       "submitTx.ts",
       "signAndSubmitCardanoTx",
     );
@@ -422,7 +429,7 @@ export const signAndSubmitEthTx = async (
     });
 
     captureAndThrowError(
-      "transaction cant be submitted",
+      "Transaction could not be submitted. Please try again.",
       "submitTx.ts",
       "signAndSubmitEthTx",
     );
@@ -785,7 +792,7 @@ export const signAndSubmitLayerZeroTx = async (
     });
 
     captureAndThrowError(
-      "transaction cant be submitted",
+      "Transaction could not be submitted. Please try again.",
       "submitTx.ts",
       "signAndSubmitLayerZeroTx",
     );

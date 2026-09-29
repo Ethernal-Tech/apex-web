@@ -451,7 +451,7 @@ export const login = async (
 				? SOL_SUPPORTED_WALLETS
 				: SUPPORTED_WALLETS;
 		toast.error(
-			`Can not find any supported wallets installed. Supported wallets: ${supportedWallets}`,
+			`Can not find any supported wallets installed. Supported wallet for selected network: ${supportedWallets}`,
 		);
 		return false;
 	}
