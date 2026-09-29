@@ -1,7 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDate, IsEnum, IsNotEmpty } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { PaginatedDto } from 'src/common/dto';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import {
+	BridgeTxDisplayStatusEnum,
+	ChainEnum,
+	TransactionStatusEnum,
+} from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
 export class BridgeTransactionDto {
@@ -111,21 +115,25 @@ export class BridgeTransactionDto {
 }
 
 export class BridgeTransactionFilterDto extends PaginatedDto {
-	@IsNotEmpty()
+	@IsOptional()
 	@ApiProperty({
 		description:
-			'Address that initiated the bridging transaction on the source chain',
+			'Address that initiated the bridging transaction on the source chain. Omit for network-wide history.',
+		nullable: true,
+		required: false,
 	})
-	senderAddress: string;
+	senderAddress?: string;
 
-	@IsNotEmpty()
+	@IsOptional()
 	@IsEnum(ChainEnum)
 	@ApiProperty({
-		description: 'Source chain ID',
+		description: 'Source chain ID. Omit to include all origin chains.',
 		enum: ChainEnum,
 		enumName: 'ChainEnum',
+		nullable: true,
+		required: false,
 	})
-	originChain: ChainEnum;
+	originChain?: ChainEnum;
 
 	@ApiProperty({
 		description: 'Destination chain ID',
@@ -137,28 +145,28 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 	destinationChain?: ChainEnum;
 
 	@ApiProperty({
-		description: 'Minimum amount of currency',
+		description: 'Minimum currency amount in 18-decimal wei',
 		nullable: true,
 		required: false,
 	})
 	amountFrom?: string;
 
 	@ApiProperty({
-		description: 'Maximum amount of currency',
+		description: 'Maximum currency amount in 18-decimal wei',
 		nullable: true,
 		required: false,
 	})
 	amountTo?: string;
 
 	@ApiProperty({
-		description: 'Minimum amount of native token',
+		description: 'Minimum native token amount in 18-decimal wei',
 		nullable: true,
 		required: false,
 	})
 	nativeTokenAmountFrom?: string;
 
 	@ApiProperty({
-		description: 'Maximum amount of native token',
+		description: 'Maximum native token amount in 18-decimal wei',
 		nullable: true,
 		required: false,
 	})
@@ -191,6 +199,18 @@ export class BridgeTransactionFilterDto extends PaginatedDto {
 		required: false,
 	})
 	onlyReactor?: boolean;
+
+	@IsOptional()
+	@IsEnum(BridgeTxDisplayStatusEnum)
+	@ApiProperty({
+		description:
+			'Filter by the status shown in history (success, failed, pending, refunded, refunding).',
+		enum: BridgeTxDisplayStatusEnum,
+		enumName: 'BridgeTxDisplayStatusEnum',
+		nullable: true,
+		required: false,
+	})
+	displayStatus?: BridgeTxDisplayStatusEnum;
 }
 
 export class BridgeTransactionResponseDto {

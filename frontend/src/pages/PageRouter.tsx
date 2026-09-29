@@ -51,7 +51,7 @@ const PageRouter: React.FC = () => {
 		(state: RootState) => state.accountInfo.account,
 	);
 	const isFullyLoggedIn = !!wallet && !!account;
-	const balanceIntervalHandle = useRef<NodeJS.Timer>();
+	const balanceIntervalHandle = useRef<ReturnType<typeof setInterval>>();
 
 	const isLoggedInMemo = !!wallet;
 

@@ -30,8 +30,7 @@ import { captureAndThrowError, captureException } from '../features/sentry';
 import Web3 from 'web3';
 import { EtherUnits } from 'web3-utils';
 
-export const SKYLINE_DOCUMENTATION_URL =
-	'https://ethernal-6.gitbook.io/skyline';
+export const SKYLINE_DOCUMENTATION_URL = 'https://docs.skylinebridge.tech/';
 
 export const capitalizeWord = (word: string): string => {
 	if (!word || word.length === 0) {
@@ -83,6 +82,11 @@ export const convertEvmDfmToApex = (dfm: string | number): string => {
 
 // convert eth to wei (evm)
 const convertApexToEvmDfm = (apex: string | number): string => {
+	return toWei(apex, 'ether');
+};
+
+export const convertApexToWei = (apex: string | number): string => {
+	if (typeof apex === 'number') apex = apex.toString();
 	return toWei(apex, 'ether');
 };
 

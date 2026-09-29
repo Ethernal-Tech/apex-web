@@ -31,6 +31,7 @@ import {
 } from './bridgeTransaction.helper';
 import {
 	BridgingModeEnum,
+	BridgeTxDisplayStatusEnum,
 	ChainEnum,
 	TransactionStatusEnum,
 } from 'src/common/enum';
@@ -63,31 +64,38 @@ export class BridgeTransactionService {
 	async getAllFiltered(
 		model: BridgeTransactionFilterDto,
 	): Promise<BridgeTransactionResponseDto> {
-		const baseWhere: Omit<FindOptionsWhere<BridgeTransaction>, 'activeFrom'> = {
-			destinationChain: model.destinationChain,
-			senderAddress: model.senderAddress,
-			originChain: model.originChain,
-		};
+		const baseWhere: Omit<
+			FindOptionsWhere<BridgeTransaction>,
+			'activeFrom'
+		> = {};
+
+		if (model.destinationChain) {
+			baseWhere.destinationChain = model.destinationChain;
+		}
+		if (model.senderAddress) {
+			baseWhere.senderAddress = model.senderAddress;
+		}
+		if (model.originChain) {
+			baseWhere.originChain = model.originChain;
+		}
 
 		if (model.amountFrom && model.amountTo) {
-			baseWhere.amount = Between(model.amountFrom, model.amountTo);
+			baseWhere.amountWei = Between(model.amountFrom, model.amountTo);
 		} else if (model.amountFrom) {
-			baseWhere.amount = MoreThanOrEqual(model.amountFrom);
+			baseWhere.amountWei = MoreThanOrEqual(model.amountFrom);
 		} else if (model.amountTo) {
-			baseWhere.amount = LessThanOrEqual(model.amountTo);
+			baseWhere.amountWei = LessThanOrEqual(model.amountTo);
 		}
 
 		if (model.nativeTokenAmountFrom && model.nativeTokenAmountTo) {
-			baseWhere.nativeTokenAmount = Between(
+			baseWhere.tokenAmountWei = Between(
 				model.nativeTokenAmountFrom,
 				model.nativeTokenAmountTo,
 			);
 		} else if (model.nativeTokenAmountFrom) {
-			baseWhere.nativeTokenAmount = MoreThanOrEqual(
-				model.nativeTokenAmountFrom,
-			);
+			baseWhere.tokenAmountWei = MoreThanOrEqual(model.nativeTokenAmountFrom);
 		} else if (model.nativeTokenAmountTo) {
-			baseWhere.nativeTokenAmount = LessThanOrEqual(model.nativeTokenAmountTo);
+			baseWhere.tokenAmountWei = LessThanOrEqual(model.nativeTokenAmountTo);
 		}
 
 		if (model.receiverAddress) {
@@ -114,6 +122,8 @@ export class BridgeTransactionService {
 			baseWhere.tokenID = 0;
 		}
 
+		applyDisplayStatusFilter(baseWhere, model.displayStatus);
+
 		const where: FindOptionsWhere<BridgeTransaction>[] = [
 			{
 				...baseWhere,
@@ -129,20 +139,23 @@ export class BridgeTransactionService {
 		const take = model.perPage || 10;
 		const skip = page * take;
 
-		let order: FindOptionsOrder<BridgeTransaction> | undefined = {
-			createdAt: 'desc',
-		};
-		if (model.orderBy && model.order) {
-			order = { [model.orderBy]: model.order };
-		}
+		const orderColumn = resolveOrderByColumn(model.orderBy);
+		const orderDirection = model.order === 'asc' ? 'asc' : 'desc';
 
 		const [entities, total] =
-			await this.bridgeTransactionRepository.findAndCount({
-				where: where,
-				take,
-				skip,
-				order,
-			});
+			orderColumn === 'status'
+				? await this.findFilteredOrderedByDisplayStatus(
+						where,
+						skip,
+						take,
+						orderDirection,
+					)
+				: await this.bridgeTransactionRepository.findAndCount({
+						where,
+						take,
+						skip,
+						order: this.buildColumnOrder(orderColumn, orderDirection),
+					});
 
 		return {
 			items: entities.map((entity) => mapBridgeTransactionToResponse(entity)),
@@ -323,4 +336,107 @@ export class BridgeTransactionService {
 			Logger.debug('Job updateStatusesJob executed');
 		}
 	}
+
+	/**
+	 * `id` is always appended as the last sort key. The chosen column can hold
+	 * duplicates (e.g. several pending txs), and without a unique tiebreaker
+	 * the DB is free to return those rows in a different order on every fetch.
+	 */
+	private buildColumnOrder(
+		orderColumn: keyof BridgeTransaction,
+		orderDirection: 'asc' | 'desc',
+	): FindOptionsOrder<BridgeTransaction> {
+		if (orderColumn === 'finishedAt') {
+			return {
+				finishedAt: {
+					direction: orderDirection,
+					nulls: 'LAST',
+				},
+				id: 'desc',
+			};
+		}
+		return { [orderColumn]: orderDirection, id: 'desc' };
+	}
+
+	/**
+	 * History shows success vs refunded (and pending vs refunding) from
+	 * `status` + `isRefund`. Sorting the raw `status` column interleaves them.
+	 * Rank matches the UI labels alphabetically: failed, pending, refunded,
+	 * refunding, success.
+	 */
+	private findFilteredOrderedByDisplayStatus(
+		where: FindOptionsWhere<BridgeTransaction>[],
+		skip: number,
+		take: number,
+		orderDirection: 'asc' | 'desc',
+	): Promise<[BridgeTransaction[], number]> {
+		const direction = orderDirection.toUpperCase() as 'ASC' | 'DESC';
+		const qb = this.bridgeTransactionRepository.createQueryBuilder('tx');
+		qb.setFindOptions({ where, skip, take });
+		qb.orderBy(
+			`CASE
+				WHEN tx.status = :invalidRequest THEN 0
+				WHEN tx.isRefund = true AND tx.status = :executed THEN 2
+				WHEN tx.isRefund = true THEN 3
+				WHEN tx.status = :executed THEN 4
+				ELSE 1
+			END`,
+			direction,
+		)
+			.addOrderBy('tx.id', 'DESC')
+			.setParameters({
+				invalidRequest: TransactionStatusEnum.InvalidRequest,
+				executed: TransactionStatusEnum.ExecutedOnDestination,
+			});
+		return qb.getManyAndCount();
+	}
+}
+
+function applyDisplayStatusFilter(
+	baseWhere: FindOptionsWhere<BridgeTransaction>,
+	displayStatus?: BridgeTxDisplayStatusEnum,
+) {
+	if (!displayStatus) {
+		return;
+	}
+
+	switch (displayStatus) {
+		case BridgeTxDisplayStatusEnum.Success:
+			baseWhere.status = TransactionStatusEnum.ExecutedOnDestination;
+			baseWhere.isRefund = false;
+			return;
+		case BridgeTxDisplayStatusEnum.Failed:
+			baseWhere.status = TransactionStatusEnum.InvalidRequest;
+			return;
+		case BridgeTxDisplayStatusEnum.Pending:
+			baseWhere.status = In(BridgingRequestNotFinalStates);
+			baseWhere.isRefund = false;
+			return;
+		case BridgeTxDisplayStatusEnum.Refunded:
+			baseWhere.status = TransactionStatusEnum.ExecutedOnDestination;
+			baseWhere.isRefund = true;
+			return;
+		case BridgeTxDisplayStatusEnum.Refunding:
+			baseWhere.status = In(BridgingRequestNotFinalStates);
+			baseWhere.isRefund = true;
+			return;
+	}
+}
+
+const ORDER_BY_COLUMNS: Record<string, keyof BridgeTransaction> = {
+	createdAt: 'createdAt',
+	finishedAt: 'finishedAt',
+	originChain: 'originChain',
+	destinationChain: 'destinationChain',
+	status: 'status',
+	senderAddress: 'senderAddress',
+	receiverAddresses: 'receiverAddresses',
+	amount: 'amountWei',
+	amountWei: 'amountWei',
+	nativeTokenAmount: 'tokenAmountWei',
+	tokenAmountWei: 'tokenAmountWei',
+};
+
+function resolveOrderByColumn(orderBy?: string): keyof BridgeTransaction {
+	return (orderBy && ORDER_BY_COLUMNS[orderBy]) || 'createdAt';
 }

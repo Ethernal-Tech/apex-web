@@ -1,0 +1,10 @@
+<svg width="32" height="33" viewBox="0 0 32 33" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ethereum (ETH) icon">
+  <!-- Top left -->
+  <polygon points="16,3 6.5,16.5 16,20" fill="#8A92B2"></polygon>
+  <!-- Top right -->
+  <polygon points="16,3 25.5,16.5 16,20" fill="#62688F"></polygon>
+  <!-- Bottom left -->
+  <polygon points="16,22 6.5,17 16,30" fill="#8A92B2"></polygon>
+  <!-- Bottom right -->
+  <polygon points="16,22 25.5,17 16,30" fill="#454A75"></polygon>
+</svg>

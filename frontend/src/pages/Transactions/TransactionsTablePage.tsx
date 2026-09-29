@@ -29,7 +29,7 @@ import { ErrorResponse, tryCatchJsonByAction } from '../../utils/fetchUtils';
 import { getStatusIconAndLabel, isStatusFinal } from '../../utils/statusUtils';
 import {
 	capitalizeWord,
-	convertApexToDfm,
+	convertApexToWei,
 	convertDfmToApex,
 	formatAddress,
 	formatTxDetailUrl,
@@ -85,30 +85,26 @@ const TransactionsTablePage = () => {
 			}
 
 			if (filtersCorrected.amountFrom) {
-				filtersCorrected.amountFrom = convertApexToDfm(
+				filtersCorrected.amountFrom = convertApexToWei(
 					filtersCorrected.amountFrom,
-					chain,
 				);
 			}
 
 			if (filtersCorrected.amountTo) {
-				filtersCorrected.amountTo = convertApexToDfm(
+				filtersCorrected.amountTo = convertApexToWei(
 					filtersCorrected.amountTo,
-					chain,
 				);
 			}
 
 			if (filtersCorrected.nativeTokenAmountFrom) {
-				filtersCorrected.nativeTokenAmountFrom = convertApexToDfm(
+				filtersCorrected.nativeTokenAmountFrom = convertApexToWei(
 					filtersCorrected.nativeTokenAmountFrom,
-					chain,
 				);
 			}
 
 			if (filtersCorrected.nativeTokenAmountTo) {
-				filtersCorrected.nativeTokenAmountTo = convertApexToDfm(
+				filtersCorrected.nativeTokenAmountTo = convertApexToWei(
 					filtersCorrected.nativeTokenAmountTo,
-					chain,
 				);
 			}
 

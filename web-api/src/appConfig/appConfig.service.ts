@@ -7,6 +7,7 @@ import {
 	resolveConfigDir,
 	safeReadJson,
 } from './appConfig.helper';
+import { DEFAULT_PROVIDER_ORDER } from 'src/tokenPrice/tokenPrice.config';
 
 const defaultUrl = 'http://localhost:40000';
 
@@ -25,7 +26,7 @@ const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
 	database: {
 		port: 5432,
 		name: 'apex',
-		migrations: ['dist/database/migrations/*.js'],
+		migrations: ['dist/src/database/migrations/*.js'],
 		migrationsTableName: '__apex_migrations',
 		entities: ['dist/**/*.entity.js'],
 	},
@@ -33,8 +34,12 @@ const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
 	features: {
 		statusUpdateModesSupported: [],
 	},
-	rpc: {
-		evmUrls: [],
+	prices: {
+		coingeckoApiUrl: 'https://api.coingecko.com/api/v3',
+		defillamaApiUrl: 'https://coins.llama.fi',
+		providerOrder: DEFAULT_PROVIDER_ORDER,
+		requestTimeoutMs: 10000,
+		stalenessThresholdMinutes: 60,
 	},
 };
 
@@ -103,6 +108,9 @@ export class AppConfigService {
 	}
 	get layerZero() {
 		return this.config.layerzero;
+	}
+	get prices() {
+		return this.config.prices;
 	}
 	get secrets() {
 		return this.config.secrets;

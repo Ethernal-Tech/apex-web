@@ -7,6 +7,7 @@ import {
 import {
 	LockedTokensDto,
 	LockedTokensResponse,
+	LockedTokensSummaryDto,
 	TransferredTokensByDay,
 	TransferredTokensResponse,
 } from './lockedTokens.dto';
@@ -14,7 +15,7 @@ import axios, { AxiosError } from 'axios';
 import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import {
 	BridgingModeEnum,
 	ChainEnum,
@@ -32,25 +33,79 @@ import {
 	getDirectionTokenIDsFromDirectionConfig,
 	getTokenNameById,
 } from 'src/settings/utils';
-import { amountToBigInt } from 'src/utils/generalUtils';
+import { amountToBigInt, convertWeiToDfm } from 'src/utils/generalUtils';
 import { getBridgingMode } from 'src/utils/chainUtils';
+import { Cron } from '@nestjs/schedule';
+import Web3 from 'web3';
+import {
+	ChainTokenAmounts,
+	HistoricalSnapshot,
+} from './historicalSnapshot.entity';
+import { adaID, apexID, isAdaToken, isApexToken } from './token';
+import { MultiChainTvlService } from './multiChainTvl.service';
+import { TokenPriceService } from 'src/tokenPrice/tokenPrice.service';
+import {
+	sumLockedUsd,
+	sumTransferredUsd,
+	TVL_EXCLUDED_TOKEN_IDS,
+} from './lockedTokensSummary.helper';
+
+const NEXUS_RPC_URLS = {
+	mainnet: 'https://rpc.nexus.mainnet.apexfusion.org/',
+	testnet: 'https://rpc.nexus.testnet.apexfusion.org',
+} as const;
+
+/** Modes the summary is warmed for on boot - what the apps ask for. */
+const SUMMARY_WARMED_MODES = [
+	BridgingModeEnum.Skyline,
+	BridgingModeEnum.LayerZero,
+];
+/** How old cached figures may get before a request triggers a recomputation. */
+const SUMMARY_TTL_MS = 60_000;
+/** Boot-time warm attempts, for when the token prices are not cached yet. */
+const SUMMARY_WARM_ATTEMPTS = 3;
+const SUMMARY_WARM_RETRY_MS = 15_000;
+/** The Nexus OFT balance is one RPC read per recomputation, so it is reused. */
+const LAYER_ZERO_APEX_TTL_MS = 60_000;
+
+type CachedSummary = {
+	tvlUsd: number;
+	tvbUsd: number;
+	computedAt: Date;
+};
 
 @Injectable()
 export class LockedTokensService {
 	constructor(
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
+		@InjectRepository(HistoricalSnapshot)
+		private readonly historicalSnapshotRepository: Repository<HistoricalSnapshot>,
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly settingsService: SettingsService,
 		private readonly appConfig: AppConfigService,
+		private readonly multiChainTvl: MultiChainTvlService,
+		private readonly tokenPriceService: TokenPriceService,
 	) {}
 
 	onModuleInit() {
 		this.init();
 	}
 
+	onApplicationBootstrap() {
+		// Warm the summary so the first page load reads a cached figure instead of
+		// waiting out the whole locked-tokens computation.
+		void this.warmSummary();
+	}
+
 	endpointUrl: string;
 	apiKey = process.env.CARDANO_API_SKYLINE_API_KEY;
+
+	/** modes -> last computed TVL / TVB, see `getSummary`. */
+	private readonly summaryCache = new Map<string, CachedSummary>();
+	/** Deduplicates concurrent recomputations of the same modes. */
+	private readonly summaryInFlight = new Map<string, Promise<CachedSummary>>();
+	private layerZeroApexDfm?: { value: string; readAt: number };
 
 	init() {
 		this.endpointUrl =
@@ -60,16 +115,448 @@ export class LockedTokensService {
 	public async fillTokensData(
 		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<LockedTokensDto> {
+		const data = (await this.fillTokensDataWithErrors(allowedBridgingModes))
+			.data;
+
+		// Whoever asked for the full breakdown has just paid for the figures the
+		// header needs, so bank them rather than making the header pay again.
+		void this.updateSummary(allowedBridgingModes, data).catch(() => {
+			// already logged; the cached figures stand until the next attempt
+		});
+
+		return data;
+	}
+
+	/**
+	 * TVL / TVB in USD, served from cache.
+	 *
+	 * The figures come out of the same computation `/lockedTokens` runs - an
+	 * external API call, a set of DB aggregates and a balance read per chain -
+	 * which is seconds of latency, far too slow for a page header. So they are
+	 * cached, refreshed by every `/lockedTokens` request, and refreshed in the
+	 * background here once the cached copy ages past its TTL.
+	 *
+	 * Only a caller finding an empty cache waits for the computation.
+	 */
+	public async getSummary(
+		allowedBridgingModes: BridgingModeEnum[],
+	): Promise<LockedTokensSummaryDto> {
+		const key = this.summaryCacheKey(allowedBridgingModes);
+		const cached = this.summaryCache.get(key);
+
+		if (!cached) {
+			return this.toSummaryDto(await this.refreshSummary(allowedBridgingModes));
+		}
+
+		if (Date.now() - cached.computedAt.getTime() > SUMMARY_TTL_MS) {
+			void this.refreshSummary(allowedBridgingModes).catch(() => {
+				// already logged; the figures returned below still stand
+			});
+		}
+
+		return this.toSummaryDto(cached);
+	}
+
+	private toSummaryDto(summary: CachedSummary): LockedTokensSummaryDto {
+		return {
+			tvlUsd: summary.tvlUsd,
+			tvbUsd: summary.tvbUsd,
+			computedAt: summary.computedAt.toISOString(),
+		};
+	}
+
+	/**
+	 * Modes are a set, so the order they arrive in must not split the cache, and
+	 * an unrecognised one can never match a direction's bridging mode anyway -
+	 * dropping it keeps a query string from inventing cache keys.
+	 */
+	private summaryCacheKey(modes: BridgingModeEnum[]): string {
+		const known = Object.values(BridgingModeEnum);
+
+		return [...new Set(modes)]
+			.filter((mode) => known.includes(mode))
+			.sort()
+			.join(',');
+	}
+
+	/**
+	 * The summary needs the cached token prices, and the price cron's first run
+	 * may still be in flight at boot, so a failed warm is retried a few times
+	 * before the first request is left to pay for the computation itself.
+	 */
+	private async warmSummary(attempt = 1): Promise<void> {
+		try {
+			await this.refreshSummary(SUMMARY_WARMED_MODES);
+		} catch {
+			// already logged by refreshSummary
+			if (attempt >= SUMMARY_WARM_ATTEMPTS) return;
+
+			setTimeout(
+				() => void this.warmSummary(attempt + 1),
+				SUMMARY_WARM_RETRY_MS,
+			);
+		}
+	}
+
+	private async refreshSummary(
+		allowedBridgingModes: BridgingModeEnum[],
+	): Promise<CachedSummary> {
+		const key = this.summaryCacheKey(allowedBridgingModes);
+		const inFlight = this.summaryInFlight.get(key);
+		if (inFlight) {
+			return inFlight;
+		}
+
+		const refresh = this.fillTokensDataWithErrors(allowedBridgingModes)
+			.then(({ data }) => this.computeSummary(key, data))
+			.catch((error) => {
+				Logger.warn(
+					`lockedTokens summary refresh failed for [${key}]: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+				throw error;
+			})
+			.finally(() => {
+				this.summaryInFlight.delete(key);
+			});
+
+		this.summaryInFlight.set(key, refresh);
+
+		return refresh;
+	}
+
+	/** As `refreshSummary`, but for locked tokens a caller already computed. */
+	private async updateSummary(
+		allowedBridgingModes: BridgingModeEnum[],
+		data: LockedTokensDto,
+	): Promise<CachedSummary> {
+		const key = this.summaryCacheKey(allowedBridgingModes);
+
+		try {
+			return await this.computeSummary(key, data);
+		} catch (error) {
+			Logger.warn(
+				`lockedTokens summary update failed for [${key}]: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
+			);
+			throw error;
+		}
+	}
+
+	private async computeSummary(
+		key: string,
+		data: LockedTokensDto,
+	): Promise<CachedSummary> {
+		// Without prices every amount is skipped and the figures come out at zero,
+		// which would then be cached and served as though it were the truth. Right
+		// after a restart the price cron may not have finished its first run yet.
+		if (this.tokenPriceService.getPrices().length === 0) {
+			throw new Error('no token prices are cached yet');
+		}
+
+		const priceOf = (tokenID: number) =>
+			this.tokenPriceService.getPriceUsdByTokenID(tokenID);
+
+		// APEX locked in the Nexus OFT contract is not part of `chains` - it is
+		// read from the chain - and is priced as prime's native currency.
+		const apexTokenID = getCurrencyIDFromDirectionConfig(
+			this.settingsService.SettingsResponse.directionConfig,
+			ChainEnum.Prime,
+		);
+		const layerZero =
+			apexTokenID === undefined
+				? undefined
+				: {
+						tokenID: apexTokenID,
+						amountDfm: BigInt(await this.cachedLayerZeroLockedApexDfm()),
+					};
+
+		const summary: CachedSummary = {
+			tvlUsd: sumLockedUsd(data.chains, priceOf, layerZero),
+			tvbUsd: sumTransferredUsd(data.totalTransferred, priceOf),
+			computedAt: new Date(),
+		};
+		this.summaryCache.set(key, summary);
+
+		return summary;
+	}
+
+	/** The OFT balance moves slowly; one read serves every summary in the window. */
+	private async cachedLayerZeroLockedApexDfm(): Promise<string> {
+		const cached = this.layerZeroApexDfm;
+		if (cached && Date.now() - cached.readAt < LAYER_ZERO_APEX_TTL_MS) {
+			return cached.value;
+		}
+
+		const value = await this.fetchLayerZeroLockedApexDfm();
+		this.layerZeroApexDfm = { value, readAt: Date.now() };
+
+		return value;
+	}
+
+	/**
+	 * As `fillTokensData`, plus which non-Cardano chains could not be read.
+	 * The errors stay off the public DTO; the snapshot cron uses them to avoid
+	 * persisting an incomplete day.
+	 */
+	private async fillTokensDataWithErrors(
+		allowedBridgingModes: BridgingModeEnum[],
+	): Promise<{ data: LockedTokensDto; errors: Record<string, string> }> {
 		const lockedTokens = await this.getLockedTokens();
 		const sumTransferred = await this.sumTransferredTokensPerChain(
 			this.settingsService.SettingsResponse.directionConfig,
 			allowedBridgingModes,
 		);
 
+		// EVM and Solana chains are absent from cardano-api's locked tokens, which
+		// reads UTxO bridging addresses only. Merged per token so that an
+		// overlapping chain name could never drop the Cardano side.
+		const multiChain = await this.multiChainTvl.getLockedTokens();
+		const chains = { ...lockedTokens.chains };
+		for (const [chain, tokenMap] of Object.entries(multiChain.chains)) {
+			chains[chain] = { ...(chains[chain] ?? {}), ...tokenMap };
+		}
+
 		return {
-			chains: lockedTokens.chains,
-			totalTransferred: sumTransferred.totalTransferred,
+			data: {
+				chains,
+				totalTransferred: sumTransferred.totalTransferred,
+			},
+			errors: multiChain.errors,
 		};
+	}
+
+	public async getHistoricalSnapshots(
+		startDate?: Date,
+		endDate?: Date,
+	): Promise<HistoricalSnapshot[]> {
+		let from = startDate;
+		let to = endDate;
+
+		if (!from) {
+			const earliest = await this.historicalSnapshotRepository.find({
+				order: { snapshotAt: 'ASC' },
+				take: 1,
+			});
+			if (earliest.length === 0) {
+				return [];
+			}
+			from = earliest[0].snapshotAt;
+		}
+
+		if (!to) {
+			const latest = await this.historicalSnapshotRepository.find({
+				order: { snapshotAt: 'DESC' },
+				take: 1,
+			});
+			if (latest.length === 0) {
+				return [];
+			}
+			to = latest[0].snapshotAt;
+		}
+
+		return this.historicalSnapshotRepository.find({
+			where: { snapshotAt: Between(from, to) },
+			order: { snapshotAt: 'ASC' },
+		});
+	}
+
+	/** UTC midnight daily snapshot of TVL / TVB. */
+	@Cron('0 0 * * *', {
+		name: 'historicalDailySnapshot',
+		timeZone: 'UTC',
+	})
+	async takeDailySnapshot(): Promise<HistoricalSnapshot | null> {
+		try {
+			const snapshot = await this.buildAndSaveSnapshot(this.utcMidnight());
+			Logger.log(
+				`historicalDailySnapshot saved for ${snapshot.snapshotAt.toISOString()}`,
+			);
+			return snapshot;
+		} catch (error) {
+			Logger.error(
+				`historicalDailySnapshot failed: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
+				error instanceof Error ? error.stack : undefined,
+			);
+			return null;
+		}
+	}
+
+	public async buildAndSaveSnapshot(
+		snapshotAt: Date = this.utcMidnight(),
+	): Promise<HistoricalSnapshot> {
+		const existing = await this.historicalSnapshotRepository.findOne({
+			where: { snapshotAt },
+		});
+
+		if (existing) {
+			Logger.log(
+				`buildAndSaveSnapshot: snapshot already exists for ${snapshotAt.toISOString()}, skipping`,
+			);
+			return existing;
+		}
+
+		const { data, errors } = await this.fillTokensDataWithErrors([
+			BridgingModeEnum.Skyline,
+			BridgingModeEnum.LayerZero,
+		]);
+
+		// A snapshot row is immutable and written once per UTC midnight, so a day
+		// stored while a chain's RPC was down would under-report that day forever.
+		// Better to fail and let the next run write it.
+		const failed = Object.keys(errors);
+		if (failed.length > 0) {
+			throw new Error(
+				`refusing to snapshot ${snapshotAt.toISOString()}: could not read ${failed.join(', ')}`,
+			);
+		}
+
+		const tvlByChain = this.sumLockedByChain(data.chains);
+		const tvbByChain = data.totalTransferred;
+		const tvlLayerZeroApex = await this.fetchLayerZeroLockedApexDfm();
+
+		const tvlApex = (
+			this.tokenAmount(tvlByChain, ChainEnum.Prime, apexID) +
+			this.tokenAmount(tvlByChain, ChainEnum.Vector, apexID) +
+			BigInt(tvlLayerZeroApex)
+		).toString();
+
+		const cardanoCurrencyId =
+			getCurrencyIDFromDirectionConfig(
+				this.settingsService.SettingsResponse.directionConfig,
+				ChainEnum.Cardano,
+			) ?? adaID;
+
+		const tvlAda = this.tokenAmount(
+			tvlByChain,
+			ChainEnum.Cardano,
+			cardanoCurrencyId,
+		).toString();
+
+		const { tvbApex, tvbAda } = this.sumTransferredTotals(tvbByChain);
+
+		const entity = new HistoricalSnapshot();
+		entity.snapshotAt = snapshotAt;
+		entity.tvlByChain = tvlByChain;
+		entity.tvlLayerZeroApex = tvlLayerZeroApex;
+		entity.tvbByChain = tvbByChain;
+		entity.tvlApex = tvlApex;
+		entity.tvlAda = tvlAda;
+		entity.tvbApex = tvbApex;
+		entity.tvbAda = tvbAda;
+
+		return this.historicalSnapshotRepository.save(entity);
+	}
+
+	private utcMidnight(date = new Date()): Date {
+		return new Date(
+			Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+		);
+	}
+
+	private sumLockedByChain(
+		chains: LockedTokensResponse['chains'],
+	): ChainTokenAmounts {
+		const result: ChainTokenAmounts = {};
+
+		for (const [chain, tokenMap] of Object.entries(chains || {})) {
+			result[chain] = {};
+			for (const [tokenId, addrMap] of Object.entries(tokenMap || {})) {
+				if (TVL_EXCLUDED_TOKEN_IDS.has(Number(tokenId))) continue;
+
+				let sum = BigInt(0);
+				for (const [address, amount] of Object.entries(addrMap || {})) {
+					try {
+						sum += BigInt(amount || '0');
+					} catch {
+						Logger.warn(
+							`sumLockedByChain: invalid amount "${amount}" for ${chain}/${tokenId}/${address}`,
+						);
+					}
+				}
+				result[chain][tokenId] = sum.toString();
+			}
+		}
+
+		return result;
+	}
+
+	private tokenAmount(
+		byChain: ChainTokenAmounts,
+		chain: string,
+		tokenId: number,
+	): bigint {
+		const raw = byChain[chain]?.[String(tokenId)] ?? '0';
+		try {
+			return BigInt(raw);
+		} catch {
+			return BigInt(0);
+		}
+	}
+
+	private sumTransferredTotals(tvbByChain: ChainTokenAmounts): {
+		tvbApex: string;
+		tvbAda: string;
+	} {
+		let tvbApex = BigInt(0);
+		let tvbAda = BigInt(0);
+
+		for (const tokenMap of Object.values(tvbByChain || {})) {
+			for (const [tokenKey, amount] of Object.entries(tokenMap || {})) {
+				let value = BigInt(0);
+				try {
+					value = BigInt(amount || '0');
+				} catch {
+					continue;
+				}
+
+				const tokenId = Number(tokenKey);
+				if (isApexToken(tokenId)) {
+					tvbApex += value;
+				} else if (isAdaToken(tokenId)) {
+					tvbAda += value;
+				}
+			}
+		}
+
+		return {
+			tvbApex: tvbApex.toString(),
+			tvbAda: tvbAda.toString(),
+		};
+	}
+
+	private async fetchLayerZeroLockedApexDfm(): Promise<string> {
+		const nexus = this.settingsService.SettingsResponse.layerZeroChains?.find(
+			(c) => c.chain === ChainEnum.Nexus,
+		);
+
+		if (!nexus?.oftAddress) {
+			Logger.warn(
+				'fetchLayerZeroLockedApexDfm: Nexus OFT address not configured',
+			);
+			return '0';
+		}
+
+		const rpcUrl = this.appConfig.app.isMainnet
+			? NEXUS_RPC_URLS.mainnet
+			: NEXUS_RPC_URLS.testnet;
+
+		try {
+			const web3 = new Web3(rpcUrl);
+			const balanceWei = await web3.eth.getBalance(nexus.oftAddress);
+			return convertWeiToDfm(String(balanceWei ?? '0')).split('.')[0];
+		} catch (error) {
+			Logger.error(
+				`fetchLayerZeroLockedApexDfm failed: ${
+					error instanceof Error ? error.message : String(error)
+				}`,
+			);
+			return '0';
+		}
 	}
 
 	private async getLockedTokens(): Promise<LockedTokensResponse> {
@@ -259,7 +746,8 @@ export class LockedTokensService {
 			}
 		}
 
-		await this.cacheManager.set(cacheKey, result, 30);
+		// milliseconds in cache-manager v7 - this was 30ms, i.e. no cache at all
+		await this.cacheManager.set(cacheKey, result, 30_000);
 
 		return result;
 	}

@@ -8,7 +8,7 @@ export class ContactService {
 	constructor(private readonly mailerService: MailerService) {}
 
 	async submitContactForm(contactData: CreateContactDto): Promise<void> {
-		const { name, email, message } = contactData;
+		const { name, email, phone, message } = contactData;
 		await this.mailerService.sendMail({
 			to: getAppConfig().email.contactEmail,
 			subject: `Skyline from ${name}`,
@@ -16,6 +16,7 @@ export class ContactService {
 			context: {
 				name,
 				email,
+				phone: phone?.trim() || undefined,
 				message: message.replace(/\n/g, '<br>'),
 			},
 		});

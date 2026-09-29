@@ -119,5 +119,67 @@ describe('BridgeTransactionService', () => {
 			expect(result.items.length).toBe(0);
 			expect(result.total).toBe(0);
 		});
+
+		it('orders finishedAt with nulls last', async () => {
+			const spy = jest
+				.spyOn(bridgeTransactionRepository, 'findAndCount')
+				.mockResolvedValue([[], 0]);
+
+			await service.getAllFiltered({
+				orderBy: 'finishedAt',
+				order: 'desc',
+			});
+
+			expect(spy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					order: {
+						finishedAt: { direction: 'desc', nulls: 'LAST' },
+						id: 'desc',
+					},
+				}),
+			);
+		});
+
+		it('orders status by display kind so success and refunded do not interleave', async () => {
+			const qb = {
+				setFindOptions: jest.fn(),
+				orderBy: jest.fn().mockReturnThis(),
+				addOrderBy: jest.fn().mockReturnThis(),
+				setParameters: jest.fn().mockReturnThis(),
+				getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+			};
+			jest
+				.spyOn(bridgeTransactionRepository, 'createQueryBuilder')
+				.mockReturnValue(qb as never);
+
+			await service.getAllFiltered({
+				orderBy: 'status',
+				order: 'asc',
+			});
+
+			expect(qb.orderBy).toHaveBeenCalledWith(
+				expect.stringContaining('isRefund'),
+				'ASC',
+			);
+			expect(qb.addOrderBy).toHaveBeenCalledWith('tx.id', 'DESC');
+			expect(qb.getManyAndCount).toHaveBeenCalled();
+		});
+
+		it('breaks ties on id so repeated fetches keep the same order', async () => {
+			const spy = jest
+				.spyOn(bridgeTransactionRepository, 'findAndCount')
+				.mockResolvedValue([[], 0]);
+
+			await service.getAllFiltered({
+				orderBy: 'originChain',
+				order: 'asc',
+			});
+
+			expect(spy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					order: { originChain: 'asc', id: 'desc' },
+				}),
+			);
+		});
 	});
 });

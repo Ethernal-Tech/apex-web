@@ -9,6 +9,15 @@ export enum TransactionStatusEnum {
 	ExecutedOnDestination = 'ExecutedOnDestination',
 }
 
+/** UI-facing status as shown in bridging history. */
+export enum BridgeTxDisplayStatusEnum {
+	Success = 'success',
+	Failed = 'failed',
+	Pending = 'pending',
+	Refunded = 'refunded',
+	Refunding = 'refunding',
+}
+
 export enum ChainApexBridgeEnum {
 	Prime = 'prime',
 	Vector = 'vector',

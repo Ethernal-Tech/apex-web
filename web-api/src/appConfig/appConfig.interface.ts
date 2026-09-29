@@ -42,8 +42,14 @@ export interface AppConfig {
 		ethTxTtlInc: number;
 		recentInputsThresholdMinutes: number;
 		addresses: {
+			/**
+			 * Fallback only, for as long as the oracle build that serves EVM
+			 * bridging addresses is not deployed. The addresses actually
+			 * used are resolved at startup by settings/gatewayAddresses.helper.ts,
+			 * which prefers cardano-api and drops to this. The native token wallet
+			 * has no entry here at all - it is always read off the chain.
+			 */
 			skylineGateway: EvmAddressConfig[];
-			skylineNativeTokenWallet: EvmAddressConfig[];
 			reactorNexusGateway: `0x${string}`;
 		};
 	};
@@ -53,9 +59,16 @@ export interface AppConfig {
 		cardanoApiSkylineUrl: string;
 		cardanoApiReactorUrl: string;
 	};
+	/** Node endpoints for reading balances off non-Cardano chains. */
 	rpc: {
+		/** `chain::url` per EVM chain. */
 		evmUrls: ChainValueConfig[];
 		solanaUrl: string;
+		/**
+		 * `chain::address` fallback for the account holding locked funds on a
+		 * Solana-type chain, used while the oracle does not serve one.
+		 */
+		solanaHolders: ChainValueConfig[];
 	};
 	database: {
 		host: string;
@@ -75,6 +88,23 @@ export interface AppConfig {
 		apiUrl: string;
 		scanUrl: string;
 		networks: LayerZeroNetworkConfig[];
+	};
+	prices: {
+		coingeckoApiUrl: string;
+		coingeckoApiKey?: string;
+		defillamaApiUrl: string;
+		/** Providers are queried in this order, first hit per token wins. */
+		providerOrder: string[];
+		requestTimeoutMs: number;
+		/** Age after which a cached price is reported as stale. */
+		stalenessThresholdMinutes: number;
+		/**
+		 * Path to the tracked tokens JSON file. Defaults to
+		 * trackedTokens.<network>.json in the appConfig config folder; point it
+		 * at a mounted file to change the tracked tokens without rebuilding the
+		 * image.
+		 */
+		trackedTokensPath?: string;
 	};
 	secrets: {
 		apiKeys: string[];

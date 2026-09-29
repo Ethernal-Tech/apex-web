@@ -1,0 +1,114 @@
+/* eslint-disable @typescript-eslint/no-unused-expressions */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { toast } from "sonner";
+import { ApiException } from "@/swagger/apexBridgeApiService";
+import { formatUserError } from "@/lib/formatUserError";
+import { captureException } from "@/lib/wallet/errors";
+
+export class ErrorResponse {
+  err: string;
+
+  constructor({ err }: { err: string }) {
+    this.err = err;
+  }
+}
+
+const toErrResponse = (error: any): ErrorResponse => {
+  try {
+    const apiException = error as ApiException;
+    if (apiException?.response) {
+      try {
+        const parsed = JSON.parse(apiException?.response);
+        const inner = parsed.message || parsed.err || parsed.error;
+        if (inner) {
+          return new ErrorResponse({ err: formatUserError(inner) });
+        }
+      } catch (e) {
+        console.log("Failed to parse apiException.response", e);
+        captureException(e, {
+          tags: {
+            component: "fetchUtils.ts",
+            action: "toErrResponse",
+          },
+        });
+      }
+
+      return new ErrorResponse({
+        err: formatUserError(apiException.response),
+      });
+    } else if (apiException?.result) {
+      return new ErrorResponse({ err: formatUserError(apiException.result) });
+    }
+  } catch (e) {
+    console.log("Error occurred while creating err response", e);
+    captureException(e, {
+      tags: {
+        component: "fetchUtils.ts",
+        action: "toErrResponse",
+      },
+    });
+  }
+
+  return new ErrorResponse({ err: formatUserError(error) });
+};
+
+export const catchError = (error: any, showUIError = true): ErrorResponse => {
+  if (error.status === 500) {
+    const err = "Unknown server error, please contact system administrator";
+    showUIError && toast.error(err);
+    return toErrResponse(err);
+  }
+
+  if (error.status === 400) {
+    showUIError &&
+      toast.error(
+        "There are some validation errors, please fix those and try again.",
+      );
+    return toErrResponse(error);
+  }
+
+  if (error.status === 403) {
+    const err = "You don't have permission to perform this action";
+    showUIError && toast.error(err);
+    return toErrResponse(err);
+  }
+
+  if (error.status === 401) {
+    const err = "You are unauthorized for this action.";
+    showUIError && toast.error(err);
+    return toErrResponse(err);
+  }
+
+  if (error.status === 404) {
+    const err =
+      typeof error.message === "string" && error.message.trim()
+        ? error.message
+        : "Not found";
+    showUIError && toast.error(err);
+    return new ErrorResponse({ err });
+  }
+
+  if (error instanceof TypeError) {
+    const err = error.toString();
+    showUIError && toast.error(err);
+    return toErrResponse(err);
+  }
+
+  const err = "Unknown error, please contact system administrator";
+  showUIError && toast.error(err);
+  return toErrResponse(err);
+};
+
+export const tryCatchJsonByAction = async <P>(
+  fetchFunction: (...args: any[]) => Promise<P>,
+  showUIError = true,
+): Promise<P | ErrorResponse> => {
+  const fetchPromise = fetchFunction();
+
+  try {
+    const response = await fetchPromise;
+    return response;
+  } catch (error: any) {
+    return catchError(error, showUIError);
+  }
+};

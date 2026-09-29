@@ -30,6 +30,32 @@ export const resolveConfigDir = (configName: string): string => {
 	return hit;
 };
 
+/** URL prefix the icon files are served under. */
+export const ICONS_URL_PREFIX = '/icons/';
+
+/**
+ * Directory served at /icons - the chain and token logos the chainInfos and
+ * tokenInfos configs name in their "icon" fields. Always public/icons, looked up
+ * relative to the process working directory the way resolveConfigDir does, since
+ * compiled __dirname is dist/src.
+ */
+export const resolveIconsDir = (): string => {
+	const candidates = [
+		path.resolve(process.cwd(), 'public', 'icons'),
+		path.resolve(__dirname, '../../../public/icons'),
+	];
+	const hit = candidates.find((p) => fs.existsSync(p));
+	if (!hit) {
+		Logger.warn(
+			`Icons folder not found. Looked in: ${candidates.join(' , ')}. ` +
+				`Chain and token logos will 404 - ensure public/icons ships with the app.`,
+		);
+	}
+
+	// still returned when missing, so the static handler simply 404s
+	return hit ?? candidates[0];
+};
+
 export function safeReadJson<T>(p?: string): DeepPartial<T> {
 	if (!p || !fs.existsSync(p)) {
 		return {} as DeepPartial<T>;
@@ -83,6 +109,28 @@ export const evmAddressConfig = makeValidator((x) => {
 			return {
 				chain,
 				address: address as `0x${string}`,
+			};
+		});
+});
+
+/**
+ * `chain::value,chain::value` - like evmAddressConfig
+ */
+export const chainValueConfig = makeValidator((x) => {
+	if (!x) return [];
+
+	return x
+		.split(',')
+		.map((s) => s.trim())
+		.filter(Boolean)
+		.map((item) => {
+			const separator = item.indexOf('::');
+			if (separator <= 0 || separator === item.length - 2) {
+				throw new Error(`Invalid chain::value config item format: "${item}"`);
+			}
+			return {
+				chain: item.slice(0, separator),
+				value: item.slice(separator + 2),
 			};
 		});
 });
@@ -150,10 +198,10 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 		ETH_TX_TTL_INC: num({ default: undefined }),
 		RECENT_INPUTS_THRESHOLD_MINUTES: num({ default: undefined }),
 		SKYLINE_GATEWAY_ADDRS: evmAddressConfig({ default: undefined }),
-		SKYLINE_NT_WALLET_ADDRS: evmAddressConfig({ default: undefined }),
 		REACTOR_NEXUS_GATEWAY_ADDR: str({ default: undefined }),
 
 		SOLANA_RPC_URL: str({ default: undefined }),
+		SOLANA_HOLDER_ADDRS: chainValueConfig({ default: undefined }),
 
 		ORACLE_SKYLINE_URL: str({ default: undefined }),
 		ORACLE_REACTOR_URL: str({ default: undefined }),
@@ -176,6 +224,14 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 		LAYERZERO_SCAN_URL: str({ default: undefined }),
 		LAYERZERO_CONFIG: layerZeroConfig({ default: undefined }),
 
+		COINGECKO_API_URL: str({ default: undefined }),
+		COINGECKO_API_KEY: str({ default: undefined }),
+		DEFILLAMA_API_URL: str({ default: undefined }),
+		TOKEN_PRICE_PROVIDERS: list({ default: undefined }),
+		TOKEN_PRICE_REQUEST_TIMEOUT_MS: num({ default: undefined }),
+		TOKEN_PRICE_STALENESS_MINUTES: num({ default: undefined }),
+		TRACKED_TOKENS_PATH: str({ default: undefined }),
+
 		WEB_API_API_KEYS: list({ default: undefined }),
 	});
 
@@ -196,7 +252,6 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			recentInputsThresholdMinutes: env.RECENT_INPUTS_THRESHOLD_MINUTES,
 			addresses: {
 				skylineGateway: env.SKYLINE_GATEWAY_ADDRS,
-				skylineNativeTokenWallet: env.SKYLINE_NT_WALLET_ADDRS,
 				reactorNexusGateway: env.REACTOR_NEXUS_GATEWAY_ADDR as `0x${string}`,
 			},
 		},
@@ -209,6 +264,7 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 		rpc: {
 			evmUrls: readEvmRpcUrls(),
 			solanaUrl: env.SOLANA_RPC_URL,
+			solanaHolders: env.SOLANA_HOLDER_ADDRS,
 		},
 		database: {
 			host: env.DB_HOST,
@@ -228,6 +284,15 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			apiUrl: env.LAYERZERO_API_URL,
 			scanUrl: env.LAYERZERO_SCAN_URL,
 			networks: env.LAYERZERO_CONFIG,
+		},
+		prices: {
+			coingeckoApiUrl: env.COINGECKO_API_URL,
+			coingeckoApiKey: env.COINGECKO_API_KEY,
+			defillamaApiUrl: env.DEFILLAMA_API_URL,
+			providerOrder: env.TOKEN_PRICE_PROVIDERS,
+			requestTimeoutMs: env.TOKEN_PRICE_REQUEST_TIMEOUT_MS,
+			stalenessThresholdMinutes: env.TOKEN_PRICE_STALENESS_MINUTES,
+			trackedTokensPath: env.TRACKED_TOKENS_PATH,
 		},
 		secrets: {
 			apiKeys: env.WEB_API_API_KEYS,

@@ -9,6 +9,11 @@ import { ContactModule } from './contact/contact.module';
 import { MailerConfigModule } from './mailer/mailer.module';
 import { LockedTokensModule } from './lockedTokens/lockedTokens.module';
 import { AppConfigModule } from './appConfig/appConfig.module';
+import { StatsModule } from './stats/stats.module';
+import { TokenPriceModule } from './tokenPrice/tokenPrice.module';
+import { TokenInfoModule } from './tokenInfo/tokenInfo.module';
+import { ChainInfoModule } from './chainInfo/chainInfo.module';
+import { BalanceModule } from './balance/balance.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ApiKeyGuard } from './common/guards/api-key.guard';
 
@@ -24,6 +29,11 @@ import { ApiKeyGuard } from './common/guards/api-key.guard';
 		BridgeTransactionModule,
 		ContactModule,
 		LockedTokensModule,
+		StatsModule,
+		TokenPriceModule,
+		TokenInfoModule,
+		ChainInfoModule,
+		BalanceModule,
 		AppConfigModule,
 	],
 	controllers: [],

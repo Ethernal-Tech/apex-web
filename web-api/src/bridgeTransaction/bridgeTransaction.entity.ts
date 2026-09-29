@@ -15,6 +15,9 @@ export class BridgeTransaction {
 	@Column('numeric', { default: '0', scale: 0, precision: 1000 })
 	amount: string;
 
+	@Column('numeric', { default: '0', scale: 0, precision: 1000 })
+	amountWei: string;
+
 	@Column({ enum: ChainEnum, enumName: 'ChainEnum' })
 	originChain: ChainEnum;
 
@@ -23,6 +26,9 @@ export class BridgeTransaction {
 
 	@Column('numeric', { default: '0', scale: 0, precision: 1000 })
 	nativeTokenAmount: string;
+
+	@Column('numeric', { default: '0', scale: 0, precision: 1000 })
+	tokenAmountWei: string;
 
 	@Column({ default: 0 })
 	tokenID: number;
