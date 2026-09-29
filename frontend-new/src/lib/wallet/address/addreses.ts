@@ -1,4 +1,5 @@
 import { captureAndThrowError } from "../errors";
+import { toBytes } from "../utils";
 import { CardanoAddress } from "./interfaces";
 import {
   StakeCredential,
@@ -42,6 +43,14 @@ export const NewAddress = (raw: string): CardanoAddress | undefined => {
 
   return NewAddressFromBytes(decoded.data);
 };
+
+/** CIP-30 `getChangeAddress` is hex; UI/API need bech32. Never returns hex. */
+export function bech32FromCip30Address(raw: string): string | undefined {
+  if (IsAddressWithValidPrefix(raw)) {
+    return raw;
+  }
+  return NewAddressFromBytes(toBytes(raw))?.String();
+}
 
 export const NewAddressFromBytes = (
   data: Uint8Array,
@@ -167,7 +176,7 @@ export class BaseAddress implements CardanoAddress {
   }
   String(network?: number): string | undefined {
     return Bech32EncodeFromBase256(
-      GetPrefix(network || this.Network),
+      GetPrefix(network ?? this.Network),
       this.Bytes(),
     );
   }
@@ -198,7 +207,7 @@ export class EnterpriseAddress implements CardanoAddress {
   }
   String(network?: number): string | undefined {
     return Bech32EncodeFromBase256(
-      GetPrefix(network || this.Network),
+      GetPrefix(network ?? this.Network),
       this.Bytes(),
     );
   }
@@ -229,7 +238,7 @@ export class RewardAddress implements CardanoAddress {
   }
   String(network?: number): string | undefined {
     return Bech32EncodeFromBase256(
-      GetStakePrefix(network || this.Network),
+      GetStakePrefix(network ?? this.Network),
       this.Bytes(),
     );
   }

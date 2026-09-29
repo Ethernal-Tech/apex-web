@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { getAssetsSumMap, type SimpleUtxo } from "@/lib/cardano/utxoMinValue";
-import { NewAddressFromBytes } from "@/lib/wallet/address/addreses";
+import { bech32FromCip30Address } from "@/lib/wallet/address/addreses";
 import { ApexBridgeNetwork } from "@/lib/wallet/enums";
 import { errorFromUnknown } from "@/lib/formatUserError";
 import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
@@ -176,14 +176,9 @@ class CardanoWalletHandler {
     this._checkWalletAndThrow();
 
     const changeAddr = await fromCip30(this._enabledWallet!.getChangeAddress());
-    if (changeAddr.startsWith("addr")) {
-      return changeAddr;
-    }
-
-    const addr = NewAddressFromBytes(toBytes(changeAddr));
-    const realChangeAddr = addr?.String();
-    if (realChangeAddr) {
-      return realChangeAddr;
+    const bech32 = bech32FromCip30Address(changeAddr);
+    if (bech32) {
+      return bech32;
     }
 
     captureAndThrowError(
@@ -201,13 +196,18 @@ class CardanoWalletHandler {
   getAllUtxos = async (includeCollateral = true): Promise<SimpleUtxo[]> => {
     this._checkWalletAndThrow();
 
-    const networkId = await this.getNetworkId();
     const changeAddrHex = await fromCip30(
       this._enabledWallet!.getChangeAddress(),
     );
     const changeAddrBytes = toBytes(changeAddrHex);
-    const displayAddress =
-      NewAddressFromBytes(changeAddrBytes)?.String(networkId) ?? changeAddrHex;
+    const displayAddress = bech32FromCip30Address(changeAddrHex);
+    if (!displayAddress) {
+      captureAndThrowError(
+        "Could not decode Cardano wallet address. Please reconnect Eternl and try again.",
+        "cardanoWallet.ts",
+        "getAllUtxos",
+      );
+    }
 
     const allUtxosMap: { [key: string]: SimpleUtxo } = {};
 
