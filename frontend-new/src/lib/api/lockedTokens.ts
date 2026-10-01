@@ -15,14 +15,10 @@ export type LockedTokensResponse = {
   totalTransferred: Record<string, Record<string, string>>;
 };
 
-/** Bridging modes included when summing TVB from `GET /lockedTokens`. */
-const ALLOWED_BRIDGING_MODES = ["skyline", "layerzero"] as const;
-
 export async function fetchLockedTokens(): Promise<LockedTokensResponse> {
-  const res = await fetch(
-    `${appSettings.apiUrl}/lockedTokens?allowedBridgingModes=${ALLOWED_BRIDGING_MODES.join(",")}`,
-    { headers: { Accept: "application/json" } },
-  );
+  const res = await fetch(`${appSettings.apiUrl}/lockedTokens`, {
+    headers: { Accept: "application/json" },
+  });
   if (!res.ok) {
     throw new Error(`Failed to load locked tokens (${res.status})`);
   }
@@ -51,10 +47,9 @@ export type LockedTokensSummary = {
 };
 
 export async function fetchLockedTokensSummary(): Promise<LockedTokensSummary> {
-  const res = await fetch(
-    `${appSettings.apiUrl}/lockedTokens/summary?allowedBridgingModes=${ALLOWED_BRIDGING_MODES.join(",")}`,
-    { headers: { Accept: "application/json" } },
-  );
+  const res = await fetch(`${appSettings.apiUrl}/lockedTokens/summary`, {
+    headers: { Accept: "application/json" },
+  });
   if (!res.ok) {
     throw new Error(`Failed to load the locked tokens summary (${res.status})`);
   }

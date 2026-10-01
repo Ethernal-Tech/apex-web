@@ -17,6 +17,12 @@ import {
 } from './lockedTokens.dto';
 import { BridgingModeEnum, GroupByTimePeriod } from 'src/common/enum';
 
+/** Modes TVB is summed over by `/lockedTokens` and `/lockedTokens/summary`. */
+const LOCKED_TOKENS_MODES = [
+	BridgingModeEnum.Skyline,
+	BridgingModeEnum.LayerZero,
+];
+
 @ApiTags('LockedTokens')
 @Controller('lockedTokens')
 export class LockedTokensController {
@@ -25,7 +31,7 @@ export class LockedTokensController {
 	@ApiOperation({
 		summary: 'Get locked tokens amount',
 		description:
-			'Provide information to users about the amount of locked tokens',
+			'Provide information to users about the amount of locked tokens. TVB is summed over the skyline and layerzero bridging modes.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -34,26 +40,8 @@ export class LockedTokensController {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	@ApiQuery({
-		name: 'allowedBridgingModes',
-		required: false,
-		isArray: true,
-		enum: BridgingModeEnum,
-		enumName: 'BridgingModeEnum',
-		style: 'form',
-		explode: false,
-		description: 'all suported bridging modes that goes into sum',
-	})
-	async get(
-		@Query(
-			'allowedBridgingModes',
-			new ParseArrayPipe({ items: String, separator: ',', optional: true }),
-		)
-		modes?: string[],
-	): Promise<LockedTokensDto> {
-		const allowedBridgingModes = (modes ?? []) as BridgingModeEnum[];
-
-		return await this.lockedTokensService.fillTokensData(allowedBridgingModes);
+	async get(): Promise<LockedTokensDto> {
+		return await this.lockedTokensService.fillTokensData(LOCKED_TOKENS_MODES);
 	}
 
 	@ApiOperation({
@@ -67,28 +55,10 @@ export class LockedTokensController {
 		description: 'OK - Cached TVL / TVB.',
 		type: LockedTokensSummaryDto,
 	})
-	@ApiQuery({
-		name: 'allowedBridgingModes',
-		required: false,
-		isArray: true,
-		enum: BridgingModeEnum,
-		enumName: 'BridgingModeEnum',
-		style: 'form',
-		explode: false,
-		description: 'all suported bridging modes that goes into sum',
-	})
 	@HttpCode(HttpStatus.OK)
 	@Get('summary')
-	async getSummary(
-		@Query(
-			'allowedBridgingModes',
-			new ParseArrayPipe({ items: String, separator: ',', optional: true }),
-		)
-		modes?: string[],
-	): Promise<LockedTokensSummaryDto> {
-		const allowedBridgingModes = (modes ?? []) as BridgingModeEnum[];
-
-		return await this.lockedTokensService.getSummary(allowedBridgingModes);
+	async getSummary(): Promise<LockedTokensSummaryDto> {
+		return await this.lockedTokensService.getSummary(LOCKED_TOKENS_MODES);
 	}
 
 	@ApiOperation({
