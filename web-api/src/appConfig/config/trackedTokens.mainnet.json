@@ -35,7 +35,7 @@
 		},
 		{
 			"symbol": "ETH",
-			"aliases": ["WETH"],
+			"aliases": ["WETH", "BaseETH"],
 			"ids": {
 				"coingecko": "ethereum",
 				"defillama": "coingecko:ethereum"

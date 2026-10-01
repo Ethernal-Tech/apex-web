@@ -25,6 +25,7 @@ import {
   type WorldKey,
 } from "@/hooks/use-locked-breakdown";
 import {
+  priceByTokenId,
   priceByTokenName,
   tokenPricesQueryOptions,
 } from "@/lib/api/tokenPrice";
@@ -49,12 +50,14 @@ export const Route = createFileRoute("/audit")({
 
 // ── Token prices (USD) ────────────────────────────────────────────────
 /**
- * Token name -> USD. Comes from `GET /tokenPrice`, which already prices every
- * wrapped representation under its own name, so `cAP3X` and `xADA` resolve
- * without any pegging table here. 0 for an asset the price cron does not track
- * (and for every asset until the first response lands).
+ * Token -> USD. Comes from `GET /tokenPrice`, which already prices every
+ * wrapped representation under its own ID, so `cAP3X` and `xADA` resolve
+ * without any pegging table here. Looked up by tokenID first - the row name is
+ * the display label, which need not match the ecosystem name the price is
+ * served under - and by name only for callers without an ID. 0 for an asset the
+ * price cron does not track (and for every asset until the first response lands).
  */
-type PriceOf = (coin: string) => number;
+type PriceOf = (coin: string, tokenID?: number) => number;
 /** null until the first `GET /tokenPrice` response lands. */
 const PriceContext = createContext<PriceOf | null>(null);
 const UNPRICED: PriceOf = () => 0;
@@ -69,7 +72,7 @@ const WORLD_LABELS: Record<WorldKey, string> = {
 };
 
 function usdOfRows(rows: TokenRow[], priceOf: PriceOf) {
-  return rows.reduce((s, r) => s + r.amount * priceOf(r.name), 0);
+  return rows.reduce((s, r) => s + r.amount * priceOf(r.name, r.tokenID), 0);
 }
 
 /** `Cardano · Prime · Vector` - the chains this world actually holds. */
@@ -82,8 +85,8 @@ const chainTag = (world: WorldBreakdown) =>
 const byUsdDesc =
   (priceOf: PriceOf) =>
   (a: TokenRow, b: TokenRow): number =>
-    b.amount * priceOf(b.name) - a.amount * priceOf(a.name) ||
-    b.amount - a.amount;
+    b.amount * priceOf(b.name, b.tokenID) -
+      a.amount * priceOf(a.name, a.tokenID) || b.amount - a.amount;
 
 const sortWorld = (world: WorldBreakdown, priceOf: PriceOf): WorldBreakdown => {
   const sortChains = (chains: ChainRows[]) =>
@@ -245,8 +248,12 @@ function AuditPage() {
   const { data: prices } = useQuery(tokenPricesQueryOptions);
   const priceOf = useMemo<PriceOf | null>(() => {
     if (!prices) return null;
+    const byId = priceByTokenId(prices);
     const byName = priceByTokenName(prices);
-    return (coin) => byName.get(coin.toUpperCase()) ?? 0;
+    return (coin, tokenID) =>
+      (tokenID !== undefined ? byId.get(tokenID) : undefined) ??
+      byName.get(coin.toUpperCase()) ??
+      0;
   }, [prices]);
 
   return (
@@ -1003,7 +1010,7 @@ function SummaryCard({ title, rows }: { title: string; rows: TokenRow[] }) {
                 {fmtTok(row.amount, row.name)}
               </span>
               <span className="block text-[11px] tabular-nums text-muted-foreground">
-                {fmtUsdCompact(row.amount * priceOf(row.name))}
+                {fmtUsdCompact(row.amount * priceOf(row.name, row.tokenID))}
               </span>
             </span>
           </div>
@@ -1046,7 +1053,7 @@ function SummaryOnly({ title, rows }: { title: string; rows: TokenRow[] }) {
                 {fmtTok(row.amount, row.name)}
               </span>
               <span className="ml-2 text-[11px] text-muted-foreground">
-                {fmtUsdCompact(row.amount * priceOf(row.name))}
+                {fmtUsdCompact(row.amount * priceOf(row.name, row.tokenID))}
               </span>
             </span>
           </div>
@@ -1133,7 +1140,7 @@ function ChainCard({ entry }: { entry?: ChainRows }) {
             <span className="text-right tabular-nums">
               <span>{fmtTok(row.amount, row.name)}</span>
               <span className="ml-2 text-[11px] text-muted-foreground">
-                {fmtUsdCompact(row.amount * priceOf(row.name))}
+                {fmtUsdCompact(row.amount * priceOf(row.name, row.tokenID))}
               </span>
             </span>
           </div>
@@ -1231,7 +1238,7 @@ function HolderCard({ entry }: { entry: ChainAddressRows }) {
                     {fmtTok(row.amount, row.name)}
                   </span>
                   <span className="text-right text-[11px] tabular-nums text-muted-foreground">
-                    {fmtUsdCompact(row.amount * priceOf(row.name))}
+                    {fmtUsdCompact(row.amount * priceOf(row.name, row.tokenID))}
                   </span>
                 </Fragment>
               ))}
