@@ -3,6 +3,7 @@ import { useMemo } from "react";
 
 import { DFM_UNIT, lockedTokensQueryOptions } from "@/lib/api/lockedTokens";
 import { settingsQueryOptions } from "@/lib/api/settings";
+import { tokenInfosQueryOptions } from "@/lib/api/tokenInfo";
 import {
   isCardanoChain,
   isEvmChain,
@@ -175,6 +176,9 @@ function addToHolder(
 export function useLockedBreakdown(): LockedBreakdown {
   const { data: settings } = useQuery(settingsQueryOptions);
   const { data: lockedTokens, isPending } = useQuery(lockedTokensQueryOptions);
+  // getTokenDisplayName reads a registry /tokenInfo fills, not React state - a
+  // dependency here so the rows relabel once it lands after the other queries.
+  const { data: tokenInfos } = useQuery(tokenInfosQueryOptions);
   const layerZeroLockedApex = useLayerZeroLockedApex();
   const chainMetaOf = useChainMeta();
 
@@ -339,5 +343,12 @@ export function useLockedBreakdown(): LockedBreakdown {
       worldKeys: visibleWorldKeys(settings?.enabledChains),
       isLoading: isPending,
     };
-  }, [settings, lockedTokens, layerZeroLockedApex, isPending, chainMetaOf]);
+  }, [
+    settings,
+    lockedTokens,
+    layerZeroLockedApex,
+    isPending,
+    chainMetaOf,
+    tokenInfos,
+  ]);
 }
