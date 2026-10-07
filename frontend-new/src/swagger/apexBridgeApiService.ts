@@ -688,6 +688,60 @@ export class BridgeTransactionControllerClient extends BaseClient {
     }
 
     /**
+     * Get the bridging transaction by its source chain tx hash
+     * @return OK - Returns bridging transaction.
+     */
+    getByTxHash(originChain: string, txHash: string): Promise<BridgeTransactionDto> {
+        let url_ = this.baseUrl + "/bridgeTransaction/byTxHash/{originChain}/{txHash}";
+        if (originChain === undefined || originChain === null)
+            throw new globalThis.Error("The parameter 'originChain' must be defined.");
+        url_ = url_.replace("{originChain}", encodeURIComponent("" + originChain));
+        if (txHash === undefined || txHash === null)
+            throw new globalThis.Error("The parameter 'txHash' must be defined.");
+        url_ = url_.replace("{txHash}", encodeURIComponent("" + txHash));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGetByTxHash(_response);
+        });
+    }
+
+    protected processGetByTxHash(response: Response): Promise<BridgeTransactionDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BridgeTransactionDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request - unknown origin chain.", status, _responseText, _headers);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("Not Found - Bridging transaction not found.", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BridgeTransactionDto>(null as any);
+    }
+
+    /**
      * Get multiple bridging transactions with filtering and pagination
      * @return OK - Returns bridging transactions.
      */

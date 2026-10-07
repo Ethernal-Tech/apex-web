@@ -12,6 +12,7 @@ import (
 	"github.com/Ethernal-Tech/cardano-api/api/controllers"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
+	"github.com/Ethernal-Tech/cardano-api/txindexer"
 	validatorchange "github.com/Ethernal-Tech/cardano-api/validator-change"
 	loggerInfra "github.com/Ethernal-Tech/cardano-infrastructure/logger"
 	"github.com/spf13/cobra"
@@ -94,6 +95,31 @@ func runCommand(cmd *cobra.Command, _ []string) {
 		outputter.SetError(errors.New("run mode is invalid"))
 
 		return
+	}
+
+	if config.Indexer != nil {
+		indexerManager, err := txindexer.NewManager(config, logger.Named("indexer"))
+		if err != nil {
+			logger.Error("indexer creation failed", "err", err)
+			outputter.SetError(err)
+
+			return
+		}
+
+		indexerCtx, cancelIndexerCtx := context.WithCancel(ctx)
+
+		indexerManager.Start(indexerCtx)
+
+		defer func() {
+			cancelIndexerCtx()
+
+			if err := indexerManager.Close(); err != nil {
+				logger.Error("error while indexer dispose", "err", err)
+			}
+		}()
+
+		apiControllers = append(apiControllers, controllers.NewBridgingTxController(
+			indexerManager.Store(), config.Indexer.PullLimit, logger.Named("bridging_tx_controller")))
 	}
 
 	apiObj, err := api.NewAPI(config.APIConfig, apiControllers, logger.Named("api"))

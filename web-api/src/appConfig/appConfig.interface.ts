@@ -36,6 +36,11 @@ export interface AppConfig {
 		hashSecret: string;
 	};
 	features: {
+		/**
+		 * Bridging modes whose transactions this instance tracks. For reactor and
+		 * skyline, their cardano-api instance is also polled for new bridging
+		 * transactions indexed on the source chains.
+		 */
 		statusUpdateModesSupported: string[];
 	};
 	bridge: {
