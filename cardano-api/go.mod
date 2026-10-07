@@ -2,6 +2,11 @@ module github.com/Ethernal-Tech/cardano-api
 
 go 1.24.1
 
+// Points to a forked version of the gouroboros library, which raises the CBOR nesting limit
+// (same as in apex-bridge and cardano-infrastructure). Replace directives are not inherited
+// from dependencies, so the indexer would otherwise use the original library.
+replace github.com/blinklabs-io/gouroboros => github.com/Ethernal-Tech/gouroboros v0.0.0-20260914132917-4454e1199f8f
+
 require (
 	github.com/blinklabs-io/gouroboros v0.103.1 // indirect
 	github.com/dgraph-io/ristretto v0.2.0
@@ -68,22 +73,38 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 )
 
-require github.com/gagliardetto/solana-go v1.23.0
+require (
+	github.com/Ethernal-Tech/blockchain-event-tracker v0.0.0-20261006135714-48456afdd3b0
+	github.com/Ethernal-Tech/ethgo v0.0.0-20240902085129-307ec04e3e94
+	github.com/gagliardetto/solana-go v1.23.0
+	go.etcd.io/bbolt v1.4.3
+)
 
 require (
+	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
+	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/gagliardetto/anchor-go v1.0.0 // indirect
 	github.com/gagliardetto/binary v0.8.0 // indirect
 	github.com/gagliardetto/treeout v0.1.4 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
+	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
+	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mostynb/zstdpool-freelist v0.0.0-20201229113212-927304c0c3b1 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20251114093237-2ab5a27a1729 // indirect
 	github.com/streamingfast/logging v0.0.0-20250404134358-92b15d2fbd2e // indirect
+	github.com/test-go/testify v1.1.4 // indirect
+	github.com/umbracle/fastrlp v0.1.1-0.20230504065717-58a1b8a9929d // indirect
+	github.com/valyala/bytebufferpool v1.0.0 // indirect
+	github.com/valyala/fasthttp v1.55.0 // indirect
+	github.com/valyala/fastjson v1.6.4 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/ratelimit v0.3.1 // indirect
