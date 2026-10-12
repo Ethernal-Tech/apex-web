@@ -38,6 +38,7 @@ import { useChainInfos } from "@/hooks/use-chain-infos";
 import { getEstimatedBridgeTime } from "@/lib/bridging/estimatedBridgeTime";
 import { resolveBridgeMaxAmounts } from "@/lib/bridging/maxAmount";
 import { BridgingModeEnum, getBridgingMode } from "@/lib/bridging/mode";
+import { calculateChangeUtxoMinValue } from "@/lib/cardano/utxoMinValue";
 import type {
   SubmitLoadingState,
   UpdateSubmitLoadingState,
@@ -1124,7 +1125,11 @@ function TransferForm({
     });
   }, [availableTokens]);
 
-  const { balances, loading: balancesLoading } = useWalletBalances({
+  const {
+    balances,
+    utxos: walletUtxos,
+    loading: balancesLoading,
+  } = useWalletBalances({
     enabled: Boolean(walletAddress),
     srcChain: source.id,
     dstChain: destination.id,
@@ -1187,11 +1192,29 @@ function TransferForm({
   const bridgingSettings =
     bridgingModeInfo.settings?.bridgingSettings || undefined;
 
-  const changeMinUtxo = useMemo(() => {
+  const defaultMinUtxo = useMemo(() => {
     const fromMode = bridgingSettings?.minUtxoChainValue?.[source.id];
     const fromApp = appSettings.minUtxoChainValue[source.id];
     return fromMode ?? fromApp ?? 0;
   }, [bridgingSettings, source.id]);
+
+  // The change output keeps every native token in the wallet, so its min lovelace
+  // grows with the number of assets held - a flat min UTXO under-reserves for MAX.
+  const [changeMinUtxo, setChangeMinUtxo] = useState(defaultMinUtxo);
+  useEffect(() => {
+    let cancelled = false;
+    setChangeMinUtxo(defaultMinUtxo);
+
+    void calculateChangeUtxoMinValue(walletUtxos, defaultMinUtxo).then(
+      (value) => {
+        if (!cancelled) setChangeMinUtxo(value);
+      },
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [walletUtxos, defaultMinUtxo]);
 
   const defaultBridgeTxFeeDfm = useMemo(
     () =>
@@ -1226,7 +1249,7 @@ function TransferForm({
       amountDisplay: amount,
       bridgeTxFeeDfm,
       defaultBridgeTxFeeDfm,
-      minUtxoValue: changeMinUtxo,
+      minUtxoValue: defaultMinUtxo,
     }).then((fee) => {
       if (!cancelled) setAdjustedBridgeTxFeeDfm(fee);
     });
@@ -1243,7 +1266,7 @@ function TransferForm({
     amount,
     fees.bridgeTxFeeDfm,
     defaultBridgeTxFeeDfm,
-    changeMinUtxo,
+    defaultMinUtxo,
   ]);
 
   const { maxAmounts, currencyMaxAmount, maxSendable } = useMemo(

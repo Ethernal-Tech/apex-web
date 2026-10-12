@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { SettingsResponse } from "@/lib/api/settings";
+import type { SimpleUtxo } from "@/lib/cardano/utxoMinValue";
 import {
   getUpdateBalanceInterval,
   safeFetchWalletBalances,
@@ -19,14 +20,17 @@ export function useWalletBalances({
   settings: SettingsResponse | undefined;
 }): {
   balances: WalletBalances;
+  utxos: SimpleUtxo[] | undefined;
   loading: boolean;
 } {
   const [balances, setBalances] = useState<WalletBalances>({});
+  const [utxos, setUtxos] = useState<SimpleUtxo[] | undefined>(undefined);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!enabled || !srcChain || !dstChain || !settings) {
       setBalances({});
+      setUtxos(undefined);
       setLoading(false);
       return;
     }
@@ -44,7 +48,8 @@ export function useWalletBalances({
           settings,
         );
         if (!cancelled && next) {
-          setBalances(next);
+          setBalances(next.balance);
+          setUtxos(next.utxos);
         }
       } finally {
         inFlight = false;
@@ -65,5 +70,5 @@ export function useWalletBalances({
     };
   }, [enabled, srcChain, dstChain, settings]);
 
-  return { balances, loading };
+  return { balances, utxos, loading };
 }
