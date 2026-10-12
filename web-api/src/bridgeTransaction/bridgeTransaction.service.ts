@@ -1,5 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { Cron, SchedulerRegistry } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
 	Between,
@@ -39,6 +39,9 @@ import { getBridgingMode } from 'src/utils/chainUtils';
 import { SettingsService } from 'src/settings/settings.service';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getRealTokenIDFromEntity } from './utils';
+import { JobLockService } from 'src/jobLock/jobLock.service';
+
+const UPDATE_STATUSES_JOB_NAME = 'updateStatusesJob';
 
 @Injectable()
 export class BridgeTransactionService {
@@ -46,7 +49,7 @@ export class BridgeTransactionService {
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
 		private readonly settingsService: SettingsService,
-		private readonly schedulerRegistry: SchedulerRegistry,
+		private readonly jobLock: JobLockService,
 		private readonly appConfig: AppConfigService,
 	) {}
 
@@ -166,7 +169,7 @@ export class BridgeTransactionService {
 	}
 
 	// every 10 seconds
-	@Cron('*/10 * * * * *', { name: 'updateStatusesJob' })
+	@Cron('*/10 * * * * *', { name: UPDATE_STATUSES_JOB_NAME })
 	async updateStatuses(): Promise<void> {
 		if (this.appConfig.features.statusUpdateModesSupported.length === 0) {
 			Logger.warn('cronjob CRONJOB_MODES_SUPPORTED not set');
@@ -177,9 +180,7 @@ export class BridgeTransactionService {
 			this.appConfig.features.statusUpdateModesSupported,
 		);
 
-		const job = this.schedulerRegistry.getCronJob('updateStatusesJob');
-		job.stop();
-		try {
+		await this.jobLock.runExclusive(UPDATE_STATUSES_JOB_NAME, async () => {
 			for (const chain of Object.values(ChainEnum)) {
 				const entities = await this.bridgeTransactionRepository.find({
 					where: {
@@ -330,11 +331,7 @@ export class BridgeTransactionService {
 					);
 				}
 			}
-		} finally {
-			job.start();
-
-			Logger.debug('Job updateStatusesJob executed');
-		}
+		});
 	}
 
 	/**

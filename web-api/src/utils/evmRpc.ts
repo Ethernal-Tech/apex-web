@@ -25,21 +25,31 @@ export const checksumEvmAddress = (value: string): `0x${string}` => {
 	return Web3.utils.toChecksumAddress(value) as `0x${string}`;
 };
 
-type JsonRpcResponse = {
-	result?: string;
+/**
+ * The node answered, but with nothing: the call reverted or there is no contract
+ * at that address. Worth telling apart from a node that could not be reached,
+ * since only one of the two is worth asking again.
+ */
+export class EmptyRpcResultError extends Error {}
+
+type JsonRpcResponse<T> = {
+	result?: T;
 	error?: { code?: number; message?: string };
 };
 
 /**
+ * One JSON-RPC call. `ethCall` below is this plus the checks a method returning
+ * a single hex word needs.
+ *
  * An EVM node answers a failed call with HTTP 200 and an `error` body, so the
  * body has to be inspected rather than the status code.
  */
-export async function ethCall(
+async function ethRequest<T>(
 	rpcUrl: string,
 	method: string,
 	params: unknown[],
-): Promise<string> {
-	const { data } = await axios.post<JsonRpcResponse>(
+): Promise<T> {
+	const { data } = await axios.post<JsonRpcResponse<T>>(
 		rpcUrl,
 		{ jsonrpc: '2.0', id: 1, method, params },
 		{
@@ -54,15 +64,29 @@ export async function ethCall(
 		);
 	}
 
-	if (typeof data?.result !== 'string' || data.result === '0x') {
-		// '0x' means the call reverted or there is no contract at that address -
-		// an empty answer, not a zero balance.
-		throw new Error(
-			`${method} returned no data (${data?.result ?? 'undefined'})`,
-		);
+	if (data?.result === undefined || data.result === null) {
+		throw new Error(`${method} returned no result`);
 	}
 
 	return data.result;
+}
+
+export async function ethCall(
+	rpcUrl: string,
+	method: string,
+	params: unknown[],
+): Promise<string> {
+	const result = await ethRequest<string>(rpcUrl, method, params);
+
+	if (typeof result !== 'string' || result === '0x') {
+		// '0x' means the call reverted or there is no contract at that address -
+		// an empty answer, not a zero balance.
+		throw new EmptyRpcResultError(
+			`${method} returned no data (${result ?? 'undefined'})`,
+		);
+	}
+
+	return result;
 }
 
 /**

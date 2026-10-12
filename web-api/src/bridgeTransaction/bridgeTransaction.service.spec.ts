@@ -5,7 +5,7 @@ import { BridgeTransaction } from './bridgeTransaction.entity';
 import { NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { ChainApexBridgeEnum, TransactionStatusEnum } from '../common/enum';
-import { SchedulerRegistry } from '@nestjs/schedule';
+import { JobLockService } from 'src/jobLock/jobLock.service';
 import { BridgeTransactionFilterDto } from './bridgeTransaction.dto';
 import { SettingsService } from 'src/settings/settings.service';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
@@ -27,8 +27,8 @@ describe('BridgeTransactionService', () => {
 					useValue: { getCronJob: jest.fn() },
 				},
 				{
-					provide: SchedulerRegistry,
-					useValue: { getCronJob: jest.fn() },
+					provide: JobLockService,
+					useValue: { runExclusive: jest.fn() },
 				},
 				{
 					provide: AppConfigService,

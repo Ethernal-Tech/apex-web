@@ -62,4 +62,11 @@ export class BridgeTransaction {
 
 	@Column({ type: 'varchar', nullable: true })
 	clientID?: string | null;
+
+	/**
+	 * Found by a sync job, in the oracle or on chain, rather than submitted
+	 * through this API.
+	 */
+	@Column({ default: false })
+	isOracleDiscovered: boolean;
 }
