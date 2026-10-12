@@ -22,8 +22,8 @@ import { formatUserError } from "@/lib/formatUserError";
 import cardanoWalletHandler from "@/lib/wallet/cardanoWallet";
 import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
 import solWalletHandler from "@/lib/wallet/solWallet";
+import type { PendingBridgeTx } from "@/lib/bridging/pendingTx";
 import {
-  BridgeTransactionDto,
   ChainEnum,
   CreateCardanoTransactionResponseDto,
   CreateEthTransactionFullResponseDto,
@@ -211,12 +211,13 @@ async function createSolanaTx(
 }
 
 /**
- * Full create → sign → submit flow (Reactor / Skyline / LayerZero).
+ * Full create → sign → submit flow (Reactor / Skyline / LayerZero). Resolves once
+ * the tx is submitted to the source chain, before it is recorded by web-api.
  * Amount is converted to chain smallest units before API/validation.
  */
 export async function submitBridgeTransfer(
   params: SubmitParams,
-): Promise<BridgeTransactionDto | undefined> {
+): Promise<PendingBridgeTx | undefined> {
   const {
     settings,
     srcChain,

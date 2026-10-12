@@ -11,15 +11,26 @@ import {
 	applyIndexedTx,
 	fetchIndexedBridgingTxs,
 	IndexedBridgingTx,
+	IndexedTxEntityFields,
+	isPermanentSaveError,
 	mapIndexedTxToEntityFields,
 } from './indexedTx.helper';
 
 const PULL_LIMIT = 200;
 // upper bound of pages pulled in a single run, so catching up does not block the job for too long
 const MAX_PAGES_PER_RUN = 10;
+// a tx that keeps failing for an unknown reason is skipped after this many attempts,
+// so it can not stop recording of all later txs
+const MAX_SAVE_ATTEMPTS = 10;
 
 @Injectable()
 export class IndexedTxService {
+	// failed save attempts of the tx currently blocking each mode
+	private readonly saveFailures = new Map<
+		BridgingModeEnum,
+		{ txHash: string; attempts: number }
+	>();
+
 	constructor(
 		@InjectRepository(BridgeTransaction)
 		private readonly bridgeTransactionRepository: Repository<BridgeTransaction>,
@@ -94,7 +105,7 @@ export class IndexedTxService {
 				return;
 			}
 
-			const lastSavedSeq = await this.saveTxs(txs);
+			const lastSavedSeq = await this.saveTxs(mode, txs);
 			if (lastSavedSeq !== undefined) {
 				await this.saveCursor(cursor, String(lastSavedSeq));
 			}
@@ -107,9 +118,13 @@ export class IndexedTxService {
 
 	/**
 	 * Saves txs in order and returns the sequence number of the last processed one.
-	 * Processing stops at the first failure, so the rest is pulled again next time.
+	 * Processing stops at the first failure that may succeed later, so the rest is
+	 * pulled again next time. Txs that can never be saved are skipped.
 	 */
-	private async saveTxs(txs: IndexedBridgingTx[]): Promise<number | undefined> {
+	async saveTxs(
+		mode: BridgingModeEnum,
+		txs: IndexedBridgingTx[],
+	): Promise<number | undefined> {
 		const directionConfig =
 			this.settingsService.SettingsResponse.directionConfig;
 		const existing = await this.bridgeTransactionRepository.find({
@@ -120,7 +135,17 @@ export class IndexedTxService {
 		let lastSavedSeq: number | undefined;
 
 		for (const tx of txs) {
-			const fields = mapIndexedTxToEntityFields(tx, directionConfig);
+			let fields: IndexedTxEntityFields | undefined;
+
+			try {
+				fields = mapIndexedTxToEntityFields(tx, directionConfig);
+			} catch (e) {
+				this.logSkippedTx(mode, tx, `invalid tx data: ${e}`);
+				lastSavedSeq = tx.seq;
+
+				continue;
+			}
+
 			if (!fields) {
 				Logger.warn(
 					`Skipping indexed tx ${tx.txHash}: unknown chain ${tx.originChainId} -> ${tx.destinationChainId}`,
@@ -140,8 +165,16 @@ export class IndexedTxService {
 			try {
 				const saved = await this.bridgeTransactionRepository.save(entity);
 				existingByHash.set(saved.sourceTxHash, saved);
+				this.saveFailures.delete(mode);
 			} catch (e) {
-				// e.g. the same tx was inserted in the meantime through the submit endpoint
+				if (isPermanentSaveError(e) || this.registerSaveFailure(mode, tx)) {
+					this.logSkippedTx(mode, tx, `${e}`);
+					lastSavedSeq = tx.seq;
+
+					continue;
+				}
+
+				// e.g. the same tx was inserted in the meantime, or the database is not reachable
 				Logger.warn(`Failed to save indexed tx ${tx.txHash}: ${e}`);
 
 				break;
@@ -155,6 +188,35 @@ export class IndexedTxService {
 		}
 
 		return lastSavedSeq;
+	}
+
+	/** Returns true when the tx failed too many times and should be skipped */
+	private registerSaveFailure(
+		mode: BridgingModeEnum,
+		tx: IndexedBridgingTx,
+	): boolean {
+		const current = this.saveFailures.get(mode);
+		const attempts = current?.txHash === tx.txHash ? current.attempts + 1 : 1;
+
+		if (attempts >= MAX_SAVE_ATTEMPTS) {
+			this.saveFailures.delete(mode);
+
+			return true;
+		}
+
+		this.saveFailures.set(mode, { txHash: tx.txHash, attempts });
+
+		return false;
+	}
+
+	private logSkippedTx(
+		mode: BridgingModeEnum,
+		tx: IndexedBridgingTx,
+		reason: string,
+	) {
+		Logger.error(
+			`Skipping indexed tx ${tx.originChainId}:${tx.txHash} (${mode}, seq ${tx.seq}), it will not be recorded: ${reason}`,
+		);
 	}
 
 	private async getCursor(mode: BridgingModeEnum): Promise<IndexerCursor> {

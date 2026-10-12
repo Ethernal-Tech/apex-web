@@ -1,8 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  getByTxHashAction,
-  layerZeroTransferAction,
-} from "@/lib/api/transaction";
+import { layerZeroTransferAction } from "@/lib/api/transaction";
 import {
   CreateTransactionDto,
   CreateCardanoTransactionResponseDto,
@@ -12,7 +9,6 @@ import {
   LayerZeroTransferDto,
   TxTypeEnum,
   CreateEthTransactionFullResponseDto,
-  BridgeTransactionDto,
 } from "@/swagger/apexBridgeApiService";
 import { ErrorResponse, tryCatchJsonByAction } from "@/lib/fetchUtils";
 import { formatUserError } from "@/lib/formatUserError";
@@ -21,13 +17,18 @@ import evmWalletHandler from "@/lib/wallet/evmWallet";
 import { Transaction } from "web3-types";
 import { toApexBridgeName, toLayerZeroChainName } from "@/lib/bridging/mode";
 import type { ISettingsState } from "@/lib/api/settings";
-import { longRetryOptions, retry, wait } from "@/lib/wallet/utils";
+import { longRetryOptions, retry } from "@/lib/wallet/utils";
 type SendTransactionOptions = {
   checkRevertBeforeSending?: boolean;
 };
 import type { UpdateSubmitLoadingState } from "@/lib/bridging/statusUtils";
 import { validateSubmitTxInputs } from "@/lib/bridging/validate";
 import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
+import { getCurrencyID } from "@/lib/tokens";
+import {
+  createPendingBridgeTx,
+  type PendingBridgeTx,
+} from "@/lib/bridging/pendingTx";
 import solWalletHandler from "@/lib/wallet/solWallet";
 import { getFeeForMessageLamports } from "@/lib/wallet/solanaRpc";
 import {
@@ -80,47 +81,6 @@ const getTxDetailsOptions = (chain: ChainEnum): TxDetailsOptions => ({
   ...chainTxDetailsOverrides[chain],
 });
 
-// how long to wait for the bridging tx to be observed on the source chain
-const bridgeTxWaitMs = 5 * 60 * 1000;
-const bridgeTxPollMs = 2000;
-
-/**
- * Waits until the bridging transaction submitted to the source chain is observed
- * by the bridge indexer and recorded by web-api.
- */
-const waitForBridgeTransaction = async (
-  originChain: ChainEnum,
-  txHash: string,
-  updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
-  action: string,
-): Promise<BridgeTransactionDto> => {
-  updateLoadingState({
-    content: "Waiting for the transaction to be recorded on the chain...",
-    txHash,
-  });
-
-  const deadline = Date.now() + bridgeTxWaitMs;
-
-  while (Date.now() < deadline) {
-    const res = await tryCatchJsonByAction(
-      getByTxHashAction.bind(null, originChain, txHash),
-      false,
-    );
-
-    if (res && !(res instanceof ErrorResponse)) {
-      return res;
-    }
-
-    await wait(bridgeTxPollMs);
-  }
-
-  captureAndThrowError(
-    `Transaction ${txHash} has been submitted, but it is not recorded yet. It will appear in the transaction history once it is confirmed on the source chain.`,
-    "submitTx.ts",
-    action,
-  );
-};
-
 /**
  * Submits an EVM tx through the wallet and waits for its receipt. If the wallet
  * fails to return the receipt after the tx hash is known, the receipt is polled directly.
@@ -161,7 +121,7 @@ export const signAndSubmitCardanoTx = async (
   values: CreateTransactionDto,
   createResponse: CreateCardanoTransactionResponseDto,
   updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
-) => {
+): Promise<PendingBridgeTx> => {
   if (!walletHandler.checkWallet()) {
     captureAndThrowError(
       "Wallet not connected.",
@@ -169,6 +129,20 @@ export const signAndSubmitCardanoTx = async (
       "signAndSubmitCardanoTx",
     );
   }
+
+  const amount =
+    BigInt(createResponse.bridgingFee || "0") +
+    BigInt(createResponse.operationFee || "0") +
+    BigInt(createResponse.amount || "0");
+
+  const nativeToken =
+    createResponse.nativeTokenAmount &&
+    createResponse.nativeTokenAmount.length > 0
+      ? createResponse.nativeTokenAmount[0]
+      : undefined;
+
+  const nativeTokenAmount = BigInt(nativeToken?.amount || "0");
+  const tokenID = nativeTokenAmount > BigInt(0) ? nativeToken!.tokenID : 0;
 
   updateLoadingState({ content: "Signing the transaction..." });
 
@@ -194,19 +168,24 @@ export const signAndSubmitCardanoTx = async (
     );
   }
 
-  return waitForBridgeTransaction(
-    values.originChain as unknown as ChainEnum,
-    createResponse.txHash,
-    updateLoadingState,
-    "signAndSubmitCardanoTx",
-  );
+  return createPendingBridgeTx({
+    originChain: values.originChain as unknown as ChainEnum,
+    destinationChain: values.destinationChain as unknown as ChainEnum,
+    txHash: createResponse.txHash,
+    senderAddress: values.senderAddress,
+    receiverAddress: values.destinationAddress,
+    amount,
+    nativeTokenAmount,
+    tokenID,
+    isLayerZero: false,
+  });
 };
 
 export const signAndSubmitEthTx = async (
   values: CreateTransactionDto,
   createResponse: CreateEthTransactionFullResponseDto,
   updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
-) => {
+): Promise<PendingBridgeTx> => {
   if (!evmWalletHandler.checkWallet()) {
     captureAndThrowError(
       "Wallet not connected.",
@@ -275,19 +254,26 @@ export const signAndSubmitEthTx = async (
     );
   }
 
-  return waitForBridgeTransaction(
+  const tokenAmount = BigInt(createResponse.bridgingTx.tokenAmount || "0");
+
+  return createPendingBridgeTx({
     originChain,
-    receipt.transactionHash.toString(),
-    updateLoadingState,
-    "signAndSubmitEthTx",
-  );
+    destinationChain: values.destinationChain as unknown as ChainEnum,
+    txHash: receipt.transactionHash.toString(),
+    senderAddress: values.senderAddress,
+    receiverAddress: values.destinationAddress,
+    amount: BigInt(createResponse.bridgingTx.ethTx.value || "0"),
+    nativeTokenAmount: tokenAmount,
+    tokenID: tokenAmount > BigInt(0) ? createResponse.bridgingTx.tokenID : 0,
+    isLayerZero: false,
+  });
 };
 
 export const signAndSubmitSolanaTx = async (
   values: CreateTransactionDto,
   createResponse: CreateSolanaTransactionFullResponseDto,
   updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
-) => {
+): Promise<PendingBridgeTx> => {
   if (!solWalletHandler.checkWallet()) {
     captureAndThrowError(
       "Wallet not connected.",
@@ -311,12 +297,25 @@ export const signAndSubmitSolanaTx = async (
 
   const signature = await solWalletHandler.signAndSendTransaction(txRaw);
 
-  return waitForBridgeTransaction(
-    values.originChain as unknown as ChainEnum,
-    signature,
-    updateLoadingState,
-    "signAndSubmitSolanaTx",
-  );
+  const bridgingFee = BigInt(createResponse.bridgingTx.bridgingFee || "0");
+  const operationFee = BigInt(createResponse.bridgingTx.operationFee || "0");
+  const tokenAmount = BigInt(createResponse.bridgingTx.tokenAmount || "0");
+  const isSplTokenBridge = tokenAmount > BigInt(0);
+  const bridgedCurrencyAmount = isSplTokenBridge
+    ? BigInt(0)
+    : BigInt(values.amount || "0");
+
+  return createPendingBridgeTx({
+    originChain: values.originChain as unknown as ChainEnum,
+    destinationChain: values.destinationChain as unknown as ChainEnum,
+    txHash: signature,
+    senderAddress: values.senderAddress,
+    receiverAddress: values.destinationAddress,
+    amount: bridgingFee + operationFee + bridgedCurrencyAmount,
+    nativeTokenAmount: isSplTokenBridge ? tokenAmount : BigInt(0),
+    tokenID: isSplTokenBridge ? createResponse.bridgingTx.tokenID : 0,
+    isLayerZero: false,
+  });
 };
 
 export const signAndSubmitLayerZeroTx = async (
@@ -327,7 +326,7 @@ export const signAndSubmitLayerZeroTx = async (
   createResponse: LayerZeroTransferResponseDto,
   tokenID: number,
   updateLoadingState: (newState: UpdateSubmitLoadingState) => void,
-) => {
+): Promise<PendingBridgeTx> => {
   if (!evmWalletHandler.checkWallet()) {
     captureAndThrowError(
       "Wallet not connected.",
@@ -418,12 +417,21 @@ export const signAndSubmitLayerZeroTx = async (
 
   console.log("layer zero send tx has been submitted", sendTx.value);
 
-  return waitForBridgeTransaction(
-    originalSrcChain,
-    receipt.transactionHash.toString(),
-    updateLoadingState,
-    "signAndSubmitLayerZeroTx",
-  );
+  const isCurrency = tokenID === getCurrencyID(settings, originalSrcChain);
+
+  return createPendingBridgeTx({
+    originChain: originalSrcChain,
+    destinationChain: originalDstChain,
+    txHash: receipt.transactionHash.toString(),
+    senderAddress: account,
+    receiverAddress: receiverAddr,
+    amount: BigInt(transactionData.populatedTransaction.value || "0"),
+    nativeTokenAmount: isCurrency
+      ? BigInt(0)
+      : createResponse.metadata.properties.amount,
+    tokenID: isCurrency ? 0 : tokenID,
+    isLayerZero: true,
+  });
 };
 
 export const populateTxDetails = async (

@@ -34,6 +34,7 @@ import {
   getDefaultBridgeTxFee,
 } from "@/lib/bridging/adjustedBridgeFee";
 import { submitBridgeTransfer } from "@/lib/bridging/bridgeSubmit";
+import { savePendingTx } from "@/lib/bridging/pendingTx";
 import { useChainInfos } from "@/hooks/use-chain-infos";
 import { getEstimatedBridgeTime } from "@/lib/bridging/estimatedBridgeTime";
 import { resolveBridgeMaxAmounts } from "@/lib/bridging/maxAmount";
@@ -1418,9 +1419,12 @@ function TransferForm({
         return;
       }
 
+      // the transaction page shows the submitted tx right away and switches to
+      // the recorded one once the bridge observes it on the source chain
+      savePendingTx(response);
       navigate({
-        to: "/transaction/$id",
-        params: { id: String(response.id) },
+        to: "/transaction/pending/$originChain/$txHash",
+        params: { originChain: response.originChain, txHash: response.txHash },
       });
     } catch {
       setLoadingState(undefined);

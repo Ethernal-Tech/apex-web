@@ -1,44 +1,39 @@
 {
-  "app": {
-    "logLevel": "debug",
-    "port": 30000,
-    "isMainnet": false
-  },
-  "features": {
-    "statusUpdateModesSupported": [
-      "reactor",
-      "skyline",
-      "layerzero"
-    ]
-  },
-  "bridge": {
-    "ethTxTtlInc": 50,
-    "recentInputsThresholdMinutes": 5
-  },
-  "services": {
-    "oracleSkylineUrl": "http://validator-1-skyline-partner.testnet.ethernal.work:10003",
-    "oracleReactorUrl": "http://bridge-api-testnet.apexfusion.org:10003",
-    "cardanoApiSkylineUrl": "http://localhost:41003",
-    "cardanoApiReactorUrl": "http://localhost:41001"
-  },
-  "database": {
-    "host": "localhost",
-    "port": 5432,
-    "name": "apex",
-    "ssl": false,
-    "migrationsTableName": "migrations",
-    "entities": ["dist/**/*.entity.js"],
-    "migrations": ["dist/src/database/migrations/*.js"]
-  },
-  "email": {
-    "contactEmail": "contact@skylinebridge.tech",
-    "smtpHost": "smtp.zoho.eu",
-    "smtpPort": 465
-  },
-  "layerzero": {
-    "apiUrl": "https://metadata.layerzero-api.com/v1/metadata/experiment/ofts",
-    "scanUrl": "https://scan.layerzero-api.com/v1",
-    "networks": [
-    ]
-  }
+	"app": {
+		"logLevel": "debug",
+		"port": 30000,
+		"isMainnet": false
+	},
+	"features": {
+		"statusUpdateModesSupported": ["reactor", "skyline", "layerzero"]
+	},
+	"bridge": {
+		"ethTxTtlInc": 50,
+		"recentInputsThresholdMinutes": 5
+	},
+	"services": {
+		"oracleSkylineUrl": "http://validator-1-skyline-partner.testnet.ethernal.work:10003",
+		"oracleReactorUrl": "http://bridge-api-testnet.apexfusion.org:10003",
+		"cardanoApiSkylineUrl": "http://localhost:41003",
+		"cardanoApiReactorUrl": "http://localhost:41001"
+	},
+	"database": {
+		"host": "localhost",
+		"port": 5432,
+		"name": "apex",
+		"ssl": false,
+		"migrationsTableName": "migrations",
+		"entities": ["dist/**/*.entity.js"],
+		"migrations": ["dist/src/database/migrations/*.js"]
+	},
+	"email": {
+		"contactEmail": "contact@skylinebridge.tech",
+		"smtpHost": "smtp.zoho.eu",
+		"smtpPort": 465
+	},
+	"layerzero": {
+		"apiUrl": "https://metadata.layerzero-api.com/v1/metadata/experiment/ofts",
+		"scanUrl": "https://scan.layerzero-api.com/v1",
+		"networks": []
+	}
 }

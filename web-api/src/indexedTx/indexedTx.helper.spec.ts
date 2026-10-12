@@ -2,9 +2,11 @@ import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entit
 import { getTxTTL } from 'src/bridgeTransaction/bridgeTransaction.helper';
 import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
 import { BridgingSettingsDirectionConfigDto } from 'src/settings/settings.dto';
+import { QueryFailedError } from 'typeorm';
 import {
 	applyIndexedTx,
 	IndexedBridgingTx,
+	isPermanentSaveError,
 	mapIndexedTxToEntityFields,
 } from './indexedTx.helper';
 
@@ -173,6 +175,37 @@ describe('mapIndexedTxToEntityFields', () => {
 				directionConfig,
 			),
 		).toBeUndefined();
+	});
+});
+
+describe('NUL characters from user controlled tx data', () => {
+	it('are removed from sender and receiver addresses', () => {
+		const fields = mapIndexedTxToEntityFields(
+			baseTx({
+				senderAddr: 'addr_test1\u0000sender',
+				receivers: [{ address: '0xrec\u0000eiver', amount: '1', tokenID: 1 }],
+			}),
+			directionConfig,
+		);
+
+		expect(fields?.senderAddress).toBe('addr_test1sender');
+		expect(fields?.receiverAddresses).toBe('0xreceiver');
+	});
+});
+
+describe('isPermanentSaveError', () => {
+	const queryError = (code: string) =>
+		new QueryFailedError('INSERT', [], { code } as unknown as Error);
+
+	it('treats postgres data exceptions as permanent', () => {
+		expect(isPermanentSaveError(queryError('22021'))).toBe(true); // invalid byte sequence (NUL)
+		expect(isPermanentSaveError(queryError('22003'))).toBe(true); // numeric out of range
+	});
+
+	it('treats other errors as transient', () => {
+		expect(isPermanentSaveError(queryError('23505'))).toBe(false); // unique violation
+		expect(isPermanentSaveError(queryError('08006'))).toBe(false); // connection failure
+		expect(isPermanentSaveError(new Error('timeout'))).toBe(false);
 	});
 });
 

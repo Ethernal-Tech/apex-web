@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
+import { QueryFailedError } from 'typeorm';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { serializeConstructedTxRaw } from 'src/bridgeTransaction/bridgeTransaction.helper';
 import {
@@ -84,6 +85,31 @@ export const fetchIndexedBridgingTxs = async (
 
 		return;
 	}
+};
+
+/**
+ * Removes NUL characters. Addresses come from user controlled tx data (metadata,
+ * event strings) and postgres rejects text containing NUL, so a single such tx
+ * would otherwise fail to save forever.
+ */
+export const sanitizeText = (value: string | undefined | null): string =>
+	(value ?? '').split('\u0000').join('');
+
+const PG_DATA_EXCEPTION_CLASS = '22';
+
+/**
+ * Returns true if saving failed because of the data itself (e.g. invalid
+ * encoding, numeric overflow), so retrying the same tx can never succeed.
+ * Everything else (unique conflicts, lost connection...) may succeed later.
+ */
+export const isPermanentSaveError = (e: unknown): boolean => {
+	if (!(e instanceof QueryFailedError)) {
+		return false;
+	}
+
+	const code = (e.driverError as { code?: unknown } | undefined)?.code;
+
+	return typeof code === 'string' && code.startsWith(PG_DATA_EXCEPTION_CLASS);
 };
 
 const chainValues = new Set<string>(Object.values(ChainEnum));
@@ -173,12 +199,12 @@ export const mapIndexedTxToEntityFields = (
 	}
 
 	return {
-		sourceTxHash: tx.txHash,
+		sourceTxHash: sanitizeText(tx.txHash),
 		originChain,
 		destinationChain: tx.destinationChainId,
-		senderAddress: tx.senderAddr,
+		senderAddress: sanitizeText(tx.senderAddr),
 		receiverAddresses: tx.receivers
-			.map((r) => (r.address ?? '').trim())
+			.map((r) => sanitizeText(r.address).trim())
 			.filter(Boolean)
 			.join(', '),
 		amount: amount.toString(),
