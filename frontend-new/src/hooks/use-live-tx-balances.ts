@@ -169,15 +169,15 @@ export function useLiveTxBalances(params: {
       phase,
     ] as const,
     queryFn: async () => {
-      const balances = await safeFetchWalletBalances(
+      const state = await safeFetchWalletBalances(
         tx!.originChain,
         tx!.destinationChain,
         settings!,
       );
-      if (!balances) {
+      if (!state) {
         throw new Error("Failed to load source wallet balance");
       }
-      return balances;
+      return state.balance;
     },
     enabled: canFetchSourceWallet,
   });

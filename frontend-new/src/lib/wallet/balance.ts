@@ -1,6 +1,6 @@
 import { fetchAddressBalance } from "@/lib/api/balance";
 import type { SettingsResponse } from "@/lib/api/settings";
-import type { SimpleUtxo } from "@/lib/cardano/utxoMinValue";
+import { createUtxo, type SimpleUtxo } from "@/lib/cardano/utxoMinValue";
 import { isEvmChain, isSolanaChain } from "@/lib/chains";
 import { getCurrencyID, getTokenConfig, LovelaceTokenName } from "@/lib/tokens";
 import cardanoWalletHandler from "@/lib/wallet/cardanoWallet";
@@ -300,12 +300,48 @@ function mapCardanoAssetMapToWalletBalances(
   }, {});
 }
 
+/** Single UTXO holding every asset in the wallet, used to size the change output's min lovelace. */
+function aggregatedCardanoUtxo(
+  address: string,
+  assets: Record<string, string>,
+): SimpleUtxo {
+  const { [LovelaceTokenName]: lovelace = "0", ...tokens } = assets;
+  return createUtxo(address, lovelace, tokens);
+}
+
+async function fetchCardanoBalancesFromWallet(
+  settings: SettingsResponse,
+  srcChain: string,
+  dirTokens: number[],
+  currencyID: number | undefined,
+): Promise<WalletBalanceState> {
+  const [balance, address] = await Promise.all([
+    cardanoWalletHandler.getBalance(),
+    cardanoWalletHandler.getChangeAddress(),
+  ]);
+  const assets: Record<string, string> = {};
+  for (const [unit, amount] of Object.entries(balance)) {
+    assets[unit] = amount.toString(10);
+  }
+
+  return {
+    balance: mapCardanoAssetMapToWalletBalances(
+      settings,
+      srcChain,
+      dirTokens,
+      currencyID,
+      assets,
+    ),
+    utxos: [aggregatedCardanoUtxo(address, assets)],
+  };
+}
+
 async function fetchCardanoBalancesFromBackend(
   settings: SettingsResponse,
   srcChain: string,
   dirTokens: number[],
   currencyID: number | undefined,
-): Promise<WalletBalances> {
+): Promise<WalletBalanceState> {
   const address = await cardanoWalletHandler.getChangeAddress();
   const data = await fetchAddressBalance({
     chain: srcChain,
@@ -319,13 +355,16 @@ async function fetchCardanoBalancesFromBackend(
     assets[token.unit] = token.amount;
   }
 
-  return mapCardanoAssetMapToWalletBalances(
-    settings,
-    srcChain,
-    dirTokens,
-    currencyID,
-    assets,
-  );
+  return {
+    balance: mapCardanoAssetMapToWalletBalances(
+      settings,
+      srcChain,
+      dirTokens,
+      currencyID,
+      assets,
+    ),
+    utxos: [aggregatedCardanoUtxo(address, assets)],
+  };
 }
 
 export async function fetchWalletBalances(
@@ -368,20 +407,12 @@ export async function fetchWalletBalances(
 
   if (utxoRetrieverType === UtxoRetrieverEnum.Wallet) {
     try {
-      const balance = await cardanoWalletHandler.getBalance();
-      const assets: Record<string, string> = {};
-      for (const [unit, amount] of Object.entries(balance)) {
-        assets[unit] = amount.toString(10);
-      }
-      return {
-        balance: mapCardanoAssetMapToWalletBalances(
-          settings,
-          srcChain,
-          dirTokens,
-          currencyID,
-          assets,
-        ),
-      };
+      return await fetchCardanoBalancesFromWallet(
+        settings,
+        srcChain,
+        dirTokens,
+        currencyID,
+      );
     } catch (walletError) {
       console.log(
         "Cardano wallet balance failed, falling back to web-api:",
@@ -396,24 +427,21 @@ export async function fetchWalletBalances(
     }
   }
 
-  return {
-    balance: await fetchCardanoBalancesFromBackend(
-      settings,
-      srcChain,
-      dirTokens,
-      currencyID,
-    ),
-  };
+  return await fetchCardanoBalancesFromBackend(
+    settings,
+    srcChain,
+    dirTokens,
+    currencyID,
+  );
 }
 
 export async function safeFetchWalletBalances(
   srcChain: string,
   dstChain: string,
   settings: SettingsResponse,
-): Promise<WalletBalances | null> {
+): Promise<WalletBalanceState | null> {
   try {
-    const state = await fetchWalletBalances(srcChain, dstChain, settings);
-    return state.balance;
+    return await fetchWalletBalances(srcChain, dstChain, settings);
   } catch (e) {
     console.log("Error while fetching wallet balance:", e);
     captureException(e, {
