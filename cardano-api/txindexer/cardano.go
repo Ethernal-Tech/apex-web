@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
 	"github.com/Ethernal-Tech/cardano-infrastructure/indexer"
 	"github.com/Ethernal-Tech/cardano-infrastructure/indexer/gouroboros"
@@ -248,7 +249,7 @@ func (h *cardanoBlockHandler) toBridgingTx(
 		}
 
 		receivers[i] = BridgingTxReceiver{
-			Address: strings.Join(receiver.Address, ""),
+			Address: metadataAddrToAddr(metadata.DestinationChainID, receiver.Address),
 			Amount:  strconv.FormatUint(receiver.Amount, 10),
 			TokenID: tokenID,
 		}
@@ -267,6 +268,18 @@ func (h *cardanoBlockHandler) toBridgingTx(
 		BlockHash:          blockHeader.Hash.String(),
 		TTL:                blockHeader.Slot + h.config.TTLSlotNumberInc,
 	}
+}
+
+// metadataAddrToAddr joins an address split into metadata chunks. EVM addresses are written to
+// metadata without the 0x prefix (sendtx.AddrToMetaDataAddr), so the prefix is restored for them
+func metadataAddrToAddr(chainID string, chunks []string) string {
+	addr := strings.Join(chunks, "")
+
+	if common.IsEvmChainID(chainID) && !strings.HasPrefix(addr, "0x") && !strings.HasPrefix(addr, "0X") {
+		return "0x" + addr
+	}
+
+	return addr
 }
 
 type cardanoIndexer struct {

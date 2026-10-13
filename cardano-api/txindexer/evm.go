@@ -2,7 +2,6 @@ package txindexer
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"sync"
@@ -12,7 +11,6 @@ import (
 	eventTracker "github.com/Ethernal-Tech/blockchain-event-tracker/tracker"
 	"github.com/Ethernal-Tech/cardano-api/core"
 	"github.com/Ethernal-Tech/ethgo"
-	"github.com/Ethernal-Tech/ethgo/jsonrpc"
 	"github.com/hashicorp/go-hclog"
 )
 
@@ -87,47 +85,27 @@ func (s *evmRescanStore) getSafeBlock(lastProcessed uint64) (uint64, error) {
 	return max(safeBlock, lastProcessed-min(lastProcessed, s.config.RescanMaxBlocks)), nil
 }
 
-// errRetryable marks errors after which the log should be delivered again by the tracker
-var errRetryable = errors.New("retryable error")
-
 type evmLogSubscriber struct {
 	config      *core.EvmIndexerConfig
 	events      *evmEvents
 	chainIDs    ChainIDConverter
-	rpcClient   func() (*jsonrpc.Client, error)
 	txsStore    BridgingTxsStore
 	gatewayAddr ethgo.Address
-	oftAddr     ethgo.Address
 	logger      hclog.Logger
 }
 
 var _ eventTracker.EventSubscriber = (*evmLogSubscriber)(nil)
 
 func (s *evmLogSubscriber) AddLog(_ *big.Int, log *ethgo.Log) error {
-	var (
-		bridgingTx *BridgingTx
-		err        error
-	)
-
-	switch {
-	case s.config.GatewayAddress != "" && log.Address == s.gatewayAddr:
-		bridgingTx, err = s.withdrawToBridgingTx(log)
-	case s.config.LayerZero != nil && log.Address == s.oftAddr:
-		bridgingTx, err = s.oftSentToBridgingTx(log)
-	default:
+	if log.Address != s.gatewayAddr {
 		return nil
 	}
 
-	if errors.Is(err, errRetryable) {
-		return err
-	} else if err != nil {
+	bridgingTx, err := s.withdrawToBridgingTx(log)
+	if err != nil {
 		// a log that can not be parsed will not become parsable later, so it is skipped
 		s.logger.Error("Failed to parse log", "chain", s.config.ChainID, "tx", log.TransactionHash, "err", err)
 
-		return nil
-	}
-
-	if bridgingTx == nil {
 		return nil
 	}
 
@@ -136,7 +114,7 @@ func (s *evmLogSubscriber) AddLog(_ *big.Int, log *ethgo.Log) error {
 	}
 
 	s.logger.Info("New bridging tx", "chain", s.config.ChainID, "hash", bridgingTx.TxHash,
-		"block", log.BlockNumber, "layerZero", bridgingTx.IsLayerZero)
+		"block", log.BlockNumber)
 
 	return nil
 }
@@ -176,63 +154,6 @@ func (s *evmLogSubscriber) withdrawToBridgingTx(log *ethgo.Log) (*BridgingTx, er
 	}, nil
 }
 
-func (s *evmLogSubscriber) oftSentToBridgingTx(log *ethgo.Log) (*BridgingTx, error) {
-	oftSent, err := s.events.parseOFTSent(log)
-	if err != nil {
-		return nil, err
-	}
-
-	destinationChainID, exists := s.config.LayerZero.EndpointIDs[oftSent.DstEid]
-	if !exists {
-		s.logger.Debug("OFTSent to untracked endpoint", "chain", s.config.ChainID,
-			"tx", log.TransactionHash, "dstEid", oftSent.DstEid)
-
-		return nil, nil
-	}
-
-	// receiver and tx value are not part of the event
-	client, err := s.rpcClient()
-	if err != nil {
-		return nil, errors.Join(errRetryable, err)
-	}
-
-	tx, err := client.Eth().GetTransactionByHash(log.TransactionHash)
-	if err != nil {
-		return nil, errors.Join(errRetryable, fmt.Errorf("could not retrieve tx: %w", err))
-	}
-
-	if tx == nil {
-		return nil, errors.Join(errRetryable, fmt.Errorf("tx %s not found", log.TransactionHash))
-	}
-
-	receiver := s.events.parseOFTSendReceiver(tx.Input)
-	if receiver == "" {
-		s.logger.Warn("Could not determine LayerZero receiver", "chain", s.config.ChainID, "tx", log.TransactionHash)
-	}
-
-	value := big.NewInt(0)
-	if tx.Value != nil {
-		value = tx.Value
-	}
-
-	return &BridgingTx{
-		OriginChainID:      s.config.ChainID,
-		TxHash:             log.TransactionHash.String(),
-		DestinationChainID: destinationChainID,
-		SenderAddr:         oftSent.FromAddress.Hex(),
-		Receivers: []BridgingTxReceiver{
-			{Address: receiver, Amount: oftSent.AmountSentLD.String()},
-		},
-		BridgingFee:  "0",
-		OperationFee: "0",
-		Value:        value.String(),
-		BlockNumber:  log.BlockNumber,
-		BlockHash:    log.BlockHash.String(),
-		TTL:          log.BlockNumber + s.config.TTLBlockNumberInc,
-		IsLayerZero:  true,
-	}, nil
-}
-
 type evmIndexer struct {
 	config   *core.EvmIndexerConfig
 	store    eventStore.EventTrackerStore
@@ -242,9 +163,6 @@ type evmIndexer struct {
 	logger   hclog.Logger
 	// logger for the event tracker library, which writes into the chain indexer log file
 	trackerLogger hclog.Logger
-
-	rpcLock   sync.Mutex
-	rpcClient *jsonrpc.Client
 }
 
 func newEvmIndexer(
@@ -310,24 +228,16 @@ func (ei *evmIndexer) Start(ctx context.Context) {
 }
 
 func (ei *evmIndexer) runTracker(ctx context.Context) {
-	logFilter := map[ethgo.Address][]ethgo.Hash{}
 	subscriber := &evmLogSubscriber{
-		config:    ei.config,
-		events:    ei.events,
-		chainIDs:  ei.chainIDs,
-		rpcClient: ei.getRPCClient,
-		txsStore:  ei.txsStore,
-		logger:    ei.logger,
+		config:      ei.config,
+		events:      ei.events,
+		chainIDs:    ei.chainIDs,
+		txsStore:    ei.txsStore,
+		gatewayAddr: ethgo.HexToAddress(ei.config.GatewayAddress),
+		logger:      ei.logger,
 	}
-
-	if ei.config.GatewayAddress != "" {
-		subscriber.gatewayAddr = ethgo.HexToAddress(ei.config.GatewayAddress)
-		logFilter[subscriber.gatewayAddr] = []ethgo.Hash{ei.events.withdrawID, ei.events.withdrawReactorID}
-	}
-
-	if ei.config.LayerZero != nil && ei.config.LayerZero.OFTAddress != "" {
-		subscriber.oftAddr = ethgo.HexToAddress(ei.config.LayerZero.OFTAddress)
-		logFilter[subscriber.oftAddr] = []ethgo.Hash{ei.events.oftSentID}
+	logFilter := map[ethgo.Address][]ethgo.Hash{
+		subscriber.gatewayAddr: {ei.events.withdrawID, ei.events.withdrawReactorID},
 	}
 
 	trackerConfig := &eventTracker.EventTrackerConfig{
@@ -369,20 +279,4 @@ func (ei *evmIndexer) runTracker(ctx context.Context) {
 	}
 
 	tracker.Start(ctx)
-}
-
-func (ei *evmIndexer) getRPCClient() (*jsonrpc.Client, error) {
-	ei.rpcLock.Lock()
-	defer ei.rpcLock.Unlock()
-
-	if ei.rpcClient == nil {
-		client, err := jsonrpc.NewClient(ei.config.NodeURL)
-		if err != nil {
-			return nil, fmt.Errorf("could not create rpc client: %w", err)
-		}
-
-		ei.rpcClient = client
-	}
-
-	return ei.rpcClient, nil
 }

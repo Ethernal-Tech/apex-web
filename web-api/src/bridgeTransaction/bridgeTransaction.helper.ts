@@ -130,6 +130,96 @@ export const getHasTxFailedRequestStates = async (
 	}, {});
 };
 
+/** The parts of a LayerZero scan message the status mapping reads */
+export type LayerZeroScanStatus = {
+	status?: { name?: string };
+	source?: { status?: string };
+	destination?: { status?: string };
+};
+
+/**
+ * Maps the global status of a LayerZero message, refined by how far its source
+ * and destination side got, to a bridging request status:
+ *	global: "INFLIGHT" //  "Source transaction sent"
+ *	source: "VALIDATING_TX"
+ *	destination: "WAITING"
+ *	verification.dvn: "WAITING"
+ *	verification.dvn.dvns: "WAITING"
+ *	verification.sealer: "WAITING"
+ *
+ *	global: "INFLIGHT" // Ready for DVNs to verify"
+ *	source: "SUCCEEDED"
+ *	destination: "WAITING"
+ *	verification.dvn: "WAITING"
+ *	verification.dvn.dvns: "VALIDATING_TX"
+ *	verification.sealer: "WAITING"
+ *
+ *	global: "INFLIGHT" // Ready for committer to commit verification
+ *	source: "SUCCEEDED"
+ *	destination: "WAITING"
+ *	verification.dvn: "SUCCEEDED"
+ *	verification.dvn.dvns: "SUCCEEDED"
+ *	verification.sealer: "WAITING"
+ *
+ *	global: "INFLIGHT" // Verification committed
+ *	source: "SUCCEEDED"
+ *	destination: "WAITING"
+ *	verification.dvn: "SUCCEEDED"
+ *	verification.dvn.dvns: "SUCCEEDED"
+ *	verification.sealer: "SUCCEEDED"
+ *
+ *	global: "INFLIGHT" // Executor transaction confirmed
+ *	source: "SUCCEEDED"
+ *	destination: "SUCCEEDED"
+ *	verification.dvn: "SUCCEEDED"
+ *	verification.dvn.dvns: "SUCCEEDED"
+ *	verification.sealer: "SUCCEEDED"
+ *
+ *	global: "DELIVERED" // Executor transaction confirmed
+ *	source: "SUCCEEDED"
+ *	destination: "SUCCEEDED"
+ *	verification.dvn: "SUCCEEDED"
+ *	verification.dvn.dvns: "SUCCEEDED"
+ *	verification.sealer: "SUCCEEDED"
+ */
+export const mapLayerZeroStatus = (
+	data: LayerZeroScanStatus | undefined,
+): TransactionStatusEnum => {
+	let status: TransactionStatusEnum = TransactionStatusEnum.Pending;
+	switch (data?.status?.name) {
+		case 'INFLIGHT':
+			if (data?.destination?.status == 'SUCCEEDED') {
+				status = TransactionStatusEnum.SubmittedToDestination;
+			} else if (data?.source?.status == 'SUCCEEDED') {
+				status = TransactionStatusEnum.SubmittedToBridge;
+			} else {
+				status = TransactionStatusEnum.DiscoveredOnSource;
+			}
+
+			break;
+		case 'DELIVERED':
+			status = TransactionStatusEnum.ExecutedOnDestination;
+
+			break;
+		case 'PAYLOAD_STORED':
+			status = TransactionStatusEnum.FailedToExecuteOnDestination;
+
+			break;
+		case 'CONFIRMING':
+			status = TransactionStatusEnum.SubmittedToDestination;
+
+			break;
+		case 'FAILED':
+		case 'BLOCKED':
+		case 'UNRESOLVABLE_COMMAND':
+			status = TransactionStatusEnum.InvalidRequest;
+
+			break;
+	}
+
+	return status;
+};
+
 export const getLayerZeroRequestState = async (
 	model: GetLayerZeroBridgingRequestStatesModel,
 ): Promise<BridgingRequestState | undefined> => {
@@ -148,81 +238,7 @@ export const getLayerZeroRequestState = async (
 		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
 
 		const data = response.data.data[0];
-
-		/*
-			global: "INFLIGHT" //  "Source transaction sent"
-			source: "VALIDATING_TX"
-			destination: "WAITING"
-			verification.dvn: "WAITING"
-			verification.dvn.dvns: "WAITING"
-			verification.sealer: "WAITING"
-
-			global: "INFLIGHT" // Ready for DVNs to verify"
-			source: "SUCCEEDED"
-			destination: "WAITING"
-			verification.dvn: "WAITING"
-			verification.dvn.dvns: "VALIDATING_TX"
-			verification.sealer: "WAITING"
-
-			global: "INFLIGHT" // Ready for committer to commit verification
-			source: "SUCCEEDED"
-			destination: "WAITING"
-			verification.dvn: "SUCCEEDED"
-			verification.dvn.dvns: "SUCCEEDED"
-			verification.sealer: "WAITING"
-		
-			global: "INFLIGHT" // Verification committed
-			source: "SUCCEEDED"
-			destination: "WAITING"
-			verification.dvn: "SUCCEEDED"
-			verification.dvn.dvns: "SUCCEEDED"
-			verification.sealer: "SUCCEEDED"
-
-			global: "INFLIGHT" // Executor transaction confirmed
-			source: "SUCCEEDED"
-			destination: "SUCCEEDED"
-			verification.dvn: "SUCCEEDED"
-			verification.dvn.dvns: "SUCCEEDED"
-			verification.sealer: "SUCCEEDED"
-
-			global: "DELIVERED" // Executor transaction confirmed
-			source: "SUCCEEDED"
-			destination: "SUCCEEDED"
-			verification.dvn: "SUCCEEDED"
-			verification.dvn.dvns: "SUCCEEDED"
-			verification.sealer: "SUCCEEDED"
-		*/
-		let status: TransactionStatusEnum = TransactionStatusEnum.Pending;
-		switch (data['status'].name) {
-			case 'INFLIGHT':
-				if (data['destination']['status'] == 'SUCCEEDED') {
-					status = TransactionStatusEnum.SubmittedToDestination;
-				} else if (data['source']['status'] == 'SUCCEEDED') {
-					status = TransactionStatusEnum.SubmittedToBridge;
-				} else {
-					status = TransactionStatusEnum.DiscoveredOnSource;
-				}
-
-				break;
-			case 'DELIVERED':
-				status = TransactionStatusEnum.ExecutedOnDestination;
-
-				break;
-			case 'PAYLOAD_STORED':
-				status = TransactionStatusEnum.FailedToExecuteOnDestination;
-
-				break;
-			case 'CONFIRMING':
-				status = TransactionStatusEnum.SubmittedToDestination;
-
-				break;
-			case 'FAILED':
-			case 'BLOCKED':
-			case 'UNRESOLVABLE_COMMAND':
-				status = TransactionStatusEnum.InvalidRequest;
-
-				break;
-		}
+		const status = mapLayerZeroStatus(data);
 
 		return {
 			sourceTxHash: model.txHash,

@@ -101,53 +101,6 @@ func TestEvmLogSubscriber_Withdraw(t *testing.T) {
 	require.Equal(t, "530", page.Txs[1].Value)
 }
 
-func TestEvmEvents_OFT(t *testing.T) {
-	events, err := getEvmEvents()
-	require.NoError(t, err)
-
-	from := goEthCommon.HexToAddress("0x3333333333333333333333333333333333333333")
-	receiver := goEthCommon.HexToAddress("0x4444444444444444444444444444444444444444")
-
-	data, err := events.abi.Events["OFTSent"].Inputs.NonIndexed().Pack(uint32(30101), big.NewInt(77), big.NewInt(70))
-	require.NoError(t, err)
-
-	oftSent, err := events.parseOFTSent(&ethgo.Log{
-		Topics: []ethgo.Hash{events.oftSentID, {9}, ethgo.Hash(goEthCommon.BytesToHash(from.Bytes()))},
-		Data:   data,
-	})
-	require.NoError(t, err)
-	require.Equal(t, uint32(30101), oftSent.DstEid)
-	require.Equal(t, from, oftSent.FromAddress)
-	require.Equal(t, big.NewInt(77), oftSent.AmountSentLD)
-
-	type sendParam struct {
-		DstEid       uint32
-		To           [32]byte
-		AmountLD     *big.Int
-		MinAmountLD  *big.Int
-		ExtraOptions []byte
-		ComposeMsg   []byte
-		OftCmd       []byte
-	}
-
-	type messagingFee struct {
-		NativeFee  *big.Int
-		LzTokenFee *big.Int
-	}
-
-	input, err := events.abi.Pack("send",
-		sendParam{
-			DstEid: 30101, To: goEthCommon.BytesToHash(receiver.Bytes()), AmountLD: big.NewInt(77),
-			MinAmountLD: big.NewInt(70), ExtraOptions: []byte{}, ComposeMsg: []byte{}, OftCmd: []byte{},
-		},
-		messagingFee{NativeFee: big.NewInt(1), LzTokenFee: big.NewInt(0)},
-		from)
-	require.NoError(t, err)
-
-	require.Equal(t, receiver.Hex(), events.parseOFTSendReceiver(input))
-	require.Equal(t, "", events.parseOFTSendReceiver([]byte{1, 2, 3, 4, 5}))
-}
-
 type testEventTrackerStore struct {
 	lastProcessed uint64
 }

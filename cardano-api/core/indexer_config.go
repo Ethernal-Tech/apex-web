@@ -71,16 +71,9 @@ type CardanoIndexerConfig struct {
 	TTLSlotNumberInc uint64 `json:"ttlSlotNumberIncrement"`
 }
 
-type EvmLayerZeroConfig struct {
-	// OFT (or OFT adapter) contract address whose OFTSent events are tracked
-	OFTAddress string `json:"oftAddress"`
-	// LayerZero endpoint ID => chain ID
-	EndpointIDs map[uint32]string `json:"endpointIDs"`
-}
-
 type EvmIndexerConfig struct {
 	ChainID string `json:"-"`
-	// Gateway contract address. Optional if only LayerZero is tracked on the chain
+	// Gateway contract address
 	GatewayAddress          string        `json:"gatewayAddress"`
 	NodeURL                 string        `json:"nodeUrl"`
 	SyncBatchSize           uint64        `json:"syncBatchSize"`
@@ -96,8 +89,6 @@ type EvmIndexerConfig struct {
 	RescanInterval              time.Duration `json:"rescanInterval"`
 	// Upper bound of blocks re-read by a single rescan
 	RescanMaxBlocks uint64 `json:"rescanMaxBlocks"`
-	// Optional LayerZero OFT tracking
-	LayerZero *EvmLayerZeroConfig `json:"layerZero,omitempty"`
 }
 
 type SolanaIndexerConfig struct {
@@ -169,8 +160,8 @@ func (appConfig *AppConfig) fillOutIndexer() error {
 			return fmt.Errorf("indexer: nodeUrl is required for chain %s", chainID)
 		}
 
-		if chainCfg.GatewayAddress == "" && (chainCfg.LayerZero == nil || chainCfg.LayerZero.OFTAddress == "") {
-			return fmt.Errorf("indexer: gatewayAddress or layerZero.oftAddress is required for chain %s", chainID)
+		if chainCfg.GatewayAddress == "" {
+			return fmt.Errorf("indexer: gatewayAddress is required for chain %s", chainID)
 		}
 
 		switch chainCfg.RescanConfirmationStrategy {

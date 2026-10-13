@@ -418,6 +418,9 @@ export const signAndSubmitLayerZeroTx = async (
   console.log("layer zero send tx has been submitted", sendTx.value);
 
   const isCurrency = tokenID === getCurrencyID(settings, originalSrcChain);
+  // the bridged amount, as recorded from LayerZero scan. The rest of the tx value
+  // is the LayerZero fee, which is not bridged
+  const bridgedAmount = createResponse.metadata.properties.amount || "0";
 
   return createPendingBridgeTx({
     originChain: originalSrcChain,
@@ -425,10 +428,8 @@ export const signAndSubmitLayerZeroTx = async (
     txHash: receipt.transactionHash.toString(),
     senderAddress: account,
     receiverAddress: receiverAddr,
-    amount: BigInt(transactionData.populatedTransaction.value || "0"),
-    nativeTokenAmount: isCurrency
-      ? BigInt(0)
-      : createResponse.metadata.properties.amount,
+    amount: isCurrency ? bridgedAmount : BigInt(0),
+    nativeTokenAmount: isCurrency ? BigInt(0) : bridgedAmount,
     tokenID: isCurrency ? 0 : tokenID,
     isLayerZero: true,
   });

@@ -222,7 +222,11 @@ export class BridgeTransactionService {
 					for (const entity of entities) {
 						// handle layer zero
 						if (entity.isLayerZero) {
-							if (modesSupported.has(BridgingModeEnum.LayerZero)) {
+							// LayerZero transfers are always on mainnet, a testnet instance never queries them
+							if (
+								modesSupported.has(BridgingModeEnum.LayerZero) &&
+								this.appConfig.app.isMainnet
+							) {
 								modelsLayerZero.push({
 									txHash: entity.sourceTxHash,
 								});

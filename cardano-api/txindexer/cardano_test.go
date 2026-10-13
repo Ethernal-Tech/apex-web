@@ -177,6 +177,13 @@ func TestCardanoBlockHandler_RollForward(t *testing.T) {
 	require.Equal(t, []cardanoBlockPoint{{Slot: 10, Hash: indexer.Hash{1}}, {Slot: 11, Hash: indexer.Hash{3}}}, handler.points)
 }
 
+func TestMetadataAddrToAddr(t *testing.T) {
+	// EVM addresses are written to metadata without the 0x prefix
+	require.Equal(t, "0xabcdef0123", metadataAddrToAddr("nexus", []string{"abcdef", "0123"}))
+	require.Equal(t, "0xabcdef0123", metadataAddrToAddr("polygon", []string{"0xabcdef", "0123"}))
+	require.Equal(t, "addr_test1qxyz", metadataAddrToAddr("vector", []string{"addr_test1", "qxyz"}))
+}
+
 func TestCardanoBlockHandler_NoAddresses(t *testing.T) {
 	handler, _ := newTestCardanoHandler(t)
 	handler.setAddresses(nil)

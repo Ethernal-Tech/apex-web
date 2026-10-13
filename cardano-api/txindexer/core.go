@@ -32,8 +32,7 @@ type BridgingTx struct {
 	BlockNumber uint64 `json:"blockNumber"`
 	BlockHash   string `json:"blockHash"`
 	// Upper bound of the tx TTL in the same units web-api uses for the chain
-	TTL         uint64 `json:"ttl"`
-	IsLayerZero bool   `json:"isLayerZero"`
+	TTL uint64 `json:"ttl"`
 	// Time when the tx was indexed for the first time
 	IndexedAt time.Time `json:"indexedAt"`
 } // @name BridgingTx

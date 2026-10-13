@@ -213,11 +213,7 @@ Durations are in nanoseconds.
             "poolIntervalMs": 5000,
             "rescanConfirmationStrategy": "finalized",
             "rescanInterval": 300000000000,
-            "rescanMaxBlocks": 200,
-            "layerZero": {
-                "oftAddress": "0x...",
-                "endpointIDs": { "30184": "base" }
-            }
+            "rescanMaxBlocks": 200
         }
     },
     "solanaChains": {

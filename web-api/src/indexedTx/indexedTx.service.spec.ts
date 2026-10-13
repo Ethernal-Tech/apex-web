@@ -25,7 +25,6 @@ const tx = (seq: number, txHash: string): IndexedBridgingTx => ({
 	blockNumber: 1,
 	blockHash: 'bh',
 	ttl: 10,
-	isLayerZero: false,
 	indexedAt: '2026-10-09T10:00:00Z',
 });
 

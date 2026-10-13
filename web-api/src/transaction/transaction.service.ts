@@ -318,6 +318,13 @@ export class TransactionService {
 	async transferLayerZero(
 		dto: LayerZeroTransferDto,
 	): Promise<LayerZeroTransferResponseDto> {
+		// LayerZero has no testnet, a testnet instance must never build mainnet transfers
+		if (!this.appConfig.app.isMainnet) {
+			throw new BadRequestException(
+				'Layer Zero transfers are not available on testnet',
+			);
+		}
+
 		if (!isAddress(dto.from)) {
 			throw new BadRequestException(
 				`error while calling Layer Zero transfer: request.from is not a valid address`,

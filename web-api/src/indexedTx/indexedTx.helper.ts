@@ -30,7 +30,6 @@ export type IndexedBridgingTx = {
 	blockNumber: number;
 	blockHash: string;
 	ttl: number;
-	isLayerZero: boolean;
 	indexedAt: string;
 };
 
@@ -112,6 +111,20 @@ export const isPermanentSaveError = (e: unknown): boolean => {
 	return typeof code === 'string' && code.startsWith(PG_DATA_EXCEPTION_CLASS);
 };
 
+const EVM_ADDRESS_WITHOUT_PREFIX_REGEX = /^[0-9a-fA-F]{40}$/;
+
+/**
+ * Cardano metadata stores EVM addresses without the 0x prefix, which EVM nodes
+ * do not accept (e.g. when reading the receiver's balance), so it is restored.
+ */
+export const normalizeReceiverAddress = (
+	destinationChain: ChainEnum,
+	address: string,
+): string =>
+	isEvmChain(destinationChain) && EVM_ADDRESS_WITHOUT_PREFIX_REGEX.test(address)
+		? `0x${address}`
+		: address;
+
 const chainValues = new Set<string>(Object.values(ChainEnum));
 
 const isChain = (chain: string): chain is ChainEnum => chainValues.has(chain);
@@ -172,20 +185,7 @@ export const mapIndexedTxToEntityFields = (
 	let amount: bigint;
 	const value = BigInt(tx.value || '0');
 
-	if (tx.isLayerZero) {
-		amount = value;
-
-		// native OFT adapter: tx value covers the sent amount. Otherwise the OFT is
-		// a token and the value only pays the LayerZero fee
-		const sentAmount = BigInt(tx.receivers[0]?.amount || '0');
-		if (value < sentAmount) {
-			tokenAmount = sentAmount;
-			tokenID =
-				getCurrencyIDFromDirectionConfig(directionConfig, ChainEnum.Nexus) ?? 0;
-		} else {
-			tokenAmount = BigInt(0);
-		}
-	} else if (isEvmChain(originChain)) {
+	if (isEvmChain(originChain)) {
 		amount = value;
 	} else {
 		amount =
@@ -204,7 +204,12 @@ export const mapIndexedTxToEntityFields = (
 		destinationChain: tx.destinationChainId,
 		senderAddress: sanitizeText(tx.senderAddr),
 		receiverAddresses: tx.receivers
-			.map((r) => sanitizeText(r.address).trim())
+			.map((r) =>
+				normalizeReceiverAddress(
+					tx.destinationChainId as ChainEnum,
+					sanitizeText(r.address).trim(),
+				),
+			)
 			.filter(Boolean)
 			.join(', '),
 		amount: amount.toString(),
@@ -214,7 +219,8 @@ export const mapIndexedTxToEntityFields = (
 			convertDfmToWeiByChain(tokenAmount.toString(), originChain),
 		),
 		tokenID,
-		isLayerZero: tx.isLayerZero,
+		// LayerZero transfers are recorded from LayerZero scan (layerZeroSync)
+		isLayerZero: false,
 	};
 };
 

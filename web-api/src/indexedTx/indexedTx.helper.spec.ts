@@ -37,7 +37,6 @@ const baseTx = (overrides: Partial<IndexedBridgingTx>): IndexedBridgingTx => ({
 	blockNumber: 10,
 	blockHash: 'bh',
 	ttl: 0,
-	isLayerZero: false,
 	indexedAt: '2026-10-07T10:00:00Z',
 	...overrides,
 });
@@ -135,37 +134,25 @@ describe('mapIndexedTxToEntityFields', () => {
 		expect(currency?.tokenID).toBe(0);
 	});
 
-	it('maps layer zero native and token OFT transfers', () => {
-		const native = mapIndexedTxToEntityFields(
+	it('restores the 0x prefix of EVM receivers from cardano metadata', () => {
+		const fields = mapIndexedTxToEntityFields(
 			baseTx({
-				originChainId: 'nexus',
-				destinationChainId: 'base',
-				isLayerZero: true,
-				receivers: [{ address: '0xr', amount: '1000', tokenID: 0 }],
-				value: '1010',
-			}),
-			directionConfig,
-		);
-
-		expect(native?.amount).toBe('1010');
-		expect(native?.nativeTokenAmount).toBe('0');
-		expect(native?.tokenID).toBe(0);
-		expect(native?.isLayerZero).toBe(true);
-
-		const token = mapIndexedTxToEntityFields(
-			baseTx({
-				originChainId: 'base',
+				originChainId: 'vector',
 				destinationChainId: 'nexus',
-				isLayerZero: true,
-				receivers: [{ address: '0xr', amount: '1000', tokenID: 0 }],
-				value: '10',
+				receivers: [
+					{
+						address: '1234567890abcdef1234567890abcdef12345678',
+						amount: '1',
+						tokenID: 0,
+					},
+				],
 			}),
 			directionConfig,
 		);
 
-		expect(token?.amount).toBe('10');
-		expect(token?.nativeTokenAmount).toBe('1000');
-		expect(token?.tokenID).toBe(3);
+		expect(fields?.receiverAddresses).toBe(
+			'0x1234567890abcdef1234567890abcdef12345678',
+		);
 	});
 
 	it('returns undefined for unknown chains', () => {
