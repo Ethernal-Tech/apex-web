@@ -9,6 +9,7 @@ import { MailerConfigModule } from './mailer/mailer.module';
 import { ContactModule } from './contact/contact.module';
 import { AppConfigModule } from './appConfig/appConfig.module';
 import { IndexedTxModule } from './indexedTx/indexedTx.module';
+import { StatsModule } from './stats/stats.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ApiKeyGuard } from './common/guards/api-key.guard';
 import { getAppConfig } from './appConfig/appConfig';
@@ -31,6 +32,7 @@ import { getAppConfig } from './appConfig/appConfig';
 		BridgeTransactionModule,
 		ContactModule,
 		IndexedTxModule,
+		StatsModule,
 		AppConfigModule,
 	],
 	controllers: [],

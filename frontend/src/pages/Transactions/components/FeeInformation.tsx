@@ -7,18 +7,31 @@ import {
 	toFixed,
 } from '../../../utils/generalUtils';
 import { ChainEnum } from '../../../swagger/apexBridgeApiService';
+import {
+	getEstimatedBridgeTime,
+	useBridgingDurations,
+} from '../../../utils/estimatedBridgeTime';
 
 interface FeeInformationProps {
 	userWalletFee: string;
 	bridgeTxFee: string;
 	chain: ChainEnum;
+	destinationChain: ChainEnum;
 }
 
 const FeeInformation: React.FC<FeeInformationProps> = ({
 	userWalletFee,
 	bridgeTxFee,
 	chain,
+	destinationChain,
 }) => {
+	const bridgingDurations = useBridgingDurations();
+	const estimatedTime = getEstimatedBridgeTime(
+		chain,
+		destinationChain,
+		bridgingDurations,
+	);
+
 	return (
 		<>
 			<Typography
@@ -157,7 +170,7 @@ const FeeInformation: React.FC<FeeInformationProps> = ({
 					</Typography>
 				</Box>
 				<Box component="span" fontSize="13px">
-					16-20 minutes
+					{estimatedTime}
 				</Box>
 			</Typography>
 		</>
