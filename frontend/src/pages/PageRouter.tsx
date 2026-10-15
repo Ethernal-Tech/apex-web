@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
 import TransactionsTablePage from './Transactions/TransactionsTablePage';
 import TransactionDetailPage from './Transactions/TransactionDetailPage';
+import PendingTransactionPage from './Transactions/PendingTransactionPage';
 import NewTransactionPage from './Transactions/NewTransactionPage';
 
 import withMiddleware from '../middleware/withMiddleware';
@@ -22,6 +23,8 @@ export const HOME_ROUTE = '/';
 export const TRANSACTIONS_ROUTE = '/transactions';
 export const NEW_TRANSACTION_ROUTE = '/new-transaction';
 export const TRANSACTION_DETAILS_ROUTE = '/transaction/:id';
+export const PENDING_TRANSACTION_ROUTE =
+	'/transaction/pending/:originChain/:txHash';
 export const PRIVACY_POLICY_ROUTE = '/privacy-policy';
 export const TERMS_OF_SERVICE_ROUTE = '/terms-of-service';
 const REFETCH_VSU_STATUS_MS = 30000;
@@ -123,6 +126,16 @@ const PageRouter: React.FC = () => {
 		[isLoggedInMemo],
 	);
 
+	const renderPendingTransactionPage = useMemo(
+		() =>
+			isLoggedInMemo ? (
+				<PendingTransactionPage />
+			) : (
+				<Navigate to={HOME_ROUTE} />
+			),
+		[isLoggedInMemo],
+	);
+
 	return (
 		<Routes>
 			<Route
@@ -140,6 +153,10 @@ const PageRouter: React.FC = () => {
 			<Route
 				path={TRANSACTION_DETAILS_ROUTE}
 				element={withMiddleware(() => renderTransactionDetailsPage)({})}
+			/>
+			<Route
+				path={PENDING_TRANSACTION_ROUTE}
+				element={withMiddleware(() => renderPendingTransactionPage)({})}
 			/>
 			<Route
 				path={TERMS_OF_SERVICE_ROUTE}

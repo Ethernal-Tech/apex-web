@@ -197,6 +197,9 @@ export const parseDateString = (dateString: string): Date => {
 	return new Date(formattedDateString);
 };
 
+export const formatPendingTxUrl = (originChain: string, txHash: string) =>
+	`/transaction/pending/${encodeURIComponent(originChain)}/${encodeURIComponent(txHash)}`;
+
 export const formatTxDetailUrl = (
 	transaction: BridgeTransactionDto,
 ): string => {
