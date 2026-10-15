@@ -244,7 +244,7 @@ func (ei *evmIndexer) runTracker(ctx context.Context) {
 		RPCEndpoint:           ei.config.NodeURL,
 		PollInterval:          time.Duration(ei.config.PoolIntervalMiliseconds) * time.Millisecond, //nolint:gosec
 		SyncBatchSize:         ei.config.SyncBatchSize,
-		ConfirmationStrategy:  eventTracker.ConfirmationStrategyNumBlockConfirmations,
+		ConfirmationStrategy:  eventTracker.ConfirmationStrategyLatest,
 		NumBlockConfirmations: 0,
 		EventSubscriber:       subscriber,
 		StartBlockFromGenesis: ei.config.StartBlockNumber,
