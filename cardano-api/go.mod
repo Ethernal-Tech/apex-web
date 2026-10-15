@@ -64,7 +64,7 @@ require (
 )
 
 require (
-	github.com/Ethernal-Tech/blockchain-event-tracker v0.0.0-20261006135714-48456afdd3b0
+	github.com/Ethernal-Tech/blockchain-event-tracker v0.0.0-20261013140239-03d3542035fd
 	github.com/Ethernal-Tech/ethgo v0.0.0-20240902085129-307ec04e3e94
 	go.etcd.io/bbolt v1.4.3
 )
