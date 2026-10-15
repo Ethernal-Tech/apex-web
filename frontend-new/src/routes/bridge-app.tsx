@@ -28,6 +28,7 @@ import {
 } from "@/lib/amount";
 import { bridgingAddressesQueryOptions } from "@/lib/api/bridgingAddresses";
 import { settingsQueryOptions } from "@/lib/api/settings";
+import { bridgingDurationsQueryOptions } from "@/lib/api/stats";
 import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
 import {
   getAdjustedBridgeTxFee,
@@ -1102,6 +1103,8 @@ function TransferForm({
 
   const reactorValidatorChangeInProgress = useReactorValidatorStatus();
   const { data: tokenInfos } = useQuery(tokenInfosQueryOptions);
+  // until loaded (or if unavailable) the estimate falls back to the static table
+  const { data: bridgingDurations } = useQuery(bridgingDurationsQueryOptions);
 
   const availableTokens = useMemo(
     () => getSupportedSourceTokens(settings, source.id, destination.id),
@@ -1345,6 +1348,7 @@ function TransferForm({
     fees.bridgingMode,
     source.id as ChainEnum,
     destination.id as ChainEnum,
+    bridgingDurations,
   );
 
   const showOperationFee =
