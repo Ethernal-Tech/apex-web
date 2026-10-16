@@ -436,6 +436,9 @@ const TransactionsTablePage = () => {
 					onPageChange={handleChangePage}
 					onRowsPerPageChange={handleChangeRowsPerPage}
 					sx={{
+						// leaves room for the footer, which is fixed to the bottom of the screen
+						// and would otherwise cover the pagination controls
+						mb: '90px',
 						color: 'white',
 						'& .MuiSelect-icon': {
 							color: 'white',

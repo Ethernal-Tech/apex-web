@@ -1,11 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-	IsArray,
-	IsEnum,
-	IsNotEmpty,
-	IsPositive,
-	IsOptional,
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsPositive } from 'class-validator';
 import { ChainEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
@@ -38,40 +32,6 @@ export class CreateTransactionDto {
 
 	@ApiProperty({ nullable: true })
 	utxoCacheKey?: string;
-}
-
-export class TransactionSubmittedDto {
-	@IsNotEmpty()
-	@IsEnum(ChainEnum)
-	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
-	originChain: ChainEnum;
-
-	@IsNotEmpty()
-	@IsEnum(ChainEnum)
-	@NotSame('originChain')
-	@ApiProperty({ enum: ChainEnum, enumName: 'ChainEnum' })
-	destinationChain: ChainEnum;
-
-	@IsNotEmpty()
-	@ApiProperty()
-	originTxHash: string;
-
-	@IsNotEmpty()
-	@ApiProperty()
-	senderAddress: string;
-
-	@IsNotEmpty()
-	@ApiProperty()
-	@IsArray()
-	receiverAddrs: string[];
-
-	@IsNotEmpty()
-	@ApiProperty()
-	amount: string;
-
-	@IsOptional()
-	@ApiProperty({ required: false })
-	txRaw?: string;
 }
 
 export class CreateCardanoTransactionResponseDto {
@@ -120,45 +80,4 @@ export class ErrorResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	err: string;
-}
-
-export class TransactionUpdateDto {
-	@IsNotEmpty()
-	@IsEnum(ChainEnum)
-	@ApiProperty({
-		description: 'Source chain ID',
-		enum: ChainEnum,
-		enumName: 'ChainEnum',
-	})
-	originChain: ChainEnum;
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description: 'Transaction hash on source chain',
-	})
-	originTxHash: string;
-
-	@IsOptional()
-	@ApiProperty({
-		description: 'Transaction raw data on source chain',
-		required: false,
-	})
-	txRaw?: string;
-}
-
-export class TransactionActivateDeleteDto {
-	@IsNotEmpty()
-	@IsEnum(ChainEnum)
-	@ApiProperty({
-		description: 'Source chain ID',
-		enum: ChainEnum,
-		enumName: 'ChainEnum',
-	})
-	originChain: ChainEnum;
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description: 'Transaction hash on source chain',
-	})
-	originTxHash: string;
 }

@@ -16,6 +16,7 @@ interface InfoBoxProps {
 	userWalletFee: string;
 	bridgeTxFee: string;
 	chain: ChainEnum;
+	destinationChain: ChainEnum;
 	isFeeInformation: boolean;
 }
 
@@ -24,6 +25,7 @@ const InfoBox: React.FC<InfoBoxProps> = ({
 	userWalletFee,
 	bridgeTxFee,
 	chain,
+	destinationChain,
 	isFeeInformation = true,
 }) => {
 	return (
@@ -37,6 +39,7 @@ const InfoBox: React.FC<InfoBoxProps> = ({
 					userWalletFee={userWalletFee}
 					bridgeTxFee={bridgeTxFee}
 					chain={chain}
+					destinationChain={destinationChain}
 				/>
 			) : (
 				<Typography

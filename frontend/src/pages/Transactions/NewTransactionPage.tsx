@@ -2,9 +2,10 @@ import BasePage from '../base/BasePage';
 import BridgeInput from './components/BridgeInput';
 import {
 	convertDfmToWei,
-	formatTxDetailUrl,
+	formatPendingTxUrl,
 	validateSubmitTxInputs,
 } from '../../utils/generalUtils';
+import { PendingBridgeTx, savePendingTx } from '../../utils/pendingTx';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { useCallback, useState } from 'react';
@@ -16,7 +17,6 @@ import {
 	getCardanoTransactionFeeAction,
 } from './action';
 import {
-	BridgeTransactionDto,
 	CardanoTransactionFeeResponseDto,
 	CreateEthTransactionResponseDto,
 	CreateTransactionDto,
@@ -78,9 +78,12 @@ function NewTransactionPage() {
 		[],
 	);
 
+	// the transaction page shows the submitted tx right away and switches to the
+	// recorded one once the bridge observes it on the source chain
 	const goToDetails = useCallback(
-		(tx: BridgeTransactionDto) => {
-			navigate(formatTxDetailUrl(tx));
+		(pending: PendingBridgeTx) => {
+			savePendingTx(pending);
+			navigate(formatPendingTxUrl(pending.originChain, pending.txHash));
 		},
 		[navigate],
 	);

@@ -73,3 +73,54 @@ $ go run main.go generate-configs\
 ``` shell
 $ go run main.go run-cardano-api --config "./config.json"
 ```
+
+# Bridging transaction indexer
+When the optional `indexer` section is present in the config, cardano api tracks bridging requests on source chains
+(without waiting for confirmations) and exposes them on `GET /api/BridgingTx/GetNew?after=<seq>&limit=<n>`.
+Web-api pulls them from there and stores them as `Pending` bridging transactions.
+
+Per-chain keys match the ones in apex-bridge oracle configs, so RPC related settings can be copied over unchanged.
+Durations are in nanoseconds.
+```json
+"indexer": {
+    "dbsPath": "./indexer-dbs-reactor",
+    "chainIDsConfigPath": "./chain_ids_config.json",
+    "retentionPeriod": 259200000000000,
+    "cardanoChains": {
+        "prime": {
+            "networkAddress": "relay.prime.example:3001",
+            "startSlot": 1000,
+            "startBlockHash": "<hash of the block at startSlot>",
+            "resumeBlockDepth": 20
+        },
+        "vector": {
+            "networkAddress": "relay.vector.example:3001",
+            "startSlot": 1000,
+            "startBlockHash": "<hash of the block at startSlot>"
+        }
+    },
+    "ethChains": {
+        "nexus": {
+            "nodeUrl": "https://rpc.nexus.example",
+            "gatewayAddress": "0x...",
+            "startBlockNumber": 100000,
+            "syncBatchSize": 20,
+            "poolIntervalMs": 5000,
+            "rescanConfirmationStrategy": "finalized",
+            "rescanInterval": 300000000000,
+            "rescanMaxBlocks": 200
+        }
+    }
+}
+```
+- Cardano chains must also be defined in `cardanoChains` (network magic is taken from there). `networkAddress` is a
+  cardano-node relay (node-to-node), the same one apex-bridge uses for its indexer. Ogmios can not be used for indexing.
+- The bridging address of each Cardano chain is the one from the config, kept up to date on validator change.
+- `gatewayAddress` is the Reactor gateway on Nexus.
+- EVM logs are tracked with zero confirmations. Every `rescanInterval` (and after each restart) blocks after the safe
+  block (`finalized`, or latest - `rescanNumBlockConfirmations`) are read again, so txs moved by reorgs are not missed.
+- `chainIDsConfigPath` points to the same chain IDs file apex-bridge uses (`{"chainIDs": [...]}`).
+- Output of block syncers and event trackers is written to `<chainID>-indexer.log` next to the main log file
+  (same as in apex-bridge). Its level can be set with `indexer.logLevel` (hclog levels, e.g. `3` for info);
+  by default the app log level is used. Newly indexed txs and tracker restarts are logged to the main log.
+- When a Reactor and a Skyline cardano api run on the same machine, each needs its own `dbsPath`.
