@@ -169,6 +169,33 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "By Tx Hash",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{web_api_api_key}}",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"url": {
+									"raw": "{{web_api_base_url}}/bridgeTransaction/byTxHash/prime/9e98b70c9f959c2af1de1ae3db05eacb60fc305541601768429c50a34e6f1ac1",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"bridgeTransaction",
+										"byTxHash",
+										"prime",
+										"9e98b70c9f959c2af1de1ae3db05eacb60fc305541601768429c50a34e6f1ac1"
+									]
+								}
+							},
+							"response": []
 						}
 					]
 				},
@@ -294,11 +321,11 @@
 											"    pm.expect(ad).to.have.property(\"cardano\");",
 											"    pm.expect(ad.cardano).to.be.an(\"object\");",
 											"",
-											"    pm.expect(ad).to.have.property(\"base\");",
-											"    pm.expect(ad.base).to.be.an(\"object\");",
+											"    // pm.expect(ad).to.have.property(\"base\");",
+											"    // pm.expect(ad.base).to.be.an(\"object\");",
 											"",
-											"    pm.expect(ad).to.have.property(\"bsc\");",
-											"    pm.expect(ad.bsc).to.be.an(\"object\");",
+											"    // pm.expect(ad).to.have.property(\"bsc\");",
+											"    // pm.expect(ad.bsc).to.be.an(\"object\");",
 											"});"
 										],
 										"type": "text/javascript",
@@ -692,134 +719,26 @@
 							"response": []
 						},
 						{
-							"name": "Bridging Transaction Submitted",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Status is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Response is JSON\", function () {",
-											"    pm.response.to.be.json;",
-											"});",
-											"",
-											"pm.test(\"Response has required fields\", function () {",
-											"    const json = pm.response.json();",
-											"    const required = [",
-											"        \"id\",",
-											"        \"senderAddress\",",
-											"        \"receiverAddresses\",",
-											"        \"amount\",",
-											"        \"originChain\",",
-											"        \"destinationChain\",",
-											"        \"sourceTxHash\",",
-											"        \"status\",",
-											"        \"createdAt\",",
-											"        \"isRefund\"",
-											"    ];",
-											"",
-											"    required.forEach(field => {",
-											"        pm.expect(json).to.have.property(field);",
-											"    });",
-											"});",
-											"",
-											"pm.test(\"Optional fields are valid if present\", function () {",
-											"    const json = pm.response.json();",
-											"    if (json.hasOwnProperty(\"destinationTxHash\") && json.destinationTxHash !== null) {",
-											"        pm.expect(json.destinationTxHash).to.be.a(\"string\");",
-											"    }",
-											"    if (json.hasOwnProperty(\"finishedAt\") && json.finishedAt !== null) {",
-											"        pm.expect(new Date(json.finishedAt).toString()).not.eql(\"Invalid Date\");",
-											"    }",
-											"});",
-											"",
-											"pm.test(\"Chain fields are valid enums\", function () {",
-											"    const chains = [\"cardano\", \"prime\", \"vector\"];",
-											"    const json = pm.response.json();",
-											"    pm.expect(chains).to.include(json.originChain);",
-											"    pm.expect(chains).to.include(json.destinationChain);",
-											"});",
-											"",
-											"pm.test(\"Status field is valid enum\", function () {",
-											"    const allowedStatus = [\"Pending\", \"DiscoveredOnSource\", \"InvalidRequest\", \"SubmittedToBridge\", \"IncludedInBatch\", \"SubmittedToDestination\", \"FailedToExecuteOnDestination\", \"ExecutedOnDestination\"];",
-											"    const json = pm.response.json();",
-											"    pm.expect(allowedStatus).to.include(json.status);",
-											"});",
-											"",
-											"pm.test(\"Dates are valid\", function () {",
-											"    const json = pm.response.json();",
-											"    pm.expect(new Date(json.createdAt).toString()).not.eql(\"Invalid Date\");",
-											"    if (json.finishedAt) {",
-											"        pm.expect(new Date(json.finishedAt).toString()).not.eql(\"Invalid Date\");",
-											"    }",
-											"});",
-											"",
-											"pm.test(\"Boolean fields are boolean\", function () {",
-											"    const json = pm.response.json();",
-											"    pm.expect(json.isRefund).to.be.a(\"boolean\");",
-											"});"
-										],
-										"type": "text/javascript",
-										"packages": {},
-										"requests": {}
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "x-api-key",
-										"value": "{{web_api_api_key}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"originChain\": \"cardano\",\n  \"destinationChain\": \"prime\",\n  \"originTxHash\": \"aaaa7775be9ac5a9d3033d120379f267e92602f34b44cf106fb8fb62be6bb2ba\",\n  \"senderAddress\": \"addr_test1qzljt7ehj7v5cj06pg8l5dnj679v2n6pcnmxulyak90t4qw40vkl9x4qxmfdha8xtqt2z5q40yvc6nkvqclspgz6kcdqazkanr\",\n  \"receiverAddrs\": [\"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\"],\n  \"amount\": \"4019390\",\n  \"nativeTokenAmount\": \"15000000\",\n  \"txRaw\": \"0xAAA_rawTxHash\",\n  \"isLayerZero\": false\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
-								"url": {
-									"raw": "{{web_api_base_url}}/transaction/bridgingTransactionSubmitted",
-									"host": [
-										"{{web_api_base_url}}"
-									],
-									"path": [
-										"transaction",
-										"bridgingTransactionSubmitted"
-									]
-								}
-							},
-							"response": []
-						},
-						{
 							"name": "LayerZero Transfer",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
+											"pm.test(\"Status code is 400\", function () {",
+											"    pm.response.to.have.status(400);",
 											"});",
 											"",
 											"pm.test(\"Response is JSON\", function () {",
 											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
 											"});",
 											"",
-											"pm.test(\"No unexpected fields\", () => {",
-											"    const allowed = [\"dstTxHistory\", \"shouldSimulate\", \"type\", \"created\", \"dstChainName\", \"metadata\", \"transactionData\", \"transactionType\"];",
-											"    Object.keys(pm.response.json()).forEach(k => {",
-											"        pm.expect(allowed).to.include(k);",
-											"    });",
-											"});"
+											"// pm.test(\"No unexpected fields\", () => {",
+											"//     const allowed = [\"dstTxHistory\", \"shouldSimulate\", \"type\", \"created\", \"dstChainName\", \"metadata\", \"transactionData\", \"transactionType\"];",
+											"//     Object.keys(pm.response.json()).forEach(k => {",
+											"//         pm.expect(allowed).to.include(k);",
+											"//     });",
+											"// });"
 										],
 										"type": "text/javascript",
 										"packages": {},
@@ -939,62 +858,18 @@
 									}
 								],
 								"url": {
-									"raw": "{{web_api_base_url}}/lockedTokens",
+									"raw": "{{web_api_base_url}}/lockedTokens?allowedBridgingModes=skyline,reactor,layerZero",
 									"host": [
 										"{{web_api_base_url}}"
 									],
 									"path": [
 										"lockedTokens"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Get Locked Tokens Summary",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Status code is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Response is JSON\", function () {",
-											"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
-											"});",
-											"",
-											"pm.test(\"Body has expected fields\", function () {",
-											"    const json = pm.response.json();",
-											"    pm.expect(json).to.have.property(\"tvlUsd\");",
-											"    pm.expect(json).to.have.property(\"tvbUsd\");",
-											"    pm.expect(json).to.have.property(\"computedAt\");",
-											"});"
-										],
-										"type": "text/javascript",
-										"packages": {},
-										"requests": {}
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "x-api-key",
-										"value": "{{web_api_api_key}}",
-										"type": "text"
-									}
-								],
-								"url": {
-									"raw": "{{web_api_base_url}}/lockedTokens/summary",
-									"host": [
-										"{{web_api_base_url}}"
 									],
-									"path": [
-										"lockedTokens",
-										"summary"
+									"query": [
+										{
+											"key": "allowedBridgingModes",
+											"value": "skyline,reactor,layerZero"
+										}
 									]
 								}
 							},
@@ -1117,6 +992,24 @@
 									],
 									"path": [
 										"stats"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Bridging Durations",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{web_api_base_url}}/stats/bridgingDurations",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"stats",
+										"bridgingDurations"
 									]
 								}
 							},
@@ -1372,6 +1265,41 @@
 										{
 											"key": "chainId",
 											"value": "prime"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetNewBridgingTx",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_reactor_api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{cardano_api_reactor_base_url}}/api/BridgingTx/GetNew?after=0&limit=100",
+									"host": [
+										"{{cardano_api_reactor_base_url}}"
+									],
+									"path": [
+										"api",
+										"BridgingTx",
+										"GetNew"
+									],
+									"query": [
+										{
+											"key": "after",
+											"value": "0"
+										},
+										{
+											"key": "limit",
+											"value": "100"
 										}
 									]
 								}
@@ -1906,6 +1834,41 @@
 										{
 											"key": "chainId",
 											"value": "prime"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "GetNewBridgingTx",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-api-key",
+										"value": "{{cardano_api_skyline_api_key}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{cardano_api_skyline_base_url}}/api/BridgingTx/GetNew?after=0&limit=100",
+									"host": [
+										"{{cardano_api_skyline_base_url}}"
+									],
+									"path": [
+										"api",
+										"BridgingTx",
+										"GetNew"
+									],
+									"query": [
+										{
+											"key": "after",
+											"value": "0"
+										},
+										{
+											"key": "limit",
+											"value": "100"
 										}
 									]
 								}
@@ -3039,7 +3002,7 @@
 											}
 										],
 										"url": {
-											"raw": "{{oracle_api_skyline_base_url}}/api/BridgingAddress/GetAllAddresses?chainId=prime",
+											"raw": "{{oracle_api_skyline_base_url}}/api/BridgingAddress/GetAllAddresses?chainId=sei",
 											"host": [
 												"{{oracle_api_skyline_base_url}}"
 											],
@@ -3051,7 +3014,7 @@
 											"query": [
 												{
 													"key": "chainId",
-													"value": "prime"
+													"value": "sei"
 												}
 											]
 										}

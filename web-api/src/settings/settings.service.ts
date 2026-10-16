@@ -73,7 +73,12 @@ export class SettingsService {
 			),
 		]);
 
-		const layerZeroChains = this.appConfig.layerZero.networks
+		// LayerZero has no testnet, its OFTs and transfers are always on mainnet. A testnet
+		// instance must never offer them, even if LAYERZERO_CONFIG is set
+		const isLayerZeroEnabled = this.appConfig.app.isMainnet;
+		const layerZeroChains = (
+			isLayerZeroEnabled ? this.appConfig.layerZero.networks : []
+		)
 			.map((network) => {
 				if (!network.chain || !network.oftAddress) {
 					return undefined;
@@ -206,60 +211,62 @@ export class SettingsService {
 		}
 
 		// layer zero
-		ecosystemTokens.push(
-			{ id: lzEthID, name: 'ETH' },
-			{ id: bapexID, name: 'BAP3X' },
-			{ id: bnapexID, name: 'BNAP3X' },
-			{ id: bnbID, name: 'BNB' },
-		);
+		if (isLayerZeroEnabled) {
+			ecosystemTokens.push(
+				{ id: lzEthID, name: 'ETH' },
+				{ id: bapexID, name: 'BAP3X' },
+				{ id: bnapexID, name: 'BNAP3X' },
+				{ id: bnbID, name: 'BNB' },
+			);
 
-		directionConfig[ChainEnum.Base] = {
-			destChain: {
-				[ChainEnum.Nexus]: [{ srcTokenID: bapexID, dstTokenID: apexID }],
-				[ChainEnum.BNB]: [{ srcTokenID: bapexID, dstTokenID: bnapexID }],
-			},
-			tokens: {
-				[lzEthID]: {
-					chainSpecific: Lovelace,
-					lockUnlock: true,
-					isWrappedCurrency: false,
+			directionConfig[ChainEnum.Base] = {
+				destChain: {
+					[ChainEnum.Nexus]: [{ srcTokenID: bapexID, dstTokenID: apexID }],
+					[ChainEnum.BNB]: [{ srcTokenID: bapexID, dstTokenID: bnapexID }],
 				},
-				[bapexID]: {
-					chainSpecific:
-						layerZeroChains.find((x) => x.chain === ChainEnum.Base)
-							?.oftAddress || '',
-					lockUnlock: false,
-					isWrappedCurrency: true,
+				tokens: {
+					[lzEthID]: {
+						chainSpecific: Lovelace,
+						lockUnlock: true,
+						isWrappedCurrency: false,
+					},
+					[bapexID]: {
+						chainSpecific:
+							layerZeroChains.find((x) => x.chain === ChainEnum.Base)
+								?.oftAddress || '',
+						lockUnlock: false,
+						isWrappedCurrency: true,
+					},
 				},
-			},
-		};
+			};
 
-		directionConfig[ChainEnum.BNB] = {
-			destChain: {
-				[ChainEnum.Nexus]: [{ srcTokenID: bnapexID, dstTokenID: apexID }],
-				[ChainEnum.Base]: [{ srcTokenID: bnapexID, dstTokenID: bapexID }],
-			},
-			tokens: {
-				[bnbID]: {
-					chainSpecific: Lovelace,
-					lockUnlock: true,
-					isWrappedCurrency: false,
+			directionConfig[ChainEnum.BNB] = {
+				destChain: {
+					[ChainEnum.Nexus]: [{ srcTokenID: bnapexID, dstTokenID: apexID }],
+					[ChainEnum.Base]: [{ srcTokenID: bnapexID, dstTokenID: bapexID }],
 				},
-				[bnapexID]: {
-					chainSpecific:
-						layerZeroChains.find((x) => x.chain === ChainEnum.BNB)
-							?.oftAddress || '',
-					lockUnlock: false,
-					isWrappedCurrency: true,
+				tokens: {
+					[bnbID]: {
+						chainSpecific: Lovelace,
+						lockUnlock: true,
+						isWrappedCurrency: false,
+					},
+					[bnapexID]: {
+						chainSpecific:
+							layerZeroChains.find((x) => x.chain === ChainEnum.BNB)
+								?.oftAddress || '',
+						lockUnlock: false,
+						isWrappedCurrency: true,
+					},
 				},
-			},
-		};
+			};
 
-		directionConfig[ChainEnum.Nexus].destChain = {
-			...directionConfig[ChainEnum.Nexus].destChain,
-			[ChainEnum.Base]: [{ srcTokenID: apexID, dstTokenID: bapexID }],
-			[ChainEnum.BNB]: [{ srcTokenID: apexID, dstTokenID: bnapexID }],
-		};
+			directionConfig[ChainEnum.Nexus].destChain = {
+				...directionConfig[ChainEnum.Nexus].destChain,
+				[ChainEnum.Base]: [{ srcTokenID: apexID, dstTokenID: bapexID }],
+				[ChainEnum.BNB]: [{ srcTokenID: apexID, dstTokenID: bnapexID }],
+			};
+		}
 
 		const enabledChains = new Set<string>();
 		// reactor

@@ -18,7 +18,7 @@ import {
 import solWalletHandler, {
   SOL_SUPPORTED_WALLETS,
 } from "@/lib/wallet/solWallet";
-import { retry, shortRetryOptions, shouldUseMainnet } from "@/lib/wallet/utils";
+import { retry, shortRetryOptions } from "@/lib/wallet/utils";
 import { ApexBridgeNetwork } from "@/lib/wallet/enums";
 import { ChainEnum } from "@/swagger/apexBridgeApiService";
 
@@ -106,7 +106,7 @@ async function checkAndSetEvmData(
   settings: SettingsResponse,
   handlers: ConnectHandlers,
 ) {
-  const useMainnet = shouldUseMainnet(srcChain, dstChain);
+  const useMainnet = appSettings.isMainnet;
   const networkId = await retry(
     evmWalletHandler.getNetworkId,
     shortRetryOptions.retryCnt,
@@ -191,10 +191,7 @@ async function enableEvmWallet(
   settings: SettingsResponse,
   handlers: ConnectHandlers,
 ) {
-  const expectedChainId = fromChainToNetworkId(
-    srcChain,
-    shouldUseMainnet(srcChain, dstChain),
-  );
+  const expectedChainId = fromChainToNetworkId(srcChain, appSettings.isMainnet);
   if (!expectedChainId) {
     captureAndThrowError(
       `Chain ${srcChain} not supported.`,
@@ -257,7 +254,7 @@ async function enableCardanoWallet(
     );
   }
 
-  const useMainnet = shouldUseMainnet(srcChain, dstChain);
+  const useMainnet = appSettings.isMainnet;
   const networkId = await cardanoWalletHandler.getNetworkId();
   const network = await cardanoWalletHandler.getNetwork();
   if (!network) {
@@ -302,7 +299,7 @@ async function enableSolanaWallet(
   settings: SettingsResponse,
   handlers: ConnectHandlers,
 ) {
-  const useMainnet = shouldUseMainnet(srcChain, dstChain);
+  const useMainnet = appSettings.isMainnet;
 
   if (!getSrcChains(settings).some((x) => x.id === srcChain)) {
     captureAndThrowError(

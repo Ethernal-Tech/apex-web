@@ -15,7 +15,10 @@ import { AssetIcon } from "@/components/ui/asset-icon";
 import { NetworkToggle } from "@/components/NetworkToggle";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { useHeadroom, headroomClass } from "@/hooks/use-headroom";
-import { useBridgeHistory } from "@/hooks/use-bridge-history";
+import {
+  useBridgeHistory,
+  type BridgeHistoryPoint,
+} from "@/hooks/use-bridge-history";
 import {
   useLockedBreakdown,
   type ChainAddressRows,
@@ -143,6 +146,14 @@ const fmtDay = (d: Date) =>
     month: "short",
     timeZone: "UTC",
   });
+/** `12 Jul 2026`, for the chart tooltip. */
+const fmtDate = (d: Date) =>
+  d.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 
 // Ease-out cubic count-up, mirrors the reference html (1600ms)
 function useCountUp(target: number, duration = 1600) {
@@ -209,19 +220,20 @@ function areaAndLine(series: number[], yMin: number, yMax: number) {
   const stepX = CHART_W / (series.length - 1);
   const scaleY = (v: number) =>
     CHART_H - ((v - yMin) / (yMax - yMin)) * (CHART_H - 20) - 10;
-  const line = series
-    .map(
-      (v, i) =>
-        `${i === 0 ? "M" : "L"}${(i * stepX).toFixed(1)},${scaleY(v).toFixed(1)}`,
-    )
+  const points = series.map((v, i) => ({ x: i * stepX, y: scaleY(v) }));
+  const line = points
+    .map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`)
     .join(" ");
   const area = `${line} L${CHART_W},${CHART_H} L0,${CHART_H} Z`;
-  const last = {
-    x: (series.length - 1) * stepX,
-    y: scaleY(series[series.length - 1]),
-  };
-  return { line, area, last };
+  return { line, area, points };
 }
+
+/** Snapshot dots closer together than this would run into one solid line. */
+const MIN_DOT_SPACING = 8;
+/** px, matches the tooltip's w-48. */
+const TOOLTIP_W = 192;
+/** px between the tooltip and the guide line it sits beside. */
+const TOOLTIP_GAP = 14;
 
 /** One donut arc - a chain's share of the world's locked USD, ready for SVG. */
 type DonutSegment = {
@@ -322,22 +334,6 @@ function AuditContent() {
   const { points, isLoading: historyLoading } = useBridgeHistory(
     RANGE_DAYS[range],
   );
-  const chart = useMemo(() => {
-    // A single point cannot be drawn as a line, so it counts as no chart.
-    if (points.length < 2) return null;
-    const tvl = points.map((p) => p.tvlUsd);
-    const tvb = points.map((p) => p.tvbUsd);
-    // A flat all-zero history would divide by zero, so keep a floor on the axis
-    const yMax = Math.max(...tvl, ...tvb, 1) * 1.1;
-    return {
-      tvl: areaAndLine(tvl, 0, yMax),
-      tvb: areaAndLine(tvb, 0, yMax),
-      from: points[0].at,
-      mid: points[Math.floor((points.length - 1) / 2)].at,
-      to: points[points.length - 1].at,
-    };
-  }, [points]);
-
   // Donut: locked composition by chain (USD)
   const donut = useMemo(() => {
     const perChain = data.locked.map((ch) => ({
@@ -497,82 +493,9 @@ function AuditContent() {
               </div>
             </div>
 
-            {chart ? (
-              <>
-                <svg
-                  viewBox={`0 0 ${CHART_W} ${CHART_H}`}
-                  preserveAspectRatio="none"
-                  className="mt-4 block h-[220px] w-full"
-                >
-                  <defs>
-                    <linearGradient id="a-tvb" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0" stopColor="#22C1E4" stopOpacity="0.34" />
-                      <stop offset="1" stopColor="#22C1E4" stopOpacity="0" />
-                    </linearGradient>
-                    <linearGradient id="a-tvl" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0" stopColor="#3B92FF" stopOpacity="0.32" />
-                      <stop offset="1" stopColor="#3B92FF" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-                  {[0.25, 0.5, 0.75].map((f) => (
-                    <line
-                      key={f}
-                      x1="0"
-                      y1={CHART_H * f}
-                      x2={CHART_W}
-                      y2={CHART_H * f}
-                      stroke="rgba(255,255,255,0.05)"
-                    />
-                  ))}
-                  <path d={chart.tvb.area} fill="url(#a-tvb)" />
-                  <path
-                    d={chart.tvb.line}
-                    fill="none"
-                    stroke="#22C1E4"
-                    strokeWidth="2.4"
-                    vectorEffect="non-scaling-stroke"
-                  />
-                  <path d={chart.tvl.area} fill="url(#a-tvl)" />
-                  <path
-                    d={chart.tvl.line}
-                    fill="none"
-                    stroke="#3B92FF"
-                    strokeWidth="2.4"
-                    vectorEffect="non-scaling-stroke"
-                  />
-                  <circle
-                    cx={chart.tvb.last.x}
-                    cy={chart.tvb.last.y}
-                    r="9"
-                    fill="#22C1E4"
-                    opacity="0.22"
-                  />
-                  <circle
-                    cx={chart.tvb.last.x}
-                    cy={chart.tvb.last.y}
-                    r="4"
-                    fill="#22C1E4"
-                  />
-                  <circle
-                    cx={chart.tvl.last.x}
-                    cy={chart.tvl.last.y}
-                    r="9"
-                    fill="#3B92FF"
-                    opacity="0.22"
-                  />
-                  <circle
-                    cx={chart.tvl.last.x}
-                    cy={chart.tvl.last.y}
-                    r="4"
-                    fill="#3B92FF"
-                  />
-                </svg>
-                <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
-                  <span>{fmtDay(chart.from)}</span>
-                  <span>{fmtDay(chart.mid)}</span>
-                  <span>{fmtDay(chart.to)}</span>
-                </div>
-              </>
+            {/* A single point cannot be drawn as a line, so it counts as no chart. */}
+            {points.length >= 2 ? (
+              <HistoryChart points={points} />
             ) : (
               <div className="mt-4">
                 {historyLoading ? (
@@ -758,6 +681,207 @@ function AuditContent() {
         </div>
       </footer>
     </div>
+  );
+}
+
+const SERIES = [
+  { key: "tvl", label: "TVL", color: "#3B92FF" },
+  { key: "tvb", label: "TVB", color: "#22C1E4" },
+] as const;
+
+/**
+ * Locked vs. bridged over the snapshots, a dot on each daily snapshot. Hovering
+ * (or touching) picks the nearest snapshot and shows its date and values.
+ */
+function HistoryChart({ points }: { points: BridgeHistoryPoint[] }) {
+  const plotRef = useRef<HTMLDivElement>(null);
+  const [plotWidth, setPlotWidth] = useState(0);
+  const [active, setActive] = useState<number | null>(null);
+
+  const geometry = useMemo(() => {
+    const tvl = points.map((p) => p.tvlUsd);
+    const tvb = points.map((p) => p.tvbUsd);
+    // A flat all-zero history would divide by zero, so keep a floor on the axis
+    const yMax = Math.max(...tvl, ...tvb, 1) * 1.1;
+    return { tvl: areaAndLine(tvl, 0, yMax), tvb: areaAndLine(tvb, 0, yMax) };
+  }, [points]);
+
+  useEffect(() => {
+    const plot = plotRef.current;
+    if (!plot) return;
+    const observer = new ResizeObserver(() => setPlotWidth(plot.clientWidth));
+    observer.observe(plot);
+    return () => observer.disconnect();
+  }, []);
+
+  // A touch has no hover to end, so the tooltip stays until a tap elsewhere.
+  useEffect(() => {
+    if (active === null) return;
+    const dismiss = (e: PointerEvent) => {
+      if (!plotRef.current?.contains(e.target as Node)) setActive(null);
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [active]);
+
+  const lastIndex = points.length - 1;
+  const showDots = plotWidth / lastIndex >= MIN_DOT_SPACING;
+  const xPct = (i: number) => (i / lastIndex) * 100;
+  const yPct = (y: number) => (y / CHART_H) * 100;
+
+  const pick = (e: React.PointerEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const fraction = (e.clientX - rect.left) / rect.width;
+    setActive(
+      Math.min(lastIndex, Math.max(0, Math.round(fraction * lastIndex))),
+    );
+  };
+
+  // With nothing hovered, the latest snapshot keeps its highlight
+  const highlighted = active ?? lastIndex;
+  const hovered = active === null ? null : points[active];
+
+  // Beside the guide line when either half of the plot has room for it, above
+  // the plot on a phone, where from the middle it would fit on neither side
+  const tooltipStyle = (index: number): React.CSSProperties => {
+    const x = (xPct(index) / 100) * plotWidth;
+    if (plotWidth >= 2 * (TOOLTIP_W + TOOLTIP_GAP)) {
+      return {
+        top: 4,
+        left: x > plotWidth / 2 ? x - TOOLTIP_GAP - TOOLTIP_W : x + TOOLTIP_GAP,
+      };
+    }
+    return {
+      bottom: "calc(100% + 8px)",
+      left: Math.max(0, Math.min(x - TOOLTIP_W / 2, plotWidth - TOOLTIP_W)),
+    };
+  };
+
+  return (
+    <>
+      <div
+        ref={plotRef}
+        data-chart-plot
+        className="relative mt-4 h-[220px] touch-pan-y"
+        onPointerDown={pick}
+        onPointerMove={pick}
+        onPointerLeave={(e) => {
+          if (e.pointerType === "mouse") setActive(null);
+        }}
+      >
+        <svg
+          viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+          preserveAspectRatio="none"
+          className="block h-full w-full"
+        >
+          <defs>
+            <linearGradient id="a-tvb" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#22C1E4" stopOpacity="0.34" />
+              <stop offset="1" stopColor="#22C1E4" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="a-tvl" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#3B92FF" stopOpacity="0.32" />
+              <stop offset="1" stopColor="#3B92FF" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          {[0.25, 0.5, 0.75].map((f) => (
+            <line
+              key={f}
+              x1="0"
+              y1={CHART_H * f}
+              x2={CHART_W}
+              y2={CHART_H * f}
+              stroke="rgba(255,255,255,0.05)"
+            />
+          ))}
+          <path d={geometry.tvb.area} fill="url(#a-tvb)" />
+          <path
+            d={geometry.tvb.line}
+            fill="none"
+            stroke="#22C1E4"
+            strokeWidth="2.4"
+            vectorEffect="non-scaling-stroke"
+          />
+          <path d={geometry.tvl.area} fill="url(#a-tvl)" />
+          <path
+            d={geometry.tvl.line}
+            fill="none"
+            stroke="#3B92FF"
+            strokeWidth="2.4"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+
+        {/* Dots are HTML, the stretched SVG would draw them as ellipses */}
+        {active !== null && (
+          <div
+            className="pointer-events-none absolute inset-y-0 w-px -translate-x-1/2 bg-white/20"
+            style={{ left: `${xPct(active)}%` }}
+          />
+        )}
+        {SERIES.map(({ key, color }) =>
+          geometry[key].points.map((p, i) =>
+            i === highlighted ? (
+              <span
+                key={`${key}-${i}`}
+                className="pointer-events-none absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                style={{
+                  left: `${xPct(i)}%`,
+                  top: `${yPct(p.y)}%`,
+                  background: color,
+                  boxShadow: `0 0 0 5px ${color}38`,
+                }}
+              />
+            ) : showDots ? (
+              <span
+                key={`${key}-${i}`}
+                className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-[0_0_0_1.5px_var(--background)]"
+                style={{
+                  left: `${xPct(i)}%`,
+                  top: `${yPct(p.y)}%`,
+                  background: color,
+                }}
+              />
+            ) : null,
+          ),
+        )}
+
+        {hovered && active !== null && (
+          <div
+            className="pointer-events-none absolute z-10 w-48 rounded-xl border border-white/10 bg-popover/95 px-3 py-2.5 text-xs shadow-xl backdrop-blur"
+            style={tooltipStyle(active)}
+          >
+            <div className="mb-1.5 font-semibold text-foreground">
+              {fmtDate(hovered.at)}
+            </div>
+            {SERIES.map(({ key, label, color }) => (
+              <div
+                key={key}
+                className="flex items-center justify-between gap-4 py-0.5"
+              >
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ background: color }}
+                  />
+                  {label}
+                </span>
+                <span className="font-medium tabular-nums text-foreground">
+                  {formatUsdFull(
+                    key === "tvl" ? hovered.tvlUsd : hovered.tvbUsd,
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+        <span>{fmtDay(points[0].at)}</span>
+        <span>{fmtDay(points[Math.floor(lastIndex / 2)].at)}</span>
+        <span>{fmtDay(points[lastIndex].at)}</span>
+      </div>
+    </>
   );
 }
 

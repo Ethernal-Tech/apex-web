@@ -2,38 +2,25 @@ import {
 	BadRequestException,
 	Injectable,
 	InternalServerErrorException,
-	NotFoundException,
 } from '@nestjs/common';
 import {
 	createCardanoBridgingTx,
 	createEthBridgingTx,
 	getCardanoBridgingTxFee,
-	canUpdateTx,
 	createSolanaBridgingTx,
 } from 'src/transaction/transaction.helper';
 import {
 	CreateTransactionDto,
 	CreateCardanoTransactionResponseDto,
-	TransactionSubmittedDto,
 	CardanoTransactionFeeResponseDto,
 	CreateEthTransactionFullResponseDto,
-	TransactionActivateDeleteDto as TransactionActivateDeleteDto,
 	CreateSolanaTransactionFullResponseDto,
 } from './transaction.dto';
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
-import {
-	BridgingModeEnum,
-	ChainApexBridgeEnum,
-	ChainEnum,
-	TransactionStatusEnum,
-} from 'src/common/enum';
+import { BridgingModeEnum } from 'src/common/enum';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThan, Repository } from 'typeorm';
-import {
-	getInputUtxos,
-	mapBridgeTransactionToResponse,
-} from 'src/bridgeTransaction/bridgeTransaction.helper';
-import { BridgeTransactionDto } from 'src/bridgeTransaction/bridgeTransaction.dto';
+import { getInputUtxos } from 'src/bridgeTransaction/bridgeTransaction.helper';
 import { SettingsService } from 'src/settings/settings.service';
 import { Utxo } from 'src/blockchain/dto';
 import { Logger } from '@nestjs/common';
@@ -52,10 +39,7 @@ import {
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
 import { getCurrencyIDFromDirectionConfig } from 'src/settings/utils';
-import { convertDfmToWeiByChain } from 'src/utils/generalUtils';
 import { isAddress } from 'web3-validator';
-import { createHash } from 'crypto';
-import { resolveTxRaw } from 'src/bridgeTransaction/txTtl';
 
 @Injectable()
 export class TransactionService {
@@ -331,169 +315,16 @@ export class TransactionService {
 		return tx;
 	}
 
-	async transactionSubmitted(
-		{
-			originChain,
-			destinationChain,
-			originTxHash,
-			senderAddress,
-			receiverAddrs,
-			amount,
-			nativeTokenAmount,
-			tokenID,
-			txRaw,
-			lastValidBlockHeight,
-			isLayerZero,
-		}: TransactionSubmittedDto,
-		ip: string,
-		activate = false,
-	): Promise<BridgeTransactionDto> {
-		const entity = new BridgeTransaction();
-
-		const receiverAddresses = receiverAddrs
-			.map((a) => (a ?? '').trim())
-			.filter(Boolean)
-			.join(', ');
-
-		const currencyID = getCurrencyIDFromDirectionConfig(
-			this.settingsService.SettingsResponse.directionConfig,
-			originChain,
-		);
-		if (!currencyID) {
-			throw new BadRequestException(
-				`failed to find currencyID for chain: ${originChain}`,
-			);
-		}
-
-		const enNativeTokenAmount =
-			(nativeTokenAmount ?? '').trim() || entity.nativeTokenAmount;
-		const nNativeTokenAmount = BigInt(enNativeTokenAmount || '0');
-
-		// for db, tokenID is only referred to a token, and never currency (amount)
-		const enTokenID =
-			tokenID !== currencyID || nNativeTokenAmount > BigInt(0) ? tokenID : 0;
-
-		entity.sourceTxHash = (originTxHash ?? '').trim();
-		entity.senderAddress = (senderAddress ?? '').trim() || entity.senderAddress;
-		entity.receiverAddresses = receiverAddresses ?? entity.receiverAddresses;
-		entity.destinationChain =
-			(destinationChain as ChainApexBridgeEnum) ?? entity.destinationChain;
-		entity.amount = (amount ?? '').trim() || entity.amount;
-		entity.nativeTokenAmount = enNativeTokenAmount;
-		entity.amountWei = String(
-			convertDfmToWeiByChain(entity.amount || '0', originChain),
-		);
-		entity.tokenAmountWei = String(
-			convertDfmToWeiByChain(enNativeTokenAmount || '0', originChain),
-		);
-		entity.tokenID = enTokenID;
-		entity.originChain = originChain;
-		entity.createdAt = new Date();
-		entity.status = TransactionStatusEnum.Pending;
-		entity.txRaw = await resolveTxRaw(originChain, txRaw, lastValidBlockHeight);
-		entity.isLayerZero = isLayerZero;
-		entity.activeFrom = activate
-			? new Date()
-			: new Date(Date.now() + this.appConfig.txValidityPeriod);
-		entity.clientID = activate
-			? undefined
-			: createHash('sha256')
-					.update(ip + (getAppConfig().hashSecret ?? ''))
-					.digest('hex');
-
-		const newBridgeTransaction =
-			this.bridgeTransactionRepository.create(entity);
-
-		try {
-			await this.bridgeTransactionRepository.save(newBridgeTransaction);
-
-			return mapBridgeTransactionToResponse(newBridgeTransaction);
-		} catch (e) {
-			const dbTxs = await this.bridgeTransactionRepository.find({
-				where: {
-					sourceTxHash: entity.sourceTxHash,
-				},
-			});
-
-			// we expect only one tx to return since there is a unique constraint
-			if (dbTxs.length != 0) {
-				return mapBridgeTransactionToResponse(dbTxs[0]);
-			} else {
-				throw new BadRequestException(
-					`error while confirming tx submittion: ${e}`,
-				);
-			}
-		}
-	}
-	async updateTransaction(
-		originChain: ChainEnum,
-		originTxHash: string,
-		ip: string,
-		txRaw?: string,
-	): Promise<BridgeTransactionDto> {
-		const hash = originTxHash.trim();
-
-		const entity = await this.bridgeTransactionRepository.findOne({
-			where: { sourceTxHash: hash, originChain: originChain },
-		});
-
-		if (!entity) {
-			throw new NotFoundException(`transaction with hash ${hash} not found`);
-		}
-
-		if (!canUpdateTx(ip, entity.clientID, entity.activeFrom)) {
-			throw new BadRequestException('unauthorized transaction update');
-		}
-
-		// Apply updates
-		if (txRaw !== undefined) {
-			entity.txRaw = await resolveTxRaw(originChain, txRaw);
-		}
-		entity.activeFrom = new Date();
-		entity.clientID = null;
-
-		const savedEntity = await this.bridgeTransactionRepository.save(entity);
-
-		return mapBridgeTransactionToResponse(savedEntity);
-	}
-
-	async removeTransaction(
-		{ originChain, originTxHash }: TransactionActivateDeleteDto,
-		ip: string,
-	): Promise<void> {
-		const hash = (originTxHash ?? '').trim();
-
-		if (!hash) {
-			throw new BadRequestException('originTxHash is required');
-		}
-
-		const entity = await this.bridgeTransactionRepository.findOne({
-			where: { sourceTxHash: hash, originChain: originChain },
-		});
-
-		if (!entity) {
-			throw new NotFoundException(`transaction with hash ${hash} not found`);
-		}
-
-		if (canUpdateTx(ip, entity?.clientID, entity.activeFrom)) {
-			const result = await this.bridgeTransactionRepository.delete({
-				sourceTxHash: hash,
-				originChain: originChain,
-			});
-
-			if (result.affected === 0) {
-				throw new NotFoundException(`Transaction with hash ${hash} not found`);
-			}
-
-			return;
-		}
-
-		throw new BadRequestException('unauthorized deletion of tx');
-	}
-
 	async transferLayerZero(
 		dto: LayerZeroTransferDto,
 	): Promise<LayerZeroTransferResponseDto> {
+		// LayerZero has no testnet, a testnet instance must never build mainnet transfers
+		if (!this.appConfig.app.isMainnet) {
+			throw new BadRequestException(
+				'Layer Zero transfers are not available on testnet',
+			);
+		}
+
 		if (!isAddress(dto.from)) {
 			throw new BadRequestException(
 				`error while calling Layer Zero transfer: request.from is not a valid address`,
