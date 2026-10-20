@@ -9,6 +9,7 @@ import (
 
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
+	"github.com/Ethernal-Tech/cardano-api/telemetry"
 	"github.com/Ethernal-Tech/cardano-infrastructure/logger"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
@@ -74,6 +75,7 @@ type AppConfig struct {
 	BridgingSettings BridgingSettings           `json:"-"`
 	APIConfig        APIConfig                  `json:"api"`
 	Indexer          *IndexerConfig             `json:"indexer,omitempty"`
+	Telemetry        telemetry.TelemetryConfig  `json:"telemetry"`
 }
 
 func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) error {
