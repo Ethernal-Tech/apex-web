@@ -7,16 +7,20 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/Ethernal-Tech/cardano-api/api"
 	"github.com/Ethernal-Tech/cardano-api/api/controllers"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
+	"github.com/Ethernal-Tech/cardano-api/telemetry"
 	"github.com/Ethernal-Tech/cardano-api/txindexer"
 	validatorchange "github.com/Ethernal-Tech/cardano-api/validator-change"
 	loggerInfra "github.com/Ethernal-Tech/cardano-infrastructure/logger"
 	"github.com/spf13/cobra"
 )
+
+const telemetryCloseTimeout = 5 * time.Second
 
 var caParams = &cardanoAPIParams{}
 
@@ -95,6 +99,26 @@ func runCommand(cmd *cobra.Command, _ []string) {
 		outputter.SetError(errors.New("run mode is invalid"))
 
 		return
+	}
+
+	if config.Telemetry.IsEnabled() {
+		telemetryObj := telemetry.NewTelemetry(config.Telemetry, logger.Named("telemetry"))
+
+		if err := telemetryObj.Start(); err != nil {
+			logger.Error("telemetry start failed", "err", err)
+			outputter.SetError(err)
+
+			return
+		}
+
+		defer func() {
+			closeCtx, cancelCloseCtx := context.WithTimeout(context.Background(), telemetryCloseTimeout)
+			defer cancelCloseCtx()
+
+			if err := telemetryObj.Close(closeCtx); err != nil {
+				logger.Error("error while telemetry dispose", "err", err)
+			}
+		}()
 	}
 
 	if config.Indexer != nil {

@@ -30,6 +30,7 @@ type Manager struct {
 	store     *BBoltStore
 	closers   []io.Closer
 	starters  []func(ctx context.Context)
+	positions map[string]latestPositionFn
 	logger    hclog.Logger
 	wg        sync.WaitGroup
 }
@@ -51,6 +52,7 @@ func NewManager(appConfig *core.AppConfig, logger hclog.Logger) (*Manager, error
 		config:    config,
 		store:     store,
 		closers:   []io.Closer{store},
+		positions: map[string]latestPositionFn{},
 		logger:    logger,
 	}
 
@@ -85,6 +87,19 @@ func (m *Manager) Start(ctx context.Context) {
 
 		m.pruneLoop(ctx)
 	}()
+
+	if m.appConfig.Telemetry.IsEnabled() {
+		worker := newTelemetryWorker(
+			m.positions, m.appConfig.Telemetry.GetPullTime(), m.logger.Named("telemetry_worker"))
+
+		m.wg.Add(1)
+
+		go func() {
+			defer m.wg.Done()
+
+			worker.Start(ctx)
+		}()
+	}
 }
 
 // Close must be called after the context passed to Start is cancelled
@@ -116,6 +131,7 @@ func (m *Manager) createIndexers() error {
 		}
 
 		m.starters = append(m.starters, ci.Start)
+		m.positions[chainID] = m.cardanoLatestPosition(chainID)
 	}
 
 	if len(m.config.EthChains) > 0 {
@@ -144,6 +160,7 @@ func (m *Manager) createIndexers() error {
 			}
 
 			m.starters = append(m.starters, ei.Start)
+			m.positions[chainID] = store.GetLastProcessedBlock
 		}
 	}
 
@@ -164,6 +181,14 @@ func (m *Manager) createIndexers() error {
 			chainConfig, store, m.store, m.resolveSolanaTokenID, m.logger.Named("solana_"+chainID), chainLogger)
 
 		m.starters = append(m.starters, si.Start)
+		m.positions[chainID] = func() (uint64, error) {
+			point, err := store.GetLatestBlockPoint()
+			if err != nil || point == nil {
+				return 0, err
+			}
+
+			return point.BlockSlot, nil
+		}
 	}
 
 	return nil

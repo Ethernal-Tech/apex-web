@@ -237,3 +237,17 @@ Durations are in nanoseconds.
 - Output of block syncers and event trackers is written to `<chainID>-indexer.log` next to the main log file
   (same as in apex-bridge). Its level can be set with `indexer.logLevel` (hclog levels, e.g. `3` for info);
   by default the app log level is used. Newly indexed txs and tracker restarts are logged to the main log.
+
+# Telemetry
+Indexer progress can be exported to Prometheus, the same way apex-bridge does it. Telemetry is enabled when
+`telemetry.prometheusAddr` is set; metrics are then served on `http://<prometheusAddr>/metrics`.
+```json
+"telemetry": {
+    "prometheusAddr": "0.0.0.0:5001",
+    "pullTime": 10000000000
+}
+```
+- `cardano_api_indexers_block_counter_<chainID>` is increased whenever the indexer of a chain moves to a new block
+  (Cardano and Solana slot, EVM block number), checked every `pullTime` (nanoseconds, 10s by default). A counter
+  that stops increasing means the indexer of that chain is stuck. A chain appears only after its first new block.
+- Works only together with the `indexer` section.

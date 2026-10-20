@@ -10,6 +10,7 @@ import (
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	solanatx "github.com/Ethernal-Tech/cardano-api/solana"
+	"github.com/Ethernal-Tech/cardano-api/telemetry"
 	"github.com/Ethernal-Tech/cardano-infrastructure/logger"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
@@ -155,6 +156,7 @@ type AppConfig struct {
 	SkylineBridgingSettings SkylineBridgingSettings        `json:"-"`
 	APIConfig               APIConfig                      `json:"api"`
 	Indexer                 *IndexerConfig                 `json:"indexer,omitempty"`
+	Telemetry               telemetry.TelemetryConfig      `json:"telemetry"`
 }
 
 func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) error {
