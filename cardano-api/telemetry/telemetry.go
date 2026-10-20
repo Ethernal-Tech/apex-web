@@ -18,7 +18,6 @@ const (
 	defaultPullTime = 10 * time.Second
 )
 
-// TelemetryConfig uses the same keys as the prometheus part of the apex-bridge telemetry config
 type TelemetryConfig struct {
 	// empty means disabled, otherwise something like 0.0.0.0:5001
 	PrometheusAddr string `json:"prometheusAddr"`

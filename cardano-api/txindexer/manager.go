@@ -19,14 +19,15 @@ const bridgingTxsDBName = "bridging_txs.db"
 
 // Manager starts all configured indexers and owns their databases
 type Manager struct {
-	appConfig *core.AppConfig
-	config    *core.IndexerConfig
-	store     *BBoltStore
-	closers   []io.Closer
-	starters  []func(ctx context.Context)
-	positions map[string]latestPositionFn
-	logger    hclog.Logger
-	wg        sync.WaitGroup
+	appConfig    *core.AppConfig
+	config       *core.IndexerConfig
+	store        *BBoltStore
+	closers      []io.Closer
+	starters     []func(ctx context.Context)
+	positions    map[string]latestPositionFn
+	pullProgress *PullProgress
+	logger       hclog.Logger
+	wg           sync.WaitGroup
 }
 
 func NewManager(appConfig *core.AppConfig, logger hclog.Logger) (*Manager, error) {
@@ -42,12 +43,13 @@ func NewManager(appConfig *core.AppConfig, logger hclog.Logger) (*Manager, error
 	}
 
 	m := &Manager{
-		appConfig: appConfig,
-		config:    config,
-		store:     store,
-		closers:   []io.Closer{store},
-		positions: map[string]latestPositionFn{},
-		logger:    logger,
+		appConfig:    appConfig,
+		config:       config,
+		store:        store,
+		closers:      []io.Closer{store},
+		positions:    map[string]latestPositionFn{},
+		pullProgress: &PullProgress{},
+		logger:       logger,
 	}
 
 	if err := m.createIndexers(); err != nil {
@@ -61,6 +63,10 @@ func NewManager(appConfig *core.AppConfig, logger hclog.Logger) (*Manager, error
 
 func (m *Manager) Store() BridgingTxsStore {
 	return m.store
+}
+
+func (m *Manager) PullProgress() *PullProgress {
+	return m.pullProgress
 }
 
 func (m *Manager) Start(ctx context.Context) {
@@ -84,7 +90,8 @@ func (m *Manager) Start(ctx context.Context) {
 
 	if m.appConfig.Telemetry.IsEnabled() {
 		worker := newTelemetryWorker(
-			m.positions, m.appConfig.Telemetry.GetPullTime(), m.logger.Named("telemetry_worker"))
+			m.positions, m.unpulledBridgingTxs, m.appConfig.Telemetry.GetPullTime(),
+			m.logger.Named("telemetry_worker"))
 
 		m.wg.Add(1)
 

@@ -6,7 +6,6 @@ import (
 	"github.com/Ethernal-Tech/cardano-api/common"
 )
 
-// ChainIDsConfigFile has the same format as the chain IDs config used by apex-bridge
 type ChainIDsConfigFile struct {
 	ChainIDConfig []ChainIDConfig `json:"chainIDs"`
 }

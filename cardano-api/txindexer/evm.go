@@ -186,7 +186,7 @@ func newEvmIndexer(
 }
 
 func (ei *evmIndexer) Start(ctx context.Context) {
-	// same restart logic as in apex-bridge: the tracker is recreated if it stops progressing
+	// the tracker is recreated if it stops progressing
 	for {
 		trackerCtx, cancelTracker := context.WithCancel(ctx)
 		closedCh := make(chan struct{})
@@ -249,7 +249,7 @@ func (ei *evmIndexer) runTracker(ctx context.Context) {
 		EventSubscriber:       subscriber,
 		StartBlockFromGenesis: ei.config.StartBlockNumber,
 		LogFilter:             logFilter,
-		// add timestamp to the logger to differentiate between multiple instances (same as in apex-bridge)
+		// add timestamp to the logger to differentiate between multiple instances
 		Logger: ei.trackerLogger.Named(time.Now().UTC().String()),
 	}
 

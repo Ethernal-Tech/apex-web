@@ -13,20 +13,22 @@ import (
 )
 
 type BridgingTxControllerImpl struct {
-	store     txindexer.BridgingTxsStore
-	pullLimit int
-	logger    hclog.Logger
+	store        txindexer.BridgingTxsStore
+	pullProgress *txindexer.PullProgress
+	pullLimit    int
+	logger       hclog.Logger
 }
 
 var _ core.APIController = (*BridgingTxControllerImpl)(nil)
 
 func NewBridgingTxController(
-	store txindexer.BridgingTxsStore, pullLimit int, logger hclog.Logger,
+	store txindexer.BridgingTxsStore, pullProgress *txindexer.PullProgress, pullLimit int, logger hclog.Logger,
 ) *BridgingTxControllerImpl {
 	return &BridgingTxControllerImpl{
-		store:     store,
-		pullLimit: pullLimit,
-		logger:    logger,
+		store:        store,
+		pullProgress: pullProgress,
+		pullLimit:    pullLimit,
+		logger:       logger,
 	}
 }
 
@@ -87,6 +89,8 @@ func (c *BridgingTxControllerImpl) getNew(w http.ResponseWriter, r *http.Request
 
 		return
 	}
+
+	c.pullProgress.SetPulled(after)
 
 	utils.WriteResponse(w, r, http.StatusOK, commonResponse.NewNewBridgingTxsResponse(page, after), c.logger)
 }

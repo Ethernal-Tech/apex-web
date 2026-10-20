@@ -30,13 +30,11 @@ const (
 // IndexerConfig configures the bridging transaction indexers. When it is absent from the config,
 // no indexer is started.
 //
-// Per-chain JSON keys intentionally match the ones in apex-bridge oracle configs, so chain settings
-// (especially RPC related ones which are sensitive to rate limits) can be copied over unchanged.
 // Durations are in nanoseconds, like everywhere else in the config.
 type IndexerConfig struct {
 	// Directory where all indexer databases are stored
 	DbsPath string `json:"dbsPath"`
-	// Path to the chain IDs config file (same format as in apex-bridge). Required for EVM indexing
+	// Path to the chain IDs config file. Required for EVM indexing
 	ChainIDsConfigPath string `json:"chainIDsConfigPath"`
 	// How long indexed bridging transactions are kept before being pruned
 	RetentionPeriod time.Duration `json:"retentionPeriod"`

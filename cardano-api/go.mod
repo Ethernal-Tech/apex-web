@@ -3,8 +3,8 @@ module github.com/Ethernal-Tech/cardano-api
 go 1.23.1
 
 // Points to a forked version of the gouroboros library, which raises the CBOR nesting limit
-// (same as in apex-bridge and cardano-infrastructure). Replace directives are not inherited
-// from dependencies, so the indexer would otherwise use the original library.
+// Replace directives are not inherited from dependencies, so the indexer would otherwise 
+// use the original library.
 replace github.com/blinklabs-io/gouroboros => github.com/Ethernal-Tech/gouroboros v0.0.0-20260914132917-4454e1199f8f
 
 require (

@@ -10,8 +10,8 @@ import (
 )
 
 // newChainLogger creates a logger which writes the output of the block syncer or event tracker of a
-// single chain into its own <chainID>-indexer.log file, placed next to the main log file (same as in
-// apex-bridge). That way the noisy indexer output does not end up in the main log file.
+// single chain into its own <chainID>-indexer.log file, placed next to the main log file.
+// That way the noisy indexer output does not end up in the main log file.
 func newChainLogger(
 	baseConfig loggerInfra.LoggerConfig, logLevel *hclog.Level, chainID string, mainLogger hclog.Logger,
 ) (hclog.Logger, error) {

@@ -137,4 +137,8 @@ Indexer progress can be exported to Prometheus, the same way apex-bridge does it
 - `cardano_api_indexers_block_counter_<chainID>` is increased whenever the indexer of a chain moves to a new block
   (Cardano slot, EVM block number), checked every `pullTime` (nanoseconds, 10s by default). A counter
   that stops increasing means the indexer of that chain is stuck. A chain appears only after its first new block.
+- `cardano_api_bridging_txs_unpulled` is the number of indexed bridging txs web-api has not pulled yet (the last
+  assigned sequence number minus `after` of the latest `GetNew` request), updated every `pullTime`. Web-api pulls
+  every few seconds, so a value above zero for several minutes means it stopped pulling. It is not reported until
+  the first `GetNew` request after start.
 - Works only together with the `indexer` section.
