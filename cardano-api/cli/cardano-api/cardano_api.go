@@ -143,7 +143,8 @@ func runCommand(cmd *cobra.Command, _ []string) {
 		}()
 
 		apiControllers = append(apiControllers, controllers.NewBridgingTxController(
-			indexerManager.Store(), config.Indexer.PullLimit, logger.Named("bridging_tx_controller")))
+			indexerManager.Store(), indexerManager.PullProgress(), config.Indexer.PullLimit,
+			logger.Named("bridging_tx_controller")))
 	}
 
 	apiObj, err := api.NewAPI(config.APIConfig, apiControllers, logger.Named("api"))

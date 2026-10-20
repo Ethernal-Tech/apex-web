@@ -17,7 +17,7 @@ import (
 
 const (
 	solanaBridgeRequestEvent = "BridgeRequestEvent"
-	// same as in apex-bridge, gives the rpc endpoint time to cool down before (re)starting
+	// gives the rpc endpoint time to cool down before (re)starting
 	solanaTrackerStartDelay = 10 * time.Second
 )
 
@@ -103,7 +103,7 @@ func newSolanaIndexer(
 }
 
 func (si *solanaIndexer) Start(ctx context.Context) {
-	// same restart logic as in apex-bridge: the tracker is recreated if it stops progressing
+	// the tracker is recreated if it stops progressing
 	for {
 		trackerCtx, cancelTracker := context.WithCancel(ctx)
 		closedCh := make(chan struct{})
@@ -198,7 +198,7 @@ func (si *solanaIndexer) loadTrackerConfig() (*tracker.EventTrackerConfig, error
 		BlockRoundingThreshold: si.config.SlotRoundingThreshold,
 		EventSubscriber:        &solanaEventSubscriber{si.config, si.txsStore, si.resolveID, si.logger},
 		StartFromSlot:          si.config.TrackerStartSlot,
-		// add timestamp to the logger to differentiate between multiple instances (same as in apex-bridge)
+		// add timestamp to the logger to differentiate between multiple instances
 		Logger:                    si.trackerLogger.Named(time.Now().UTC().String()),
 		DisableRateLimiting:       si.config.DisableRateLimiting,
 		RPCMethodLimitsConfig:     rpcMethodLimits,

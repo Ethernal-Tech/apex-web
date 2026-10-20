@@ -18,7 +18,6 @@ const (
 	defaultPullTime = 10 * time.Second
 )
 
-// TelemetryConfig uses the same keys as the prometheus part of the apex-bridge telemetry config
 type TelemetryConfig struct {
 	// empty means disabled, otherwise something like 0.0.0.0:5001
 	PrometheusAddr string `json:"prometheusAddr"`
@@ -95,7 +94,6 @@ func (t *Telemetry) startPrometheus() {
 	}
 }
 
-// same setup as in apex-bridge, metric names are prefixed with the service name (cardano_api_...)
 func setupPrometheusTelemetry() error {
 	inm := metrics.NewInmemSink(10*time.Second, time.Minute)
 	metrics.DefaultInmemSignal(inm)

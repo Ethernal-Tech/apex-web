@@ -7,9 +7,6 @@ import (
 	"github.com/fxamacker/cbor/v2"
 )
 
-// The metadata parsing below mirrors apex-bridge (common/metadata.go), so a tx is read here
-// the same way the oracle reads it.
-
 const (
 	bridgingTxTypeBridgingRequest = "bridge"
 	metadataMapKey                = 1

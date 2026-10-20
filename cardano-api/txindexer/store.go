@@ -136,6 +136,17 @@ func (s *BBoltStore) GetBridgingTxs(after uint64, limit int) (*BridgingTxsPage, 
 	return page, err
 }
 
+// GetCurrentSeq returns the last assigned sequence number
+func (s *BBoltStore) GetCurrentSeq() (seq uint64, err error) {
+	err = s.db.View(func(tx *bbolt.Tx) error {
+		seq = tx.Bucket(bridgingTxsBucket).Sequence()
+
+		return nil
+	})
+
+	return seq, err
+}
+
 func (s *BBoltStore) PruneBridgingTxs(indexedBefore time.Time) (cnt int, err error) {
 	err = s.db.Update(func(tx *bbolt.Tx) error {
 		txsBucket, hashBucket := tx.Bucket(bridgingTxsBucket), tx.Bucket(bridgingTxsByHash)
