@@ -90,8 +90,7 @@ Durations are in nanoseconds.
         "prime": {
             "networkAddress": "relay.prime.example:3001",
             "startSlot": 1000,
-            "startBlockHash": "<hash of the block at startSlot>",
-            "resumeBlockDepth": 20
+            "startBlockHash": "<hash of the block at startSlot>"
         },
         "vector": {
             "networkAddress": "relay.vector.example:3001",
@@ -116,6 +115,9 @@ Durations are in nanoseconds.
 - Cardano chains must also be defined in `cardanoChains` (network magic is taken from there). `networkAddress` is a
   cardano-node relay (node-to-node), the same one apex-bridge uses for its indexer. Ogmios can not be used for indexing.
 - The bridging address of each Cardano chain is the one from the config, kept up to date on validator change.
+- Cardano blocks are indexed with the block indexer from cardano-infrastructure, without confirmations and with deep
+  rollbacks allowed (`allowDeepRollback`). Its state is kept in `cardano_<chainID>.db`; the start point is used only
+  while that database is empty.
 - `gatewayAddress` is the Reactor gateway on Nexus.
 - EVM logs are tracked with zero confirmations. Every `rescanInterval` (and after each restart) blocks after the safe
   block (`finalized`, or latest - `rescanNumBlockConfirmations`) are read again, so txs moved by reorgs are not missed.

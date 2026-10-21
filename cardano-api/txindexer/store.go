@@ -12,7 +12,6 @@ import (
 var (
 	bridgingTxsBucket     = []byte("BridgingTxs")
 	bridgingTxsByHash     = []byte("BridgingTxsByHash")
-	cardanoBlockPoints    = []byte("CardanoBlockPoints")
 	errBridgingTxNotFound = fmt.Errorf("bridging tx not found")
 )
 
@@ -29,7 +28,7 @@ func NewBBoltStore(filePath string) (*BBoltStore, error) {
 	}
 
 	err = db.Update(func(tx *bbolt.Tx) error {
-		for _, bn := range [][]byte{bridgingTxsBucket, bridgingTxsByHash, cardanoBlockPoints} {
+		for _, bn := range [][]byte{bridgingTxsBucket, bridgingTxsByHash} {
 			if _, err := tx.CreateBucketIfNotExists(bn); err != nil {
 				return fmt.Errorf("could not create bucket %s: %w", string(bn), err)
 			}
@@ -183,31 +182,6 @@ func (s *BBoltStore) PruneBridgingTxs(indexedBefore time.Time) (cnt int, err err
 	})
 
 	return cnt, err
-}
-
-// GetCardanoBlockPoints returns the recently observed blocks of a cardano chain, ordered by slot
-func (s *BBoltStore) GetCardanoBlockPoints(chainID string) (points []cardanoBlockPoint, err error) {
-	err = s.db.View(func(tx *bbolt.Tx) error {
-		data := tx.Bucket(cardanoBlockPoints).Get([]byte(chainID))
-		if data == nil {
-			return nil
-		}
-
-		return json.Unmarshal(data, &points)
-	})
-
-	return points, err
-}
-
-func (s *BBoltStore) SetCardanoBlockPoints(chainID string, points []cardanoBlockPoint) error {
-	data, err := json.Marshal(points)
-	if err != nil {
-		return err
-	}
-
-	return s.db.Update(func(tx *bbolt.Tx) error {
-		return tx.Bucket(cardanoBlockPoints).Put([]byte(chainID), data)
-	})
 }
 
 func putBridgingTx(bucket *bbolt.Bucket, key []byte, bridgingTx *BridgingTx) error {

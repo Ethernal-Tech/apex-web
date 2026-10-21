@@ -13,7 +13,6 @@ const (
 	defaultIndexerPruneInterval   = time.Hour
 	defaultIndexerPullLimit       = 500
 
-	defaultCardanoResumeBlockDepth          = 20
 	defaultCardanoAddressesRefreshInterval  = time.Minute
 	defaultCardanoTTLSlotNumberInc          = 3600
 	defaultEvmSyncBatchSize                 = 20
@@ -56,8 +55,6 @@ type CardanoIndexerConfig struct {
 	// Starting point used only when the indexer database is empty
 	StartSlot      uint64 `json:"startSlot"`
 	StartBlockHash string `json:"startBlockHash"`
-	// How many blocks behind the last observed block the indexer resumes from after a restart
-	ResumeBlockDepth int `json:"resumeBlockDepth"`
 	// How often bridging addresses are refreshed from the oracle
 	AddressesRefreshInterval time.Duration `json:"addressesRefreshInterval"`
 	// Added to the slot of the block containing the tx to get an upper bound for its TTL
@@ -111,11 +108,6 @@ func (appConfig *AppConfig) fillOutIndexer() error {
 			return fmt.Errorf("indexer: networkAddress is required for chain %s", chainID)
 		}
 
-		if chainCfg.ResumeBlockDepth < 0 {
-			return fmt.Errorf("indexer: invalid resumeBlockDepth for chain %s", chainID)
-		}
-
-		chainCfg.ResumeBlockDepth = defaultIfZero(chainCfg.ResumeBlockDepth, defaultCardanoResumeBlockDepth)
 		chainCfg.AddressesRefreshInterval = defaultIfZero(
 			chainCfg.AddressesRefreshInterval, defaultCardanoAddressesRefreshInterval)
 		chainCfg.TTLSlotNumberInc = defaultIfZero(chainCfg.TTLSlotNumberInc, defaultCardanoTTLSlotNumberInc)

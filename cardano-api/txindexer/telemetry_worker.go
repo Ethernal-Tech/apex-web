@@ -94,14 +94,3 @@ func (m *Manager) unpulledBridgingTxs() (uint64, bool, error) {
 
 	return currentSeq - pulledSeq, true, nil
 }
-
-func (m *Manager) cardanoLatestPosition(chainID string) latestPositionFn {
-	return func() (uint64, error) {
-		points, err := m.store.GetCardanoBlockPoints(chainID)
-		if err != nil || len(points) == 0 {
-			return 0, err
-		}
-
-		return points[len(points)-1].Slot, nil
-	}
-}
