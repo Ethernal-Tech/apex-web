@@ -31,21 +31,6 @@ func TestTelemetryWorker_Execute(t *testing.T) {
 	require.Equal(t, map[string]uint64{"prime": 15}, worker.latest)
 }
 
-func TestManager_CardanoLatestPosition(t *testing.T) {
-	m := &Manager{store: newTestStore(t)}
-	getPosition := m.cardanoLatestPosition("prime")
-
-	position, err := getPosition()
-	require.NoError(t, err)
-	require.Zero(t, position)
-
-	require.NoError(t, m.store.SetCardanoBlockPoints("prime", []cardanoBlockPoint{{Slot: 5}, {Slot: 9}}))
-
-	position, err = getPosition()
-	require.NoError(t, err)
-	require.Equal(t, uint64(9), position)
-}
-
 func TestManager_UnpulledBridgingTxs(t *testing.T) {
 	m := &Manager{store: newTestStore(t), pullProgress: &PullProgress{}}
 

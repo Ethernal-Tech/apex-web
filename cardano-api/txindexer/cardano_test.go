@@ -2,10 +2,12 @@ package txindexer
 
 import (
 	"errors"
+	"path/filepath"
 	"testing"
 
 	"github.com/Ethernal-Tech/cardano-api/core"
 	"github.com/Ethernal-Tech/cardano-infrastructure/indexer"
+	indexerbbolt "github.com/Ethernal-Tech/cardano-infrastructure/indexer/db/bbolt"
 	"github.com/fxamacker/cbor/v2"
 	"github.com/hashicorp/go-hclog"
 	"github.com/stretchr/testify/require"
@@ -88,35 +90,43 @@ func TestParseBridgingRequestMetadata(t *testing.T) {
 	})
 }
 
-func newTestCardanoHandler(t *testing.T) (*cardanoBlockHandler, *BBoltStore) {
+func newTestCardanoIndexer(t *testing.T) (*cardanoIndexer, *indexerbbolt.BBoltDatabase, *BBoltStore) {
 	t.Helper()
+
+	db := &indexerbbolt.BBoltDatabase{}
+	require.NoError(t, db.Init(filepath.Join(t.TempDir(), "cardano.db")))
+
+	t.Cleanup(func() { _ = db.Close() })
 
 	store := newTestStore(t)
 	config := &core.CardanoIndexerConfig{
 		ChainID:          "prime",
 		StartSlot:        5,
 		StartBlockHash:   "0505",
-		ResumeBlockDepth: 2,
 		TTLSlotNumberInc: 100,
 	}
 
-	handler, err := newCardanoBlockHandler(config, store, store, func(string, bool) uint16 { return 1 }, hclog.NewNullLogger())
-	require.NoError(t, err)
+	ci := newCardanoIndexer(config, 0, db, store, nil,
+		func(string, bool) uint16 { return 1 }, hclog.NewNullLogger(), hclog.NewNullLogger())
+	ci.setAddresses([]string{testBridgingAddr})
 
-	handler.setAddresses([]string{testBridgingAddr})
-
-	return handler, store
+	return ci, db, store
 }
 
 func testHeader(slot uint64, hashByte byte) indexer.BlockHeader {
 	return indexer.BlockHeader{Slot: slot, Hash: indexer.Hash{hashByte}}
 }
 
-func TestCardanoBlockHandler_RollForward(t *testing.T) {
-	handler, store := newTestCardanoHandler(t)
-	metadata := testBridgingMetadata(t, func(m map[int]any) any { return m })
+func testTx(header indexer.BlockHeader, tx indexer.Tx) *indexer.Tx {
+	tx.BlockSlot, tx.BlockHash = header.Slot, header.Hash
 
-	bridgingTx := &indexer.Tx{
+	return &tx
+}
+
+func TestCardanoIndexer_RollForward(t *testing.T) {
+	ci, db, store := newTestCardanoIndexer(t)
+	metadata := testBridgingMetadata(t, func(m map[int]any) any { return m })
+	bridgingTx := indexer.Tx{
 		Hash:     indexer.Hash{0xaa},
 		Metadata: metadata,
 		Outputs: []*indexer.TxOutput{
@@ -126,17 +136,26 @@ func TestCardanoBlockHandler_RollForward(t *testing.T) {
 	}
 	retriever := &testTxsRetriever{txs: map[indexer.Hash][]*indexer.Tx{
 		{1}: {
-			bridgingTx,
+			testTx(testHeader(10, 1), bridgingTx),
 			// metadata, but nothing sent to the bridging address
-			{Hash: indexer.Hash{0xbb}, Metadata: metadata, Outputs: []*indexer.TxOutput{{Address: testOtherAddr, Amount: 5}}},
+			testTx(testHeader(10, 1), indexer.Tx{
+				Indx: 1, Hash: indexer.Hash{0xbb}, Metadata: metadata,
+				Outputs: []*indexer.TxOutput{{Address: testOtherAddr, Amount: 5}},
+			}),
 			// sent to the bridging address without metadata (e.g. hot wallet funding)
-			{Hash: indexer.Hash{0xcc}, Outputs: []*indexer.TxOutput{{Address: testBridgingAddr, Amount: 5}}},
+			testTx(testHeader(10, 1), indexer.Tx{
+				Indx: 2, Hash: indexer.Hash{0xcc}, Outputs: []*indexer.TxOutput{{Address: testBridgingAddr, Amount: 5}},
+			}),
 		},
 		{2}: {},
-		{3}: {bridgingTx},
+		{3}: {testTx(testHeader(11, 3), bridgingTx)},
 	}}
 
-	require.NoError(t, handler.RollForward(testHeader(10, 1), retriever))
+	point, err := ci.blockIndexer.Reset()
+	require.NoError(t, err)
+	require.Equal(t, uint64(5), point.BlockSlot)
+
+	require.NoError(t, ci.blockIndexer.RollForward(testHeader(10, 1), retriever))
 
 	page, err := store.GetBridgingTxs(0, 10)
 	require.NoError(t, err)
@@ -157,15 +176,11 @@ func TestCardanoBlockHandler_RollForward(t *testing.T) {
 	require.Equal(t, uint64(10), tx.BlockNumber)
 	require.Equal(t, uint64(110), tx.TTL)
 
-	// already processed block is skipped without retrieving txs
-	require.NoError(t, handler.RollForward(testHeader(10, 1), retriever))
-	require.Equal(t, 1, retriever.calls)
+	require.NoError(t, ci.blockIndexer.RollForward(testHeader(11, 2), retriever))
 
-	require.NoError(t, handler.RollForward(testHeader(11, 2), retriever))
-
-	// rollback to slot 10: the tx is included again in another block of the new fork
-	require.NoError(t, handler.RollBackward(indexer.BlockPoint{BlockSlot: 10, BlockHash: indexer.Hash{1}}))
-	require.NoError(t, handler.RollForward(testHeader(11, 3), retriever))
+	// rollback of an already processed block: the tx is included again in another block of the new fork
+	require.NoError(t, ci.blockIndexer.RollBackward(indexer.BlockPoint{BlockSlot: 10, BlockHash: indexer.Hash{1}}))
+	require.NoError(t, ci.blockIndexer.RollForward(testHeader(11, 3), retriever))
 
 	page, err = store.GetBridgingTxs(0, 10)
 	require.NoError(t, err)
@@ -173,8 +188,34 @@ func TestCardanoBlockHandler_RollForward(t *testing.T) {
 	require.Equal(t, uint64(11), page.Txs[0].BlockNumber)
 	require.Equal(t, indexer.Hash{3}.String(), page.Txs[0].BlockHash)
 
-	// block from the abandoned fork is removed from the known points
-	require.Equal(t, []cardanoBlockPoint{{Slot: 10, Hash: indexer.Hash{1}}, {Slot: 11, Hash: indexer.Hash{3}}}, handler.points)
+	unprocessed, err := db.GetUnprocessedConfirmedTxs(0)
+	require.NoError(t, err)
+	require.Empty(t, unprocessed)
+
+	latestPoint, err := db.GetLatestBlockPoint()
+	require.NoError(t, err)
+	require.Equal(t, indexer.BlockPoint{BlockSlot: 11, BlockHash: indexer.Hash{3}}, *latestPoint)
+}
+
+func TestCardanoIndexer_ProcessConfirmedTxs_Retry(t *testing.T) {
+	ci, db, store := newTestCardanoIndexer(t)
+	tx := testTx(testHeader(10, 1), indexer.Tx{
+		Hash:     indexer.Hash{0xaa},
+		Metadata: testBridgingMetadata(t, func(m map[int]any) any { return m }),
+		Outputs:  []*indexer.TxOutput{{Address: testBridgingAddr, Amount: 1_500_000}},
+	})
+
+	// txs of a block whose processing failed stay unprocessed and are processed with the next block
+	require.NoError(t, db.OpenTx().AddConfirmedTxs([]*indexer.Tx{tx}).Execute())
+	require.NoError(t, ci.processConfirmedTxs(nil, nil))
+
+	page, err := store.GetBridgingTxs(0, 10)
+	require.NoError(t, err)
+	require.Len(t, page.Txs, 1)
+
+	unprocessed, err := db.GetUnprocessedConfirmedTxs(0)
+	require.NoError(t, err)
+	require.Empty(t, unprocessed)
 }
 
 func TestMetadataAddrToAddr(t *testing.T) {
@@ -182,51 +223,4 @@ func TestMetadataAddrToAddr(t *testing.T) {
 	require.Equal(t, "0xabcdef0123", metadataAddrToAddr("nexus", []string{"abcdef", "0123"}))
 	require.Equal(t, "0xabcdef0123", metadataAddrToAddr("polygon", []string{"0xabcdef", "0123"}))
 	require.Equal(t, "addr_test1qxyz", metadataAddrToAddr("vector", []string{"addr_test1", "qxyz"}))
-}
-
-func TestCardanoBlockHandler_NoAddresses(t *testing.T) {
-	handler, _ := newTestCardanoHandler(t)
-	handler.setAddresses(nil)
-
-	err := handler.RollForward(testHeader(10, 1), &testTxsRetriever{})
-	require.ErrorIs(t, err, errNoBridgingAddresses)
-}
-
-func TestCardanoBlockHandler_Reset(t *testing.T) {
-	handler, store := newTestCardanoHandler(t)
-	retriever := &testTxsRetriever{txs: map[indexer.Hash][]*indexer.Tx{}}
-
-	// no known blocks -> configured starting point
-	point, err := handler.Reset()
-	require.NoError(t, err)
-	require.Equal(t, uint64(5), point.BlockSlot)
-
-	for i := byte(1); i <= 6; i++ {
-		retriever.txs[indexer.Hash{i}] = nil
-		require.NoError(t, handler.RollForward(testHeader(uint64(i)*10, i), retriever))
-	}
-
-	// only 2 * resumeBlockDepth points are kept
-	require.Len(t, handler.points, 4)
-
-	// points are persisted, so a new handler (restart) resumes from them
-	handler, err = newCardanoBlockHandler(handler.config, store, store, nil, hclog.NewNullLogger())
-	require.NoError(t, err)
-
-	expectedSlots := []uint64{40, 40, 30, 5}
-	for _, slot := range expectedSlots {
-		point, err := handler.Reset()
-		require.NoError(t, err)
-		require.Equal(t, slot, point.BlockSlot)
-	}
-
-	// successful sync resets the fallback
-	handler.setAddresses([]string{testBridgingAddr})
-
-	retriever.txs[indexer.Hash{7}] = nil
-	require.NoError(t, handler.RollForward(testHeader(70, 7), retriever))
-
-	point, err = handler.Reset()
-	require.NoError(t, err)
-	require.Equal(t, uint64(50), point.BlockSlot)
 }

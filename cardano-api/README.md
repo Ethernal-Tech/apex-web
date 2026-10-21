@@ -200,8 +200,7 @@ Durations are in nanoseconds.
         "prime": {
             "networkAddress": "relay.prime.example:3001",
             "startSlot": 1000,
-            "startBlockHash": "<hash of the block at startSlot>",
-            "resumeBlockDepth": 20
+            "startBlockHash": "<hash of the block at startSlot>"
         }
     },
     "ethChains": {
@@ -229,6 +228,9 @@ Durations are in nanoseconds.
 ```
 - Cardano chains must also be defined in `cardanoChains` (network magic is taken from there). `networkAddress` is a
   cardano-node relay (node-to-node), the same one apex-bridge uses for its indexer. Ogmios can not be used for indexing.
+- Cardano blocks are indexed with the block indexer from cardano-infrastructure, without confirmations and with deep
+  rollbacks allowed (`allowDeepRollback`). Its state is kept in `cardano_<chainID>.db`; the start point is used only
+  while that database is empty.
 - Solana chains must also be defined in `solanaChains`. RPC endpoint and program default to its `chainSpecific`
   values and can be overridden with `txProviderEndpoint` and `trackedProgram`.
 - EVM logs are tracked with zero confirmations. Every `rescanInterval` (and after each restart) blocks after the safe

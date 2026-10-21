@@ -13,6 +13,7 @@ import (
 	eventStore "github.com/Ethernal-Tech/blockchain-event-tracker/store"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
+	indexerbbolt "github.com/Ethernal-Tech/cardano-infrastructure/indexer/db/bbolt"
 	solanaStore "github.com/Ethernal-Tech/solana-infrastructure/tracker/store"
 	"github.com/hashicorp/go-hclog"
 )
@@ -125,20 +126,31 @@ func (m *Manager) createIndexers() error {
 	for chainID, chainConfig := range m.config.CardanoChains {
 		cardanoConfig := m.appConfig.CardanoChains[chainID]
 
+		db := &indexerbbolt.BBoltDatabase{}
+		if err := db.Init(m.chainDBPath("cardano", chainID)); err != nil {
+			return fmt.Errorf("failed to open cardano indexer db for %s: %w", chainID, err)
+		}
+
+		m.closers = append(m.closers, db)
+
 		chainLogger, err := m.newChainLogger(chainID)
 		if err != nil {
 			return err
 		}
 
-		ci, err := newCardanoIndexer(
-			chainConfig, cardanoConfig.NetworkMagic, m.store, m.store,
+		ci := newCardanoIndexer(
+			chainConfig, cardanoConfig.NetworkMagic, db, m.store,
 			m.getCardanoBridgingAddresses, m.resolveCardanoTokenID, m.logger.Named("cardano_"+chainID), chainLogger)
-		if err != nil {
-			return err
-		}
 
 		m.starters = append(m.starters, ci.Start)
-		m.positions[chainID] = m.cardanoLatestPosition(chainID)
+		m.positions[chainID] = func() (uint64, error) {
+			point, err := db.GetLatestBlockPoint()
+			if err != nil || point == nil {
+				return 0, err
+			}
+
+			return point.BlockSlot, nil
+		}
 	}
 
 	if len(m.config.EthChains) > 0 {
