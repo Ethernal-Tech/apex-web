@@ -49,15 +49,21 @@ export function IntroAnimation() {
   // Guards against firing the "enter" transition more than once (e.g. a rapid
   // double-click or a click + keypress landing in the same tick).
   const proceededRef = useRef(false);
+  // Decided once per mount. StrictMode (dev) runs effects twice, and the second
+  // run would otherwise see the flag the first run just set and skip the intro.
+  const shouldPlayRef = useRef<boolean | null>(null);
 
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
-    if (sessionStorage.getItem("skyline-intro-played") === "1") {
+    if (shouldPlayRef.current === null) {
+      shouldPlayRef.current =
+        sessionStorage.getItem("skyline-intro-played") !== "1";
+      sessionStorage.setItem("skyline-intro-played", "1");
+    }
+    if (!shouldPlayRef.current) {
       setActive(false);
       emitDone();
-      return;
     }
-    sessionStorage.setItem("skyline-intro-played", "1");
   }, []);
 
   // Preload the intro sound so it's ready to play the instant the user enters.

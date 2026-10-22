@@ -403,6 +403,7 @@ export function SiteHeader({
             className={`h-8 w-auto max-w-none shrink-0 transition-[filter] duration-300 md:h-9 ${
               light ? "brightness-[0.35] saturate-[3]" : ""
             }`}
+            data-skyline-logo-target
           />
         </Link>
 
