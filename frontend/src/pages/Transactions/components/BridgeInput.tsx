@@ -403,6 +403,7 @@ const BridgeInput = ({
 				userWalletFee={userWalletFee || '0'}
 				bridgeTxFee={bridgeTxFee}
 				chain={chain}
+				destinationChain={destinationChain}
 				isFeeInformation={!validatorChangeInProgress}
 			/>
 		</Box>

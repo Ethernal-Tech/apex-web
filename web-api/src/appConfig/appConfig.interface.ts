@@ -15,8 +15,6 @@ export interface AppConfig {
 		port: number;
 		corsAllowList: string[];
 		isMainnet: boolean;
-		txValidityPeriod: number;
-		hashSecret: string;
 	};
 	features: {
 		statusUpdateModesSupported: string[];
@@ -39,6 +37,8 @@ export interface AppConfig {
 		name: string;
 		ssl: boolean;
 		migrationsTableName: string;
+		/** Upper bound for a single query of the running app, in milliseconds */
+		statementTimeoutMs: number;
 		entities: string[];
 		migrations: string[];
 	};

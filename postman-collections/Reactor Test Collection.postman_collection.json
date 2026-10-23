@@ -170,6 +170,26 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "By Tx Hash",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{web_api_base_url}}/bridgeTransaction/byTxHash/prime/cb55124ee128a8df8d48fafa2f2794ca13e1115dbc490ec9801ff84b82660e19",
+									"host": [
+										"{{web_api_base_url}}"
+									],
+									"path": [
+										"bridgeTransaction",
+										"byTxHash",
+										"prime",
+										"cb55124ee128a8df8d48fafa2f2794ca13e1115dbc490ec9801ff84b82660e19"
+									]
+								}
+							},
+							"response": []
 						}
 					]
 				},
@@ -583,110 +603,25 @@
 								}
 							},
 							"response": []
-						},
+						}
+					]
+				},
+				{
+					"name": "stats",
+					"item": [
 						{
-							"name": "Bridging Transaction Submitted",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test(\"Status is 200\", function () {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test(\"Response is JSON\", function () {",
-											"    pm.response.to.be.json;",
-											"});",
-											"",
-											"pm.test(\"Response has required fields\", function () {",
-											"    const json = pm.response.json();",
-											"    const required = [",
-											"        \"id\",",
-											"        \"senderAddress\",",
-											"        \"receiverAddresses\",",
-											"        \"amount\",",
-											"        \"originChain\",",
-											"        \"destinationChain\",",
-											"        \"sourceTxHash\",",
-											"        \"status\",",
-											"        \"createdAt\",",
-											"        \"isRefund\"",
-											"    ];",
-											"",
-											"    required.forEach(field => {",
-											"        pm.expect(json).to.have.property(field);",
-											"    });",
-											"});",
-											"",
-											"pm.test(\"Optional fields are valid if present\", function () {",
-											"    const json = pm.response.json();",
-											"    if (json.hasOwnProperty(\"destinationTxHash\") && json.destinationTxHash !== null) {",
-											"        pm.expect(json.destinationTxHash).to.be.a(\"string\");",
-											"    }",
-											"    if (json.hasOwnProperty(\"finishedAt\") && json.finishedAt !== null) {",
-											"        pm.expect(new Date(json.finishedAt).toString()).not.eql(\"Invalid Date\");",
-											"    }",
-											"});",
-											"",
-											"pm.test(\"Chain fields are valid enums\", function () {",
-											"    const chains = [\"nexus\", \"prime\", \"vector\"];",
-											"    const json = pm.response.json();",
-											"    pm.expect(chains).to.include(json.originChain);",
-											"    pm.expect(chains).to.include(json.destinationChain);",
-											"});",
-											"",
-											"pm.test(\"Status field is valid enum\", function () {",
-											"    const allowedStatus = [\"Pending\", \"DiscoveredOnSource\", \"InvalidRequest\", \"SubmittedToBridge\", \"IncludedInBatch\", \"SubmittedToDestination\", \"FailedToExecuteOnDestination\", \"ExecutedOnDestination\"];",
-											"    const json = pm.response.json();",
-											"    pm.expect(allowedStatus).to.include(json.status);",
-											"});",
-											"",
-											"pm.test(\"Dates are valid\", function () {",
-											"    const json = pm.response.json();",
-											"    pm.expect(new Date(json.createdAt).toString()).not.eql(\"Invalid Date\");",
-											"    if (json.finishedAt) {",
-											"        pm.expect(new Date(json.finishedAt).toString()).not.eql(\"Invalid Date\");",
-											"    }",
-											"});",
-											"",
-											"pm.test(\"Boolean fields are boolean\", function () {",
-											"    const json = pm.response.json();",
-											"    pm.expect(json.isRefund).to.be.a(\"boolean\");",
-											"});"
-										],
-										"type": "text/javascript",
-										"packages": {},
-										"requests": {}
-									}
-								}
-							],
+							"name": "Bridging Durations",
 							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "x-api-key",
-										"value": "{{web_api_api_key}}",
-										"type": "text"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"originChain\": \"nexus\",\n  \"destinationChain\": \"prime\",\n  \"originTxHash\": \"0x1f80a397469c55bf3e8c2ef0b3ca765dde7bc668198376b8963e74951caf2943\",\n  \"senderAddress\": \"0xcCB2dDA531690E0eacf03338116Ea214c6379cD4\",\n  \"receiverAddrs\": [\"addr_test1qqwzx3uuk6zuqv95k89fp34k5753n6j50lwgpttwh5w3lu00v62fvkzx070qc6slaa76s2za4pne5puer00d5evdny9qd4dqcy\"],\n  \"amount\": \"21000010000000000000\",\n  \"txRaw\": \"0xAAA_rawTxHash\",\n  \"isFallback\": false\n}",
-									"options": {
-										"raw": {
-											"language": "json"
-										}
-									}
-								},
+								"method": "GET",
+								"header": [],
 								"url": {
-									"raw": "{{web_api_base_url}}/transaction/bridgingTransactionSubmitted",
+									"raw": "{{web_api_base_url}}/stats/bridgingDurations",
 									"host": [
 										"{{web_api_base_url}}"
 									],
 									"path": [
-										"transaction",
-										"bridgingTransactionSubmitted"
+										"stats",
+										"bridgingDurations"
 									]
 								}
 							},
@@ -904,6 +839,41 @@
 								"api",
 								"CardanoTx",
 								"GetSettings"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetNewBridgingTx",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{cardano_api_key}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{cardano_api_base_url}}/api/BridgingTx/GetNew?after=0&limit=100",
+							"host": [
+								"{{cardano_api_base_url}}"
+							],
+							"path": [
+								"api",
+								"BridgingTx",
+								"GetNew"
+							],
+							"query": [
+								{
+									"key": "after",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
 							]
 						}
 					},
