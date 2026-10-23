@@ -14,15 +14,24 @@ import { TokenPriceModule } from './tokenPrice/tokenPrice.module';
 import { TokenInfoModule } from './tokenInfo/tokenInfo.module';
 import { ChainInfoModule } from './chainInfo/chainInfo.module';
 import { BalanceModule } from './balance/balance.module';
+import { IndexedTxModule } from './indexedTx/indexedTx.module';
+import { LayerZeroSyncModule } from './layerZeroSync/layerZeroSync.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ApiKeyGuard } from './common/guards/api-key.guard';
+import { getAppConfig } from './appConfig/appConfig';
 
 @Module({
 	imports: [
 		ConfigModule.forRoot({
 			isGlobal: true,
 		}),
-		TypeOrmModule.forRoot(dbdatasource),
+		TypeOrmModule.forRoot({
+			...dbdatasource,
+			// only for the app connection, migrations run through dbdatasource without a limit
+			extra: {
+				statement_timeout: getAppConfig().db.statementTimeoutMs,
+			},
+		}),
 		MailerConfigModule,
 		SettingsModule,
 		TransactionModule,
@@ -34,6 +43,9 @@ import { ApiKeyGuard } from './common/guards/api-key.guard';
 		TokenInfoModule,
 		ChainInfoModule,
 		BalanceModule,
+		IndexedTxModule,
+		// LayerZero has no testnet, so its transfers are recorded only by mainnet instances
+		...(getAppConfig().app.isMainnet ? [LayerZeroSyncModule] : []),
 		AppConfigModule,
 	],
 	controllers: [],

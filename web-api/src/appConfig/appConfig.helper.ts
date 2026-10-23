@@ -190,8 +190,6 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			default: undefined,
 		}),
 		IS_MAINNET: bool({ default: undefined }),
-		TX_VALIDITY_PERIOD: num({ default: undefined }),
-		HASH_SECRET: str({ default: undefined }),
 
 		STATUS_UPDATE_MODES_SUPPORTED: list({ default: undefined }),
 
@@ -213,6 +211,7 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 		DB_NAME: str({ default: undefined }),
 		DB_SSL: bool({ default: undefined }),
 		DB_MIGRATIONS_TABLE_NAME: str({ default: undefined }),
+		DB_STATEMENT_TIMEOUT_MS: num({ default: undefined }),
 		DB_ENTITIES: list({ default: undefined }),
 		DB_MIGRATIONS: list({ default: undefined }),
 
@@ -241,8 +240,6 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			port: env.PORT,
 			corsAllowList: env.CORS_ALLOW_LIST,
 			isMainnet: env.IS_MAINNET,
-			txValidityPeriod: env.TX_VALIDITY_PERIOD,
-			hashSecret: env.HASH_SECRET,
 		},
 		features: {
 			statusUpdateModesSupported: env.STATUS_UPDATE_MODES_SUPPORTED,
@@ -272,6 +269,7 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			name: env.DB_NAME,
 			ssl: env.DB_SSL,
 			migrationsTableName: env.DB_MIGRATIONS_TABLE_NAME,
+			statementTimeoutMs: env.DB_STATEMENT_TIMEOUT_MS,
 			entities: env.DB_ENTITIES,
 			migrations: env.DB_MIGRATIONS,
 		},
