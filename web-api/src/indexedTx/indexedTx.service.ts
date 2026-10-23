@@ -159,6 +159,7 @@ export class IndexedTxService {
 				existingByHash.get(tx.txHash),
 				tx,
 				fields,
+				mode,
 				new Date(),
 			);
 

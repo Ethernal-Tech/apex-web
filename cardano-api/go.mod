@@ -74,7 +74,7 @@ require (
 )
 
 require (
-	github.com/Ethernal-Tech/blockchain-event-tracker v0.0.0-20261013140239-03d3542035fd
+	github.com/Ethernal-Tech/blockchain-event-tracker v0.0.0-20261023113908-ed976452bc2d
 	github.com/Ethernal-Tech/ethgo v0.0.0-20240902085129-307ec04e3e94
 	github.com/gagliardetto/solana-go v1.23.0
 	github.com/hashicorp/go-metrics v0.5.4

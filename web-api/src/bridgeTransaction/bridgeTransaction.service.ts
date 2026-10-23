@@ -241,26 +241,30 @@ export class BridgeTransactionService {
 							txRaw: entity.txRaw,
 						};
 
-						const tokenID = getRealTokenIDFromEntity(
-							this.settingsService.SettingsResponse.directionConfig,
-							entity,
-						);
-						if (!tokenID) {
-							Logger.error(
-								`failed to get real tokenID for entity: ${entity.originChain} ${entity.sourceTxHash}`,
-							);
-
-							return;
-						}
-
-						const bridgingMode = getBridgingMode(
-							entity.originChain,
-							entity.destinationChain,
-							tokenID,
-							this.settingsService.SettingsResponse,
-						);
+						// txs recorded before the indexer do not have the mode stored
+						let bridgingMode = entity.bridgingMode;
 						if (!bridgingMode) {
-							continue;
+							const tokenID = getRealTokenIDFromEntity(
+								this.settingsService.SettingsResponse.directionConfig,
+								entity,
+							);
+							if (!tokenID) {
+								Logger.error(
+									`failed to get real tokenID for entity: ${entity.originChain} ${entity.sourceTxHash}`,
+								);
+
+								continue;
+							}
+
+							bridgingMode = getBridgingMode(
+								entity.originChain,
+								entity.destinationChain,
+								tokenID,
+								this.settingsService.SettingsResponse,
+							);
+							if (!bridgingMode) {
+								continue;
+							}
 						}
 
 						if (bridgingMode === BridgingModeEnum.Skyline) {

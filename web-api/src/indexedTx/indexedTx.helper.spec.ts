@@ -1,6 +1,10 @@
 import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import { getTxTTL } from 'src/bridgeTransaction/bridgeTransaction.helper';
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import {
+	BridgingModeEnum,
+	ChainEnum,
+	TransactionStatusEnum,
+} from 'src/common/enum';
 import { BridgingSettingsDirectionConfigDto } from 'src/settings/settings.dto';
 import { QueryFailedError } from 'typeorm';
 import {
@@ -208,6 +212,7 @@ describe('applyIndexedTx', () => {
 			undefined,
 			tx,
 			mapIndexedTxToEntityFields(tx, directionConfig)!,
+			BridgingModeEnum.Skyline,
 			now,
 		);
 
@@ -215,6 +220,7 @@ describe('applyIndexedTx', () => {
 		expect(entity.createdAt).toEqual(new Date('2026-10-07T10:00:00Z'));
 		expect(entity.activeFrom).toEqual(now);
 		expect(entity.clientID).toBeNull();
+		expect(entity.bridgingMode).toBe(BridgingModeEnum.Skyline);
 		expect(getTxTTL(ChainEnum.Prime, entity.txRaw)).toBe(BigInt(1234));
 	});
 
@@ -239,6 +245,7 @@ describe('applyIndexedTx', () => {
 			existing,
 			tx,
 			mapIndexedTxToEntityFields(tx, directionConfig)!,
+			BridgingModeEnum.Skyline,
 			now,
 		);
 

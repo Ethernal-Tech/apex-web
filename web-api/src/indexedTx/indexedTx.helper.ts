@@ -233,11 +233,14 @@ export const applyIndexedTx = (
 	entity: BridgeTransaction | undefined,
 	tx: IndexedBridgingTx,
 	fields: IndexedTxEntityFields,
+	mode: BridgingModeEnum,
 	now: Date,
 ): BridgeTransaction => {
 	const result = entity ?? new BridgeTransaction();
 
 	Object.assign(result, fields);
+	// the direction may not be allowed by the settings, so the mode can not be derived from them later
+	result.bridgingMode = mode;
 
 	if (!entity) {
 		const indexedAt = new Date(tx.indexedAt);
