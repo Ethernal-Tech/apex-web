@@ -108,15 +108,17 @@ export function toFixedAmount(n: number | string, decimals: number): string {
 
 /**
  * At most `maxDigits` digits, wherever the decimal point falls, so amounts stay
- * inside a fixed width column: 11583.664579 -> 11583.664, 0.123456789 ->
+ * inside a fixed width column: 11583.664579 -> 11,583.664, 0.123456789 ->
  * 0.1234567. The integer part is never shortened, the decimals take whatever
- * room is left over, and trailing zeros go - 53602.000000 -> 53602.
+ * room is left over, and trailing zeros go - 53602.000000 -> 53,602. Thousands
+ * are separated with commas, which do not count against `maxDigits`.
  *
  * Decimals are cut rather than rounded, so what is shown is never more than what
  * was bridged.
  *
  * Past 9999999 not even the integer part fits, so only its first five digits
- * are kept with "..." after them: 1075201007.45 -> 10752...
+ * are kept with "..." after them: 1075201007.45 -> 10752... These get no
+ * commas, "10,752..." would read as ten thousand.
  */
 export function formatAmountDigits(
   value: number | string,
@@ -147,7 +149,8 @@ export function formatAmountDigits(
     .slice(0, Math.max(0, maxDigits - spent))
     .replace(/0+$/, "");
 
-  return `${sign}${whole}${trimmed ? `.${trimmed}` : ""}`;
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${sign}${grouped}${trimmed ? `.${trimmed}` : ""}`;
 }
 
 export function toFixedFloor(n: number | string, decimals: number): string {

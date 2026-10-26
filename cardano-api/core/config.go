@@ -10,6 +10,7 @@ import (
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	solanatx "github.com/Ethernal-Tech/cardano-api/solana"
+	"github.com/Ethernal-Tech/cardano-api/telemetry"
 	"github.com/Ethernal-Tech/cardano-infrastructure/logger"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
@@ -154,6 +155,8 @@ type AppConfig struct {
 	ReactorBridgingSettings ReactorBridgingSettings        `json:"-"`
 	SkylineBridgingSettings SkylineBridgingSettings        `json:"-"`
 	APIConfig               APIConfig                      `json:"api"`
+	Indexer                 *IndexerConfig                 `json:"indexer,omitempty"`
+	Telemetry               telemetry.TelemetryConfig      `json:"telemetry"`
 }
 
 func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) error {
@@ -191,6 +194,10 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 	}
 
 	appConfig.solanaChainsMu.Unlock()
+
+	if err := appConfig.fillOutIndexer(); err != nil {
+		return err
+	}
 
 	settingsRequestURL := fmt.Sprintf("%s/api/Settings/Get", appConfig.OracleAPI.URL)
 
@@ -425,6 +432,19 @@ func (appConfig *AppConfig) updateMultisigAddresses(
 			logger.Info("successfully updated bridge address", "chainID", chainID)
 		}
 	}
+}
+
+// GetCardanoMultiSigAddress returns the bridging address of a cardano chain kept in the config
+// (it is the only bridging address in reactor mode and it can be updated by validator change)
+func (appConfig *AppConfig) GetCardanoMultiSigAddress(chainID string) string {
+	appConfig.cardanoChainsMu.RLock()
+	defer appConfig.cardanoChainsMu.RUnlock()
+
+	if chainConfig, exists := appConfig.CardanoChains[chainID]; exists {
+		return chainConfig.BridgingAddresses.BridgingAddress
+	}
+
+	return ""
 }
 
 func (appConfig *AppConfig) CreateEnabledChains() []string {

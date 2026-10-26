@@ -3,17 +3,6 @@ export type SolanaTxRawStorage = {
 	lastValidBlockHeight: string;
 };
 
-export function serializeSolanaTxRawStorage(
-	txRaw: string,
-	lastValidBlockHeight: string,
-): string {
-	return JSON.stringify({
-		txRaw,
-		lastValidBlockHeight,
-	} satisfies SolanaTxRawStorage);
-}
-
-/** Parses Solana txRaw from DB; supports legacy plain base64 and JSON storage. */
 export function parseSolanaTxRawStorage(stored: string): {
 	txRaw: string;
 	lastValidBlockHeight?: string;

@@ -28,12 +28,14 @@ import {
 } from "@/lib/amount";
 import { bridgingAddressesQueryOptions } from "@/lib/api/bridgingAddresses";
 import { settingsQueryOptions } from "@/lib/api/settings";
+import { bridgingDurationsQueryOptions } from "@/lib/api/stats";
 import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
 import {
   getAdjustedBridgeTxFee,
   getDefaultBridgeTxFee,
 } from "@/lib/bridging/adjustedBridgeFee";
 import { submitBridgeTransfer } from "@/lib/bridging/bridgeSubmit";
+import { savePendingTx } from "@/lib/bridging/pendingTx";
 import { useChainInfos } from "@/hooks/use-chain-infos";
 import { getEstimatedBridgeTime } from "@/lib/bridging/estimatedBridgeTime";
 import { resolveBridgeMaxAmounts } from "@/lib/bridging/maxAmount";
@@ -1101,6 +1103,8 @@ function TransferForm({
 
   const reactorValidatorChangeInProgress = useReactorValidatorStatus();
   const { data: tokenInfos } = useQuery(tokenInfosQueryOptions);
+  // until loaded (or if unavailable) the estimate falls back to the static table
+  const { data: bridgingDurations } = useQuery(bridgingDurationsQueryOptions);
 
   const availableTokens = useMemo(
     () => getSupportedSourceTokens(settings, source.id, destination.id),
@@ -1344,6 +1348,7 @@ function TransferForm({
     fees.bridgingMode,
     source.id as ChainEnum,
     destination.id as ChainEnum,
+    bridgingDurations,
   );
 
   const showOperationFee =
@@ -1418,9 +1423,12 @@ function TransferForm({
         return;
       }
 
+      // the transaction page shows the submitted tx right away and switches to
+      // the recorded one once the bridge observes it on the source chain
+      savePendingTx(response);
       navigate({
-        to: "/transaction/$id",
-        params: { id: String(response.id) },
+        to: "/transaction/pending/$originChain/$txHash",
+        params: { originChain: response.originChain, txHash: response.txHash },
       });
     } catch {
       setLoadingState(undefined);

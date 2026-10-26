@@ -1,4 +1,8 @@
-import { ChainEnum, TransactionStatusEnum } from 'src/common/enum';
+import {
+	BridgingModeEnum,
+	ChainEnum,
+	TransactionStatusEnum,
+} from 'src/common/enum';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('bridgeTransactions')
@@ -62,4 +66,8 @@ export class BridgeTransaction {
 
 	@Column({ type: 'varchar', nullable: true })
 	clientID?: string | null;
+
+	// mode of the bridge that received the tx, not set for txs recorded before the indexer
+	@Column({ type: 'varchar', nullable: true })
+	bridgingMode?: BridgingModeEnum | null;
 }
