@@ -5,6 +5,7 @@ import {
 	Between,
 	FindOptionsOrder,
 	FindOptionsWhere,
+	ILike,
 	In,
 	IsNull,
 	LessThan,
@@ -33,6 +34,9 @@ import {
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
+import { MAX_PAGE, MAX_PER_PAGE } from 'src/common/dto';
+
+const EVM_ADDRESS_REGEX = /^0x[0-9a-fA-F]{40}$/;
 
 @Injectable()
 export class BridgeTransactionService {
@@ -54,12 +58,31 @@ export class BridgeTransactionService {
 		return mapBridgeTransactionToResponse(entity);
 	}
 
+	async getByTxHash(
+		originChain: ChainEnum,
+		txHash: string,
+	): Promise<BridgeTransactionDto> {
+		const entity = await this.bridgeTransactionRepository.findOne({
+			where: { originChain, sourceTxHash: txHash.trim() },
+		});
+		if (!entity) {
+			throw new NotFoundException();
+		}
+
+		return mapBridgeTransactionToResponse(entity);
+	}
+
 	async getAllFiltered(
 		model: BridgeTransactionFilterDto,
 	): Promise<BridgeTransactionResponseDto> {
 		const baseWhere: FindOptionsWhere<BridgeTransaction> = {
 			destinationChain: model.destinationChain,
-			senderAddress: model.senderAddress,
+			// EVM addresses are case insensitive and the same address can be stored
+			// checksummed (indexed from the chain) or lowercase (submitted by a wallet)
+			senderAddress:
+				model.senderAddress && EVM_ADDRESS_REGEX.test(model.senderAddress)
+					? ILike(model.senderAddress)
+					: model.senderAddress,
 			originChain: model.originChain,
 			tokenID: 0,
 		};
@@ -104,8 +127,12 @@ export class BridgeTransactionService {
 			},
 		];
 
-		const page = model.page || 0;
-		const take = model.perPage || 10;
+		// the DTO validates the limits too, this keeps the query bounded if it is called directly
+		const page = Math.min(Math.max(Math.trunc(model.page || 0), 0), MAX_PAGE);
+		const take = Math.min(
+			Math.max(Math.trunc(model.perPage || 10), 1),
+			MAX_PER_PAGE,
+		);
 		const skip = page * take;
 
 		let order: FindOptionsOrder<BridgeTransaction> | undefined = {

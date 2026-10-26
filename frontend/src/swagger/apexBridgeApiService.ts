@@ -255,237 +255,6 @@ export class TransactionControllerClient extends BaseClient {
         }
         return Promise.resolve<CreateEthTransactionResponseDto>(null as any);
     }
-
-    /**
-     * Save non-active transactions to the database, with desired activation offset
-     * @return Success
-     */
-    bridgingTransactionSubmitted(body: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
-        let url_ = this.baseUrl + "/transaction/bridgingTransactionSubmitted";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-        };
-
-        return this.transformOptions(options_).then(transformedOptions_ => {
-            return this.http.fetch(url_, transformedOptions_);
-        }).then((_response: Response) => {
-            return this.processBridgingTransactionSubmitted(_response);
-        });
-    }
-
-    protected processBridgingTransactionSubmitted(response: Response): Promise<BridgeTransactionDto> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = BridgeTransactionDto.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            return throwException("Bad Request", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<BridgeTransactionDto>(null as any);
-    }
-
-    /**
-     * Update the txRaw field in the database transaction and activate it
-     * @return OK - Returns activated bridging transaction.
-     */
-    bridgingTransactionUpdate(body: TransactionUpdateDto): Promise<BridgeTransactionDto> {
-        let url_ = this.baseUrl + "/transaction/bridgingTransactionUpdate";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-        };
-
-        return this.transformOptions(options_).then(transformedOptions_ => {
-            return this.http.fetch(url_, transformedOptions_);
-        }).then((_response: Response) => {
-            return this.processBridgingTransactionUpdate(_response);
-        });
-    }
-
-    protected processBridgingTransactionUpdate(response: Response): Promise<BridgeTransactionDto> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = BridgeTransactionDto.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            return throwException("Bad Request - Error while confirming transaction submittion.", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<BridgeTransactionDto>(null as any);
-    }
-
-    /**
-     * Delete unconfirmed transaction from database
-     */
-    bridgingTransactionDelete(body: TransactionActivateDeleteDto): Promise<void> {
-        let url_ = this.baseUrl + "/transaction/bridgingTransactionDelete";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            }
-        };
-
-        return this.transformOptions(options_).then(transformedOptions_ => {
-            return this.http.fetch(url_, transformedOptions_);
-        }).then((_response: Response) => {
-            return this.processBridgingTransactionDelete(_response);
-        });
-    }
-
-    protected processBridgingTransactionDelete(response: Response): Promise<void> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 400) {
-            return response.text().then((_responseText) => {
-            return throwException("Bad Request - Error while confirming transaction submittion.", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<void>(null as any);
-    }
-
-    /**
-     * Save transactions to the database, the transaction is activated immediately
-     * @return OK - Returns non-active bridging transaction.
-     */
-    bridgingTransactionSubmittedActivated(body: TransactionSubmittedDto): Promise<BridgeTransactionDto> {
-        let url_ = this.baseUrl + "/transaction/bridgingTransactionSubmittedActivated";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-        };
-
-        return this.transformOptions(options_).then(transformedOptions_ => {
-            return this.http.fetch(url_, transformedOptions_);
-        }).then((_response: Response) => {
-            return this.processBridgingTransactionSubmittedActivated(_response);
-        });
-    }
-
-    protected processBridgingTransactionSubmittedActivated(response: Response): Promise<BridgeTransactionDto> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = BridgeTransactionDto.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            return throwException("Bad Request - Error while non-active transaction submittion.", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<BridgeTransactionDto>(null as any);
-    }
-
-    /**
-     * Confirm the bridging transaction submission on the source chain
-     * @return OK - Returns activated bridging transaction.
-     */
-    bridgingTransactionActivate(body: TransactionActivateDeleteDto): Promise<BridgeTransactionDto> {
-        let url_ = this.baseUrl + "/transaction/bridgingTransactionActivate";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(body);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-        };
-
-        return this.transformOptions(options_).then(transformedOptions_ => {
-            return this.http.fetch(url_, transformedOptions_);
-        }).then((_response: Response) => {
-            return this.processBridgingTransactionActivate(_response);
-        });
-    }
-
-    protected processBridgingTransactionActivate(response: Response): Promise<BridgeTransactionDto> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = BridgeTransactionDto.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status === 400) {
-            return response.text().then((_responseText) => {
-            return throwException("Bad Request - Error while confirming transaction submittion.", status, _responseText, _headers);
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<BridgeTransactionDto>(null as any);
-    }
 }
 
 export class BridgeTransactionControllerClient extends BaseClient {
@@ -536,6 +305,59 @@ export class BridgeTransactionControllerClient extends BaseClient {
         } else if (status === 404) {
             return response.text().then((_responseText) => {
             return throwException("Not Found", status, _responseText, _headers);
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<BridgeTransactionDto>(null as any);
+    }
+
+    /**
+     * @return Success
+     */
+    getByTxHash(originChain: string, txHash: string): Promise<BridgeTransactionDto> {
+        let url_ = this.baseUrl + "/bridgeTransaction/byTxHash/{originChain}/{txHash}";
+        if (originChain === undefined || originChain === null)
+            throw new Error("The parameter 'originChain' must be defined.");
+        url_ = url_.replace("{originChain}", encodeURIComponent("" + originChain));
+        if (txHash === undefined || txHash === null)
+            throw new Error("The parameter 'txHash' must be defined.");
+        url_ = url_.replace("{txHash}", encodeURIComponent("" + txHash));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.transformOptions(options_).then(transformedOptions_ => {
+            return this.http.fetch(url_, transformedOptions_);
+        }).then((_response: Response) => {
+            return this.processGetByTxHash(_response);
+        });
+    }
+
+    protected processGetByTxHash(response: Response): Promise<BridgeTransactionDto> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = BridgeTransactionDto.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status === 400) {
+            return response.text().then((_responseText) => {
+            return throwException("Bad Request - unknown origin chain", status, _responseText, _headers);
+            });
+        } else if (status === 404) {
+            return response.text().then((_responseText) => {
+            return throwException("Not Found - the transaction is not recorded (yet)", status, _responseText, _headers);
             });
         } else if (status !== 200 && status !== 204) {
             return response.text().then((_responseText) => {
@@ -1109,89 +931,6 @@ export interface ICreateEthTransactionResponseDto {
     [key: string]: any;
 }
 
-export class TransactionSubmittedDto implements ITransactionSubmittedDto {
-    originChain!: ChainEnum;
-    destinationChain!: ChainEnum;
-    originTxHash!: string;
-    senderAddress!: string;
-    receiverAddrs!: string[];
-    amount!: string;
-    txRaw!: string;
-
-    [key: string]: any;
-
-    constructor(data?: ITransactionSubmittedDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-        if (!data) {
-            this.receiverAddrs = [];
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            for (var property in _data) {
-                if (_data.hasOwnProperty(property))
-                    this[property] = _data[property];
-            }
-            this.originChain = _data["originChain"];
-            this.destinationChain = _data["destinationChain"];
-            this.originTxHash = _data["originTxHash"];
-            this.senderAddress = _data["senderAddress"];
-            if (Array.isArray(_data["receiverAddrs"])) {
-                this.receiverAddrs = [] as any;
-                for (let item of _data["receiverAddrs"])
-                    this.receiverAddrs!.push(item);
-            }
-            this.amount = _data["amount"];
-            this.txRaw = _data["txRaw"];
-        }
-    }
-
-    static fromJS(data: any): TransactionSubmittedDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new TransactionSubmittedDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        for (var property in this) {
-            if (this.hasOwnProperty(property))
-                data[property] = this[property];
-        }
-        data["originChain"] = this.originChain;
-        data["destinationChain"] = this.destinationChain;
-        data["originTxHash"] = this.originTxHash;
-        data["senderAddress"] = this.senderAddress;
-        if (Array.isArray(this.receiverAddrs)) {
-            data["receiverAddrs"] = [];
-            for (let item of this.receiverAddrs)
-                data["receiverAddrs"].push(item);
-        }
-        data["amount"] = this.amount;
-        data["txRaw"] = this.txRaw;
-        return data;
-    }
-}
-
-export interface ITransactionSubmittedDto {
-    originChain: ChainEnum;
-    destinationChain: ChainEnum;
-    originTxHash: string;
-    senderAddress: string;
-    receiverAddrs: string[];
-    amount: string;
-    txRaw: string;
-
-    [key: string]: any;
-}
-
 export enum TransactionStatusEnum {
     Pending = "Pending",
     DiscoveredOnSource = "DiscoveredOnSource",
@@ -1291,120 +1030,6 @@ export interface IBridgeTransactionDto {
     createdAt: Date;
     finishedAt?: Date | undefined;
     isRefund: boolean;
-
-    [key: string]: any;
-}
-
-export class TransactionUpdateDto implements ITransactionUpdateDto {
-    originChain!: ChainEnum;
-    /** Transaction hash on source chain */
-    originTxHash!: string;
-    /** Transaction raw data on source chain */
-    txRaw!: string;
-
-    [key: string]: any;
-
-    constructor(data?: ITransactionUpdateDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            for (var property in _data) {
-                if (_data.hasOwnProperty(property))
-                    this[property] = _data[property];
-            }
-            this.originChain = _data["originChain"];
-            this.originTxHash = _data["originTxHash"];
-            this.txRaw = _data["txRaw"];
-        }
-    }
-
-    static fromJS(data: any): TransactionUpdateDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new TransactionUpdateDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        for (var property in this) {
-            if (this.hasOwnProperty(property))
-                data[property] = this[property];
-        }
-        data["originChain"] = this.originChain;
-        data["originTxHash"] = this.originTxHash;
-        data["txRaw"] = this.txRaw;
-        return data;
-    }
-}
-
-export interface ITransactionUpdateDto {
-    originChain: ChainEnum;
-    /** Transaction hash on source chain */
-    originTxHash: string;
-    /** Transaction raw data on source chain */
-    txRaw: string;
-
-    [key: string]: any;
-}
-
-export class TransactionActivateDeleteDto implements ITransactionActivateDeleteDto {
-    originChain!: ChainEnum;
-    /** Transaction hash on source chain */
-    originTxHash!: string;
-
-    [key: string]: any;
-
-    constructor(data?: ITransactionActivateDeleteDto) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            for (var property in _data) {
-                if (_data.hasOwnProperty(property))
-                    this[property] = _data[property];
-            }
-            this.originChain = _data["originChain"];
-            this.originTxHash = _data["originTxHash"];
-        }
-    }
-
-    static fromJS(data: any): TransactionActivateDeleteDto {
-        data = typeof data === 'object' ? data : {};
-        let result = new TransactionActivateDeleteDto();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        for (var property in this) {
-            if (this.hasOwnProperty(property))
-                data[property] = this[property];
-        }
-        data["originChain"] = this.originChain;
-        data["originTxHash"] = this.originTxHash;
-        return data;
-    }
-}
-
-export interface ITransactionActivateDeleteDto {
-    originChain: ChainEnum;
-    /** Transaction hash on source chain */
-    originTxHash: string;
 
     [key: string]: any;
 }

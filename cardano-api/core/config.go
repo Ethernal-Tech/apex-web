@@ -9,6 +9,7 @@ import (
 
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
+	"github.com/Ethernal-Tech/cardano-api/telemetry"
 	"github.com/Ethernal-Tech/cardano-infrastructure/logger"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	cardanowallet "github.com/Ethernal-Tech/cardano-infrastructure/wallet"
@@ -73,6 +74,8 @@ type AppConfig struct {
 	Settings         AppSettings                `json:"appSettings"`
 	BridgingSettings BridgingSettings           `json:"-"`
 	APIConfig        APIConfig                  `json:"api"`
+	Indexer          *IndexerConfig             `json:"indexer,omitempty"`
+	Telemetry        telemetry.TelemetryConfig  `json:"telemetry"`
 }
 
 func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) error {
@@ -88,6 +91,10 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 
 	for chainID, ethChainConfig := range appConfig.EthChains {
 		ethChainConfig.ChainID = chainID
+	}
+
+	if err := appConfig.fillOutIndexer(); err != nil {
+		return err
 	}
 
 	settingsRequestURL := fmt.Sprintf("%s/api/Settings/Get", appConfig.OracleAPI.URL)
@@ -158,6 +165,19 @@ func (appConfig *AppConfig) updateMultisigAddresses(
 			logger.Info("successfully updated bridge address", "chainID", chainID)
 		}
 	}
+}
+
+// GetCardanoMultiSigAddress returns the bridging address of a cardano chain kept in the config
+// (it is updated on validator change)
+func (appConfig *AppConfig) GetCardanoMultiSigAddress(chainID string) string {
+	appConfig.cardanoChainsMu.RLock()
+	defer appConfig.cardanoChainsMu.RUnlock()
+
+	if chainConfig, exists := appConfig.CardanoChains[chainID]; exists {
+		return chainConfig.BridgingAddresses.BridgingAddress
+	}
+
+	return ""
 }
 
 func (appConfig *AppConfig) CreateEnabledChains() []string {
