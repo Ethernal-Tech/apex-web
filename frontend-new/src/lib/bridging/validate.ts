@@ -23,6 +23,16 @@ import type { ISettingsState } from "@/lib/api/settings";
 import { getCurrencyID } from "@/lib/tokens";
 import { getTokenInfo } from "../tokenInfo";
 
+const EVM_ZERO_ADDRESS_REGEX = /^(0x)?0{40}$/i;
+
+// the bridge treats the zero address on EVM destinations as its fee address, so
+// the amount sent to it would end up as bridging fee instead of being delivered
+const isEvmZeroAddress = (address: string) =>
+  EVM_ZERO_ADDRESS_REGEX.test(address.trim());
+
+const ZERO_ADDRESS_DESTINATION_ERROR =
+  "Zero address can not be used as destination address";
+
 export const validateSubmitTxInputs = (
   settings: ISettingsState,
   srcChain: ChainEnum,
@@ -66,6 +76,9 @@ function layerZeroValidation(
   }
   if (!isAddress(dstAddr)) {
     return `Invalid destination address: ${dstAddr}`;
+  }
+  if (isEvmZeroAddress(dstAddr)) {
+    return ZERO_ADDRESS_DESTINATION_ERROR;
   }
 }
 
@@ -127,6 +140,9 @@ function reactorValidation(
   } else if (isEvmChain(dstChain)) {
     if (!isAddress(dstAddr)) {
       return `Invalid destination address: ${dstAddr}`;
+    }
+    if (isEvmZeroAddress(dstAddr)) {
+      return ZERO_ADDRESS_DESTINATION_ERROR;
     }
   }
 }
@@ -258,6 +274,9 @@ function skylineValidaton(
   } else if (isEvmChain(dstChain)) {
     if (!isAddress(dstAddr)) {
       return `Invalid destination address: ${dstAddr}`;
+    }
+    if (isEvmZeroAddress(dstAddr)) {
+      return ZERO_ADDRESS_DESTINATION_ERROR;
     }
   } else if (isSolanaChain(dstChain)) {
     if (!isValidSolanaOnCurveAddress(dstAddr)) {

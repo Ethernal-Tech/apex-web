@@ -8,6 +8,7 @@ import {
 	areChainsEqual,
 	CHAIN_TO_CHAIN_ID,
 	fromChainToNetworkId,
+	isEvmZeroAddress,
 	toNumChainID,
 } from './chainUtils';
 import { ChainEnum } from '../common/enum';
@@ -248,6 +249,30 @@ describe('toNumChainID', () => {
 
 	it('should return undefined for an invalid ChainEnum', () => {
 		expect(toNumChainID('InvalidChain' as any)).toBeUndefined();
+	});
+});
+
+describe('isEvmZeroAddress', () => {
+	it('should detect the zero address with and without prefix', () => {
+		expect(isEvmZeroAddress('0x0000000000000000000000000000000000000000')).toBe(
+			true,
+		);
+		expect(isEvmZeroAddress('0000000000000000000000000000000000000000')).toBe(
+			true,
+		);
+		expect(
+			isEvmZeroAddress(' 0X0000000000000000000000000000000000000000 '),
+		).toBe(true);
+	});
+
+	it('should not detect other addresses', () => {
+		expect(isEvmZeroAddress('0x0000000000000000000000000000000000000001')).toBe(
+			false,
+		);
+		expect(isEvmZeroAddress('0x000000000000000000000000000000000000000')).toBe(
+			false,
+		);
+		expect(isEvmZeroAddress('')).toBe(false);
 	});
 });
 

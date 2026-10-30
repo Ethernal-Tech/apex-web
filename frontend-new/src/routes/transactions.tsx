@@ -13,6 +13,12 @@ import { NetworkToggle } from "@/components/NetworkToggle";
 import { BridgeHeader } from "@/components/BridgeHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   ArrowDown,
   ArrowRight,
   Check,
@@ -36,6 +42,7 @@ import {
   convertApexToWei,
   convertDfmToApex,
   formatAmountDigits,
+  formatAmountFull,
   toFixedAmount,
 } from "@/lib/amount";
 import { fetchBridgeTransactions } from "@/lib/api/bridgeTransactions";
@@ -106,7 +113,7 @@ type Tx = {
   destination: string;
   amount: number;
   amountDisplay: string;
-  /** Unshortened, for the title of the cell the shortened one is shown in. */
+  /** Unshortened, for the tooltip of the cell the shortened one is shown in. */
   amountFull: string;
   currencyLabel: string;
   tokenAmount: number | null;
@@ -191,8 +198,34 @@ const STATUS_FILTERS: { value: Status; label: string }[] = [
   { value: "refunding", label: "Refunding" },
 ];
 
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "createdAt", label: "Date created" },
+  { value: "finishedAt", label: "Date finished" },
+  { value: "amount", label: "Amount" },
+  { value: "tokenAmount", label: "Token amount" },
+  { value: "origin", label: "Origin" },
+  { value: "destination", label: "Destination" },
+  { value: "sender", label: "Sender" },
+  { value: "receiver", label: "Receiver" },
+  { value: "status", label: "Status" },
+];
+
 function TransactionsPage() {
-  const isCompact = useMediaQuery("(max-width: 1279px)");
+  // the table collapses one step at a time as it narrows: origin/destination
+  // merge into a route, then amount/token amount and sender/receiver pairs
+  // stack, then created/finished, and at last status shrinks to a row icon
+  const layout: TableLayout = {
+    routed: useMediaQuery("(max-width: 1399px)"),
+    amountsStacked: useMediaQuery("(max-width: 1279px)"),
+    datesStacked: useMediaQuery("(max-width: 959px)"),
+    compact: useMediaQuery("(max-width: 887px)"),
+  };
+  const columnCount = layout.compact
+    ? 4
+    : (layout.routed ? 1 : 2) +
+      (layout.amountsStacked ? 2 : 4) +
+      (layout.datesStacked ? 1 : 2) +
+      2;
   const navigate = useNavigate();
   const [list, setList] = useTransactionsListState();
   const { data: settings } = useQuery(settingsQueryOptions);
@@ -492,6 +525,27 @@ function TransactionsPage() {
                 ? "Every transfer across the Skyline network."
                 : "Transfers from your connected wallet and source chain."}
             </span>
+            {/* merged table headers can not sort, so sorting moves here */}
+            {layout.routed && (
+              <div className="ml-auto flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Sort by</span>
+                <SortSelect
+                  ariaLabel="Sort by"
+                  value={sortKey}
+                  options={SORT_OPTIONS}
+                  onChange={(key) => setList({ sortKey: key, page: 1 })}
+                />
+                <SortSelect
+                  ariaLabel="Sort direction"
+                  value={sortDir}
+                  options={[
+                    { value: "desc", label: "Descending" },
+                    { value: "asc", label: "Ascending" },
+                  ]}
+                  onChange={(dir) => setList({ sortDir: dir, page: 1 })}
+                />
+              </div>
+            )}
           </div>
 
           {/* Card containing table */}
@@ -501,174 +555,213 @@ function TransactionsPage() {
 
               <div
                 className={
-                  isCompact
+                  layout.compact
                     ? "overflow-x-auto scrollbar-sky"
                     : "overflow-x-hidden"
                 }
               >
-                <table
-                  className={`w-full border-collapse text-sm ${
-                    isCompact ? "min-w-[580px]" : "table-fixed"
-                  }`}
-                >
-                  <thead>
-                    <tr className="text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      {isCompact ? (
-                        <th className="w-[11rem] min-w-[10rem] px-4 py-4 text-center">
-                          Route
-                        </th>
-                      ) : (
+                <TooltipProvider delayDuration={200}>
+                  <table
+                    className={`w-full border-collapse text-sm ${
+                      layout.compact ? "min-w-[580px]" : "table-fixed"
+                    }`}
+                  >
+                    <thead>
+                      <tr className="text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                        {layout.compact ? (
+                          <>
+                            {/* status icons, they need no caption */}
+                            <th
+                              aria-label="Status"
+                              className="w-px py-4 pl-4 pr-0"
+                            />
+                            <th className="w-[11rem] min-w-[10rem] px-4 py-4 text-center">
+                              Route
+                            </th>
+                          </>
+                        ) : layout.routed ? (
+                          <th className="w-[7.5rem] px-5 py-4">Route</th>
+                        ) : (
+                          <>
+                            <Th
+                              onClick={() => toggleSort("origin")}
+                              active={sortKey === "origin"}
+                              dir={sortDir}
+                              className="w-[10rem]"
+                            >
+                              Origin
+                            </Th>
+                            <Th
+                              onClick={() => toggleSort("destination")}
+                              active={sortKey === "destination"}
+                              dir={sortDir}
+                              className="w-[10rem]"
+                            >
+                              Destination
+                            </Th>
+                          </>
+                        )}
+                        {layout.amountsStacked ? (
+                          <StackedTh
+                            labels={["Amount", "Token amount"]}
+                            className="w-[10rem]"
+                          />
+                        ) : (
+                          <>
+                            <Th
+                              onClick={() => toggleSort("amount")}
+                              active={sortKey === "amount"}
+                              dir={sortDir}
+                              className="w-[8rem]"
+                            >
+                              Amount
+                            </Th>
+                            <Th
+                              onClick={() => toggleSort("tokenAmount")}
+                              active={sortKey === "tokenAmount"}
+                              dir={sortDir}
+                              className="w-[9rem]"
+                            >
+                              Token amount
+                            </Th>
+                          </>
+                        )}
+                        {!layout.compact &&
+                          (layout.amountsStacked ? (
+                            <StackedTh
+                              labels={["Sender", "Receiver"]}
+                              className="min-w-[8.75rem]"
+                            />
+                          ) : (
+                            <>
+                              <Th
+                                onClick={() => toggleSort("sender")}
+                                active={sortKey === "sender"}
+                                dir={sortDir}
+                              >
+                                Sender
+                              </Th>
+                              <Th
+                                onClick={() => toggleSort("receiver")}
+                                active={sortKey === "receiver"}
+                                dir={sortDir}
+                                className="min-w-[8.75rem]"
+                              >
+                                Receiver
+                              </Th>
+                            </>
+                          ))}
+                        {layout.datesStacked ? (
+                          <StackedTh
+                            labels={["Created", "Finished"]}
+                            className="w-[11rem]"
+                          />
+                        ) : (
+                          <>
+                            <Th
+                              onClick={() => toggleSort("createdAt")}
+                              active={sortKey === "createdAt"}
+                              dir={sortDir}
+                              className="w-[7.75rem]"
+                            >
+                              Created
+                            </Th>
+                            <Th
+                              onClick={() => toggleSort("finishedAt")}
+                              active={sortKey === "finishedAt"}
+                              dir={sortDir}
+                              className="w-[7.75rem]"
+                            >
+                              Finished
+                            </Th>
+                          </>
+                        )}
+                        {!layout.compact && (
+                          <>
+                            <Th
+                              onClick={() => toggleSort("status")}
+                              active={sortKey === "status"}
+                              dir={sortDir}
+                              className="min-w-[6.5rem] w-[6.5rem] pr-2"
+                            >
+                              Status
+                            </Th>
+                            <th className="w-[6.5rem] py-4 pl-2 pr-5 text-right">
+                              Actions
+                            </th>
+                          </>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {isLoading && paged.length === 0 && (
                         <>
-                          <Th
-                            onClick={() => toggleSort("origin")}
-                            active={sortKey === "origin"}
-                            dir={sortDir}
-                            className="w-[6.5rem] min-[1400px]:w-[10rem]"
-                          >
-                            Origin
-                          </Th>
-                          <Th
-                            onClick={() => toggleSort("destination")}
-                            active={sortKey === "destination"}
-                            dir={sortDir}
-                            className="w-[8rem] min-[1400px]:w-[10rem]"
-                          >
-                            Destination
-                          </Th>
+                          {Array.from({ length: 6 }, (_, row) => (
+                            <tr
+                              key={`sk-${row}`}
+                              className="border-t border-white/5"
+                            >
+                              {Array.from(
+                                { length: columnCount },
+                                (__, col) => (
+                                  <td
+                                    key={col}
+                                    className={`py-4 ${
+                                      col === 0
+                                        ? "pl-4 pr-2"
+                                        : col === columnCount - 1
+                                          ? "pl-2 pr-5"
+                                          : "px-2"
+                                    }`}
+                                  >
+                                    <Skeleton
+                                      className={`h-3.5 ${
+                                        col % 3 === 0
+                                          ? "w-24"
+                                          : col % 3 === 1
+                                            ? "w-16"
+                                            : "w-20"
+                                      }`}
+                                    />
+                                  </td>
+                                ),
+                              )}
+                            </tr>
+                          ))}
                         </>
                       )}
-                      <Th
-                        onClick={() => toggleSort("amount")}
-                        active={sortKey === "amount"}
-                        dir={sortDir}
-                        className="w-[8rem]"
-                      >
-                        Amount
-                      </Th>
-                      <Th
-                        onClick={() => toggleSort("tokenAmount")}
-                        active={sortKey === "tokenAmount"}
-                        dir={sortDir}
-                        className="w-[9rem]"
-                      >
-                        Token amount
-                      </Th>
-                      {!isCompact && (
-                        <Th
-                          onClick={() => toggleSort("sender")}
-                          active={sortKey === "sender"}
-                          dir={sortDir}
-                        >
-                          Sender
-                        </Th>
-                      )}
-                      {!isCompact && (
-                        <Th
-                          onClick={() => toggleSort("receiver")}
-                          active={sortKey === "receiver"}
-                          dir={sortDir}
-                          className="min-w-[8.75rem]"
-                        >
-                          Receiver
-                        </Th>
-                      )}
-                      <Th
-                        onClick={() => toggleSort("createdAt")}
-                        active={sortKey === "createdAt"}
-                        dir={sortDir}
-                        className="w-[7.75rem]"
-                      >
-                        Created
-                      </Th>
-                      <Th
-                        onClick={() => toggleSort("finishedAt")}
-                        active={sortKey === "finishedAt"}
-                        dir={sortDir}
-                        className="w-[7.75rem]"
-                      >
-                        Finished
-                      </Th>
-                      <Th
-                        onClick={() => toggleSort("status")}
-                        active={sortKey === "status"}
-                        dir={sortDir}
-                        className="min-w-[6.5rem] w-[6.5rem] pr-2"
-                      >
-                        Status
-                      </Th>
-                      {!isCompact && (
-                        <th className="w-[6.5rem] py-4 pl-2 pr-5 text-right">
-                          Actions
-                        </th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {isLoading && paged.length === 0 && (
-                      <>
-                        {Array.from({ length: 6 }, (_, row) => (
-                          <tr
-                            key={`sk-${row}`}
-                            className="border-t border-white/5"
+                      {listQuery.isError && paged.length === 0 && (
+                        <tr>
+                          <td
+                            colSpan={columnCount}
+                            className="px-5 py-14 text-center text-sm text-[oklch(0.8_0.2_27)]"
                           >
-                            {Array.from(
-                              { length: isCompact ? 6 : 10 },
-                              (__, col) => (
-                                <td
-                                  key={col}
-                                  className={`py-4 ${
-                                    col === 0
-                                      ? "pl-4 pr-2"
-                                      : col === (isCompact ? 5 : 9)
-                                        ? "pl-2 pr-5"
-                                        : "px-2"
-                                  }`}
-                                >
-                                  <Skeleton
-                                    className={`h-3.5 ${
-                                      col % 3 === 0
-                                        ? "w-24"
-                                        : col % 3 === 1
-                                          ? "w-16"
-                                          : "w-20"
-                                    }`}
-                                  />
-                                </td>
-                              ),
-                            )}
-                          </tr>
+                            {(listQuery.error as Error)?.message ||
+                              "Failed to load transactions."}
+                          </td>
+                        </tr>
+                      )}
+                      {!listQuery.isError &&
+                        paged.map((t) => (
+                          <TxRow key={t.id} tx={t} layout={layout} />
                         ))}
-                      </>
-                    )}
-                    {listQuery.isError && paged.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={isCompact ? 6 : 10}
-                          className="px-5 py-14 text-center text-sm text-[oklch(0.8_0.2_27)]"
-                        >
-                          {(listQuery.error as Error)?.message ||
-                            "Failed to load transactions."}
-                        </td>
-                      </tr>
-                    )}
-                    {!listQuery.isError &&
-                      paged.map((t) => (
-                        <TxRow key={t.id} tx={t} compact={isCompact} />
-                      ))}
-                    {!isLoading && !listQuery.isError && paged.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={isCompact ? 6 : 10}
-                          className="px-5 py-14 text-center text-sm text-muted-foreground"
-                        >
-                          {view === "user" && !isConnected
-                            ? "Connect your wallet to view your bridging history."
-                            : "No transactions match your filters."}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                      {!isLoading &&
+                        !listQuery.isError &&
+                        paged.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={columnCount}
+                              className="px-5 py-14 text-center text-sm text-muted-foreground"
+                            >
+                              {view === "user" && !isConnected
+                                ? "Connect your wallet to view your bridging history."
+                                : "No transactions match your filters."}
+                            </td>
+                          </tr>
+                        )}
+                    </tbody>
+                  </table>
+                </TooltipProvider>
               </div>
 
               {/* Pagination */}
@@ -800,7 +893,120 @@ function Th({
   );
 }
 
-function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
+function SortSelect<T extends string>({
+  ariaLabel,
+  value,
+  options,
+  onChange,
+}: {
+  ariaLabel: string;
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (value: T) => void;
+}) {
+  return (
+    <div className="relative">
+      <select
+        aria-label={ariaLabel}
+        value={value}
+        onChange={(e) => onChange(e.target.value as T)}
+        className="h-8 appearance-none rounded-full border border-white/10 bg-white/[0.04] px-3 pr-7 text-xs font-semibold text-foreground [color-scheme:dark] focus:border-[oklch(0.72_0.19_245_/_0.6)] focus:outline-none"
+      >
+        {options.map((o) => (
+          <option
+            key={o.value}
+            value={o.value}
+            className="bg-[#141a2c] text-foreground"
+          >
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+    </div>
+  );
+}
+
+/** Header of a column two fields are stacked in, without sorting - there is no room for it. */
+function StackedTh({
+  labels,
+  className = "",
+}: {
+  labels: [string, string];
+  className?: string;
+}) {
+  return (
+    <th className={cn("px-5 py-4", className)}>
+      {/* when it does not fit, it wraps only after the slash */}
+      <span className="whitespace-nowrap">{labels[0]} /</span>{" "}
+      <span className="whitespace-nowrap">{labels[1]}</span>
+    </th>
+  );
+}
+
+/** Shortened amount, the full one is shown on hover in the same font. */
+function AmountWithTooltip({
+  display,
+  full,
+  className,
+}: {
+  display: string;
+  full: string;
+  className?: string;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className={cn("font-display text-sm text-foreground", className)}>
+          {display}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent
+        className={cn(
+          "border border-white/10 bg-[oklch(0.16_0.03_262_/_0.85)] font-display text-sm text-foreground shadow-none backdrop-blur-sm",
+          className,
+        )}
+      >
+        {formatAmountFull(full)}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+/** Amount with its currency/token label next to it, for the stacked amounts column. */
+function StackedAmount({
+  display,
+  full,
+  label,
+  className,
+}: {
+  display: string;
+  full: string;
+  label?: string | null;
+  className?: string;
+}) {
+  return (
+    <div className="flex items-baseline gap-1.5">
+      <AmountWithTooltip className={className} display={display} full={full} />
+      {label && (
+        <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Collapse steps of the table, each narrower step keeps the previous ones. */
+type TableLayout = {
+  routed: boolean;
+  amountsStacked: boolean;
+  datesStacked: boolean;
+  compact: boolean;
+};
+
+function TxRow({ tx, layout }: { tx: Tx; layout: TableLayout }) {
+  const { compact } = layout;
   const chainMetaOf = useChainMeta();
   const origin = toChainView(chainMetaOf, tx.origin);
   const dest = toChainView(chainMetaOf, tx.destination);
@@ -830,6 +1036,11 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
       {...rowProps}
       className={`border-t border-white/5 transition-colors hover:bg-white/[0.02] ${compact ? "cursor-pointer" : ""}`}
     >
+      {compact && (
+        <td className="w-px py-4 pl-4 pr-0">
+          <StatusPill status={tx.status} label={tx.statusLabel} iconOnly />
+        </td>
+      )}
       {compact ? (
         <td className="w-[11rem] min-w-[10rem] px-4 py-4">
           <RouteCell
@@ -839,69 +1050,123 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
             receiver={tx.receiver}
           />
         </td>
+      ) : layout.routed ? (
+        <td className="w-[7.5rem] px-5 py-4">
+          <div className="flex items-center gap-1.5">
+            <ChainCell chain={origin} />
+            <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+            <ChainCell chain={dest} />
+          </div>
+        </td>
       ) : (
         <>
-          <td className="w-[6.5rem] px-5 py-4 min-[1400px]:w-[10rem]">
+          <td className="w-[10rem] px-5 py-4">
             <ChainCell chain={origin} />
           </td>
-          <td className="w-[8rem] px-5 py-4 min-[1400px]:w-[10rem]">
+          <td className="w-[10rem] px-5 py-4">
             <ChainCell chain={dest} />
           </td>
         </>
       )}
-      <td className="w-[8rem] px-5 py-4">
-        <div
-          className="font-display text-sm font-semibold text-foreground"
-          title={tx.amountFull}
-        >
-          {tx.amountDisplay}
-        </div>
-        <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-          {origin?.symbol}
-        </div>
-      </td>
-      <td className="w-[9rem] px-5 py-4">
-        {tx.tokenAmountDisplay != null ? (
-          <>
-            <div
-              className="font-display text-sm text-foreground"
-              title={tx.tokenAmountFull ?? undefined}
-            >
-              {tx.tokenAmountDisplay}
-            </div>
-            {tx.tokenLabel && (
-              <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                {tx.tokenLabel}
-              </div>
+      {layout.amountsStacked ? (
+        <td className="w-[10rem] px-5 py-4">
+          <div className="flex flex-col gap-1.5">
+            <StackedAmount
+              className="font-semibold"
+              display={tx.amountDisplay}
+              full={tx.amountFull}
+              label={origin?.symbol}
+            />
+            {tx.tokenAmountDisplay != null && (
+              <StackedAmount
+                display={tx.tokenAmountDisplay}
+                full={tx.tokenAmountFull ?? tx.tokenAmountDisplay}
+                label={tx.tokenLabel}
+              />
             )}
+          </div>
+        </td>
+      ) : (
+        <>
+          <td className="w-[8rem] px-5 py-4">
+            <AmountWithTooltip
+              className="font-semibold"
+              display={tx.amountDisplay}
+              full={tx.amountFull}
+            />
+            <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+              {origin?.symbol}
+            </div>
+          </td>
+          <td className="w-[9rem] px-5 py-4">
+            {tx.tokenAmountDisplay != null ? (
+              <>
+                <AmountWithTooltip
+                  display={tx.tokenAmountDisplay}
+                  full={tx.tokenAmountFull ?? tx.tokenAmountDisplay}
+                />
+                {tx.tokenLabel && (
+                  <div className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                    {tx.tokenLabel}
+                  </div>
+                )}
+              </>
+            ) : (
+              <span className="text-muted-foreground">—</span>
+            )}
+          </td>
+        </>
+      )}
+      {!compact &&
+        (layout.amountsStacked ? (
+          <td className="min-w-[8.75rem] px-5 py-4">
+            <div className="flex w-fit min-w-0 max-w-full flex-col gap-0.5">
+              <AddressCell address={tx.sender} />
+              <ArrowDown className="h-3 w-3 text-muted-foreground/70" />
+              <AddressCell address={tx.receiver} />
+            </div>
+          </td>
+        ) : (
+          <>
+            <td className="px-5 py-4">
+              <AddressCell address={tx.sender} />
+            </td>
+            <td className="min-w-[8.75rem] px-5 py-4">
+              <AddressCell address={tx.receiver} />
+            </td>
           </>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </td>
-      {!compact && (
-        <td className="px-5 py-4">
-          <AddressCell address={tx.sender} />
+        ))}
+      {layout.datesStacked ? (
+        <td className="w-[11rem] px-5 py-4 text-xs text-muted-foreground">
+          <div className="flex flex-col gap-0.5">
+            <DateTime date={tx.createdAt} inline />
+            <ArrowDown className="h-3 w-3 text-muted-foreground/70" />
+            {tx.finishedAt ? (
+              <DateTime date={tx.finishedAt} inline />
+            ) : (
+              <span className="text-[oklch(0.85_0.15_235)]">Pending</span>
+            )}
+          </div>
         </td>
+      ) : (
+        <>
+          <td className="w-[7.75rem] px-5 py-4 text-xs text-muted-foreground">
+            <DateTime date={tx.createdAt} />
+          </td>
+          <td className="w-[7.75rem] px-5 py-4 text-xs text-muted-foreground">
+            {tx.finishedAt ? (
+              <DateTime date={tx.finishedAt} />
+            ) : (
+              <span className="text-[oklch(0.85_0.15_235)]">Pending</span>
+            )}
+          </td>
+        </>
       )}
       {!compact && (
-        <td className="min-w-[8.75rem] px-5 py-4">
-          <AddressCell address={tx.receiver} />
+        <td className="min-w-[6.5rem] w-[6.5rem] py-4 pl-5 pr-2">
+          <StatusPill status={tx.status} label={tx.statusLabel} />
         </td>
       )}
-      <td className="w-[7.75rem] px-5 py-4 text-xs text-muted-foreground">
-        <DateTime date={tx.createdAt} />
-      </td>
-      <td className="w-[7.75rem] px-5 py-4 text-xs text-muted-foreground">
-        {tx.finishedAt ? (
-          <DateTime date={tx.finishedAt} />
-        ) : (
-          <span className="text-[oklch(0.85_0.15_235)]">Pending</span>
-        )}
-      </td>
-      <td className="min-w-[6.5rem] w-[6.5rem] py-4 pl-5 pr-2">
-        <StatusPill status={tx.status} label={tx.statusLabel} />
-      </td>
       {!compact && (
         <td className="py-4 pl-2 pr-5 text-right">
           <Link
@@ -980,30 +1245,86 @@ function RouteCell({
   );
 }
 
-function StatusPill({ status, label }: { status: Status; label: string }) {
-  const caption = label.charAt(0).toUpperCase() + label.slice(1);
+const STATUS_STYLES: Record<
+  Status,
+  { className: string; icon: React.ReactNode }
+> = {
+  success: {
+    className:
+      "border-[oklch(0.72_0.19_155_/_0.4)] bg-[oklch(0.72_0.19_155_/_0.12)] text-[oklch(0.85_0.18_155)]",
+    icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+  },
+  failed: {
+    className:
+      "border-[oklch(0.62_0.24_27_/_0.5)] bg-[oklch(0.62_0.24_27_/_0.12)] text-[oklch(0.8_0.2_27)]",
+    icon: <XCircle className="h-3.5 w-3.5" />,
+  },
+  refunded: {
+    className:
+      "border-[oklch(0.78_0.14_85_/_0.45)] bg-[oklch(0.78_0.14_85_/_0.12)] text-[oklch(0.88_0.12_85)]",
+    icon: <Undo2 className="h-3.5 w-3.5" />,
+  },
+  // pulses like pending, otherwise it could not be told apart from refunded
+  // once the caption is left out
+  refunding: {
+    className:
+      "border-[oklch(0.78_0.14_85_/_0.45)] bg-[oklch(0.78_0.14_85_/_0.12)] text-[oklch(0.88_0.12_85)]",
+    icon: <Undo2 className="h-3.5 w-3.5 animate-pulse" />,
+  },
+  pending: {
+    className:
+      "border-[oklch(0.72_0.19_245_/_0.4)] bg-[oklch(0.72_0.19_245_/_0.12)] text-[oklch(0.85_0.15_235)]",
+    icon: <Clock className="h-3.5 w-3.5 animate-pulse" />,
+  },
+};
 
-  if (status === "success")
+/** Status pill; `iconOnly` leaves the caption out and shows it on hover instead. */
+function StatusPill({
+  status,
+  label,
+  iconOnly = false,
+}: {
+  status: Status;
+  label: string;
+  iconOnly?: boolean;
+}) {
+  const caption = label.charAt(0).toUpperCase() + label.slice(1);
+  const { className, icon } = STATUS_STYLES[status] ?? STATUS_STYLES.pending;
+
+  if (iconOnly) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.72_0.19_155_/_0.4)] bg-[oklch(0.72_0.19_155_/_0.12)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[oklch(0.85_0.18_155)]">
-        <CheckCircle2 className="h-3.5 w-3.5" /> {caption}
-      </span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span
+            aria-label={caption}
+            className={cn(
+              "inline-flex h-7 w-7 items-center justify-center rounded-full border",
+              className,
+            )}
+          >
+            {icon}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent
+          className={cn(
+            "border border-white/10 bg-[oklch(0.16_0.03_262_/_0.85)] text-[11px] font-semibold shadow-none backdrop-blur-sm",
+            className.split(" ").find((c) => c.startsWith("text-")),
+          )}
+        >
+          {caption}
+        </TooltipContent>
+      </Tooltip>
     );
-  if (status === "failed")
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.62_0.24_27_/_0.5)] bg-[oklch(0.62_0.24_27_/_0.12)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[oklch(0.8_0.2_27)]">
-        <XCircle className="h-3.5 w-3.5" /> {caption}
-      </span>
-    );
-  if (status === "refunded" || status === "refunding")
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.78_0.14_85_/_0.45)] bg-[oklch(0.78_0.14_85_/_0.12)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[oklch(0.88_0.12_85)]">
-        <Undo2 className="h-3.5 w-3.5" /> {caption}
-      </span>
-    );
+  }
+
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.72_0.19_245_/_0.4)] bg-[oklch(0.72_0.19_245_/_0.12)] px-2.5 py-1 text-[11px] font-semibold capitalize text-[oklch(0.85_0.15_235)]">
-      <Clock className="h-3.5 w-3.5 animate-pulse" /> {caption}
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold capitalize",
+        className,
+      )}
+    >
+      {icon} {caption}
     </span>
   );
 }
@@ -1356,9 +1677,10 @@ function toDate(value: Date | string | null | undefined): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function DateTime({ date }: { date: Date }) {
+/** Date above time, or both on one line when `inline`. */
+function DateTime({ date, inline = false }: { date: Date; inline?: boolean }) {
   return (
-    <div className="whitespace-nowrap">
+    <div className={cn("whitespace-nowrap", inline && "flex gap-1.5")}>
       <div>
         {date.toLocaleDateString("en-US", {
           year: "numeric",
