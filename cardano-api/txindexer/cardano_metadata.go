@@ -15,7 +15,7 @@ const (
 
 type bridgingRequestMetadataTransaction struct {
 	Address                     []string `cbor:"a" json:"a"`
-	IsNativeTokenOnSrc_Obsolete byte     `cbor:"nt" json:"nt"` //nolint:stylecheck
+	IsNativeTokenOnSrc_Obsolete byte     `cbor:"nt" json:"nt"`
 	Amount                      uint64   `cbor:"m" json:"m"`
 	TokenID                     uint16   `cbor:"t" json:"t"`
 }
