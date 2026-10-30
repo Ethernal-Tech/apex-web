@@ -17,10 +17,11 @@ jobs:
       - name: Setup Go environment
         uses: actions/setup-go@v6
         with:
-          go-version: ${{ vars.GOLANG_VERSION }}
+          go-version: 1.27.3
       - name: Run Golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9.3.0
         with:
+          version: v2.15.0
           working-directory: cardano-api
   web_api:
     name: Run lint web-api

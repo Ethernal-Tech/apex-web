@@ -1098,7 +1098,6 @@ func (c *SkylineTxControllerImpl) getAddressToBridgeTo(
 		}
 
 		if lowestBalance > sum {
-			//nolint:gosec
 			choosenIdx, lowestBalance = uint8(i), sum
 		}
 	}
