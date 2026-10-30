@@ -121,6 +121,10 @@ type IsRecoverableErrorFn func(err error) bool
 
 var ErrExecutionTimeout = errors.New("timeout while trying to execute with retry")
 
+// ErrZeroDestinationAddress is returned for the zero address on an EVM destination. The bridge treats
+// it as its fee address, so the amount sent to it would end up as bridging fee instead of being delivered
+var ErrZeroDestinationAddress = errors.New("zero address can not be used as destination address")
+
 func OgmiosIsRecoverableError(err error) bool {
 	return strings.Contains(err.Error(), "status code 500")
 }

@@ -9,12 +9,13 @@ import {
 
 /** Periodically refresh wallet balances while connected. */
 export function useWalletBalances({
-  enabled,
+  account,
   srcChain,
   dstChain,
   settings,
 }: {
-  enabled: boolean;
+  /** Connected address; a change refetches the balances right away. */
+  account: string | null;
   srcChain: string | undefined;
   dstChain: string | undefined;
   settings: SettingsResponse | undefined;
@@ -28,12 +29,16 @@ export function useWalletBalances({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!enabled || !srcChain || !dstChain || !settings) {
+    if (!account || !srcChain || !dstChain || !settings) {
       setBalances({});
       setUtxos(undefined);
       setLoading(false);
       return;
     }
+
+    // balances of the previous account/direction must not stay visible meanwhile
+    setBalances({});
+    setUtxos(undefined);
 
     let cancelled = false;
     let inFlight = false;
@@ -68,7 +73,7 @@ export function useWalletBalances({
       cancelled = true;
       window.clearInterval(handle);
     };
-  }, [enabled, srcChain, dstChain, settings]);
+  }, [account, srcChain, dstChain, settings]);
 
   return { balances, utxos, loading };
 }
