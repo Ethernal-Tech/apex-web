@@ -72,7 +72,7 @@ async function calculateMinValueOfAggregatedUtxo(
     TransactionOutput,
     Value,
     min_ada_for_output,
-  } = await import("@emurgo/cardano-serialization-lib-asmjs");
+  } = await import("@emurgo/cardano-serialization-lib-browser");
 
   const value = Value.new(BigNum.from_str("0"));
   const multiAsset = MultiAsset.new();

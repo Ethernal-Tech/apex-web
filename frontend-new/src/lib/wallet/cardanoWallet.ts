@@ -293,7 +293,7 @@ async function addBrowserWitnesses(
   witnesses: string,
 ): Promise<string> {
   const { FixedTransaction, TransactionWitnessSet } =
-    await import("@emurgo/cardano-serialization-lib-asmjs");
+    await import("@emurgo/cardano-serialization-lib-browser");
 
   const walletWitnessSet = TransactionWitnessSet.from_bytes(toBytes(witnesses));
   const cWitness = walletWitnessSet.vkeys();
@@ -327,7 +327,7 @@ function bytesToHex(bytes: Uint8Array): string {
 async function parseCip30Value(
   balanceHex: string,
 ): Promise<Record<string, bigint>> {
-  const { Value } = await import("@emurgo/cardano-serialization-lib-asmjs");
+  const { Value } = await import("@emurgo/cardano-serialization-lib-browser");
   const value = Value.from_bytes(toBytes(balanceHex));
   const out: Record<string, bigint> = {
     lovelace: BigInt(value.coin().to_str()),
@@ -362,7 +362,7 @@ async function parseCip30Utxo(
   displayAddress: string,
 ): Promise<{ utxo: SimpleUtxo; addrBytes: Uint8Array }> {
   const { TransactionUnspentOutput } =
-    await import("@emurgo/cardano-serialization-lib-asmjs");
+    await import("@emurgo/cardano-serialization-lib-browser");
   const tuo = TransactionUnspentOutput.from_bytes(toBytes(hex));
   const input = tuo.input();
   const output = tuo.output();
