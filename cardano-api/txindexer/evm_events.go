@@ -58,7 +58,7 @@ var getEvmEvents = sync.OnceValues(func() (*evmEvents, error) {
 type evmWithdrawReceiver struct {
 	Receiver string
 	Amount   *big.Int
-	TokenId  uint16 //nolint:stylecheck
+	TokenId  uint16
 }
 
 type evmWithdraw struct {

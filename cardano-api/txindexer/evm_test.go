@@ -16,7 +16,7 @@ import (
 type testReceiver struct {
 	Receiver string
 	Amount   *big.Int
-	TokenId  uint16 //nolint:stylecheck
+	TokenId  uint16
 }
 
 type testReactorReceiver struct {
