@@ -356,7 +356,7 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 	config := &core.AppConfig{
 		CardanoChains: map[string]*core.CardanoChainConfig{
 			common.ChainIDStrPrime: {
-				NetworkID:    wallet.CardanoNetworkType(p.primeNetworkID),
+				NetworkID:    wallet.CardanoNetworkType(p.primeNetworkID), //nolint:gosec
 				NetworkMagic: p.primeNetworkMagic,
 				ChainSpecific: &cardanotx.CardanoChainConfig{
 					OgmiosURL:        p.primeOgmiosURL,
@@ -370,7 +370,7 @@ func (p *generateConfigsParams) Execute() (common.ICommandResult, error) {
 				IsEnabled: true,
 			},
 			common.ChainIDStrVector: {
-				NetworkID:    wallet.CardanoNetworkType(p.vectorNetworkID),
+				NetworkID:    wallet.CardanoNetworkType(p.vectorNetworkID), //nolint:gosec
 				NetworkMagic: p.vectorNetworkMagic,
 				ChainSpecific: &cardanotx.CardanoChainConfig{
 					OgmiosURL:        p.vectorOgmiosURL,
