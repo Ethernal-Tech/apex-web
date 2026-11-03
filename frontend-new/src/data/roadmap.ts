@@ -47,7 +47,7 @@ export const milestones: Milestone[] = [
     title: "Ethereum Production Integration",
     description:
       "Bring the existing Ethereum support into production and expand Skyline connectivity to the Ethereum ecosystem.",
-    status: "in-progress",
+    status: "completed",
     icon: Globe2,
   },
   {
@@ -56,7 +56,7 @@ export const milestones: Milestone[] = [
     title: "Solana Production Integration",
     description:
       "Bring the existing Solana support into production and expand Skyline connectivity to the Solana ecosystem.",
-    status: "planned",
+    status: "in-progress",
     icon: Sun,
   },
   {
