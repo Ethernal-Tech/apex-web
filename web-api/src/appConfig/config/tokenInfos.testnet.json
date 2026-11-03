@@ -41,7 +41,7 @@
 		},
 		{
 			"tokenID": 2,
-			"icon": "unknown.svg",
+			"icon": "ada.svg",
 			"label": "ADA",
 			"color": "#4F7BFF"
 		},
@@ -53,7 +53,7 @@
 		},
 		{
 			"tokenID": 4,
-			"icon": "unknown.svg",
+			"icon": "ada.svg",
 			"label": "xADA",
 			"color": "#2FD3A5"
 		},
