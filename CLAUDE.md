@@ -12,7 +12,7 @@ and no root-level build.
 
 | Dir | What | Stack |
 | --- | --- | --- |
-| `cardano-api/` | Builds unsigned Cardano bridging transactions and serves bridge settings | Go 1.24, cobra CLI |
+| `cardano-api/` | Builds unsigned Cardano bridging transactions and serves bridge settings | Go 1.27, cobra CLI |
 | `web-api/` | Backend for the frontends: bridge tx history, settings, stats, prices, locked tokens | NestJS, TypeORM, PostgreSQL |
 | `frontend-new/` | Current frontend; recent feature work lands here | TanStack Start/Router, React Query, Tailwind, Radix, Vite |
 | `frontend/` | Legacy frontend (CRA + Redux); logic migrated to `frontend-new` in #198 | React, react-app-rewired |
@@ -34,7 +34,7 @@ and no root-level build.
 
 ```bash
 make build                        # go build with version ldflags
-make lint                         # golangci-lint (config is v1 format)
+make lint                         # golangci-lint (config is v2 format)
 make unit-test                    # go test -race -shuffle=on, excludes e2e
 go test ./api/... -run TestName   # single test
 make swag-generate                # writes swagger into ../../apex-bridge/docs/cardano-api
@@ -96,6 +96,7 @@ npm run swagger                   # regenerate API client with nswag
 
 `.github/workflows/lint.yml` (golangci-lint for `cardano-api`, ESLint for `web-api` and `frontend`)
 and `unit-test.yml` (cardano-api unit tests) run on PRs and on pushes to `main` and `feat/skyline`.
+On a PR, `@claude` (`claude.yml`) and `@claude-review` (`claude-review-comment.yml`) comments run Claude.
 
 ## Deployment note
 
@@ -106,15 +107,18 @@ from `frontend/public_example` to `frontend/public/`; `llm.txt` and `llms.txt` m
 
 Languages: Go, JavaScript, TypeScript.
 
-- Go 1.24.1 (cardano-api)
+- Go 1.27.3 (cardano-api, per go.mod)
 
 ## Verification
 
-- Before a push: `(cd cardano-api && GOTOOLCHAIN=local golangci-lint run && GOTOOLCHAIN=local go test ./...)` (the fast gate).
-- Before a PR: `(cd cardano-api && GOTOOLCHAIN=local golangci-lint run && GOTOOLCHAIN=local go test -race ./... && GOTOOLCHAIN=local go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...)` (the full gate).
-- Build (go): `go vet ./...` (or `golangci-lint run`), `go test ./...` and `govulncheck ./...`,
-  each with `GOTOOLCHAIN=local`; a `net/http` service also gets API E2E tests through
-  `httptest` against a real database (testcontainers-go), then scripted HTTP requests.
+- Before a push: `(cd cardano-api && make lint)` for Go changes; `npm run lint` in each touched
+  Node project (`web-api`, `frontend-new`, `frontend`) (the fast gate).
+- Before a PR: the fast gate plus tests for each touched project: `(cd cardano-api && make unit-test)`,
+  `(cd web-api && npm test)`, `(cd frontend-new && npm test)`; `npm run build` in `web-api` or
+  `frontend-new` when they change (the full gate). CI runs only the cardano-api tests (they need
+  the Cardano tools installed in `unit-test.yml`) and lint for `cardano-api`, `web-api` and
+  `frontend`; web-api and frontend-new tests are not run in CI.
+- No Go E2E suite or `govulncheck` step exists in this repo; do not add one in a verify run.
 - Then ask Claude to run its verify skill: a Scenario, Layer, Outcome table from real output.
 - Results come from real output; anything not run is reported as not run.
 
@@ -122,8 +126,9 @@ Languages: Go, JavaScript, TypeScript.
 
 - Conventional commits, `<type>(<scope>): <summary>`. Why: the squash commit takes the PR
   title, and a readable history is the project's record of changes.
-- Claude verifies a task, then leaves its changes unstaged and names the files; the engineer
-  commits them. Why: the engineer owns every commit.
+- In local sessions, Claude verifies a task, then leaves its changes unstaged and names the
+  files; the engineer commits them (the `@claude` GitHub workflow may commit to the PR branch).
+  Why: the engineer owns every commit.
 - New environment variables go into `.env.example` with a name and no value. Why: secrets stay
   out of git and out of the model's context.
 - Adopt the newest stable release of a dependency; fix the code instead of pinning back. Why:
