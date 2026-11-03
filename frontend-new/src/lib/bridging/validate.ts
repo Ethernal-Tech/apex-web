@@ -18,7 +18,7 @@ import {
   convertDfmToApex,
   convertLamportsToWei,
 } from "@/lib/amount";
-import { shouldUseMainnet } from "@/lib/wallet/utils";
+import appSettings from "@/settings/appSettings";
 import type { ISettingsState } from "@/lib/api/settings";
 import { getCurrencyID } from "@/lib/tokens";
 import { getTokenInfo } from "../tokenInfo";
@@ -120,11 +120,7 @@ function reactorValidation(
     }
 
     if (
-      !checkCardanoAddressCompatibility(
-        dstChain,
-        addr,
-        shouldUseMainnet(srcChain, dstChain),
-      )
+      !checkCardanoAddressCompatibility(dstChain, addr, appSettings.isMainnet)
     ) {
       return `Destination address not compatible with destination chain: ${dstChain}`;
     }
@@ -255,11 +251,7 @@ function skylineValidaton(
     }
 
     if (
-      !checkCardanoAddressCompatibility(
-        dstChain,
-        addr,
-        shouldUseMainnet(srcChain, dstChain),
-      )
+      !checkCardanoAddressCompatibility(dstChain, addr, appSettings.isMainnet)
     ) {
       return `Destination address not compatible with destination chain: ${dstChain}`;
     }

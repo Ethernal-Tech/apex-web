@@ -1,6 +1,7 @@
 import appSettings from "@/settings/appSettings";
 import { BridgingModeEnum } from "@/lib/bridging/mode";
 import { ChainEnum } from "@/swagger/apexBridgeApiService";
+import type { BridgingDurations } from "@/lib/api/stats";
 
 /** Time range in minutes. Use equal min/max for a fixed value. */
 export type TimeRangeMinutes = {
@@ -103,12 +104,46 @@ export const getApexEstimatedBridgeTime = (
 export const getLayerZeroEstimatedBridgeTime = (): string =>
   LAYER_ZERO_ESTIMATED_TIME;
 
+/**
+ * Formats a measured duration range (median to 90th percentile) in whole minutes,
+ * rounded up so the estimate does not promise more than the bridge delivers.
+ */
+export const formatMeasuredBridgeTime = (
+  medianSeconds: number,
+  p90Seconds: number,
+): string => {
+  if (p90Seconds < 60) {
+    return "Less than a minute";
+  }
+
+  return formatEstimatedBridgeTime(
+    Math.max(1, Math.ceil(medianSeconds / 60)),
+    Math.ceil(p90Seconds / 60),
+  );
+};
+
+/**
+ * The estimated bridging time of a direction. Measured from its latest finished
+ * transactions when there are enough of them, otherwise taken from the static
+ * table above.
+ */
 export const getEstimatedBridgeTime = (
   bridgingMode: BridgingModeEnum,
   srcChain: ChainEnum,
   dstChain: ChainEnum,
+  durations?: BridgingDurations,
   isMainnet: boolean = appSettings.isMainnet,
 ): string => {
+  const measured = durations?.directions.find(
+    (d) => d.originChain === srcChain && d.destinationChain === dstChain,
+  );
+  if (measured) {
+    return formatMeasuredBridgeTime(
+      measured.medianSeconds,
+      measured.p90Seconds,
+    );
+  }
+
   if (bridgingMode === BridgingModeEnum.LayerZero) {
     return getLayerZeroEstimatedBridgeTime();
   }

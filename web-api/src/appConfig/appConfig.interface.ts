@@ -32,10 +32,13 @@ export interface AppConfig {
 		port: number;
 		corsAllowList: string[];
 		isMainnet: boolean;
-		txValidityPeriod: number;
-		hashSecret: string;
 	};
 	features: {
+		/**
+		 * Bridging modes whose transactions this instance tracks. For reactor and
+		 * skyline, their cardano-api instance is also polled for new bridging
+		 * transactions indexed on the source chains.
+		 */
 		statusUpdateModesSupported: string[];
 	};
 	bridge: {
@@ -76,6 +79,8 @@ export interface AppConfig {
 		name: string;
 		ssl: boolean;
 		migrationsTableName: string;
+		/** Upper bound for a single query of the running app, in milliseconds */
+		statementTimeoutMs: number;
 		entities: string[];
 		migrations: string[];
 	};

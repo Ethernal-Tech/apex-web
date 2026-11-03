@@ -33,11 +33,8 @@ All paths in this document are relative to this base URL.
 | `nexus`     | EVM     | Apex Fusion – Nexus chain        |
 | `base`      | EVM     | Base                             |
 | `bsc`       | EVM     | BNB Smart Chain                  |
-| `solana`    | SVM     | Solana                           |
 
 > **Note:** `prime` and `vector` are Apex Fusion chains that use Cardano-style UTXO addresses (e.g. `addr_test1...`) and lovelace denomination — treat them as UTXO chains, not EVM. Use `POST /transaction/createCardano` for them.
-
-> **Note:** `solana` is an SVM chain — neither UTXO nor EVM. It uses base58 addresses (e.g. `9xQeWv...`), lamport denomination (1 SOL = 1,000,000,000 lamports), and its own build endpoint `POST /transaction/createSolana`. Destination addresses must be on-curve base58 public keys; reject anything else before building.
 
 **Source chain type determines which transaction-building endpoint to call** (see Step 2 below). Everything else in the workflow is identical regardless of chain pair.
 
@@ -54,16 +51,6 @@ Use these to broadcast signed transactions and poll for receipts without asking 
 | `bsc`      | `https://bsc-dataseed.bnbchain.org`            | `56`         |
 
 For EVM chains not listed here, ask the user to provide the RPC URL before proceeding. If the EVM chain ID is not listed above, fetch it via `eth_chainId` before presenting `RAW_TX` to the user — signing scripts require it to protect against replay attacks.
-
-## Known Solana RPC URL
-
-Use this to broadcast signed Solana transactions and poll for confirmation without asking the user.
-
-| Chain ID | RPC URL                            | Cluster   |
-|----------|------------------------------------|-----------|
-| `solana` | `https://api.mainnet.solana.com`   | mainnet   |
-
-Solana speaks JSON-RPC over HTTP POST like the EVM chains, but with different method names and base64 payloads — see Phase 3.
 
 ## Known Ogmios Submission URLs (UTXO chains)
 
@@ -86,47 +73,15 @@ Submit via Ogmios v6 JSON-RPC (HTTP POST):
 }
 ```
 
-A successful response contains `result.transaction.id` — this is the `txHash`. Use it directly for Phase 4 registration.
+A successful response contains `result.transaction.id` — this is the `txHash`. Use it directly for the Phase 4 lookup.
 
 For UTXO chains **not** listed here, ask the user to provide the Ogmios URL before proceeding.
 
 ---
 
-
-## Explorer URLs
-
-Use these to construct transaction links when reporting results to the user.
-
-| Chain ID    | Explorer Base URL                                    | Tx URL format                                      |
-|-------------|------------------------------------------------------|----------------------------------------------------|
-| `prime`     | `https://apexscan.org/en`                            | `https://apexscan.org/en/transactions/<txHash>`    |
-| `vector`    | `https://vector.apexscan.org/en`                     | `https://vector.apexscan.org/en/transaction/<txHash>` |
-| `cardano`   | `https://cardanoscan.io`                             | `https://cardanoscan.io/transactions/<txHash>`     |
-| `nexus`     | `https://explorer.nexus.mainnet.apexfusion.org`      | `https://explorer.nexus.mainnet.apexfusion.org/tx/<txHash>` |
-| `base`      | `https://basescan.org`                               | `https://basescan.org/tx/<txHash>`                 |
-| `bsc`       | `https://bscscan.com`                                | `https://bscscan.com/tx/<txHash>`                  |
-| `polygon`   | `https://polygonscan.com`                            | `https://polygonscan.com/tx/<txHash>`              |
-| `ethereum`  | `https://etherscan.io`                               | `https://etherscan.io/tx/<txHash>`                 |
-| `katana`    | `https://katanascan.com`                             | `https://katanascan.com/tx/<txHash>`               |
-| `sei`       | `https://seiscan.io`                                 | `https://seiscan.io/tx/<txHash>`                   |
-| `arbitrum`  | `https://arbiscan.io`                                | `https://arbiscan.io/tx/<txHash>`                  |
-| `scroll`    | `https://scrollscan.com`                             | `https://scrollscan.com/tx/<txHash>`               |
-| `unichain`  | `https://unichain.blockscout.com`                    | `https://unichain.blockscout.com/tx/<txHash>`      |
-| `solana`    | `https://explorer.solana.com`                        | `https://explorer.solana.com/tx/<txHash>`          |
-
-**Rules:**
-- UTXO chains (`prime`, `vector`, `cardano`): append `/transactions/<txHash>`
-- EVM chains (all others): append `/tx/<txHash>`
-- Solana: append `/tx/<txHash>`
-- Always include explorer links in the `BRIDGE TRANSACTION SUMMARY` when a `txHash` is available.
-
----
-
-
-
 ## Interaction Model
 
-The agent never controls the user's private key. The workflow is a **four-phase handshake**:
+The agent never controls the user's private key. The workflow is a **five-phase handshake**:
 
 ```
 ┌─────────┐          ┌────────────┐   ┌─────────┐   ┌──────────┐
@@ -154,8 +109,8 @@ The agent never controls the user's private key. The workflow is a **four-phase 
      │── 7. eth_getTransactionReceipt ────>│  (poll until mined)
      │<─ receipt ─────────────────────────│              │
      │                     │               │              │
-     │── 8. POST /transaction/bridgingTransactionSubmittedActivated ─>
-     │<─ bridge tx id ─────                │              │
+     │── 8. GET /bridgeTransaction/byTxHash/{originChain}/{txHash} ─>
+     │<─ 404 until indexed, then bridge tx id ─           │
      │                     │               │              │
      │── 9. Poll /bridgeTransaction/{id} ──>              │
      │── 10. Report final status + destinationTxHash ────>│
@@ -163,10 +118,10 @@ The agent never controls the user's private key. The workflow is a **four-phase 
 
 **Key rules:**
 - The agent builds the transaction; the user only signs it.
-- For **EVM source chains**: once the user returns `signedTxRaw`, the agent broadcasts it to the chain RPC, waits for it to be mined, then registers with Skyline and polls to completion — without any further input from the user.
+- For **EVM source chains**: once the user returns `signedTxRaw`, the agent broadcasts it to the chain RPC, waits for it to be mined, then looks up the indexed bridge transaction and polls it to completion — without any further input from the user.
 - For **UTXO source chains** (cardano, prime, vector): if the chain has a known Ogmios URL (see the Ogmios table), the agent submits the signed transaction on the user's behalf via `submitTransaction` and extracts `txHash` from `result.transaction.id`. If the chain is not listed, ask the user to provide the Ogmios URL before proceeding.
-- Calling `/transaction/bridgingTransactionSubmittedActivated` is what triggers the bridge validators to execute the cross-chain transfer.
-- For **LayerZero routes** (where the source chain is listed in `layerZeroChains` in the settings response): use `POST /transaction/layerZeroTransfer` instead of `createEth`. The rest of the workflow (signing, broadcasting, registration, polling) is identical, with `isLayerZero: true` in Phase 4.
+- There is **no registration call**. The bridge indexers discover the transaction on the source chain by themselves; once it is on-chain the agent only looks it up via `GET /bridgeTransaction/byTxHash/{originChain}/{txHash}` (Phase 4).
+- For **LayerZero routes** (`originChain` or `destinationChain` is `base` or `bsc`): use `POST /transaction/layerZeroTransfer` instead of `createEth`. The rest of the workflow (signing, broadcasting, lookup, polling) is identical; the recorded transaction has `isLayerZero: true`.
 - The user must provide their addresses before the agent can proceed.
 
 ---
@@ -193,7 +148,6 @@ If the user says "bridge to the same address", set `destinationAddress = senderA
 |-------------------|----------|----------------------------------------------------------|
 | EVM               | wei      | 1 token = 10^18 wei (for 18-decimal tokens)              |
 | Cardano           | Lovelace | 1 ADA = 1,000,000 Lovelace                               |
-| Solana            | lamports | 1 SOL = 1,000,000,000 lamports (9 decimals)              |
 
 `minValueToBridge` returned by `/settings` is expressed in the **token's smallest unit** — i.e. the same unit used in the `amount` field of the build request. For ERC-20 tokens with 18 decimals, validate the raw wei value against it after conversion.
 
@@ -221,7 +175,7 @@ The result is a hex-encoded uint8 — e.g. `0x...0000000000000000000000000000000
 
 ## Universal Bridging Workflow
 
-The workflow has 4 phases and is **identical for every chain combination**. The only decision point is in Phase 1 Step 2, where the source chain type selects the correct endpoint.
+The workflow has 5 phases and is **identical for every chain combination**. The only decision point is in Phase 1 Step 2, where the source chain type selects the correct endpoint.
 
 ---
 
@@ -299,13 +253,12 @@ Check `minValueToBridge` and `maxAmountAllowedToBridge` from `settingsPerMode.sk
 | Source chain                        | Endpoint                                   |
 |-------------------------------------|--------------------------------------------|
 | `cardano`, `prime`, `vector`        | `POST /transaction/createCardano`          |
-| `solana`                            | `POST /transaction/createSolana`           |
 | EVM chain, **non-LayerZero route**  | `POST /transaction/createEth`              |
 | EVM chain, **LayerZero route**      | `POST /transaction/layerZeroTransfer`      |
 
-**Determining if a route is LayerZero:** check `layerZeroChains` in the settings response. If the source chain appears there, use `POST /transaction/layerZeroTransfer` for that route.
+**Determining if a route is LayerZero:** a route is LayerZero when `originChain` or `destinationChain` is `base` or `bsc`. These chains are listed in top-level `enabledChains` and in `layerZeroChains`, but not in `settingsPerMode.skyline`. Every other EVM source route uses `createEth`.
 
-The `createCardano`, `createEth` and `createSolana` endpoints accept the same request body:
+The `createCardano` and `createEth` endpoints accept the same request body:
 
 ```json
 {
@@ -372,12 +325,15 @@ Request body:
 {
   "srcChainName":  "<source chain ID>",
   "dstChainName":  "<destination chain ID>",
-  "oftAddress":    "<OFT contract address from layerZeroChains[srcChain].oftAddress>",
+  "oftAddress":    "<oftAddress of the layerZeroChains entry whose chain is the source chain>",
   "amount":        "<amount in smallest unit as string>",
   "from":          "<sender address>",
   "to":            "<destination address>"
 }
 ```
+
+- `srcChainName` / `dstChainName` are LayerZero chain names: the same as the Skyline chain ID, except `nexus`, which is `apexfusionnexus`.
+- `layerZeroChains` in the settings response is an array of `{ "chain", "oftAddress", "chainID", "txType" }` entries — pick the one whose `chain` matches the source chain.
 
 Response:
 ```json
@@ -418,42 +374,9 @@ Response:
 ```
 
 - `txRaw` is the **unsigned** transaction. There is no `approvalTx` for Cardano.
-- When bridging a **native UTXO token** (not lovelace), the response will have `amount: "0"` and `nativeTokenAmount` as an array: `[{"tokenID": <id>, "amount": "<value>"}]`. Extract the `amount` from this array and use it as the `nativeTokenAmount` field in the Phase 4 registration call. Pass `"0"` for `amount`. When bridging lovelace, `nativeTokenAmount` will be `null` or an empty array — use `"0"` for it in registration.
+- When bridging a **native UTXO token** (not lovelace), the response will have `amount: "0"` and `nativeTokenAmount` as an array: `[{"tokenID": <id>, "amount": "<value>"}]`. The bridged token amount is `nativeTokenAmount[0].amount`; the lovelace spent covers only `bridgingFee` + `operationFee`. When bridging lovelace, `nativeTokenAmount` will be `null` or an empty array and `amount` is the bridged lovelace amount. Use these values for the amount and fee lines of the preview.
 
 > **TTL / expiry:** Cardano transactions encode a TTL (time-to-live) slot in the tx body. TTLs are short — typically only a few minutes. Always warn the user to sign and return the witness promptly after receiving the `txRaw`. If the user requests a rebuild, or if submission is rejected due to expiry, call `POST /transaction/createCardano` again with the same parameters to get a fresh `txRaw` with a new TTL. The same Ogmios submission flow applies to the rebuilt transaction.
-
-**Solana response** (`POST /transaction/createSolana`):
-```json
-{
-  "approvalTx": {
-    "txRaw":                "AQABBc0v...",
-    "lastValidBlockHeight": "298345120"
-  },
-  "bridgingTx": {
-    "solTx": {
-      "txRaw":                "AQABBc0v...",
-      "lastValidBlockHeight": "298345120"
-    },
-    "bridgingFee":  "1100000",
-    "operationFee": "500000",
-    "tokenAmount":  "5000000000",
-    "tokenID":      3
-  }
-}
-```
-
-- `bridgingTx.solTx.txRaw` is the **unsigned** transaction encoded as **base64** — not hex, unlike EVM and UTXO chains. Never present it as hex.
-- `approvalTx` has the same shape and appears only for SPL token bridges that need a token account or allowance set up first. If it is `null` or absent, only `bridgingTx.solTx` needs signing. When present, the user signs and submits it first, waits for confirmation, then signs the bridging tx — the same one-at-a-time rule as the EVM two-tx flow.
-- **Native SOL vs SPL token:** `bridgingTx.tokenAmount` is `"0"` when bridging native SOL and non-zero when bridging an SPL token. This decides what Phase 4 registration receives:
-
-| Bridging      | `amount`                                       | `nativeTokenAmount`      | `tokenID`             |
-|---------------|------------------------------------------------|--------------------------|-----------------------|
-| Native SOL    | `bridgingFee + operationFee + <bridged amount>` | `"0"`                    | `0`                   |
-| SPL token     | `bridgingFee + operationFee`                    | `bridgingTx.tokenAmount` | `bridgingTx.tokenID`  |
-
-- **Total deducted from the user's wallet = bridged amount + `bridgingFee` + `operationFee`**, all in lamports.
-
-> **Expiry:** `lastValidBlockHeight` is the block height past which the transaction is no longer accepted. Solana blockhashes stay valid only ~60–90 seconds, so this window is much tighter than Cardano's TTL — warn the user to sign and return immediately. If it expires, call `POST /transaction/createSolana` again for a fresh `txRaw`. Pass `lastValidBlockHeight` through to Phase 4 registration unchanged.
 
 ---
 
@@ -499,8 +422,6 @@ For **UTXO chains**, present the unsigned `txRaw` hex directly for signing — *
 4. Re-encode the array as CBOR — this is the complete `signedTxRaw`.
 5. Proceed without asking the user for anything further.
 
-For **Solana**, present the unsigned `txRaw` **base64** string directly for signing and ask for the signed transaction back, also base64-encoded. Do **not** use the `RAW_TX` JS format below — that is EVM-only, and Solana transactions carry no `gas`, `nonce` or `chainId` fields. State the expiry explicitly: the transaction is void once the chain passes `lastValidBlockHeight`, which is typically under two minutes away.
-
 **Always present the transaction to sign using this exact `RAW_TX` format** so the user can paste it directly into their signing script:
 
 ```js
@@ -532,7 +453,7 @@ Wait for `signedTxRaw` before proceeding to Phase 3.
 
 ---
 
-### Phase 3 — Broadcast & Confirm (EVM and Solana source chains)
+### Phase 3 — Broadcast & Confirm (EVM source chains)
 
 Once the user provides `signedTxRaw`:
 
@@ -569,79 +490,73 @@ Check `result.status`:
 
 > For **UTXO source chains** (cardano, prime, vector): if the chain has a known Ogmios URL (see table above), submit on the user's behalf using `submitTransaction` and extract `txHash` from `result.transaction.id`. Then proceed directly to Phase 4. If the chain has no known Ogmios URL, ask the user to provide the Ogmios URL before proceeding.
 
-**Solana source chains:** broadcast on the user's behalf via the Solana RPC — never ask the user to submit manually.
+---
 
-**Step 1 — Broadcast** via `sendTransaction`, passing the signed transaction as base64:
 
-```json
-{
-  "jsonrpc": "2.0",
-  "method":  "sendTransaction",
-  "params":  [
-    "<signedTxRaw base64>",
-    { "encoding": "base64", "skipPreflight": false, "preflightCommitment": "confirmed" }
-  ],
-  "id": 1
-}
-```
+## Explorer URLs
 
-The `result` field is the transaction signature — this is the `txHash` for Phase 4 and for explorer links.
+Use these to construct transaction links when reporting results to the user.
 
-**Step 2 — Confirm** by polling `getSignatureStatuses` every second until the status reaches `confirmed` or `finalized`:
+| Chain ID    | Explorer Base URL                                    | Tx URL format                                      |
+|-------------|------------------------------------------------------|----------------------------------------------------|
+| `prime`     | `https://apexscan.org/en`                            | `https://apexscan.org/en/transactions/<txHash>`    |
+| `vector`    | `https://vector.apexscan.org/en`                     | `https://vector.apexscan.org/en/transaction/<txHash>` |
+| `cardano`   | `https://cardanoscan.io`                             | `https://cardanoscan.io/transactions/<txHash>`     |
+| `nexus`     | `https://explorer.nexus.mainnet.apexfusion.org`      | `https://explorer.nexus.mainnet.apexfusion.org/tx/<txHash>` |
+| `base`      | `https://basescan.org`                               | `https://basescan.org/tx/<txHash>`                 |
+| `bsc`       | `https://bscscan.com`                                | `https://bscscan.com/tx/<txHash>`                  |
+| `polygon`   | `https://polygonscan.com`                            | `https://polygonscan.com/tx/<txHash>`              |
+| `ethereum`  | `https://etherscan.io`                               | `https://etherscan.io/tx/<txHash>`                 |
+| `katana`    | `https://katanascan.com`                             | `https://katanascan.com/tx/<txHash>`               |
+| `sei`       | `https://seiscan.io`                                 | `https://seiscan.io/tx/<txHash>`                   |
+| `arbitrum`  | `https://arbiscan.io`                                | `https://arbiscan.io/tx/<txHash>`                  |
+| `scroll`    | `https://scrollscan.com`                             | `https://scrollscan.com/tx/<txHash>`               |
+| `unichain`  | `https://unichain.blockscout.com`                    | `https://unichain.blockscout.com/tx/<txHash>`      |
 
-```json
-{
-  "jsonrpc": "2.0",
-  "method":  "getSignatureStatuses",
-  "params":  [["<txHash>"], { "searchTransactionHistory": true }],
-  "id": 1
-}
-```
-
-- `result.value[0].confirmationStatus` of `"confirmed"` or `"finalized"` — success, proceed to Phase 4.
-- `result.value[0].err` non-null — the transaction failed. Report the error and stop.
-- `result.value[0]` still `null` after ~60 seconds, or the chain has passed `lastValidBlockHeight` — the transaction expired and was never accepted. Rebuild via `POST /transaction/createSolana` and start Phase 1 Step 2 again.
+**Rules:**
+- UTXO chains (`prime`, `vector`, `cardano`): append `/transactions/<txHash>`
+- EVM chains (all others): append `/tx/<txHash>`
+- Always include explorer links in the `BRIDGE TRANSACTION SUMMARY` when a `txHash` is available.
 
 ---
 
-### Phase 4 — Register with Skyline
 
-Once the transaction is confirmed on-chain (or the user provides `txHash` for UTXO chains), register it with the bridge. This triggers the validators to process the cross-chain transfer.
+### Phase 4 — Look Up the Bridge Transaction
+
+There is **no registration call**. The bridge indexers watch every supported source chain and record each bridging transaction on their own once it lands on-chain. After Phase 3, the agent only has to find the recorded transaction by its source chain and tx hash:
 
 ```
-POST [API URL]/transaction/bridgingTransactionSubmittedActivated
-Content-Type: application/json
-
-{
-  "originChain":       "<source chain ID>",
-  "destinationChain":  "<destination chain ID>",
-  "originTxHash":      "<txHash from user>",
-  "senderAddress":     "<user's source address>",
-  "receiverAddrs":     ["<user's destination address>"],
-  "amount":            "<amount in smallest unit>",
-  "nativeTokenAmount": "0",
-  "tokenID":           "<integer token ID>",
-  "txRaw":             "<signedTxRaw from user>",
-  "isLayerZero":       false
-}
+GET [API URL]/bridgeTransaction/byTxHash/{originChain}/{txHash}
 ```
 
-| Field               | Value source                                                        |
-|---------------------|---------------------------------------------------------------------|
-| `originTxHash`      | txHash provided by the user after on-chain submission               |
-| `txRaw`             | Signed transaction hex provided by the user                         |
-| `nativeTokenAmount` | `"0"` for lovelace bridges and for all EVM source chain bridges. For native UTXO token bridges (non-lovelace), extract from the build response `nativeTokenAmount` array: `nativeTokenAmount[0].amount` |
-| `amount`            | For EVM source chains: the full token amount in smallest unit (e.g. wei). For UTXO native token bridges: `"0"` (amount is in `nativeTokenAmount`). For UTXO lovelace bridges: the lovelace amount. |
-| `isLayerZero`       | `false` for standard Skyline bridge; `true` for LayerZero path (when `POST /transaction/layerZeroTransfer` was used) |
+| Path param    | Value                                                                                                   |
+|---------------|---------------------------------------------------------------------------------------------------------|
+| `originChain` | Source chain ID (from the Supported Chain IDs table)                                                    |
+| `txHash`      | Source tx hash from Phase 3 — EVM: `0x`-prefixed **lowercase** hex; UTXO: 64-char hex without `0x` (`result.transaction.id` from Ogmios) |
 
-**Response** — save the `id` field for polling:
+- `404` means the transaction has **not been indexed yet** — this is expected right after broadcasting. Poll every 5 seconds until the endpoint returns `200`. Indexing usually takes only a few seconds.
+- **LayerZero transfers** are recorded from LayerZero Scan rather than the bridge indexers, so they appear only after LayerZero Scan has indexed the source tx, which can take a few minutes after it is mined. Use the source chain (`nexus`, `base` or `bsc`) as `originChain`. The recorded transaction has `isLayerZero: true`.
+- If it still returns `404` after 10 minutes, stop polling and provide the source explorer link and lookup URL. If source-chain inclusion was independently confirmed, report that the transaction is on-chain but has not been indexed by the bridge. Otherwise, report: "The transaction was submitted, but inclusion and bridge indexing remain unconfirmed." Ogmios submission acceptance alone does not prove inclusion; a UTXO transaction can expire before being included. **Do not rebuild or resubmit while the original outcome is unknown.** Only consider rebuilding after verifying that the original transaction was not included and can no longer be included (for example, its TTL has expired).
+- `400` means `originChain` is not a valid chain ID — fix the parameter, do not retry as-is.
+
+**Response** — same shape as `GET /bridgeTransaction/{id}`; save the `id` field for Phase 5:
 ```json
 {
   "id": 12345,
   "status": "Pending",
   "originChain": "...",
   "destinationChain": "...",
-  ...
+  "sourceTxHash": "...",
+  "destinationTxHash": null,
+  "senderAddress": "...",
+  "receiverAddresses": "...",
+  "amount": "...",
+  "nativeTokenAmount": "...",
+  "tokenID": 1,
+  "createdAt": "...",
+  "finishedAt": null,
+  "isLayerZero": false,
+  "isRefund": false
 }
 ```
 
@@ -672,7 +587,7 @@ GET [API URL]/bridgeTransaction/{id}
 | `IncludedInBatch`               | no       | Keep polling                                                                                                    |
 | `SubmittedToDestination`        | no       | Keep polling                                                                                                    |
 | `ExecutedOnDestination`         | **yes**  | Check `isRefund`. If `true`: inform the user the bridge did **not** execute and their funds have been refunded. If `false`: report `destinationTxHash` as proof of delivery. Done. |
-| `FailedToExecuteOnDestination`  | **yes**  | Report failure. If `isRefund` is `true`, inform user a refund is underway.                                      |
+| `FailedToExecuteOnDestination`  | no       | Keep polling within the 30-minute tracking limit; destination execution failed, but the bridge outcome is not final. If `isRefund` is `true`, a refund is underway. |
 | `InvalidRequest`                | **yes**  | Report error. Do not retry. Ask user to start a new request.                                                    |
 
 Typical bridging time: **2–10 minutes**.
@@ -683,7 +598,7 @@ For the **first** non-terminal status, report progress to the user using this ex
 ══════════════════════════════════════════
   BRIDGE TRANSACTION PROGRESS
 ══════════════════════════════════════════
-  Current status  : <Pending | DiscoveredOnSource | SubmittedToBridge | IncludedInBatch | SubmittedToDestination>
+  Current status  : <Pending | DiscoveredOnSource | SubmittedToBridge | IncludedInBatch | SubmittedToDestination | FailedToExecuteOnDestination>
   Bridge tx ID    : <id>
   Source tx       : <sourceTxHash>
   Destination tx  : <destinationTxHash, or "N/A" if null>
@@ -703,7 +618,7 @@ When a terminal status is reached, always report the outcome using this exact st
 ══════════════════════════════════════════
   BRIDGE TRANSACTION SUMMARY
 ══════════════════════════════════════════
-  Status          : <ExecutedOnDestination | FailedToExecuteOnDestination | InvalidRequest>
+  Status          : <ExecutedOnDestination | InvalidRequest>
   Result          : <Delivered | Refunded | Failed>
 
   Token           : <token name>
@@ -721,11 +636,12 @@ When a terminal status is reached, always report the outcome using this exact st
   Destination tx  : <destinationTxHash, or "N/A" if refunded/failed>
   Dest tx link    : <explorer URL for destinationChain>/transactions/<txHash> or /tx/<txHash>, or "N/A">
 
+
   Bridge tx ID    : <id>
 ══════════════════════════════════════════
 ```
 
-- Set **Result** to `Delivered` when `isRefund=false`, `Refunded` when `isRefund=true`, `Failed` for `FailedToExecuteOnDestination`.
+- For `ExecutedOnDestination`, set **Result** to `Delivered` when `isRefund=false` or `Refunded` when `isRefund=true`. For `InvalidRequest`, set **Result** to `Failed`. `FailedToExecuteOnDestination` is non-terminal and must not produce a final summary.
 - Omit `Destination tx` line if `destinationTxHash` is null.
 
 ---
@@ -736,7 +652,7 @@ When a terminal status is reached, always report the outcome using this exact st
 |-------------|----------------------------------------------------------------------|
 | `200`       | Success                                                              |
 | `400`       | Bad request — invalid parameters or constraint violation             |
-| `404`       | Not found — unknown transaction ID                                   |
+| `404`       | Not found — unknown transaction ID; on `byTxHash`, not indexed yet   |
 | `500`       | Internal server error — retry with exponential back-off             |
 
 Common causes of a `400` on the build endpoints:
@@ -778,13 +694,14 @@ Content-Type: application/json
 {
   "senderAddress": "<address>",
   "originChain":   "<chain ID>",
-  "page":          1,
+  "page":          0,
   "perPage":       20
 }
 ```
 
-Required: `senderAddress`, `originChain`.
-Optional: `destinationChain`, `receiverAddress`, `amountFrom`, `amountTo`, `orderBy`, `order`, `page`, `perPage`.
+All fields are optional — omit `senderAddress` and `originChain` for network-wide history.
+Other filters: `destinationChain`, `receiverAddress`, `amountFrom`, `amountTo`, `nativeTokenAmountFrom`, `nativeTokenAmountTo` (amount filters are in 18-decimal wei), `displayStatus` (`success`, `failed`, `pending`, `refunded`, `refunding`), `orderBy`, `order`.
+`page` is zero-based (default `0`, max `10000`); `perPage` defaults to `10` (max `100`).
 
 ---
 
@@ -806,11 +723,9 @@ Agent collects (if not provided):
 
 2. if originChain in {cardano, prime, vector}:
        POST /transaction/createCardano
-   elif originChain == solana:
-       POST /transaction/createSolana
-   elif originChain in layerZeroChains (from settings):
+   elif originChain or destinationChain in {base, bsc}:   (LayerZero route)
        POST /transaction/layerZeroTransfer
-       Body: { srcChainName, dstChainName, oftAddress (from layerZeroChains), amount, from, to }
+       Body: { srcChainName, dstChainName, oftAddress (layerZeroChains entry for originChain), amount, from, to }
    else:
        POST /transaction/createEth
    Body (createCardano/createEth): { senderAddress, originChain, destinationChain,
@@ -832,7 +747,7 @@ Agent collects (if not provided):
 
 4. [Wait for user to provide signedTxRaw]
 
-──── Phase 3: Broadcast & Confirm (EVM + Solana source chains) ─────
+──── Phase 3: Broadcast & Confirm (EVM source chains) ──────────────
 
 5. POST <RPC_URL>  eth_sendRawTransaction  → txHash
 6. POLL <RPC_URL>  eth_getTransactionReceipt every 5s until mined
@@ -840,17 +755,13 @@ Agent collects (if not provided):
 
    [UTXO source chains with known Ogmios URL: submit via Ogmios submitTransaction → extract txHash from result.transaction.id]
    [UTXO source chains without known Ogmios URL: ask user to provide the Ogmios URL before proceeding]
-   [Solana: sendTransaction (base64) → signature = txHash, then poll getSignatureStatuses every 1s until confirmed/finalized]
 
-──── Phase 4: Register ─────────────────────────────────────────────
+──── Phase 4: Look up ──────────────────────────────────────────────
 
-7. POST /transaction/bridgingTransactionSubmittedActivated
-   Body: { originChain, destinationChain,
-           originTxHash: txHash, senderAddress,
-           receiverAddrs: [destinationAddress],
-            amount, nativeTokenAmount: (nativeTokenAmount[0].amount for native token bridges, else "0"), tokenID,
-           txRaw: signedTxRaw, isLayerZero: false }
-   Extract: id
+7. POLL GET /bridgeTransaction/byTxHash/{originChain}/{txHash} every 5s
+   404 → not indexed yet, keep polling (stop after 10 minutes; report inclusion as unconfirmed unless independently verified; do not rebuild or resubmit while the original outcome is unknown)
+   200 → Extract: id
+   (no registration call — the bridge indexers record the tx on their own)
 
 ──── Phase 5: Track ────────────────────────────────────────────────
 
@@ -859,7 +770,7 @@ Agent collects (if not provided):
      each subsequent non-terminal check → report `Bridging not finished yet, current status: <status>` and continue polling.
      "ExecutedOnDestination" + isRefund=false → report destinationTxHash. Done.
      "ExecutedOnDestination" + isRefund=true  → inform user bridge did NOT execute; funds were refunded.
-     "FailedToExecuteOnDestination"  → report failure + isRefund status.
+     "FailedToExecuteOnDestination"  → non-terminal; continue polling within the 30-minute limit (refund underway if isRefund=true).
      "InvalidRequest"                → report error, do not retry.
      terminal status                → report BRIDGE TRANSACTION SUMMARY.
 ```
@@ -871,15 +782,15 @@ Agent collects (if not provided):
 1. **Never handle private keys.** Build unsigned transactions; the user signs them.
 2. **Always fetch `tokenID` from `/settings` — read `ecosystemTokens` and `directionConfig` from the top-level fields.** The response also contains `settingsPerMode.reactor` — ignore it. Use `settingsPerMode.skyline.bridgingSettings` only for fee and amount limit values. Never hardcode token IDs.
 3. **Always fetch bridging addresses from the API.** Never hardcode them.
-4. **Validate the amount** against `minValueToBridge` / `maxAmountAllowedToBridge` before calling the build endpoint. Both values are in the token's smallest unit (wei for EVM, lovelace for UTXO, lamports for Solana).
-5. **Source chain type and route selects the endpoint.** `cardano`, `prime`, `vector` → `createCardano`; `solana` → `createSolana`; EVM chains on LayerZero routes (source chain listed in `layerZeroChains`) → `layerZeroTransfer`; all other EVM chains → `createEth`.
+4. **Validate the amount** against `minValueToBridge` / `maxAmountAllowedToBridge` before calling the build endpoint. Both values are in the token's smallest unit (wei for EVM, lovelace for UTXO).
+5. **Source chain type and route selects the endpoint.** `cardano`, `prime`, `vector` → `createCardano`; LayerZero routes (`originChain` or `destinationChain` is `base` or `bsc`) → `layerZeroTransfer`; all other EVM chains → `createEth`.
 6. **Handle the two-tx EVM case.** If `approvalTx` is non-null, the user must submit it first and confirm before the bridge tx. If null, it is a native token — one transaction only.
-7. **Convert amounts correctly.** EVM = wei (10^18 per token for 18-decimal), Cardano/UTXO = Lovelace (10^6 per token), Solana = lamports (10^9 per SOL).
-8. **For EVM source chains: broadcast on behalf of the user.** Once `signedTxRaw` is received, submit it via `eth_sendRawTransaction` using the known RPC, wait for the receipt, then register with Skyline and poll to completion — no further input needed from the user.
+7. **Convert amounts correctly.** EVM = wei (10^18 per token for 18-decimal), Cardano/UTXO = Lovelace (10^6 per token).
+8. **For EVM source chains: broadcast on behalf of the user.** Once `signedTxRaw` is received, submit it via `eth_sendRawTransaction` using the known RPC, wait for the receipt, then look up the indexed bridge transaction via `byTxHash` and poll it to completion — no further input needed from the user.
 9. **For UTXO source chains: submit if a known Ogmios URL is available.** If the chain is listed in the Ogmios table, submit the signed transaction via `submitTransaction` and extract `txHash` from the response. If the chain is not listed, ask the user to provide the Ogmios URL before proceeding.
 10. **For UTXO signing: expect a complete signed tx, but handle witness-only responses.** Tell the user to provide the fully assembled signed transaction (CBOR starting with `84`). If they provide a witness set only (CBOR starting with `a1`), assemble the full signed tx by replacing the empty witness in the original `txRaw` and proceed without further prompting.
 11. **Rebuild expired Cardano transactions.** If the user reports a transaction was rejected or expired, call `POST /transaction/createCardano` again with the same parameters to get a fresh `txRaw` with a new TTL.
-12. **Use known RPC URLs.** Refer to the EVM RPC, Solana RPC and Ogmios tables. If the chain's RPC is not listed, ask the user for it before proceeding.
+12. **Use known RPC URLs.** Refer to the EVM RPC and Ogmios tables. If the chain's RPC is not listed, ask the user for it before proceeding.
 13. **Do not retry `InvalidRequest` transactions.** Diagnose and ask the user to start a new request.
 14. **Check `isRefund` on `ExecutedOnDestination`.** If `isRefund` is `true`, the bridge did not execute — inform the user their funds have been refunded, not delivered to the destination. Only report `destinationTxHash` as proof of delivery when `isRefund` is `false`.
 15. **Always validate the token against the route before building.** Check `directionConfig[originChain].destChain[destinationChain]` for the token ID. If the requested token is not available on that route, list the supported tokens and ask the user to choose — do not call the build endpoint with an unsupported token.
@@ -893,8 +804,5 @@ Agent collects (if not provided):
 23. **Always perform continuous tracking.** Poll every 20 seconds and proactively report non-terminal updates until terminal completion (or timeout): full block for the first non-terminal status, then short-line updates at every poll.
 24. **Always state active tracking behavior in the first progress block.** Include the line: `Tracking        : I am polling every 20 seconds and will send an update if the status changes.`
 25. **After the first progress block, do not repost the full body for non-terminal updates.** Use only: `Bridging not finished yet, current status: <status>` for every subsequent poll while status is non-terminal.
-26. **Always construct and display explorer links in `BRIDGE TRANSACTION SUMMARY`.** Use the Explorer URLs table to build the full transaction URL. For UTXO chains (`prime`, `vector`, `cardano`) append `/transactions/<txHash>`; for EVM chains append `/tx/<txHash>`; for `solana` append `/tx/<txHash>`. Include `Source tx link` for the source transaction and `Dest tx link` for the destination transaction (omit `Dest tx link` if `destinationTxHash` is null).
-27. **For Solana source chains: broadcast on behalf of the user.** Submit the signed base64 transaction via `sendTransaction` on the Solana RPC, poll `getSignatureStatuses` until `confirmed` or `finalized`, then register with Skyline and poll to completion — no further input needed from the user.
-28. **Solana transactions are base64, not hex.** Present `txRaw` to the user as the base64 string exactly as returned, and expect the signed transaction back in base64. Never wrap a Solana transaction in the `RAW_TX` JS format.
-29. **Respect the Solana expiry window.** `lastValidBlockHeight` gives roughly 60–90 seconds. Warn the user up front, and if it lapses rebuild via `POST /transaction/createSolana` rather than retrying the stale transaction.
-30. **Distinguish native SOL from SPL tokens before registering.** `bridgingTx.tokenAmount` of `"0"` means native SOL — send `nativeTokenAmount: "0"` and `tokenID: 0`. A non-zero value means an SPL token — send that value as `nativeTokenAmount` with the response's `tokenID`, and `amount` covering fees only.
+26. **Always construct and display explorer links in `BRIDGE TRANSACTION SUMMARY`.** Use the Explorer URLs table to build the full transaction URL. For UTXO chains (`prime`, `vector`, `cardano`) append `/transactions/<txHash>`; for EVM chains append `/tx/<txHash>`. Include `Source tx link` for the source transaction and `Dest tx link` for the destination transaction (omit `Dest tx link` if `destinationTxHash` is null).
+27. **Never try to register a transaction.** There is no registration endpoint — the bridge indexers record every bridging transaction they observe on the source chain. After broadcasting, find it via `GET /bridgeTransaction/byTxHash/{originChain}/{txHash}`, treating `404` as "not indexed yet" and polling every 5 seconds (stop after 10 minutes).

@@ -1,10 +1,4 @@
-import { isLZBridging } from "@/lib/chains";
-import appSettings from "@/settings/appSettings";
 import { captureAndThrowError } from "@/lib/wallet/errors";
-
-export function shouldUseMainnet(src: string, dst: string): boolean {
-  return appSettings.isMainnet || isLZBridging(src, dst);
-}
 
 export function toBytes(hex: string): Uint8Array {
   if (hex.length % 2 === 0 && /^[0-9A-F]*$/i.test(hex)) {

@@ -104,14 +104,14 @@ type skylineGenerateConfigsParams struct {
 func (p *skylineGenerateConfigsParams) validateFlags() error {
 	err := validateAddress(
 		true, p.primeBridgingFeeAddress, primeBridgingFeeAddressFlag,
-		wallet.CardanoNetworkType(p.primeNetworkID))
+		wallet.CardanoNetworkType(p.primeNetworkID)) //nolint:gosec
 	if err != nil {
 		return err
 	}
 
 	err = validateAddress(
 		true, p.primeTreasuryAddress, primeTreasuryAddressFlag,
-		wallet.CardanoNetworkType(p.primeNetworkID))
+		wallet.CardanoNetworkType(p.primeNetworkID)) //nolint:gosec
 	if err != nil {
 		return err
 	}
@@ -131,14 +131,14 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 
 	err = validateAddress(
 		true, p.cardanoBridgingFeeAddress, cardanoBridgingFeeAddressFlag,
-		wallet.CardanoNetworkType(p.cardanoNetworkID))
+		wallet.CardanoNetworkType(p.cardanoNetworkID)) //nolint:gosec
 	if err != nil {
 		return err
 	}
 
 	err = validateAddress(
 		true, p.cardanoTreasuryAddress, cardanoTreasuryAddressFlag,
-		wallet.CardanoNetworkType(p.cardanoNetworkID))
+		wallet.CardanoNetworkType(p.cardanoNetworkID)) //nolint:gosec
 	if err != nil {
 		return err
 	}
@@ -158,14 +158,14 @@ func (p *skylineGenerateConfigsParams) validateFlags() error {
 
 	err = validateAddress(
 		true, p.vectorBridgingFeeAddress, vectorBridgingFeeAddressFlag,
-		wallet.CardanoNetworkType(p.vectorNetworkID))
+		wallet.CardanoNetworkType(p.vectorNetworkID)) //nolint:gosec
 	if err != nil {
 		return err
 	}
 
 	err = validateAddress(
 		true, p.vectorTreasuryAddress, vectorTreasuryAddressFlag,
-		wallet.CardanoNetworkType(p.vectorNetworkID))
+		wallet.CardanoNetworkType(p.vectorNetworkID)) //nolint:gosec
 	if err != nil {
 		return err
 	}
@@ -516,7 +516,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 		RunMode: common.SkylineMode,
 		CardanoChains: map[string]*core.CardanoChainConfig{
 			common.ChainIDStrPrime: {
-				NetworkID:    wallet.CardanoNetworkType(p.primeNetworkID),
+				NetworkID:    wallet.CardanoNetworkType(p.primeNetworkID), //nolint:gosec
 				NetworkMagic: p.primeNetworkMagic,
 				BridgingAddresses: core.BridgingAddresses{
 					FeeAddress: p.primeBridgingFeeAddress,
@@ -534,7 +534,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 				IsEnabled: true,
 			},
 			common.ChainIDStrCardano: {
-				NetworkID:    wallet.CardanoNetworkType(p.cardanoNetworkID),
+				NetworkID:    wallet.CardanoNetworkType(p.cardanoNetworkID), //nolint:gosec
 				NetworkMagic: p.cardanoNetworkMagic,
 				BridgingAddresses: core.BridgingAddresses{
 					FeeAddress: p.cardanoBridgingFeeAddress,
@@ -553,7 +553,7 @@ func (p *skylineGenerateConfigsParams) Execute(
 				IsEnabled: true,
 			},
 			common.ChainIDStrVector: {
-				NetworkID:    wallet.CardanoNetworkType(p.vectorNetworkID),
+				NetworkID:    wallet.CardanoNetworkType(p.vectorNetworkID), //nolint:gosec
 				NetworkMagic: p.vectorNetworkMagic,
 				BridgingAddresses: core.BridgingAddresses{
 					FeeAddress: p.vectorBridgingFeeAddress,

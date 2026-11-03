@@ -48,7 +48,6 @@ import {
 	ValidateEVMAddress,
 	ValidateSolanaAddress,
 } from 'src/utils/Address/addreses';
-import { createHash } from 'crypto';
 
 const prepareCreateCardanoBridgingTx = (
 	dto: CreateTransactionDto,
@@ -474,15 +473,3 @@ const reactorEthBridgingTx = (
 		},
 	};
 };
-
-export function canUpdateTx(
-	ip: string,
-	clientID?: string | null,
-	activeFrom?: Date,
-): boolean {
-	const hash = createHash('sha256')
-		.update(ip + (getAppConfig().hashSecret ?? ''))
-		.digest('hex');
-
-	return hash === clientID && !!activeFrom && activeFrom > new Date();
-}

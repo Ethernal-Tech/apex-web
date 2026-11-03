@@ -1,15 +1,13 @@
 import { ApiExtraModels, ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-	IsArray,
 	IsEnum,
 	IsNotEmpty,
 	IsObject,
-	IsOptional,
 	IsPositive,
 	ValidateNested,
 } from 'class-validator';
-import { ChainApexBridgeEnum, ChainEnum } from 'src/common/enum';
+import { ChainApexBridgeEnum } from 'src/common/enum';
 import { NotSame } from 'src/decorators/notSame.decorator';
 
 export class CreateTransactionDto {
@@ -79,124 +77,6 @@ export class CreateTransactionDto {
 		required: false,
 	})
 	utxoCacheKey?: string;
-}
-
-export class TransactionSubmittedDto {
-	@IsNotEmpty()
-	@IsEnum(ChainEnum)
-	@ApiProperty({
-		description: 'Source chain ID',
-		enum: ChainEnum,
-		enumName: 'ChainEnum',
-	})
-	originChain: ChainEnum;
-
-	@IsNotEmpty()
-	@IsEnum(ChainEnum)
-	@NotSame('originChain')
-	@ApiProperty({
-		description: 'Destination chain ID',
-		enum: ChainEnum,
-		enumName: 'ChainEnum',
-	})
-	destinationChain: ChainEnum;
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description: 'Transaction hash on source chain',
-	})
-	originTxHash: string;
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description:
-			'Address that initiated the bridging request on the source chain',
-	})
-	senderAddress: string;
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description: 'Recipient addresses on the destination chain',
-	})
-	@IsArray()
-	receiverAddrs: string[];
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description: 'Amount of currency to be bridged, including bridging fee',
-	})
-	amount: string;
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description: 'Amount of native token to be bridged',
-	})
-	nativeTokenAmount: string;
-
-	@ApiProperty({
-		description: 'Token ID',
-	})
-	tokenID: number;
-
-	@IsOptional()
-	@ApiProperty({
-		description: 'Transaction raw data on source chain',
-		required: false,
-	})
-	txRaw?: string;
-
-	@IsOptional()
-	@ApiProperty({
-		description: 'Solana last valid block height from create tx',
-		required: false,
-	})
-	lastValidBlockHeight?: string;
-
-	@ApiProperty({
-		description: 'Indicates if Layer Zero bridging is used',
-	})
-	isLayerZero: boolean;
-}
-
-export class TransactionUpdateDto {
-	@IsNotEmpty()
-	@IsEnum(ChainEnum)
-	@ApiProperty({
-		description: 'Source chain ID',
-		enum: ChainEnum,
-		enumName: 'ChainEnum',
-	})
-	originChain: ChainEnum;
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description: 'Transaction hash on source chain',
-	})
-	originTxHash: string;
-
-	@IsOptional()
-	@ApiProperty({
-		description: 'Transaction raw data on source chain',
-		required: false,
-	})
-	txRaw?: string;
-}
-
-export class TransactionActivateDeleteDto {
-	@IsNotEmpty()
-	@IsEnum(ChainEnum)
-	@ApiProperty({
-		description: 'Source chain ID',
-		enum: ChainEnum,
-		enumName: 'ChainEnum',
-	})
-	originChain: ChainEnum;
-
-	@IsNotEmpty()
-	@ApiProperty({
-		description: 'Transaction hash on source chain',
-	})
-	originTxHash: string;
 }
 
 export class CreateCardanoTransactionResponseTokenAmountDto {

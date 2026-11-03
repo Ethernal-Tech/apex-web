@@ -12,7 +12,7 @@ import { DEFAULT_PROVIDER_ORDER } from 'src/tokenPrice/tokenPrice.config';
 const defaultUrl = 'http://localhost:40000';
 
 const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
-	app: { port: 3500, isMainnet: false, txValidityPeriod: 30000 }, //in milliseconds
+	app: { port: 3500, isMainnet: false },
 	bridge: {
 		recentInputsThresholdMinutes: 5,
 		ethTxTtlInc: 50,
@@ -28,6 +28,7 @@ const DEFAULTS: Readonly<DeepPartial<AppConfig>> = {
 		name: 'apex',
 		migrations: ['dist/src/database/migrations/*.js'],
 		migrationsTableName: '__apex_migrations',
+		statementTimeoutMs: 15000,
 		entities: ['dist/**/*.entity.js'],
 	},
 	email: { contactEmail: 'info@ethernal.tech', smtpPort: 465 },
@@ -114,11 +115,5 @@ export class AppConfigService {
 	}
 	get secrets() {
 		return this.config.secrets;
-	}
-	get txValidityPeriod() {
-		return this.config.app.txValidityPeriod;
-	}
-	get hashSecret() {
-		return this.config.app.hashSecret;
 	}
 }

@@ -24,6 +24,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as TransactionIdRouteImport } from './routes/transaction.$id'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as TransactionPendingOriginChainTxHashRouteImport } from './routes/transaction.pending.$originChain.$txHash'
 
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
@@ -100,6 +101,12 @@ const BlogSlugRoute = BlogSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => BlogRoute,
 } as any)
+const TransactionPendingOriginChainTxHashRoute =
+  TransactionPendingOriginChainTxHashRouteImport.update({
+    id: '/transaction/pending/$originChain/$txHash',
+    path: '/transaction/pending/$originChain/$txHash',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/blog/$slug': typeof BlogSlugRoute
   '/transaction/$id': typeof TransactionIdRoute
   '/blog/': typeof BlogIndexRoute
+  '/transaction/pending/$originChain/$txHash': typeof TransactionPendingOriginChainTxHashRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -133,6 +141,7 @@ export interface FileRoutesByTo {
   '/blog/$slug': typeof BlogSlugRoute
   '/transaction/$id': typeof TransactionIdRoute
   '/blog': typeof BlogIndexRoute
+  '/transaction/pending/$originChain/$txHash': typeof TransactionPendingOriginChainTxHashRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -151,6 +160,7 @@ export interface FileRoutesById {
   '/blog/$slug': typeof BlogSlugRoute
   '/transaction/$id': typeof TransactionIdRoute
   '/blog/': typeof BlogIndexRoute
+  '/transaction/pending/$originChain/$txHash': typeof TransactionPendingOriginChainTxHashRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/transaction/$id'
     | '/blog/'
+    | '/transaction/pending/$originChain/$txHash'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/transaction/$id'
     | '/blog'
+    | '/transaction/pending/$originChain/$txHash'
   id:
     | '__root__'
     | '/'
@@ -203,6 +215,7 @@ export interface FileRouteTypes {
     | '/blog/$slug'
     | '/transaction/$id'
     | '/blog/'
+    | '/transaction/pending/$originChain/$txHash'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -219,6 +232,7 @@ export interface RootRouteChildren {
   TermsOfServiceRoute: typeof TermsOfServiceRoute
   TransactionsRoute: typeof TransactionsRoute
   TransactionIdRoute: typeof TransactionIdRoute
+  TransactionPendingOriginChainTxHashRoute: typeof TransactionPendingOriginChainTxHashRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -328,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof BlogRoute
     }
+    '/transaction/pending/$originChain/$txHash': {
+      id: '/transaction/pending/$originChain/$txHash'
+      path: '/transaction/pending/$originChain/$txHash'
+      fullPath: '/transaction/pending/$originChain/$txHash'
+      preLoaderRoute: typeof TransactionPendingOriginChainTxHashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -357,6 +378,8 @@ const rootRouteChildren: RootRouteChildren = {
   TermsOfServiceRoute: TermsOfServiceRoute,
   TransactionsRoute: TransactionsRoute,
   TransactionIdRoute: TransactionIdRoute,
+  TransactionPendingOriginChainTxHashRoute:
+    TransactionPendingOriginChainTxHashRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

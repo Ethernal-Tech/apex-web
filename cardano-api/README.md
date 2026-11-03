@@ -183,3 +183,77 @@ $ go run main.go generate-configs skyline \
 ``` shell
 $ go run main.go run-cardano-api --config "./config.json"
 ```
+
+# Bridging transaction indexer
+When the optional `indexer` section is present in the config, cardano api tracks bridging requests on source chains
+(without waiting for confirmations) and exposes them on `GET /api/BridgingTx/GetNew?after=<seq>&limit=<n>`.
+Web-api pulls them from there and stores them as `Pending` bridging transactions.
+
+Per-chain keys match the ones in apex-bridge oracle configs, so RPC related settings can be copied over unchanged.
+Durations are in nanoseconds.
+```json
+"indexer": {
+    "dbsPath": "./indexer-dbs",
+    "chainIDsConfigPath": "./chainIDsConfig.json",
+    "retentionPeriod": 259200000000000,
+    "cardanoChains": {
+        "prime": {
+            "networkAddress": "relay.prime.example:3001",
+            "startSlot": 1000,
+            "startBlockHash": "<hash of the block at startSlot>"
+        }
+    },
+    "ethChains": {
+        "nexus": {
+            "nodeUrl": "https://rpc.nexus.example",
+            "gatewayAddress": "0x...",
+            "startBlockNumber": 100000,
+            "syncBatchSize": 20,
+            "poolIntervalMs": 5000,
+            "rescanConfirmationStrategy": "finalized",
+            "rescanInterval": 300000000000,
+            "rescanMaxBlocks": 200
+        }
+    },
+    "solanaChains": {
+        "solana": {
+            "commitment": "confirmed",
+            "trackerStartSlot": 1000,
+            "chainHeadTargetBlockCount": 30,
+            "chainHeadSlotOffset": 80,
+            "rpcMethodLimitsConfig": "./rpcMethodLimits.json"
+        }
+    }
+}
+```
+- Cardano chains must also be defined in `cardanoChains` (network magic is taken from there). `networkAddress` is a
+  cardano-node relay (node-to-node), the same one apex-bridge uses for its indexer. Ogmios can not be used for indexing.
+- Cardano blocks are indexed with the block indexer from cardano-infrastructure, without confirmations and with deep
+  rollbacks allowed (`allowDeepRollback`). Its state is kept in `cardano_<chainID>.db`; the start point is used only
+  while that database is empty.
+- Solana chains must also be defined in `solanaChains`. RPC endpoint and program default to its `chainSpecific`
+  values and can be overridden with `txProviderEndpoint` and `trackedProgram`.
+- EVM logs are tracked with zero confirmations. Every `rescanInterval` (and after each restart) blocks after the safe
+  block (`finalized`, or latest - `rescanNumBlockConfirmations`) are read again, so txs moved by reorgs are not missed.
+- `chainIDsConfigPath` points to the same chain IDs file apex-bridge uses (`{"chainIDs": [...]}`).
+- Output of block syncers and event trackers is written to `<chainID>-indexer.log` next to the main log file
+  (same as in apex-bridge). Its level can be set with `indexer.logLevel` (hclog levels, e.g. `3` for info);
+  by default the app log level is used. Newly indexed txs and tracker restarts are logged to the main log.
+
+# Telemetry
+Indexer progress can be exported to Prometheus, the same way apex-bridge does it. Telemetry is enabled when
+`telemetry.prometheusAddr` is set; metrics are then served on `http://<prometheusAddr>/metrics`.
+```json
+"telemetry": {
+    "prometheusAddr": "0.0.0.0:5001",
+    "pullTime": 10000000000
+}
+```
+- `cardano_api_indexers_block_counter_<chainID>` is increased whenever the indexer of a chain moves to a new block
+  (Cardano and Solana slot, EVM block number), checked every `pullTime` (nanoseconds, 10s by default). A counter
+  that stops increasing means the indexer of that chain is stuck. A chain appears only after its first new block.
+- `cardano_api_bridging_txs_unpulled` is the number of indexed bridging txs web-api has not pulled yet (the last
+  assigned sequence number minus `after` of the latest `GetNew` request), updated every `pullTime`. Web-api pulls
+  every few seconds, so a value above zero for several minutes means it stopped pulling. It is not reported until
+  the first `GetNew` request after start.
+- Works only together with the `indexer` section.

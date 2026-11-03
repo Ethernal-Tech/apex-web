@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowDown,
   ArrowRight,
+  Check,
   CheckCircle2,
   ChevronDown,
   ChevronLeft,
@@ -191,7 +192,7 @@ const STATUS_FILTERS: { value: Status; label: string }[] = [
 ];
 
 function TransactionsPage() {
-  const isCompact = useMediaQuery("(max-width: 1000px)");
+  const isCompact = useMediaQuery("(max-width: 1279px)");
   const navigate = useNavigate();
   const [list, setList] = useTransactionsListState();
   const { data: settings } = useQuery(settingsQueryOptions);
@@ -513,7 +514,7 @@ function TransactionsPage() {
                   <thead>
                     <tr className="text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                       {isCompact ? (
-                        <th className="min-w-[10rem] px-4 py-4 text-center">
+                        <th className="w-[11rem] min-w-[10rem] px-4 py-4 text-center">
                           Route
                         </th>
                       ) : (
@@ -522,7 +523,7 @@ function TransactionsPage() {
                             onClick={() => toggleSort("origin")}
                             active={sortKey === "origin"}
                             dir={sortDir}
-                            className="min-w-[4.75rem] min-[1200px]:w-[10.5rem]"
+                            className="w-[6.5rem] min-[1400px]:w-[10rem]"
                           >
                             Origin
                           </Th>
@@ -530,7 +531,7 @@ function TransactionsPage() {
                             onClick={() => toggleSort("destination")}
                             active={sortKey === "destination"}
                             dir={sortDir}
-                            className="w-[8rem] min-[1200px]:w-[10.5rem]"
+                            className="w-[8rem] min-[1400px]:w-[10rem]"
                           >
                             Destination
                           </Th>
@@ -540,7 +541,7 @@ function TransactionsPage() {
                         onClick={() => toggleSort("amount")}
                         active={sortKey === "amount"}
                         dir={sortDir}
-                        className="w-[5.25rem]"
+                        className="w-[8rem]"
                       >
                         Amount
                       </Th>
@@ -575,7 +576,7 @@ function TransactionsPage() {
                         onClick={() => toggleSort("createdAt")}
                         active={sortKey === "createdAt"}
                         dir={sortDir}
-                        className="min-w-[7.25rem]"
+                        className="w-[7.75rem]"
                       >
                         Created
                       </Th>
@@ -583,7 +584,7 @@ function TransactionsPage() {
                         onClick={() => toggleSort("finishedAt")}
                         active={sortKey === "finishedAt"}
                         dir={sortDir}
-                        className="min-w-[8.25rem]"
+                        className="w-[7.75rem]"
                       >
                         Finished
                       </Th>
@@ -830,7 +831,7 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
       className={`border-t border-white/5 transition-colors hover:bg-white/[0.02] ${compact ? "cursor-pointer" : ""}`}
     >
       {compact ? (
-        <td className="min-w-[10rem] px-4 py-4">
+        <td className="w-[11rem] min-w-[10rem] px-4 py-4">
           <RouteCell
             origin={origin}
             dest={dest}
@@ -840,15 +841,15 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
         </td>
       ) : (
         <>
-          <td className="min-w-[4.75rem] px-5 py-4 min-[1200px]:w-[10.5rem]">
+          <td className="w-[6.5rem] px-5 py-4 min-[1400px]:w-[10rem]">
             <ChainCell chain={origin} />
           </td>
-          <td className="w-[8rem] px-5 py-4 min-[1200px]:w-[10.5rem]">
+          <td className="w-[8rem] px-5 py-4 min-[1400px]:w-[10rem]">
             <ChainCell chain={dest} />
           </td>
         </>
       )}
-      <td className="w-[5.25rem] px-5 py-4">
+      <td className="w-[8rem] px-5 py-4">
         <div
           className="font-display text-sm font-semibold text-foreground"
           title={tx.amountFull}
@@ -888,12 +889,12 @@ function TxRow({ tx, compact }: { tx: Tx; compact: boolean }) {
           <AddressCell address={tx.receiver} />
         </td>
       )}
-      <td className="min-w-[7.25rem] px-5 py-4 text-xs text-muted-foreground">
-        {formatDate(tx.createdAt)}
+      <td className="w-[7.75rem] px-5 py-4 text-xs text-muted-foreground">
+        <DateTime date={tx.createdAt} />
       </td>
-      <td className="min-w-[8.25rem] px-5 py-4 text-xs text-muted-foreground">
+      <td className="w-[7.75rem] px-5 py-4 text-xs text-muted-foreground">
         {tx.finishedAt ? (
-          formatDate(tx.finishedAt)
+          <DateTime date={tx.finishedAt} />
         ) : (
           <span className="text-[oklch(0.85_0.15_235)]">Pending</span>
         )}
@@ -920,7 +921,7 @@ function ChainCell({ chain }: { chain?: ChainView }) {
   return (
     <div className="flex items-center gap-2.5" title={chain.label}>
       <ChainIcon chain={chain} />
-      <span className="hidden whitespace-nowrap font-medium text-foreground min-[1200px]:inline">
+      <span className="hidden whitespace-nowrap font-medium text-foreground min-[1400px]:inline">
         {chain.label}
       </span>
     </div>
@@ -1297,6 +1298,7 @@ function formatAddress(a: string | null) {
 }
 
 function AddressCell({ address }: { address: string }) {
+  const [copied, setCopied] = useState(false);
   if (!address) {
     return <span className="text-muted-foreground">—</span>;
   }
@@ -1325,14 +1327,24 @@ function AddressCell({ address }: { address: string }) {
       )}
       <button
         type="button"
-        onClick={(e) => {
+        onClick={async (e) => {
           e.stopPropagation();
-          navigator.clipboard?.writeText(address);
+          try {
+            await navigator.clipboard.writeText(address);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          } catch {
+            /* ignore */
+          }
         }}
         className="relative shrink-0 text-muted-foreground/60 transition-colors hover:text-foreground"
         aria-label="Copy address"
       >
-        <Clipboard className="h-3.5 w-3.5" />
+        {copied ? (
+          <Check className="h-3.5 w-3.5 text-[oklch(0.85_0.15_235)]" />
+        ) : (
+          <Clipboard className="h-3.5 w-3.5" />
+        )}
       </button>
     </div>
   );
@@ -1344,12 +1356,22 @@ function toDate(value: Date | string | null | undefined): Date | null {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function formatDate(d: Date) {
-  return d.toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+function DateTime({ date }: { date: Date }) {
+  return (
+    <div className="whitespace-nowrap">
+      <div>
+        {date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })}
+      </div>
+      <div>
+        {date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+      </div>
+    </div>
+  );
 }

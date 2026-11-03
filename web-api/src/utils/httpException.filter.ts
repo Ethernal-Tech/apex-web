@@ -3,6 +3,7 @@ import {
 	Catch,
 	ArgumentsHost,
 	HttpException,
+	HttpStatus,
 	Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
@@ -18,10 +19,18 @@ export class HttpExceptionFilter implements ExceptionFilter {
 		const request = ctx.getRequest<Request>();
 		const status = exception.getStatus();
 
-		Logger.error(
-			`Exception intercepted - ${formatRequestInfo(request)}, Status: ${status}, ex: ${JSON.stringify(exception)}`,
-			exception.stack,
-		);
+		if (status === (HttpStatus.NOT_FOUND as number)) {
+			// a missing resource is an expected outcome (e.g. the frontend polls for a
+			// bridging tx until it is recorded), not a server error
+			Logger.debug(
+				`Not found - ${formatRequestInfo(request)}, message: ${exception.message}`,
+			);
+		} else {
+			Logger.error(
+				`Exception intercepted - ${formatRequestInfo(request)}, Status: ${status}, ex: ${JSON.stringify(exception)}`,
+				exception.stack,
+			);
+		}
 
 		let error = exception.name;
 		try {

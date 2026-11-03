@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { BridgeTransactionService } from './bridgeTransaction.service';
 import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ChainEnum } from 'src/common/enum';
 import {
 	BridgeTransactionDto,
 	BridgeTransactionFilterDto,
@@ -52,6 +53,40 @@ export class BridgeTransactionController {
 			throw new BadRequestException('Invalid id');
 		}
 		return this.bridgeTransactionService.get(n);
+	}
+
+	@ApiOperation({
+		summary: 'Get the bridging transaction by its source chain tx hash',
+		description:
+			'Returns information about bridging transaction based on the source chain and the tx hash on it. The transaction is available once it is observed on the source chain.',
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: BridgeTransactionDto,
+		description: 'OK - Returns bridging transaction.',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request - unknown origin chain.',
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Not Found - Bridging transaction not found.',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Get('byTxHash/:originChain/:txHash')
+	async getByTxHash(
+		@Param('originChain') originChain: string,
+		@Param('txHash') txHash: string,
+	): Promise<BridgeTransactionDto> {
+		if (!(Object.values(ChainEnum) as string[]).includes(originChain)) {
+			throw new BadRequestException('Invalid originChain');
+		}
+
+		return this.bridgeTransactionService.getByTxHash(
+			originChain as ChainEnum,
+			txHash,
+		);
 	}
 
 	@ApiOperation({
