@@ -333,11 +333,14 @@ func (c *SkylineTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 			receiver.TokenID = srcCurrencyID
 		}
 
+		if ethDestConfig != nil && normalizeAddr(receiver.Addr) == normalizeAddr(common.EthZeroAddr) {
+			return common.ErrZeroDestinationAddress
+		}
+
 		// if fee address is specified in transactions just add amount to the fee sum
 		// otherwise keep this transaction
-		if (cardanoDestConfig != nil &&
-			normalizeAddr(receiver.Addr) == normalizeAddr(cardanoDestConfig.BridgingAddresses.FeeAddress)) ||
-			(ethDestConfig != nil && normalizeAddr(receiver.Addr) == normalizeAddr(common.EthZeroAddr)) {
+		if cardanoDestConfig != nil &&
+			normalizeAddr(receiver.Addr) == normalizeAddr(cardanoDestConfig.BridgingAddresses.FeeAddress) {
 			if receiver.TokenID != srcCurrencyID {
 				return fmt.Errorf("fee receiver invalid. receiver: %v", receiver)
 			}

@@ -23,7 +23,10 @@
 		"",
 		"\"color\" is the accent the UI paints the token in (legend dots, chart",
 		"series), as a hex string. Optional: a token without one falls back to the",
-		"unknownToken color, and to the UI's own default accent if that is unset too."
+		"unknownToken color, and to the UI's own default accent if that is unset too.",
+		"",
+		"\"ADA icon\" must be set to unkown because of the copyright issue with the ADA logo.",
+		"The ADA logo is copyrighted and cannot be used without permission."
 	],
 	"unknownToken": {
 		"tokenID": 0,

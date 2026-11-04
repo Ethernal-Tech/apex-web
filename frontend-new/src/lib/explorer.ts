@@ -113,11 +113,14 @@ export const getExplorerUrl = (tx: BridgeTransactionDto | undefined) => {
     tx.status === TransactionStatusEnum.ExecutedOnDestination &&
     tx.destinationTxHash
   ) {
+    // A refund pays the locked assets back on the origin chain, so its
+    // destinationTxHash lives there, not on destinationChain.
+    const chain = tx.isRefund ? tx.originChain : tx.destinationChain;
     const txHash =
-      isEvmChain(tx.destinationChain) && !tx.destinationTxHash.startsWith("0x")
+      isEvmChain(chain) && !tx.destinationTxHash.startsWith("0x")
         ? `0x${tx.destinationTxHash}`
         : tx.destinationTxHash;
-    return getExplorerTxUrl(tx.destinationChain, txHash);
+    return getExplorerTxUrl(chain, txHash);
   } else if (tx.sourceTxHash) {
     const txHash =
       isEvmChain(tx.originChain) && !tx.sourceTxHash.startsWith("0x")

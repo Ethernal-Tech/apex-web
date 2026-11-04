@@ -206,12 +206,12 @@ func (c *ReactorTxControllerImpl) validateAndFillOutCreateBridgingTxRequest(
 				break
 			}
 
-			if receiver.Addr == common.EthZeroAddr {
-				feeSum += receiver.Amount
-			} else {
-				transactions = append(transactions, receiver)
-				receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(receiver.Amount))
+			if normalizeAddr(receiver.Addr) == normalizeAddr(common.EthZeroAddr) {
+				return common.ErrZeroDestinationAddress
 			}
+
+			transactions = append(transactions, receiver)
+			receiverAmountSum.Add(receiverAmountSum, new(big.Int).SetUint64(receiver.Amount))
 		}
 	}
 

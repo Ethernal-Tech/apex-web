@@ -1,2 +1,4 @@
 *.json
 ./cardano-api
+# indexer databases
+*-indexer-dbs/

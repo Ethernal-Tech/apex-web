@@ -1134,7 +1134,7 @@ function TransferForm({
     utxos: walletUtxos,
     loading: balancesLoading,
   } = useWalletBalances({
-    enabled: Boolean(walletAddress),
+    account: walletAddress,
     srcChain: source.id,
     dstChain: destination.id,
     settings,
