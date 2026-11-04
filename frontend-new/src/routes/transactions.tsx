@@ -213,19 +213,23 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 function TransactionsPage() {
   // the table collapses one step at a time as it narrows: origin/destination
   // merge into a route, then amount/token amount and sender/receiver pairs
-  // stack, then created/finished, and at last status shrinks to a row icon
+  // stack, then created/finished, then status shrinks to a row icon, and on
+  // phones every row folds into a single cell with no header
   const layout: TableLayout = {
     routed: useMediaQuery("(max-width: 1399px)"),
     amountsStacked: useMediaQuery("(max-width: 1279px)"),
     datesStacked: useMediaQuery("(max-width: 959px)"),
     compact: useMediaQuery("(max-width: 887px)"),
+    phone: useMediaQuery("(max-width: 559px)"),
   };
-  const columnCount = layout.compact
-    ? 4
-    : (layout.routed ? 1 : 2) +
-      (layout.amountsStacked ? 2 : 4) +
-      (layout.datesStacked ? 1 : 2) +
-      2;
+  const columnCount = layout.phone
+    ? 1
+    : layout.compact
+      ? 4
+      : (layout.routed ? 1 : 2) +
+        (layout.amountsStacked ? 2 : 4) +
+        (layout.datesStacked ? 1 : 2) +
+        2;
   const navigate = useNavigate();
   const [list, setList] = useTransactionsListState();
   const { data: settings } = useQuery(settingsQueryOptions);
@@ -555,7 +559,7 @@ function TransactionsPage() {
 
               <div
                 className={
-                  layout.compact
+                  layout.compact && !layout.phone
                     ? "overflow-x-auto scrollbar-sky"
                     : "overflow-x-hidden"
                 }
@@ -563,136 +567,141 @@ function TransactionsPage() {
                 <TooltipProvider delayDuration={200}>
                   <table
                     className={`w-full border-collapse text-sm ${
-                      layout.compact ? "min-w-[580px]" : "table-fixed"
+                      layout.compact && !layout.phone
+                        ? "min-w-[580px]"
+                        : "table-fixed"
                     }`}
                   >
-                    <thead>
-                      <tr className="text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        {layout.compact ? (
-                          <>
-                            {/* status icons, they need no caption */}
-                            <th
-                              aria-label="Status"
-                              className="w-px py-4 pl-4 pr-0"
-                            />
-                            <th className="w-[11rem] min-w-[10rem] px-4 py-4 text-center">
-                              Route
-                            </th>
-                          </>
-                        ) : layout.routed ? (
-                          <th className="w-[7.5rem] px-5 py-4">Route</th>
-                        ) : (
-                          <>
-                            <Th
-                              onClick={() => toggleSort("origin")}
-                              active={sortKey === "origin"}
-                              dir={sortDir}
-                              className="w-[10rem]"
-                            >
-                              Origin
-                            </Th>
-                            <Th
-                              onClick={() => toggleSort("destination")}
-                              active={sortKey === "destination"}
-                              dir={sortDir}
-                              className="w-[10rem]"
-                            >
-                              Destination
-                            </Th>
-                          </>
-                        )}
-                        {layout.amountsStacked ? (
-                          <StackedTh
-                            labels={["Amount", "Token amount"]}
-                            className="w-[10rem]"
-                          />
-                        ) : (
-                          <>
-                            <Th
-                              onClick={() => toggleSort("amount")}
-                              active={sortKey === "amount"}
-                              dir={sortDir}
-                              className="w-[8rem]"
-                            >
-                              Amount
-                            </Th>
-                            <Th
-                              onClick={() => toggleSort("tokenAmount")}
-                              active={sortKey === "tokenAmount"}
-                              dir={sortDir}
-                              className="w-[9rem]"
-                            >
-                              Token amount
-                            </Th>
-                          </>
-                        )}
-                        {!layout.compact &&
-                          (layout.amountsStacked ? (
+                    {/* a phone row is a single cell, column captions would not line up with anything */}
+                    {!layout.phone && (
+                      <thead>
+                        <tr className="text-left text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                          {layout.compact ? (
+                            <>
+                              {/* status icons, they need no caption */}
+                              <th
+                                aria-label="Status"
+                                className="w-px py-4 pl-4 pr-0"
+                              />
+                              <th className="w-[11rem] min-w-[10rem] px-4 py-4 text-center">
+                                Route
+                              </th>
+                            </>
+                          ) : layout.routed ? (
+                            <th className="w-[7.5rem] px-5 py-4">Route</th>
+                          ) : (
+                            <>
+                              <Th
+                                onClick={() => toggleSort("origin")}
+                                active={sortKey === "origin"}
+                                dir={sortDir}
+                                className="w-[10rem]"
+                              >
+                                Origin
+                              </Th>
+                              <Th
+                                onClick={() => toggleSort("destination")}
+                                active={sortKey === "destination"}
+                                dir={sortDir}
+                                className="w-[10rem]"
+                              >
+                                Destination
+                              </Th>
+                            </>
+                          )}
+                          {layout.amountsStacked ? (
                             <StackedTh
-                              labels={["Sender", "Receiver"]}
-                              className="min-w-[8.75rem]"
+                              labels={["Amount", "Token amount"]}
+                              className="w-[10rem]"
                             />
                           ) : (
                             <>
                               <Th
-                                onClick={() => toggleSort("sender")}
-                                active={sortKey === "sender"}
+                                onClick={() => toggleSort("amount")}
+                                active={sortKey === "amount"}
                                 dir={sortDir}
+                                className="w-[8rem]"
                               >
-                                Sender
+                                Amount
                               </Th>
                               <Th
-                                onClick={() => toggleSort("receiver")}
-                                active={sortKey === "receiver"}
+                                onClick={() => toggleSort("tokenAmount")}
+                                active={sortKey === "tokenAmount"}
                                 dir={sortDir}
-                                className="min-w-[8.75rem]"
+                                className="w-[9rem]"
                               >
-                                Receiver
+                                Token amount
                               </Th>
                             </>
-                          ))}
-                        {layout.datesStacked ? (
-                          <StackedTh
-                            labels={["Created", "Finished"]}
-                            className="w-[11rem]"
-                          />
-                        ) : (
-                          <>
-                            <Th
-                              onClick={() => toggleSort("createdAt")}
-                              active={sortKey === "createdAt"}
-                              dir={sortDir}
-                              className="w-[7.75rem]"
-                            >
-                              Created
-                            </Th>
-                            <Th
-                              onClick={() => toggleSort("finishedAt")}
-                              active={sortKey === "finishedAt"}
-                              dir={sortDir}
-                              className="w-[7.75rem]"
-                            >
-                              Finished
-                            </Th>
-                          </>
-                        )}
-                        {!layout.compact && (
-                          <>
-                            <Th
-                              onClick={() => toggleSort("status")}
-                              active={sortKey === "status"}
-                              dir={sortDir}
-                              className="min-w-[6.5rem] w-[6.5rem] pr-2"
-                            >
-                              Status
-                            </Th>
-                            <th className="w-[6.5rem] py-4 pl-2 pr-5 text-right">
-                              Actions
-                            </th>
-                          </>
-                        )}
-                      </tr>
-                    </thead>
+                          )}
+                          {!layout.compact &&
+                            (layout.amountsStacked ? (
+                              <StackedTh
+                                labels={["Sender", "Receiver"]}
+                                className="min-w-[8.75rem]"
+                              />
+                            ) : (
+                              <>
+                                <Th
+                                  onClick={() => toggleSort("sender")}
+                                  active={sortKey === "sender"}
+                                  dir={sortDir}
+                                >
+                                  Sender
+                                </Th>
+                                <Th
+                                  onClick={() => toggleSort("receiver")}
+                                  active={sortKey === "receiver"}
+                                  dir={sortDir}
+                                  className="min-w-[8.75rem]"
+                                >
+                                  Receiver
+                                </Th>
+                              </>
+                            ))}
+                          {layout.datesStacked ? (
+                            <StackedTh
+                              labels={["Created", "Finished"]}
+                              className="w-[11rem]"
+                            />
+                          ) : (
+                            <>
+                              <Th
+                                onClick={() => toggleSort("createdAt")}
+                                active={sortKey === "createdAt"}
+                                dir={sortDir}
+                                className="w-[7.75rem]"
+                              >
+                                Created
+                              </Th>
+                              <Th
+                                onClick={() => toggleSort("finishedAt")}
+                                active={sortKey === "finishedAt"}
+                                dir={sortDir}
+                                className="w-[7.75rem]"
+                              >
+                                Finished
+                              </Th>
+                            </>
+                          )}
+                          {!layout.compact && (
+                            <>
+                              <Th
+                                onClick={() => toggleSort("status")}
+                                active={sortKey === "status"}
+                                dir={sortDir}
+                                className="min-w-[6.5rem] w-[6.5rem] pr-2"
+                              >
+                                Status
+                              </Th>
+                              <th className="w-[6.5rem] py-4 pl-2 pr-5 text-right">
+                                Actions
+                              </th>
+                            </>
+                          )}
+                        </tr>
+                      </thead>
+                    )}
                     <tbody>
                       {isLoading && paged.length === 0 && (
                         <>
@@ -1003,6 +1012,7 @@ type TableLayout = {
   amountsStacked: boolean;
   datesStacked: boolean;
   compact: boolean;
+  phone: boolean;
 };
 
 function TxRow({ tx, layout }: { tx: Tx; layout: TableLayout }) {
@@ -1030,6 +1040,53 @@ function TxRow({ tx, layout }: { tx: Tx; layout: TableLayout }) {
         },
       }
     : {};
+
+  // the route on the left and the amounts on the right, then a footer line
+  // with the status and creation date; the finish date is left to the details
+  // page the row opens
+  if (layout.phone) {
+    return (
+      <tr
+        {...rowProps}
+        className="cursor-pointer border-t border-white/5 transition-colors hover:bg-white/[0.02]"
+      >
+        <td className="px-3 py-3">
+          <div className="flex items-center gap-2.5">
+            <div className="min-w-0 flex-1">
+              <RouteCell
+                origin={origin}
+                dest={dest}
+                sender={tx.sender}
+                receiver={tx.receiver}
+                hug
+              />
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <StackedAmount
+                className="font-semibold"
+                display={tx.amountDisplay}
+                full={tx.amountFull}
+                label={origin?.symbol}
+              />
+              {tx.tokenAmountDisplay != null && (
+                <StackedAmount
+                  display={tx.tokenAmountDisplay}
+                  full={tx.tokenAmountFull ?? tx.tokenAmountDisplay}
+                  label={tx.tokenLabel}
+                />
+              )}
+            </div>
+          </div>
+          <div className="mt-2.5 flex items-center justify-between gap-2">
+            <StatusPill status={tx.status} label={tx.statusLabel} />
+            <span className="whitespace-nowrap text-[11px] text-muted-foreground">
+              {formatShortDateTime(tx.createdAt)}
+            </span>
+          </div>
+        </td>
+      </tr>
+    );
+  }
 
   return (
     <tr
@@ -1213,11 +1270,14 @@ function RouteCell({
   dest,
   sender,
   receiver,
+  hug = false,
 }: {
   origin?: ChainView;
   dest?: ChainView;
   sender: string;
   receiver: string;
+  /** keep each copy button right after its address instead of at the far edge */
+  hug?: boolean;
 }) {
   return (
     <div className="grid grid-cols-[1.75rem_1fr] items-center gap-x-2">
@@ -1228,7 +1288,7 @@ function RouteCell({
           <span className="text-muted-foreground">—</span>
         )}
       </div>
-      <AddressCell address={sender} />
+      <AddressCell address={sender} hug={hug} />
       <div className="flex justify-center py-0.5">
         <ArrowDown className="h-3 w-3 text-muted-foreground/70" />
       </div>
@@ -1240,7 +1300,7 @@ function RouteCell({
           <span className="text-muted-foreground">—</span>
         )}
       </div>
-      <AddressCell address={receiver} />
+      <AddressCell address={receiver} hug={hug} />
     </div>
   );
 }
@@ -1618,7 +1678,13 @@ function formatAddress(a: string | null) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
 }
 
-function AddressCell({ address }: { address: string }) {
+function AddressCell({
+  address,
+  hug = false,
+}: {
+  address: string;
+  hug?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
   if (!address) {
     return <span className="text-muted-foreground">—</span>;
@@ -1631,7 +1697,7 @@ function AddressCell({ address }: { address: string }) {
   return (
     <div className="flex min-w-0 items-center gap-1.5 font-mono text-xs text-muted-foreground">
       {collapsed ? (
-        <span className="flex min-w-0 flex-1 overflow-hidden">
+        <span className={cn("flex min-w-0 overflow-hidden", !hug && "flex-1")}>
           <span className="shrink-0">{address.slice(0, head)}</span>
           <span className="shrink-0">…</span>
           <span
@@ -1642,7 +1708,12 @@ function AddressCell({ address }: { address: string }) {
           </span>
         </span>
       ) : (
-        <span className="min-w-0 flex-1 overflow-hidden whitespace-nowrap">
+        <span
+          className={cn(
+            "min-w-0 overflow-hidden whitespace-nowrap",
+            !hug && "flex-1",
+          )}
+        >
           {address}
         </span>
       )}
@@ -1675,6 +1746,21 @@ function toDate(value: Date | string | null | undefined): Date | null {
   if (value == null || value === "") return null;
   const date = value instanceof Date ? value : new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** "Nov 2, 04:11 PM" on one line; the year only when it is not this one. */
+function formatShortDateTime(date: Date): string {
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+  const day = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
+  const time = date.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${day}, ${time}`;
 }
 
 /** Date above time, or both on one line when `inline`. */
