@@ -1,10 +1,13 @@
 package core
 
 import (
+	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
+	"github.com/Ethernal-Tech/cardano-infrastructure/indexer/gouroboros"
 	"github.com/hashicorp/go-hclog"
 )
 
@@ -64,6 +67,9 @@ type CardanoIndexerConfig struct {
 	AddressesRefreshInterval time.Duration `json:"addressesRefreshInterval"`
 	// Added to the slot of the block containing the tx to get an upper bound for its TTL
 	TTLSlotNumberInc uint64 `json:"ttlSlotNumberIncrement"`
+	// NetworkTLS turns on mutual TLS for the connection to the Cardano node (nil: plain tcp or unix socket).
+	// Same key as in apex-bridge oracle configs
+	NetworkTLS *gouroboros.TLSConfig `json:"networkTls,omitempty"`
 }
 
 type EvmIndexerConfig struct {
@@ -134,6 +140,10 @@ func (appConfig *AppConfig) fillOutIndexer() error {
 			return fmt.Errorf("indexer: networkAddress is required for chain %s", chainID)
 		}
 
+		if err := checkNetworkTLS(chainCfg); err != nil {
+			return fmt.Errorf("indexer: invalid networkTls for chain %s: %w", chainID, err)
+		}
+
 		chainCfg.AddressesRefreshInterval = defaultIfZero(
 			chainCfg.AddressesRefreshInterval, defaultCardanoAddressesRefreshInterval)
 		chainCfg.TTLSlotNumberInc = defaultIfZero(chainCfg.TTLSlotNumberInc, defaultCardanoTTLSlotNumberInc)
@@ -197,6 +207,49 @@ func (appConfig *AppConfig) fillOutIndexer() error {
 	}
 
 	return nil
+}
+
+// checkNetworkTLS loads the networkTls files so that a bad setting stops the startup instead of failing
+// on every reconnect (same as apex-bridge). It does nothing when networkTls is not set.
+// networkAddress must already be trimmed of http:// and https://
+func checkNetworkTLS(chainCfg *CardanoIndexerConfig) error {
+	if chainCfg.NetworkTLS == nil {
+		return nil
+	}
+
+	if strings.HasPrefix(chainCfg.NetworkAddress, "/") {
+		return fmt.Errorf("tls is not supported with a unix socket address %s", chainCfg.NetworkAddress)
+	}
+
+	serverName, err := networkTLSDefaultServerName(chainCfg)
+	if err != nil {
+		return err
+	}
+
+	_, err = chainCfg.NetworkTLS.ClientConfig(serverName)
+
+	return err
+}
+
+// networkTLSDefaultServerName returns the server name to verify when networkTls.serverName is empty:
+// the host of the network address (same rule as the block syncer's DialNode).
+// When serverName is set it is used as is and the address is not parsed ("" is returned).
+func networkTLSDefaultServerName(chainCfg *CardanoIndexerConfig) (string, error) {
+	if chainCfg.NetworkTLS.ServerName != "" {
+		return "", nil
+	}
+
+	host, _, err := net.SplitHostPort(chainCfg.NetworkAddress)
+	if err != nil {
+		return "", fmt.Errorf("networkAddress %q has no host:port to take the tls server name from: %w",
+			chainCfg.NetworkAddress, err)
+	}
+
+	if host == "" {
+		return "", errors.New("networkAddress has an empty host")
+	}
+
+	return host, nil
 }
 
 func defaultIfZero[T comparable](value T, def T) T {
