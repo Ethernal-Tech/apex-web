@@ -327,31 +327,48 @@ func (appConfig *AppConfig) fillOutSkylineSpecific(
 }
 
 func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig, *EthChainConfig, *SolanaChainConfig) {
-	appConfig.cardanoChainsMu.RLock()
-
-	if cardanoChainConfig, exists := appConfig.CardanoChains[chainID]; exists && cardanoChainConfig.IsEnabled {
+	if cardanoChainConfig := appConfig.getCardanoChainConfig(chainID); cardanoChainConfig != nil {
 		return cardanoChainConfig, nil, nil
 	}
 
-	appConfig.cardanoChainsMu.RUnlock()
-
-	appConfig.evmChainsMu.RLock()
-
-	if ethChainConfig, exists := appConfig.EthChains[chainID]; exists && ethChainConfig.IsEnabled {
+	if ethChainConfig := appConfig.getEthChainConfig(chainID); ethChainConfig != nil {
 		return nil, ethChainConfig, nil
 	}
 
-	appConfig.evmChainsMu.RUnlock()
+	return nil, nil, appConfig.getSolanaChainConfig(chainID)
+}
 
-	appConfig.solanaChainsMu.RLock()
+func (appConfig *AppConfig) getCardanoChainConfig(chainID string) *CardanoChainConfig {
+	appConfig.cardanoChainsMu.RLock()
+	defer appConfig.cardanoChainsMu.RUnlock()
 
-	if solanaChainConfig, exists := appConfig.SolanaChains[chainID]; exists && solanaChainConfig.IsEnabled {
-		return nil, nil, solanaChainConfig
+	if chainConfig, exists := appConfig.CardanoChains[chainID]; exists && chainConfig.IsEnabled {
+		return chainConfig
 	}
 
-	appConfig.solanaChainsMu.RUnlock()
+	return nil
+}
 
-	return nil, nil, nil
+func (appConfig *AppConfig) getEthChainConfig(chainID string) *EthChainConfig {
+	appConfig.evmChainsMu.RLock()
+	defer appConfig.evmChainsMu.RUnlock()
+
+	if chainConfig, exists := appConfig.EthChains[chainID]; exists && chainConfig.IsEnabled {
+		return chainConfig
+	}
+
+	return nil
+}
+
+func (appConfig *AppConfig) getSolanaChainConfig(chainID string) *SolanaChainConfig {
+	appConfig.solanaChainsMu.RLock()
+	defer appConfig.solanaChainsMu.RUnlock()
+
+	if chainConfig, exists := appConfig.SolanaChains[chainID]; exists && chainConfig.IsEnabled {
+		return chainConfig
+	}
+
+	return nil
 }
 func (appConfig *AppConfig) ToSendTxChainConfigs() (map[string]sendtx.ChainConfig, error) {
 	appConfig.cardanoChainsMu.RLock()
