@@ -9,7 +9,7 @@ replace github.com/blinklabs-io/gouroboros => github.com/Ethernal-Tech/gouroboro
 
 require (
 	github.com/Ethernal-Tech/blockchain-event-tracker v0.0.0-20261023113908-ed976452bc2d
-	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20261030103848-c6266ba831b1
+	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20261105103155-4058f12d9b7e
 	github.com/Ethernal-Tech/ethgo v0.0.0-20240902085129-307ec04e3e94
 	github.com/Ethernal-Tech/solana-infrastructure v0.0.0-20261103163749-1a2e504a2775
 	github.com/dgraph-io/ristretto v0.2.0
