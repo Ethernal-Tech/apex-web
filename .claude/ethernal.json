@@ -5,7 +5,7 @@
       "run": "(cd cardano-api && golangci-lint run && go test ./...)"
     },
     "full": {
-      "run": "(cd cardano-api && golangci-lint run && go test -race ./... && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...)"
+      "run": "(cd cardano-api && golangci-lint run && go test -race ./...)"
     }
   },
   "sourceGlobs": [

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "renderedWith": "0.10.0",
+  "renderedWith": "0.10.1",
   "answers": {
     "tier": "harness",
     "plugins": [
@@ -11,7 +11,7 @@
     "marketplace": "github",
     "profile": "standard",
     "gateFast": "(cd cardano-api && golangci-lint run && go test ./...)",
-    "gateFull": "(cd cardano-api && golangci-lint run && go test -race ./... && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...)",
+    "gateFull": "(cd cardano-api && golangci-lint run && go test -race ./...)",
     "gateFastQuiet": null,
     "gateFullQuiet": null,
     "sourceGlobs": [

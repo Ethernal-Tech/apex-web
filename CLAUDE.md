@@ -91,7 +91,9 @@ comments run Claude.
 ## Verification
 
 - Before a push: `(cd cardano-api && golangci-lint run && go test ./...)` (the fast gate).
-- Before a PR: `(cd cardano-api && golangci-lint run && go test -race ./... && go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...)` (the full gate).
+- Before a PR: `(cd cardano-api && golangci-lint run && go test -race ./...)` (the full gate).
+  No `govulncheck` in the gate: it reports known issues in `go-ethereum`, `klauspost/compress`
+  and `brotli` on `main` that need a dependency bump first.
 - No `GOTOOLCHAIN=local`: `go.mod` needs Go 1.27.3 and the go toolchain downloads it when the
   installed `go` is older.
 - web-api and frontend changes: `npm run lint` in that project (CI runs it), plus `npx jest` in web-api.

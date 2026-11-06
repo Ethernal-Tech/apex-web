@@ -129,6 +129,7 @@ dist
 .claude/ethernal/handoff.md.lock
 .claude/ethernal/state.json
 .claude/ethernal/state.lock
+.claude/ethernal/backlog-*.lock
 .claude/ethernal/hooks.log
 .claude/ethernal/rate-limits.json*
 .claude/ethernal/hook-crash-*

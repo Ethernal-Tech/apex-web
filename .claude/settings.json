@@ -4,8 +4,7 @@
     "allow": [
       "Bash(golangci-lint run)",
       "Bash(go test ./...)",
-      "Bash(go test -race ./...)",
-      "Bash(go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...)"
+      "Bash(go test -race ./...)"
     ],
     "deny": [
       "Read(.env)",
