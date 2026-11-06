@@ -17,7 +17,8 @@ jobs:
       contents: read
       pull-requests: write
       id-token: write
-    uses: ./.github/workflows/claude-review.yml
+    # A local reusable workflow is called by its ./ path (GitHub docs).
+    uses: ./.github/workflows/claude-review.yml # zizmor: ignore[self-repository]
     with:
       pr_number: ${{ github.event.issue.number }}
       model: claude-opus-5-5
