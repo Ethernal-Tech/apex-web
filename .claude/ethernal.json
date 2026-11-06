@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "gates": {
+    "fast": {
+      "run": "(cd cardano-api && golangci-lint run && go test ./...)"
+    },
+    "full": {
+      "run": "(cd cardano-api && golangci-lint run && go test -race ./...)"
+    }
+  },
+  "sourceGlobs": [
+    "cardano-api/**",
+    "web-api/src/**",
+    "frontend/src/**"
+  ],
+  "protectedBranches": [
+    "main"
+  ],
+  "requiredChecks": [
+    "Run lint cardano-api",
+    "Run lint frontend",
+    "Run lint web-api",
+    "Run Cardano-API Unit Tests"
+  ],
+  "delivery": {
+    "mode": "none",
+    "branch": "current"
+  },
+  "issues": {
+    "trackers": [
+      "github",
+      "jira"
+    ],
+    "jiraKeys": [
+      "AD",
+      "APEX"
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(golangci-lint run)",
+      "Bash(go test ./...)",
+      "Bash(go test -race ./...)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(!.env*.example)",
+      "Read(!.env*.sample)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(!.env*.example)",
+      "Edit(!.env*.sample)"
+    ]
+  },
+  "enabledPlugins": {
+    "core@ethernal": true,
+    "go@ethernal": true,
+    "typescript@ethernal": true
+  },
+  "extraKnownMarketplaces": {
+    "ethernal": {
+      "source": {
+        "source": "github",
+        "repo": "Ethernal-Tech/claude-playbook"
+      },
+      "autoUpdate": true
+    }
+  }
+}
