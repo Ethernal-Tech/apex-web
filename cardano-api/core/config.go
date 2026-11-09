@@ -178,22 +178,9 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 
 	appConfig.evmChainsMu.Unlock()
 
-	appConfig.solanaChainsMu.Lock()
-
-	for chainID, solanaChainConfig := range appConfig.SolanaChains {
-		solanaChainConfig.ChainID = chainID
-
-		if solanaChainConfig.ChainSpecific != nil {
-			txProvider, err := solanawallet.NewProvider(solanaChainConfig.ChainSpecific.JSONRPCAddress, nil)
-			if err != nil {
-				return fmt.Errorf("failed to create tx provider: %w", err)
-			}
-
-			solanaChainConfig.ChainSpecific.TxProvider = txProvider
-		}
+	if err := appConfig.fillOutSolanaChains(); err != nil {
+		return err
 	}
-
-	appConfig.solanaChainsMu.Unlock()
 
 	if err := appConfig.fillOutIndexer(); err != nil {
 		return err
@@ -211,6 +198,26 @@ func (appConfig *AppConfig) FillOut(ctx context.Context, logger hclog.Logger) er
 	default:
 		return fmt.Errorf("unsupported run mode: %v", appConfig.RunMode)
 	}
+}
+
+func (appConfig *AppConfig) fillOutSolanaChains() error {
+	appConfig.solanaChainsMu.Lock()
+	defer appConfig.solanaChainsMu.Unlock()
+
+	for chainID, solanaChainConfig := range appConfig.SolanaChains {
+		solanaChainConfig.ChainID = chainID
+
+		if solanaChainConfig.ChainSpecific != nil {
+			txProvider, err := solanawallet.NewProvider(solanaChainConfig.ChainSpecific.JSONRPCAddress, nil)
+			if err != nil {
+				return fmt.Errorf("failed to create tx provider: %w", err)
+			}
+
+			solanaChainConfig.ChainSpecific.TxProvider = txProvider
+		}
+	}
+
+	return nil
 }
 
 func (appConfig *AppConfig) fillOutReactorSpecific(
@@ -327,73 +334,87 @@ func (appConfig *AppConfig) fillOutSkylineSpecific(
 }
 
 func (appConfig *AppConfig) GetChainConfig(chainID string) (*CardanoChainConfig, *EthChainConfig, *SolanaChainConfig) {
-	appConfig.cardanoChainsMu.RLock()
-
-	if cardanoChainConfig, exists := appConfig.CardanoChains[chainID]; exists && cardanoChainConfig.IsEnabled {
+	if cardanoChainConfig := appConfig.getCardanoChainConfig(chainID); cardanoChainConfig != nil {
 		return cardanoChainConfig, nil, nil
 	}
 
-	appConfig.cardanoChainsMu.RUnlock()
-
-	appConfig.evmChainsMu.RLock()
-
-	if ethChainConfig, exists := appConfig.EthChains[chainID]; exists && ethChainConfig.IsEnabled {
+	if ethChainConfig := appConfig.getEthChainConfig(chainID); ethChainConfig != nil {
 		return nil, ethChainConfig, nil
 	}
 
-	appConfig.evmChainsMu.RUnlock()
-
-	appConfig.solanaChainsMu.RLock()
-
-	if solanaChainConfig, exists := appConfig.SolanaChains[chainID]; exists && solanaChainConfig.IsEnabled {
-		return nil, nil, solanaChainConfig
-	}
-
-	appConfig.solanaChainsMu.RUnlock()
-
-	return nil, nil, nil
+	return nil, nil, appConfig.getSolanaChainConfig(chainID)
 }
-func (appConfig *AppConfig) ToSendTxChainConfigs() (map[string]sendtx.ChainConfig, error) {
+
+func (appConfig *AppConfig) getCardanoChainConfig(chainID string) *CardanoChainConfig {
 	appConfig.cardanoChainsMu.RLock()
+	defer appConfig.cardanoChainsMu.RUnlock()
 
-	result := make(map[string]sendtx.ChainConfig, len(appConfig.CardanoChains)+len(appConfig.EthChains))
-
-	for chainID, cardanoConfig := range appConfig.CardanoChains {
-		cfg, err := cardanoConfig.ToSendTxChainConfig(appConfig)
-		if err != nil {
-			return nil, err
-		}
-
-		result[chainID] = cfg
+	if chainConfig, exists := appConfig.CardanoChains[chainID]; exists && chainConfig.IsEnabled {
+		return chainConfig
 	}
 
-	appConfig.cardanoChainsMu.RUnlock()
+	return nil
+}
 
+func (appConfig *AppConfig) getEthChainConfig(chainID string) *EthChainConfig {
 	appConfig.evmChainsMu.RLock()
+	defer appConfig.evmChainsMu.RUnlock()
 
-	for chainID, config := range appConfig.EthChains {
+	if chainConfig, exists := appConfig.EthChains[chainID]; exists && chainConfig.IsEnabled {
+		return chainConfig
+	}
+
+	return nil
+}
+
+func (appConfig *AppConfig) getSolanaChainConfig(chainID string) *SolanaChainConfig {
+	appConfig.solanaChainsMu.RLock()
+	defer appConfig.solanaChainsMu.RUnlock()
+
+	if chainConfig, exists := appConfig.SolanaChains[chainID]; exists && chainConfig.IsEnabled {
+		return chainConfig
+	}
+
+	return nil
+}
+
+type sendTxChainConfigSource interface {
+	ToSendTxChainConfig(appConfig *AppConfig) (sendtx.ChainConfig, error)
+}
+
+// addSendTxChainConfigs adds the send tx config of every chain in chains to result, under mu's read lock
+func addSendTxChainConfigs[T sendTxChainConfigSource](
+	appConfig *AppConfig, mu *sync.RWMutex, chains map[string]T, result map[string]sendtx.ChainConfig,
+) error {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	for chainID, config := range chains {
 		cfg, err := config.ToSendTxChainConfig(appConfig)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		result[chainID] = cfg
 	}
 
-	appConfig.evmChainsMu.RUnlock()
+	return nil
+}
 
-	appConfig.solanaChainsMu.RLock()
+func (appConfig *AppConfig) ToSendTxChainConfigs() (map[string]sendtx.ChainConfig, error) {
+	result := make(map[string]sendtx.ChainConfig)
 
-	for chainID, config := range appConfig.SolanaChains {
-		ctg, err := config.ToSendTxChainConfig(appConfig)
-		if err != nil {
-			return nil, err
-		}
-
-		result[chainID] = ctg
+	if err := addSendTxChainConfigs(appConfig, &appConfig.cardanoChainsMu, appConfig.CardanoChains, result); err != nil {
+		return nil, err
 	}
 
-	appConfig.solanaChainsMu.RUnlock()
+	if err := addSendTxChainConfigs(appConfig, &appConfig.evmChainsMu, appConfig.EthChains, result); err != nil {
+		return nil, err
+	}
+
+	if err := addSendTxChainConfigs(appConfig, &appConfig.solanaChainsMu, appConfig.SolanaChains, result); err != nil {
+		return nil, err
+	}
 
 	return result, nil
 }
