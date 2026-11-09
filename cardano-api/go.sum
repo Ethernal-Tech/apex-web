@@ -8,8 +8,8 @@ github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161/go.mod h1:xomTg6
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/Ethernal-Tech/blockchain-event-tracker v0.0.0-20261023113908-ed976452bc2d h1:yJp+jYFHGiPrFf8EmjI/kJOg5SrQ8peW6JDO86sLDKI=
 github.com/Ethernal-Tech/blockchain-event-tracker v0.0.0-20261023113908-ed976452bc2d/go.mod h1:PVyFIDYImtT8fzpX5Q9xLi0TqAVENf5oif0uxvBQbXU=
-github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20261105103155-4058f12d9b7e h1:KZvo2BP5q2fDVwnE4PD7qmVqQonD8t5JO9n75s5p7qE=
-github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20261105103155-4058f12d9b7e/go.mod h1:jCilgLoQXZldAnajt/R+3euCRflLjAA3hLPxOoLSxfM=
+github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20261109150205-00abcca57098 h1:7b9xjW8exSkbubBlzo8/BxMAVbDn2czxT2vXndcYyiM=
+github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20261109150205-00abcca57098/go.mod h1:jCilgLoQXZldAnajt/R+3euCRflLjAA3hLPxOoLSxfM=
 github.com/Ethernal-Tech/ethgo v0.0.0-20240902085129-307ec04e3e94 h1:xUvsP9JPf8BKZ0ZJt0kC0UlernoKTkAzm4JVo4Mig/M=
 github.com/Ethernal-Tech/ethgo v0.0.0-20240902085129-307ec04e3e94/go.mod h1:B8gumPuc8eynSJmAcMd2CEjhlOSE8CynwFx9G3AlaQ8=
 github.com/Ethernal-Tech/gouroboros v0.0.0-20260914132917-4454e1199f8f h1:+jmWJUaCoz/QjsE+TH1suO0RPLs7f/dXxTe0JM8p0O8=
