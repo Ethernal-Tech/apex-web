@@ -9,6 +9,7 @@ type SendTransactionOptions = {
 import { ERC20_MIN_ABI } from "@/lib/wallet/abi";
 import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
 import { shortRetryOptions, wait } from "@/lib/wallet/utils";
+import { findEip6963Provider, METAMASK_RDNS } from "@/lib/wallet/eip6963";
 
 type WalletInfo = {
   name: string;
@@ -24,17 +25,30 @@ export const EVM_SUPPORTED_WALLETS: WalletInfo[] = [
   },
 ];
 
+/** EIP-1193 surface we rely on - some extensions posing as MetaMask lack it. */
+const isEip1193Provider = (provider: any): boolean =>
+  typeof provider?.request === "function" &&
+  typeof provider?.on === "function" &&
+  typeof provider?.removeListener === "function";
+
 class EvmWalletHandler {
   private _enabled = false;
   private web3: Web3 | undefined;
   private provider: any | undefined;
+  private listenersAttached = false;
   private onAccountsChanged: (accounts: string[]) => Promise<void> = () =>
     new Promise<void>(() => undefined);
   private onChainChanged: (chainId: string) => Promise<void> = async () =>
     new Promise<void>(() => undefined);
 
+  /** MetaMask provider; may be a non-compliant impostor, see isEip1193Provider. */
   private getMetaMaskProvider = (): any | undefined => {
     if (typeof window === "undefined") return undefined;
+
+    const announced = findEip6963Provider(METAMASK_RDNS);
+    if (announced) return announced;
+
+    // Legacy fallback for wallets without EIP-6963 support.
     const injected = (window as any).ethereum;
     if (!injected) return undefined;
 
@@ -55,11 +69,12 @@ class EvmWalletHandler {
 
   getWeb3 = (): Web3 | undefined => {
     if (this.web3 === undefined) {
-      this.provider = this.getMetaMaskProvider();
-      if (!this.provider) {
+      const provider = this.getMetaMaskProvider();
+      if (!isEip1193Provider(provider)) {
         return;
       }
 
+      this.provider = provider;
       this.web3 = new Web3(this.provider);
       this.web3.transactionBlockTimeout = 200;
     }
@@ -77,6 +92,13 @@ class EvmWalletHandler {
     onChainChanged: (chainId: string) => Promise<void>,
   ) => {
     if (!this.getWeb3()) {
+      if (this.getMetaMaskProvider()) {
+        captureAndThrowError(
+          "Unsupported wallet detected. Please use MetaMask, or disable other wallet extensions that override it.",
+          "evmWallet.ts",
+          "enable",
+        );
+      }
       return;
     }
 
@@ -84,8 +106,11 @@ class EvmWalletHandler {
 
     this.onAccountsChanged = onAccountsChanged;
     this.onChainChanged = onChainChanged;
-    this.provider.on("accountsChanged", this.accountsChanged);
-    this.provider.on("chainChanged", this.chainChanged);
+    if (!this.listenersAttached) {
+      this.provider.on("accountsChanged", this.accountsChanged);
+      this.provider.on("chainChanged", this.chainChanged);
+      this.listenersAttached = true;
+    }
 
     await this.forceChainWithRetry(expectedChainId);
 
@@ -98,13 +123,19 @@ class EvmWalletHandler {
   };
 
   clearEnabledWallet = () => {
+    const { provider, listenersAttached } = this;
+
+    // Reset first so a failing removeListener can't leave a stale provider
+    // cached for the next connect attempt; its error still propagates.
     this._enabled = false;
-    if (this.provider) {
-      this.provider.removeListener("accountsChanged", this.accountsChanged);
-      this.provider.removeListener("chainChanged", this.chainChanged);
-    }
     this.provider = undefined;
     this.web3 = undefined;
+    this.listenersAttached = false;
+
+    if (listenersAttached) {
+      provider.removeListener("accountsChanged", this.accountsChanged);
+      provider.removeListener("chainChanged", this.chainChanged);
+    }
   };
 
   private _isEnabled = () => !!this._enabled && !!this.getWeb3();
