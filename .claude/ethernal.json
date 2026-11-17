@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "gates": {
+    "fast": {
+      "run": "(cd cardano-api && GOTOOLCHAIN=local golangci-lint run && GOTOOLCHAIN=local go test ./...)"
+    },
+    "full": {
+      "run": "(cd cardano-api && GOTOOLCHAIN=local golangci-lint run && GOTOOLCHAIN=local go test -race ./... && GOTOOLCHAIN=local go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...)"
+    }
+  },
+  "sourceGlobs": [
+    "cardano-api/go.mod",
+    "cardano-api/go.sum"
+  ],
+  "protectedBranches": [
+    "main"
+  ],
+  "requiredChecks": [
+    "Run lint cardano-api",
+    "Run lint frontend",
+    "Run lint web-api",
+    "Run Cardano-API Unit Tests"
+  ],
+  "delivery": {
+    "mode": "none",
+    "branch": "current"
+  },
+  "issues": {
+    "trackers": [
+      "github",
+      "jira"
+    ],
+    "jiraKeys": [
+      "AD"
+    ]
+  }
+}
