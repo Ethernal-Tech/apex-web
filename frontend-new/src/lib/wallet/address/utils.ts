@@ -95,13 +95,8 @@ export const Bech32DecodeToBase256 = (
     data.set(converted);
 
     return { prefix: decoded.prefix, data };
-  } catch (e) {
-    console.log("failed to Bech32DecodeToBase256. err:", e);
-    captureException(e, {
-      tags: {
-        component: "utils.ts",
-        action: "Bech32DecodeToBase256",
-      },
-    });
+  } catch {
+    // not a bech32 string, e.g. a mistyped address - the caller treats it as invalid
+    return;
   }
 };

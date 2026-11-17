@@ -54,6 +54,7 @@ import {
   chainMatchesFilter,
   getDstChains,
   getSrcChains,
+  isEvmChain,
   isLZBridging,
   resolveDestinationAddressPlaceholder,
   type BridgeChain,
@@ -1088,6 +1089,9 @@ function TransferForm({
   onDiscard: () => void;
 }) {
   const [destAddress, setDestAddress] = useState("");
+  // the address error shows once the address is complete (blur or paste),
+  // not while it is being typed
+  const [showAddressError, setShowAddressError] = useState(false);
   const [amount, setAmount] = useState("");
   const [copied, setCopied] = useState(false);
   const [loadingState, setLoadingState] = useState<
@@ -1208,6 +1212,8 @@ function TransferForm({
       selectedToken.tokenID,
     );
   }, [settings, selectedToken, source.id, destination.id, enteredDfm]);
+
+  const visibleAddressError = showAddressError ? addressError : undefined;
 
   const fees = useBridgeFees({
     enabled: Boolean(walletAddress && settings && selectedToken),
@@ -1398,6 +1404,7 @@ function TransferForm({
     try {
       const text = await navigator.clipboard.readText();
       setDestAddress(text.trim());
+      setShowAddressError(true);
     } catch {
       /* clipboard blocked */
     }
@@ -1420,6 +1427,14 @@ function TransferForm({
     );
   };
 
+  // EVM sources (LayerZero included) must wait for the fee: their estimate is
+  // quick and a failing one means the submit would hang in gas estimation
+  // retries. Cardano/Solana estimates can take seconds (e.g. slow ogmios) and
+  // their submit fails fast, so only a fee estimate that already failed blocks.
+  const feeBlocksSubmit = isEvmChain(source.id)
+    ? fees.loading || fees.userWalletFeeDfm === undefined
+    : !fees.loading && !!fees.walletFeeError;
+
   const canMoveFunds =
     Boolean(selectedToken) &&
     trimmedDestAddress !== "" &&
@@ -1431,9 +1446,7 @@ function TransferForm({
     !overMaxAllowed &&
     !insufficientCurrency &&
     !reactorSubmitBlocked &&
-    // every fee must be known before the tx can be built
-    !fees.loading &&
-    fees.userWalletFeeDfm !== undefined;
+    !feeBlocksSubmit;
 
   const feeErrorMessage =
     !fees.loading && !amountError && !addressError
@@ -1678,7 +1691,7 @@ function TransferForm({
               </label>
               <div
                 className={`flex items-center gap-2 rounded-2xl border bg-white/[0.03] px-4 py-3 focus-within:border-[oklch(0.72_0.19_245_/_0.5)] ${
-                  addressError
+                  visibleAddressError
                     ? "border-[oklch(0.62_0.22_25_/_0.55)]"
                     : "border-white/10"
                 }`}
@@ -1686,7 +1699,12 @@ function TransferForm({
                 <input
                   id="dest-addr"
                   value={destAddress}
-                  onChange={(e) => setDestAddress(e.target.value)}
+                  onChange={(e) => {
+                    setDestAddress(e.target.value);
+                    if (!e.target.value.trim()) setShowAddressError(false);
+                  }}
+                  onBlur={() => setShowAddressError(true)}
+                  onPaste={() => setShowAddressError(true)}
                   placeholder={resolveDestinationAddressPlaceholder(
                     destination.id,
                     appSettings.isMainnet,
@@ -1701,9 +1719,9 @@ function TransferForm({
                   <Clipboard className="h-3 w-3" /> Paste
                 </button>
               </div>
-              {addressError && (
+              {visibleAddressError && (
                 <p className="mt-1.5 text-xs text-[oklch(0.78_0.19_25)]">
-                  {addressError}
+                  {visibleAddressError}
                 </p>
               )}
             </div>
