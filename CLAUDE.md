@@ -17,6 +17,9 @@ and no root-level build.
 | `frontend-new/` | Current frontend; recent feature work lands here | TanStack Start/Router, React Query, Tailwind, Radix, Vite |
 | `frontend/` | Legacy frontend (CRA + Redux); logic migrated to `frontend-new` in #198 | React, react-app-rewired |
 | `postman-collections/` | Manual API test collections | – |
+| `.claude/` | Claude Code settings and ethernal config; path-scoped rules in `.claude/rules/` | – |
+| `.github/` | CI workflows (lint, unit tests, Claude review) | GitHub Actions |
+| `docs/` | Efficiency journal (`docs/efficiency/`, one fragment per row in `journal.d/`) | – |
 
 ## Runtime topology
 
