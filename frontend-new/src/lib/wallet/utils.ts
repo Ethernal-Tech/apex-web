@@ -39,16 +39,22 @@ export async function retryForever<T>(
   }
 }
 
+/**
+ * Retries `callback` up to `tryCount` times. Errors for which `shouldRetry`
+ * returns false are rethrown immediately (e.g. deterministic EVM reverts).
+ */
 export async function retry<T>(
   callback: () => Promise<T> | T,
   tryCount: number,
   retryDelayMs = 1000,
+  shouldRetry: (err: unknown) => boolean = () => true,
 ): Promise<T> {
   for (let i = 0; i < tryCount; ++i) {
     try {
       return await callback();
     } catch (e) {
       console.log("Error while retry", e);
+      if (!shouldRetry(e)) throw e;
       await wait(retryDelayMs);
     }
   }

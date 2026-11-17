@@ -32,7 +32,11 @@ const isEvmZeroAddress = (address: string) =>
 
 const ZERO_ADDRESS_DESTINATION_ERROR =
   "Zero address can not be used as destination address";
+const INVALID_ADDRESS_ERROR = "Invalid destination address";
+const INCOMPATIBLE_ADDRESS_ERROR =
+  "Destination address is not compatible with the destination network";
 
+/** Validates the amount and destination address; returns the first error. */
 export const validateSubmitTxInputs = (
   settings: ISettingsState,
   srcChain: ChainEnum,
@@ -40,55 +44,82 @@ export const validateSubmitTxInputs = (
   dstAddr: string,
   amount: string,
   tokenID: number,
-): string | undefined => {
+): string | undefined =>
+  validateBridgeAmount(settings, srcChain, dstChain, BigInt(amount), tokenID) ??
+  validateDestinationAddress(settings, srcChain, dstChain, dstAddr, tokenID);
+
+/** Direction/token support and min/max amount checks. */
+export function validateBridgeAmount(
+  settings: ISettingsState,
+  srcChain: ChainEnum,
+  dstChain: ChainEnum,
+  amount: bigint,
+  tokenID: number,
+): string | undefined {
   const subSettings = getBridgingMode(settings, srcChain, dstChain, tokenID);
   switch (subSettings.bridgingMode) {
     case BridgingModeEnum.LayerZero:
-      return layerZeroValidation(BigInt(amount), dstAddr);
+      return amount === BigInt(0) ? "Amount cant be zero" : undefined;
     case BridgingModeEnum.Skyline:
-      return skylineValidaton(
+      return skylineAmountValidation(
         srcChain,
         dstChain,
-        dstAddr,
-        BigInt(amount),
+        amount,
         tokenID,
         subSettings.settings!,
       );
     case BridgingModeEnum.Reactor:
-      return reactorValidation(
-        srcChain,
-        dstChain,
-        dstAddr,
-        BigInt(amount),
-        subSettings.settings!,
-      );
+      return reactorAmountValidation(srcChain, amount, subSettings.settings!);
     default:
       return `unknown direction ${srcChain} -> ${dstChain}`;
   }
-};
-
-function layerZeroValidation(
-  amount: bigint,
-  dstAddr: string,
-): string | undefined {
-  if (amount === BigInt(0)) {
-    return "Amount cant be zero";
-  }
-  if (!isAddress(dstAddr)) {
-    return `Invalid destination address: ${dstAddr}`;
-  }
-  if (isEvmZeroAddress(dstAddr)) {
-    return ZERO_ADDRESS_DESTINATION_ERROR;
-  }
 }
 
-function reactorValidation(
+export function validateDestinationAddress(
+  settings: ISettingsState,
   srcChain: ChainEnum,
   dstChain: ChainEnum,
   dstAddr: string,
+  tokenID: number,
+): string | undefined {
+  const { bridgingMode } = getBridgingMode(
+    settings,
+    srcChain,
+    dstChain,
+    tokenID,
+  );
+
+  // LayerZero destinations are always EVM chains
+  if (bridgingMode === BridgingModeEnum.LayerZero || isEvmChain(dstChain)) {
+    if (!isAddress(dstAddr)) {
+      return INVALID_ADDRESS_ERROR;
+    }
+    if (isEvmZeroAddress(dstAddr)) {
+      return ZERO_ADDRESS_DESTINATION_ERROR;
+    }
+  } else if (isCardanoChain(dstChain)) {
+    const addr = NewAddress(dstAddr);
+    if (!addr || addr instanceof RewardAddress || dstAddr !== addr.String()) {
+      return INVALID_ADDRESS_ERROR;
+    }
+
+    if (
+      !checkCardanoAddressCompatibility(dstChain, addr, appSettings.isMainnet)
+    ) {
+      return INCOMPATIBLE_ADDRESS_ERROR;
+    }
+  } else if (isSolanaChain(dstChain)) {
+    if (!isValidSolanaOnCurveAddress(dstAddr)) {
+      return INVALID_ADDRESS_ERROR;
+    }
+  }
+}
+
+function reactorAmountValidation(
+  srcChain: ChainEnum,
   amount: bigint,
   settings: SettingsResponseDto,
-) {
+): string | undefined {
   if (!settings) {
     return "settings not provided";
   }
@@ -125,32 +156,11 @@ function reactorValidation(
       return `Amount more than maximum allowed: ${convertEvmDfmToApex(maxAllowedToBridgeWei.toString(10))} ${tokenInfo.label}`;
     }
   }
-
-  if (isCardanoChain(dstChain)) {
-    const addr = NewAddress(dstAddr);
-    if (!addr || addr instanceof RewardAddress || dstAddr !== addr.String()) {
-      return `Invalid destination address: ${dstAddr}`;
-    }
-
-    if (
-      !checkCardanoAddressCompatibility(dstChain, addr, appSettings.isMainnet)
-    ) {
-      return `Destination address not compatible with destination chain: ${dstChain}`;
-    }
-  } else if (isEvmChain(dstChain)) {
-    if (!isAddress(dstAddr)) {
-      return `Invalid destination address: ${dstAddr}`;
-    }
-    if (isEvmZeroAddress(dstAddr)) {
-      return ZERO_ADDRESS_DESTINATION_ERROR;
-    }
-  }
 }
 
-function skylineValidaton(
+function skylineAmountValidation(
   srcChain: ChainEnum,
   dstChain: ChainEnum,
-  dstAddr: string,
   amount: bigint,
   tokenID: number,
   settings: SettingsResponseDto,
@@ -258,29 +268,5 @@ function skylineValidaton(
   );
   if (maxAllowedToBridgeDfm > 0 && amount > maxAllowedToBridgeDfm) {
     return `Amount more than maximum allowed: ${convertDfmToApex(maxAllowedToBridgeDfm.toString(10), srcChain)} ${tokenInfo.label}`;
-  }
-
-  if (isCardanoChain(dstChain)) {
-    const addr = NewAddress(dstAddr);
-    if (!addr || addr instanceof RewardAddress || dstAddr !== addr.String()) {
-      return `Invalid destination address: ${dstAddr}`;
-    }
-
-    if (
-      !checkCardanoAddressCompatibility(dstChain, addr, appSettings.isMainnet)
-    ) {
-      return `Destination address not compatible with destination chain: ${dstChain}`;
-    }
-  } else if (isEvmChain(dstChain)) {
-    if (!isAddress(dstAddr)) {
-      return `Invalid destination address: ${dstAddr}`;
-    }
-    if (isEvmZeroAddress(dstAddr)) {
-      return ZERO_ADDRESS_DESTINATION_ERROR;
-    }
-  } else if (isSolanaChain(dstChain)) {
-    if (!isValidSolanaOnCurveAddress(dstAddr)) {
-      return `Invalid destination address: ${dstAddr}`;
-    }
   }
 }

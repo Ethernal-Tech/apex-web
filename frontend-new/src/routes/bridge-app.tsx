@@ -40,6 +40,10 @@ import { useChainInfos } from "@/hooks/use-chain-infos";
 import { getEstimatedBridgeTime } from "@/lib/bridging/estimatedBridgeTime";
 import { resolveBridgeMaxAmounts } from "@/lib/bridging/maxAmount";
 import { BridgingModeEnum, getBridgingMode } from "@/lib/bridging/mode";
+import {
+  validateBridgeAmount,
+  validateDestinationAddress,
+} from "@/lib/bridging/validate";
 import { calculateChangeUtxoMinValue } from "@/lib/cardano/utxoMinValue";
 import type {
   SubmitLoadingState,
@@ -1168,14 +1172,51 @@ function TransferForm({
   const currencyBalanceDfm =
     currencyID !== undefined ? (balances[currencyID] ?? "0") : "0";
 
+  const enteredDfm = useMemo(() => {
+    if (!amount.trim()) return BigInt(0);
+    try {
+      return BigInt(convertApexToDfm(amount || "0", source.id));
+    } catch {
+      return BigInt(0);
+    }
+  }, [amount, source.id]);
+
+  const trimmedDestAddress = destAddress.trim();
+
+  // Checked here so the field is marked right away and invalid input never
+  // reaches the fee estimation.
+  const addressError = useMemo(() => {
+    if (!settings || !selectedToken || !trimmedDestAddress) return undefined;
+    return validateDestinationAddress(
+      settings,
+      source.id as ChainEnum,
+      destination.id as ChainEnum,
+      trimmedDestAddress,
+      selectedToken.tokenID,
+    );
+  }, [settings, selectedToken, source.id, destination.id, trimmedDestAddress]);
+
+  const amountLimitError = useMemo(() => {
+    if (!settings || !selectedToken || enteredDfm <= BigInt(0)) {
+      return undefined;
+    }
+    return validateBridgeAmount(
+      settings,
+      source.id as ChainEnum,
+      destination.id as ChainEnum,
+      enteredDfm,
+      selectedToken.tokenID,
+    );
+  }, [settings, selectedToken, source.id, destination.id, enteredDfm]);
+
   const fees = useBridgeFees({
     enabled: Boolean(walletAddress && settings && selectedToken),
     settings,
     srcChain: source.id,
     dstChain: destination.id,
     senderAddress: walletAddress,
-    destinationAddress: destAddress,
-    amountDisplay: amount,
+    destinationAddress: addressError ? "" : destAddress,
+    amountDisplay: amountLimitError ? "" : amount,
     tokenID: selectedToken?.tokenID,
     currencyID,
     currencyBalanceDfm,
@@ -1309,15 +1350,6 @@ function TransferForm({
     ],
   );
 
-  const enteredDfm = useMemo(() => {
-    if (!amount.trim()) return BigInt(0);
-    try {
-      return BigInt(convertApexToDfm(amount || "0", source.id));
-    } catch {
-      return BigInt(0);
-    }
-  }, [amount, source.id]);
-
   const insufficientBalance = enteredDfm > maxAmounts.maxByBalance;
   const overMaxAllowed =
     enteredDfm > maxAmounts.maxByAllowed && maxAmounts.maxByAllowed > BigInt(0);
@@ -1331,7 +1363,7 @@ function TransferForm({
       ? "Over maximum allowed"
       : insufficientCurrency
         ? `Insufficient ${feeTokenLabel}`
-        : null;
+        : (amountLimitError ?? null);
 
   const formatFeeDfm = (dfm: string | undefined) => {
     if (dfm === undefined) return `— ${feeTokenLabel}`;
@@ -1390,13 +1422,23 @@ function TransferForm({
 
   const canMoveFunds =
     Boolean(selectedToken) &&
-    destAddress.trim() !== "" &&
+    trimmedDestAddress !== "" &&
+    !addressError &&
+    !amountLimitError &&
     amount.trim() !== "" &&
     enteredDfm > BigInt(0) &&
     !insufficientBalance &&
     !overMaxAllowed &&
     !insufficientCurrency &&
-    !reactorSubmitBlocked;
+    !reactorSubmitBlocked &&
+    // every fee must be known before the tx can be built
+    !fees.loading &&
+    fees.userWalletFeeDfm !== undefined;
+
+  const feeErrorMessage =
+    !fees.loading && !amountError && !addressError
+      ? fees.walletFeeError
+      : undefined;
 
   const navigate = useNavigate();
 
@@ -1412,7 +1454,7 @@ function TransferForm({
         srcChain: source.id,
         dstChain: destination.id,
         senderAddress: walletAddress,
-        destinationAddress: destAddress.trim(),
+        destinationAddress: trimmedDestAddress,
         amountDisplay: amount.trim(),
         tokenID: selectedToken.tokenID,
         updateLoadingState,
@@ -1634,7 +1676,13 @@ function TransferForm({
               <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
                 Destination Address
               </label>
-              <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 focus-within:border-[oklch(0.72_0.19_245_/_0.5)]">
+              <div
+                className={`flex items-center gap-2 rounded-2xl border bg-white/[0.03] px-4 py-3 focus-within:border-[oklch(0.72_0.19_245_/_0.5)] ${
+                  addressError
+                    ? "border-[oklch(0.62_0.22_25_/_0.55)]"
+                    : "border-white/10"
+                }`}
+              >
                 <input
                   id="dest-addr"
                   value={destAddress}
@@ -1653,6 +1701,11 @@ function TransferForm({
                   <Clipboard className="h-3 w-3" /> Paste
                 </button>
               </div>
+              {addressError && (
+                <p className="mt-1.5 text-xs text-[oklch(0.78_0.19_25)]">
+                  {addressError}
+                </p>
+              )}
             </div>
 
             {selectedToken ? (
@@ -1740,6 +1793,21 @@ function TransferForm({
                     />
                   )}
                   <FeeRow label="Estimated time" value={estimatedTime} />
+                  {feeErrorMessage && (
+                    <div className="mt-2 flex items-start justify-between gap-3 border-t border-white/10 pt-2.5 text-[oklch(0.78_0.19_25)]">
+                      <p className="flex items-start gap-1.5">
+                        <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" />
+                        {feeErrorMessage}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={fees.refresh}
+                        className="shrink-0 font-semibold uppercase tracking-[0.14em] text-[oklch(0.85_0.15_235)] transition-colors hover:text-foreground"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  )}
                 </div>
               </TooltipProvider>
             ) : (

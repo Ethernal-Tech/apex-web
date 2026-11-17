@@ -21,6 +21,7 @@ import { isCardanoChain, isEvmChain, isSolanaChain } from "@/lib/chains";
 import { ErrorResponse, tryCatchJsonByAction } from "@/lib/fetchUtils";
 import cardanoWalletHandler from "@/lib/wallet/cardanoWallet";
 import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
+import { formatFeeEstimationError } from "@/lib/wallet/evmErrors";
 import solWalletHandler from "@/lib/wallet/solWallet";
 import {
   ChainEnum,
@@ -35,6 +36,8 @@ const ETH_LOCK_UNLOCK_FEE_MULTIPLIER = 1.5;
 export type BridgeFeeEstimate = {
   /** Network/wallet fee in source-chain smallest units. */
   userWalletFeeDfm: string | undefined;
+  /** User-facing reason the wallet fee estimation failed. */
+  walletFeeError: string | undefined;
   /** Bridge tx fee in source-chain smallest units. */
   bridgeTxFeeDfm: string;
   /** Operation fee in source-chain smallest units (Skyline). */
@@ -155,6 +158,7 @@ function defaultFees(
 
   return {
     userWalletFeeDfm: undefined,
+    walletFeeError: undefined,
     bridgeTxFeeDfm: useCurrencyMin ? minBridge : minBridgeToken,
     operationFeeDfm: minOp,
     bridgingMode: modeInfo.bridgingMode,
@@ -534,6 +538,10 @@ export async function estimateBridgeFees(
     captureException(e, {
       tags: { component: "estimateFees.ts", action: "estimateBridgeFees" },
     });
-    return { ...defaults, userWalletFeeDfm: undefined };
+    return {
+      ...defaults,
+      userWalletFeeDfm: undefined,
+      walletFeeError: formatFeeEstimationError(e),
+    };
   }
 }
