@@ -46,10 +46,6 @@ export type GetBridgingRequestStatesModel = {
 	txRaw: string;
 };
 
-export type GetLayerZeroBridgingRequestStatesModel = {
-	txHash: string;
-};
-
 export const getBridgingRequestStates = async (
 	chainId: string,
 	bridgingMode: BridgingModeEnum,
@@ -92,22 +88,6 @@ export const getBridgingRequestStates = async (
 
 export type HasTxFailedResponse = {
 	failed: boolean;
-};
-
-export const getLayerZeroRequestStates = async (
-	models: GetLayerZeroBridgingRequestStatesModel[],
-) => {
-	const states = await Promise.all(
-		models.map((model) => getLayerZeroRequestState(model)).filter((x) => !!x),
-	);
-
-	return states.reduce((acc: { [key: string]: BridgingRequestState }, cv) => {
-		if (cv) {
-			acc[cv.sourceTxHash] = cv;
-		}
-
-		return acc;
-	}, {});
 };
 
 export const getHasTxFailedRequestStates = async (
@@ -218,42 +198,6 @@ export const mapLayerZeroStatus = (
 	}
 
 	return status;
-};
-
-export const getLayerZeroRequestState = async (
-	model: GetLayerZeroBridgingRequestStatesModel,
-): Promise<BridgingRequestState | undefined> => {
-	const layerZeroUrl = getAppConfig().layerZero.scanUrl;
-	if (!layerZeroUrl) {
-		Logger.error('layer zero scan url not set');
-
-		return;
-	}
-	const endpointUrl = `${layerZeroUrl}/messages/tx/${model.txHash}`;
-
-	Logger.debug(`axios.get: ${endpointUrl}`);
-	try {
-		const response = await axios.get(endpointUrl);
-
-		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
-
-		const data = response.data.data[0];
-		const status = mapLayerZeroStatus(data);
-
-		return {
-			sourceTxHash: model.txHash,
-			status: status,
-		} as BridgingRequestState;
-	} catch (e) {
-		if (e instanceof AxiosError) {
-			Logger.error(
-				`Error while getLayerZeroRequestState: ${e}. response: ${JSON.stringify(e.response?.data)}`,
-				e.stack,
-			);
-		} else {
-			Logger.error(`Error while getLayerZeroRequestState: ${e}`, e.stack);
-		}
-	}
 };
 
 export const getHasTxFailedRequestState = async (

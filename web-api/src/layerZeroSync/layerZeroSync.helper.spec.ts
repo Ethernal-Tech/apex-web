@@ -4,7 +4,9 @@ import {
 	LayerZeroMessage,
 	parseLayerZeroMessage,
 } from './layerZeroScan.helper';
+import { BridgeTransaction } from 'src/bridgeTransaction/bridgeTransaction.entity';
 import {
+	applyLayerZeroMessage,
 	LayerZeroMappingContext,
 	mapLayerZeroMessage,
 } from './layerZeroSync.helper';
@@ -134,5 +136,87 @@ describe('mapLayerZeroMessage', () => {
 			'skipReason' in
 				mapLayerZeroMessage(message({ source: { txHash: undefined } }), ctx),
 		).toBe(true);
+	});
+});
+
+describe('applyLayerZeroMessage', () => {
+	const stored = (overrides: Partial<BridgeTransaction> = {}) =>
+		Object.assign(new BridgeTransaction(), {
+			sourceTxHash: '0xabcd',
+			senderAddress: '0xsender',
+			status: TransactionStatusEnum.SubmittedToBridge,
+			isLayerZero: true,
+			...overrides,
+		});
+
+	it('fills in a sender scan did not have when the transfer was recorded', () => {
+		const entity = stored({ senderAddress: '' });
+
+		expect(applyLayerZeroMessage(entity, message())).toBe(true);
+		expect(entity.senderAddress).toBe('0xsender');
+	});
+
+	it('keeps a stored sender', () => {
+		const entity = stored({ senderAddress: '0xstored' });
+
+		expect(applyLayerZeroMessage(entity, message())).toBe(false);
+		expect(entity.senderAddress).toBe('0xstored');
+	});
+
+	it('finishes a delivered transfer with its destination tx and delivery time', () => {
+		const deliveredAt = new Date('2026-10-12T10:05:00Z');
+		const entity = stored();
+
+		expect(
+			applyLayerZeroMessage(
+				entity,
+				message({
+					status: TransactionStatusEnum.ExecutedOnDestination,
+					destination: { txHash: '0xdst', deliveredAt },
+				}),
+			),
+		).toBe(true);
+		expect(entity.status).toBe(TransactionStatusEnum.ExecutedOnDestination);
+		expect(entity.destinationTxHash).toBe('0xdst');
+		expect(entity.finishedAt).toEqual(deliveredAt);
+	});
+
+	it('fills in the destination tx of a transfer finished without it', () => {
+		const deliveredAt = new Date('2026-10-12T10:05:00Z');
+		const entity = stored({
+			status: TransactionStatusEnum.ExecutedOnDestination,
+			finishedAt: new Date('2026-10-12T11:00:00Z'),
+		});
+
+		expect(
+			applyLayerZeroMessage(
+				entity,
+				message({
+					status: TransactionStatusEnum.ExecutedOnDestination,
+					destination: { txHash: '0xdst', deliveredAt },
+				}),
+			),
+		).toBe(true);
+		expect(entity.destinationTxHash).toBe('0xdst');
+		expect(entity.finishedAt).toEqual(deliveredAt);
+	});
+
+	it('reports no change for an up to date transfer', () => {
+		const deliveredAt = new Date('2026-10-12T10:05:00Z');
+		const entity = stored({
+			status: TransactionStatusEnum.ExecutedOnDestination,
+			destinationTxHash: '0xdst',
+			finishedAt: deliveredAt,
+		});
+
+		expect(
+			applyLayerZeroMessage(
+				entity,
+				message({
+					status: TransactionStatusEnum.ExecutedOnDestination,
+					destination: { txHash: '0xdst', deliveredAt },
+				}),
+			),
+		).toBe(false);
 	});
 });
