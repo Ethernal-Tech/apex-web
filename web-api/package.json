@@ -24,6 +24,7 @@
   "dependencies": {
     "@emurgo/cardano-message-signing-nodejs": "^1.0.1",
     "@emurgo/cardano-serialization-lib-nodejs": "^14.1.1",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@nestjs-modules/mailer": "^2.0.2",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^10.0.0",
@@ -53,7 +54,8 @@
     "web3": "^4.11.1",
     "web3-validator": "^2.0.6",
     "winston": "^3.15.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston-daily-rotate-file": "^5.0.0",
+    "zod": "^3.25.76"
   },
   "overrides": {
     "@nestjs-modules/mailer": {

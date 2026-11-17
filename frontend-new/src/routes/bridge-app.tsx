@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -7,6 +7,7 @@ import { useBridgeFees } from "@/hooks/use-bridge-fees";
 import { useReactorValidatorStatus } from "@/hooks/use-reactor-validator-status";
 import { useWalletBalances } from "@/hooks/use-wallet-balances";
 import { useWalletSession } from "@/lib/wallet/WalletSessionProvider";
+import { captureException } from "@/lib/wallet/errors";
 import { FooterSocials, FooterLegal } from "@/components/ui/footer-socials";
 import { AssetIcon } from "@/components/ui/asset-icon";
 import { NetworkBadge, NetworkToggle } from "@/components/NetworkToggle";
@@ -26,6 +27,11 @@ import {
   toFixedAmount,
   toFixedFloor,
 } from "@/lib/amount";
+import {
+  bridgeIntentQueryOptions,
+  submitBridgeIntent,
+  type BridgeIntent,
+} from "@/lib/api/bridgeIntent";
 import { bridgingAddressesQueryOptions } from "@/lib/api/bridgingAddresses";
 import { settingsQueryOptions } from "@/lib/api/settings";
 import { bridgingDurationsQueryOptions } from "@/lib/api/stats";
@@ -96,7 +102,15 @@ import { useIsUnsupportedDevice } from "@/hooks/use-unsupported-device";
 import { externalAnchorProps, SKYLINE_DOCUMENTATION_URL } from "@/lib/utils";
 import { pageHead } from "@/lib/seo";
 
+type BridgeAppSearch = {
+  /** Bridge intent prepared by an AI agent, for the user to review and sign */
+  intent?: string;
+};
+
 export const Route = createFileRoute("/bridge-app")({
+  validateSearch: (search: Record<string, unknown>): BridgeAppSearch => ({
+    intent: typeof search.intent === "string" ? search.intent : undefined,
+  }),
   head: () =>
     pageHead({
       title: "Skyline Bridge - Move assets across chains",
@@ -725,6 +739,17 @@ function BridgeApp() {
   // the memo deps below so the pickers rebuild once the payload lands.
   const chainInfos = useChainInfos();
 
+  const { intent: searchIntentId } = Route.useSearch();
+  // taken after mount: the page is prerendered without search params, so the
+  // first client render must match the prerendered one
+  const [intentId, setIntentId] = useState<string | undefined>();
+  useEffect(() => setIntentId(searchIntentId), [searchIntentId]);
+  const intentQuery = useQuery({
+    ...bridgeIntentQueryOptions(intentId ?? ""),
+    enabled: Boolean(intentId),
+  });
+  const intent = intentQuery.data;
+
   const sourceChains = useMemo(
     () => getSrcChains(settings),
     [settings, chainInfos],
@@ -741,6 +766,7 @@ function BridgeApp() {
     account,
     isFullyLoggedIn,
     isConnecting: connecting,
+    sourceChain: sessionSourceChain,
     connect: connectSession,
     disconnect: disconnectSession,
   } = useWalletSession();
@@ -765,33 +791,61 @@ function BridgeApp() {
     enabled: Boolean(walletAddress && source?.id),
   });
 
+  // an intent fixes both chains; wait for it instead of picking stored ones
+  const waitingForIntent = Boolean(intentId) && !intent;
+
   useEffect(() => {
-    if (sourceChains.length === 0) return;
+    if (sourceChains.length === 0 || waitingForIntent) return;
+    const wanted = intent?.originChain;
     // Re-take the entry from the current list instead of keeping the selected
     // object: its label and logo were resolved when it was picked, and
     // /chainInfo may only have landed afterwards - see getChainMeta.
     const current = source && sourceChains.find((c) => c.id === source.id);
-    if (current) {
+    if (current && (!wanted || current.id === wanted)) {
       if (current !== source) setSource(current);
       return;
     }
-    const storedSrc = loadStoredSourceChain();
+    const storedSrc = wanted ?? loadStoredSourceChain();
     setSource(sourceChains.find((c) => c.id === storedSrc) ?? sourceChains[0]);
-  }, [source, sourceChains]);
+  }, [source, sourceChains, intent, waitingForIntent]);
 
   useEffect(() => {
-    if (!source || destinationChains.length === 0) return;
+    if (!source || destinationChains.length === 0 || waitingForIntent) return;
+    const wanted = intent?.destinationChain;
     const current =
       destination && destinationChains.find((c) => c.id === destination.id);
-    if (current) {
+    if (current && (!wanted || current.id === wanted)) {
       if (current !== destination) setDestination(current);
       return;
     }
-    const storedDst = loadStoredDestinationChain();
+    const storedDst = wanted ?? loadStoredDestinationChain();
     setDestination(
       destinationChains.find((c) => c.id === storedDst) ?? destinationChains[0],
     );
-  }, [source, destination, destinationChains]);
+  }, [source, destination, destinationChains, intent, waitingForIntent]);
+
+  // The bridge no longer serves the intent's chains, e.g. it was disabled since
+  const intentRouteUnavailable =
+    !!intent &&
+    sourceChains.length > 0 &&
+    !getDstChains(intent.originChain, settings).some(
+      (c) => c.id === intent.destinationChain,
+    );
+  const intentMatchesSelection =
+    !!intent &&
+    source?.id === intent.originChain &&
+    destination?.id === intent.destinationChain;
+  const intentExpired =
+    !!intent &&
+    (intent.state === "expired" ||
+      new Date(intent.expiresAt).getTime() <= Date.now());
+  const intentBlocked =
+    Boolean(intentId) &&
+    (!intent ||
+      intent.state === "submitted" ||
+      intentExpired ||
+      intentRouteUnavailable ||
+      !intentMatchesSelection);
 
   useEffect(() => {
     if (source) persistSourceChain(source.id);
@@ -820,6 +874,14 @@ function BridgeApp() {
     await disconnectSession();
     setStep("select");
   }, [disconnectSession]);
+
+  // A wallet restored for another source chain can not sign the intent's
+  // transfer, so the user has to connect again for the intent's chains.
+  useEffect(() => {
+    if (!intent || !isConnected) return;
+    if (sessionSourceChain === intent.originChain) return;
+    void disconnect();
+  }, [intent, isConnected, sessionSourceChain, disconnect]);
 
   const swap = () => {
     if (!source || !destination || !canSwap) return;
@@ -912,9 +974,22 @@ function BridgeApp() {
             >
               <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.72_0.19_245_/_0.6)] to-transparent" />
 
+              {intentId && (
+                <IntentNotice
+                  loading={intentQuery.isLoading}
+                  error={intentQuery.error}
+                  intent={intent}
+                  expired={intentExpired}
+                  routeUnavailable={intentRouteUnavailable}
+                />
+              )}
+
               {step === "select" ? (
                 <div className="grid gap-4">
-                  {settingsLoading || !source || !destination ? (
+                  {settingsLoading ||
+                  !source ||
+                  !destination ||
+                  waitingForIntent ? (
                     <div
                       className="grid gap-3"
                       role="status"
@@ -931,14 +1006,16 @@ function BridgeApp() {
                         value={source}
                         onChange={setSource}
                         chains={sourceChains}
-                        disabled={isConnected}
+                        disabled={isConnected || Boolean(intentId)}
                       />
 
                       <div className="flex justify-center">
                         <button
                           type="button"
                           onClick={swap}
-                          disabled={!canSwap || isConnected}
+                          disabled={
+                            !canSwap || isConnected || Boolean(intentId)
+                          }
                           aria-label="Swap chains"
                           title={
                             isConnected
@@ -956,9 +1033,10 @@ function BridgeApp() {
                         value={destination}
                         onChange={setDestination}
                         chains={destinationChains}
+                        disabled={Boolean(intentId)}
                       />
 
-                      {isUnsupportedDevice ? (
+                      {intentBlocked ? null : isUnsupportedDevice ? (
                         <button
                           type="button"
                           disabled
@@ -1001,13 +1079,14 @@ function BridgeApp() {
                     </>
                   )}
                 </div>
-              ) : source && destination ? (
+              ) : source && destination && !intentBlocked ? (
                 <TransferForm
                   source={source}
                   destination={destination}
                   settings={settings}
                   walletAddress={walletAddress ?? ""}
                   bridgingAddresses={bridgingAddresses}
+                  intent={intent}
                   onDiscard={() => setStep("select")}
                 />
               ) : (
@@ -1074,6 +1153,7 @@ function TransferForm({
   settings,
   walletAddress,
   bridgingAddresses,
+  intent,
   onDiscard,
 }: {
   source: Chain;
@@ -1081,10 +1161,15 @@ function TransferForm({
   settings: SettingsResponse | undefined;
   walletAddress: string;
   bridgingAddresses: string[];
+  /** When set, the transfer is the intent's and can only be signed as is */
+  intent?: BridgeIntent;
   onDiscard: () => void;
 }) {
-  const [destAddress, setDestAddress] = useState("");
-  const [amount, setAmount] = useState("");
+  const queryClient = useQueryClient();
+  const [destAddress, setDestAddress] = useState(
+    intent?.destinationAddress ?? "",
+  );
+  const [amount, setAmount] = useState(intent?.amount ?? "");
   const [copied, setCopied] = useState(false);
   const [loadingState, setLoadingState] = useState<
     SubmitLoadingState | undefined
@@ -1106,10 +1191,14 @@ function TransferForm({
   // until loaded (or if unavailable) the estimate falls back to the static table
   const { data: bridgingDurations } = useQuery(bridgingDurationsQueryOptions);
 
+  const intentTokenID = intent?.tokenID;
   const availableTokens = useMemo(
-    () => getSupportedSourceTokens(settings, source.id, destination.id),
+    () =>
+      getSupportedSourceTokens(settings, source.id, destination.id).filter(
+        (t) => intentTokenID === undefined || t.tokenID === intentTokenID,
+      ),
     // tokenInfos hydrates getTokenInfo() used inside getSupportedSourceTokens.
-    [settings, source.id, destination.id, tokenInfos],
+    [settings, source.id, destination.id, tokenInfos, intentTokenID],
   );
 
   const [selectedToken, setSelectedToken] = useState<Token | null>(null);
@@ -1423,6 +1512,21 @@ function TransferForm({
         return;
       }
 
+      if (intent) {
+        // the tx is on chain already - failing to link it only costs the agent
+        // its status updates, so it must not hold up the user
+        try {
+          await submitBridgeIntent(intent.id, response.txHash);
+        } catch (e) {
+          captureException(e, {
+            tags: { component: "bridge-app.tsx", action: "submitBridgeIntent" },
+          });
+        }
+        void queryClient.invalidateQueries({
+          queryKey: bridgeIntentQueryOptions(intent.id).queryKey,
+        });
+      }
+
       // the transaction page shows the submitted tx right away and switches to
       // the recorded one once the bridge observes it on the source chain
       savePendingTx(response);
@@ -1639,19 +1743,22 @@ function TransferForm({
                   id="dest-addr"
                   value={destAddress}
                   onChange={(e) => setDestAddress(e.target.value)}
+                  readOnly={!!intent}
                   placeholder={resolveDestinationAddressPlaceholder(
                     destination.id,
                     appSettings.isMainnet,
                   )}
                   className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
                 />
-                <button
-                  type="button"
-                  onClick={paste}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[oklch(0.85_0.15_235)] transition-colors hover:text-foreground"
-                >
-                  <Clipboard className="h-3 w-3" /> Paste
-                </button>
+                {!intent && (
+                  <button
+                    type="button"
+                    onClick={paste}
+                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[oklch(0.85_0.15_235)] transition-colors hover:text-foreground"
+                  >
+                    <Clipboard className="h-3 w-3" /> Paste
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1692,9 +1799,10 @@ function TransferForm({
                   placeholder="0.000000"
                   inputMode="decimal"
                   disabled={isProcessing}
+                  readOnly={!!intent}
                   className="w-full bg-transparent font-display text-2xl text-foreground placeholder:text-muted-foreground/50 focus:outline-none disabled:opacity-60"
                 />
-                {maxSendable > BigInt(0) && (
+                {!intent && maxSendable > BigInt(0) && (
                   <button
                     type="button"
                     onClick={setMax}
@@ -1804,6 +1912,56 @@ function TransferForm({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function IntentNotice({
+  loading,
+  error,
+  intent,
+  expired,
+  routeUnavailable,
+}: {
+  loading: boolean;
+  error: Error | null;
+  intent: BridgeIntent | undefined;
+  expired: boolean;
+  routeUnavailable: boolean;
+}) {
+  if (loading) {
+    return <Skeleton className="mb-4 h-16 w-full rounded-2xl" />;
+  }
+
+  const problem = error
+    ? error.message
+    : !intent
+      ? undefined
+      : intent.state === "submitted"
+        ? "This bridge request has already been signed and submitted."
+        : expired
+          ? "This bridge request has expired. Ask your agent to prepare a new one."
+          : routeUnavailable
+            ? "The bridge does not support this route at the moment."
+            : undefined;
+
+  if (problem) {
+    return (
+      <div className="mb-4 flex items-start gap-2.5 rounded-2xl border border-[oklch(0.62_0.22_25_/_0.5)] bg-[oklch(0.62_0.22_25_/_0.08)] px-4 py-3 text-sm text-[oklch(0.78_0.19_25)]">
+        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>{problem}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-4 flex items-start gap-2.5 rounded-2xl border border-[oklch(0.72_0.19_245_/_0.35)] bg-[oklch(0.72_0.19_245_/_0.08)] px-4 py-3 text-sm text-foreground">
+      <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[oklch(0.85_0.15_235)]" />
+      <span>
+        This transfer was prepared on your behalf, e.g. by an AI agent. Check
+        the networks, token, amount and especially the destination address
+        before signing - a transfer can not be reversed.
+      </span>
     </div>
   );
 }

@@ -190,6 +190,7 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			default: undefined,
 		}),
 		IS_MAINNET: bool({ default: undefined }),
+		FRONTEND_URL: str({ default: undefined }),
 
 		STATUS_UPDATE_MODES_SUPPORTED: list({ default: undefined }),
 
@@ -240,6 +241,7 @@ export const envOverrides = (): DeepPartial<AppConfig> => {
 			port: env.PORT,
 			corsAllowList: env.CORS_ALLOW_LIST,
 			isMainnet: env.IS_MAINNET,
+			frontendUrl: env.FRONTEND_URL,
 		},
 		features: {
 			statusUpdateModesSupported: env.STATUS_UPDATE_MODES_SUPPORTED,

@@ -6,7 +6,8 @@
 			"https://skyline.testnet.ethernal.work",
 			"http://localhost:8080"
 		],
-		"isMainnet": false
+		"isMainnet": false,
+		"frontendUrl": "https://skyline.testnet.ethernal.work"
 	},
 	"features": {
 		"statusUpdateModesSupported": ["reactor", "skyline", "layerzero"]

@@ -32,6 +32,11 @@ export interface AppConfig {
 		port: number;
 		corsAllowList: string[];
 		isMainnet: boolean;
+		/**
+		 * Base URL of the bridge frontend of this network. Bridge intents created
+		 * through MCP point the user here to sign the transaction.
+		 */
+		frontendUrl?: string;
 	};
 	features: {
 		/**

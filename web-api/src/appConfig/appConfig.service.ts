@@ -74,6 +74,9 @@ export class AppConfigService {
 	get corsAllowList() {
 		return this.config.app.corsAllowList;
 	}
+	get frontendUrl() {
+		return this.config.app.frontendUrl;
+	}
 	get logLevel() {
 		return this.config.app.logLevel;
 	}

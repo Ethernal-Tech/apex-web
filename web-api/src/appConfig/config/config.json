@@ -2,7 +2,8 @@
 	"app": {
 		"logLevel": "debug",
 		"port": 30000,
-		"isMainnet": false
+		"isMainnet": false,
+		"frontendUrl": "http://localhost:8080"
 	},
 	"features": {
 		"statusUpdateModesSupported": ["reactor", "skyline", "layerzero"]

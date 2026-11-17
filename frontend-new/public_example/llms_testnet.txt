@@ -4,6 +4,8 @@
 > Read it in full before making any API calls.
 >
 > **This is the testnet guide.** Every API, RPC, Ogmios and explorer URL below points at a test network. Never use it to move mainnet funds.
+>
+> **Use the Bridge Intent flow (MCP) below whenever you can send HTTP POST requests.** It needs no transaction building, signing format handling or broadcasting on your side: you prepare the transfer, the user signs it in the Skyline web app with their own wallet. The manual REST workflow further down is a fallback only.
 
 ---
 
@@ -22,6 +24,74 @@ https://partner-web-api-skyline.testnet.ethernal.work
 ```
 
 All paths in this document are relative to this base URL.
+
+---
+
+## Bridge Intent Flow (MCP) — Recommended
+
+The bridge exposes a [Model Context Protocol](https://modelcontextprotocol.io) server at:
+
+```
+POST https://partner-web-api-skyline.testnet.ethernal.work/mcp
+```
+
+You do **not** need to be configured as an MCP client. Every call is a single, self-contained JSON-RPC 2.0 HTTP POST — no session, no `initialize` handshake. If your environment does support MCP natively, you may add the URL above as a Streamable HTTP server instead; the tools are the same.
+
+### How to call a tool
+
+```bash
+curl -s -X POST https://partner-web-api-skyline.testnet.ethernal.work/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": { "name": "<tool name>", "arguments": { ... } }
+  }'
+```
+
+The tool output is a JSON document in `result.content[0].text` — parse it. When `result.isError` is `true`, `result.content[0].text` is an error message meant to be shown to (or fixed with) the user, e.g. an unsupported route or an invalid address. `{"method": "tools/list"}` returns the full input schema of every tool.
+
+### Tools
+
+| Tool | Arguments | Returns |
+|------|-----------|---------|
+| `get_bridge_routes` | `sourceChain?`, `destinationChain?` (chain IDs, both optional filters) | `network` and `routes[]`: `sourceChain`, `sourceChainType` (`utxo` / `evm` / `svm`), `destinationChain`, `destinationChainType`, `tokens[]` with `tokenID`, `symbol`, `destinationTokenID`, `destinationSymbol`, `bridgingMode` |
+| `create_bridge_intent` | `sourceChain`, `destinationChain`, `tokenID` (integer, from `get_bridge_routes`), `amount` (decimal string in whole token units, max 6 decimals, e.g. `"12.5"`), `destinationAddress` | `intentId`, `signingUrl`, `expiresAt`, `transfer` (the validated transfer, with token `symbol` and `bridgingMode`) |
+| `get_bridge_intent_status` | `intentId` | `state` (see below), the transfer details, and once known `sourceTxHash`, `destinationTxHash`, `bridgeStatus` (raw bridge status) and `transactionUrl` (page where the user can follow the transfer) |
+
+### Workflow
+
+1. **Collect** from the user: source chain, destination chain, token, amount, and the receiver address on the destination chain. **Never guess or derive the receiver address** — if the user did not give it, ask. The sender address is not needed: it is whatever wallet the user connects when signing.
+2. **Resolve the route** with `get_bridge_routes` (filter by the chains the user named). Map the token the user named to its `tokenID` by `symbol`. Users may refer to testnet tokens with a `t` prefix (`tAP3X`, `tADA`): strip it and match by base name. If the route or token is not listed, tell the user which routes are available instead.
+3. **Create the intent** with `create_bridge_intent`. Nothing is sent and no funds move at this point.
+4. **Hand the `signingUrl` to the user**, together with a one-line summary of the transfer (amount, token, source → destination, receiver address). Tell them to:
+   - open it in a **desktop browser** with their wallet extension installed (mobile wallets are not supported),
+   - connect the wallet for the source chain, check the details and sign,
+   - do so before `expiresAt` (1 hour) — after that, create a new intent.
+   The signing page checks the user's balance, fees and minimum/maximum amounts; if it reports a problem, relay it and create a new intent with corrected values.
+5. **Track** with `get_bridge_intent_status`, polling no more often than every 30 seconds, until a final state. Report progress to the user when the state changes, and give them `transactionUrl` once it appears.
+
+### Intent states
+
+| `state` | Meaning | Final |
+|---------|---------|-------|
+| `awaiting_signature` | Created, waiting for the user to sign | no |
+| `expired` | Not signed before `expiresAt` — create a new intent if the user still wants the transfer | yes |
+| `submitted` | Signed and sent to the source chain, not yet picked up by the bridge (usually under a few minutes) | no |
+| `pending` | The bridge is processing the transfer | no |
+| `refunding` | The transfer could not be delivered, funds are being returned to the sender | no |
+| `success` | Delivered to the receiver on the destination chain (`destinationTxHash` is set) | yes |
+| `refunded` | Funds returned to the sender | yes |
+| `failed` | The bridge rejected the request | yes |
+
+### Rules
+
+- You never see, hold or ask for private keys or seed phrases, and you never sign anything — the user signs in their own wallet on the Skyline web app.
+- Only give the user a `signingUrl` returned by `create_bridge_intent`; never construct or alter one.
+- An intent cannot be edited. To change anything, create a new intent and tell the user to ignore the old link.
+- Use one intent per transfer. Do not create several intents for the same request "just in case".
 
 ---
 
