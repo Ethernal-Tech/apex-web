@@ -228,6 +228,13 @@ Durations are in nanoseconds.
 ```
 - Cardano chains must also be defined in `cardanoChains` (network magic is taken from there). `networkAddress` is a
   cardano-node relay (node-to-node), the same one apex-bridge uses for its indexer. Ogmios can not be used for indexing.
+- The connection to the relay can use mutual TLS by adding a `networkTls` object to the chain (same key as in
+  apex-bridge oracle configs): `"networkTls": {"caFile": "/certs/ca.pem", "certFile": "/certs/client.pem", "keyFile": "/certs/client.key"}`.
+  Only the CAs in `caFile` are trusted (at most 2, for CA rotation) and TLS 1.3 is required. `serverName` is optional
+  and defaults to the host part of `networkAddress` (`host:port` is then required). Unix sockets can not use TLS.
+  cardano-node has no TLS of its own, so the relay side needs a TLS terminator that checks the client certificate;
+  apex-bridge has a stunnel setup and a cert generation script in `scripts/cardano-node-tls`. The files are checked at startup and read again on every reconnect,
+  so certificates can be rotated without a restart.
 - Cardano blocks are indexed with the block indexer from cardano-infrastructure, without confirmations and with deep
   rollbacks allowed (`allowDeepRollback`). Its state is kept in `cardano_<chainID>.db`; the start point is used only
   while that database is empty.

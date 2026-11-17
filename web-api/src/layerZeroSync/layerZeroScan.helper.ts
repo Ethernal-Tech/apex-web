@@ -92,6 +92,15 @@ export const getLayerZeroOAppMessages = async (
 			nextToken: response.data?.nextToken || undefined,
 		};
 	} catch (e) {
+		// the page after the last one is answered with 404 instead of an empty page
+		if (e instanceof AxiosError && e.response?.status === 404) {
+			Logger.debug(
+				`no more layer zero messages for ${oappAddress} on ${eid}: ${JSON.stringify(e.response?.data)}`,
+			);
+
+			return { messages: [] };
+		}
+
 		if (e instanceof AxiosError) {
 			Logger.error(
 				`Error while getLayerZeroOAppMessages for ${oappAddress} on ${eid}: ${e}. response: ${JSON.stringify(e.response?.data)}`,

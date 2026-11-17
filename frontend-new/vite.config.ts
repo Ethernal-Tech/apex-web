@@ -5,6 +5,7 @@
 //     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import wasm from "vite-plugin-wasm";
 // The blog feed, so every post gets a prerendered page. Posts added to the
 // live copy on GitHub after a build render client-side instead - see
 // src/lib/api/blog.ts.
@@ -58,5 +59,8 @@ export default defineConfig({
     ].map((path) => ({ path })),
     sitemap: { enabled: false },
   },
+  // cardano-serialization-lib-browser ships a .wasm module. The asmjs build
+  // breaks once its memory grows (stale DataView in the glue code).
+  plugins: [wasm()],
   nitro: false,
 });

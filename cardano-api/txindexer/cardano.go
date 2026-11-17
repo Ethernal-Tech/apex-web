@@ -212,6 +212,7 @@ func (ci *cardanoIndexer) Start(ctx context.Context) {
 			RestartDelay:   cardanoSyncerRestartDelay,
 			SyncStartTries: cardanoSyncStartTries,
 			KeepAlive:      cardanoSyncerKeepAlive,
+			TLS:            ci.config.NetworkTLS,
 		}, ci.blockIndexer, ci.syncerLogger.Named("block_syncer"))
 
 		ci.syncerCloseLock.Lock()

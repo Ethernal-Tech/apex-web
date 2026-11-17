@@ -27,10 +27,32 @@ export const SOL_SUPPORTED_WALLETS: WalletInfo[] = [
   },
 ];
 
+const toBase58 = (publicKey: any): string =>
+  typeof publicKey === "string"
+    ? publicKey
+    : (publicKey?.toBase58?.() ?? String(publicKey));
+
 class SolWalletHandler {
   private _provider: any | undefined;
   private _address: string | undefined;
   private _useMainnet: boolean | undefined;
+  private onAccountChanged: () => Promise<void> = async () => undefined;
+  private onDisconnected: () => Promise<void> = async () => undefined;
+
+  // publicKey is null when switched to an account not yet connected to the site
+  accountChanged = async (publicKey: any) => {
+    if (!publicKey) {
+      await this.onDisconnected();
+      return;
+    }
+
+    const address = toBase58(publicKey);
+    if (address === this._address) return;
+
+    this._address = address;
+    await this.onAccountChanged();
+  };
+  walletDisconnected = async () => await this.onDisconnected();
 
   private resolvePhantomProvider(): any {
     const provider = (window as any)?.phantom?.solana;
@@ -53,7 +75,11 @@ class SolWalletHandler {
 
   checkWallet = (): boolean => !!this._provider && !!this._address;
 
-  enable = async (useMainnet?: boolean): Promise<boolean> => {
+  enable = async (
+    useMainnet: boolean | undefined,
+    onAccountChanged: () => Promise<void>,
+    onDisconnected: () => Promise<void>,
+  ): Promise<boolean> => {
     this._useMainnet = useMainnet ?? appSettings.isMainnet;
     this._provider = this.resolvePhantomProvider();
 
@@ -68,20 +94,32 @@ class SolWalletHandler {
       );
     }
 
-    this._address =
-      typeof publicKey === "string"
-        ? publicKey
-        : (publicKey?.toBase58?.() ?? String(publicKey));
+    this._address = toBase58(publicKey);
+
+    this.onAccountChanged = onAccountChanged;
+    this.onDisconnected = onDisconnected;
+    // enable can run again without a disconnect in between, avoid duplicate listeners
+    this._provider.removeListener("accountChanged", this.accountChanged);
+    this._provider.removeListener("disconnect", this.walletDisconnected);
+    this._provider.on("accountChanged", this.accountChanged);
+    this._provider.on("disconnect", this.walletDisconnected);
 
     return true;
   };
 
   disconnect = async (): Promise<void> => {
     try {
+      if (this._provider) {
+        // removed before disconnecting, so our own disconnect does not trigger the handler
+        this._provider.removeListener("accountChanged", this.accountChanged);
+        this._provider.removeListener("disconnect", this.walletDisconnected);
+      }
       if (this._provider?.disconnect) {
         await this._provider.disconnect();
       }
     } finally {
+      this.onAccountChanged = async () => undefined;
+      this.onDisconnected = async () => undefined;
       this._provider = undefined;
       this._address = undefined;
       this._useMainnet = undefined;

@@ -136,6 +136,16 @@ export const isEvmChain = (chain: ChainEnum) =>
 
 export const isSolanaChain = (chain: ChainEnum) => chain === ChainEnum.Solana;
 
+const EVM_ZERO_ADDRESS_REGEX = /^(0x)?0{40}$/i;
+
+// the bridge treats the zero address on EVM destinations as its fee address, so
+// the amount sent to it would end up as bridging fee instead of being delivered
+export const isEvmZeroAddress = (address: string) =>
+	EVM_ZERO_ADDRESS_REGEX.test(address.trim());
+
+export const ZERO_ADDRESS_DESTINATION_ERROR =
+	'Zero address can not be used as destination address';
+
 const isAllowedDirection = function (
 	srcChain: ChainEnum,
 	dstChain: ChainEnum,

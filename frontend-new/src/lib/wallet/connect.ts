@@ -292,32 +292,12 @@ async function enableCardanoWallet(
   return true;
 }
 
-async function enableSolanaWallet(
+function setSolanaSession(
   selectedWalletName: string,
   srcChain: string,
-  dstChain: string,
-  settings: SettingsResponse,
   handlers: ConnectHandlers,
 ) {
   const useMainnet = appSettings.isMainnet;
-
-  if (!getSrcChains(settings).some((x) => x.id === srcChain)) {
-    captureAndThrowError(
-      `Chain: ${srcChain} not supported.`,
-      "connect.ts",
-      "enableSolanaWallet",
-    );
-  }
-
-  await solWalletHandler.enable(useMainnet);
-  if (!solWalletHandler.checkWallet()) {
-    captureAndThrowError(
-      "Failed to connect to wallet.",
-      "connect.ts",
-      "enableSolanaWallet",
-    );
-  }
-
   const account = solWalletHandler.getAddress();
   const networkId = fromChainToNetworkId(srcChain, useMainnet);
   const network = fromChainToNetwork(srcChain, useMainnet);
@@ -326,7 +306,7 @@ async function enableSolanaWallet(
     captureAndThrowError(
       `Missing Solana network mapping for chain=${srcChain}, useMainnet=${useMainnet}.`,
       "connect.ts",
-      "enableSolanaWallet",
+      "setSolanaSession",
     );
   }
 
@@ -335,6 +315,55 @@ async function enableSolanaWallet(
     walletName: selectedWalletName,
     account: { account, networkId, network },
   });
+}
+
+async function onSolanaAccountChanged(
+  selectedWalletName: string,
+  srcChain: string,
+  handlers: ConnectHandlers,
+): Promise<void> {
+  try {
+    setSolanaSession(selectedWalletName, srcChain, handlers);
+  } catch (e) {
+    console.log(e);
+    captureException(e, {
+      tags: { component: "connect.ts", action: "onSolanaAccountChanged" },
+    });
+    handlers.onError?.(formatUserError(e));
+    await disconnectWallet(handlers);
+  }
+}
+
+async function enableSolanaWallet(
+  selectedWalletName: string,
+  srcChain: string,
+  dstChain: string,
+  settings: SettingsResponse,
+  handlers: ConnectHandlers,
+) {
+  if (!getSrcChains(settings).some((x) => x.id === srcChain)) {
+    captureAndThrowError(
+      `Chain: ${srcChain} not supported.`,
+      "connect.ts",
+      "enableSolanaWallet",
+    );
+  }
+
+  // Phantom has no network change event, it only reports account switches and disconnects
+  await solWalletHandler.enable(
+    appSettings.isMainnet,
+    () => onSolanaAccountChanged(selectedWalletName, srcChain, handlers),
+    () => disconnectWallet(handlers),
+  );
+  if (!solWalletHandler.checkWallet()) {
+    captureAndThrowError(
+      "Failed to connect to wallet.",
+      "connect.ts",
+      "enableSolanaWallet",
+    );
+  }
+
+  setSolanaSession(selectedWalletName, srcChain, handlers);
   return true;
 }
 

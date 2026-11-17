@@ -153,6 +153,12 @@ export function formatAmountDigits(
   return `${sign}${grouped}${trimmed ? `.${trimmed}` : ""}`;
 }
 
+/** Full amount with thousands separated by commas: 1075201007.450000 -> 1,075,201,007.450000. */
+export function formatAmountFull(value: string): string {
+  const { whole, fraction } = formatBalanceParts(value);
+  return fraction != null ? `${whole}.${fraction}` : whole;
+}
+
 export function toFixedFloor(n: number | string, decimals: number): string {
   const exp = Math.pow(10, decimals);
   return (Math.floor(+n * exp) / exp).toFixed(decimals);

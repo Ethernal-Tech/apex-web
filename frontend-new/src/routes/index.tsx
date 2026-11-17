@@ -39,13 +39,28 @@ import {
 import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
-  head: () =>
-    pageHead({
+  head: () => {
+    const head = pageHead({
       title: "Skyline",
       description:
-        "Skyline connects every chain, agent, and dollar. Bridge assets instantly today - soon powering AI agents and traditional finance rails via Stripe and stablecoins.",
+        "Skyline connects every chain, agent, and dollar. Bridge assets instantly today - soon powering AI agents and traditional finance rails via Stripe and stablecoins. AI agents: bridging API and flow at /llms.txt",
       path: "/",
-    }),
+    });
+    return {
+      ...head,
+      // Points AI agents handed the site URL at the agent guide. The file is
+      // copied from public_example/ into public/ at deploy time (see README).
+      links: [
+        ...head.links,
+        {
+          rel: "alternate",
+          type: "text/markdown",
+          title: "LLM guide",
+          href: "/llms.txt",
+        },
+      ],
+    };
+  },
   component: Landing,
 });
 

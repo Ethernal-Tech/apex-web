@@ -34,7 +34,9 @@ import {
 	getBridgingSettings,
 	isCardanoChain,
 	isEvmChain,
+	isEvmZeroAddress,
 	isSolanaChain,
+	ZERO_ADDRESS_DESTINATION_ERROR,
 } from 'src/utils/chainUtils';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getAppConfig } from 'src/appConfig/appConfig';
@@ -60,6 +62,13 @@ export class TransactionService {
 			)
 		) {
 			throw new BadRequestException('Chain not supported');
+		}
+
+		if (
+			isEvmChain(dto.destinationChain) &&
+			isEvmZeroAddress(dto.destinationAddress)
+		) {
+			throw new BadRequestException(ZERO_ADDRESS_DESTINATION_ERROR);
 		}
 
 		const settings = getBridgingSettings(
@@ -335,6 +344,10 @@ export class TransactionService {
 			throw new BadRequestException(
 				`error while calling Layer Zero transfer: request.to is not a valid address`,
 			);
+		}
+
+		if (isEvmZeroAddress(dto.to)) {
+			throw new BadRequestException(ZERO_ADDRESS_DESTINATION_ERROR);
 		}
 
 		try {
