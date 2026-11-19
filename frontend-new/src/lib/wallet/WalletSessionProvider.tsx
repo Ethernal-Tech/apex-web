@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import {
   createContext,
   useCallback,
@@ -9,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { toast } from "sonner";
-import { settingsQueryOptions } from "@/lib/api/settings";
+import { useSettings } from "@/hooks/use-settings";
 import type { SettingsResponse } from "@/lib/api/settings";
 import {
   connectWallet,
@@ -43,7 +42,7 @@ const WalletSessionContext = createContext<WalletSessionContextValue | null>(
 );
 
 export function WalletSessionProvider({ children }: { children: ReactNode }) {
-  const { data: settings } = useQuery(settingsQueryOptions);
+  const { data: settings } = useSettings();
 
   const initialChains = useMemo(() => initChainsState(), []);
   const [sourceChain, setSourceChain] = useState(initialChains.chain);

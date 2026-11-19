@@ -46,7 +46,7 @@ import {
   toFixedAmount,
 } from "@/lib/amount";
 import { fetchBridgeTransactions } from "@/lib/api/bridgeTransactions";
-import { settingsQueryOptions } from "@/lib/api/settings";
+import { useSettings } from "@/hooks/use-settings";
 import type { SettingsResponse } from "@/lib/api/settings";
 import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
 import {
@@ -232,7 +232,7 @@ function TransactionsPage() {
         2;
   const navigate = useNavigate();
   const [list, setList] = useTransactionsListState();
-  const { data: settings } = useQuery(settingsQueryOptions);
+  const { data: settings } = useSettings();
   useQuery(tokenInfosQueryOptions);
   const chainMetaOf = useChainMeta();
   const {

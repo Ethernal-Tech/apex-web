@@ -27,7 +27,7 @@ import {
   toFixedFloor,
 } from "@/lib/amount";
 import { bridgingAddressesQueryOptions } from "@/lib/api/bridgingAddresses";
-import { settingsQueryOptions } from "@/lib/api/settings";
+import { useSettings } from "@/hooks/use-settings";
 import { bridgingDurationsQueryOptions } from "@/lib/api/stats";
 import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
 import {
@@ -722,8 +722,7 @@ function TokenRow({
 
 function BridgeApp() {
   const navigate = useNavigate();
-  const { data: settings, isLoading: settingsLoading } =
-    useQuery(settingsQueryOptions);
+  const { data: settings, isPending: settingsPending } = useSettings();
   // Hydrates token label/icon registry used by getSupportedSourceTokens / getTokenInfo.
   useQuery(tokenInfosQueryOptions);
   // Hydrates the chain display registry getSrcChains/getDstChains read; kept in
@@ -919,7 +918,7 @@ function BridgeApp() {
 
               {step === "select" ? (
                 <div className="grid gap-4">
-                  {settingsLoading || !source || !destination ? (
+                  {settingsPending || !source || !destination ? (
                     <div
                       className="grid gap-3"
                       role="status"

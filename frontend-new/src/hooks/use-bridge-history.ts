@@ -7,7 +7,7 @@ import {
 } from "@/lib/api/historicalSnapshots";
 import { DFM_UNIT } from "@/lib/api/lockedTokens";
 import { priceByTokenId, tokenPricesQueryOptions } from "@/lib/api/tokenPrice";
-import { settingsQueryOptions } from "@/lib/api/settings";
+import { useSettings } from "@/hooks/use-settings";
 import { getCurrencyID } from "@/lib/tokens";
 import { isUnreportedChain } from "@/lib/chains";
 
@@ -67,7 +67,7 @@ function utcMidnightDaysAgo(days: number): string {
 export function useBridgeHistory(days: number): BridgeHistory {
   const startDate = useMemo(() => utcMidnightDaysAgo(days), [days]);
 
-  const { data: settings } = useQuery(settingsQueryOptions);
+  const { data: settings } = useSettings();
   const { data: prices, isPending: pricesPending } = useQuery(
     tokenPricesQueryOptions,
   );

@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode, RefObject } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   Shield,
@@ -22,7 +21,7 @@ import {
   externalAnchorProps,
   SKYLINE_DOCUMENTATION_URL,
 } from "@/lib/utils";
-import { settingsQueryOptions } from "@/lib/api/settings";
+import { useSettings } from "@/hooks/use-settings";
 import { ValueSkeleton } from "@/components/ui/skeleton";
 import { pageHead } from "@/lib/seo";
 import heroImg from "@/assets/about/about-hero.jpg";
@@ -219,7 +218,7 @@ function Hero() {
 }
 
 function Stats() {
-  const { data: settings, isPending } = useQuery(settingsQueryOptions);
+  const { data: settings, isPending } = useSettings();
   const chainsConnected = settings?.enabledChains.length;
 
   const stats = [
