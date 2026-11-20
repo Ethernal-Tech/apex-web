@@ -22,7 +22,7 @@ import {
 import { FooterSocials } from "@/components/ui/footer-socials";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AssetIcon } from "@/components/ui/asset-icon";
-import { settingsQueryOptions } from "@/lib/api/settings";
+import { useSettings } from "@/hooks/use-settings";
 import { landingStatsQueryOptions } from "@/lib/api/stats";
 import { useBridgeStats } from "@/hooks/use-bridge-stats";
 import { formatUsdCompact } from "@/lib/usd";
@@ -133,8 +133,7 @@ function HeaderStats() {
 }
 
 function Hero() {
-  const { data: settings, isPending: settingsPending } =
-    useQuery(settingsQueryOptions);
+  const { data: settings, isPending: settingsPending } = useSettings();
   const { tvbUsd, isLoading: statsLoading } = useBridgeStats();
   const chainsConnected = settings?.enabledChains.length;
   const tokensEnabled = settings?.ecosystemTokens.length;
@@ -245,7 +244,7 @@ function Hero() {
 }
 
 function Pillars() {
-  const { data: settings } = useQuery(settingsQueryOptions);
+  const { data: settings } = useSettings();
   const chainsConnected = settings?.enabledChains.length;
   const chainsLabel = chainsConnected != null ? String(chainsConnected) : "—";
 
@@ -379,8 +378,7 @@ function formatCountCompact(value: number | undefined): string {
 }
 
 function Analytics() {
-  const { data: settings, isPending: settingsPending } =
-    useQuery(settingsQueryOptions);
+  const { data: settings, isPending: settingsPending } = useSettings();
   // The same figures the header reports, so the page cannot contradict itself.
   const { tvlUsd, tvbUsd, isLoading: statsLoading } = useBridgeStats();
   const { data: landingStats, isPending: landingStatsPending } = useQuery(
@@ -621,7 +619,7 @@ function Orbit({
 
 function Connecting() {
   const ellipseMode = true;
-  const { data: settings } = useQuery(settingsQueryOptions);
+  const { data: settings } = useSettings();
   // getEnabledChainNodes reads the chain display registry this query populates.
   useChainInfos();
   const chainsConnected = settings?.enabledChains.length;

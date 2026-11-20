@@ -9,9 +9,9 @@ replace github.com/blinklabs-io/gouroboros => github.com/Ethernal-Tech/gouroboro
 
 require (
 	github.com/Ethernal-Tech/blockchain-event-tracker v0.0.0-20261023113908-ed976452bc2d
-	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20261109150205-00abcca57098
+	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20261120094405-a929f370b67e
 	github.com/Ethernal-Tech/ethgo v0.0.0-20240902085129-307ec04e3e94
-	github.com/Ethernal-Tech/solana-infrastructure v0.0.0-20261105101704-aedaac4babfa
+	github.com/Ethernal-Tech/solana-infrastructure v0.0.0-20261119130707-e291a2169212
 	github.com/dgraph-io/ristretto v0.2.0
 	github.com/ethereum/go-ethereum v1.14.11
 	github.com/fxamacker/cbor/v2 v2.7.0
@@ -26,7 +26,7 @@ require (
 	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/sethvargo/go-retry v0.2.4
 	github.com/spf13/cobra v1.9.1
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.1
 	go.etcd.io/bbolt v1.4.3
 	golang.org/x/tools v0.52.0
 )
@@ -44,7 +44,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
-	github.com/felixge/httpsnoop v1.0.4 // indirect
+	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/gagliardetto/anchor-go v1.0.0 // indirect
 	github.com/gagliardetto/binary v0.8.0 // indirect
 	github.com/gagliardetto/treeout v0.1.4 // indirect
@@ -76,7 +76,7 @@ require (
 	github.com/quasilyte/stdinfo v0.0.0-20220114132959-f7386bf02567 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/streamingfast/logging v0.0.0-20250404134358-92b15d2fbd2e // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/test-go/testify v1.1.4 // indirect
 	github.com/umbracle/fastrlp v0.1.1-0.20230504065717-58a1b8a9929d // indirect
 	github.com/utxorpc/go-codegen v0.12.0 // indirect
@@ -88,14 +88,14 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/ratelimit v0.3.1 // indirect
 	go.uber.org/zap v1.27.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240213143201-ec583247a57a // indirect
 	golang.org/x/mod v0.42.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/term v0.47.0 // indirect
-	golang.org/x/time v0.11.0 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
+	golang.org/x/time v0.16.0 // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

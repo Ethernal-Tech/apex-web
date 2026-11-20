@@ -20,7 +20,7 @@ import { NetworkBadge } from "@/components/NetworkToggle";
 import { BridgeHeader } from "@/components/BridgeHeader";
 import { Skeleton, ValueSkeleton } from "@/components/ui/skeleton";
 import { convertDfmToApex, toFixedAmount } from "@/lib/amount";
-import { settingsQueryOptions } from "@/lib/api/settings";
+import { useSettings } from "@/hooks/use-settings";
 import { tokenInfosQueryOptions } from "@/lib/api/tokenInfos";
 import {
   buildBridgingStepsFromStatus,
@@ -195,7 +195,7 @@ export function TransactionScreen({
     await disconnectSession();
   };
 
-  const settingsQuery = useQuery(settingsQueryOptions);
+  const settingsQuery = useSettings();
   useQuery(tokenInfosQueryOptions);
   const chainMetaOf = useChainMeta();
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ISettingsState } from "@/lib/api/settings";
 import {
   estimateBridgeFees,
@@ -22,11 +22,15 @@ export type UseBridgeFeesArgs = {
 };
 
 export type UseBridgeFeesResult = BridgeFeeEstimate & {
+  /** True from the moment inputs change until the matching estimate lands. */
   loading: boolean;
+  /** Re-runs the estimation with the current inputs. */
+  refresh: () => void;
 };
 
 const EMPTY: BridgeFeeEstimate = {
   userWalletFeeDfm: undefined,
+  walletFeeError: undefined,
   bridgeTxFeeDfm: "0",
   operationFeeDfm: "0",
   bridgingMode: BridgingModeEnum.Unknown,
@@ -49,19 +53,25 @@ export function useBridgeFees(args: UseBridgeFeesArgs): UseBridgeFeesResult {
 
   const [estimate, setEstimate] = useState<BridgeFeeEstimate>(EMPTY);
   const [loading, setLoading] = useState(false);
+  const [refreshNonce, setRefreshNonce] = useState(0);
   const reqIdRef = useRef(0);
 
+  const refresh = useCallback(() => setRefreshNonce((n) => n + 1), []);
+
   useEffect(() => {
+    // Invalidate any in-flight estimate for the previous inputs.
+    const reqId = ++reqIdRef.current;
+
     if (!enabled || !settings || tokenID === undefined) {
       setEstimate(EMPTY);
       setLoading(false);
       return;
     }
 
-    const handle = window.setTimeout(() => {
-      const reqId = ++reqIdRef.current;
-      setLoading(true);
+    // Mark loading right away so submit stays blocked during the debounce.
+    setLoading(true);
 
+    const handle = window.setTimeout(() => {
       void estimateBridgeFees({
         settings,
         srcChain,
@@ -93,7 +103,8 @@ export function useBridgeFees(args: UseBridgeFeesArgs): UseBridgeFeesResult {
     tokenID,
     currencyID,
     currencyBalanceDfm,
+    refreshNonce,
   ]);
 
-  return { ...estimate, loading };
+  return { ...estimate, loading, refresh };
 }

@@ -115,6 +115,47 @@ export const getLayerZeroOAppMessages = async (
 	}
 };
 
+/**
+ * The message LayerZero scan indexed for a source tx, or undefined when it is
+ * not indexed or the scan API can not be reached.
+ */
+export const getLayerZeroMessageByTx = async (
+	txHash: string,
+): Promise<LayerZeroMessage | undefined> => {
+	const scanUrl = getAppConfig().layerZero.scanUrl;
+	if (!scanUrl) {
+		Logger.error('layer zero scan url not set');
+
+		return;
+	}
+
+	const endpointUrl = `${scanUrl}/messages/tx/${txHash}`;
+
+	try {
+		const response = await axios.get(endpointUrl, {
+			timeout: REQUEST_TIMEOUT_MS,
+		});
+
+		const data = (response.data?.data ?? [])[0] as
+			| LayerZeroScanMessage
+			| undefined;
+
+		return data && parseLayerZeroMessage(data);
+	} catch (e) {
+		if (e instanceof AxiosError) {
+			Logger.error(
+				`Error while getLayerZeroMessageByTx for ${txHash}: ${e}. response: ${JSON.stringify(e.response?.data)}`,
+				e.stack,
+			);
+		} else {
+			Logger.error(
+				`Error while getLayerZeroMessageByTx for ${txHash}: ${e}`,
+				(e as Error)?.stack,
+			);
+		}
+	}
+};
+
 export const parseLayerZeroMessage = (
 	data: LayerZeroScanMessage,
 ): LayerZeroMessage => ({

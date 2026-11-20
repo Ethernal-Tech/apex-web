@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { lockedTokensSummaryQueryOptions } from "@/lib/api/lockedTokens";
-import { settingsQueryOptions } from "@/lib/api/settings";
+import { useSettings } from "@/hooks/use-settings";
 import appSettings from "@/settings/appSettings";
 
 /** LayerZero balances come back in wei (18 decimals). */
@@ -52,7 +52,7 @@ async function fetchLayerZeroLockedApexDfm(
  * chain balances the way the web-api adds it to the TVL it serves.
  */
 export function useLayerZeroLockedApex(): bigint | undefined {
-  const { data: settings } = useQuery(settingsQueryOptions);
+  const { data: settings } = useSettings();
   const oftAddress = settings?.layerZeroChains?.nexus?.oftAddress;
 
   const { data } = useQuery({

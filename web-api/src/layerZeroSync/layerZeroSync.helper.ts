@@ -104,3 +104,44 @@ export const mapLayerZeroMessage = (
 
 	return { entity };
 };
+
+/**
+ * Brings a stored LayerZero transfer up to date with its scan message. Scan
+ * fills some fields in only after it first indexes a message (e.g. the sender),
+ * so the ones missing when the transfer was recorded are filled in here too.
+ * Returns true when the entity changed.
+ */
+export const applyLayerZeroMessage = (
+	entity: BridgeTransaction,
+	message: LayerZeroMessage,
+): boolean => {
+	let changed = false;
+
+	if (!entity.senderAddress && message.source.from) {
+		entity.senderAddress = message.source.from.toLowerCase();
+		changed = true;
+	}
+
+	if (entity.status !== message.status) {
+		entity.status = message.status;
+		changed = true;
+	}
+
+	if (!BridgingRequestNotFinalStatesMap[entity.status]) {
+		const destinationTxHash =
+			message.destination.txHash ?? entity.destinationTxHash;
+		if (destinationTxHash !== entity.destinationTxHash) {
+			entity.destinationTxHash = destinationTxHash;
+			changed = true;
+		}
+
+		const finishedAt =
+			message.destination.deliveredAt ?? entity.finishedAt ?? new Date();
+		if (finishedAt.getTime() !== entity.finishedAt?.getTime()) {
+			entity.finishedAt = finishedAt;
+			changed = true;
+		}
+	}
+
+	return changed;
+};

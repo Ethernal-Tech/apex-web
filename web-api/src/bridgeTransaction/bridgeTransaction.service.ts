@@ -25,8 +25,6 @@ import {
 	getBridgingRequestStates,
 	GetBridgingRequestStatesModel,
 	getHasTxFailedRequestStates,
-	GetLayerZeroBridgingRequestStatesModel,
-	getLayerZeroRequestStates,
 	mapBridgeTransactionToResponse,
 	updateBridgeTransactionStates,
 } from './bridgeTransaction.helper';
@@ -37,6 +35,8 @@ import {
 	TransactionStatusEnum,
 } from 'src/common/enum';
 import { getBridgingMode } from 'src/utils/chainUtils';
+import { getLayerZeroMessageByTx } from 'src/layerZeroSync/layerZeroScan.helper';
+import { applyLayerZeroMessage } from 'src/layerZeroSync/layerZeroSync.helper';
 import { SettingsService } from 'src/settings/settings.service';
 import { AppConfigService } from 'src/appConfig/appConfig.service';
 import { getRealTokenIDFromEntity } from './utils';
@@ -208,17 +208,28 @@ export class BridgeTransactionService {
 		try {
 			for (const chain of Object.values(ChainEnum)) {
 				const entities = await this.bridgeTransactionRepository.find({
-					where: {
-						status: In(BridgingRequestNotFinalStates),
-						originChain: chain,
-					},
+					where: [
+						{
+							status: In(BridgingRequestNotFinalStates),
+							originChain: chain,
+						},
+						// LayerZero transfers recorded before scan filled these in. They are
+						// completed from the scan message, after which they drop out of here
+						{ originChain: chain, isLayerZero: true, senderAddress: '' },
+						{
+							originChain: chain,
+							isLayerZero: true,
+							status: TransactionStatusEnum.ExecutedOnDestination,
+							destinationTxHash: IsNull(),
+						},
+					],
 				});
 				if (entities.length > 0) {
 					const modelsReactor: GetBridgingRequestStatesModel[] = [];
 					const modelsPendingReactor: GetBridgingRequestStatesModel[] = [];
 					const modelsSkyline: GetBridgingRequestStatesModel[] = [];
 					const modelsPendingSkyline: GetBridgingRequestStatesModel[] = [];
-					const modelsLayerZero: GetLayerZeroBridgingRequestStatesModel[] = [];
+					const layerZeroEntities: BridgeTransaction[] = [];
 					for (const entity of entities) {
 						// handle layer zero
 						if (entity.isLayerZero) {
@@ -227,9 +238,7 @@ export class BridgeTransactionService {
 								modesSupported.has(BridgingModeEnum.LayerZero) &&
 								this.appConfig.app.isMainnet
 							) {
-								modelsLayerZero.push({
-									txHash: entity.sourceTxHash,
-								});
+								layerZeroEntities.push(entity);
 							}
 
 							continue;
@@ -298,7 +307,7 @@ export class BridgeTransactionService {
 						statesReactor,
 						statesTxFailedSkyline,
 						statesTxFailedReactor,
-						stateslayerZero,
+						updatedLayerZeroTransactions,
 					] = await Promise.all([
 						getBridgingRequestStates(
 							chain,
@@ -320,7 +329,7 @@ export class BridgeTransactionService {
 							BridgingModeEnum.Reactor,
 							modelsPendingReactor,
 						),
-						getLayerZeroRequestStates(modelsLayerZero),
+						this.updateLayerZeroTransactions(layerZeroEntities),
 					]);
 
 					Object.keys(statesSkyline).length > 0 &&
@@ -339,17 +348,12 @@ export class BridgeTransactionService {
 						Logger.debug(
 							`updateStatuses - got has tx failed request states reactor: ${JSON.stringify(statesTxFailedReactor)}`,
 						);
-					Object.keys(stateslayerZero).length > 0 &&
-						Logger.debug(
-							`updateStatuses - got bridging request states from layer zero: ${JSON.stringify(stateslayerZero)}`,
-						);
 
 					const updatedBridgeTransactions = updateBridgeTransactionStates(
 						entities,
 						{
 							...statesSkyline,
 							...statesReactor,
-							...stateslayerZero,
 						},
 						{ ...statesTxFailedReactor, ...statesTxFailedSkyline },
 					);
@@ -359,9 +363,15 @@ export class BridgeTransactionService {
 							`updateStatuses - updatedBridgeTransactions: ${JSON.stringify(updatedBridgeTransactions)}`,
 						);
 
-					await this.bridgeTransactionRepository.save(
-						updatedBridgeTransactions,
-					);
+					updatedLayerZeroTransactions.length > 0 &&
+						Logger.debug(
+							`updateStatuses - updated layer zero transactions: ${JSON.stringify(updatedLayerZeroTransactions)}`,
+						);
+
+					await this.bridgeTransactionRepository.save([
+						...updatedBridgeTransactions,
+						...updatedLayerZeroTransactions,
+					]);
 				}
 			}
 		} finally {
@@ -369,6 +379,23 @@ export class BridgeTransactionService {
 
 			Logger.debug('Job updateStatusesJob executed');
 		}
+	}
+
+	/**
+	 * Updates LayerZero transfers from their scan messages and returns the ones
+	 * that changed. Transfers whose message can not be read are left as they are.
+	 */
+	private async updateLayerZeroTransactions(
+		entities: BridgeTransaction[],
+	): Promise<BridgeTransaction[]> {
+		const messages = await Promise.all(
+			entities.map((entity) => getLayerZeroMessageByTx(entity.sourceTxHash)),
+		);
+
+		return entities.filter(
+			(entity, i) =>
+				!!messages[i] && applyLayerZeroMessage(entity, messages[i]),
+		);
 	}
 
 	/**

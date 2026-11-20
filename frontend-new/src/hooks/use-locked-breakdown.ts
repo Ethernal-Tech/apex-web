@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 import { DFM_UNIT, lockedTokensQueryOptions } from "@/lib/api/lockedTokens";
-import { settingsQueryOptions } from "@/lib/api/settings";
+import { useSettings } from "@/hooks/use-settings";
 import { tokenInfosQueryOptions } from "@/lib/api/tokenInfo";
 import {
   isCardanoChain,
@@ -174,7 +174,7 @@ function addToHolder(
  * them - so a world can legitimately come back empty.
  */
 export function useLockedBreakdown(): LockedBreakdown {
-  const { data: settings } = useQuery(settingsQueryOptions);
+  const { data: settings } = useSettings();
   const { data: lockedTokens, isPending } = useQuery(lockedTokensQueryOptions);
   // getTokenDisplayName reads a registry /tokenInfo fills, not React state - a
   // dependency here so the rows relabel once it lands after the other queries.

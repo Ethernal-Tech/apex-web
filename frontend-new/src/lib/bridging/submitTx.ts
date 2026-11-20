@@ -24,6 +24,7 @@ type SendTransactionOptions = {
 import type { UpdateSubmitLoadingState } from "@/lib/bridging/statusUtils";
 import { validateSubmitTxInputs } from "@/lib/bridging/validate";
 import { captureAndThrowError, captureException } from "@/lib/wallet/errors";
+import { isDeterministicEvmError } from "@/lib/wallet/evmErrors";
 import { getCurrencyID } from "@/lib/tokens";
 import {
   createPendingBridgeTx,
@@ -200,10 +201,10 @@ export const signAndSubmitEthTx = async (
   const { approvalTx } = createResponse;
   if (approvalTx) {
     console.log("processing eth approval tx...");
-    const tx: Transaction = await retry(
-      () => populateTxDetails(approvalTx, TxTypeEnum.London, txOpts),
-      longRetryOptions.retryCnt,
-      longRetryOptions.waitTime,
+    const tx: Transaction = await populateTxDetailsWithRetry(
+      approvalTx,
+      TxTypeEnum.London,
+      txOpts,
     );
 
     updateLoadingState({
@@ -223,15 +224,10 @@ export const signAndSubmitEthTx = async (
     console.log("eth approval tx has been submitted");
   }
 
-  const tx: Transaction = await retry(
-    () =>
-      populateTxDetails(
-        createResponse.bridgingTx.ethTx,
-        TxTypeEnum.London,
-        txOpts,
-      ),
-    longRetryOptions.retryCnt,
-    longRetryOptions.waitTime,
+  const tx: Transaction = await populateTxDetailsWithRetry(
+    createResponse.bridgingTx.ethTx,
+    TxTypeEnum.London,
+    txOpts,
   );
 
   updateLoadingState({
@@ -349,18 +345,13 @@ export const signAndSubmitLayerZeroTx = async (
 
   if (transactionData.approvalTransaction) {
     console.log("processing layer zero approval tx...");
-    const tx: Transaction = await retry(
-      () =>
-        populateTxDetails(
-          {
-            from: account,
-            ...transactionData.transactionData.approvalTransaction,
-          },
-          txType,
-          txOpts,
-        ),
-      longRetryOptions.retryCnt,
-      longRetryOptions.waitTime,
+    const tx: Transaction = await populateTxDetailsWithRetry(
+      {
+        from: account,
+        ...transactionData.transactionData.approvalTransaction,
+      },
+      txType,
+      txOpts,
     );
 
     updateLoadingState({
@@ -381,18 +372,13 @@ export const signAndSubmitLayerZeroTx = async (
   }
 
   console.log("processing layer zero send tx...");
-  const sendTx: Transaction = await retry(
-    () =>
-      populateTxDetails(
-        {
-          from: account,
-          ...transactionData.populatedTransaction,
-        },
-        txType,
-        txOpts,
-      ),
-    longRetryOptions.retryCnt,
-    longRetryOptions.waitTime,
+  const sendTx: Transaction = await populateTxDetailsWithRetry(
+    {
+      from: account,
+      ...transactionData.populatedTransaction,
+    },
+    txType,
+    txOpts,
   );
 
   updateLoadingState({
@@ -463,6 +449,22 @@ export const populateTxDetails = async (
     ? populateLondonTxDetails(response, opts)
     : populateLegacyTxDetails(response, opts);
 };
+
+/**
+ * populateTxDetails with retries for transient RPC failures. Reverts and
+ * insufficient funds are thrown right away since retrying won't fix them.
+ */
+const populateTxDetailsWithRetry = (
+  tx: Transaction,
+  txType: TxTypeEnum,
+  opts: TxDetailsOptions,
+): Promise<Transaction> =>
+  retry(
+    () => populateTxDetails(tx, txType, opts),
+    longRetryOptions.retryCnt,
+    longRetryOptions.waitTime,
+    (err) => !isDeterministicEvmError(err),
+  );
 
 const populateLegacyTxDetails = async (
   tx: Transaction,

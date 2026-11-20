@@ -207,8 +207,15 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // The SPA shell (`_shell.html`, and every page under `vite dev`) is rendered
+  // without the intro. Only the server knows it via isShell(); on the client the
+  // router marks the matches the shell did not render as `ssr: false`, so both
+  // sides agree and hydration does not mismatch.
+  const isShellDocument = useRouterState({
+    select: (s) => router.isShell() || s.matches.some((m) => m.ssr === false),
+  });
   const showIntro =
-    !router.isShell() &&
+    !isShellDocument &&
     (pathname === "/" || pathname === "/landing" || pathname === "/bridge-app");
 
   useEffect(() => {
