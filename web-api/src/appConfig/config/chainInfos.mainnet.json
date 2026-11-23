@@ -121,6 +121,15 @@
 			"order": 8,
 			"category": "evm",
 			"symbol": "ETH"
+		},
+		{
+			"chain": "solana",
+			"label": "Solana",
+			"icon": "solana.svg",
+			"color": "#9945FF",
+			"order": 9,
+			"category": "svm",
+			"symbol": "SOL"
 		}
 	]
 }
