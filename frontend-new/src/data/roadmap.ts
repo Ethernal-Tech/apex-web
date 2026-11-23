@@ -56,7 +56,7 @@ export const milestones: Milestone[] = [
     title: "Solana Production Integration",
     description:
       "Bring the existing Solana support into production and expand Skyline connectivity to the Solana ecosystem.",
-    status: "in-progress",
+    status: "completed",
     icon: Sun,
   },
   {
