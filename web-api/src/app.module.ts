@@ -14,6 +14,7 @@ import { TokenPriceModule } from './tokenPrice/tokenPrice.module';
 import { TokenInfoModule } from './tokenInfo/tokenInfo.module';
 import { ChainInfoModule } from './chainInfo/chainInfo.module';
 import { BalanceModule } from './balance/balance.module';
+import { SolanaRpcModule } from './solanaRpc/solanaRpc.module';
 import { IndexedTxModule } from './indexedTx/indexedTx.module';
 import { LayerZeroSyncModule } from './layerZeroSync/layerZeroSync.module';
 import { APP_GUARD } from '@nestjs/core';
@@ -43,6 +44,7 @@ import { getAppConfig } from './appConfig/appConfig';
 		TokenInfoModule,
 		ChainInfoModule,
 		BalanceModule,
+		SolanaRpcModule,
 		IndexedTxModule,
 		// LayerZero has no testnet, so its transfers are recorded only by mainnet instances
 		...(getAppConfig().app.isMainnet ? [LayerZeroSyncModule] : []),

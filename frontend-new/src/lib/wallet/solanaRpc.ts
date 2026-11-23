@@ -1,34 +1,13 @@
 import appSettings from "@/settings/appSettings";
-import {
-  SolanaNetworkType,
-  SolanaNetworkTypeMap,
-} from "@/lib/wallet/address/types";
 
 type JsonRpcResponse<T> = {
   result?: T;
   error?: { message?: string; code?: number };
 };
 
-function getRpcUrl(useMainnet?: boolean): string {
-  const isMainnet = useMainnet ?? appSettings.isMainnet;
-  const rpcUrl =
-    SolanaNetworkTypeMap[
-      isMainnet
-        ? SolanaNetworkType.MainNetNetwork
-        : SolanaNetworkType.TestNetNetwork
-    ];
-  if (!rpcUrl) {
-    throw new Error("Missing Solana RPC URL for selected network.");
-  }
-  return rpcUrl;
-}
-
-async function solanaRpcCall<T>(
-  method: string,
-  params: unknown[],
-  useMainnet?: boolean,
-): Promise<T> {
-  const response = await fetch(getRpcUrl(useMainnet), {
+// web-api forwards to its SOLANA_RPC_URL: public nodes reject browser-origin requests with 403
+async function solanaRpcCall<T>(method: string, params: unknown[]): Promise<T> {
+  const response = await fetch(`${appSettings.apiUrl}/solanaRpc`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -53,15 +32,11 @@ async function solanaRpcCall<T>(
   return json.result;
 }
 
-export async function getBalanceLamports(
-  address: string,
-  useMainnet?: boolean,
-): Promise<bigint> {
-  const result = await solanaRpcCall<{ value: number }>(
-    "getBalance",
-    [address, { commitment: "confirmed" }],
-    useMainnet,
-  );
+export async function getBalanceLamports(address: string): Promise<bigint> {
+  const result = await solanaRpcCall<{ value: number }>("getBalance", [
+    address,
+    { commitment: "confirmed" },
+  ]);
   return BigInt(result.value);
 }
 
@@ -82,7 +57,6 @@ type ParsedTokenAccount = {
 
 export async function getSplTokenBalancesByMintLamports(
   ownerAddress: string,
-  useMainnet?: boolean,
 ): Promise<Record<string, bigint>> {
   const result = await solanaRpcCall<{ value: ParsedTokenAccount[] }>(
     "getTokenAccountsByOwner",
@@ -91,7 +65,6 @@ export async function getSplTokenBalancesByMintLamports(
       { programId: SPL_TOKEN_PROGRAM_ID },
       { encoding: "jsonParsed", commitment: "confirmed" },
     ],
-    useMainnet,
   );
 
   const balances: Record<string, bigint> = {};
@@ -108,12 +81,10 @@ export async function getSplTokenBalancesByMintLamports(
 
 export async function getFeeForMessageLamports(
   messageBase64: string,
-  useMainnet?: boolean,
 ): Promise<bigint> {
   const result = await solanaRpcCall<{ value: number | null }>(
     "getFeeForMessage",
     [messageBase64, { commitment: "confirmed" }],
-    useMainnet,
   );
 
   if (result.value == null) {
@@ -125,25 +96,19 @@ export async function getFeeForMessageLamports(
 
 export async function sendRawTransactionBase64(
   transactionBase64: string,
-  useMainnet?: boolean,
 ): Promise<string> {
-  return solanaRpcCall<string>(
-    "sendTransaction",
-    [
-      transactionBase64,
-      {
-        encoding: "base64",
-        skipPreflight: false,
-        preflightCommitment: "confirmed",
-      },
-    ],
-    useMainnet,
-  );
+  return solanaRpcCall<string>("sendTransaction", [
+    transactionBase64,
+    {
+      encoding: "base64",
+      skipPreflight: false,
+      preflightCommitment: "confirmed",
+    },
+  ]);
 }
 
 export async function confirmTransactionSignature(
   signature: string,
-  useMainnet?: boolean,
   timeoutMs = 60_000,
 ): Promise<void> {
   const started = Date.now();
@@ -154,11 +119,10 @@ export async function confirmTransactionSignature(
         confirmationStatus?: string;
         err: unknown;
       } | null>;
-    }>(
-      "getSignatureStatuses",
-      [[signature], { searchTransactionHistory: true }],
-      useMainnet,
-    );
+    }>("getSignatureStatuses", [
+      [signature],
+      { searchTransactionHistory: true },
+    ]);
 
     const status = result.value[0];
     if (status?.err) {

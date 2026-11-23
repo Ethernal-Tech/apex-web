@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import appSettings from "@/settings/appSettings";
 import { captureAndThrowError } from "@/lib/wallet/errors";
 import {
   confirmTransactionSignature,
@@ -35,7 +34,6 @@ const toBase58 = (publicKey: any): string =>
 class SolWalletHandler {
   private _provider: any | undefined;
   private _address: string | undefined;
-  private _useMainnet: boolean | undefined;
   private onAccountChanged: () => Promise<void> = async () => undefined;
   private onDisconnected: () => Promise<void> = async () => undefined;
 
@@ -76,11 +74,9 @@ class SolWalletHandler {
   checkWallet = (): boolean => !!this._provider && !!this._address;
 
   enable = async (
-    useMainnet: boolean | undefined,
     onAccountChanged: () => Promise<void>,
     onDisconnected: () => Promise<void>,
   ): Promise<boolean> => {
-    this._useMainnet = useMainnet ?? appSettings.isMainnet;
     this._provider = this.resolvePhantomProvider();
 
     const resp = await this._provider.connect();
@@ -122,7 +118,6 @@ class SolWalletHandler {
       this.onDisconnected = async () => undefined;
       this._provider = undefined;
       this._address = undefined;
-      this._useMainnet = undefined;
     }
   };
 
@@ -141,7 +136,7 @@ class SolWalletHandler {
         "getBalanceLamports",
       );
     }
-    return getBalanceLamports(this._address, this._useMainnet);
+    return getBalanceLamports(this._address);
   };
 
   getSplTokenBalancesByMint = async (): Promise<Record<string, bigint>> => {
@@ -152,7 +147,7 @@ class SolWalletHandler {
         "getSplTokenBalancesByMint",
       );
     }
-    return getSplTokenBalancesByMintLamports(this._address, this._useMainnet);
+    return getSplTokenBalancesByMintLamports(this._address);
   };
 
   signAndSendTransaction = async (txRawBase64: string): Promise<string> => {
@@ -177,7 +172,7 @@ class SolWalletHandler {
           throw new Error("Phantom did not return a transaction signature");
         }
 
-        await confirmTransactionSignature(signature, this._useMainnet);
+        await confirmTransactionSignature(signature);
         return signature;
       }
 
@@ -192,11 +187,8 @@ class SolWalletHandler {
           ? signedBytes
           : new Uint8Array(signedBytes),
       );
-      const signature = await sendRawTransactionBase64(
-        signedBase64,
-        this._useMainnet,
-      );
-      await confirmTransactionSignature(signature, this._useMainnet);
+      const signature = await sendRawTransactionBase64(signedBase64);
+      await confirmTransactionSignature(signature);
       return signature;
     } catch (err: any) {
       console.error("Full error:", JSON.stringify(err, null, 2));
