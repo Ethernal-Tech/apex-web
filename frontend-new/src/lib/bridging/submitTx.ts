@@ -31,12 +31,6 @@ import {
   type PendingBridgeTx,
 } from "@/lib/bridging/pendingTx";
 import solWalletHandler from "@/lib/wallet/solWallet";
-import { getFeeForMessageLamports } from "@/lib/wallet/solanaRpc";
-import {
-  base64ToUint8Array,
-  extractMessageFromLegacyTransaction,
-  uint8ArrayToBase64,
-} from "@/lib/wallet/solanaTx";
 
 type TxDetailsOptions = {
   feePercMult: bigint;
@@ -541,15 +535,6 @@ export const estimateEthTxFee = async (
   }
 
   return BigInt(tx.gasPrice!) * gasLimit;
-};
-
-export const estimateSolanaTxFeeLamports = async (
-  txRawBase64: string,
-): Promise<bigint> => {
-  const message = extractMessageFromLegacyTransaction(
-    base64ToUint8Array(txRawBase64),
-  );
-  return getFeeForMessageLamports(uint8ArrayToBase64(message));
 };
 
 export const getLayerZeroTransferResponse = async function (

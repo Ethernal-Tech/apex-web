@@ -1,15 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { captureAndThrowError } from "@/lib/wallet/errors";
 import {
-  confirmTransactionSignature,
-  getBalanceLamports,
-  getSplTokenBalancesByMintLamports,
-  sendRawTransactionBase64,
-} from "@/lib/wallet/solanaRpc";
-import {
   base64ToUint8Array,
   createPhantomTransactionAdapter,
-  uint8ArrayToBase64,
 } from "@/lib/wallet/solanaTx";
 
 type WalletInfo = {
@@ -128,28 +121,8 @@ class SolWalletHandler {
     return this._address;
   };
 
-  getBalanceLamports = async (): Promise<bigint> => {
-    if (!this._address) {
-      captureAndThrowError(
-        "Wallet not enabled.",
-        "solWallet.ts",
-        "getBalanceLamports",
-      );
-    }
-    return getBalanceLamports(this._address);
-  };
-
-  getSplTokenBalancesByMint = async (): Promise<Record<string, bigint>> => {
-    if (!this._address) {
-      captureAndThrowError(
-        "Wallet not enabled.",
-        "solWallet.ts",
-        "getSplTokenBalancesByMint",
-      );
-    }
-    return getSplTokenBalancesByMintLamports(this._address);
-  };
-
+  // Phantom submits through its own RPC, so sending costs our backend nothing. The bridge
+  // tx is picked up by the indexer, so there is no confirmation polling here.
   signAndSendTransaction = async (txRawBase64: string): Promise<string> => {
     if (!this._address || !this._provider) {
       captureAndThrowError(
@@ -159,36 +132,18 @@ class SolWalletHandler {
       );
     }
 
-    const serializedTx = base64ToUint8Array(txRawBase64);
-    const adapter = createPhantomTransactionAdapter(serializedTx);
+    const adapter = createPhantomTransactionAdapter(
+      base64ToUint8Array(txRawBase64),
+    );
 
     try {
-      if (this._provider.signAndSendTransaction) {
-        const result = await this._provider.signAndSendTransaction(adapter);
-        const signature =
-          typeof result === "string" ? result : result?.signature;
+      const result = await this._provider.signAndSendTransaction(adapter);
+      const signature = typeof result === "string" ? result : result?.signature;
 
-        if (!signature) {
-          throw new Error("Phantom did not return a transaction signature");
-        }
-
-        await confirmTransactionSignature(signature);
-        return signature;
+      if (!signature) {
+        throw new Error("Phantom did not return a transaction signature");
       }
 
-      const signedTx = await this._provider.signTransaction(adapter);
-      const signedBytes =
-        typeof signedTx?.serialize === "function"
-          ? signedTx.serialize()
-          : signedTx;
-
-      const signedBase64 = uint8ArrayToBase64(
-        signedBytes instanceof Uint8Array
-          ? signedBytes
-          : new Uint8Array(signedBytes),
-      );
-      const signature = await sendRawTransactionBase64(signedBase64);
-      await confirmTransactionSignature(signature);
       return signature;
     } catch (err: any) {
       console.error("Full error:", JSON.stringify(err, null, 2));

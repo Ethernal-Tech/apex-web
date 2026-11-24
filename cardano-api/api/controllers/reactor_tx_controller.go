@@ -53,7 +53,7 @@ func (c *ReactorTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 		{Path: "CreateBridgingTx", Method: http.MethodPost, Handler: c.createBridgingTx},
 		{Path: "GetBridgingTxFee", Method: http.MethodPost, Handler: c.getBridgingTxFee},
 		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
-		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance},
+		{Path: getBalancePath, Method: http.MethodGet, Handler: c.getBalance},
 		{Path: "GetLatestSlot", Method: http.MethodGet, Handler: c.getLatestSlot},
 	}
 }

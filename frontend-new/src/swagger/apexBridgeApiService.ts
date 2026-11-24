@@ -2070,6 +2070,8 @@ export class SolanaTransactionResponseDto implements ISolanaTransactionResponseD
     txRaw!: string;
     /** Block through which the tx stays valid */
     lastValidBlockHeight!: string;
+    /** Network fee the fee payer pays for this tx, in lamports */
+    txFee!: string;
 
     [key: string]: any;
 
@@ -2090,6 +2092,7 @@ export class SolanaTransactionResponseDto implements ISolanaTransactionResponseD
             }
             this.txRaw = _data["txRaw"];
             this.lastValidBlockHeight = _data["lastValidBlockHeight"];
+            this.txFee = _data["txFee"];
         }
     }
 
@@ -2108,6 +2111,7 @@ export class SolanaTransactionResponseDto implements ISolanaTransactionResponseD
         }
         data["txRaw"] = this.txRaw;
         data["lastValidBlockHeight"] = this.lastValidBlockHeight;
+        data["txFee"] = this.txFee;
         return data;
     }
 }
@@ -2117,6 +2121,8 @@ export interface ISolanaTransactionResponseDto {
     txRaw: string;
     /** Block through which the tx stays valid */
     lastValidBlockHeight: string;
+    /** Network fee the fee payer pays for this tx, in lamports */
+    txFee: string;
 
     [key: string]: any;
 }
@@ -2191,8 +2197,6 @@ export interface IBridgingSolanaTransactionResponseDto {
 }
 
 export class CreateSolanaTransactionFullResponseDto implements ICreateSolanaTransactionFullResponseDto {
-    /** Approval tx for the bridging tx */
-    approvalTx!: SolanaTransactionResponseDto | undefined;
     /** Solana Bridging tx */
     bridgingTx!: BridgingSolanaTransactionResponseDto;
 
@@ -2216,7 +2220,6 @@ export class CreateSolanaTransactionFullResponseDto implements ICreateSolanaTran
                 if (_data.hasOwnProperty(property))
                     this[property] = _data[property];
             }
-            this.approvalTx = _data["approvalTx"] ? SolanaTransactionResponseDto.fromJS(_data["approvalTx"]) : undefined as any;
             this.bridgingTx = _data["bridgingTx"] ? BridgingSolanaTransactionResponseDto.fromJS(_data["bridgingTx"]) : new BridgingSolanaTransactionResponseDto();
         }
     }
@@ -2234,15 +2237,12 @@ export class CreateSolanaTransactionFullResponseDto implements ICreateSolanaTran
             if (this.hasOwnProperty(property))
                 data[property] = this[property];
         }
-        data["approvalTx"] = this.approvalTx ? this.approvalTx.toJSON() : undefined as any;
         data["bridgingTx"] = this.bridgingTx ? this.bridgingTx.toJSON() : undefined as any;
         return data;
     }
 }
 
 export interface ICreateSolanaTransactionFullResponseDto {
-    /** Approval tx for the bridging tx */
-    approvalTx: SolanaTransactionResponseDto | undefined;
     /** Solana Bridging tx */
     bridgingTx: BridgingSolanaTransactionResponseDto;
 

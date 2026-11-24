@@ -235,6 +235,12 @@ export class SolanaTransactionResponseDto {
 		description: 'Block through which the tx blockhash stays valid',
 	})
 	lastValidBlockHeight: string;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Network fee the fee payer pays for this tx, in lamports',
+	})
+	txFee: string;
 }
 
 @ApiExtraModels(SolanaTransactionResponseDto)
@@ -268,16 +274,6 @@ export class BridgingSolanaTransactionResponseDto {
 	BridgingSolanaTransactionResponseDto,
 )
 export class CreateSolanaTransactionFullResponseDto {
-	@IsObject()
-	@ValidateNested()
-	@Type(() => SolanaTransactionResponseDto)
-	@ApiProperty({
-		description: 'Approval tx for the bridging tx',
-		type: SolanaTransactionResponseDto,
-		nullable: true,
-	})
-	approvalTx?: SolanaTransactionResponseDto;
-
 	@IsNotEmpty()
 	@IsObject()
 	@ValidateNested()

@@ -1,120 +1,67 @@
 import { BadRequestException, Logger } from '@nestjs/common';
 import axios, { AxiosError } from 'axios';
+import { ErrorResponseDto } from 'src/transaction/transaction.dto';
 import { BalanceTokenDto } from './balance.dto';
 
-const SPL_TOKEN_PROGRAM_ID = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
-
-type JsonRpcResponse<T> = {
-	result?: T;
-	error?: { message?: string; code?: number };
+type CardanoApiSolanaBalanceResponse = {
+	chain: string;
+	address: string;
+	amount: string;
+	tokens: { mint: string; amount: string }[];
 };
 
-type ParsedTokenAccount = {
-	account: {
-		data: {
-			parsed?: {
-				info?: {
-					mint?: string;
-					tokenAmount?: { amount?: string };
-				};
-			};
-		};
-	};
-};
-
-async function solanaRpcCall<T>(
-	rpcUrl: string,
-	method: string,
-	params: unknown[],
+/**
+ * Proxies to cardano-api `GET /api/Solana/GetBalance`, which reads through the
+ * chain's rate-limited RPC client and caches per address. It returns every SPL
+ * token configured for the chain; `mintFilter` narrows that down.
+ */
+export async function fetchSolanaAddressBalance(
+	baseUrl: string,
+	apiKey: string | undefined,
+	chain: string,
+	address: string,
+	mintFilter: string[],
 	timeoutMs: number,
-): Promise<T> {
-	Logger.debug(`solanaRpc ${method}: ${rpcUrl}`);
+): Promise<{ amount: string; tokens: BalanceTokenDto[] }> {
+	const endpointUrl =
+		`${baseUrl.replace(/\/$/, '')}/api/Solana/GetBalance` +
+		`?chainId=${encodeURIComponent(chain)}` +
+		`&address=${encodeURIComponent(address)}`;
+
+	Logger.debug(`axios.get: ${endpointUrl}`);
+
 	try {
-		const response = await axios.post(
-			rpcUrl,
-			{ jsonrpc: '2.0', id: 1, method, params },
+		const response = await axios.get<CardanoApiSolanaBalanceResponse>(
+			endpointUrl,
 			{
-				headers: { 'Content-Type': 'application/json' },
+				headers: {
+					'X-API-KEY': apiKey,
+					Accept: 'application/json',
+				},
 				timeout: timeoutMs,
 			},
 		);
-		const body = response.data as JsonRpcResponse<T>;
-		if (body.error) {
-			throw new BadRequestException(
-				body.error.message ?? `Solana RPC error in ${method}`,
-			);
+
+		Logger.debug(`axios.response: ${JSON.stringify(response.data)}`);
+
+		const filter = mintFilter.length > 0 ? new Set(mintFilter) : undefined;
+		const tokens = (response.data.tokens ?? [])
+			.filter((t) => !filter || filter.has(t.mint))
+			.map((t) => ({ unit: t.mint, amount: t.amount }));
+
+		return {
+			amount: response.data.amount ?? '0',
+			tokens,
+		};
+	} catch (error) {
+		if (error instanceof AxiosError && error.response) {
+			throw new BadRequestException(error.response.data as ErrorResponseDto);
 		}
-		if (body.result === undefined) {
-			throw new BadRequestException(
-				`Solana RPC returned no result for ${method}`,
-			);
-		}
-		return body.result;
-	} catch (e) {
-		if (e instanceof BadRequestException) throw e;
-		if (e instanceof AxiosError) {
-			throw new BadRequestException(`Solana RPC request failed: ${e.message}`);
-		}
+
 		throw new BadRequestException(
-			`Solana RPC request failed: ${e instanceof Error ? e.message : String(e)}`,
+			error instanceof Error
+				? error.message
+				: 'Failed to fetch Solana address balance',
 		);
 	}
-}
-
-export async function fetchSolanaAddressBalance(
-	rpcUrl: string,
-	address: string,
-	mintFilter: string[] | undefined,
-	timeoutMs: number,
-): Promise<{ amount: string; tokens: BalanceTokenDto[] }> {
-	const [balanceResult, tokenAccounts] = await Promise.all([
-		solanaRpcCall<{ value: number }>(
-			rpcUrl,
-			'getBalance',
-			[address, { commitment: 'confirmed' }],
-			timeoutMs,
-		),
-		solanaRpcCall<{ value: ParsedTokenAccount[] }>(
-			rpcUrl,
-			'getTokenAccountsByOwner',
-			[
-				address,
-				{ programId: SPL_TOKEN_PROGRAM_ID },
-				{ encoding: 'jsonParsed', commitment: 'confirmed' },
-			],
-			timeoutMs,
-		),
-	]);
-
-	const byMint: Record<string, bigint> = {};
-	for (const { account } of tokenAccounts.value) {
-		const info = account.data?.parsed?.info;
-		const mint = info?.mint;
-		const amount = info?.tokenAmount?.amount;
-		if (!mint || amount == null) continue;
-		byMint[mint] = (byMint[mint] ?? BigInt(0)) + BigInt(amount);
-	}
-
-	const filter =
-		mintFilter && mintFilter.length > 0 ? new Set(mintFilter) : undefined;
-
-	const tokens: BalanceTokenDto[] = Object.entries(byMint)
-		.filter(([mint]) => !filter || filter.has(mint))
-		.map(([unit, amount]) => ({
-			unit,
-			amount: amount.toString(10),
-		}));
-
-	if (filter) {
-		for (const mint of filter) {
-			if (!tokens.some((t) => t.unit === mint)) {
-				tokens.push({ unit: mint, amount: '0' });
-			}
-		}
-	}
-
-	return {
-		amount: BigInt(balanceResult.value).toString(10),
-		tokens,
-	};
 }

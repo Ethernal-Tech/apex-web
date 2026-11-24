@@ -9,6 +9,8 @@ type SolanaTransactionResponse struct {
 	BlockHash string `json:"blockHash"`
 	// Block through which blockHash remains valid
 	LastValidBlockHeight string `json:"lastValidBlockHeight"`
+	// Network fee the fee payer pays for this transaction, in lamports
+	TxFee string `json:"txFee"`
 } // @name SolanaTransactionResponse
 
 type BridgingSolanaTransactionResponse struct {
@@ -27,6 +29,7 @@ func NewCreateSolanaBridgingTxFullResponse(
 	txRaw string,
 	blockHash string,
 	lastValidBlockHeight uint64,
+	txFee uint64,
 	bridgingFee uint64,
 	operationFee uint64,
 	tokenAmount uint64,
@@ -38,6 +41,7 @@ func NewCreateSolanaBridgingTxFullResponse(
 				TxRaw:                txRaw,
 				BlockHash:            blockHash,
 				LastValidBlockHeight: strconv.FormatUint(lastValidBlockHeight, 10),
+				TxFee:                strconv.FormatUint(txFee, 10),
 			},
 			BridgingFee:  strconv.FormatUint(bridgingFee, 10),
 			OperationFee: strconv.FormatUint(operationFee, 10),

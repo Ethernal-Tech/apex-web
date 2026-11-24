@@ -43,7 +43,7 @@ export class AddressBalanceQueryDocs {
 	@ApiPropertyOptional({
 		description:
 			'Optional comma-separated token ids to include. ' +
-			'EVM: ERC-20 contracts. Solana: mint addresses (omit = all SPL). ' +
+			'EVM: ERC-20 contracts. Solana: mint addresses (omit = all SPL tokens configured for the chain). ' +
 			'Cardano: ignored (all assets on the address are returned).',
 	})
 	tokens?: string;
