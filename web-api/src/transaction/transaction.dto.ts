@@ -290,3 +290,27 @@ export class ErrorResponseDto {
 	@ApiProperty()
 	err: string;
 }
+
+export enum SolanaTxStatusEnum {
+	Pending = 'pending',
+	Confirmed = 'confirmed',
+	Failed = 'failed',
+	Expired = 'expired',
+}
+
+export class SolanaTxStatusResponseDto {
+	@ApiProperty({
+		enum: SolanaTxStatusEnum,
+		enumName: 'SolanaTxStatusEnum',
+		description:
+			'pending: not confirmed yet, blockhash still valid. confirmed: executed. ' +
+			'failed: in a block, execution failed. expired: not found and the blockhash expired, so it can never land.',
+	})
+	status: SolanaTxStatusEnum;
+
+	@ApiProperty({
+		required: false,
+		description: 'Execution error reported by the node, set only when failed',
+	})
+	err?: string;
+}

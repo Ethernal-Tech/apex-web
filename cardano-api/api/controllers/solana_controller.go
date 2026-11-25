@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -67,6 +68,7 @@ func (*SolanaControllerImpl) GetPathPrefix() string {
 func (c *SolanaControllerImpl) GetEndpoints() []*core.APIEndpoint {
 	return []*core.APIEndpoint{
 		{Path: getBalancePath, Method: http.MethodGet, Handler: c.getBalance},
+		{Path: "GetTxStatus", Method: http.MethodGet, Handler: c.getTxStatus},
 	}
 }
 
@@ -86,32 +88,17 @@ func (c *SolanaControllerImpl) getBalance(w http.ResponseWriter, r *http.Request
 	c.logger.Debug("getBalance request", "url", r.URL)
 
 	query := r.URL.Query()
-	chainID := strings.TrimSpace(query.Get("chainId"))
 	address := strings.TrimSpace(query.Get("address"))
 
-	if chainID == "" {
-		utils.WriteErrorResponse(w, r, http.StatusBadRequest, errors.New("chainId missing from query"), c.logger)
+	chainID, txProvider, err := c.resolveChain(query.Get("chainId"))
+	if err != nil {
+		utils.WriteErrorResponse(w, r, http.StatusBadRequest, err, c.logger)
 
 		return
 	}
 
 	if address == "" {
 		utils.WriteErrorResponse(w, r, http.StatusBadRequest, errors.New("address missing from query"), c.logger)
-
-		return
-	}
-
-	if !common.IsSolanaChainID(chainID) {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest, fmt.Errorf("unsupported chainId for GetBalance: %s", chainID), c.logger)
-
-		return
-	}
-
-	_, _, chainConfig := c.appConfig.GetChainConfig(chainID)
-	if chainConfig == nil || chainConfig.ChainSpecific == nil || chainConfig.ChainSpecific.TxProvider == nil {
-		utils.WriteErrorResponse(
-			w, r, http.StatusBadRequest, fmt.Errorf("chain is not configured or disabled: %s", chainID), c.logger)
 
 		return
 	}
@@ -144,8 +131,7 @@ func (c *SolanaControllerImpl) getBalance(w http.ResponseWriter, r *http.Request
 		ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), solanaBalanceTimeout)
 		defer cancel()
 
-		balance, err := utils.FetchSolanaAddressBalance(
-			ctx, chainConfig.ChainSpecific.TxProvider, chainID, owner, mints)
+		balance, err := utils.FetchSolanaAddressBalance(ctx, txProvider, chainID, owner, mints)
 		if err != nil {
 			return nil, err
 		}
@@ -163,6 +149,75 @@ func (c *SolanaControllerImpl) getBalance(w http.ResponseWriter, r *http.Request
 	}
 
 	utils.WriteResponse(w, r, http.StatusOK, balance, c.logger)
+}
+
+// @Summary Get the status of a submitted Solana transaction
+// @Description Reports whether a transaction landed: confirmed, failed, still pending, or expired (not found and its blockhash is no longer valid, so it can never land). Each call reads the signature status and, only while the transaction is not found, the block height.
+// @Tags Solana
+// @Produce json
+// @Param chainId query string true "Solana chain ID"
+// @Param signature query string true "Base58 transaction signature"
+// @Param lastValidBlockHeight query string true "lastValidBlockHeight returned with the transaction when it was created"
+// @Success 200 {object} response.SolanaTxStatusResponse "OK - Transaction status."
+// @Failure 400 {object} response.ErrorResponse "Bad Request – missing/invalid query params or unsupported chain."
+// @Failure 401 {object} response.ErrorResponse "Unauthorized – API key missing or invalid."
+// @Failure 500 {object} response.ErrorResponse "Internal server error – the status lookup failed."
+// @Security ApiKeyAuth
+// @Router /Solana/GetTxStatus [get]
+func (c *SolanaControllerImpl) getTxStatus(w http.ResponseWriter, r *http.Request) {
+	c.logger.Debug("getTxStatus request", "url", r.URL)
+
+	query := r.URL.Query()
+
+	_, txProvider, err := c.resolveChain(query.Get("chainId"))
+	if err != nil {
+		utils.WriteErrorResponse(w, r, http.StatusBadRequest, err, c.logger)
+
+		return
+	}
+
+	signature, err := solana.SignatureFromBase58(strings.TrimSpace(query.Get("signature")))
+	if err != nil {
+		utils.WriteErrorResponse(w, r, http.StatusBadRequest, fmt.Errorf("invalid signature: %w", err), c.logger)
+
+		return
+	}
+
+	lastValidBlockHeight, err := strconv.ParseUint(strings.TrimSpace(query.Get("lastValidBlockHeight")), 10, 64)
+	if err != nil {
+		utils.WriteErrorResponse(
+			w, r, http.StatusBadRequest, fmt.Errorf("invalid lastValidBlockHeight: %w", err), c.logger)
+
+		return
+	}
+
+	status, err := utils.FetchSolanaTxStatus(r.Context(), txProvider, signature, lastValidBlockHeight)
+	if err != nil {
+		utils.WriteErrorResponse(w, r, http.StatusInternalServerError, fmt.Errorf("get tx status: %w", err), c.logger)
+
+		return
+	}
+
+	utils.WriteResponse(w, r, http.StatusOK, status, c.logger)
+}
+
+// resolveChain validates the chainId query value and returns the chain's rate-limited tx provider.
+func (c *SolanaControllerImpl) resolveChain(rawChainID string) (string, *solanawallet.Provider, error) {
+	chainID := strings.TrimSpace(rawChainID)
+	if chainID == "" {
+		return "", nil, errors.New("chainId missing from query")
+	}
+
+	if !common.IsSolanaChainID(chainID) {
+		return "", nil, fmt.Errorf("unsupported Solana chainId: %s", chainID)
+	}
+
+	_, _, chainConfig := c.appConfig.GetChainConfig(chainID)
+	if chainConfig == nil || chainConfig.ChainSpecific == nil || chainConfig.ChainSpecific.TxProvider == nil {
+		return "", nil, fmt.Errorf("chain is not configured or disabled: %s", chainID)
+	}
+
+	return chainID, chainConfig.ChainSpecific.TxProvider, nil
 }
 
 // configuredMints returns the SPL mints of the tokens configured for chainID, sorted.

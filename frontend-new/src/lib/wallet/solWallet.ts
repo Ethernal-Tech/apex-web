@@ -121,8 +121,7 @@ class SolWalletHandler {
     return this._address;
   };
 
-  // Phantom submits through its own RPC, so sending costs our backend nothing. The bridge
-  // tx is picked up by the indexer, so there is no confirmation polling here.
+  // Phantom submits through its own RPC, so sending costs our backend nothing
   signAndSendTransaction = async (txRawBase64: string): Promise<string> => {
     if (!this._address || !this._provider) {
       captureAndThrowError(
