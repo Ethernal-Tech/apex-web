@@ -92,7 +92,9 @@ func runCommand(cmd *cobra.Command, _ []string) {
 		go validatorChange.Start(ctx)
 	case common.SkylineMode:
 		apiControllers = append(
-			apiControllers, controllers.NewSkylineTxController(config, logger.Named("skyline_tx_controller")),
+			apiControllers,
+			controllers.NewSkylineTxController(config, logger.Named("skyline_tx_controller")),
+			controllers.NewSolanaController(config, logger.Named("solana_controller")),
 		)
 	default:
 		logger.Error("cardano api creation failed", "err", "run mode is invalid.")

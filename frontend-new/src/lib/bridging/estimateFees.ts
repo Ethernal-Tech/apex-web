@@ -13,7 +13,6 @@ import {
 } from "@/lib/bridging/mode";
 import {
   estimateEthTxFee,
-  estimateSolanaTxFeeLamports,
   getLayerZeroTransferResponse,
 } from "@/lib/bridging/submitTx";
 import { validateSubmitTxInputs } from "@/lib/bridging/validate";
@@ -288,23 +287,11 @@ async function estimateSolanaFees(
     throw new Error(feeResponse.err);
   }
 
-  const { bridgingTx, approvalTx } = feeResponse;
-  let walletFeeLamports = BigInt(0);
-
-  if (approvalTx?.txRaw) {
-    const approvalFee = await estimateSolanaTxFeeLamports(approvalTx.txRaw);
-    const bridgingFeeEstimate = await estimateSolanaTxFeeLamports(
-      bridgingTx.solTx.txRaw,
-    );
-    walletFeeLamports = approvalFee + bridgingFeeEstimate;
-  } else if (bridgingTx.solTx?.txRaw) {
-    walletFeeLamports = await estimateSolanaTxFeeLamports(
-      bridgingTx.solTx.txRaw,
-    );
-  }
+  const { bridgingTx } = feeResponse;
 
   return {
-    userWalletFeeDfm: walletFeeLamports.toString(10),
+    // cardano-api computes the network fee from the tx it built, no RPC call needed
+    userWalletFeeDfm: BigInt(bridgingTx.solTx?.txFee || "0").toString(10),
     bridgeTxFeeDfm: BigInt(bridgingTx.bridgingFee || "0").toString(10),
     operationFeeDfm: BigInt(bridgingTx.operationFee || "0").toString(10),
   };

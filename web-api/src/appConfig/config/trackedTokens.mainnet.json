@@ -40,6 +40,14 @@
 				"coingecko": "ethereum",
 				"defillama": "coingecko:ethereum"
 			}
+		},
+		{
+			"symbol": "SOL",
+			"aliases": ["WSOL"],
+			"ids": {
+				"coingecko": "solana",
+				"defillama": "coingecko:solana"
+			}
 		}
 	]
 }

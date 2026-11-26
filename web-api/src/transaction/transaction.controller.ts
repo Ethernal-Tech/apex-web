@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Post,
+	Query,
+} from '@nestjs/common';
 import { TransactionService } from './transaction.service';
 import {
 	CreateCardanoTransactionResponseDto,
@@ -6,8 +14,11 @@ import {
 	CreateEthTransactionFullResponseDto,
 	CardanoTransactionFeeResponseDto,
 	CreateSolanaTransactionFullResponseDto,
+	SolanaTxStatusResponseDto,
 } from './transaction.dto';
-import { ApiResponse, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiResponse, ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ChainEnum } from 'src/common/enum';
+import { getSolanaTxStatus } from './solanaTxStatus.helper';
 import {
 	LayerZeroTransferDto as LayerZeroTransferDto,
 	LayerZeroTransferResponseDto,
@@ -113,6 +124,43 @@ export class TransactionController {
 		@Body() model: CreateTransactionDto,
 	): Promise<CreateSolanaTransactionFullResponseDto> {
 		return await this.transactionService.createSolana(model);
+	}
+
+	@ApiOperation({
+		summary: 'Get the status of a submitted Solana transaction',
+		description:
+			'Proxied to cardano-api. Reports whether the transaction landed: confirmed, failed, pending, or expired.',
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		type: SolanaTxStatusResponseDto,
+		description: 'Success',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Bad Request',
+	})
+	@ApiQuery({
+		name: 'chain',
+		required: true,
+		enum: ChainEnum,
+		enumName: 'ChainEnum',
+	})
+	@ApiQuery({ name: 'signature', required: true, type: String })
+	@ApiQuery({
+		name: 'lastValidBlockHeight',
+		required: true,
+		type: String,
+		description: 'lastValidBlockHeight returned by createSolana',
+	})
+	@HttpCode(HttpStatus.OK)
+	@Get('solanaTxStatus')
+	async solanaTxStatus(
+		@Query('chain') chain: string,
+		@Query('signature') signature: string,
+		@Query('lastValidBlockHeight') lastValidBlockHeight: string,
+	): Promise<SolanaTxStatusResponseDto> {
+		return getSolanaTxStatus(chain, signature, lastValidBlockHeight);
 	}
 
 	@ApiOperation({

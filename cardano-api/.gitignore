@@ -2,3 +2,6 @@
 ./cardano-api
 # indexer databases
 *-indexer-dbs/
+
+# test coverage, written by make unit-test
+coverage.out

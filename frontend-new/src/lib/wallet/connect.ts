@@ -351,7 +351,6 @@ async function enableSolanaWallet(
 
   // Phantom has no network change event, it only reports account switches and disconnects
   await solWalletHandler.enable(
-    appSettings.isMainnet,
     () => onSolanaAccountChanged(selectedWalletName, srcChain, handlers),
     () => disconnectWallet(handlers),
   );

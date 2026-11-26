@@ -75,11 +75,12 @@ export class BalanceService {
 
 		if (isSolanaChain(chain)) {
 			ValidateSolanaAddress(address);
-			const rpcUrl = this.resolveSolanaRpcUrl();
 			const result = await fetchSolanaAddressBalance(
-				rpcUrl,
+				this.appConfig.cardanoSkylineApiUrl,
+				process.env.CARDANO_API_SKYLINE_API_KEY,
+				chain,
 				address,
-				tokens.length > 0 ? tokens : undefined,
+				tokens,
 				REQUEST_TIMEOUT_MS,
 			);
 			return { chain, address, ...result };
@@ -111,15 +112,6 @@ export class BalanceService {
 		throw new BadRequestException(
 			`No EVM RPC URL configured for chain "${chain}". ` +
 				`Set EVM_RPC_URL_${chain.toUpperCase()}.`,
-		);
-	}
-
-	private resolveSolanaRpcUrl(): string {
-		const fromConfig = this.appConfig.rpc?.solanaUrl;
-		if (fromConfig?.trim()) return fromConfig.trim();
-
-		throw new BadRequestException(
-			`No Solana RPC URL configured. Set SOLANA_RPC_URL.`,
 		);
 	}
 }

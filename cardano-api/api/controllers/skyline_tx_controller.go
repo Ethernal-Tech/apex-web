@@ -24,6 +24,7 @@ import (
 	cardanotx "github.com/Ethernal-Tech/cardano-api/cardano"
 	"github.com/Ethernal-Tech/cardano-api/common"
 	"github.com/Ethernal-Tech/cardano-api/core"
+	solanatx "github.com/Ethernal-Tech/cardano-api/solana"
 	infracommon "github.com/Ethernal-Tech/cardano-infrastructure/common"
 	"github.com/Ethernal-Tech/cardano-infrastructure/sendtx"
 	"github.com/Ethernal-Tech/cardano-infrastructure/wallet"
@@ -83,7 +84,7 @@ func (c *SkylineTxControllerImpl) GetEndpoints() []*core.APIEndpoint {
 		{Path: "GetSettings", Method: http.MethodGet, Handler: c.getSettings},
 		{Path: "GetLockedTokens", Method: http.MethodGet, Handler: c.getLockedAmountOfTokens},
 		{Path: "GetBridgingAddresses", Method: http.MethodGet, Handler: c.getBridgingAddresses},
-		{Path: "GetBalance", Method: http.MethodGet, Handler: c.getBalance},
+		{Path: getBalancePath, Method: http.MethodGet, Handler: c.getBalance},
 		{Path: "GetLatestSlot", Method: http.MethodGet, Handler: c.getLatestSlot},
 	}
 }
@@ -595,6 +596,11 @@ func (c *SkylineTxControllerImpl) createSolanaTx(
 		return nil, fmt.Errorf("failed to marshal tx: %w", err)
 	}
 
+	txFee, err := solanatx.TxFeeLamports(tx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to calculate tx fee: %w", err)
+	}
+
 	bridgeTokenID := requestBody.Transactions[0].TokenID
 	if bridgeTokenID == 0 {
 		bridgeTokenID = currencyID
@@ -609,6 +615,7 @@ func (c *SkylineTxControllerImpl) createSolanaTx(
 		base64.StdEncoding.EncodeToString(txBytes),
 		latestBlockHashAndExpiry.Blockhash.String(),
 		latestBlockHashAndExpiry.LastValidBlockHeight,
+		txFee,
 		requestBody.BridgingFee,
 		requestBody.OperationFee,
 		tokenAmount,

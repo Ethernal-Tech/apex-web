@@ -11,10 +11,11 @@ require (
 	github.com/Ethernal-Tech/blockchain-event-tracker v0.0.0-20261023113908-ed976452bc2d
 	github.com/Ethernal-Tech/cardano-infrastructure v0.0.0-20261120094405-a929f370b67e
 	github.com/Ethernal-Tech/ethgo v0.0.0-20240902085129-307ec04e3e94
-	github.com/Ethernal-Tech/solana-infrastructure v0.0.0-20261123101009-573ef1728f28
+	github.com/Ethernal-Tech/solana-infrastructure v0.0.0-20261125102353-a3c43ec78763
 	github.com/dgraph-io/ristretto v0.2.0
 	github.com/ethereum/go-ethereum v1.14.11
 	github.com/fxamacker/cbor/v2 v2.7.0
+	github.com/gagliardetto/binary v0.8.0
 	github.com/gagliardetto/solana-go v1.23.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
@@ -28,6 +29,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.12.1
 	go.etcd.io/bbolt v1.4.3
+	golang.org/x/sync v0.24.0
 	golang.org/x/tools v0.52.0
 )
 
@@ -46,7 +48,6 @@ require (
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/gagliardetto/anchor-go v1.0.0 // indirect
-	github.com/gagliardetto/binary v0.8.0 // indirect
 	github.com/gagliardetto/treeout v0.1.4 // indirect
 	github.com/go-toolsmith/astcopy v1.0.2 // indirect
 	github.com/go-toolsmith/astequal v1.0.3 // indirect
@@ -92,7 +93,6 @@ require (
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20240213143201-ec583247a57a // indirect
 	golang.org/x/mod v0.42.0 // indirect
-	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/term v0.47.0 // indirect
 	golang.org/x/time v0.16.0 // indirect

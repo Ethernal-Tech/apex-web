@@ -84,6 +84,24 @@
 			"color": "#8B7CFF"
 		},
 		{
+			"tokenID": 9,
+			"icon": "solana.svg",
+			"label": "SOL",
+			"color": "#9945FF"
+		},
+		{
+			"tokenID": 10,
+			"icon": "solana.svg",
+			"label": "wSOL",
+			"color": "#14F195"
+		},
+		{
+			"tokenID": 11,
+			"icon": "apex.svg?v=3",
+			"label": "solAP3X",
+			"color": "#7B5CFF"
+		},
+		{
 			"tokenID": 1000001,
 			"icon": "eth.svg",
 			"label": "Base ETH",

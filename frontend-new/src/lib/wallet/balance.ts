@@ -20,12 +20,12 @@ export type WalletBalanceState = {
 };
 
 const WALLET_UPDATE_BALANCE_INTERVAL = 5000;
-const SOLANA_WALLET_UPDATE_BALANCE_INTERVAL = 10000;
+// also Solana: its balance comes from web-api, which reads RPC for all users
 const DEFAULT_UPDATE_BALANCE_INTERVAL = 30000;
 
 export function getUpdateBalanceInterval(srcChain: string | undefined): number {
   if (!srcChain || isSolanaChain(srcChain)) {
-    return SOLANA_WALLET_UPDATE_BALANCE_INTERVAL;
+    return DEFAULT_UPDATE_BALANCE_INTERVAL;
   }
 
   return getUtxoRetrieverType(srcChain) === UtxoRetrieverEnum.Wallet
@@ -62,48 +62,8 @@ function mapApiBalanceToWalletBalances(
   return finalBalance;
 }
 
-async function fetchSolanaBalancesFromRpc(
-  settings: SettingsResponse,
-  srcChain: string,
-  dirTokens: number[],
-  currencyID: number | undefined,
-): Promise<WalletBalances> {
-  const hasSplTokens = dirTokens.some((tokenID) => {
-    const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
-    return tokenConfig && tokenConfig.chainSpecific !== LovelaceTokenName;
-  });
-
-  const [nativeLamports, splByMint] = await Promise.all([
-    solWalletHandler.getBalanceLamports(),
-    hasSplTokens
-      ? solWalletHandler.getSplTokenBalancesByMint()
-      : Promise.resolve({} as Record<string, bigint>),
-  ]);
-
-  const finalBalance: WalletBalances = {};
-  for (const tokenID of dirTokens) {
-    const tokenConfig = getTokenConfig(settings, srcChain, tokenID);
-    const isCurrencyToken = currencyID !== undefined && tokenID === currencyID;
-    if (!tokenConfig) {
-      finalBalance[tokenID.toString()] = isCurrencyToken
-        ? nativeLamports.toString(10)
-        : "0";
-      continue;
-    }
-
-    if (tokenConfig.chainSpecific === LovelaceTokenName) {
-      finalBalance[tokenID.toString()] = nativeLamports.toString(10);
-    } else {
-      finalBalance[tokenID.toString()] = (
-        splByMint[tokenConfig.chainSpecific] ?? BigInt(0)
-      ).toString(10);
-    }
-  }
-
-  return finalBalance;
-}
-
-async function fetchSolanaBalancesFromBackend(
+/** Solana: web-api only. Public RPC nodes reject browser requests and Phantom has no balance API. */
+async function fetchSolanaWalletBalances(
   settings: SettingsResponse,
   srcChain: string,
   dirTokens: number[],
@@ -131,52 +91,6 @@ async function fetchSolanaBalancesFromBackend(
     currencyID,
     data,
   );
-}
-
-/** Solana: RPC first, web-api fallback, then throw. */
-async function fetchSolanaWalletBalances(
-  settings: SettingsResponse,
-  srcChain: string,
-  dirTokens: number[],
-  currencyID: number | undefined,
-): Promise<WalletBalances> {
-  try {
-    return await fetchSolanaBalancesFromRpc(
-      settings,
-      srcChain,
-      dirTokens,
-      currencyID,
-    );
-  } catch (rpcError) {
-    console.log(
-      "Solana RPC balance failed, falling back to web-api:",
-      rpcError,
-    );
-    captureException(rpcError, {
-      tags: {
-        component: "balance.ts",
-        action: "fetchSolanaBalancesFromRpc",
-      },
-    });
-
-    try {
-      return await fetchSolanaBalancesFromBackend(
-        settings,
-        srcChain,
-        dirTokens,
-        currencyID,
-      );
-    } catch (apiError) {
-      console.log(`Solana web-api balance fallback failed: ${apiError}`);
-      captureException(apiError, {
-        tags: {
-          component: "balance.ts",
-          action: "fetchSolanaBalancesFromBackend",
-        },
-      });
-      throw apiError;
-    }
-  }
 }
 
 async function fetchEvmBalancesFromWallet(

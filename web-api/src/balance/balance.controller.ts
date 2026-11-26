@@ -13,7 +13,7 @@ export class BalanceController {
 		summary: 'Get address balance',
 		description:
 			'Returns the native balance (and optional token balances) for an address on the given chain. ' +
-			'EVM/Solana are queried via RPC; Cardano-family chains are proxied to cardano-api GetBalance.',
+			'EVM is queried via RPC; Cardano-family and Solana chains are proxied to cardano-api.',
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -40,7 +40,7 @@ export class BalanceController {
 		required: false,
 		type: String,
 		description:
-			'Comma-separated token ids. EVM: ERC-20 contracts. Solana: mint addresses (omit = all SPL). Cardano: ignored.',
+			'Comma-separated token ids. EVM: ERC-20 contracts. Solana: mint addresses (omit = all SPL tokens configured for the chain). Cardano: ignored.',
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()

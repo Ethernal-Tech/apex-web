@@ -31,12 +31,7 @@ import {
   type PendingBridgeTx,
 } from "@/lib/bridging/pendingTx";
 import solWalletHandler from "@/lib/wallet/solWallet";
-import { getFeeForMessageLamports } from "@/lib/wallet/solanaRpc";
-import {
-  base64ToUint8Array,
-  extractMessageFromLegacyTransaction,
-  uint8ArrayToBase64,
-} from "@/lib/wallet/solanaTx";
+import { waitForSolanaConfirmation } from "@/lib/bridging/solanaConfirm";
 
 type TxDetailsOptions = {
   feePercMult: bigint;
@@ -279,9 +274,11 @@ export const signAndSubmitSolanaTx = async (
   }
 
   const txRaw = createResponse.bridgingTx?.solTx?.txRaw;
-  if (!txRaw) {
+  const lastValidBlockHeight =
+    createResponse.bridgingTx?.solTx?.lastValidBlockHeight;
+  if (!txRaw || !lastValidBlockHeight) {
     captureAndThrowError(
-      "Missing Solana txRaw in create response.",
+      "Missing Solana txRaw or lastValidBlockHeight in create response.",
       "submitTx.ts",
       "signAndSubmitSolanaTx",
     );
@@ -292,6 +289,16 @@ export const signAndSubmitSolanaTx = async (
   });
 
   const signature = await solWalletHandler.signAndSendTransaction(txRaw);
+
+  updateLoadingState({
+    content: "Waiting for the transaction to be confirmed...",
+  });
+
+  await waitForSolanaConfirmation({
+    chain: values.originChain,
+    signature,
+    lastValidBlockHeight,
+  });
 
   const bridgingFee = BigInt(createResponse.bridgingTx.bridgingFee || "0");
   const operationFee = BigInt(createResponse.bridgingTx.operationFee || "0");
@@ -541,15 +548,6 @@ export const estimateEthTxFee = async (
   }
 
   return BigInt(tx.gasPrice!) * gasLimit;
-};
-
-export const estimateSolanaTxFeeLamports = async (
-  txRawBase64: string,
-): Promise<bigint> => {
-  const message = extractMessageFromLegacyTransaction(
-    base64ToUint8Array(txRawBase64),
-  );
-  return getFeeForMessageLamports(uint8ArrayToBase64(message));
 };
 
 export const getLayerZeroTransferResponse = async function (

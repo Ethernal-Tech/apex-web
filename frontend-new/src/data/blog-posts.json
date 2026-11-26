@@ -1,6 +1,22 @@
 {
   "posts": [
     {
+      "slug": "solana-live-on-skyline-mainnet",
+      "title": "Solana is live on Skyline mainnet",
+      "date": "2026-11-23",
+      "summary": "AP3X now moves between Vector and Solana on mainnet, arriving on the other side as solAP3X - a new token, backed one-for-one by the AP3X the bridge holds on Vector.",
+      "cover": "/blog-covers/solana-route.webp",
+      "coverAlt": "AP3X moving both ways between Vector and Solana, where it is held as solAP3X",
+      "body": [
+        "Solana is live on Skyline mainnet. Bridge AP3X out of Vector and it arrives on Solana as solAP3X; send solAP3X back and the AP3X is released on Vector again. The route is open now, in both directions.",
+        "solAP3X is new. It is the Solana representation of AP3X, minted one-for-one against the AP3X the bridge holds on Vector. It is not a separate asset with its own supply or economics: there is exactly as much solAP3X on Solana as there is AP3X held behind it, and no more.",
+        "This is the first route that leaves the EVM. Polygon and Ethereum both spoke the language Skyline already knew from Nexus; Solana does not. It has its own accounts, its own token standard and its own wallets, so connecting to it meant building a new side of the bridge rather than pointing an existing one at another chain. What did not change is who watches it. The same validator set that secures the Vector, Polygon and Ethereum routes watches Solana too, so adding it did not add a trust assumption that only Solana users carry.",
+        "Using it looks like every other route. Open the bridge, pick Vector on one side and Solana on the other, connect the wallet you already use on Vector and a Solana wallet on the other end, and send. The bridge shows you the fee before you sign rather than after.",
+        "Every AP3X locked behind solAP3X is published on the audit page alongside everything else the bridge holds, so the one-for-one claim above is something you can check rather than something you have to take on trust.",
+        "Solana was the last of this year's production integrations on the roadmap. With it, AP3X on Vector now reaches Polygon, Ethereum and Solana without giving up the guarantees it had at home."
+      ]
+    },
+    {
       "slug": "ethereum-live-on-skyline-mainnet",
       "title": "Ethereum is live on Skyline mainnet",
       "date": "2026-09-09",

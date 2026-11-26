@@ -9,14 +9,6 @@ export function base64ToUint8Array(base64: string): Uint8Array {
   return bytes;
 }
 
-export function uint8ArrayToBase64(bytes: Uint8Array): string {
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
-
 /** Reads Solana compact-u16 length prefix; returns [value, bytesConsumed]. */
 function decodeCompactU16(bytes: Uint8Array, offset: number): [number, number] {
   let size = 0;

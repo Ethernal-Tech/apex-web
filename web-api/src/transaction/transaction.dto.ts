@@ -235,6 +235,12 @@ export class SolanaTransactionResponseDto {
 		description: 'Block through which the tx blockhash stays valid',
 	})
 	lastValidBlockHeight: string;
+
+	@IsNotEmpty()
+	@ApiProperty({
+		description: 'Network fee the fee payer pays for this tx, in lamports',
+	})
+	txFee: string;
 }
 
 @ApiExtraModels(SolanaTransactionResponseDto)
@@ -268,16 +274,6 @@ export class BridgingSolanaTransactionResponseDto {
 	BridgingSolanaTransactionResponseDto,
 )
 export class CreateSolanaTransactionFullResponseDto {
-	@IsObject()
-	@ValidateNested()
-	@Type(() => SolanaTransactionResponseDto)
-	@ApiProperty({
-		description: 'Approval tx for the bridging tx',
-		type: SolanaTransactionResponseDto,
-		nullable: true,
-	})
-	approvalTx?: SolanaTransactionResponseDto;
-
 	@IsNotEmpty()
 	@IsObject()
 	@ValidateNested()
@@ -293,4 +289,28 @@ export class ErrorResponseDto {
 	@IsNotEmpty()
 	@ApiProperty()
 	err: string;
+}
+
+export enum SolanaTxStatusEnum {
+	Pending = 'pending',
+	Confirmed = 'confirmed',
+	Failed = 'failed',
+	Expired = 'expired',
+}
+
+export class SolanaTxStatusResponseDto {
+	@ApiProperty({
+		enum: SolanaTxStatusEnum,
+		enumName: 'SolanaTxStatusEnum',
+		description:
+			'pending: not confirmed yet, blockhash still valid. confirmed: executed. ' +
+			'failed: in a block, execution failed. expired: not found and the blockhash expired, so it can never land.',
+	})
+	status: SolanaTxStatusEnum;
+
+	@ApiProperty({
+		required: false,
+		description: 'Execution error reported by the node, set only when failed',
+	})
+	err?: string;
 }

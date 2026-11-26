@@ -1,16 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import appSettings from "@/settings/appSettings";
 import { captureAndThrowError } from "@/lib/wallet/errors";
-import {
-  confirmTransactionSignature,
-  getBalanceLamports,
-  getSplTokenBalancesByMintLamports,
-  sendRawTransactionBase64,
-} from "@/lib/wallet/solanaRpc";
 import {
   base64ToUint8Array,
   createPhantomTransactionAdapter,
-  uint8ArrayToBase64,
 } from "@/lib/wallet/solanaTx";
 
 type WalletInfo = {
@@ -35,7 +27,6 @@ const toBase58 = (publicKey: any): string =>
 class SolWalletHandler {
   private _provider: any | undefined;
   private _address: string | undefined;
-  private _useMainnet: boolean | undefined;
   private onAccountChanged: () => Promise<void> = async () => undefined;
   private onDisconnected: () => Promise<void> = async () => undefined;
 
@@ -76,11 +67,9 @@ class SolWalletHandler {
   checkWallet = (): boolean => !!this._provider && !!this._address;
 
   enable = async (
-    useMainnet: boolean | undefined,
     onAccountChanged: () => Promise<void>,
     onDisconnected: () => Promise<void>,
   ): Promise<boolean> => {
-    this._useMainnet = useMainnet ?? appSettings.isMainnet;
     this._provider = this.resolvePhantomProvider();
 
     const resp = await this._provider.connect();
@@ -122,7 +111,6 @@ class SolWalletHandler {
       this.onDisconnected = async () => undefined;
       this._provider = undefined;
       this._address = undefined;
-      this._useMainnet = undefined;
     }
   };
 
@@ -133,28 +121,7 @@ class SolWalletHandler {
     return this._address;
   };
 
-  getBalanceLamports = async (): Promise<bigint> => {
-    if (!this._address) {
-      captureAndThrowError(
-        "Wallet not enabled.",
-        "solWallet.ts",
-        "getBalanceLamports",
-      );
-    }
-    return getBalanceLamports(this._address, this._useMainnet);
-  };
-
-  getSplTokenBalancesByMint = async (): Promise<Record<string, bigint>> => {
-    if (!this._address) {
-      captureAndThrowError(
-        "Wallet not enabled.",
-        "solWallet.ts",
-        "getSplTokenBalancesByMint",
-      );
-    }
-    return getSplTokenBalancesByMintLamports(this._address, this._useMainnet);
-  };
-
+  // Phantom submits through its own RPC, so sending costs our backend nothing
   signAndSendTransaction = async (txRawBase64: string): Promise<string> => {
     if (!this._address || !this._provider) {
       captureAndThrowError(
@@ -164,39 +131,18 @@ class SolWalletHandler {
       );
     }
 
-    const serializedTx = base64ToUint8Array(txRawBase64);
-    const adapter = createPhantomTransactionAdapter(serializedTx);
+    const adapter = createPhantomTransactionAdapter(
+      base64ToUint8Array(txRawBase64),
+    );
 
     try {
-      if (this._provider.signAndSendTransaction) {
-        const result = await this._provider.signAndSendTransaction(adapter);
-        const signature =
-          typeof result === "string" ? result : result?.signature;
+      const result = await this._provider.signAndSendTransaction(adapter);
+      const signature = typeof result === "string" ? result : result?.signature;
 
-        if (!signature) {
-          throw new Error("Phantom did not return a transaction signature");
-        }
-
-        await confirmTransactionSignature(signature, this._useMainnet);
-        return signature;
+      if (!signature) {
+        throw new Error("Phantom did not return a transaction signature");
       }
 
-      const signedTx = await this._provider.signTransaction(adapter);
-      const signedBytes =
-        typeof signedTx?.serialize === "function"
-          ? signedTx.serialize()
-          : signedTx;
-
-      const signedBase64 = uint8ArrayToBase64(
-        signedBytes instanceof Uint8Array
-          ? signedBytes
-          : new Uint8Array(signedBytes),
-      );
-      const signature = await sendRawTransactionBase64(
-        signedBase64,
-        this._useMainnet,
-      );
-      await confirmTransactionSignature(signature, this._useMainnet);
       return signature;
     } catch (err: any) {
       console.error("Full error:", JSON.stringify(err, null, 2));
