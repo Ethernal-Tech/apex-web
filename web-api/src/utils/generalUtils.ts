@@ -162,16 +162,41 @@ export const getUrlAndApiKey = (
 	};
 };
 
-export const amountToBigInt = (amountStr: string, chain: ChainEnum): bigint => {
+/**
+ * Decimals of a chain's currency as bridge transactions store it: lovelace
+ * (6), lamports (9) or wei (18).
+ */
+export const currencyDecimals = (chain: ChainEnum): number => {
 	if (isCardanoChain(chain)) {
-		return BigInt(amountStr || '0');
+		return 6;
+	}
+	if (isSolanaChain(chain)) {
+		return 9;
+	}
+	return 18;
+};
+
+/**
+ * A raw stored amount (or a SUM of them) in a unit with `decimals` decimals ->
+ * DFM (6 decimals), rounded up so a non-zero amount never shows as zero.
+ *
+ * The caller names the decimals: a chain alone does not fix them, an SPL token
+ * is stored in its own mint's units.
+ */
+export const amountToBigInt = (
+	amountStr: string | null | undefined,
+	decimals: number,
+): bigint => {
+	if (!Number.isInteger(decimals) || decimals < 0 || decimals > 77) {
+		throw new Error(`unsupported token decimals: ${decimals}`);
 	}
 
-	const parts = convertWeiToDfm(amountStr || '0').split('.');
-	let increment: bigint = 0n;
-	if (parts.length == 2) {
-		increment = 1n; // fake rounding
+	const raw = BigInt(amountStr || '0');
+	if (decimals <= 6) {
+		return raw * BigInt(10) ** BigInt(6 - decimals);
 	}
 
-	return BigInt(parts[0]) + increment;
+	const divisor = BigInt(10) ** BigInt(decimals - 6);
+	const whole = raw / divisor;
+	return raw % divisor === BigInt(0) ? whole : whole + BigInt(1);
 };

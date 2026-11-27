@@ -32,9 +32,15 @@ import {
 	getWrappedCurrencyIDFromDirectionConfig,
 	getDirectionTokenIDsFromDirectionConfig,
 	getTokenNameById,
+	Lovelace,
 } from 'src/settings/utils';
-import { amountToBigInt, convertWeiToDfm } from 'src/utils/generalUtils';
-import { getBridgingMode } from 'src/utils/chainUtils';
+import {
+	amountToBigInt,
+	convertWeiToDfm,
+	currencyDecimals,
+} from 'src/utils/generalUtils';
+import { getBridgingMode, isSolanaChain } from 'src/utils/chainUtils';
+import { readSplMintDecimals } from './solanaBalance.helper';
 import { Cron } from '@nestjs/schedule';
 import Web3 from 'web3';
 import {
@@ -305,10 +311,11 @@ export class LockedTokensService {
 		allowedBridgingModes: BridgingModeEnum[],
 	): Promise<{ data: LockedTokensDto; errors: Record<string, string> }> {
 		const lockedTokens = await this.getLockedTokens();
-		const sumTransferred = await this.sumTransferredTokensPerChain(
-			this.settingsService.SettingsResponse.directionConfig,
-			allowedBridgingModes,
-		);
+		const { result: sumTransferred, errors: transferredErrors } =
+			await this.sumTransferredTokensPerChain(
+				this.settingsService.SettingsResponse.directionConfig,
+				allowedBridgingModes,
+			);
 
 		// EVM and Solana chains are absent from cardano-api's locked tokens, which
 		// reads UTxO bridging addresses only. Merged per token so that an
@@ -324,7 +331,7 @@ export class LockedTokensService {
 				chains,
 				totalTransferred: sumTransferred.totalTransferred,
 			},
-			errors: multiChain.errors,
+			errors: { ...multiChain.errors, ...transferredErrors },
 		};
 	}
 
@@ -586,22 +593,75 @@ export class LockedTokensService {
 		}
 	}
 
+	/** `decimals` of an SPL mint cannot change, so one read per mint per process. */
+	private readonly splDecimalsCache = new Map<string, number>();
+
+	/**
+	 * Decimals of a token's stored `nativeTokenAmount` on `chain`. Cardano and
+	 * EVM amounts are taken in the chain's currency unit, as before; a Solana
+	 * SPL token is stored in its own mint's units, so those are read once from
+	 * the node. Throws when they cannot be.
+	 */
+	private async tokenAmountDecimals(
+		chain: string,
+		tokenID: number,
+	): Promise<number> {
+		if (!isSolanaChain(chain as ChainEnum)) {
+			return currencyDecimals(chain as ChainEnum);
+		}
+
+		const mint =
+			this.settingsService.SettingsResponse?.directionConfig?.[chain]?.tokens?.[
+				tokenID
+			]?.chainSpecific;
+		if (!mint) {
+			throw new Error(`no mint in the settings for ${chain} token ${tokenID}`);
+		}
+		if (mint === Lovelace) {
+			return currencyDecimals(chain as ChainEnum);
+		}
+
+		const cached = this.splDecimalsCache.get(mint);
+		if (cached !== undefined) {
+			return cached;
+		}
+
+		const rpcUrl = this.appConfig.rpc?.solanaUrl;
+		if (!rpcUrl) {
+			throw new Error('no SOLANA_RPC_URL set');
+		}
+
+		const decimals = await readSplMintDecimals(rpcUrl, mint);
+		this.splDecimalsCache.set(mint, decimals);
+
+		return decimals;
+	}
+
+	/**
+	 * TVB per origin chain and token, in DFM. A token whose amount unit cannot
+	 * be resolved is left out and named in `errors`; such a partial result is
+	 * not cached.
+	 */
 	private async sumTransferredTokensPerChain(
 		directionConfig: {
 			[key: string]: BridgingSettingsDirectionConfigDto;
 		},
 		allowedBridgingModes: BridgingModeEnum[],
-	): Promise<TransferredTokensResponse> {
+	): Promise<{
+		result: TransferredTokensResponse;
+		errors: Record<string, string>;
+	}> {
 		const cacheKey = 'transferredTokensPerChainNestedMap';
 		const cached =
 			await this.cacheManager.get<TransferredTokensResponse>(cacheKey);
 
-		if (cached !== undefined) {
-			return cached;
+		if (cached !== undefined && cached !== null) {
+			return { result: cached, errors: {} };
 		}
 
 		const result = new TransferredTokensResponse();
 		result.totalTransferred = {};
+		const errors: Record<string, string> = {};
 
 		for (const [srcChain, config] of Object.entries(directionConfig)) {
 			for (const dstChain of Object.keys(config.destChain || {})) {
@@ -635,6 +695,19 @@ export class LockedTokensService {
 
 						if (!allowedBridgingModes.includes(bridgingMode!)) continue;
 
+						let tokenDecimals: number;
+						try {
+							tokenDecimals = await this.tokenAmountDecimals(srcChain, tokenID);
+						} catch (error) {
+							const message =
+								error instanceof Error ? error.message : String(error);
+							errors[`${srcChain}/${tokenID}`] = message;
+							Logger.warn(
+								`TVB: skipping ${srcChain} token ${tokenID}: ${message}`,
+							);
+							continue;
+						}
+
 						const nativeTokenAmount = await this.getAggregatedSum(
 							srcChain,
 							dstChain,
@@ -653,7 +726,7 @@ export class LockedTokensService {
 						result.totalTransferred[srcChain] ??= {};
 						result.totalTransferred[srcChain][tokenID] = (
 							BigInt(result.totalTransferred[srcChain][tokenID] ?? '0') +
-							amountToBigInt(nativeTokenAmount, srcChain as ChainEnum)
+							amountToBigInt(nativeTokenAmount, tokenDecimals)
 						).toString();
 
 						if (BigInt(result.totalTransferred[srcChain][tokenID] ?? '0') > 0) {
@@ -669,7 +742,10 @@ export class LockedTokensService {
 								result.totalTransferred[srcChain] ??= {};
 								result.totalTransferred[srcChain][currency] = (
 									BigInt(result.totalTransferred[srcChain][currency] ?? '0') +
-									amountToBigInt(amount, srcChain as ChainEnum)
+									amountToBigInt(
+										amount,
+										currencyDecimals(srcChain as ChainEnum),
+									)
 								).toString();
 							}
 						}
@@ -691,7 +767,7 @@ export class LockedTokensService {
 
 							result.totalTransferred[srcChain][tokenID] = (
 								BigInt(result.totalTransferred[srcChain][tokenID] ?? '0') +
-								amountToBigInt(nativeTokenAmountZeroId, srcChain as ChainEnum)
+								amountToBigInt(nativeTokenAmountZeroId, tokenDecimals)
 							).toString();
 
 							if (
@@ -709,7 +785,10 @@ export class LockedTokensService {
 									result.totalTransferred[srcChain] ??= {};
 									result.totalTransferred[srcChain][currency] = (
 										BigInt(result.totalTransferred[srcChain][currency] ?? '0') +
-										amountToBigInt(amountZeroId, srcChain as ChainEnum)
+										amountToBigInt(
+											amountZeroId,
+											currencyDecimals(srcChain as ChainEnum),
+										)
 									).toString();
 								}
 							}
@@ -739,17 +818,19 @@ export class LockedTokensService {
 						result.totalTransferred[srcChain] ??= {};
 						result.totalTransferred[srcChain][currency] = (
 							BigInt(result.totalTransferred[srcChain][currency] ?? '0') +
-							amountToBigInt(amount, srcChain as ChainEnum)
+							amountToBigInt(amount, currencyDecimals(srcChain as ChainEnum))
 						).toString();
 					}
 				}
 			}
 		}
 
-		// milliseconds in cache-manager v7 - this was 30ms, i.e. no cache at all
-		await this.cacheManager.set(cacheKey, result, 30_000);
+		if (Object.keys(errors).length === 0) {
+			// milliseconds in cache-manager v7 - this was 30ms, i.e. no cache at all
+			await this.cacheManager.set(cacheKey, result, 30_000);
+		}
 
-		return result;
+		return { result, errors };
 	}
 
 	private async getAggregatedSum(
@@ -841,7 +922,42 @@ export class LockedTokensService {
 			}
 		}
 
-		return this.transformRawResultsToDto(fetchResult, groupBy);
+		const tokenDecimals = await this.resolveRowTokenDecimals(fetchResult);
+
+		return this.transformRawResultsToDto(fetchResult, groupBy, tokenDecimals);
+	}
+
+	/**
+	 * `chain/tokenID` -> decimals of `nativeTokenAmount`, for every token the
+	 * rows carry. A token whose decimals cannot be read is left out, and its
+	 * amounts with it.
+	 */
+	private async resolveRowTokenDecimals(
+		rows: { originChain: string; tokenID: number; nativeSum: string | null }[],
+	): Promise<Map<string, number>> {
+		const decimals = new Map<string, number>();
+
+		for (const row of rows) {
+			if (!row.nativeSum || Number(row.nativeSum) <= 0) continue;
+
+			const key = `${row.originChain}/${row.tokenID}`;
+			if (decimals.has(key)) continue;
+
+			try {
+				decimals.set(
+					key,
+					await this.tokenAmountDecimals(row.originChain, row.tokenID),
+				);
+			} catch (error) {
+				Logger.warn(
+					`TVB by date: skipping ${key}: ${
+						error instanceof Error ? error.message : String(error)
+					}`,
+				);
+			}
+		}
+
+		return decimals;
 	}
 
 	private async processTokenData(
@@ -936,6 +1052,7 @@ export class LockedTokensService {
 	private transformRawResultsToDto(
 		rawResults: any[],
 		groupBy: GroupByTimePeriod,
+		tokenDecimals: Map<string, number>,
 	): TransferredTokensByDay[] {
 		const groupedByDate: Record<string, TransferredTokensByDay> = {};
 
@@ -953,7 +1070,7 @@ export class LockedTokensService {
 				};
 			}
 
-			const chainResult = this.processRowData(row);
+			const chainResult = this.processRowData(row, tokenDecimals);
 
 			this.mergeChainResult(
 				groupedByDate[dateKey].totalTransferred,
@@ -967,9 +1084,13 @@ export class LockedTokensService {
 		);
 	}
 
-	private processRowData(row: any): Record<string, string> {
+	private processRowData(
+		row: any,
+		tokenDecimals: Map<string, number>,
+	): Record<string, string> {
 		const chainResult: Record<string, string> = {};
 		const chain = row.originChain;
+		const chainCurrencyDecimals = currencyDecimals(chain as ChainEnum);
 
 		const tokenName = getTokenNameById(
 			this.settingsService.SettingsResponse.ecosystemTokens,
@@ -979,7 +1100,13 @@ export class LockedTokensService {
 		if (!tokenName) return chainResult;
 
 		if (row.nativeSum && Number(row.nativeSum) > 0) {
-			chainResult[tokenName] = amountToBigInt(row.nativeSum, chain).toString(
+			const decimals = tokenDecimals.get(`${chain}/${row.tokenID}`);
+			if (decimals === undefined) {
+				// unit unknown, see resolveRowTokenDecimals
+				return chainResult;
+			}
+
+			chainResult[tokenName] = amountToBigInt(row.nativeSum, decimals).toString(
 				10,
 			);
 
@@ -994,12 +1121,16 @@ export class LockedTokensService {
 			);
 
 			if (currencyName) {
-				chainResult[currencyName] = amountToBigInt(row.amount, chain).toString(
-					10,
-				);
+				chainResult[currencyName] = amountToBigInt(
+					row.amount,
+					chainCurrencyDecimals,
+				).toString(10);
 			}
 		} else {
-			chainResult[tokenName] = amountToBigInt(row.amount, chain).toString(10);
+			chainResult[tokenName] = amountToBigInt(
+				row.amount,
+				chainCurrencyDecimals,
+			).toString(10);
 		}
 
 		return chainResult;

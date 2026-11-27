@@ -86,6 +86,25 @@ export async function readSolBalance(
 	return BigInt(match[1]);
 }
 
+/** Decimals of an SPL mint, from `getTokenSupply`. */
+export async function readSplMintDecimals(
+	rpcUrl: string,
+	mint: string,
+): Promise<number> {
+	const { result } = await solanaRpc<{ value?: { decimals?: unknown } }>(
+		rpcUrl,
+		'getTokenSupply',
+		[mint, { commitment: COMMITMENT }],
+	);
+
+	const decimals = result.value?.decimals;
+	if (typeof decimals !== 'number' || !Number.isInteger(decimals)) {
+		throw new Error(`getTokenSupply returned no decimals for ${mint}`);
+	}
+
+	return decimals;
+}
+
 /**
  * SPL balance of one mint across every token account `owner` holds for it,
  * with the mint's own decimals - so no ATA derivation and no assumed decimals.

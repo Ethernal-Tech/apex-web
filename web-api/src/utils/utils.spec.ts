@@ -15,6 +15,8 @@ import { ChainEnum } from '../common/enum';
 import { capitalizeWord, splitStringIntoChunks } from './stringUtils';
 import Web3 from 'web3';
 import {
+	amountToBigInt,
+	currencyDecimals,
 	convertApexToDfm,
 	convertApexToWei,
 	convertDfmToApex,
@@ -413,5 +415,44 @@ describe('Conversion functions', () => {
 		const result = convertDfmToWei(600);
 		expect(result).toBe('1000000000000000000');
 		expect(mockToWei).toHaveBeenCalledWith(600, 12);
+	});
+});
+
+describe('currencyDecimals', () => {
+	it.each([
+		[ChainEnum.Prime, 6],
+		[ChainEnum.Nexus, 18],
+		[ChainEnum.Solana, 9],
+	])('%s stores its currency with %i decimals', (chain, decimals) => {
+		expect(currencyDecimals(chain)).toBe(decimals);
+	});
+});
+
+describe('amountToBigInt', () => {
+	it.each([
+		['lovelace stay as they are', '1500000', 6, BigInt(1500000)],
+		['1 SOL in lamports is 1 DFM-unit SOL', '1000000000', 9, BigInt(1000000)],
+		['lamports below 1 DFM round up', '1', 9, BigInt(1)],
+		['lamports with a remainder round up', '1000000001', 9, BigInt(1000001)],
+		['1 ETH in wei', '1000000000000000000', 18, BigInt(1000000)],
+		['wei with a remainder round up', '1500000000000', 18, BigInt(2)],
+		['a 6-decimal SPL token is identity', '100000000', 6, BigInt(100000000)],
+		['a 2-decimal token scales up', '123', 2, BigInt(1230000)],
+		['an empty SUM is zero', null, 9, BigInt(0)],
+		[
+			'above 2^53 stays exact',
+			'123456789012345678901',
+			9,
+			BigInt('123456789012345679'),
+		],
+	])('%s', (_name, amount, decimals, expected) => {
+		expect(amountToBigInt(amount, decimals)).toBe(expected);
+	});
+
+	it('rejects decimals that are not a sane integer', () => {
+		expect(() => amountToBigInt('1', -1)).toThrow('unsupported token decimals');
+		expect(() => amountToBigInt('1', 1.5)).toThrow(
+			'unsupported token decimals',
+		);
 	});
 });
